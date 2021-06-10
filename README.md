@@ -68,7 +68,7 @@ Next run the LoadInstall_new.R to install all the packages and dependencies.
 
 Next press **⌘(CMD) + Shift + G** or click the Finder Menubar menu GO > Go to Folder... in the Finder menubar and paste: 
 
-<img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/61156362303f4552faeca1d729a03433b9977312/screenshots/findergo.png" alt="drawing" width="250"/>
+<img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/61156362303f4552faeca1d729a03433b9977312/screenshots/findergo.png" alt="drawing" width="325"/>
 
 <br>`/Volumes/CBioinformatics/jonathan/Rprojects/Clinical_Methylation/Clinical_Methylation_Run.Rmd`
 
