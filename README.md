@@ -61,7 +61,10 @@ If you don't have homebrew, install brew by running the following command in R:
 
 `system("/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)`
 
-Next run the LoadInstall.R to install all the packages and dependencies.  
+Next run the LoadInstall_new.R to install all the packages and dependencies.
+
+[LoadInstall_new.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/8b32e9a3c90ebf6b568a6c6582a020f6729867ef/LoadInstall_new.R)
+
 
 Next press **⌘(CMD) + Shift + G** or click the Finder Menubar menu GO > Go to Folder... in the Finder menubar and paste: 
 
