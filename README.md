@@ -12,7 +12,7 @@ First, download RStudio 4.1 from:
 Download the following Mac Packages, but **do not install** until you have opened the system preferences Security Pane as below.
 
 I recommend to download 4.1 and run on a clean install to avoid changing any other packages.  4.1 includes compile and Tckl dependencies.  Attached in this directory are menubar apps for Rswitch which allows you to seamlessly switch between package libraries:
-<img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/25020451c5d320ff6aa70e65421f7a828f4a6905/screenshots/rswitch.png" alt="drawing" width="650"/>
+<img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/25020451c5d320ff6aa70e65421f7a828f4a6905/screenshots/rswitch.png" alt="drawing" width="250"/>
 
 Download R from Cran: [https://cran.r-project.org/bin/macosx/](https://cran.r-project.org/bin/macosx/)
 
