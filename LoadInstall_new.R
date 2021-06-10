@@ -161,7 +161,7 @@ install.or.load <- function(pathtoFile=NULL, instNew=T, rmpkg=F) {
 #' @return package installs or loads
 #' @export
 loadPacks <- function(ezLibs=NULL, ghPk=NULL, bioPks=NULL) {
-  pkgs <- c('devtools', 'remotes', 'sjmisc', 'stringi', 'digest', 'RCurl', 'rlang', 'parallel', 'grid', 'gridExtra','knitr', 'kableExtra','ggplot2', 'plotly', 'ggfortify', 'ggrepel', 'gplots', 'fastmatch','pals', 'Polychrome','qdapTools','beepr','xtable','pander','grDevices','graphics','stats', 'utils')
+  pkgs <- c('devtools', 'remotes', 'sjmisc', 'stringi', 'digest', 'RCurl', 'rlang', 'parallel', 'grid', 'gridExtra','knitr', 'kableExtra','ggplot2', 'plotly', 'ggfortify', 'ggrepel', 'gplots', 'fastmatch','pals', 'Polychrome','qdapTools','beepr','xtable','pander','grDevices','graphics','stats', 'utils','magick')
   if(is.null(ezLibs)){
     ezLibs<-c('tidyverse','sjmisc','stringi','digest','RCurl','gridExtra','needs')}
   if(is.null(ghPk)){
