@@ -53,10 +53,11 @@ Next press **⌘(CMD) + Shift + G** or click GO > Go to Folder... in the Finder 
 
 `/Volumes/CBioinformatics/Methylation/load_install_test/LoadInstall.R`
 
-
 If you don't have homebrew, install brew by running the following command in R:
 
 `system("/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)`
 
-The latest version of brew installs any casks safely in $USER/local and symlinks.  It is reversable as it does not overwrite an existing components nor does it overwrite any Mac OS System Components such as Clang which are part of Xcode.
+The latest version of brew installs any casks safely in $USER/local and symlinks.  It is reversable as it does not overwrite an existing components nor does it overwrite any Mac OS System Components such as Clang which are part of Xcode. To stop a brew cask from loading simply execute:
+<br>
+`brew unlink [packageName]`
 
