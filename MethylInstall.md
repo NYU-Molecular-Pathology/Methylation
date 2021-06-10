@@ -30,13 +30,6 @@ Next, go to Mac OS System Preferences by pressing **⌘(CMD) + Space** and typin
 <br>
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/0e124ca5b0b06278ccfd03569e0b8cd769e9fd2b/screenshots/syspref3.png" alt="drawing" width="650"/>
 
-
-If you don't have homebrew, install brew by running the following command in R:
-
-`system("/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)`
-
-The latest version of brew installs any casks safely in $USER/local and symlinks.  It is reversable as it does not overwrite an existing components nor does it overwrite any Mac OS System Components such as Clang which are part of Xcode.
-
 To avoid any install or compile errors, you must have Xcode installed and accept the licence.  You can run the following commands in terminal or in R:
 
 `system("xcode-select --install")`
@@ -59,4 +52,11 @@ Next press **⌘(CMD) + Shift + G** or click GO > Go to Folder... in the Finder 
 <br>`/Volumes/CBioinformatics/jonathan/Rprojects/Clinical_Methylation/Clinical_Methylation_Run.Rmd`
 
 `/Volumes/CBioinformatics/Methylation/load_install_test/LoadInstall.R`
+
+
+If you don't have homebrew, install brew by running the following command in R:
+
+`system("/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)`
+
+The latest version of brew installs any casks safely in $USER/local and symlinks.  It is reversable as it does not overwrite an existing components nor does it overwrite any Mac OS System Components such as Clang which are part of Xcode.
 
