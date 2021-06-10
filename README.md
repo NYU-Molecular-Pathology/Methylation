@@ -9,10 +9,21 @@ First, download RStudio 4.1 from:
 <br> R 4.0 approximately 15.2 mintues
 <br> R 4.1 approximately 6.33 mintues
 
-Install R from Cran: [https://cran.r-project.org/bin/macosx/](https://cran.r-project.org/bin/macosx/)
+Download the following Mac Packages, but **do not install** until you have opened the system preferences Security Pane as below.
+
+I recommend to download 4.1 and run on a clean install to avoid changing any other packages.  Attached in this directory are menubar apps for Rswitch which allows you to seamlessly switch between package libraries:
+
+
+
+Download R from Cran: [https://cran.r-project.org/bin/macosx/](https://cran.r-project.org/bin/macosx/)
 
 Download XQuartz with any new install of R or Rstudio you have:
 [https://github.com/XQuartz/XQuartz/releases/download/XQuartz-2.8.1/XQuartz-2.8.1.dmg](https://github.com/XQuartz/XQuartz/releases/download/XQuartz-2.8.1/XQuartz-2.8.1.dmg)
+
+
+Download LaTeX for Mac in order to be able to properly render the HTML report outputs
+[https://www.tug.org/mactex/mactex-download.html](https://www.tug.org/mactex/mactex-download.html)
+
 
 Next, go to Mac OS System Preferences by pressing **⌘(CMD) + Space** and typing "System Pref" and click on Security & Privacy:<br>
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/0e124ca5b0b06278ccfd03569e0b8cd769e9fd2b/screenshots/syspref1.png" alt="drawing" width="650"/>
