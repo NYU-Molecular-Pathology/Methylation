@@ -15,12 +15,12 @@ Download XQuartz with any new install of R or Rstudio you have:
 [https://github.com/XQuartz/XQuartz/releases/download/XQuartz-2.8.1/XQuartz-2.8.1.dmg](https://github.com/XQuartz/XQuartz/releases/download/XQuartz-2.8.1/XQuartz-2.8.1.dmg)
 
 Next, go to Mac OS System Preferences by pressing **⌘(CMD) + Space** and typing "System Pref" and click on Security & Privacy:<br>
-<img src="/Users/serraj10/Desktop/syspref1.png" alt="drawing" width="650"/>
+<img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/0e124ca5b0b06278ccfd03569e0b8cd769e9fd2b/screenshots/syspref1.png" alt="drawing" width="650"/>
 
 <br>
 1. Click on the "General" Tab and click the lock to make changes
 <br>
-<img src="/Users/serraj10/Desktop/syspref2.png" alt="drawing" width="650"/>
+<img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/0e124ca5b0b06278ccfd03569e0b8cd769e9fd2b/screenshots/syspref2.png" alt="drawing" width="650"/>
 
 2. Keep this window open as you install RStudio and R as Mac OS will block any app install.
 <br>
@@ -28,7 +28,7 @@ Next, go to Mac OS System Preferences by pressing **⌘(CMD) + Space** and typin
 <br>
 4. Select "Full Disk Access", and add R and Rstudio to prevent any slow file reads or permission issues.
 <br>
-<img src="/Users/serraj10/Desktop/syspref3.png" alt="drawing" width="650"/>
+<img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/0e124ca5b0b06278ccfd03569e0b8cd769e9fd2b/screenshots/syspref3.png" alt="drawing" width="650"/>
 
 
 If you don't have homebrew, install brew by running the following command in R:
