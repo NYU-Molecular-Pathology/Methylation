@@ -73,6 +73,9 @@ Next press **⌘(CMD) + Shift + G** or click the Finder Menubar menu GO > Go to 
 <br>`/Volumes/CBioinformatics/jonathan/Rprojects/Clinical_Methylation/Clinical_Methylation_Run.Rmd`
 
 The latest version of brew installs any casks safely in $USER/local and symlinks.  It is reversable as it does not overwrite an existing components nor does it overwrite any Mac OS System Components such as Clang which are part of Xcode. To stop a brew cask from loading simply execute:
-<br>
+
 `brew unlink [packageName]`
+
+You may need to install libomp with brew to fix any dependency issues.
+
 
