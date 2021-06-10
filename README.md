@@ -57,17 +57,15 @@ Open Finder and press **⌘(CMD) + K** then add three directories, login name is
 
 `smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular`
 
-Next press **⌘(CMD) + Shift + G** or click the Finder Menubar menu GO > Go to Folder... in the Finder menubar and paste: 
-
-<br>`/Volumes/CBioinformatics/jonathan/Rprojects/Clinical_Methylation/Clinical_Methylation_Run.Rmd`
-
-`/Volumes/CBioinformatics/Methylation/load_install_test/LoadInstall.R`
-
 If you don't have homebrew, install brew by running the following command in R:
 
 `system("/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)`
 
-Next run the LoadInstall.R to install all the package dependencies.
+Next run the LoadInstall.R to install all the packages and dependencies.  
+
+Next press **⌘(CMD) + Shift + G** or click the Finder Menubar menu GO > Go to Folder... in the Finder menubar and paste: 
+
+<br>`/Volumes/CBioinformatics/jonathan/Rprojects/Clinical_Methylation/Clinical_Methylation_Run.Rmd`
 
 The latest version of brew installs any casks safely in $USER/local and symlinks.  It is reversable as it does not overwrite an existing components nor does it overwrite any Mac OS System Components such as Clang which are part of Xcode. To stop a brew cask from loading simply execute:
 <br>
