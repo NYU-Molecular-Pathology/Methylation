@@ -1,0 +1,48 @@
+---
+title: "Clinical_Methylation_Run"
+date: Sys.Date()
+params:
+    runID: NULL
+    selectRDs: NULL
+    reinstall: FALSE
+    token: NULL
+---
+# Source the main script functions
+```{r, include=FALSE, cache=FALSE, echo=TRUE}
+mount_path <- "/Volumes/CBioinformatics/jonathan/Rprojects"
+main_script <- file.path(mount_path,"Methylation-scripts/readSheet_GenerateReport.R")
+if(is.null(params$runID)){message("Try setting the runID params:\n> runID <- \"21-MGDM##\"")}
+
+critialMnts <-c( "/Volumes/CBioinformatics/jonathan", "/Volumes/molecular/MOLECULAR LAB ONLY", "/Volumes/snudem01labspace/idats")
+
+checkMounts <- function(driveMount){
+    if(!dir.exists(driveMount)){
+        warning("PATH does not exist, ensure path is mounted:\n",driveMount)
+        message(crayon::bgRed(
+                "You must mount each of the following paths:\n
+                smb://research-cifs.nyumc.org/Research/CBioinformatics/\n
+                smb://research-cifs.nyumc.org/Research/snudem01lab/snudem01labspace\n
+                smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular\n"))
+        stopifnot(dir.exists(driveMount))
+}}
+
+for(i in critialMnts){checkMounts(i)}
+if (file.exists(main_script)) {
+    gb <- globalenv(); sys.source(main_script, gb)
+    gb$setVar("runID", params$runID); gb$setVar("ApiToken", params$token)
+    methylPath <- gb$setRunDir(gb$runID); setwd(methylPath)
+    varNm <- gb$getDefaults(); varNm$ApiToken <- gb$ApiToken; gb$printParams(varNm)
+    # Loads pipeline or installs new
+    if(params$reinstall){gb$install.or.load(instNew = T, rmpkg = T)}else{gb$install.or.load(instNew = F, rmpkg = F)}
+    }else{message("main_script path not found:\n", crayon::bgGreen(mount_path),"\nEdit using gb$setVar('main_script','path/to/script')")}
+
+if (file.exists(main_script)) {
+    if(is.null(gb$ApiToken)){warning("You are missing ApiToken")}
+    gb$copyWorksheetFile(runID=gb$runID) # copies the xlsm file
+    gb$readSheetWrite() # reads xlsm and generates input .csv samplesheet
+    gb$get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
+    gb$moveSampleSheet(gb$methDir) #copies outputs temp to desktop for QC.Rmd
+    gb$startRun(params$selectRDs)
+    }
+
+```
