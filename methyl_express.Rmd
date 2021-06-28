@@ -22,17 +22,14 @@ checkMounts <- function(driveMount){
                 smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular\n"))
         stopifnot(dir.exists(driveMount))
 }}
-
-for(i in critialMnts){checkMounts(i)}
+for(i in 1:3){checkMounts(critialMnts[i])}
 if (file.exists(main_script)) {
     gb <- globalenv(); sys.source(main_script, gb)
     gb$setVar("runID", params$runID); gb$setVar("ApiToken", params$token)
     methylPath <- gb$setRunDir(gb$runID); setwd(methylPath)
     varNm <- gb$getDefaults(); varNm$ApiToken <- gb$ApiToken; gb$printParams(varNm)
-    # Loads pipeline or installs new
     if(params$reinstall){gb$install.or.load(instNew = T, rmpkg = T)}else{gb$install.or.load(instNew = F, rmpkg = F)}
     }else{message("main_script path not found:\n", crayon::bgGreen(mount_path),"\nEdit using gb$setVar('main_script','path/to/script')")}
-
 if (file.exists(main_script)) {
     if(is.null(gb$ApiToken)){warning("You are missing ApiToken")}
     gb$copyWorksheetFile(runID=gb$runID) # copies the xlsm file
@@ -41,5 +38,4 @@ if (file.exists(main_script)) {
     gb$moveSampleSheet(gb$methDir) #copies outputs temp to desktop for QC.Rmd
     gb$startRun(params$selectRDs)
 }
-
 ```
