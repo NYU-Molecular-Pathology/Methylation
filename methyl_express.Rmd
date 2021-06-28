@@ -1,9 +1,9 @@
 ---
 params:
   runID: NULL
-selectRDs: NULL
-reinstall: FALSE
-token: NULL
+  selectRDs: NULL
+  reinstall: FALSE
+  token: NULL
 ---
 ```{r ClinicalRun, include=FALSE, cache=FALSE, progress = TRUE, verbose = TRUE, echo=TRUE}
 if(is.null(params$runID)){message("Try setting the runID params:\n> runID <- \"21-MGDM##\"")}
@@ -1041,4 +1041,3 @@ setVar("runID", params$runID); setVar("ApiToken", params$token)
     moveSampleSheet(methDir) #copies outputs temp to desktop for QC.Rmd
     startRun(params$selectRDs)
 ```
-
