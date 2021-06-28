@@ -5,7 +5,7 @@ params:
     reinstall: FALSE
     token: NULL
 ---
-```{r ClinicalRun, include=FALSE, cache=FALSE, echo=TRUE}
+```{r ClinicalRun, include=FALSE, cache=FALSE, progress = TRUE, verbose = TRUE, echo=TRUE}
 if(!file.exists('pipelineHelper.R')){
 mount_path <- "/Volumes/CBioinformatics/jonathan/Rprojects"
 main_script <- file.path(mount_path,"Methylation-scripts/readSheet_GenerateReport.R")
