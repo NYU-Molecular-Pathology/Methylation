@@ -1,13 +1,10 @@
 ---
-title: "Clinical_Methylation_Run"
-date: Sys.Date()
 params:
     runID: NULL
     selectRDs: NULL
     reinstall: FALSE
     token: NULL
 ---
-# Source the main script functions
 ```{r ClinicalRun, include=FALSE, cache=FALSE, echo=TRUE}
 mount_path <- "/Volumes/CBioinformatics/jonathan/Rprojects"
 main_script <- file.path(mount_path,"Methylation-scripts/readSheet_GenerateReport.R")
@@ -43,6 +40,6 @@ if (file.exists(main_script)) {
     gb$get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
     gb$moveSampleSheet(gb$methDir) #copies outputs temp to desktop for QC.Rmd
     gb$startRun(params$selectRDs)
-    }
+}
 
 ```
