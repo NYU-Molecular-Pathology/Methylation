@@ -8,7 +8,7 @@ params:
     token: NULL
 ---
 # Source the main script functions
-```{r, include=FALSE, cache=FALSE, echo=TRUE}
+```{r ClinicalRun, include=FALSE, cache=FALSE, echo=TRUE}
 mount_path <- "/Volumes/CBioinformatics/jonathan/Rprojects"
 main_script <- file.path(mount_path,"Methylation-scripts/readSheet_GenerateReport.R")
 if(is.null(params$runID)){message("Try setting the runID params:\n> runID <- \"21-MGDM##\"")}
