@@ -6,8 +6,10 @@ params:
     token: NULL
 ---
 ```{r ClinicalRun, include=FALSE, cache=FALSE, echo=TRUE}
+if(!file.exists('pipelineHelper.R')){
 mount_path <- "/Volumes/CBioinformatics/jonathan/Rprojects"
 main_script <- file.path(mount_path,"Methylation-scripts/readSheet_GenerateReport.R")
+}else{main_script<-'pipelineHelper.R'}
 if(is.null(params$runID)){message("Try setting the runID params:\n> runID <- \"21-MGDM##\"")}
 
 critialMnts <-c( "/Volumes/CBioinformatics/jonathan", "/Volumes/molecular/MOLECULAR LAB ONLY", "/Volumes/snudem01labspace/idats")
