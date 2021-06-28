@@ -81,7 +81,7 @@ You may need to install libomp with brew to fix any dependency issues.
 
 If you want to run the pipeline AFTER installation from your terminal, simply download the Rmd file from this page in two lines:
 
-`wget -L https://github.com/NYU-Molecular-Pathology/Methylation/blob/5ea31b8b483582b59e281dc8a49fb60f5b1928d1/methyl_express.Rmd`
+`wget -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/methyl_express.Rmd`
 
 `Rscript -e "rmarkdown::render('methyl_express.Rmd', params = list(runID = '21MDGM-99', selectRDs = NULL, token = '12456789abcdefghijklmnop'))"`
 
