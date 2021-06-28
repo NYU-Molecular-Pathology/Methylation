@@ -221,8 +221,6 @@ assignVar <- function(varStr, assignedVal){
 
 ckNull <- function(nullVar, subVar, varName){
   if (is.null(nullVar)){
-    message("\nRe-assigning variable:");cat(varName,sep = "\n")
-    cat(paste("to", subVar,"\n"))
     setVar(as.character(varName),as.character(subVar))
     return(paste0(subVar))
     }else{return(paste0(nullVar))}
