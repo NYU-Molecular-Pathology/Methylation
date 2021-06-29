@@ -7,7 +7,7 @@ Once the run is complete and the QC is finalized, go to the Current Run:
 - For Research Runs click [here](https://redcap.nyumc.org/apps/redcap/redcap_v10.0.19/DataExport/index.php?pid=24752&report_id=61212)
 - For Clinical Runs click [here](https://redcap.nyumc.org/apps/redcap/redcap_v10.0.19/DataExport/index.php?pid=24752&report_id=75682)
 
-<img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/71bd4ac74c47ab8e718fd8ccd70b082a47338b90/screenshots/selectQC.png" alt="drawing" width="250"/>
+<img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/71bd4ac74c47ab8e718fd8ccd70b082a47338b90/screenshots/selectQC.png" alt="drawing" width="850"/>
 
 1. First Click on the link to the research or Clinical runs above.
 2. Then select your QC file for the finished run like above
