@@ -257,11 +257,11 @@ setRunType <- function(isMC=T){
     system("gcc --version")
     # .libPaths("/Volumes/CBioinformatics/Methylation/in_house_libs")
     loadPacks()
-    ms1<- paste0(crayon::bgRed("Your mnp.v11b6 package is outdated execute the function:\n"),
-                 crayon::bgBlue("install.or.load(pathtoFile=NULL, instNew=F, rmpkg=F)\n"),
-                 crayon::bgRed("To update the in-house classifier to current clinical version"))
-    ms2<- paste0(crayon::bgRed("mnp.v11b6 package is not installed execute the function:\n"),
-                 crayon::bgBlue("install.or.load()\n"), crayon::bgRed("to install in-house classifier"))
+    ms1<- paste0(crayon::white$bgRed("Your mnp.v11b6 package is outdated execute the function:\n"),
+                 crayon::white$bgBlue("install.or.load(pathtoFile=NULL, instNew=F, rmpkg=F)\n"),
+                 crayon::white$bgRed("To update the in-house classifier to current clinical version"))
+    ms2<- paste0(crayon::white$bgRed("mnp.v11b6 package is not installed execute the function:\n"),
+                 crayon::white$bgBlue("install.or.load()\n"), crayon::bgRed("to install in-house classifier"))
     gh.inst("rmarkdown",'rstudio/rmarkdown')
     if (rq("mgmtstp27")){srcInst(mgmtLn)}
     if (rq("sest")){sw(srcInst(sexEst))}
