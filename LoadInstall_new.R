@@ -178,7 +178,7 @@ loadPacks <- function(ezLibs=NULL, ghPk=NULL, bioPks=NULL) {
                 'randomForest', 'glmnet',
                 'IlluminaHumanMethylation450kmanifest',
                 'IlluminaHumanMethylation450kanno.ilmn12.hg19',
-                'Rtsne', 'IlluminaHumanMethylationEPICmanifest',
+                'Rtsne', 'IlluminaHumanMethylationEPICmanifest','IlluminaHumanMethylationEPICanno.ilm10b2.hg19',
                 'IlluminaHumanMethylationEPICanno.ilm10b4.hg19', 'MethylAid', 'conumee',
                 'BiocParallel')
   }
