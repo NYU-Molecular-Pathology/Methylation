@@ -134,7 +134,7 @@ printParams <-function(){
     varsNames<- getSetvars()
     cat(crayon::white$bgGreen("\nThese are your variables:\n"))
     i=NULL; varCol=crayon::white$bgBlue$bold("\nVariable:")
-    valCol = crayon::white$bgCyan("\nAssigned value:\n")
+    valCol = crayon::white$bgCyan$bold("\nAssigned value:")
     invisible(
         foreach::foreach(i=1:length(varsNames))%do%{
             cat(paste(varCol, names(varsNames)[i], valCol, varsNames[1,i],"\n"))}
