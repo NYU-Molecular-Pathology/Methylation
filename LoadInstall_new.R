@@ -1,7 +1,3 @@
-#devtools::install_github("RGLab/Rtsne.multicore")}
-#rstudioapi::executeCommand("toggleDocumentOutline")
-# Package Automation with container in Kubernetes: https://solutions.rstudio.com/sys-admin/launcher/kubernetes/
-
 sw <- function(pkgOb){try(return(suppressMessages(suppressWarnings(pkgOb))),silent=T)}
 rq <- function(pkg){return(sw(!require(pkg, character.only=T)))}
 ld <- function(libName){sw(suppressPackageStartupMessages(library(libName,character.only=T)))}
