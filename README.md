@@ -28,16 +28,16 @@ Next, go to Mac OS System Preferences by pressing **⌘(CMD) + Space** and typin
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/0e124ca5b0b06278ccfd03569e0b8cd769e9fd2b/screenshots/syspref1.png" alt="drawing" width="650"/>
 
 <br>
-### 1. Click on the "General" Tab and click the lock to make changes
-<br>
+### 1. Click on the "General" Tab and click the lock to make changes<p></p>
+
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/0e124ca5b0b06278ccfd03569e0b8cd769e9fd2b/screenshots/syspref2.png" alt="drawing" width="650"/>
 
 ### 2. Keep this window open as you install RStudio and R as Mac OS will block any app install.
-<br>
+
 ### 3. Once you install R and Rstudio, click the "Privacy" tab in system preferences
-<br>
+
 ### 4. Select "Full Disk Access", and add R and Rstudio to prevent any slow file reads or permission issues.
-<br>
+
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/0e124ca5b0b06278ccfd03569e0b8cd769e9fd2b/screenshots/syspref3.png" alt="drawing" width="650"/>
 
 ### To avoid any install or compile errors, you must have Xcode installed and accept the licence.  You can run the following commands in R or paste into terminal the content in quotes:
