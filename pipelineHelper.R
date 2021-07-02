@@ -707,11 +707,20 @@ checkMounts <- function(driveMount){
                 smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular\n")
         )
         stopifnot(dir.exists(driveMount))
-    }}
-
+    }
+}
+prepareRun <- function(){
+  copyWorksheetFile(runID = gb$runID) # copies the xlsm file
+  readSheetWrite() # reads xlsm and generates input .csv samplesheet
+  get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
+  moveSampleSheet(gb$methDir) #copies outputs temp to desktop for QC.Rmd
+  install.or.load(instNew = F, rmpkg = F) # Loads pipeline or installs new
+}
+    
 for(i in 1:3){checkMounts(critialMnts[i])}
 defineParams()
 gb$fldx() #folds all funcitons
 printParams()
 }
 sourceAll()
+
