@@ -1,12 +1,5 @@
-## Normal Methylation Run
-## Jonathan Serrano Jan 14, 2020
-
-#devtools::install_github("RGLab/Rtsne.multicore")}
-#rstudioapi::executeCommand("toggleDocumentOutline")
 sourceAll <- function(){
 options(stringsAsFactors = FALSE);gb <- globalenv(); assign("gb", gb)
-# Abbreviated functions to require or load a library
-
 # FUN: Loads all the packages used in the RMD Methylation QC file
 checkQCpkg <- function(){
     methylQCpacks <- c(
