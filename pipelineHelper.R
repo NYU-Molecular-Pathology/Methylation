@@ -140,7 +140,7 @@ printParams <-function(){
             cat(paste(varCol, names(varsNames)[i], valCol, varsNames[1,i],"\n"))}
     )
     funArgs <- crayon::white$bgBlue$bold('gb$setVar("varNameString", varValue)')
-    cat("\nUse the function", funArgs ,"to change any variables\n")
+    cat("\nUse the function", funArgs ,"to change any default variables above if needed\n")
 }
 
 # FUN: copies the molecular or research lab Worksheet xlsm to cwd
