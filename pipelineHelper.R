@@ -31,7 +31,7 @@ checkQCpkg <- function(){
 # Helper functions to get and set global variables
 setVar<-function(valueName,val){return(assign(valueName, val, envir=.GlobalEnv))}
 assignVar <- function(varStr, assignedVal){
-    tryCatch(expr = {if(!is.null(get(varStr))){message(varStr," =",assignedVal,"\n")}},error = {setVar(varStr,assignedVal)})
+    tryCatch(expr = {if(!is.null(get(varStr))){message(varStr," = ",assignedVal)}},error = {setVar(varStr,assignedVal)})
 }
 ckNull <- function(nullVar, subVar, varName){
     if (is.null(nullVar)){setVar(as.character(varName),as.character(subVar))
