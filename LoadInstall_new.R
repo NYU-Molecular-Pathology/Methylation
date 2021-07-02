@@ -95,7 +95,7 @@ fixProf <- function(){
 
 fixNeeds <- function (){
     sysfile <- system.file("extdata", "promptUser", package="needs")
-    write(0, file=sysfile); options(needs.promptUser=FALSE); needs:::autoload(TRUE)
+    write(0, file=sysfile); options(needs.promptUser=FALSE); invisible(needs:::autoload(TRUE))
 }
 
 checkNeeds <- function(){
