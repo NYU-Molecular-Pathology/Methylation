@@ -10,9 +10,8 @@ options(stringsAsFactors = FALSE);gb <- globalenv(); assign("gb", gb)
 # FUN: Loads all the packages used in the RMD Methylation QC file
 checkQCpkg <- function(){
     methylQCpacks <- c(
-        "kableExtra","magick","webshot","plyr","beepr","ggplot2","knitr","reshape2",
-        "data.table","DT","plotly",
-        "MethylAid","minfi","scales","IlluminaHumanMethylation450kmanifest",
+        "kableExtra","magick","webshot","plyr","ggplot2","knitr","reshape2",
+        "data.table","DT","plotly", "MethylAid","minfi","scales","IlluminaHumanMethylation450kmanifest",
         "IlluminaHumanMethylationEPICanno.ilm10b2.hg19",
         "IlluminaHumanMethylationEPICmanifest",
         "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
@@ -20,7 +19,7 @@ checkQCpkg <- function(){
         "qdapTools","gplots","readxl","stringr","ggrepel","Polychrome",
         "tinytex","gridExtra","rmarkdown", "BiocParallel", "grid"
     )
-    easypackages::libraries(methylQCpacks)
+    easypackages::packages(methylQCpacks,prompt=F)
     require("ggplot2")
     require("pals")
     require("stringr")
@@ -30,35 +29,25 @@ checkQCpkg <- function(){
 
 # Helper functions to get and set global variables
 setVar<-function(valueName,val){return(assign(valueName, val, envir=.GlobalEnv))}
-assignVar <- function(varStr, assignedVal){
-    tryCatch(expr = {if(!is.null(get(varStr))){message(varStr," = ",assignedVal)}},error = {setVar(varStr,assignedVal)})
-}
-ckNull <- function(nullVar, subVar, varName){
-    if (is.null(nullVar)){setVar(as.character(varName),as.character(subVar))
+assignVar <- function(varStr, assignedVal){tryCatch(expr = {if(!is.null(get(varStr))){message(varStr," = ",assignedVal)}}, 
+                                                    error = {setVar(varStr,assignedVal)})}
+ckNull <- function(nullVar, subVar, varName){if (is.null(nullVar)){setVar(as.character(varName),as.character(subVar))
         return(paste0(subVar))} else {return(paste0(nullVar))}
 }
 
 # FUN: Loads the main packages and dependencies checks if any are not installed
 loadClassifierPacks <- function(){
-    #loadPacks()
-    # tryCatch(
-    #     sys.source(system.file(package='clinical.pack','/R/LoadInstall_new.R'), gb),
-    #     error={
-    #         source('./R/LoadInstall_new.R')
-    #     }
-    # )
-
-    tryCatch(
+    ldPkg <- tryCatch(
         expr={checkQCpkg()},
-        error=function(cond){message("error in loading QC package dependencies:\n");message(cond)},
-        warning=function(cond){message("Warn in loading QC package dependencies:\n");message(cond)}
+        error=function(cond){message("error in loading QC package dependency:\n");message(cond)},
+        warning=function(cond){message("Warning in loading QC package dependency:\n");message(cond)}
     )
+    return(ldPkg)
 }
 getDefaults <- function() {
-
     cbVol = "/Volumes/CBioinformatics"
     moVol = "/Volumes/molecular"
-
+    rsVol = "/Volumes/snudem01labspace"
     defaultParams <- data.frame(
         mnp.pk.loc = paste0(file.path(cbVol, "Methylation/in_house/mnp.v116/mnp.v11b6")),
         ApiToken = "",
@@ -66,7 +55,7 @@ getDefaults <- function() {
         clinDrv = paste0(file.path(moVol, "MOLECULAR LAB ONLY/NYU-METHYLATION")),
         rschOut = paste0(file.path(cbVol, "jonathan/Rprojects/Research_runs/")),
         clinOut = paste0(file.path(moVol, "MOLECULAR/MethylationClassifier")),
-        rsch.idat = "/Volumes/snudem01labspace/idats",
+        rsch.idat = paste0(file.path(rsVol,"idats")),
         clin.idat = paste0(file.path(moVol, "MOLECULAR/iScan")),
         QC_file = paste0(system.file('Methyl_QC.Rmd', package = "mnp.v11b6")),
         baseDir = paste0(file.path(cbVol, "jonathan/Rprojects")),
@@ -667,30 +656,18 @@ makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
     if(email==T){launchEmailNotify(runID)}
 }
 
-# Function to just run a default clinical run without changes
-automateRun <- function(runID=NULL){
-    if (is.null(runID)){runID=listMolecularSheets()}
-    setRunDir(runID);readSheetWrite()
-    get.idats("samplesheet.csv")
-    moveSampleSheet(gb$methDir)
-    install.or.load(instNew = F, rmpkg = F)
-    makeReports.v11b6(skipQC = F, email=T)
-}
-
-# Function to just run a default clinical run without changes
-startRun <- function(selectRDs=NULL){
-    prioritySam <- quickReport(selectRDs) # returns index in samplelist get("quickReport")
+# Function to just run a default clinical run without changes, input selectRDs to prioritize samples running first
+startRun <- function(selectRDs=NULL, runID=NULL){
     isClinicalRun <- stringr::str_detect(gb$runID, "MGDM")
-    if(isClinicalRun){
         #Clinical Run
         if(!is.null(selectRDs)){
+            prioritySam <- quickReport(selectRDs) # returns index in samplelist get("quickReport")
             remainingSam <- quickReport(selectRDs,getAll=T)
             makeReports.v11b6(skipQC=T, email=F, cpReport=F, selectSams=prioritySam, redcapUp=F)
             makeReports.v11b6(skipQC=F, email=T, cpReport=T, selectSams=remainingSam, redcapUp=T)
-        }else{makeReports.v11b6(skipQC=F, email=F, cpReport=F, selectSams=prioritySam, redcapUp=F)}
-    }else{
-        #Research Run
-        makeReports.v11b6(skipQC=F, email=T, cpReport=T, selectSams = NULL, redcapUp=T)}
+        }else{
+            makeReports.v11b6(skipQC=F, email=F, cpReport=F, selectSams=prioritySam, redcapUp=F)}
+
 }
 
 # List of three mount paths needed to run the pipleine
