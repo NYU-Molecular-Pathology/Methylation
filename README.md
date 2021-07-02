@@ -11,7 +11,7 @@ First, download RStudio 4.1 from:
 
 Download the following Mac Packages, but **do not install** until you have opened the system preferences Security Pane as below.
 
-I recommend to download 4.1 and run on a clean install to avoid changing any other packages.  4.1 includes compile and Tckl dependencies.  Attached in this directory are menubar apps for Rswitch which allows you to seamlessly switch between package libraries:
+I recommend to download 4.1 and run on a clean install to avoid changing any other packages.  4.1 includes compile and Tckl dependencies.  In this repository is a menubar app called Rswitch which allows you to seamlessly switch between package libraries:
 <br>
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/25020451c5d320ff6aa70e65421f7a828f4a6905/screenshots/rswitch.png" alt="drawing" width="250"/>
 
@@ -22,7 +22,6 @@ Download XQuartz with any new install of R or Rstudio you have:
 
 Download LaTeX for Mac in order to be able to properly render the HTML report outputs
 [https://www.tug.org/mactex/mactex-download.html](https://www.tug.org/mactex/mactex-download.html)
-
 
 Next, go to Mac OS System Preferences by pressing **⌘(CMD) + Space** and typing "System Pref" and click on Security & Privacy:<br>
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/0e124ca5b0b06278ccfd03569e0b8cd769e9fd2b/screenshots/syspref1.png" alt="drawing" width="450"/>
@@ -57,7 +56,6 @@ If you don't have homebrew, install brew by running the following command in R:
 `system("/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)`
 
 Next run the LoadInstall_new.R to install all the packages and dependencies.
-
 [LoadInstall_new.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/8b32e9a3c90ebf6b568a6c6582a020f6729867ef/LoadInstall_new.R)
 
 Next press **⌘(CMD) + Shift + G** or click the Finder Menubar: GO > Go to Folder... in the Finder menubar and paste: 
