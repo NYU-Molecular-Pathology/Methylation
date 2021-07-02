@@ -31,11 +31,11 @@ Next, go to Mac OS System Preferences by pressing **⌘(CMD) + Space** and typin
 
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/0e124ca5b0b06278ccfd03569e0b8cd769e9fd2b/screenshots/syspref2.png" alt="drawing" width="450"/>
 
-### 2. Keep this window open as you install RStudio and R as Mac OS will block any app install.
+#### 2. Keep this window open as you install RStudio and R as Mac OS will block any app install.
 
-### 3. Once you install R and Rstudio, click the "Privacy" tab in system preferences
+#### 3. Once you install R and Rstudio, click the "Privacy" tab in system preferences
 
-### 4. Select "Full Disk Access", and add R and Rstudio to prevent any slow file reads or permission issues.
+#### 4. Select "Full Disk Access", and add R and Rstudio to prevent any slow file reads or permission issues.
 
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/0e124ca5b0b06278ccfd03569e0b8cd769e9fd2b/screenshots/syspref3.png" alt="drawing" width="450"/>
 
