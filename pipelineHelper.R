@@ -709,12 +709,15 @@ checkMounts <- function(driveMount){
         stopifnot(dir.exists(driveMount))
     }
 }
-prepareRun <- function(){
-  copyWorksheetFile(runID = gb$runID) # copies the xlsm file
-  readSheetWrite() # reads xlsm and generates input .csv samplesheet
-  get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
-  moveSampleSheet(gb$methDir) #copies outputs temp to desktop for QC.Rmd
-  install.or.load(instNew = F, rmpkg = F) # Loads pipeline or installs new
+prepareRun <- function(token){
+    methylPath <- gb$setRunDir(gb$runID)
+    message("Working directory set to:"); cat(crayon::bgGreen(methylPath)); setwd(methylPath)
+    setVar("ApiToken", token); gb$printParams() # assign the ApiToken & print params
+    copyWorksheetFile(runID = gb$runID) # copies the xlsm file
+    readSheetWrite() # reads xlsm and generates input .csv samplesheet
+    get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
+    moveSampleSheet(gb$methDir) #copies outputs temp to desktop for QC.Rmd
+    install.or.load(instNew = F, rmpkg = F) # Loads pipeline or installs new
 }
     
 for(i in 1:3){checkMounts(critialMnts[i])}
