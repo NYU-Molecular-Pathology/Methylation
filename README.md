@@ -42,49 +42,39 @@ Next, go to Mac OS System Preferences by pressing **⌘(CMD) + Space** and typin
 ### To avoid any install or compile errors, you must have Xcode installed and accept the licence.  You can run the following commands in R or paste into terminal the content in quotes:
 
 `system("xcode-select --install")`
-
 `system("xcodebuild -runFirstLaunch")`
 
 ## Getting the Source Code
 
 To install and run the pipeline, you must mount two drives:
-<br><br>
 Open Finder and press **⌘(CMD) + K** then add three directories, login name is NYUMC\KerberosID:
-<br><br>
+<br>
 `smb://research-cifs.nyumc.org/Research/CBioinformatics/`
-
 `smb://research-cifs.nyumc.org/Research/snudem01lab/snudem01labspace`
-
 `smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular`
 
 If you don't have homebrew, install brew by running the following command in R:
-
 `system("/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)`
 
 Next run the LoadInstall_new.R to install all the packages and dependencies.
 
 [LoadInstall_new.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/8b32e9a3c90ebf6b568a6c6582a020f6729867ef/LoadInstall_new.R)
 
-
-Next press **⌘(CMD) + Shift + G** or click the Finder Menubar menu GO > Go to Folder... in the Finder menubar and paste: 
+Next press **⌘(CMD) + Shift + G** or click the Finder Menubar: GO > Go to Folder... in the Finder menubar and paste: 
 
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/61156362303f4552faeca1d729a03433b9977312/screenshots/findergo.png" alt="drawing" width="325"/>
 
 <br>`/Volumes/CBioinformatics/jonathan/Rprojects/Clinical_Methylation/Clinical_Methylation_Run.Rmd`
 
 The latest version of brew installs any casks safely in $USER/local and symlinks.  It is reversable as it does not overwrite an existing components nor does it overwrite any Mac OS System Components such as Clang which are part of Xcode. To stop a brew cask from loading simply execute:
-
 `brew unlink [packageName]`
 
 You may need to install libomp with brew to fix any dependency issues.
 
-
 If you want to run the pipeline AFTER installation from your terminal, simply download the Rmd file from this page in two lines:
 
 `wget -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/methyl_express.Rmd`
-
 `wget -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/pipelineHelper.R`
-
 `Rscript -e "rmarkdown::render('methyl_express.Rmd', params = list(runID = '21MDGM-99', selectRDs = NULL, token = '12456789abcdefghijklmnop'))"`
 
 
