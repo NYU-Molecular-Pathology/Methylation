@@ -20,17 +20,15 @@ checkQCpkg <- function(){
         "tinytex","gridExtra","rmarkdown", "BiocParallel", "grid"
     )
     easypackages::packages(methylQCpacks,prompt=F)
-    require("ggplot2")
-    require("pals")
-    require("stringr")
-    require("scales")
-    require('grid')
+    reqPkg <- list("ggplot2","pals","stringr","scales","grid")
+    invisible(lapply(reqPkg, FUN = function(X) {do.call("require", list(X))}))
 }
 
 # Helper functions to get and set global variables
-setVar<-function(valueName,val){return(assign(valueName, val, envir=.GlobalEnv))}
-assignVar <- function(varStr, assignedVal){tryCatch(expr = {if(!is.null(get(varStr))){message(varStr," = ",assignedVal)}}, 
-                                                    error = {setVar(varStr,assignedVal)})}
+setVar <- function(valueName,val){return(assign(valueName, val, envir=.GlobalEnv))}
+assignVar <- function(varStr, assignedVal){
+    return(tryCatch(expr = {if(!is.null(get(varStr))){message(varStr," = ",assignedVal)}},error = {setVar(varStr,assignedVal)}))}
+
 ckNull <- function(nullVar, subVar, varName){if (is.null(nullVar)){setVar(as.character(varName),as.character(subVar))
         return(paste0(subVar))} else {return(paste0(nullVar))}
 }
@@ -618,12 +616,12 @@ do_report <-function(data = NULL) {
 }
 
 # Helper function to return the index of priority selected samples first
-quickReport <- function(selectRDs, sh=NULL, getAll=F){
-    if(is.null(selectRDs)){return(NULL)}
-    if(is.null(sh)){sh<-"samplesheet.csv"}
+reOrderRun <- function(selectRDs, sh=NULL){
+    if(is.null(selectRDs)){return(NULL)}; if(is.null(sh)){sh<-"samplesheet.csv"}
     allRd <- as.data.frame(read.csv(sh))
-    if(getAll==T){return(which(!(allRd[,1] %in% selectRDs)))}
-    return(which(allRd[,1] %in% selectRDs))
+    runFirst <- which(allRd[,1] %in% selectRDs)
+    runAfter <- which(!(allRd[,1] %in% selectRDs))
+    return(c(runFirst,runAfter))
 }
 
 #' REPORT: Generates Html reports to cwd with samplesheet.csv
@@ -657,35 +655,31 @@ makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
 }
 
 # Function to just run a default clinical run without changes, input selectRDs to prioritize samples running first
-startRun <- function(selectRDs=NULL, runID=NULL){
-    isClinicalRun <- stringr::str_detect(gb$runID, "MGDM")
-        #Clinical Run
-        if(!is.null(selectRDs)){
-            prioritySam <- quickReport(selectRDs) # returns index in samplelist get("quickReport")
-            remainingSam <- quickReport(selectRDs,getAll=T)
-            makeReports.v11b6(skipQC=T, email=F, cpReport=F, selectSams=prioritySam, redcapUp=F)
-            makeReports.v11b6(skipQC=F, email=T, cpReport=T, selectSams=remainingSam, redcapUp=T)
-        }else{
-            makeReports.v11b6(skipQC=F, email=F, cpReport=F, selectSams=prioritySam, redcapUp=F)}
-
+startRun <- function(selectRDs=NULL, runID=NULL, emailNotify=T){
+    if(!is.null(selectRDs)){
+        sampleOrder <- reOrderRun(selectRDs) # Re-order sample report generation for priority samples first
+        makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=T, selectSams=sampleOrder, redcapUp=T)
+        }else{makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=F, selectSams=NULL, redcapUp=T)}
 }
-
-# List of three mount paths needed to run the pipleine
-critialMnts <- c("/Volumes/CBioinformatics/jonathan", "/Volumes/molecular/MOLECULAR LAB ONLY", "/Volumes/snudem01labspace/idats")
 
 # FUN: Checks if all the paths are accessible to the Rscript location
-checkMounts <- function(driveMount){
-    if(!dir.exists(driveMount)){
-        warning("PATH does not exist, ensure path is mounted:\n",driveMount)
-        cat(crayon::white$bgRed(
-            "You must mount each of the following paths:\n
-                smb://research-cifs.nyumc.org/Research/CBioinformatics/\n
-                smb://research-cifs.nyumc.org/Research/snudem01lab/snudem01labspace\n
-                smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular\n")
-        )
-        stopifnot(dir.exists(driveMount))
-    }
+checkMounts <- function(){
+    # List of three mount paths needed to run the pipleine
+    critialMnts <- c("/Volumes/CBioinformatics/jonathan", "/Volumes/molecular/MOLECULAR LAB ONLY", "/Volumes/snudem01labspace/idats")
+    failMount <- lapply(critialMnts, function(driveMount){
+    ifelse(!dir.exists(driveMount),return(T),return(F))})
+    if(any(failMount==T)){
+        toFix <- paste(critialMnts[which(failMount==T)])
+        cat("PATH does not exist, ensure path is mounted:", crayon::white$bgRed$bold(toFix),"\n")
+        cat("You must mount each of the following paths:\n",
+            crayon::white$bgGreen$bold(
+                "smb://research-cifs.nyumc.org/Research/CBioinformatics/\n",
+                "smb://research-cifs.nyumc.org/Research/snudem01lab/snudem01labspace\n",
+                "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular\n")
+            )
+        }
 }
+
 prepareRun <- function(token){
     methylPath <- gb$setRunDir(gb$runID)
     message("Working directory set to:"); cat(crayon::bgGreen(methylPath)); setwd(methylPath)
@@ -694,10 +688,10 @@ prepareRun <- function(token){
     readSheetWrite() # reads xlsm and generates input .csv samplesheet
     get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
     moveSampleSheet(gb$methDir) #copies outputs temp to desktop for QC.Rmd
-    install.or.load(instNew = F, rmpkg = F) # Loads pipeline or installs new
+    gb$install.or.load(instNew = F, rmpkg = F) # Loads pipeline or installs new
 }
-    
-for(i in 1:3){checkMounts(critialMnts[i])}
+
+checkMounts()
 defineParams()
 gb$fldx() #folds all funcitons
 printParams()
