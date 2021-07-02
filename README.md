@@ -27,8 +27,7 @@ Download LaTeX for Mac in order to be able to properly render the HTML report ou
 Next, go to Mac OS System Preferences by pressing **⌘(CMD) + Space** and typing "System Pref" and click on Security & Privacy:<br>
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/0e124ca5b0b06278ccfd03569e0b8cd769e9fd2b/screenshots/syspref1.png" alt="drawing" width="650"/>
 
-<br>
-### 1. Click on the "General" Tab and click the lock to make changes<p></p>
+### 1. Click on the "General" Tab and click the lock to make changes
 
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/0e124ca5b0b06278ccfd03569e0b8cd769e9fd2b/screenshots/syspref2.png" alt="drawing" width="650"/>
 
