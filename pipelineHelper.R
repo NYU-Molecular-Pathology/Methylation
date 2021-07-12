@@ -685,6 +685,6 @@ prepareRun <- function(token){
 
 checkMounts()
 defineParams()
-gb$fldx() #folds all funcitons
+#gb$fldx() #folds all funcitons
 printParams()
 
