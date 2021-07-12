@@ -260,7 +260,8 @@ importRedcapStart <- function(nfldr){
     samSh <- list.files(path=getwd(), full.names=T, ".xlsm")
     sampleNumb <- getTotalSamples()
     sh_Dat <-as.data.frame(readxl::read_excel(samSh,sheet=3,range="A1:N97", col_types=c("text")))[,1:13]
-    sampleNumb=as.integer(sampleNumb);sh_Dat = sh_Dat[1:sampleNumb,]; runName=gb$runID
+    sampleNumb=as.integer(sampleNumb);sh_Dat = sh_Dat[1:sampleNumb,]
+    runName <- gb$runID
     filnm = paste0(sh_Dat$record_id, "_cnv.png")
     pathNam = file.path(nfldr,paste0(runName,"_CNVs"),filnm)
     rms=paste(c("control_","low_"),collapse ='|')
@@ -274,7 +275,6 @@ importRedcapStart <- function(nfldr){
             res<-RCurl::postForm(uri,token=tk,content='record',format='json',type='flat',data=datarecord)
             message("Record Uploaded"); print(res)
         }
-        create.QC.record(runName)
     }
 }
 
@@ -632,7 +632,7 @@ makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
     if (is.null(runPath)) {runPath=gb$workDir}
     if (is.null(sheetName)) {sheetName="samplesheet.csv"}
     data <- read.csv(sheetName, strip.white=T)
-    runID<-paste0(as.character((data$RunID)[1]))
+    runID<-paste0(data$RunID[1])
     normList <- 1:length(as.character(data$SentrixID_Pos))
     if(is.null(selectSams)){samList <-normList}else{samList <-selectSams}
     for (i in samList) {
@@ -648,7 +648,10 @@ makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
     }
     cat(crayon::black$bgGreen$bold(dsh,"RUN COMPLETE",dsh),sep="\n")
     checkRunOutput(runID)
-    if(skipQC==F){create.QC.record(runID);generateQCreport()} # creates a redcap QC record and Knits the QC RMD file
+    if(skipQC==F){
+        create.QC.record(runID)
+        generateQCreport()
+        } # creates a redcap QC record and Knits the QC RMD file
     if(cpReport==T){file.list <- copy2outFolder(gb$clinDrv, runID)}
     if(redcapUp==T){file.list <- list.files(path = getwd(), "*.html", full.names = T); uploadToRedcap(file.list)
     }
