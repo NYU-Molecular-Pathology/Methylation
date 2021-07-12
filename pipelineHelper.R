@@ -463,6 +463,10 @@ importDesktopCsv <- function(rcon,samsheet=NULL) {
     if (length(samsheet) < 1) {message("Redcap headers csv file not found")}
     if (length(samsheet) == 1) {
         data<-read.csv(samsheet, stringsAsFactors=F)
+        if(any(duplicated(data$record_id))){
+            message("Removing duplicates in redcap dataframe")
+            data = data[!duplicated(data$record_id),]
+        }
         for (n in 1:nrow(data)) {
             datarecord = jsonlite::toJSON((as.list(data[n,])), auto_unbox=T);print(datarecord)
             message("\n~~Record Uploaded:")
