@@ -336,7 +336,7 @@ copyBaseIdats <- function(allFi) {
     idatsCopied <- idcs[idcs != ""]
     success = file.exists(idatsCopied)
     message(".idat files that failed to copy:")
-    if ((length(success) > 0)) {print(idatsCopied[!success])} else{cat("none\n")}
+    if ((length(success) == 0)) {cat("none\n")} else{print(idatsCopied[!success])}
 }
 
 # Helper FUN called during copying idats to notify if a network mount is not found
