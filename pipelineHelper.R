@@ -1,4 +1,3 @@
-sourceAll <- function(){
 options(stringsAsFactors = FALSE);gb <- globalenv(); assign("gb", gb)
 # FUN: Loads all the packages used in the RMD Methylation QC file
 checkQCpkg <- function(){
@@ -688,6 +687,4 @@ checkMounts()
 defineParams()
 gb$fldx() #folds all funcitons
 printParams()
-}
-sourceAll()
 
