@@ -628,6 +628,7 @@ reOrderRun <- function(selectRDs, sh=NULL){
 #' @param redcapUp default is true, flag will upload output html files and dataframe to redcap
 makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,skipQC=F,email=T,cpReport=F,redcapUp=T){
     dsh <- "-----------"
+    bky <- function(txtVar,...){crayon::black$bgYellow$bold(txtVar,...)}
     if (is.null(runPath)) {runPath=gb$workDir}
     if (is.null(sheetName)) {sheetName="samplesheet.csv"}
     data <- read.csv(sheetName, strip.white=T)
@@ -635,8 +636,14 @@ makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
     normList <- 1:length(as.character(data$SentrixID_Pos))
     if(is.null(selectSams)){samList <-normList}else{samList <-selectSams}
     for (i in samList) {
-        cat(crayon::black$bgYellow$bold(dsh,"Now Running", i, "of", length(samList),dsh))
-        do_report(data=data[i, ])
+        outFileN = paste0(data[1,i],".html")
+        if(file.exists(file.path(gb$workFolder,gb$runID,outFileN))){
+            cat(bky(outFileN, "exists skipping sample\n"))
+            next
+            }else{
+                cat(bky("\n",dsh,"Now Running", i, "of", length(samList),dsh,"\n"))
+                do_report(data=data[i, ])
+                }
     }
     cat(crayon::black$bgGreen$bold(dsh,"RUN COMPLETE",dsh),sep="\n")
     checkRunOutput(runID)
