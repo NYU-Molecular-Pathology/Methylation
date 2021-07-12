@@ -125,12 +125,13 @@ printParams <-function(){
 # FUN: copies the molecular or research lab Worksheet xlsm to cwd
 copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
     if (is.null(runYear)){runYear=paste0(format(Sys.Date(), "%Y"))}
-    if (is.null(runID)){runID=paste0(basename(getwd()))}else(runID=runID)
+    if (is.null(runID)){runID=paste0(basename(getwd()))}else{runID=runID}
+    stopifnot(!is.null(runID))
     isMC = sjmisc::str_contains(runID, "MGDM")|sjmisc::str_contains(runID, "MC")
-    assign("isMC", isMC)
+    assign("isMC", isMC); message("Is Clinical methylation:",isMC)
     rschDrv <- "/Volumes/snudem01labspace/Methylation_Worksheets"
     mountLoc <- ifelse(isMC,file.path(gb$clinDrv,"WORKSHEETS"),rschDrv)
-    message("\nCopying file from: "); cat(mountLoc)
+    message("\nCopying file from: "); cat(mountLoc,"\n")
     if (dir.exists(mountLoc)) {
         fileLoc <- file.path(mountLoc,runYear,paste0(runID,".xlsm"))
         if (file.exists(fileLoc)) {
