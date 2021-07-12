@@ -330,7 +330,7 @@ getAllFiles <- function(idatDir, csvNam=NULL) {
 
 # FUN: Copies .idat files to your current directory using sample sheet
 copyBaseIdats <- function(allFi) {
-    cat(crayon::white$bgCyan("Copying idats to current directory..."))
+    cat(crayon::white$bgCyan("Copying idats to current directory...\n"))
     fs::file_copy(allFi, file.path(getwd()))
     idcs = basename(allFi)
     idatsCopied <- idcs[idcs != ""]
