@@ -59,7 +59,7 @@ getSetvars <- function() {
         ApiToken = gb$ApiToken,
         methDir = gb$methDir,
         clinDrv = gb$clinDrv,
-        rschOut = gb$clinDrv,
+        rschOut = gb$rschOut,
         clinOut = gb$clinOut,
         rsch.idat = gb$rsch.idat,
         clin.idat = gb$clin.idat,
