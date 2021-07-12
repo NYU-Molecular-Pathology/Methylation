@@ -71,11 +71,12 @@ The latest version of brew installs any casks safely in $USER/local and symlinks
 You may need to install libomp and cairo with brew to fix any dependency issues.
 
 # How to Run in Terminal
-If you want to run the pipeline AFTER installation from your terminal, simply execute two lines:
-`cd /Volumes/CBioinformatics/jonathan/Rprojects/Clinical_Methylation/`
-`Rscript --verbose methylExpress.R '12456789abcdefghijklmnop''MR21-099' NULL`
+If you want to run the pipeline AFTER installation from your terminal, simply execute two lines:<br />
+`cd /Volumes/CBioinformatics/jonathan/Rprojects/Clinical_Methylation/`<br />
+`Rscript --verbose methylExpress.R '12456789abcdefghijklmnop''MR21-099' NULL`<br />
 
-Here you will call the system Rscript to run methylExpress.R with the arguments in order:
+Here you will call the system Rscript to run methylExpress.R with the arguments in order:<br />
+
 `arg[1]` is the token for the API call<br />
 `arg[2]` is the RunID which if NULL runs the latest Clinical Worksheet<br />
 `arg[3]` is the selectRds parameter which is to prioritize samples being run<br />
