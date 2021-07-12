@@ -641,14 +641,14 @@ makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
         if(file.exists(outPathN)){
             cat(bky(outFileN, "exists skipping sample\n"))
             next
-            }else{
-                cat(bky("\n",dsh,"Now Running", i, "of", length(samList),dsh,"\n"))
-                do_report(data=data[i, ])
-                }
+        }else{
+            cat(bky("\n",dsh,"Now Running", i, "of", length(samList),dsh,"\n"))
+            do_report(data=data[i, ])
+        }
     }
     cat(crayon::black$bgGreen$bold(dsh,"RUN COMPLETE",dsh),sep="\n")
     checkRunOutput(runID)
-    if(skipQC==F){create.QC.record();generateQCreport()} # creates a redcap QC record and Knits the QC RMD file
+    if(skipQC==F){create.QC.record(runID);generateQCreport()} # creates a redcap QC record and Knits the QC RMD file
     if(cpReport==T){file.list <- copy2outFolder(gb$clinDrv, runID)}
     if(redcapUp==T){file.list <- list.files(path = getwd(), "*.html", full.names = T); uploadToRedcap(file.list)
     }
