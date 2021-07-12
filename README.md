@@ -69,8 +69,18 @@ The latest version of brew installs any casks safely in $USER/local and symlinks
 `brew unlink [packageName]`
 
 You may need to install libomp and cairo with brew to fix any dependency issues.
-If you want to run the pipeline AFTER installation from your terminal, simply download the Rmd file from this page in two lines:
 
-`wget -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/methyl_express.Rmd`<br />
-`wget -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/pipelineHelper.R`<br />
-`Rscript -e "rmarkdown::render('methyl_express.Rmd', params = list(runID = '21MDGM-99', selectRDs = NULL, token = '12456789abcdefghijklmnop'))"`
+# How to Run in Terminal
+If you want to run the pipeline AFTER installation from your terminal, simply execute two lines:
+`cd /Volumes/CBioinformatics/jonathan/Rprojects/Clinical_Methylation/`
+`Rscript --verbose methylExpress.R '12456789abcdefghijklmnop''MR21-099' NULL`
+
+Here you will call the system Rscript to run methylExpress.R with the arguments in order:
+`arg[1]` is the token for the API call<br />
+`arg[2]` is the RunID which if NULL runs the latest Clinical Worksheet<br />
+`arg[3]` is the selectRds parameter which is to prioritize samples being run<br />
+
+Alternatively, you can source then run the github script:
+
+`wget -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/methylExpress.R`<br />
+`Rscript --verbose methylExpress.R '12456789abcdefghijklmnop''MR21-099' NULL`
