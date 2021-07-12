@@ -636,8 +636,9 @@ makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
     normList <- 1:length(as.character(data$SentrixID_Pos))
     if(is.null(selectSams)){samList <-normList}else{samList <-selectSams}
     for (i in samList) {
-        outFileN = paste0(data[1,i],".html")
-        if(file.exists(file.path(gb$workFolder,gb$runID,outFileN))){
+        outFileN = paste0(data[i,1],".html")
+        outPathN = file.path(gb$workFolder,gb$runID,outFileN)
+        if(file.exists(outPathN)){
             cat(bky(outFileN, "exists skipping sample\n"))
             next
             }else{
