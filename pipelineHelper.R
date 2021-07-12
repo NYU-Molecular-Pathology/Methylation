@@ -129,7 +129,7 @@ copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
     isMC = sjmisc::str_contains(runID, "MGDM")|sjmisc::str_contains(runID, "MC")
     assign("isMC", isMC)
     rschDrv <- "/Volumes/snudem01labspace/Methylation_Worksheets"
-    mountLoc <- ifelse(isMC==T,rschDrv,file.path(gb$clinDrv,"WORKSHEETS"))
+    mountLoc <- ifelse(isMC,file.path(gb$clinDrv,"WORKSHEETS"),rschDrv)
     message("\nCopying file from: "); cat(mountLoc)
     if (dir.exists(mountLoc)) {
         fileLoc <- file.path(mountLoc,runYear,paste0(runID,".xlsm"))
