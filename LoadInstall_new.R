@@ -18,10 +18,10 @@ pk.inst <- function(pkg,...){
             do.call(install.packages, c(pk.opt,list(type="both")))
         },
         custom_error=function(cond) {message("Error1 caught: ", cond, "\n-----------");up()
-            do.call(install.packages, c(pk.opt,list(type="source",repos = "http://cran.us.r-project.org")))
+            do.call(install.packages, c(pk.opt,list(type="source")))
         },
         error=function(cond) {message("Error2 caught: ", cond, "\n-----------")
-            do.call(install.packages, c(pk.opt,list(type="binary",repos = "http://cran.us.r-project.org")))
+            do.call(install.packages, c(pk.opt,list(type="binary")))
         },
         finally={suppressMessages(do.call(easypackages::packages, list(pkg)))}
     )
@@ -174,6 +174,10 @@ loadPacks <- function(ezLibs=NULL, ghPk=NULL, bioPks=NULL) {
                     'IlluminaHumanMethylationEPICanno.ilm10b4.hg19', 'MethylAid', 'conumee',
                     'BiocParallel')
     }
+    library(base)
+    rlis = getOption("repos")
+    rlis["CRAN"] = "http://cran.us.r-project.org"
+    options(repos = rlis)
 
     tryCatch(
         expr={setOptions(); fixProf()
