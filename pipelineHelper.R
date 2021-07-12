@@ -522,7 +522,7 @@ copy2outFolder <-function(clinDrv = NULL, runID, runYear = NULL) {
     prevs = file.path(newFolder, "previous")
     if (length(oldFi) > 0) {save.prev.folder(prevs, oldFi)} # saves any old files
     file.list = list.files(path = getwd(), "*.html", full.names = T)
-    message("Copying Existing Reports to Folder")
+    message("\nCopying Existing Reports to Folder...\n")
     fs::file_copy(file.list, newFolder, overwrite = T)
     if (isMC) {
         cnList <- list.files(getwd(), "_cnv.png",recursive = F)
@@ -541,6 +541,7 @@ copy2outFolder <-function(clinDrv = NULL, runID, runYear = NULL) {
 # Creates QC record and uploads reports to redcap
 uploadToRedcap <- function(file.list) {
     rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", gb$ApiToken)
+    message("\nFiles to Import:\n"); print(file.list)
     importDesktopCsv(rcon)
     recordName <-stringr::str_replace_all(string = paste0(file.list), ".html", "")
     runIDs <- rep(gb$runID, length(recordName))
@@ -653,8 +654,7 @@ makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
         generateQCreport()
         } # creates a redcap QC record and Knits the QC RMD file
     if(cpReport==T){file.list <- copy2outFolder(gb$clinDrv, runID)}
-    if(redcapUp==T){file.list <- list.files(path = getwd(), "*.html", full.names = T); uploadToRedcap(file.list)
-    }
+    if(redcapUp==T){file.list <- list.files(pattern="*.html", full.names = T); uploadToRedcap(file.list)}
     if(email==T){launchEmailNotify(runID)}
 }
 
