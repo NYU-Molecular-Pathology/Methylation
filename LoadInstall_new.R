@@ -18,10 +18,10 @@ pk.inst <- function(pkg,...){
             do.call(install.packages, c(pk.opt,list(type="both")))
         },
         custom_error=function(cond) {message("Error1 caught: ", cond, "\n-----------");up()
-            do.call(install.packages, c(pk.opt,list(type="source")))
+            do.call(install.packages, c(pk.opt,list(type="source",repos = "http://cran.us.r-project.org")))
         },
         error=function(cond) {message("Error2 caught: ", cond, "\n-----------")
-            do.call(install.packages, c(pk.opt,list(type="binary")))
+            do.call(install.packages, c(pk.opt,list(type="binary",repos = "http://cran.us.r-project.org")))
         },
         finally={suppressMessages(do.call(easypackages::packages, list(pkg)))}
     )
