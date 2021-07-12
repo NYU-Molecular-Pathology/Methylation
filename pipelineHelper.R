@@ -22,7 +22,7 @@ assignVar <- function(varStr, assignedVal){
     return(tryCatch(expr = {if(!is.null(get(varStr))){message(varStr," = ",assignedVal)}},error = {setVar(varStr,assignedVal)}))}
 
 ckNull <- function(nullVar, subVar, varName){if (is.null(nullVar)){setVar(as.character(varName),as.character(subVar))
-        return(paste0(subVar))} else {return(paste0(nullVar))}
+    return(paste0(subVar))} else {return(paste0(nullVar))}
 }
 
 # FUN: Loads the main packages and dependencies checks if any are not installed
@@ -235,9 +235,9 @@ launchEmailNotify <-function(runID){
     com <- ifelse(isMC==T, "sample_qc", "sample_research") # research or clinical notification
     record = data.frame(record_id=sam_id,comments=com)
     datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T);print(datarecord)
-
+    
     res<-RCurl::postForm(ur,token=tk,content='record',format='json',type='flat',data=datarecord)
-
+    
     cat(crayon::black$bgGreen$bold("Email Notification Created\n"))
     cat(crayon::white$bgBlue$bold("Check email to confirm run notifcation\n"));cat(res)
 }
@@ -260,7 +260,7 @@ importRedcapStart <- function(nfldr){
     samSh <- list.files(path=getwd(), full.names=T, ".xlsm")
     sampleNumb <- getTotalSamples()
     sh_Dat <-as.data.frame(readxl::read_excel(samSh,sheet=3,range="A1:N97", col_types=c("text")))[,1:13]
-    sampleNumb=as.integer(sampleNumb);sh_Dat = sh_Dat[1:sampleNumb,]; runName=basename(getwd())
+    sampleNumb=as.integer(sampleNumb);sh_Dat = sh_Dat[1:sampleNumb,]; runName=gb$runID
     filnm = paste0(sh_Dat$record_id, "_cnv.png")
     pathNam = file.path(nfldr,paste0(runName,"_CNVs"),filnm)
     rms=paste(c("control_","low_"),collapse ='|')
@@ -410,7 +410,7 @@ checkBarcode <- function(RGsetEpic, barcode) {
 
 # QC REPORT maker: knits the QC RMD file
 generateQCreport <- function(runID=NULL, qc=NULL) {
-    runID<-ckNull(nullVar = runID, subVar=basename(getwd()), deparse(substitute(runID,env=.GlobalEnv)))
+    runID<-ckNull(nullVar = runID, subVar=gb$runID, deparse(substitute(runID,env=.GlobalEnv)))
     QC_file <- system.file('Methyl_QC.Rmd', package = "mnp.v11b6")
     if (!file.exists(QC_file)){message("Check Working directory, QC_file.rmd not found")}
     fs::file_copy(QC_file, getwd(), overwrite = T)
@@ -543,7 +543,7 @@ uploadToRedcap <- function(file.list) {
     rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", gb$ApiToken)
     importDesktopCsv(rcon)
     recordName <-stringr::str_replace_all(string = paste0(file.list), ".html", "")
-    runIDs <- rep(basename(getwd()), length(recordName))
+    runIDs <- rep(gb$runID, length(recordName))
     records <- basename(recordName)
     for (idx in 1:length(records)) {
         pth = file.list[idx]
@@ -604,7 +604,7 @@ do_report <-function(data = NULL) {
             output_file = output_file,
             clean = T
         )
-
+        
     }else{message("your data is null")}
 }
 
@@ -652,7 +652,7 @@ startRun <- function(selectRDs=NULL, runID=NULL, emailNotify=T){
     if(!is.null(selectRDs)){
         sampleOrder <- reOrderRun(selectRDs) # Re-order sample report generation for priority samples first
         makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=T, selectSams=sampleOrder, redcapUp=T)
-        }else{makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=F, selectSams=NULL, redcapUp=T)}
+    }else{makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=F, selectSams=NULL, redcapUp=T)}
 }
 
 # FUN: Checks if all the paths are accessible to the Rscript location
@@ -660,7 +660,7 @@ checkMounts <- function(){
     # List of three mount paths needed to run the pipleine
     critialMnts <- c("/Volumes/CBioinformatics/jonathan", "/Volumes/molecular/MOLECULAR LAB ONLY", "/Volumes/snudem01labspace/idats")
     failMount <- lapply(critialMnts, function(driveMount){
-    ifelse(!dir.exists(driveMount),return(T),return(F))})
+        ifelse(!dir.exists(driveMount),return(T),return(F))})
     if(any(failMount==T)){
         toFix <- paste(critialMnts[which(failMount==T)])
         cat("PATH does not exist, ensure path is mounted:", crayon::white$bgRed$bold(toFix),"\n")
@@ -669,8 +669,8 @@ checkMounts <- function(){
                 "smb://research-cifs.nyumc.org/Research/CBioinformatics/\n",
                 "smb://research-cifs.nyumc.org/Research/snudem01lab/snudem01labspace\n",
                 "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular\n")
-            )
-        }
+        )
+    }
 }
 
 prepareRun <- function(token){
@@ -688,4 +688,3 @@ checkMounts()
 defineParams()
 #gb$fldx() #folds all funcitons
 printParams()
-
