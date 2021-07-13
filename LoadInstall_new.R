@@ -23,7 +23,7 @@ pk.inst <- function(pkg,...){
         error=function(cond) {message("Error2 caught: ", cond, "\n-----------")
             do.call(install.packages, c(pk.opt,list(type="binary")))
         },
-        finally={suppressMessages(do.call(easypackages::packages, list(pkg)))}
+        finally={suppressMessages(do.call(easypackages::packages, list(pkg,c(prompt=F))))}
     )
 }
 # FUN: Installs package from github link
@@ -154,7 +154,7 @@ loadPacks <- function(ezLibs=NULL, ghPk=NULL, bioPks=NULL) {
     pkgs <- c('devtools', 'remotes', 'sjmisc', 'stringi', 'digest', 'RCurl', 'rlang', 'parallel', 'grid', 'gridExtra','knitr', 'kableExtra','ggplot2', 'plotly', 'ggfortify', 'ggrepel', 'gplots', 'fastmatch','pals', 'Polychrome','qdapTools','beepr','xtable','pander','grDevices','graphics','stats', 'utils','magick', 'ade4',"MASS", "R.utils")
     if(is.null(ezLibs)){
         ezLibs<-c('tidyverse','sjmisc','stringi','digest','RCurl','gridExtra','needs')
-        }
+    }
     if(is.null(ghPk)){
         ghPk<- data.frame(
             docstring='dasonk/docstring',
@@ -189,7 +189,7 @@ loadPacks <- function(ezLibs=NULL, ghPk=NULL, bioPks=NULL) {
             if(suppressWarnings(!require("BiocManager"))){
                 install.packages("BiocManager")
                 BiocManager::install(version="3.10",update=T, ask=F, type="source")
-                }
+            }
             #if(BiocManager::version()!='3.13'){BiocManager::install(version="3.13",update=T, ask=F, type="source")}
             if(rq("zip")){install.packages("zip", dependencies=T, type="binary")}
             invisible(lapply(1:length(pkgs),function(x){pk.inst(pkgs[x])}))
@@ -247,53 +247,53 @@ fixCompiles <- function(){
 #' @export
 startLoadingAll <- function(isMC = T) {
 
-  
-  sexEst = "https://github.com/jungch/sest/raw/master/sest.tar"
-  mgmtLn = "https://github.com/badozor/mgmtstp27/blob/master/trunk/Rpackage/mgmtstp27_0.6-3.tar.gz"
-  if (isMC) {
-    cbio = "/Volumes/CBioinformatics/";zdriv = "/Volumes/molecular/Molecular";wmm = "You do not have this path mounted:\n"
-    if (!dir.exists(cbio)) {
-      warning(wmm, cbio)
-    }
-    if (!dir.exists(zdriv)) {
-      warning(wmm, zdriv)
-    }
-    message("You have the following drives mounted:")
-    system("ls /Volumes")
-    stopifnot(dir.exists(cbio) | dir.exists(zdriv))
-    system("gcc --version")
-    # .libPaths("/Volumes/CBioinformatics/Methylation/in_house_libs")
-    loadPacks()
-      mkred <- function(strMsg) {return(crayon::white$bgRed$bold(strMsg))}
-      mkblu <- function(strMsg) {return(crayon::white$bgBlue$bold(strMsg))}
-    ms1 <- paste0(
-        crayon::white$bgGreen("Your mnp.v11b6 package is installed and loading\n"),
-        crayon::white$bgGreen("To update the in-house classifier to current clinical version run:\n"),
-        mkblu("install.or.load(pathtoFile=NULL, instNew=F, rmpkg=F)\n")
-        )
-    ms2 <- paste0(
-        mkred("mnp.v11b6 package is not installed executing the function to install:\n"),
-        mkblu("install.or.load(instNew=T)\n")
-    )
-    gh.inst("rmarkdown", 'rstudio/rmarkdown')
 
-    if (rq("mgmtstp27")) {
-      srcInst(mgmtLn)
+    sexEst = "https://github.com/jungch/sest/raw/master/sest.tar"
+    mgmtLn = "https://github.com/badozor/mgmtstp27/blob/master/trunk/Rpackage/mgmtstp27_0.6-3.tar.gz"
+    if (isMC) {
+        cbio = "/Volumes/CBioinformatics/";zdriv = "/Volumes/molecular/Molecular";wmm = "You do not have this path mounted:\n"
+        if (!dir.exists(cbio)) {
+            warning(wmm, cbio)
+        }
+        if (!dir.exists(zdriv)) {
+            warning(wmm, zdriv)
+        }
+        message("You have the following drives mounted:")
+        system("ls /Volumes")
+        stopifnot(dir.exists(cbio) | dir.exists(zdriv))
+        system("gcc --version")
+        # .libPaths("/Volumes/CBioinformatics/Methylation/in_house_libs")
+        loadPacks()
+        mkred <- function(strMsg) {return(crayon::white$bgRed$bold(strMsg))}
+        mkblu <- function(strMsg) {return(crayon::white$bgBlue$bold(strMsg))}
+        ms1 <- paste0(
+            crayon::white$bgGreen("Your mnp.v11b6 package is installed and loading\n"),
+            crayon::white$bgGreen("To update the in-house classifier to current clinical version run:\n"),
+            mkblu("install.or.load(pathtoFile=NULL, instNew=F, rmpkg=F)\n")
+        )
+        ms2 <- paste0(
+            mkred("mnp.v11b6 package is not installed executing the function to install:\n"),
+            mkblu("install.or.load(instNew=T)\n")
+        )
+        gh.inst("rmarkdown", 'rstudio/rmarkdown')
+
+        if (rq("mgmtstp27")) {
+            srcInst(mgmtLn)
+        }
+        if (rq("sest")) {
+            sw(srcInst(sexEst))
+        }
+        if (rq("mnp.v11b6")) {
+            cat(ms2)
+            install.or.load(instNew = T)
+        }
+        if (!rq("mnp.v11b6")) {
+            cat(ms1)
+            install.or.load(instNew = F)
+        }
+        #file.path(system.file('data', package = "mnp.v11b6"),'rfpred.v11b6.rds')
+    } else{
+        loadPacks()
     }
-    if (rq("sest")) {
-      sw(srcInst(sexEst))
-    }
-    if (rq("mnp.v11b6")) {
-      cat(ms2)
-      install.or.load(instNew = T)
-    }
-    if (!rq("mnp.v11b6")) {
-      cat(ms1)
-      install.or.load(instNew = F)
-    }
-    #file.path(system.file('data', package = "mnp.v11b6"),'rfpred.v11b6.rds')
-  } else{
-    loadPacks()
-  }
-  }
+}
 startLoadingAll()
