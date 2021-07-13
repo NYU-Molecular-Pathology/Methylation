@@ -247,8 +247,7 @@ fixCompiles <- function(){
 #' @export
 startLoadingAll <- function(isMC = T) {
 
-  mkred <- function(strMsg) {return(crayon::white$bgRed$bold(strMsg))}
-  mkblu <- function(strMsg) {return(crayon::white$bgBlue$bold(strMsg))}
+  
   sexEst = "https://github.com/jungch/sest/raw/master/sest.tar"
   mgmtLn = "https://github.com/badozor/mgmtstp27/blob/master/trunk/Rpackage/mgmtstp27_0.6-3.tar.gz"
   if (isMC) {
@@ -265,17 +264,17 @@ startLoadingAll <- function(isMC = T) {
     system("gcc --version")
     # .libPaths("/Volumes/CBioinformatics/Methylation/in_house_libs")
     loadPacks()
-    ms1 <-
-      paste0(
+      mkred <- function(strMsg) {return(crayon::white$bgRed$bold(strMsg))}
+      mkblu <- function(strMsg) {return(crayon::white$bgBlue$bold(strMsg))}
+    ms1 <- paste0(
         crayon::white$bgGreen("Your mnp.v11b6 package is installed and loading\n"),
         crayon::white$bgGreen("To update the in-house classifier to current clinical version run:\n"),
         mkblu("install.or.load(pathtoFile=NULL, instNew=F, rmpkg=F)\n")
         )
-    ms2 <-
-      paste0(
+    ms2 <- paste0(
         mkred("mnp.v11b6 package is not installed executing the function to install:\n"),
         mkblu("install.or.load(instNew=T)\n")
-      )
+    )
     gh.inst("rmarkdown", 'rstudio/rmarkdown')
 
     if (rq("mgmtstp27")) {
