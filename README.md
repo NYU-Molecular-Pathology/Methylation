@@ -9,11 +9,11 @@ The classifier runs on R version 3.6.3 and up.  It is not compatible with 3.3.3
 - Download **RStudio 1.4**: [https://download1.rstudio.org/desktop/macos/RStudio-1.4.1717.dmg](https://download1.rstudio.org/desktop/macos/RStudio-1.4.1717.dmg)
 - Download **XQuartz**: [https://github.com/XQuartz/XQuartz/releases/download/XQuartz-2.8.1/XQuartz-2.8.1.dmg](https://github.com/XQuartz/XQuartz/releases/download/XQuartz-2.8.1/XQuartz-2.8.1.dmg)
 - Download **LaTeX** for Mac: [https://www.tug.org/mactex/mactex-download.html](https://www.tug.org/mactex/mactex-download.html)
-- After downloading R & RStudio **do not install** until you have unlocked the
-[System Preferences Privacy & Security Panel](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/Notes/SystemPermissions.md).
 - Download **Homebrew**, you can install using the following line in terminal:
 `/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh`
 - R v4.1 includes compile and Tckl dependencies. The pipeline may use brew to install libomp and cairo if needed.
+- After downloading R & RStudio **do not install** until you have unlocked the
+[System Preferences Privacy & Security Panel](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/Notes/SystemPermissions.md).
 - Download the [Rswitch](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/Rswitch/) app, which allows you to switch between R version libraries, for example:
 /Library/Frameworks/R.framework/Versions/3.6/Resources/library/minfi
 /Library/Frameworks/R.framework/Versions/4.1/Resources/library/minfi
