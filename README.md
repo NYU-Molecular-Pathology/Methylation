@@ -11,7 +11,7 @@ The classifier runs on R version 3.6.3 and up.  It is not compatible with 3.3.3
 - Download **LaTeX** for Mac: [https://www.tug.org/mactex/mactex-download.html](https://www.tug.org/mactex/mactex-download.html)
 - Download **Homebrew**, you can install using the following line in terminal:
 `/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh`
-- R v4.1 includes compile and Tckl dependencies. The pipeline may use brew to install libomp and cairo if needed.
+- R v4.1 includes compile and Tckl dependencies. brew can install libomp and cairo if needed.
 - After downloading R & RStudio **do not install** until you have unlocked the
 [System Preferences Privacy & Security Panel](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/Notes/SystemPermissions.md).
 - Download the [Rswitch](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/Rswitch/) app, which allows you to switch between R version libraries, for example:
