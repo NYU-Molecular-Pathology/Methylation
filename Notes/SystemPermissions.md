@@ -1,5 +1,4 @@
 ## Fix Mac OS System Permissions
-___
 
 To prevent any permission issues during the install process or with running R:</br> 
 Open the MacOS System Preferences app by pressing **⌘(CMD) + Space** and searching "System Pref"<br>
