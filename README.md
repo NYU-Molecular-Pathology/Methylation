@@ -15,9 +15,8 @@ The classifier runs on R version 3.6.3 and up.  It is not compatible with 3.3.3
 - After downloading R & RStudio **do not install** until you have unlocked the
 [System Preferences Privacy & Security Panel](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/Notes/SystemPermissions.md).
 - Download the [Rswitch](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/Rswitch/) app, which allows you to switch between R version libraries, for example:
-/Library/Frameworks/R.framework/Versions/3.6/Resources/library/minfi
-/Library/Frameworks/R.framework/Versions/4.1/Resources/library/minfi
-<img align="right" src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/25020451c5d320ff6aa70e65421f7a828f4a6905/screenshots/rswitch.png" alt="drawing" width="250"/>
+`/Library/Frameworks/R.framework/Versions/3.6/Resources/library/minfi`
+`/Library/Frameworks/R.framework/Versions/4.1/Resources/library/minfi`
 
 ## Network Drive Mount Paths
 
