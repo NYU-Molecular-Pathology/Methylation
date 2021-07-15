@@ -1,7 +1,7 @@
 # How To Setup Clinical Methylation Classifier 
 ---
 
-### Essential Downloads
+## Essential Downloads
 The classifier runs on R version 3.6.3 and up.  It is not compatible with 3.3.3
 
 - Download **R 4.1** from CRAN: [https://cran.r-project.org/bin/macosx/](https://cran.r-project.org/bin/macosx/)
@@ -18,9 +18,7 @@ The classifier runs on R version 3.6.3 and up.  It is not compatible with 3.3.3
 `/Library/Frameworks/R.framework/Versions/4.1/Resources/library/minfi`
 
 ## Network Drive Mount Paths
-
 ---
-
 ### To install & run the pipeline, it is critical to mount the following network smb shared drives:
 
 Open Finder and press **⌘(CMD) + K** then paste each of these directories, login name and password is your NYUMC\KerberosID
@@ -29,13 +27,13 @@ Open Finder and press **⌘(CMD) + K** then paste each of these directories, log
 `smb://research-cifs.nyumc.org/Research/snudem01lab/snudem01labspace`<br />
 `smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular`<br />
 
-## Install and run the pipeline
-
+## Install pipeline
 ---
 
 Run [LoadInstall_new.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/8b32e9a3c90ebf6b568a6c6582a020f6729867ef/LoadInstall_new.R) to install all package dependencies and the pipeline on a new system.  This script is also called when running the pipeline.
 
 ## Start a Run in Terminal
+---
 
 ### To run the pipeline from your terminal, simply execute the following command:<br />
 `[ ! -f methylExpress.R ] && wget -L https://git.io/JWujj; Rscript --verbose methylExpress.R '12456789abcdefghijklmnop''MR21-099' NULL`<br />
