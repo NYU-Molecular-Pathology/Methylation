@@ -1,4 +1,5 @@
-# How To Setup Clinical Methylation Classifier ---
+# How To Setup Clinical Methylation Classifier 
+---
 
 ### Essential Downloads
 The classifier runs on R version 3.6.3 and up.  It is not compatible with 3.3.3
