@@ -45,4 +45,4 @@ There are two system Rscript to run methylExpress.R with the arguments in order:
 `arg[2]` is the RunID which if NULL runs the latest Clinical Worksheet ('MR21-099')<br />
 `arg[3]` is the selectRds parameter which is to prioritize samples being run (NULL)<br />
 
-Alternatively, you can source then run the github script:
+Alternatively, you can source then run the github script locally using [methylExpress.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/methylExpress.R)
