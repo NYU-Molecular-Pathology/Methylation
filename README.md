@@ -1,7 +1,5 @@
 # How To Setup Clinical Methylation Classifier
 
----
-
 ### Essential Downloads
 The classifier runs on R version 3.6.3 and up.  It is not compatible with 3.3.3
 
@@ -20,8 +18,6 @@ The classifier runs on R version 3.6.3 and up.  It is not compatible with 3.3.3
 
 ## Network Drive Mount Paths
 
----
-
 ### To install & run the pipeline, it is critical to mount the following network smb shared drives:
 
 Open Finder and press **⌘(CMD) + K** then paste each of these directories, login name and password is your NYUMC\KerberosID
@@ -30,23 +26,21 @@ Open Finder and press **⌘(CMD) + K** then paste each of these directories, log
 `smb://research-cifs.nyumc.org/Research/snudem01lab/snudem01labspace`<br />
 `smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular`<br />
 
----
-
 ## Install and run the pipeline
 
-Next run the [LoadInstall_new.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/8b32e9a3c90ebf6b568a6c6582a020f6729867ef/LoadInstall_new.R) to install all package dependencies and the pipeline.
+---
+
+Run [LoadInstall_new.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/8b32e9a3c90ebf6b568a6c6582a020f6729867ef/LoadInstall_new.R) to install all package dependencies and the pipeline on a new system.  This script is also called when running the pipeline.
 
 ## Start a Run in Terminal
-If you want to run the pipeline AFTER installation from your terminal, simply execute two lines:<br />
-`cd /Volumes/CBioinformatics/jonathan/Rprojects/Clinical_Methylation/`<br />
-`Rscript --verbose methylExpress.R '12456789abcdefghijklmnop''MR21-099' NULL`<br />
 
-Here you will call the system Rscript to run methylExpress.R with the arguments in order:<br />
+To run the pipeline from your terminal, simply execute the following command:
+`wget -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/methylExpress.R && Rscript --verbose methylExpress.R '12456789abcdefghijklmnop''MR21-099' NULL`<br />
+
+There are two system Rscript to run methylExpress.R with the arguments in order:<br />
 
 `arg[1]` is the token for the API call<br />
 `arg[2]` is the RunID which if NULL runs the latest Clinical Worksheet<br />
 `arg[3]` is the selectRds parameter which is to prioritize samples being run<br />
 
 Alternatively, you can source then run the github script:
-
-`wget -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/methylExpress.R && Rscript --verbose methylExpress.R '12456789abcdefghijklmnop''MR21-099' NULL`<br />
