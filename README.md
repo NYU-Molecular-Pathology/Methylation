@@ -35,7 +35,7 @@ Run [LoadInstall_new.R](https://github.com/NYU-Molecular-Pathology/Methylation/b
 `[ ! -f methylExpress.R ] && wget -L https://git.io/JWujj; Rscript --verbose methylExpress.R '12456789abcdefghijklmnop''MR21-099' NULL`<br />
 ### Args
 ___
-There are two system Rscript to run methylExpress.R with the arguments in order:<br />
+### There are two system Rscript to run methylExpress.R with the arguments in order:<br />
 `arg[1]` is the **token** for the API call ('12456789abcdefghijklmnop')<br />
 `arg[2]` is the **RunID** which if NULL runs the latest Clinical Worksheet ('MR21-099')<br />
 `arg[3]` is the **selectRds** parameter which is to prioritize samples being run (NULL)<br />
