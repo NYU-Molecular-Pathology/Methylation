@@ -18,6 +18,8 @@ The classifier runs on R version 3.6.3 and up.  It is not compatible with 3.3.3
 
 ## Network Drive Mount Paths
 
+---
+
 ### To install & run the pipeline, it is critical to mount the following network smb shared drives:
 
 Open Finder and press **⌘(CMD) + K** then paste each of these directories, login name and password is your NYUMC\KerberosID
