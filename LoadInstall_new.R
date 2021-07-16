@@ -1,13 +1,82 @@
+#!/usr/bin/env Rscript
+
+# Cran Packages ----
+cranPkgs <-
+  c(
+    'devtools',
+    'remotes',
+    'sjmisc',
+    'stringi',
+    'digest',
+    'RCurl',
+    'rlang',
+    'parallel',
+    'grid',
+    'gridExtra',
+    'knitr',
+    'kableExtra',
+    'ggplot2',
+    'plotly',
+    'ggfortify',
+    'ggrepel',
+    'gplots',
+    'fastmatch',
+    'pals',
+    'Polychrome',
+    'qdapTools',
+    'beepr',
+    'xtable',
+    'pander',
+    'grDevices',
+    'graphics',
+    'stats',
+    'utils',
+    'magick',
+    'ade4',
+    "MASS",
+    "R.utils",
+    "optparse",
+    "targets",
+    "usethis"
+  )
+
+# Extra Libraries ----
+easyPkgs <-
+  c('tidyverse','sjmisc','stringi','digest','RCurl','gridExtra','needs')
+
+# GitHub Packages ----
+gHubPkgs <-
+  data.frame(
+    docstring = 'dasonk/docstring',
+    rstudioapi = 'rstudio/rstudioapi',
+    easypackages = 'jakesherman/easypackages',
+    redcapAPI = 'nutterb/redcapAPI',
+    crayon = "r-lib/crayon"
+  )
+
+# BioConductor Packages ----
+biocPkgs <-
+  c(
+    'HDF5Array', 'rngtools', 'bumphunter','GEOquery', 'minfi', 'lumi', 'methylumi',
+    'randomForest', 'glmnet','IlluminaHumanMethylation450kmanifest',
+    'IlluminaHumanMethylation450kanno.ilmn12.hg19', 'Rtsne',
+    'IlluminaHumanMethylationEPICmanifest', 'IlluminaHumanMethylationEPICanno.ilm10b2.hg19',
+    'IlluminaHumanMethylationEPICanno.ilm10b4.hg19', 'MethylAid', 'conumee','BiocParallel'
+    )
+# Helper Functions ----
 sw <- function(pkgOb){try(return(suppressMessages(suppressWarnings(pkgOb))),silent=T)}
 rq <- function(pkg){return(sw(!require(pkg, character.only=T)))}
 ld <- function(libName){sw(suppressPackageStartupMessages(library(libName,character.only=T)))}
 up <- function(){update.packages(repos='http://cran.rstudio.com/',type = "source", ask=F, checkBuilt=T)}
 
-# FUN: Installs package from Cran
-doInst <- function(func, param, ...){do.call(func,c(param,list(...)))}
-
-pk.inst <- function(pkg,...){
-    pk.opt <- list(pkg,dependencies=T,verbose=T,...)
+#' pk.inst will load a package library or install it if it does not exist
+#'
+#' @param pkg a character string package name
+#' @param ... additional parameters passed to install.packages()
+#'
+#' @return Message if loading the library was successful
+pk.inst <- function(pkg){
+    pk.opt <- list(pkg,dependencies=T,verbose=T)
     message("Checking ", pkg, "...")
     tryCatch(
         expr={if(rq(pkg)){
@@ -15,15 +84,13 @@ pk.inst <- function(pkg,...){
         }else{message(pkg," ...load successful")}
         },
         warning=function(cond) {message("Warning caught:", cond, "\n-----------");up()
-            do.call(install.packages, c(pk.opt,list(type="both")))
+          do.call(install.packages, c(pk.opt,list(type="source")))
         },
-        custom_error=function(cond) {message("Error1 caught: ", cond, "\n-----------");up()
-            do.call(install.packages, c(pk.opt,list(type="source")))
-        },
-        error=function(cond) {message("Error2 caught: ", cond, "\n-----------")
+        error=function(cond) {message("Error1 caught: ", cond, "\n-----------")
             do.call(install.packages, c(pk.opt,list(type="binary")))
         },
-        finally={suppressMessages(do.call(easypackages::packages, list(pkg,c(prompt=F))))}
+        custom_error=function(cond){message("Error2 caught: ", cond, "\n-----------")
+          easypackages::packages(pkg,prompt=F);message(cond)}
     )
 }
 # FUN: Installs package from github link
@@ -45,25 +112,19 @@ gh.inst <- function(pkNam, ghLnk,...){
 }
 
 # FUN: Installs package from Source link
-srcInst <- function(pkg,...){
-    message("Checking ", basename(pkg), "...")
-    downLoc = file.path(getwd(),basename(pkg))
-    message("Downloading to:\n",downLoc)
-    download.file(url=pkg,destfile=downLoc)
-    #untar(downLoc)
-    #pkg<-stringr::str_split(basename(pkg),"_")[[1]][1]
-    #downLoc=file.path(getwd(),pkg)
+srcInst <- function(fn,...){
+  message("Checking ", basename(fn), "...")
+  #downLoc = file.path("~/Desktop",basename(fn))
+  #download.file(url=fn,destfile=downLoc)
     tryCatch(
-        expr={
-            install.packages(downLoc, repos=NULL, type="source")
-        },
+        expr={install.packages(fn, repos=NULL, type="source")},
         error=function(cond){
-            install.packages(pkg,repos=NULL, method="libcurl")
-        },
+            install.packages(fn,repos=NULL, method="libcurl", type = "source")
+          },
         warning=function(cond){
-            install.packages(pkg,repos=NULL, method="source")
-        }
-    )
+          install.packages(fn,repos=NULL, method="auto", type = "source")
+          }
+        )
 }
 
 # FUN: Installs package from Bioconductor
@@ -146,49 +207,24 @@ install.or.load <- function(pathtoFile=NULL, instNew=T, rmpkg=F) {
 }
 
 # Loads default packages or custom if input provided
-#' @param ezLibs  default is NULL, list of libraries to load or install
-#' @param ghPk dataframe of packages following the convention: packageName="gitRepo/directory"
 #' @return package installs or loads
 #' @export
-loadPacks <- function(ezLibs=NULL, ghPk=NULL, bioPks=NULL) {
-    pkgs <- c('devtools', 'remotes', 'sjmisc', 'stringi', 'digest', 'RCurl', 'rlang', 'parallel', 'grid', 'gridExtra','knitr', 'kableExtra','ggplot2', 'plotly', 'ggfortify', 'ggrepel', 'gplots', 'fastmatch','pals', 'Polychrome','qdapTools','beepr','xtable','pander','grDevices','graphics','stats', 'utils','magick', 'ade4',"MASS", "R.utils")
-    if(is.null(ezLibs)){
-        ezLibs<-c('tidyverse','sjmisc','stringi','digest','RCurl','gridExtra','needs')
-    }
-    if(is.null(ghPk)){
-        ghPk<- data.frame(
-            docstring='dasonk/docstring',
-            rstudioapi='rstudio/rstudioapi',
-            easypackages='jakesherman/easypackages',
-            redcapAPI='nutterb/redcapAPI',
-            crayon="r-lib/crayon")
-    }
-
-    if(is.null(bioPks)){
-        bioPks <- c('HDF5Array','rngtools','bumphunter','minfi','lumi', 'methylumi',
-                    'randomForest', 'glmnet',
-                    'IlluminaHumanMethylation450kmanifest',
-                    'IlluminaHumanMethylation450kanno.ilmn12.hg19',
-                    'Rtsne', 'IlluminaHumanMethylationEPICmanifest',
-                    'IlluminaHumanMethylationEPICanno.ilm10b2.hg19',
-                    'IlluminaHumanMethylationEPICanno.ilm10b4.hg19', 'MethylAid', 'conumee',
-                    'BiocParallel')
-    }
-    library(base)
+loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bioPks=biocPkgs) {
+    library("base")
     rlis = getOption("repos")
     rlis["CRAN"] = "http://cran.us.r-project.org"
     options(repos = rlis)
-
     tryCatch(
-        expr={setOptions(); fixProf()
+        expr={
+          setOptions(); fixProf()
             if (rq("devtools")) {install.packages("devtools",dependencies=T,verbose=T)}else{library("devtools")}
             checkNeeds()
             gh.inst("easypackages","jakesherman/easypackages")
             if (rq("tidyverse")) {pk.inst("tidyverse")}else{ld("tidyverse")}
             easypackages::packages("parallel","doSNOW","doParallel", "foreach","compiler", prompt=F)
             if(suppressWarnings(!require("BiocManager"))){
-                install.packages("BiocManager")
-                BiocManager::install(version="3.10",update=T, ask=F, type="source")
+              install.packages("BiocManager")
+              BiocManager::install(version="3.10",update=T, ask=F, type="source")
             }
             #if(BiocManager::version()!='3.13'){BiocManager::install(version="3.13",update=T, ask=F, type="source")}
             if(rq("zip")){install.packages("zip", dependencies=T, type="binary")}
@@ -246,10 +282,8 @@ fixCompiles <- function(){
 #' @return
 #' @export
 startLoadingAll <- function(isMC = T) {
-
-
     sexEst = "https://github.com/jungch/sest/raw/master/sest.tar"
-    mgmtLn = "https://github.com/badozor/mgmtstp27/blob/master/trunk/Rpackage/mgmtstp27_0.6-3.tar.gz"
+    mgmtLn = "https://github.com/mwsill/mgmtstp27/blob/master/trunk/Rpackage/mgmtstp27_0.6-3.tar.gz?raw=true"
     if (isMC) {
         cbio = "/Volumes/CBioinformatics/";zdriv = "/Volumes/molecular/Molecular";wmm = "You do not have this path mounted:\n"
         if (!dir.exists(cbio)) {
@@ -278,7 +312,9 @@ startLoadingAll <- function(isMC = T) {
         gh.inst("rmarkdown", 'rstudio/rmarkdown')
 
         if (rq("mgmtstp27")) {
-            srcInst(mgmtLn)
+          dLoc <-"~/Desktop/temp.tar.gz"
+          download.file(url=mgmtLn,destfile=dLoc)
+          sw(install.packages(dLoc, repos=NULL, type="source"))
         }
         if (rq("sest")) {
             sw(srcInst(sexEst))

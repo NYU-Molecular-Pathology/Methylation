@@ -235,9 +235,9 @@ launchEmailNotify <-function(runID){
     com <- ifelse(isMC==T, "sample_qc", "sample_research") # research or clinical notification
     record = data.frame(record_id=sam_id,comments=com)
     datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T);print(datarecord)
-    
+
     res<-RCurl::postForm(ur,token=tk,content='record',format='json',type='flat',data=datarecord)
-    
+
     cat(crayon::black$bgGreen$bold("Email Notification Created\n"))
     cat(crayon::white$bgBlue$bold("Check email to confirm run notifcation\n"));cat(res)
 }
@@ -600,16 +600,13 @@ do_report <-function(data = NULL) {
         output_file <- paste0(sampleID,".html")
         message(paste("Now running:", samplename_data, run_id, barcode, pathEpic,"\n"))
         rmarkdown::render(
-            #"/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/inst/report.Rmd",
-            #rmarkdown::render( "/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/inst/report.Rmd",
             system.file("report.Rmd",package="mnp.v11b6"),
-            #system.file('report.Rmd', package = "mnp.v11b6"),
             output_dir = output_dir,
             output_format = "html_document",
             output_file = output_file,
             clean = T
         )
-        
+
     }else{message("your data is null")}
 }
 
@@ -673,7 +670,8 @@ startRun <- function(selectRDs=NULL, runID=NULL, emailNotify=T){
 # FUN: Checks if all the paths are accessible to the Rscript location
 checkMounts <- function(){
     # List of three mount paths needed to run the pipleine
-    critialMnts <- c("/Volumes/CBioinformatics/jonathan", "/Volumes/molecular/MOLECULAR LAB ONLY", "/Volumes/snudem01labspace/idats")
+    critialMnts <- c("/Volumes/CBioinformatics/jonathan",
+                     "/Volumes/molecular/MOLECULAR LAB ONLY", "/Volumes/snudem01labspace/idats")
     failMount <- lapply(critialMnts, function(driveMount){
         ifelse(!dir.exists(driveMount),return(T),return(F))})
     if(any(failMount==T)){
@@ -702,4 +700,4 @@ prepareRun <- function(token){
 checkMounts()
 defineParams()
 #gb$fldx() #folds all funcitons
-printParams()
+#printParams()
