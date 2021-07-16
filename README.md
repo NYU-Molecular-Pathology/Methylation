@@ -32,7 +32,7 @@ Run [LoadInstall_new.R](https://github.com/NYU-Molecular-Pathology/Methylation/b
 ## Start a Run in Terminal
 ---
 ### To run the pipeline from your terminal, simply execute the following command:<br />
-`rm -f methylExpress.R; wget -L https://git.io/JWujj; Rscript --verbose methylExpress.R '#######################' '21-MGDM_TEST' NULL`<br />
+`wget -L https://git.io/JWujj -O methylExpress.R; Rscript --verbose methylExpress.R '#######################' '21-MGDM_TEST' NULL`<br />
 ### Args
 ___
 ### There are two system Rscript to run methylExpress.R with the arguments in order:<br />
