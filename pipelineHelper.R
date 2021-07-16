@@ -1,3 +1,4 @@
+#!/usr/bin/env Rscript
 options(stringsAsFactors = FALSE);gb <- globalenv(); assign("gb", gb)
 # FUN: Loads all the packages used in the RMD Methylation QC file
 checkQCpkg <- function(){
@@ -95,17 +96,30 @@ setDirectory <- function(foldr) {
 }
 
 # Returns a text string of the latest modified Run name, if isMC=False then research directory is returned
-listMolecularSheets <- function(isMC=T) {
+listMolecularSheets <- function(isMC=T, getAll=F) {
     researchWorksheets <- "/Volumes/snudem01labspace/Methylation_Worksheets"
     if(isMC){
-        prevMC <- list.files(path=file.path(gb$clinDrv,"WORKSHEETS",format(Sys.time(),"%Y")), pattern="MGDM", full.names=T)
-    }else{prevMC <- list.files(path=file.path(researchWorksheets,format(Sys.time(),"%Y")), pattern="MR", full.names=T)}
+        wsPath <- file.path(gb$clinDrv,"WORKSHEETS",format(Sys.time(),"%Y"))
+        prevMC <- dir(path=wsPath, pattern="MGDM", full.names=T)
+    }else{
+        wsPath <- file.path(researchWorksheets,format(Sys.time(),"%Y"))
+        prevMC <- dir(path=wsPath, pattern="MR", full.names=T)
+    }
+    if(getAll==T){return(prevMC)}
     newestFile <- which.max(file.info(prevMC)$mtime)
     prevMC<- sub(".xlsm","",basename(prevMC))
     newestRun = paste0(prevMC[newestFile])
     cat(crayon::bgCyan("List of Runs Found:\n"));cat(prevMC,sep="\n")
     cat(crayon::black$bgYellow("Newest Run Found:", crayon::red$bold(paste0(newestRun))))
     return(newestRun)
+}
+
+checkValidRun <- function(runID){
+    isMC = sjmisc::str_contains(runID, "MGDM")|sjmisc::str_contains(runID, "MC")
+    ws.list <- listMolecularSheets(isMC,getAll=T)
+    paste0(runID,".xlsm") %in% basename(ws.list)
+    found<- stringr::str_detect(ws.list,pattern = runID)
+    ifelse(file.exists(ws.list[found]),T,F)
 }
 
 #prints the variables currently assigned
@@ -154,6 +168,7 @@ setRunDir <- function(runID=NULL, workFolder=NULL){
     workFolder <- ckNull(workFolder, gb$methDir, deparse(substitute(workFolder,env=.GlobalEnv)))
     newRun <- file.path(workFolder, runID)
     assign("newRunPath", newRun)
+    if(runID=="21-MGDM_TEST" & dir.exists(newRun)){unlink(newRun, T, T)}
     if(!dir.exists(newRun)){
         dir.create(newRun);cat("creating folder: ",newRun)
         setDirectory(newRun)}else{setDirectory(newRun)}
@@ -162,15 +177,15 @@ setRunDir <- function(runID=NULL, workFolder=NULL){
 
 # Returns Total Sample Count in the run
 getTotalSamples <- function(){
-    thisSh <- list.files(getwd(), "*.xlsm")
+    templateDir = "Clinical_Methylation/methylation_run_TEMPLATE_new.xlsm"
+    thisSh <- dir(getwd(), "*.xlsm")
     temp <- stringi::stri_detect_fixed(thisSh, "~$")
     thisSh <- thisSh[!temp]
     if(length(thisSh)==0){print("No .xlsm sheet, defaulting to 16");return(16)}
-    worksheet <- readxl::read_excel(thisSh[1], sheet=1, col_names=F, range="B4:B4",trim_ws=T)
+    worksheet <- readxl::read_excel(thisSh[1], col_names="Total", range="B4:B4")
     if (length(worksheet) == 0) {
         message("Samplesheet ", thisSh[1]," is invalid format, manually edit")
-        fs::file_copy(
-            path=file.path(gb$baseDir, "Clinical_Methylation/methylation_run_TEMPLATE_new.xlsm"), new_path=getwd())
+        fs::file_copy(path=file.path(gb$baseDir, templateDir), new_path=getwd())
     } else {message("Total sample count found is: ", worksheet[1])}
     return(paste0(worksheet[1]))
 }
@@ -206,7 +221,7 @@ checkRunOutput <- function(runID) {
 
 # FUN: Reads the csv samplesheet for minfi input
 readSampleSheet <- function(runID=F, totalSam=F, wks=F) {
-    file.list <- list.files(path=getwd(), "*.xlsm")
+    file.list <- dir(path=getwd(), "*.xlsm")
     temps <- stringi::stri_detect_fixed(file.list, "~$")
     file.list <- file.list[!temps]
     sampleSheet <- paste0(file.list[1])
@@ -257,7 +272,7 @@ create.QC.record <- function(runID=NULL){
 importRedcapStart <- function(nfldr){
     rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", gb$ApiToken)
     uri=paste0(rcon$url); tk=rcon$token
-    samSh <- list.files(path=getwd(), full.names=T, ".xlsm")
+    samSh <- dir(path=getwd(), full.names=T, ".xlsm")
     sampleNumb <- getTotalSamples()
     sh_Dat <-as.data.frame(readxl::read_excel(samSh,sheet=3,range="A1:N97", col_types=c("text")))[,1:13]
     sampleNumb=as.integer(sampleNumb);sh_Dat = sh_Dat[1:sampleNumb,]
@@ -355,7 +370,7 @@ get.idats <-function(csvNam = "samplesheet.csv"){
         allFi = allFi[file.exists(allFi)]
         if (length(allFi) > 0) {
             message("Files found: "); print(allFi)
-            cur.idat <- list.files(pattern = "*.idat")
+            cur.idat <- dir(pattern = "*.idat")
             bcds <- paste0(basename(allFi))
             if (all(bcds %in% cur.idat)) {message(".idat files already copied")}
             if (length(cur.idat) < length(allFi)) {copyBaseIdats(allFi[!(bcds %in% cur.idat)])}
@@ -414,7 +429,7 @@ generateQCreport <- function(runID=NULL, qc=NULL) {
     QC_file <- system.file('Methyl_QC.Rmd', package = "mnp.v11b6")
     if (!file.exists(QC_file)){message("Check Working directory, QC_file.rmd not found")}
     fs::file_copy(QC_file, getwd(), overwrite = T)
-    currentQC = list.files(getwd(),"*QC.Rmd", full.names=T)
+    currentQC = dir(getwd(),"*QC.Rmd", full.names=T)
     qcFile = paste0(runID,"_QC.html") # output file name
     rmarkdown::render(currentQC, output_file=file.path(dirname(currentQC), qcFile), params=list(runID=runID))
     currentQC <- stringr::str_replace_all(string=currentQC, ".Rmd", "_cache")
@@ -426,7 +441,7 @@ removeExtras <- function(runID) {
     folder.list = list.dirs(path=getwd(), full.names=T, recursive=T)
     temp.folder.list <- folder.list[stringi::stri_detect_fixed(folder.list, "_files")]
     thisReport <- paste0(runID, "_Redcap.csv")
-    file.list<-list.files(path=paste0("~/Desktop/",runID,"/"), thisReport, full.names=T)
+    file.list<-dir(path=paste0("~/Desktop/",runID,"/"), thisReport, full.names=T)
     fs::file_copy(file.list, getwd(), overwrite=T)
     print(as.data.frame(temp.folder.list))
     unlink(temp.folder.list, recursive=T)
@@ -444,7 +459,7 @@ copy.to.clinical <- function(clinOut, runID, runYear) {
     newFolder <- file.path(clinOut, runYear,runID); message(newFolder)
     if (!dir.exists(newFolder)) {dir.create(newFolder)}
     if (dir.exists(newFolder)) {
-        oldFi=list.files(path=newFolder, full.names=T)
+        oldFi=dir(path=newFolder, full.names=T)
         prevs=file.path(newFolder,"previous")
         if (length(oldFi) > 0) {save.prev.folder(prevs,oldFi)}
         message(paste("Copying Reports to output folder:\n", newFolder))
@@ -459,7 +474,7 @@ importDesktopCsv <- function(rcon,samsheet=NULL) {
     rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", gb$ApiToken)
     ur=paste0(rcon$url);tk=rcon$token
     if(is.null(samsheet)){
-        samsheet=list.files(path=getwd(),full.names=T,"_Redcap.csv",recursive=F)}else{samsheet=samsheet}
+        samsheet=dir(path=getwd(),full.names=T,"_Redcap.csv",recursive=F)}else{samsheet=samsheet}
     if (length(samsheet) < 1) {message("Redcap headers csv file not found")}
     if (length(samsheet) == 1) {
         data<-read.csv(samsheet, stringsAsFactors=F)
@@ -480,7 +495,7 @@ importDesktopCsv <- function(rcon,samsheet=NULL) {
 copy.cnv.files <- function(newFolder, runID, runYear=NULL) {
     if (is.null(runYear)){runYear=paste0(format(Sys.Date(), "%Y"))}
     cnv_folder <- file.path(newFolder,paste0(runID,"_CNVs/"))
-    cnvNames <- list.files(path=getwd(), full.names=T, "*_cnv.png")
+    cnvNames <- dir(path=getwd(), full.names=T, "*_cnv.png")
     if(length(cnvNames)>2){
         message(paste0("Copying PNG to: ", cnv_folder));print(as.data.frame(cnvNames))
         if (!dir.exists(cnv_folder)){dir.create(cnv_folder)}
@@ -491,7 +506,7 @@ copy.cnv.files <- function(newFolder, runID, runYear=NULL) {
 # Uploads any created cnv png files to redcap database
 uploadCnPng <- function() {
     rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", gb$ApiToken)
-    samSh <- list.files(path=getwd(), full.names=T, ".xlsm")
+    samSh <- dir(path=getwd(), full.names=T, ".xlsm")
     sampleNumb <- getTotalSamples()
     sh_Dat <-as.data.frame(readxl::read_excel(samSh,sheet=3,range="A1:N97", col_types=c("text")))
     sampleNumb=as.integer(sampleNumb)
@@ -522,14 +537,14 @@ copy2outFolder <-function(clinDrv = NULL, runID, runYear = NULL) {
     newFolder <- ifelse(isMC==T, clinicalOutDir, researchOutDir)
     cat(crayon::white$bgCyan("Output Folder is:\n", newFolder))
     if (!dir.exists(newFolder)) {dir.create(newFolder)}
-    oldFi = list.files(path = newFolder, full.names = T)
+    oldFi = dir(path = newFolder, full.names = T)
     prevs = file.path(newFolder, "previous")
     if (length(oldFi) > 0) {save.prev.folder(prevs, oldFi)} # saves any old files
-    file.list = list.files(path = getwd(), "*.html", full.names = T)
+    file.list = dir(path = getwd(), "*.html", full.names = T)
     message("\nCopying Existing Reports to Folder...\n")
     fs::file_copy(file.list, newFolder, overwrite = T)
     if (isMC) {
-        cnList <- list.files(getwd(), "_cnv.png",recursive = F)
+        cnList <- dir(getwd(), "_cnv.png",recursive = F)
         hasCn <- length(cnList) > 2
         if (hasCn) {
             copy.cnv.files(newFolder, runID, runYear)
@@ -655,7 +670,7 @@ makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
         generateQCreport()
         } # creates a redcap QC record and Knits the QC RMD file
     if(cpReport==T){file.list <- copy2outFolder(gb$clinDrv, runID)}
-    if(redcapUp==T){file.list <- list.files(pattern="*.html", full.names = T); uploadToRedcap(file.list)}
+    if(redcapUp==T){file.list <- dir(pattern="*.html", full.names = T); uploadToRedcap(file.list)}
     if(email==T){launchEmailNotify(runID)}
 }
 

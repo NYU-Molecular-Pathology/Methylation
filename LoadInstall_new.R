@@ -37,7 +37,16 @@ cranPkgs <-
     "R.utils",
     "optparse",
     "targets",
-    "usethis"
+    "usethis",
+    "webshot",
+    "reshape2",
+    "data.table",
+    "DT",
+    "scales",
+    "RColorBrewer",
+    "readxl",
+    "stringr",
+    "tinytex"
   )
 
 # Extra Libraries ----
@@ -61,7 +70,8 @@ biocPkgs <-
     'randomForest', 'glmnet','IlluminaHumanMethylation450kmanifest',
     'IlluminaHumanMethylation450kanno.ilmn12.hg19', 'Rtsne',
     'IlluminaHumanMethylationEPICmanifest', 'IlluminaHumanMethylationEPICanno.ilm10b2.hg19',
-    'IlluminaHumanMethylationEPICanno.ilm10b4.hg19', 'MethylAid', 'conumee','BiocParallel'
+    'IlluminaHumanMethylationEPICanno.ilm10b4.hg19', 'MethylAid', 'conumee','BiocParallel',
+    "Biobase","limma"
     )
 # Helper Functions ----
 sw <- function(pkgOb){try(return(suppressMessages(suppressWarnings(pkgOb))),silent=T)}
@@ -277,59 +287,50 @@ fixCompiles <- function(){
     system('brew doctor')
 }
 
+startmsg <- function(){
+  cbio = "/Volumes/CBioinformatics/"; zdriv = "/Volumes/molecular/Molecular"
+  wmm = "You do not have this path mounted:\n"
+  if (!dir.exists(cbio)) {warning(wmm, cbio)}
+  if (!dir.exists(zdriv)) {warning(wmm, zdriv)}
+  message("You have the following drives mounted:")
+  system("ls /Volumes")
+  stopifnot(dir.exists(cbio) | dir.exists(zdriv))
+  system("gcc --version")
+}
+
+colorMsg <- function(){
+  mkred <- function(strMsg) {return(crayon::white$bgRed$bold(strMsg))}
+  mkblu <- function(strMsg) {return(crayon::white$bgBlue$bold(strMsg))}
+  ms1 <- paste0(
+    crayon::white$bgGreen("Your mnp.v11b6 package is installed and loading"),"\n",
+    crayon::white$bgGreen("To update the in-house classifier to current clinical version run:"),"\n",
+    mkblu("install.or.load(pathtoFile=NULL, instNew=F, rmpkg=F)"),"\n"
+  )
+  ms2 <- paste0(
+    mkred("mnp.v11b6 package is not installed executing the function to install:"),"\n",
+    mkblu("install.or.load(instNew=T)"),"\n"
+  )
+  return(c(ms1,ms2))
+}
+
 #' Loads or installs required packages based if run is clinical or research
 #' @param isMC boolean logical if True, run is methylation clinical run set as false to load only research packages and not the methylation classifier
 #' @return
 #' @export
-startLoadingAll <- function(isMC = T) {
+startLoadingAll <- function() {
     sexEst = "https://github.com/jungch/sest/raw/master/sest.tar"
-    mgmtLn = "https://github.com/mwsill/mgmtstp27/blob/master/trunk/Rpackage/mgmtstp27_0.6-3.tar.gz?raw=true"
-    if (isMC) {
-        cbio = "/Volumes/CBioinformatics/";zdriv = "/Volumes/molecular/Molecular";wmm = "You do not have this path mounted:\n"
-        if (!dir.exists(cbio)) {
-            warning(wmm, cbio)
-        }
-        if (!dir.exists(zdriv)) {
-            warning(wmm, zdriv)
-        }
-        message("You have the following drives mounted:")
-        system("ls /Volumes")
-        stopifnot(dir.exists(cbio) | dir.exists(zdriv))
-        system("gcc --version")
-        # .libPaths("/Volumes/CBioinformatics/Methylation/in_house_libs")
-        loadPacks()
-        mkred <- function(strMsg) {return(crayon::white$bgRed$bold(strMsg))}
-        mkblu <- function(strMsg) {return(crayon::white$bgBlue$bold(strMsg))}
-        ms1 <- paste0(
-            crayon::white$bgGreen("Your mnp.v11b6 package is installed and loading\n"),
-            crayon::white$bgGreen("To update the in-house classifier to current clinical version run:\n"),
-            mkblu("install.or.load(pathtoFile=NULL, instNew=F, rmpkg=F)\n")
-        )
-        ms2 <- paste0(
-            mkred("mnp.v11b6 package is not installed executing the function to install:\n"),
-            mkblu("install.or.load(instNew=T)\n")
-        )
-        gh.inst("rmarkdown", 'rstudio/rmarkdown')
-
-        if (rq("mgmtstp27")) {
-          dLoc <-"~/Desktop/temp.tar.gz"
-          download.file(url=mgmtLn,destfile=dLoc)
-          sw(install.packages(dLoc, repos=NULL, type="source"))
-        }
-        if (rq("sest")) {
-            sw(srcInst(sexEst))
-        }
-        if (rq("mnp.v11b6")) {
-            cat(ms2)
-            install.or.load(instNew = T)
-        }
-        if (!rq("mnp.v11b6")) {
-            cat(ms1)
-            install.or.load(instNew = F)
-        }
-        #file.path(system.file('data', package = "mnp.v11b6"),'rfpred.v11b6.rds')
-    } else{
-        loadPacks()
+    mgmtLn = "https://git.io/JWKTo"
+    startmsg()
+    loadPacks()
+    ms <- colorMsg()
+    gh.inst("rmarkdown", 'rstudio/rmarkdown')
+    if (rq("mgmtstp27")) {
+      dLoc <- "~/Desktop/temp.tar.gz"
+      download.file(url = mgmtLn, destfile = dLoc)
+      sw(install.packages(dLoc, repos = NULL, type = "source"))
     }
+    if (rq("sest")) {sw(srcInst(sexEst))}
+    if (rq("mnp.v11b6")) {cat(ms[2]);install.or.load(instNew = T)}
+    if (!rq("mnp.v11b6")) {cat(ms[1]);install.or.load(instNew = F)}
 }
 startLoadingAll()
