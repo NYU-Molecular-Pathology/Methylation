@@ -168,7 +168,7 @@ setRunDir <- function(runID=NULL, workFolder=NULL){
     workFolder <- ckNull(workFolder, gb$methDir, deparse(substitute(workFolder,env=.GlobalEnv)))
     newRun <- file.path(workFolder, runID)
     assign("newRunPath", newRun)
-    if(runID=="21-MGDM_TEST" & dir.exists(newRun)){unlink(newRun, T, T)}
+    if(runID=="21-MGDM_TEST" & dir.exists(newRun)){unlink(newRun, T, T);dir.create(newRun)}
     if(!dir.exists(newRun)){
         dir.create(newRun);cat("creating folder: ",newRun)
         setDirectory(newRun)}else{setDirectory(newRun)}
@@ -672,6 +672,8 @@ makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
     if(cpReport==T){file.list <- copy2outFolder(gb$clinDrv, runID)}
     if(redcapUp==T){file.list <- dir(pattern="*.html", full.names = T); uploadToRedcap(file.list)}
     if(email==T){launchEmailNotify(runID)}
+    deskDir <- file.path("~/Desktop",runID)
+    unlink(deskDir,T,T)
 }
 
 # Function to just run a default clinical run without changes, input selectRDs to prioritize samples running first
