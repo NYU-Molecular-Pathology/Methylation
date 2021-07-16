@@ -23,11 +23,8 @@ Open Finder and press **⌘(CMD) + K** then paste each of these directories, log
 `smb://research-cifs.nyumc.org/Research/CBioinformatics/`<br />
 `smb://research-cifs.nyumc.org/Research/snudem01lab/snudem01labspace`<br />
 `smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular`<br />
-
-## Install pipeline
-Run [LoadInstall_new.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/8b32e9a3c90ebf6b568a6c6582a020f6729867ef/LoadInstall_new.R) to install all package dependencies and the pipeline on a new system.  This script is also called when running the pipeline.
-
-## Start a Run in Terminal
+___
+## Install pipeline and start a Run in Terminal
 ### To run the pipeline from your terminal, simply execute the following command:<br />
 `wget -L https://git.io/JWujj -O methylExpress.R; Rscript --verbose methylExpress.R '#######################' '21-MGDM_TEST' NULL`<br />
 ### There are two system Rscript to run methylExpress.R with the arguments in order:<br />
