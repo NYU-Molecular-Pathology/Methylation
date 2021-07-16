@@ -165,7 +165,9 @@ setRunDir <- function(runID=NULL, workFolder=NULL){
     workFolder <- ckNull(workFolder, gb$methDir, deparse(substitute(workFolder,env=.GlobalEnv)))
     newRun <- file.path(workFolder, runID)
     assign("newRunPath", newRun)
-    if(runID=="21-MGDM_TEST" & dir.exists(newRun)){unlink(newRun, T, T);dir.create(newRun)}
+    if(runID=="21-MGDM_TEST" & dir.exists(newRun)){unlink(newRun, T, T);dir.create(newRun)
+        try(unlink("~/Desktop/21-MGDM_TEST",recursive = T),silent = T)
+        }
     if(!dir.exists(newRun)){
         dir.create(newRun);cat("creating folder: ",newRun)
         setDirectory(newRun)}else{setDirectory(newRun)}
