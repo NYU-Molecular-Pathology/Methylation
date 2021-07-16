@@ -1,5 +1,4 @@
 # How To Setup Clinical Methylation Classifier 
----
 ## Essential Downloads
 The classifier runs on R version 3.6.3 and up.  It is not compatible with 3.3.3<br />
 Download **R 4.1** from CRAN: [https://cran.r-project.org/bin/macosx/](https://cran.r-project.org/bin/macosx/)<br />
@@ -15,9 +14,8 @@ Download **Homebrew**: https://brew.sh/ you can install using the following line
 - Download the [Rswitch](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/Rswitch/) app, which allows you to switch between R version libraries, for example:
 `/Library/Frameworks/R.framework/Versions/3.6/Resources/library/minfi`
 `/Library/Frameworks/R.framework/Versions/4.1/Resources/library/minfi`
-
+___
 ## Network Drive Mount Paths
----
 ### To install & run the pipeline, it is critical to mount the following network smb shared drives:
 
 Open Finder and press **⌘(CMD) + K** then paste each of these directories, login name and password is your NYUMC\KerberosID
@@ -27,15 +25,12 @@ Open Finder and press **⌘(CMD) + K** then paste each of these directories, log
 `smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular`<br />
 
 ## Install pipeline
----
 Run [LoadInstall_new.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/8b32e9a3c90ebf6b568a6c6582a020f6729867ef/LoadInstall_new.R) to install all package dependencies and the pipeline on a new system.  This script is also called when running the pipeline.
 
 ## Start a Run in Terminal
----
 ### To run the pipeline from your terminal, simply execute the following command:<br />
 `wget -L https://git.io/JWujj -O methylExpress.R; Rscript --verbose methylExpress.R '#######################' '21-MGDM_TEST' NULL`<br />
 ### Args
-___
 ### There are two system Rscript to run methylExpress.R with the arguments in order:<br />
 `arg[1]` is the **token** for the API call ('#######################')<br />
 `arg[2]` is the **RunID** which if NULL runs the latest Clinical Worksheet ('MR21-099')<br />
