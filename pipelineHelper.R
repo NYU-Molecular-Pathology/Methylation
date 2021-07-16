@@ -346,13 +346,13 @@ getAllFiles <- function(idatDir, csvNam=NULL) {
 
 # FUN: Copies .idat files to your current directory using sample sheet
 copyBaseIdats <- function(allFi) {
-    cat(crayon::white$bgCyan("Copying idats to current directory...\n"))
+    cat(crayon::white$bgCyan("Copying idats to current directory..."),"\n")
     fs::file_copy(allFi, file.path(getwd()))
     idcs = basename(allFi)
     idatsCopied <- idcs[idcs != ""]
     success = file.exists(idatsCopied)
     message(".idat files that failed to copy:")
-    if ((length(success) == 0)) {cat("none\n")} else{print(idatsCopied[!success])}
+    if ((length(success) == 0)) {cat("none","\n")} else{print(idatsCopied[!success])}
 }
 
 # Helper FUN called during copying idats to notify if a network mount is not found
@@ -462,9 +462,11 @@ copy.to.clinical <- function(clinOut, runID, runYear) {
         oldFi=dir(path=newFolder, full.names=T)
         prevs=file.path(newFolder,"previous")
         if (length(oldFi) > 0) {save.prev.folder(prevs,oldFi)}
-        message(paste("Copying Reports to output folder:\n", newFolder))
-        sys_cmd <- paste("cp",paste(getwd(),"*.html",sep="/"), newFolder)
-        system(sys_cmd)
+        mmm1 <- paste("Copying Reports to output folder:\n", newFolder)
+        cat(crayon::white$bgBlue$bold(mmm1),"\n")
+        fi2copy <- dir(getwd(), pattern="*.html", full.names = T)
+        cat(crayon::white$bgGreen$bold("Now copying html reports..."),"\n")
+        fs::file_copy(path=fi2copy,newFolder)
     }
 }
 
@@ -656,10 +658,10 @@ makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
         outFileN = paste0(data[i,1],".html")
         outPathN = file.path(gb$workFolder,gb$runID,outFileN)
         if(file.exists(outPathN)){
-            cat(bky(outFileN, "exists skipping sample\n"))
+            cat(bky(outFileN, "exists skipping sample","\n"))
             next
         }else{
-            cat(bky("\n",dsh,"Now Running", i, "of", length(samList),dsh,"\n"))
+            cat(bky("\n",dsh,"Now Running", i, "of", length(samList),dsh),"\n")
             do_report(data=data[i, ])
         }
     }

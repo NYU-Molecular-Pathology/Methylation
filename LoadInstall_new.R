@@ -330,6 +330,7 @@ startLoadingAll <- function() {
       sw(install.packages(dLoc, repos = NULL, type = "source"))
     }
     if (rq("sest")) {sw(srcInst(sexEst))}
+    if (rq("mnpqc")) {sw(srcInst())}
     if (rq("mnp.v11b6")) {cat(ms[2]);install.or.load(instNew = T)}
     if (!rq("mnp.v11b6")) {cat(ms[1]);install.or.load(instNew = F)}
 }
