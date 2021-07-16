@@ -320,6 +320,8 @@ colorMsg <- function(){
 startLoadingAll <- function() {
     sexEst = "https://github.com/jungch/sest/raw/master/sest.tar"
     mgmtLn = "https://git.io/JWKTo"
+    cbioLn = "/Volumes/CBioinformatics/Methylation/"
+    mnqDir = file.path(cbioLn,"in_house/mnp.v116/mnpqc_0.1.0.tar.gz")
     startmsg()
     loadPacks()
     ms <- colorMsg()
@@ -330,7 +332,7 @@ startLoadingAll <- function() {
       sw(install.packages(dLoc, repos = NULL, type = "source"))
     }
     if (rq("sest")) {sw(srcInst(sexEst))}
-    if (rq("mnpqc")) {sw(srcInst())}
+    if (rq("mnpqc")) {install.packages(mnqDir, repos = NULL, type="source", verbose=T)}
     if (rq("mnp.v11b6")) {cat(ms[2]);install.or.load(instNew = T)}
     if (!rq("mnp.v11b6")) {cat(ms[1]);install.or.load(instNew = F)}
 }

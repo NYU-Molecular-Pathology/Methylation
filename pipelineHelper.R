@@ -126,12 +126,9 @@ checkValidRun <- function(runID){
 printParams <-function(){
     varsNames<- getSetvars()
     cat(crayon::white$bgGreen("\nThese are your variables:\n"))
-    i=NULL; varCol=crayon::white$bgBlue$bold("\nVariable:")
-    valCol = crayon::white$bgCyan$bold("\nAssigned value:")
-    invisible(
-        foreach::foreach(i=1:length(varsNames))%do%{
-            cat(paste(varCol, names(varsNames)[i], valCol, varsNames[1,i],"\n"))}
-    )
+    i=NULL; varCol=crayon::white$bgBlue$bold("Variable:")
+    valCol = crayon::white$bgCyan$bold("Assigned value:")
+    invisible(foreach::foreach(i=1:length(varsNames))%do%{cat(paste("\n",varCol, names(varsNames)[i], "\n",valCol, varsNames[1,i],"\n"))})
     funArgs <- crayon::white$bgBlue$bold('gb$setVar("varNameString", varValue)')
     cat("\nUse the function", funArgs ,"to change any default variables above if needed\n")
 }
@@ -708,7 +705,7 @@ checkMounts <- function(){
 prepareRun <- function(token){
     methylPath <- gb$setRunDir(gb$runID)
     message("Working directory set to:"); cat(crayon::bgGreen(methylPath)); setwd(methylPath)
-    setVar("ApiToken", token); gb$printParams() # assign the ApiToken & print params
+    setVar("ApiToken", token) # assign the ApiToken & print params
     copyWorksheetFile(runID = gb$runID) # copies the xlsm file
     readSheetWrite() # reads xlsm and generates input .csv samplesheet
     get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
