@@ -303,20 +303,16 @@ colorMsg <- function(){
   mkblu <- function(strMsg) {return(crayon::white$bgBlue$bold(strMsg))}
   ms1 <- paste0(
     crayon::white$bgGreen("Your mnp.v11b6 package is installed and loading"),"\n",
-    crayon::white$bgGreen("To update the in-house classifier to current clinical version run:"),"\n",
+    crayon::white$bgGreen("To update in-house classifier to current version run:"),"\n",
     mkblu("install.or.load(pathtoFile=NULL, instNew=F, rmpkg=F)"),"\n"
   )
   ms2 <- paste0(
     mkred("mnp.v11b6 package is not installed executing the function to install:"),"\n",
-    mkblu("install.or.load(instNew=T)"),"\n"
-  )
+    mkblu("install.or.load(instNew=T)"),"\n")
   return(c(ms1,ms2))
 }
 
-#' Loads or installs required packages based if run is clinical or research
-#' @param isMC boolean logical if True, run is methylation clinical run set as false to load only research packages and not the methylation classifier
-#' @return
-#' @export
+# Load all Functions ---------------------
 startLoadingAll <- function() {
     sexEst = "https://github.com/jungch/sest/raw/master/sest.tar"
     mgmtLn = "https://git.io/JWKTo"
@@ -333,7 +329,9 @@ startLoadingAll <- function() {
     }
     if (rq("sest")) {sw(srcInst(sexEst))}
     if (rq("mnpqc")) {install.packages(mnqDir, repos = NULL, type="source", verbose=T)}
-    if (rq("mnp.v11b6")) {cat(ms[2]);install.or.load(instNew = T)}
-    if (!rq("mnp.v11b6")) {cat(ms[1]);install.or.load(instNew = F)}
+    if (rq("mnp.v11b6")) {
+      cat(ms[2]);install.or.load(instNew = T)}else{
+      cat(ms[1]);install.or.load(instNew = F)  
+    }
 }
 startLoadingAll()
