@@ -49,3 +49,6 @@ Alternatively, you can source then run the github script locally using [methylEx
 
 ### The functions inside pipelineHelper.R generate the reports and save the html to the current directory and csv files on the desktop
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/a880a5bcba2f9c6242286116715f6a2e10c0440a/screenshots/pipeline.png" alt="drawing" width="850"/><br />
+
+### The main script that is run from the command line is methylExpress.R which sources each of these scripts into the global environment and takes in the user parameters
+<img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/5e54893b0cc7d54212508f78d3239e787cf09c26/screenshots/methEx.png" alt="drawing" width="850"/><br />
