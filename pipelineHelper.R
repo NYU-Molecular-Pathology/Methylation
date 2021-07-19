@@ -170,7 +170,8 @@ setRunDir <- function(runID=NULL, workFolder=NULL){
         }
     if(!dir.exists(newRun)){
         dir.create(newRun);cat("creating folder: ",newRun)
-        setDirectory(newRun)}else{setDirectory(newRun)}
+        setDirectory(newRun)
+        }else{setDirectory(newRun)}
     return(newRun)
 }
 
@@ -532,16 +533,20 @@ copy2outFolder <-function(clinDrv = NULL, runID, runYear = NULL) {
     if (is.null(runYear)) {runYear = paste0(format(Sys.Date(), "%Y"))}
     if (is.null(clinDrv)) {clinDrv <- gb$clinDrv}
     isMC = sjmisc::str_contains(runID, "MGDM") | sjmisc::str_contains(runID, "MC")
+    
     researchOutDir = file.path("/Volumes/snudem01labspace/FINAL_PDF_Reports_Brain",runID)
     clinicalOutDir = file.path(clinDrv, "Results", runYear, runID)
     runYear = ifelse(isMC, paste0("20", stringr::str_split_fixed(runID, "-", 2)[1]), runYear)
     newFolder <- ifelse(isMC==T, clinicalOutDir, researchOutDir)
+    
     cat(crayon::white$bgCyan("Output Folder is:\n", newFolder))
     if (!dir.exists(newFolder)) {dir.create(newFolder)}
     oldFi = dir(path = newFolder, full.names = T)
     prevs = file.path(newFolder, "previous")
+    
     if (length(oldFi) > 0) {save.prev.folder(prevs, oldFi)} # saves any old files
     file.list = dir(path = getwd(), "*.html", full.names = T)
+    newFolder <- base::rep(newFolder,length(file.list))
     message("\nCopying Existing Reports to Folder...\n")
     fs::file_copy(file.list, newFolder, overwrite = T)
     if (isMC) {
@@ -550,7 +555,7 @@ copy2outFolder <-function(clinDrv = NULL, runID, runYear = NULL) {
         if (hasCn) {
             copy.cnv.files(newFolder, runID, runYear)
             uploadCnPng()
-        }
+            }
         clinOut = file.path(stringr::str_split_fixed(clinDrv, " ", 2)[1],"MethylationClassifier")
         importRedcapStart(clinOut)
         copy.to.clinical(clinOut, runID, runYear)
@@ -669,12 +674,13 @@ makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
     if(skipQC==F){
         create.QC.record(runID)
         generateQCreport()
-        } # creates a redcap QC record and Knits the QC RMD file
+         # creates a redcap QC record and Knits the QC RMD file
     if(cpReport==T){file.list <- copy2outFolder(gb$clinDrv, runID)}
     if(redcapUp==T){file.list <- dir(pattern="*.html", full.names = T); uploadToRedcap(file.list)}
     if(email==T){launchEmailNotify(runID)}
     deskDir <- file.path("~/Desktop",runID)
     unlink(deskDir,T,T)
+    }
 }
 
 # Function to just run a default clinical run without changes, input selectRDs to prioritize samples running first
