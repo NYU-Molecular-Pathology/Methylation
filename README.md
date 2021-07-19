@@ -33,3 +33,6 @@ ___
 `arg[3]` is the **selectRds** parameter which is to prioritize samples being run (NULL)<br />
 
 Alternatively, you can source then run the github script locally using [methylExpress.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/methylExpress.R)
+
+## Pipeline Functions Overview
+
