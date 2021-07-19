@@ -2,19 +2,25 @@
 args <- commandArgs(TRUE)
 library("base"); gb <- globalenv(); assign("gb", gb)
 
-# Main Parameters
+# Main Parameters trailing commandline
 token<-args[1]; runID<-args[2]; selectRDs<-args[3]
 if(length(selectRDs)==0){selectRDs=NULL}else{if(is.na(selectRDs))selectRDs=NULL}
 
 # Check Input Params
 stopifnot(!is.null(token))
-invisible(lapply(base::ls(), function(i){message(i, " = ", get(i), " (",typeof(i),")\n")}))
+params <- c(token, runID, selectRDs)
+invisible(lapply(params, function(i){message(i, " = ", get(i), " (",typeof(i),")\n")}))
 
-# Source Github Scripts
+# Paths to the GitHub Repo files
 mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
-scripts = paste0(mainHub, c("LoadInstall_new.R","SetRunParams.R","CopyInputs.R","CopyOutput.R","pipelineHelper.R"))
+script.list = c("LoadInstall_new.R","SetRunParams.R","CopyInputs.R","CopyOutput.R", "pipelineHelper.R")
+
+# Source GitHub Scripts
+scripts = paste0(mainHub, script.list)
 invisible(lapply(scripts, function(i) {devtools::source_url(i)}))
 
 # Execute Methylation Run
 if(!is.null(runID)){gb$setVar("runID", runID)}
 gb$prepareRun(token); gb$startRun(selectRDs)
+
+
