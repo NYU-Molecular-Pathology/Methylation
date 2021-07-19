@@ -35,4 +35,12 @@ ___
 Alternatively, you can source then run the github script locally using [methylExpress.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/methylExpress.R)
 
 ## Pipeline Functions Overview
+### First function is LoadInstall_new.R which lists all the dependencies and required packages 
+<img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/421ecaf2793e8260d83fba35ce6d130e58fc3f0c/screenshots/loadinstall.png" alt="drawing" width="450"/><br />
+
+### Next, the functions inside SetRunParams.R load the default file paths and parameter values
+<img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/421ecaf2793e8260d83fba35ce6d130e58fc3f0c/screenshots/setparam.png" alt="drawing" width="450"/><br />
+
+### The functions inside CopyInputs.R help to setup the methylation run by copying idats and parsing the worksheet to the working directory
+<img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/421ecaf2793e8260d83fba35ce6d130e58fc3f0c/screenshots/copyin.png" alt="drawing" width="450"/><br />
 
