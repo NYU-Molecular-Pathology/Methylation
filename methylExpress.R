@@ -8,8 +8,7 @@ if(length(selectRDs)==0){selectRDs=NULL}else{if(is.na(selectRDs))selectRDs=NULL}
 
 # Check Input Params
 stopifnot(!is.null(token))
-params <- c(token, runID, selectRDs)
-invisible(lapply(params, function(i){message(i, " = ", get(i), " (",typeof(i),")\n")}))
+message("Parameters input:",token, runID, selectRDs)
 
 # Paths to the GitHub Repo files
 mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
@@ -22,5 +21,3 @@ invisible(lapply(scripts, function(i) {devtools::source_url(i)}))
 # Execute Methylation Run
 if(!is.null(runID)){gb$setVar("runID", runID)}
 gb$prepareRun(token); gb$startRun(selectRDs)
-
-
