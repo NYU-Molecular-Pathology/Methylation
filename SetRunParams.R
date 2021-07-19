@@ -21,7 +21,7 @@ setVar <- function(valueName,val){return(assign(valueName, val, envir=.GlobalEnv
 assignVar <- function(varStr, assignedVal){
     return(
         tryCatch(
-            expr = {if(!is.null(get(varStr)))},
+            expr = {if(!is.null(get(varStr))){cat("")}},
             error = {setVar(varStr,assignedVal)},
             finally = message(varStr," = ",assignedVal)
             )
