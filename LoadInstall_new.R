@@ -318,8 +318,7 @@ startLoadingAll <- function() {
     mgmtLn = "https://git.io/JWKTo"
     cbioLn = "/Volumes/CBioinformatics/Methylation/"
     mnqDir = file.path(cbioLn,"in_house/mnp.v116/mnpqc_0.1.0.tar.gz")
-    startmsg()
-    loadPacks()
+    startmsg(); loadPacks()
     ms <- colorMsg()
     gh.inst("rmarkdown", 'rstudio/rmarkdown')
     if (rq("mgmtstp27")) {
@@ -331,7 +330,7 @@ startLoadingAll <- function() {
     if (rq("mnpqc")) {install.packages(mnqDir, repos = NULL, type="source", verbose=T)}
     if (rq("mnp.v11b6")) {
       cat(ms[2]);install.or.load(instNew = T)}else{
-      cat(ms[1]);install.or.load(instNew = F)  
+      cat(ms[1]);install.or.load(instNew = F)
     }
 }
 startLoadingAll()
