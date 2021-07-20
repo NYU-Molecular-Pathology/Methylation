@@ -17,7 +17,7 @@ generateCNVpng <- function(RGsetEpic, sampleName) {
     MsetEpic <- minfi::preprocessRaw(RGsetEpic)
     png(filename=imgName,width=1820, height=1040)
     mnp.v11b6::MNPcnvplot(MsetEpic)
-    dev.off()
+    dev.off(); message("File saved:\n",imgName,"\n")
 }
 
 getRGset <- function(runPath, sentrix){
