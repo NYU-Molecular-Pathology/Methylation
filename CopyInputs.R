@@ -263,7 +263,7 @@ get.rd.info <- function(rd_numbers=NULL, token=NULL, sh_name=NULL){
     if (is.null(rd_numbers)){message("Input RD-numbers using get.rd.info(rd_numbers)")}
     if (is.null(sh_name)) {sh_name = "samplesheet.csv"}
     if(is.null(token)){message("You must provide an ApiToken!")};stopifnot(!is.null(token))
-    result <- search.redcap(rd_numbers, token, sh_name)
+    result <- search.redcap(rd_numbers, token, NULL)
     samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[,"barcode_and_row_column"],"_",2))
     writeFromRedcap(result, samplesheet_ID) # writes API export as minfi dataframe sheet
     get.idats(csvNam = sh_name)  # copies idat files from return to current directory
