@@ -21,9 +21,8 @@ generateCNVpng <- function(RGsetEpic, sampleName) {
 }
 
 getRGset <- function(runPath, sentrix){
-    pathEpic = file.path(runPath, sentrix)
     barcode = stringr::str_split_fixed(sentrix, "_",2)[1]
-    RGsetEpic <- minfi::read.metharray(pathEpic, verbose = T, force = T)
+    RGsetEpic <- minfi::read.metharray(file.path(runPath, sentrix), verbose = T, force = T)
     aEpic=c(array="IlluminaHumanMethylationEPIC", annotation="ilm10b4.hg19")
     a450k=c(array="IlluminaHumanMethylation450k", annotation="ilmn12.hg19")
     if (barcode >= as.numeric("204220033000")) {RGsetEpic@annotation=aEpic}
@@ -44,6 +43,7 @@ do_report <-function(data = NULL, genCn=F) {
         bnumber = paste0(data[,2])
         runPath = getwd()
         barcode = as.numeric(data[,3])
+        pathEpic = file.path(runPath, sentrix_pos_list)
         RGsetEpic <- getRGset(runPath, sentrix_pos_list)
         RGset = RGsetEpic
         sampleID=paste0(samplename_data)
@@ -134,7 +134,7 @@ makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
             cat(bky(outFileN, "exists skipping sample","\n"))
             next
         } else {
-            cat(bky("\n",dsh,"Now Running", i, "of", length(samList),dsh),"\n")
+            cat(bky("\n",dsh,"Now Running", i, "of", length(samList),dsh),sep="\n")
             do_report(data=data[i, ], genCn)
         }
     }
