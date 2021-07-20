@@ -100,7 +100,7 @@ pk.inst <- function(pkg){
             do.call(install.packages, c(pk.opt,list(type="binary")))
         },
         custom_error=function(cond){message("Error2 caught: ", cond, "\n-----------")
-          easypackages::packages(pkg,prompt=F);message(cond)}
+          easypackages::packages(pkg,prompt=F, Ncpus = 6);message(cond)}
     )
 }
 # FUN: Installs package from github link
@@ -127,7 +127,7 @@ srcInst <- function(fn,...){
   #downLoc = file.path("~/Desktop",basename(fn))
   #download.file(url=fn,destfile=downLoc)
     tryCatch(
-        expr={install.packages(fn, repos=NULL, type="source")},
+        expr={install.packages(fn, repos=NULL, type="source", Ncpus = 6)},
         error=function(cond){
             install.packages(fn,repos=NULL, method="libcurl", type = "source")
           },
@@ -169,7 +169,7 @@ checkNeeds <- function(){
     tryCatch(
         expr={
             if(!("needs" %in% rownames(installed.packages()))){
-                install.packages("needs",dependencies=T,verbose=T)
+                install.packages("needs",dependencies=T,verbose=T, Ncpus = 6)
                 fixNeeds();fixProf()
             }else{
                 fixNeeds();fixProf()
@@ -211,7 +211,7 @@ install.or.load <- function(pathtoFile=NULL, instNew=T, rmpkg=F) {
     }else{mnp.pk.loc<-pathtoFile}
     if(rmpkg){remove.packages("mnp.v11b6", lib=.libPaths()[[1]][1])}
     if(instNew){
-        install.packages(mnp.pk.loc, repos=NULL, type="source", force=T)
+        install.packages(mnp.pk.loc, repos=NULL, type="source", force=T, Ncpus = 6)
         install.or.load(instNew=F)
     }else{ld("mnp.v11b6")}
 }
@@ -233,7 +233,7 @@ loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bioPks=bioc
             if (rq("tidyverse")) {pk.inst("tidyverse")}else{ld("tidyverse")}
             easypackages::packages("parallel","doSNOW","doParallel", "foreach","compiler", prompt=F)
             if(suppressWarnings(!require("BiocManager"))){
-              install.packages("BiocManager")
+              install.packages("BiocManager", Ncpus = 6)
               BiocManager::install(version="3.10",update=T, ask=F, type="source")
             }
             #if(BiocManager::version()!='3.13'){BiocManager::install(version="3.13",update=T, ask=F, type="source")}
@@ -295,7 +295,7 @@ startmsg <- function(){
   message("You have the following drives mounted:")
   system("ls /Volumes")
   stopifnot(dir.exists(cbio) | dir.exists(zdriv))
-  system("gcc --version")
+  #system("gcc --version")
 }
 
 colorMsg <- function(){
