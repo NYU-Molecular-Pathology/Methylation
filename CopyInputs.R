@@ -218,3 +218,54 @@ moveSampleSheet <- function(methDir, runID=NULL) {
     fs::file_copy(path=paste0(currDir,"/samplesheet.csv"),new_path=baseFolder,overwrite=T)
     file.rename(from=paste0(baseFolder,"samplesheet.csv"), to=endDir)
 }
+
+#  Copy idats and Worksheets creation
+writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
+    if (is.null(bn)) {bn = file.path(getwd(), df$barcode_and_row_column)}
+    message("~~~Writing from redcap samplesheet.csv:")
+    names(df)
+    samplesheet_csv = data.frame(
+        Sample_Name = df[, "record_id"],
+        DNA_Number = df[,"b_number"],
+        Sentrix_ID = samplesheet_ID[, 1],
+        Sentrix_Position = samplesheet_ID[, 2],
+        SentrixID_Pos = df[, "barcode_and_row_column"],
+        Basename = paste0(bn),
+        RunID = df$run_number,
+        MP_num = df$accession_number,
+        tech = df$primary_tech,
+        tech2 = df$second_tech,
+        Date = df$arrived
+    )
+    print(samplesheet_csv)
+    write.csv(
+        samplesheet_csv,
+        file = "samplesheet.csv",
+        quote = F,
+        row.names = F
+    )
+}
+
+#' FUN: Returns dataframe of redcap search using default worksheet header and fields
+search.redcap <- function(rd_numbers, flds=NULL,ApiToken=NULL) {
+    if(!require("redcapAPI")){install.packages("redcapAPI", dependencies = T, type="both",ask=F);library("redcapAPI")}
+    if(is.null(ApiToken)){message("You must provide an ApiToken!")}
+    rcon <- redcapAPI::redcapConnection(gb$apiLink, ApiToken)
+    if (is.null(flds)){flds = c("record_id","b_number","primary_tech","second_tech","run_number",
+                                "barcode_and_row_column","accession_number","arrived")}
+    result <- redcapAPI::exportRecords(rcon,records = rd_numbers,fields = flds,dag = F,factors = F,
+                                       labels = F,dates = F, form_complete_auto = F,format = 'csv')
+    result <- as.data.frame(result)
+    return(result)
+}
+
+# FUN: Copies .idat files to your directory and saves samplesheet.csv
+get.rd.info <- function(rd_numbers=NULL, sh_name=NULL, token=NULL){
+    if (is.null(rd_numbers)){message("Input RD-numbers using get.rd.info(rd_numbers)")}
+    if (is.null(sh_name)) {sh_name = "samplesheet.csv"}
+    result <- search.redcap(rd_numbers, NULL, token)
+    samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[, "barcode_and_row_column"], "_", 2))
+    writeFromRedcap(result, samplesheet_ID) # writes API export as minfi dataframe sheet
+    get.idats(csvNam = sh_name)  # copies idat files from return to current directory
+    return(result)
+}
