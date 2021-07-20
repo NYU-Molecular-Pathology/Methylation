@@ -182,8 +182,9 @@ copyBaseIdats <- function(allFi) {
     idcs = basename(allFi)
     idatsCopied <- idcs[idcs != ""]
     success = file.exists(idatsCopied)
+    all(success)
     message(".idat files that failed to copy:")
-    if ((length(success) == 0)) {cat("none","\n")} else {print(idatsCopied[!success])}
+    if (all(success)) {cat("none","\n")} else {print(idatsCopied[!success])}
 }
 
 # Helper FUN called during copying idats to notify if a network mount is not found
@@ -201,7 +202,7 @@ get.idats <-function(csvNam = "samplesheet.csv"){
         allFi = allFi[file.exists(allFi)]
         if (length(allFi) > 0) {
             message("Files found: "); print(allFi)
-            cur.idat <- dir(pattern = "*.idat")
+            cur.idat <- dir(pattern = "*.idat$")
             bcds <- paste0(basename(allFi))
             if (all(bcds %in% cur.idat)) {message(".idat files already copied")}
             if (length(cur.idat) < length(allFi)) {copyBaseIdats(allFi[!(bcds %in% cur.idat)])}
