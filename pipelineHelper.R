@@ -20,6 +20,17 @@ generateCNVpng <- function(RGsetEpic, sampleName) {
     dev.off()
 }
 
+getRGset <- function(runPath, sentrix){
+    pathEpic = file.path(runPath, sentrix)
+    barcode = stringr::str_split_fixed(sentrix, "_",2)[1]
+    RGsetEpic <- minfi::read.metharray(pathEpic, verbose = T, force = T)
+    aEpic=c(array="IlluminaHumanMethylationEPIC", annotation="ilm10b4.hg19")
+    a450k=c(array="IlluminaHumanMethylation450k", annotation="ilmn12.hg19")
+    if (barcode >= as.numeric("204220033000")) {RGsetEpic@annotation=aEpic}
+    if (RGsetEpic@annotation['array']=="IlluminaHumanMethylation450k") {RGsetEpic@annotation=a450k}
+    return(RGsetEpic)
+}
+
 # Helper function called by makeReports.v11b6 to generate the HTML report
 do_report <-function(data = NULL, genCn=F) {
     require(rmarkdown)
@@ -33,12 +44,7 @@ do_report <-function(data = NULL, genCn=F) {
         bnumber = paste0(data[,2])
         runPath = getwd()
         barcode = as.numeric(data[,3])
-        pathEpic = file.path(runPath, sentrix_pos_list)
-        RGsetEpic <- minfi::read.metharray(pathEpic, verbose = T, force = T)
-        aEpic=c(array="IlluminaHumanMethylationEPIC", annotation="ilm10b4.hg19")
-        a450k=c(array="IlluminaHumanMethylation450k", annotation="ilmn12.hg19")
-        if (barcode >= as.numeric("204220033000")) {RGsetEpic@annotation=aEpic}
-        if (RGsetEpic@annotation['array']=="IlluminaHumanMethylation450k") {RGsetEpic@annotation=a450k}
+        RGsetEpic <- getRGset(runPath, sentrix_pos_list)
         RGset = RGsetEpic
         sampleID=paste0(samplename_data)
         FFPE = NULL

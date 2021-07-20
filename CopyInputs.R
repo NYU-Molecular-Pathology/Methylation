@@ -247,24 +247,24 @@ writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
 }
 
 #' FUN: Returns dataframe of redcap search using default worksheet header and fields
-search.redcap <- function(rd_numbers, flds=NULL,ApiToken=NULL) {
+search.redcap <- function(rd_numbers, token=NULL, flds=NULL) {
     if(!require("redcapAPI")){install.packages("redcapAPI", dependencies = T, type="both",ask=F);library("redcapAPI")}
-    if(is.null(ApiToken)){message("You must provide an ApiToken!")}
-    rcon <- redcapAPI::redcapConnection(gb$apiLink, ApiToken)
+    if(is.null(token)){message("You must provide an ApiToken!")};stopifnot(!is.null(token))
+    rcon <- redcapAPI::redcapConnection(gb$apiLink, token)
     if (is.null(flds)){flds = c("record_id","b_number","primary_tech","second_tech","run_number",
                                 "barcode_and_row_column","accession_number","arrived")}
     result <- redcapAPI::exportRecords(rcon,records = rd_numbers,fields = flds,dag = F,factors = F,
                                        labels = F,dates = F, form_complete_auto = F,format = 'csv')
-    result <- as.data.frame(result)
-    return(result)
+    return(as.data.frame(result))
 }
 
 # FUN: Copies .idat files to your directory and saves samplesheet.csv
-get.rd.info <- function(rd_numbers=NULL, sh_name=NULL, token=NULL){
+get.rd.info <- function(rd_numbers=NULL, token=NULL, sh_name=NULL){
     if (is.null(rd_numbers)){message("Input RD-numbers using get.rd.info(rd_numbers)")}
     if (is.null(sh_name)) {sh_name = "samplesheet.csv"}
+    if(is.null(token)){message("You must provide an ApiToken!")};stopifnot(!is.null(token))
     result <- search.redcap(rd_numbers, NULL, token)
-    samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[, "barcode_and_row_column"], "_", 2))
+    samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[,"barcode_and_row_column"],"_",2))
     writeFromRedcap(result, samplesheet_ID) # writes API export as minfi dataframe sheet
     get.idats(csvNam = sh_name)  # copies idat files from return to current directory
     return(result)
