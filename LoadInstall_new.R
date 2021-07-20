@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-
+options(Ncpus = 6)
 # Cran Packages ----
 cranPkgs <-
   c(
@@ -49,10 +49,6 @@ cranPkgs <-
     "tinytex"
   )
 
-# Extra Libraries ----
-easyPkgs <-
-  c('tidyverse','sjmisc','stringi','digest','RCurl','gridExtra','needs')
-
 # GitHub Packages ----
 gHubPkgs <-
   data.frame(
@@ -73,6 +69,10 @@ biocPkgs <-
     'IlluminaHumanMethylationEPICanno.ilm10b4.hg19', 'MethylAid', 'conumee','BiocParallel',
     "Biobase","limma"
     )
+
+# Extra Libraries ----
+easyPkgs <- c('tidyverse','sjmisc','stringi','digest','RCurl','gridExtra','needs')
+
 # Helper Functions ----
 sw <- function(pkgOb){try(return(suppressMessages(suppressWarnings(pkgOb))),silent=T)}
 rq <- function(pkg){return(sw(!require(pkg, character.only=T)))}

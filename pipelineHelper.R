@@ -182,16 +182,16 @@ checkMounts <- function(){
 
 # Executes the functions in order to setup a run
 prepareRun <- function(token){
-    runValid <- checkValidRun(gb$runID)
+    runValid <- gb$checkValidRun(gb$runID)
     message("Is the runID valid? ", runValid)
     if(!runValid){message("runID ",gb$runID," is not valid"); stopifnot(runValid)}
     methylPath <- gb$setRunDir(gb$runID)
     message("Working directory set to:"); cat(crayon::bgGreen(methylPath)); setwd(methylPath)
     gb$setVar("ApiToken", token) # assign the ApiToken & print params
-    copyWorksheetFile(runID = gb$runID) # copies the xlsm file
-    readSheetWrite() # reads xlsm and generates input .csv samplesheet
-    get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
-    moveSampleSheet(gb$methDir) #copies outputs temp to desktop for QC.Rmd
+    gb$copyWorksheetFile(runID = gb$runID) # copies the xlsm file
+    gb$readSheetWrite() # reads xlsm and generates input .csv samplesheet
+    gb$get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
+    gb$moveSampleSheet(gb$methDir) #copies outputs temp to desktop for QC.Rmd
     gb$install.or.load(instNew = F, rmpkg = F) # Loads pipeline or installs new
 }
 
