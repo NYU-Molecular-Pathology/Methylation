@@ -86,7 +86,7 @@ up <- function(){update.packages(repos='http://cran.rstudio.com/',type = "source
 #'
 #' @return Message if loading the library was successful
 pk.inst <- function(pkg){
-    pk.opt <- list(pkg,dependencies=T,verbose=T)
+    pk.opt <- list(pkg,dependencies=T,verbose=T,Ncpus = 6)
     message("Checking ", pkg, "...")
     tryCatch(
         expr={if(rq(pkg)){
@@ -189,7 +189,7 @@ checkNeeds <- function(){
 setOptions <- function(){
     options(needs.promptUser=F); Sys.setenv(R_ENABLE_JIT=T)
     options("needs.promptUser"=F); options("promptUser"=F)
-    options("device.ask.default" ='1')
+    options("device.ask.default" = FALSE)
     options("install.packages.compile.from.source"="Yes")
     options("install.packages.check.source"="yes")
     compiler::enableJIT(3); compiler::compilePKGS(enable=T);
