@@ -176,11 +176,11 @@ checkNeeds <- function(){
             }
         },
         error=function(cond){
-            devtools::install_github("joshkatz/needs", ref = "development",dependencies=T,verbose=T)
+            devtools::install_github("joshkatz/needs", ref = "development",dependencies=T,verbose=T,upgrade="always")
             fixNeeds();fixProf()
         },
         warning=function(cond){
-            devtools::install_github("joshkatz/needs", ref = "development",dependencies=T,verbose=T)
+            devtools::install_github("joshkatz/needs", ref = "development",dependencies=T,verbose=T,upgrade="always")
             fixNeeds();fixProf()
         }
     )
