@@ -24,8 +24,8 @@ loadPacks <- function(){
     options(repos = rlis)
    invisible(lapply(pkgs, function(pk){
         if(suppressWarnings(!require(pk, character.only=T))){
-        pk.opt <- list(pk,dependencies=T, verbose=T)
-        do.call(install.packages, c(pk.opt, list(repos = "http://cran.us.r-project.org", type="source")))}}))
+
+        install.packages(pk,dependencies=T, verbose=T, repos = "http://cran.us.r-project.org", type="source")}}))
 }
 
 # API Call functions -----
