@@ -22,10 +22,10 @@ loadPacks <- function(){
     rlis = getOption("repos")
     rlis["CRAN"] = "http://cran.us.r-project.org"
     options(repos = rlis)
-   invisible(lapply(pkgs, function(pk){
+    invisible(lapply(pkgs, function(pk){
         if(suppressWarnings(!require(pk, character.only=T))){
-
-        install.packages(pk,dependencies=T, verbose=T, repos = "http://cran.us.r-project.org", type="source")}}))
+            install.packages(pk,dependencies=T, verbose=T, repos="http://cran.us.r-project.org", type="both")
+            }}))
 }
 
 # API Call functions -----
