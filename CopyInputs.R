@@ -194,7 +194,7 @@ warnMount <- function(idat.dir){
 
 # FUN: Returns a list of idat files that exist on Molecular and Snuderl lab drives -
 get.idats <-function(csvNam = "samplesheet.csv"){
-    rsch.idat = gb$rsch.idat;clin.idat = gb$clin.idat
+    rsch.idat <- gb$rsch.idat;clin.idat <- gb$clin.idat
     if(!dir.exists(rsch.idat)){warnMount(rsch.idat)}; if(!dir.exists(clin.idat)){warnMount(clin.idat)}
     stopifnot(dir.exists(rsch.idat)|dir.exists(clin.idat))
     if (file.exists(csvNam)) {
