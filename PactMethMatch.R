@@ -18,11 +18,11 @@ if(suppressWarnings(!require("redcapAPI"))){
 
 # Functions to load packages and get redcap info -----
 loadPacks <- function(){
-    pkgs = c("data.table", "foreach", "xlsx","jsonlite","RCurl","crayon")
-    invisible(sapply(pkgs, function(pk){
+    pkgs = c("data.table", "foreach", "xlsx","jsonlite","RCurl")
+   invisible(lapply(pkgs, function(pk){
         if(suppressWarnings(!require(pk, character.only=T))){
-        pk.opt <- list(pk,dependencies=T, verbose=T, Ncpu=6,type="source")
-        do.call(install.packages, c(pk.opt))}}))
+        pk.opt <- list(pk,dependencies=T, verbose=T)
+        do.call(install.packages, c(pk.opt, list(type="source")))}}))
 }
 
 # API Call functions -----
@@ -47,8 +47,10 @@ loadPacks()
 # Get Methylation and Molecular Samples list ----
 rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", token)
 db <- grabAllRecords(token, flds, rcon)
-methResA <- searchDb(strtrim(vals2find[,1], 10), db)
-methResB <- searchDb(vals2find[,2], db)
+query1 <- vals2find[,1][vals2find[,1]!=0 & vals2find[,1] !=""]
+methResA <- searchDb(strtrim(query1, 10), db)
+query2 <- vals2find[,2][vals2find[,2]!=0 & vals2find[,2] !=""]
+methResB <- searchDb(query2, db)
 output <- unique(rbind(methResA, methResB))
 runId <- paste0(head(read.csv(inputSheet))[3,2])
 winpath = "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/MOLECULAR/NYU-METHYLATION/Results/"
@@ -60,13 +62,10 @@ xlsx::write.xlsx(output, file.path("~/Desktop",outFi), sheetName = runId, row.na
 
 record = data.frame(record_id = runId, run_number = runId)
 datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
-res<-RCurl::postForm(rcon$url,token=rcon$token,content='record',format='json',type='flat',data=datarecord)
-cat(res)
+RCurl::postForm(rcon$url,token=rcon$token,content='record',format='json',type='flat',data=datarecord)
 redcapAPI::importFiles(rcon,file= file.path("~/Desktop",outFi), runId, field="other_file", repeat_instance=1)
 
 record = data.frame(record_id = runId, comments="pact_sample_list_email")
 datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
-res<-RCurl::postForm(rcon$url,token=rcon$token,content='record',format='json',type='flat',data=datarecord)
-cat(res)
+RCurl::postForm(rcon$url,token=rcon$token,content='record',format='json',type='flat',data=datarecord)
 message("====Email Notification Created====")
-
