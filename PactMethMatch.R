@@ -19,6 +19,9 @@ if(suppressWarnings(!require("redcapAPI"))){
 # Functions to load packages and get redcap info -----
 loadPacks <- function(){
     pkgs = c("data.table", "foreach", "xlsx","jsonlite","RCurl")
+    rlis = getOption("repos")
+    rlis["CRAN"] = "http://cran.us.r-project.org"
+    options(repos = rlis)
    invisible(lapply(pkgs, function(pk){
         if(suppressWarnings(!require(pk, character.only=T))){
         pk.opt <- list(pk,dependencies=T, verbose=T)
