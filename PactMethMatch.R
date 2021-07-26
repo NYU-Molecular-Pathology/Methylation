@@ -24,8 +24,8 @@ loadPacks <- function(){
     options(repos = rlis)
    invisible(lapply(pkgs, function(pk){
         if(suppressWarnings(!require(pk, character.only=T))){
-        pk.opt <- list(pk,dependencies=T, verbose=T,repos = "http://cran.us.r-project.org")
-        do.call(install.packages, c(pk.opt, list(type="source")))}}))
+        pk.opt <- list(pk,dependencies=T, verbose=T)
+        do.call(install.packages, c(pk.opt, list(repos = "http://cran.us.r-project.org", type="source")))}}))
 }
 
 # API Call functions -----
@@ -44,15 +44,17 @@ searchDb <- function(vals, db){
 # Import csv Worksheet -----
 vals2find <- utils::read.csv(inputSheet, skip=19)[,c(6,7)]
 vals2find <- vals2find[!grepl("H20|SERACARE|HAPMAP", vals2find[,2]),]
-print(vals2find)
+
 loadPacks()
 
 # Get Methylation and Molecular Samples list ----
 rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", token)
 db <- grabAllRecords(token, flds, rcon)
 query1 <- vals2find[,1][vals2find[,1]!=0 & vals2find[,1] !=""]
+print(query1)
 methResA <- searchDb(strtrim(query1, 10), db)
 query2 <- vals2find[,2][vals2find[,2]!=0 & vals2find[,2] !=""]
+print(query2)
 methResB <- searchDb(query2, db)
 output <- unique(rbind(methResA, methResB))
 runId <- paste0(head(read.csv(inputSheet))[3,2])
