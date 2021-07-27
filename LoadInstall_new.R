@@ -56,7 +56,8 @@ gHubPkgs <-
     rstudioapi = 'rstudio/rstudioapi',
     easypackages = 'jakesherman/easypackages',
     redcapAPI = 'nutterb/redcapAPI',
-    crayon = "r-lib/crayon"
+    crayon = "r-lib/crayon",
+    redcap = "epicentre-msf/redcap"
   )
 
 # BioConductor Packages ----
