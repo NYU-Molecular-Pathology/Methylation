@@ -94,7 +94,7 @@ pk.inst <- function(pkg){
             do.call(install.packages, c(pk.opt,list(type="both")))
         }else{message(pkg," ...load successful")}
         },
-        warning=function(cond) {message("Warning caught:", cond, "\n-----------");up()
+        warning=function(cond) {message("Warning caught:", cond, "\n-----------")
           do.call(install.packages, c(pk.opt,list(type="source")))
         },
         error=function(cond) {message("Error1 caught: ", cond, "\n-----------")
@@ -115,7 +115,6 @@ gh.inst <- function(pkNam, ghLnk,...){
         }else{message(pkNam," ...load successful")}
         },
         error=function(cond){
-            up()
             params  <- c(gh.opt,list(type="binary"))
             do.call(devtools::install_github, params)
         }
