@@ -106,7 +106,7 @@ pk.inst <- function(pkg){
 # FUN: Installs package from github link
 gh.inst <- function(pkNam, ghLnk,...){
     message("Checking ", pkNam, "...")
-    gh.opt=list(ghLnk, dependencies=T, upgrade="always",...)
+    gh.opt=list(ghLnk, dependencies=T, upgrade="never",...)
     tryCatch(
         expr={if(rq(pkNam)){
             params <- c(gh.opt,list(type="source"))
