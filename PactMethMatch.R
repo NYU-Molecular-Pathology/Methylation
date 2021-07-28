@@ -83,7 +83,7 @@ record = data.frame(record_id = runId, run_number = runId)
 datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
 res <- RCurl::postForm(rcon$url,token=rcon$token,content='record',format='json',
                        type='flat',data=datarecord, returnContent = 'count', returnFormat = 'csv')
-cat(res)
+cat(res,sep="\n")
 redcapAPI::importFiles(rcon,file= file.path("~/Desktop",outFi), runId, field="other_file", repeat_instance=1)
 
 record = data.frame(record_id = runId, comments="pact_sample_list_email")
