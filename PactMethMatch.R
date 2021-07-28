@@ -50,6 +50,7 @@ loadPacks()
 rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", token)
 db <- grabAllRecords(token, flds, rcon)
 query1 <- vals2find[,1][vals2find[,1]!=0 & vals2find[,1] !=""]
+message("\n~~~ Queried Cases:\n")
 print(query1)
 methResA <- searchDb(strtrim(query1, 10), db)
 query2 <- vals2find[,2][vals2find[,2]!=0 & vals2find[,2] !=""]
@@ -80,10 +81,14 @@ openxlsx::saveWorkbook(wb, file.path("~/Desktop",outFi), overwrite = TRUE)
 
 record = data.frame(record_id = runId, run_number = runId)
 datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
-RCurl::postForm(rcon$url,token=rcon$token,content='record',format='json',type='flat',data=datarecord)
+res <- RCurl::postForm(rcon$url,token=rcon$token,content='record',format='json',
+                       type='flat',data=datarecord, returnContent = 'count', returnFormat = 'csv')
+cat(res)
 redcapAPI::importFiles(rcon,file= file.path("~/Desktop",outFi), runId, field="other_file", repeat_instance=1)
 
 record = data.frame(record_id = runId, comments="pact_sample_list_email")
 datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
-RCurl::postForm(rcon$url,token=rcon$token,content='record',format='json',type='flat',data=datarecord)
-message("====Email Notification Created====")
+res<-RCurl::postForm(rcon$url,token=rcon$token,content='record',format='json',type='flat',
+                data=datarecord,returnContent = 'ids', returnFormat = 'csv')
+cat(res)
+message("\n====Email Notification Created====")
