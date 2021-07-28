@@ -27,12 +27,21 @@ ___
 ## Install pipeline and start a Run in Terminal
 ### To run the pipeline from your terminal, simply execute the following command:<br />
 `wget -L https://git.io/JWujj -O methylExpress.R; Rscript --verbose methylExpress.R '#######################' '21-MGDM_TEST' NULL`<br />
+
+If you have issues with wget, you can also use curl to run the script:
+
+`curl -o methylExpress.R -L https://git.io/JWujj; Rscript --verbose methylExpress.R '#######################' '21-MGDM_TEST' NULL`<br />
+
 ### There are two system Rscript to run methylExpress.R with the arguments in order:<br />
 `arg[1]` is the **token** for the API call ('#######################')<br />
 `arg[2]` is the **RunID** which if NULL runs the latest Clinical Worksheet ('MR21-099')<br />
 `arg[3]` is the **selectRds** parameter which is to prioritize samples being run (NULL)<br />
 
 Alternatively, you can source then run the github script locally using [methylExpress.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/methylExpress.R)
+
+# Email List of Methylation samples which are PACT run
+
+`curl -o PactMethMatch.R -L https://git.io/J41Wp; Rscript --verbose PactMethMatch.R 'TOKENAPI12345667891011' '/Users/PATH/TO/CSV/Desktop/210715_NB501073_9999_ABCDEFGHIJRLK-SampleSheet.csv'`
 
 ## Pipeline Functions Overview
 ### First function is LoadInstall_new.R which lists all the dependencies and required packages 
