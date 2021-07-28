@@ -18,7 +18,7 @@ if(suppressWarnings(!require("redcapAPI"))){
 
 # Functions to load packages and get redcap info -----
 loadPacks <- function(){
-    pkgs = c("data.table", "foreach", "xlsx","jsonlite","RCurl")
+    pkgs = c("data.table", "foreach", "openxlsx","jsonlite","RCurl")
     rlis = getOption("repos")
     rlis["CRAN"] = "http://cran.us.r-project.org"
     options(repos = rlis)
@@ -44,7 +44,6 @@ searchDb <- function(vals, db){
 # Import csv Worksheet -----
 vals2find <- utils::read.csv(inputSheet, skip=19)[,c(6,7)]
 vals2find <- vals2find[!grepl("H20|SERACARE|HAPMAP", vals2find[,2]),]
-
 loadPacks()
 
 # Get Methylation and Molecular Samples list ----
@@ -60,10 +59,23 @@ output <- unique(rbind(methResA, methResB))
 runId <- paste0(head(read.csv(inputSheet))[3,2])
 winpath = "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/MOLECULAR/NYU-METHYLATION/Results/"
 output$report_complete <- ifelse(!is.na(output$run_number), "YES", "NOT_YET_RUN")
-output$reportPath <- paste0(winpath,format(Sys.Date(),"%Y"),"/",output$run_number,"/",output$record_id,".html")
-output$reportPath[is.na(output$run_number)] <- "NOT_YET_RUN"
+output$'Report Link' <- paste0(winpath, format(Sys.Date(),"%Y"),"/",output$run_number,"/",output$record_id,".html")
+output$'Report Link'[is.na(output$run_number)] <- ""
+output$'Report Path'<-output$'Report Link'
 outFi <- paste0(runId,"_MethylMatch.xlsx")
-xlsx::write.xlsx(output, file.path("~/Desktop",outFi), sheetName = runId, row.names = F)
+
+wb <- openxlsx::createWorkbook()
+openxlsx::addWorksheet(wb, runId)
+openxlsx::writeData(wb, sheet=runId, x= output)
+for (fiLn in 1:length(output$'Report Link')) {
+    if(output$'Report Link'[fiLn]!=''){
+        x <- c(output$'Report Link'[fiLn])
+        names(x) <- paste0(output$record_id[fiLn],".html")
+        class(x) <- "hyperlink"
+        writeData(wb, sheet = runId, x = x, startCol = 11, startRow=fiLn+1)
+    }
+}
+openxlsx::saveWorkbook(wb, file.path("~/Desktop",outFi), overwrite = TRUE)
 
 record = data.frame(record_id = runId, run_number = runId)
 datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
