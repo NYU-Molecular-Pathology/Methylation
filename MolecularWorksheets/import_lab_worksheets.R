@@ -324,7 +324,9 @@ grab.recent <- function(ws.type, td = NULL, doAll = F) {
   if (ws.type == "FUSION") {return(grab.fusion.ws(ws, td))
   } else
   if (ws.type == "PACT") {file.list <- dir(ws, pattern = fend, full.names = T)
-  } else {file.list <- dir(ws, pattern = fend, full.names = T)}
+  } else {
+    file.list <- dir(ws, pattern = fend, full.names = T)
+    }
   if (doAll == T) {return(removePattern(file.list))}
   file.list <- removePattern(file.list)
   recentMod <- grab.today(file.list)
@@ -362,7 +364,9 @@ parse.ws <- function(file.list, naHeader, xl.range, ws.type) {
         return(readxl::read_excel(file.list[ws], sheet = 1, xl.range, naHeader, "text"))
       }
     )
-    as.data.frame(dataRead[!is.na(dataRead[, 2]),])
+    doc <- as.data.frame(dataRead[!is.na(dataRead[, 2]),])
+    doc$fileName <- paste0(file.list[ws])
+    doc
   }
 }
 
@@ -390,12 +394,12 @@ clean.output <- function(files.read, ws.type) {
   cntrls <- c("NTC" = "", "SC" = "", "NC" = "")
   if (grepl("PACT", toupper(ws.type)) == T) {
     files.read[, 6] <- stringr::str_replace_all(trimws(files.read[, 6]), cntrls)
-    dat.io <-as.data.frame(files.read[c(files.read[, 6] != ""), c(6:10, 13:15)])
+    dat.io <-as.data.frame(files.read[c(files.read[, 6] != ""), c(6:10, 13:15,ncol(files.read))])
   }
   if(ws.type=="METH"){
-    dat.io <- as.data.frame(files.read[!is.na(files.read[, 2]), c(2,3,1,4)])
+    dat.io <- as.data.frame(files.read[!is.na(files.read[, 2]), c(2,3,1,4,ncol(files.read))])
   } else {
-    dat.io <- as.data.frame(files.read[!is.na(files.read[, 2]), c(2, 3, 7:9)])
+    dat.io <- as.data.frame(files.read[!is.na(files.read[, 2]), c(2, 3, 7:9,ncol(files.read))])
     dat.io[, 5] <- toupper(stringr::str_replace_all(trimws(dat.io[, 5]), spaceFix))
   }
   dat.io[, 1] <- toupper(stringr::str_replace_all(trimws(dat.io[, 1]), autocorrect))
@@ -452,11 +456,12 @@ combBQ <- local(function(dat.io, bqCurr, rcrd, col2swap) {
 
 dropNAvals <- function(dat.io) {
   if (length(names(table(dat.io == "NA"))) > 1) {
-    dat.io[dat.io == "NA"] <- ""
+    idx <- which(dat.io == "NA", arr.ind=TRUE)
+    if(length(idx)>0){dat.io[idx] <- ""}
+    idx <- which(dat.io == NA, arr.ind=TRUE)
+    if(length(idx)>0){dat.io[idx] <- ""}
   }
-  if (length(names(table(is.na(dat.io)))) > 1) {
-    dat.io[is.na(dat.io)] <- ""
-  }
+  #if (length(names(table(is.na(dat.io)))) > 1) {dat.io[is.na(dat.io)] <- ""}
   return(dat.io)
 }
 
@@ -484,10 +489,9 @@ msg.io <- function(dat.io = NULL, ws.type = NULL, rez = NULL) {
     cat(crayon::bgGreen(paste(ws.type, ": Import is up-to-date\n")))
   }
   if (length(dat.io) > 0 & !is.null(ws.type)) {
-    io_name <-
-      paste(format(Sys.Date(), "%b%d"), ws.type, "sheets.csv", sep = "_")
+    io_name <- paste(format(Sys.Date(), "%b%d"), ws.type, "sheets.csv", sep = "_")
     message("\nSaving CSV: ", io_name, "\n")
-    readr::write_csv(dat.io, io_name, na = "")
+    readr::write_csv(dat.io, file.path("~/Desktop",io_name), na = "")
   }
 }
 
@@ -513,6 +517,7 @@ csv2redcap <- function(dat.io, api.tkn, ws.type) {
   if (is.null(dat.io)) {return(NULL)}
   dat.io <- checkDupes(rcon, dat.io)
   msg.io(dat.io, ws.type, NULL)
+  dat.io <- dat.io[,!names(dat.io)%in%"fileName"]
   pushRedcap(jsonlite::toJSON(dat.io), rcon)
 }
 
@@ -556,7 +561,7 @@ sheets.to.redcap <-
       automate.calls("FUSION", api.tkn, td, doAll)
       automate.calls("METH", api.tkn, td, doAll)
     }
-  }
+}
 
 sheets.to.redcap(api.tkn,ws.type,doAll)
 
