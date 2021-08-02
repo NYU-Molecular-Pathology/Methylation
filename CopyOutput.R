@@ -158,9 +158,31 @@ copy2outFolder <-function(clinDrv = NULL, runID, runYear = NULL) {
 
     if (length(oldFi) > 0) {save.prev.folder(prevs, oldFi)} # saves any old files
     file.list = dir(path = getwd(), "*.html", full.names = T)
-    newFolder <- base::rep(newFolder,length(file.list))
+    #newFolder <- base::rep(newFolder,length(file.list))
+    
     message("\nCopying Existing Reports to Folder...\n")
-    fs::file_copy(file.list, newFolder, overwrite = T)
+    message(crayon::bgBlue(newFolder),"\n")
+    message("Files to copy:\n")
+    print(file.list)
+    #fs::file_copy(file.list, newFolder, overwrite = T)
+    #lapply(file.list, function(foo){fs::file_copy(foo, newFolder, overwrite=T)})
+    lapply(file.list,
+       function(foo) {
+           destDir = file.path(newFolder, basename(foo))
+               tryCatch(
+                   expr = {
+                       if(file.exists(destDir)){unlink(destDir)}
+                       fs::file_copy(foo,destDir , overwrite = T)
+                   },
+                   error = function(cond) {
+                       message(cond,"\n")
+                       message("Trying other file copy method:")
+                       if(!file.exists(foo)){print(paste(foo, "does not exist"))}else{
+                       cmnd = paste("cp", foo, newFolder)
+                       system(cmnd)}
+                   })  
+       })
+    
     if (isMC) {
         cnList <- dir(getwd(), "_cnv.png",recursive = F)
         hasCn <- length(cnList) > 2
