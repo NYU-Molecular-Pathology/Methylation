@@ -59,7 +59,8 @@ methResB <- searchDb(query2, db)
 output <- unique(rbind(methResA, methResB))
 runId <- paste0(head(read.csv(inputSheet))[3,2])
 message("======",runId,"======")
-winpath = "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/MOLECULAR/NYU-METHYLATION/Results/"
+yearPath = ""
+winpath = "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/MethylationClassifier/"
 output$report_complete <- ifelse(!is.na(output$run_number), "YES", "NOT_YET_RUN")
 output$'Report Link' <- paste0(winpath, format(Sys.Date(),"%Y"),"/",output$run_number,"/",output$record_id,".html")
 output$'Report Link'[is.na(output$run_number)] <- ""
