@@ -7,6 +7,12 @@ token<-args[1]; inputSheet<-args[2]
 # Check Input Params -----
 message("====Parameters input====\ntoken: ",token,"\n","Worksheet: ", inputSheet,"\n"); stopifnot(!is.null(token))
 
+readFlag=F
+
+if(endsWith(inputSheet,".csv")){
+    readFlag=T
+}
+
 # REDcap Heading Fields -----
 flds = c("record_id","b_number","tm_number","accession_number","block","diagnosis","organ","tissue_comments","run_number")
 
@@ -25,7 +31,7 @@ loadPacks <- function(){
     invisible(lapply(pkgs, function(pk){
         if(suppressWarnings(!require(pk, character.only=T))){
             install.packages(pk,dependencies=T, verbose=T, repos="http://cran.us.r-project.org", type="both")
-            }}))
+        }}))
 }
 
 # API Call functions -----
@@ -37,13 +43,26 @@ grabAllRecords <- function(token, flds, rcon){
 
 # Database search function -----
 searchDb <- function(vals, db){
-    vals2find <- paste(vals, collapse="|"); i=NULL
-    return(foreach::foreach(i=1:ncol(db), .combine='rbind') %do% {db[grepl(vals2find,db[,i]),]})
+    v2f <- paste(vals, collapse="|"); i=NULL
+    return(foreach::foreach(i=1:ncol(db), .combine='rbind') %do% {db[grepl(v2f,db[,i]),]})
 }
 
 # Import csv Worksheet -----
-vals2find <- utils::read.csv(inputSheet, skip=19)[,c(6,7)]
+
+if(readFlag==T){}
+vals2find <- utils::read.csv(inputSheet, skip=19)[,c(6,7,9)]
 vals2find <- vals2find[!grepl("H20|SERACARE|HAPMAP", vals2find[,2]),]
+}else{
+    
+    drive = file.path("", "Volumes", "molecular", "MOLECULAR LAB ONLY")
+    folder <- file.path("NYU PACT Patient Data", "Workbook")
+    runyr <- stringr::str_split_fixed(inputSheet,"-",3)[,2]
+    inputFi <- file.path(drive, folder, paste0("20", runyr),inputSheet,paste0(inputSheet,".xlsx"))
+    if(file.exists(inputFi)){
+        vals2find <-  as.data.frame(readxl::read_excel(inputFi, sheet=7, skip=19, col_types ="text")[,c(6,7,9)])
+        vals2find <- vals2find[!grepl("H20|SERACARE|HAPMAP", vals2find[,2]),]
+    }else{message("The PACT run worksheet was not found:\n",inputFi)}
+}
 loadPacks()
 
 # Get Methylation and Molecular Samples list ----
@@ -52,17 +71,43 @@ db <- grabAllRecords(token, flds, rcon)
 query1 <- vals2find[,1][vals2find[,1]!=0 & vals2find[,1] !=""]
 message("\n~~~ Queried Cases:\n")
 print(query1)
-methResA <- searchDb(strtrim(query1, 10), db)
+methResA <- searchDb(query1, db)
 query2 <- vals2find[,2][vals2find[,2]!=0 & vals2find[,2] !=""]
 print(query2)
 methResB <- searchDb(query2, db)
 output <- unique(rbind(methResA, methResB))
 runId <- paste0(head(read.csv(inputSheet))[3,2])
 message("======",runId,"======")
-yearPath = ""
+yearPat <- stringr::str_split_fixed(output$run_number,"-",2)[,1]
+yearPath <- lapply(yearPat, function(yr) {
+    rnum <- NULL
+    if(nchar(yr)>2){rnum <- substring(yr, 3)}else{rnum <- yr}
+    if(nchar(yr)>0){paste0("20",rnum)}else{rnum}
+    })
 winpath = "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/MethylationClassifier/"
+ngsNumb <- vals2find[,c(1,2,3)]
+
+v2f <- lapply(X=c(1,2,4), FUN=function(X){
+    newval<- output[,X]
+    newval<- newval[!is.na(newval)&newval!=""&newval!="0"]
+    c(paste(newval,collapse="|"))
+})
+output$Test_Number <- NA
+for(i in 1:nrow(output)){
+    theVal = NA
+    for (var in 1:ncol(vals2find)) {
+        pat<-vals2find[,var]
+        currRow <- paste(output[i,])
+        theMatch <- which(pat %in% currRow[currRow!="0"&currRow!="NA"])
+        if(length(theMatch)>0){
+            theVal <- vals2find$Test_Number[theMatch]
+            }
+    }
+    output$Test_Number[i] <- theVal
+}
+
 output$report_complete <- ifelse(!is.na(output$run_number), "YES", "NOT_YET_RUN")
-output$'Report Link' <- paste0(winpath, format(Sys.Date(),"%Y"),"/",output$run_number,"/",output$record_id,".html")
+output$'Report Link' <- paste0(winpath, yearPath,"/",output$run_number,"/",output$record_id,".html")
 output$'Report Link'[is.na(output$run_number)] <- ""
 output$'Report Path'<-output$'Report Link'
 outFi <- paste0(runId,"_MethylMatch.xlsx")
@@ -90,6 +135,6 @@ redcapAPI::importFiles(rcon,file= file.path("~/Desktop",outFi), runId, field="ot
 record = data.frame(record_id = runId, comments="pact_sample_list_email")
 datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
 res<-RCurl::postForm(rcon$url,token=rcon$token,content='record',format='json',type='flat',
-                data=datarecord,returnContent = 'ids', returnFormat = 'csv')
+                     data=datarecord,returnContent = 'ids', returnFormat = 'csv')
 cat(res)
 message("\n====Email Notification Created====")
