@@ -60,6 +60,7 @@ vals2find <- vals2find[!grepl("H20|SERACARE|HAPMAP", vals2find[,2]),]
     if(file.exists(inputFi)){
         vals2find <-  as.data.frame(readxl::read_excel(inputFi, sheet=7, skip=19, col_types ="text")[,c(6,7,9)])
         vals2find <- vals2find[!grepl("H20|SERACARE|HAPMAP", vals2find[,2]),]
+        vals2find <- vals2find[!is.na(vals2find[,1]),]
     }else{message("The PACT run worksheet was not found:\n",inputFi)}
 }
 loadPacks()
@@ -141,4 +142,4 @@ datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
 res<-RCurl::postForm(rcon$url,token=rcon$token,content='record',format='json',type='flat',
                      data=datarecord,returnContent = 'ids', returnFormat = 'csv')
 cat(res)
-message("\n====Email Notification Created====") 
+message("\n====Email Notification Created====")
