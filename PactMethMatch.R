@@ -141,4 +141,4 @@ datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
 res<-RCurl::postForm(rcon$url,token=rcon$token,content='record',format='json',type='flat',
                      data=datarecord,returnContent = 'ids', returnFormat = 'csv')
 cat(res)
-message("\n====Email Notification Created====")
+message("\n====Email Notification Created====") 
