@@ -40,7 +40,7 @@ copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
             if(nchar(yr)>0){paste0("20",rnum)}else{rnum}
             return(rnum)
         }
-        runYear=grabyear(yearPat))
+        runYear=grabyear(yearPat)
         }
     stopifnot(!is.null(runID))
     isMC = sjmisc::str_contains(runID, "MGDM")|sjmisc::str_contains(runID, "MC")
