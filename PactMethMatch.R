@@ -48,12 +48,11 @@ searchDb <- function(vals, db){
 }
 
 # Import csv Worksheet -----
-
-if(readFlag==T){}
+inputFi =NULL
+if(readFlag==T){
 vals2find <- utils::read.csv(inputSheet, skip=19)[,c(6,7,9)]
 vals2find <- vals2find[!grepl("H20|SERACARE|HAPMAP", vals2find[,2]),]
 }else{
-    
     drive = file.path("", "Volumes", "molecular", "MOLECULAR LAB ONLY")
     folder <- file.path("NYU PACT Patient Data", "Workbook")
     runyr <- stringr::str_split_fixed(inputSheet,"-",3)[,2]
@@ -76,7 +75,12 @@ query2 <- vals2find[,2][vals2find[,2]!=0 & vals2find[,2] !=""]
 print(query2)
 methResB <- searchDb(query2, db)
 output <- unique(rbind(methResA, methResB))
+
+if(readFlag==T){
 runId <- paste0(head(read.csv(inputSheet))[3,2])
+}else{
+    runId <- paste0(head(readxl::read_excel(inputFi, sheet=7))[3,2])
+}
 message("======",runId,"======")
 yearPat <- stringr::str_split_fixed(output$run_number,"-",2)[,1]
 yearPath <- lapply(yearPat, function(yr) {
