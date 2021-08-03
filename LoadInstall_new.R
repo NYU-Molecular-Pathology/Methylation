@@ -320,6 +320,7 @@ startLoadingAll <- function() {
     mnqDir = file.path(cbioLn,"in_house/mnp.v116/mnpqc_0.1.0.tar.gz")
     startmsg(); loadPacks()
     ms <- colorMsg()
+    Sys.setenv(RSTUDIO_PANDOC='/Applications/RStudio.app/Contents/MacOS/pandoc')
     system("export RSTUDIO_PANDOC=/Applications/RStudio.app/Contents/MacOS/pandoc")
     gh.inst("rmarkdown", 'rstudio/rmarkdown')
     if (rq("mgmtstp27")) {
