@@ -244,8 +244,8 @@ loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bioPks=bioc
             # Loads libraries
             ready <- ezLibs %in% sessioninfo::package_info()[["package"]]
             if(any(!ready)){lapply(ezLibs[!ready], require, character.only=TRUE)}
-            fldx <- function(nmn = "foldAll") {return(rstudioapi::executeCommand(nmn))}
-            assign(x = "fldx", value = fldx, envir = .GlobalEnv)
+            #fldx <- function(nmn = "foldAll") {return(rstudioapi::executeCommand(nmn))}
+            #assign(x = "fldx", value = fldx, envir = .GlobalEnv)
         },
         error= function(cond){
             message("\n~~~You encountered the following error during install:\n", cond,"\n")
