@@ -24,7 +24,7 @@ if(suppressWarnings(!require("redcapAPI"))){
 
 # Functions to load packages and get redcap info -----
 loadPacks <- function(){
-    pkgs = c("data.table", "foreach", "openxlsx","jsonlite","RCurl")
+    pkgs = c("data.table", "foreach", "openxlsx","jsonlite","RCurl","readxl","stringr")
     rlis = getOption("repos")
     rlis["CRAN"] = "http://cran.us.r-project.org"
     options(repos = rlis)
@@ -50,15 +50,17 @@ searchDb <- function(vals, db){
 # Import csv Worksheet -----
 inputFi =NULL
 if(readFlag==T){
-vals2find <- utils::read.csv(inputSheet, skip=19)[,c(6,7,9)]
-vals2find <- vals2find[!grepl("H20|SERACARE|HAPMAP", vals2find[,2]),]
+    vals2find <- utils::read.csv(inputSheet, skip=19)[,c(6,7,9)]
+    vals2find <- vals2find[!grepl("H20|SERACARE|HAPMAP", vals2find[,2]),]
 }else{
     drive = file.path("", "Volumes", "molecular", "MOLECULAR LAB ONLY")
     folder <- file.path("NYU PACT Patient Data", "Workbook")
     runyr <- stringr::str_split_fixed(inputSheet,"-",3)[,2]
     inputFi <- file.path(drive, folder, paste0("20", runyr),inputSheet,paste0(inputSheet,".xlsx"))
     if(file.exists(inputFi)){
-        vals2find <-  as.data.frame(readxl::read_excel(inputFi, sheet=7, skip=19, col_types ="text")[,c(6,7,9)])
+        shNames <- readxl::excel_sheets(inputFi)
+        sh <- which(grepl("SampleSheet",shNames,ignore.case=T))[1]
+        vals2find <-  as.data.frame(readxl::read_excel(inputFi, sheet=shNames[sh], skip=19, col_types ="text")[,c(6,7,9)])
         vals2find <- vals2find[!grepl("H20|SERACARE|HAPMAP", vals2find[,2]),]
         vals2find <- vals2find[!is.na(vals2find[,1]),]
     }else{message("The PACT run worksheet was not found:\n",inputFi)}
@@ -78,7 +80,7 @@ methResB <- searchDb(query2, db)
 output <- unique(rbind(methResA, methResB))
 
 if(readFlag==T){
-runId <- paste0(head(read.csv(inputSheet))[3,2])
+    runId <- paste0(head(read.csv(inputSheet))[3,2])
 }else{
     runId <- paste0(head(readxl::read_excel(inputFi, sheet=7))[3,2])
 }
@@ -88,7 +90,7 @@ yearPath <- lapply(yearPat, function(yr) {
     rnum <- NULL
     if(nchar(yr)>2){rnum <- substring(yr, 3)}else{rnum <- yr}
     if(nchar(yr)>0){paste0("20",rnum)}else{rnum}
-    })
+})
 winpath = "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/MethylationClassifier/"
 ngsNumb <- vals2find[,c(1,2,3)]
 
@@ -106,7 +108,7 @@ for(i in 1:nrow(output)){
         theMatch <- which(pat %in% currRow[currRow!="0"&currRow!="NA"])
         if(length(theMatch)>0){
             theVal <- vals2find$Test_Number[theMatch]
-            }
+        }
     }
     output$Test_Number[i] <- theVal
 }
