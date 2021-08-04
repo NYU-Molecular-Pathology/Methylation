@@ -343,6 +343,12 @@ startLoadingAll <- function() {
   } else {
     if (packageVersion("mnp.v11b4") == '0.1.124') {
       install.or.load("Methylation_classifier_v11b4/mnp.v11b4", rmpkg = T)
+    } else{
+      install.or.load(
+        "Methylation_classifier_v11b4/mnp.v11b4",
+        instNew = F,
+        rmpkg = F
+      )
     }
   }
   if (rq("mnp.v11b6")) {
