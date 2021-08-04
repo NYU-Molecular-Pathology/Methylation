@@ -2,73 +2,73 @@
 options(Ncpus = 6)
 # Cran Packages ----
 cranPkgs <-
-  c(
-    'devtools',
-    'remotes',
-    'sjmisc',
-    'stringi',
-    'digest',
-    'RCurl',
-    'rlang',
-    'parallel',
-    'grid',
-    'gridExtra',
-    'knitr',
-    'kableExtra',
-    'ggplot2',
-    'plotly',
-    'ggfortify',
-    'ggrepel',
-    'gplots',
-    'fastmatch',
-    'pals',
-    'Polychrome',
-    'qdapTools',
-    'beepr',
-    'xtable',
-    'pander',
-    'grDevices',
-    'graphics',
-    'stats',
-    'utils',
-    'magick',
-    'ade4',
-    "MASS",
-    "R.utils",
-    "optparse",
-    "targets",
-    "usethis",
-    "webshot",
-    "reshape2",
-    "data.table",
-    "DT",
-    "scales",
-    "RColorBrewer",
-    "readxl",
-    "stringr",
-    "tinytex"
-  )
+    c(
+        'devtools',
+        'remotes',
+        'sjmisc',
+        'stringi',
+        'digest',
+        'RCurl',
+        'rlang',
+        'parallel',
+        'grid',
+        'gridExtra',
+        'knitr',
+        'kableExtra',
+        'ggplot2',
+        'plotly',
+        'ggfortify',
+        'ggrepel',
+        'gplots',
+        'fastmatch',
+        'pals',
+        'Polychrome',
+        'qdapTools',
+        'beepr',
+        'xtable',
+        'pander',
+        'grDevices',
+        'graphics',
+        'stats',
+        'utils',
+        'magick',
+        'ade4',
+        "MASS",
+        "R.utils",
+        "optparse",
+        "targets",
+        "usethis",
+        "webshot",
+        "reshape2",
+        "data.table",
+        "DT",
+        "scales",
+        "RColorBrewer",
+        "readxl",
+        "stringr",
+        "tinytex"
+    )
 
 # GitHub Packages ----
 gHubPkgs <-
-  data.frame(
-    docstring = 'dasonk/docstring',
-    rstudioapi = 'rstudio/rstudioapi',
-    easypackages = 'jakesherman/easypackages',
-    redcapAPI = 'nutterb/redcapAPI',
-    crayon = "r-lib/crayon",
-    redcap = "epicentre-msf/redcap"
-  )
+    data.frame(
+        docstring = 'dasonk/docstring',
+        rstudioapi = 'rstudio/rstudioapi',
+        easypackages = 'jakesherman/easypackages',
+        redcapAPI = 'nutterb/redcapAPI',
+        crayon = "r-lib/crayon",
+        redcap = "epicentre-msf/redcap"
+    )
 
 # BioConductor Packages ----
 biocPkgs <-
-  c(
-    'HDF5Array', 'rngtools', 'bumphunter','GEOquery', 'minfi', 'lumi', 'methylumi',
-    'randomForest', 'glmnet','IlluminaHumanMethylation450kmanifest',
-    'IlluminaHumanMethylation450kanno.ilmn12.hg19', 'Rtsne',
-    'IlluminaHumanMethylationEPICmanifest', 'IlluminaHumanMethylationEPICanno.ilm10b2.hg19',
-    'IlluminaHumanMethylationEPICanno.ilm10b4.hg19', 'MethylAid', 'conumee','BiocParallel',
-    "Biobase","limma"
+    c(
+        'HDF5Array', 'rngtools', 'bumphunter','GEOquery', 'minfi', 'lumi', 'methylumi',
+        'randomForest', 'glmnet','IlluminaHumanMethylation450kmanifest',
+        'IlluminaHumanMethylation450kanno.ilmn12.hg19', 'Rtsne',
+        'IlluminaHumanMethylationEPICmanifest', 'IlluminaHumanMethylationEPICanno.ilm10b2.hg19',
+        'IlluminaHumanMethylationEPICanno.ilm10b4.hg19', 'MethylAid', 'conumee','BiocParallel',
+        "Biobase","limma"
     )
 
 # Extra Libraries ----
@@ -95,13 +95,13 @@ pk.inst <- function(pkg){
         }else{message(pkg," ...load successful")}
         },
         warning=function(cond) {message("Warning caught:", cond, "\n-----------")
-          do.call(install.packages, c(pk.opt,list(type="source")))
+            do.call(install.packages, c(pk.opt,list(type="source")))
         },
         error=function(cond) {message("Error1 caught: ", cond, "\n-----------")
             do.call(install.packages, c(pk.opt,list(type="binary")))
         },
         custom_error=function(cond){message("Error2 caught: ", cond, "\n-----------")
-          easypackages::packages(pkg,prompt=F, Ncpus = 6);message(cond)}
+            easypackages::packages(pkg,prompt=F, Ncpus = 6);message(cond)}
     )
 }
 # FUN: Installs package from github link
@@ -123,18 +123,18 @@ gh.inst <- function(pkNam, ghLnk,...){
 
 # FUN: Installs package from Source link
 srcInst <- function(fn,...){
-  message("Checking ", basename(fn), "...")
-  #downLoc = file.path("~/Desktop",basename(fn))
-  #download.file(url=fn,destfile=downLoc)
+    message("Checking ", basename(fn), "...")
+    #downLoc = file.path("~/Desktop",basename(fn))
+    #download.file(url=fn,destfile=downLoc)
     tryCatch(
         expr={install.packages(fn, repos=NULL, type="source", Ncpus = 6)},
         error=function(cond){
             install.packages(fn,repos=NULL, method="libcurl", type = "source")
-          },
+        },
         warning=function(cond){
-          install.packages(fn,repos=NULL, method="auto", type = "source")
-          }
-        )
+            install.packages(fn,repos=NULL, method="auto", type = "source")
+        }
+    )
 }
 
 # FUN: Installs package from Bioconductor
@@ -226,15 +226,15 @@ loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bioPks=bioc
     options(repos = rlis)
     tryCatch(
         expr={
-          setOptions(); fixProf()
+            setOptions(); fixProf()
             if (rq("devtools")) {install.packages("devtools",dependencies=T,verbose=T)}else{library("devtools")}
             checkNeeds()
             gh.inst("easypackages","jakesherman/easypackages")
             if (rq("tidyverse")) {pk.inst("tidyverse")}else{ld("tidyverse")}
             easypackages::packages("parallel","doSNOW","doParallel", "foreach","compiler", prompt=F)
             if(suppressWarnings(!require("BiocManager"))){
-              install.packages("BiocManager", Ncpus = 6)
-              BiocManager::install(version="3.10",update=T, ask=F, type="source")
+                install.packages("BiocManager", Ncpus = 6)
+                BiocManager::install(version="3.10",update=T, ask=F, type="source")
             }
             #if(BiocManager::version()!='3.13'){BiocManager::install(version="3.13",update=T, ask=F, type="source")}
             if(rq("zip")){install.packages("zip", dependencies=T, type="binary")}
@@ -252,7 +252,7 @@ loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bioPks=bioc
             message("If there is a compile error, try running fixCompiles() and then try loadPacks() again")
         }
     )
-
+    
 }
 
 fixCompiles <- function(){
@@ -288,28 +288,28 @@ fixCompiles <- function(){
 }
 
 startmsg <- function(){
-  cbio = "/Volumes/CBioinformatics/"; zdriv = "/Volumes/molecular/Molecular"
-  wmm = "You do not have this path mounted:\n"
-  if (!dir.exists(cbio)) {warning(wmm, cbio)}
-  if (!dir.exists(zdriv)) {warning(wmm, zdriv)}
-  message("You have the following drives mounted:")
-  system("ls /Volumes")
-  stopifnot(dir.exists(cbio) | dir.exists(zdriv))
-  #system("gcc --version")
+    cbio = "/Volumes/CBioinformatics/"; zdriv = "/Volumes/molecular/Molecular"
+    wmm = "You do not have this path mounted:\n"
+    if (!dir.exists(cbio)) {warning(wmm, cbio)}
+    if (!dir.exists(zdriv)) {warning(wmm, zdriv)}
+    message("You have the following drives mounted:")
+    system("ls /Volumes")
+    stopifnot(dir.exists(cbio) | dir.exists(zdriv))
+    #system("gcc --version")
 }
 
 colorMsg <- function(){
-  mkred <- function(strMsg) {return(crayon::white$bgRed$bold(strMsg))}
-  mkblu <- function(strMsg) {return(crayon::white$bgBlue$bold(strMsg))}
-  ms1 <- paste0(
-    crayon::white$bgGreen("Your mnp.v11b6 package is installed and loading"),"\n",
-    crayon::white$bgGreen("To update in-house classifier to current version run:"),"\n",
-    mkblu("install.or.load(pathtoFile=NULL, instNew=F, rmpkg=F)"),"\n"
-  )
-  ms2 <- paste0(
-    mkred("mnp.v11b6 package is not installed executing the function to install:"),"\n",
-    mkblu("install.or.load(instNew=T)"),"\n")
-  return(c(ms1,ms2))
+    mkred <- function(strMsg) {return(crayon::white$bgRed$bold(strMsg))}
+    mkblu <- function(strMsg) {return(crayon::white$bgBlue$bold(strMsg))}
+    ms1 <- paste0(
+        crayon::white$bgGreen("Your mnp.v11b6 package is installed and loading"),"\n",
+        crayon::white$bgGreen("To update in-house classifier to current version run:"),"\n",
+        mkblu("install.or.load(pathtoFile=NULL, instNew=F, rmpkg=F)"),"\n"
+    )
+    ms2 <- paste0(
+        mkred("mnp.v11b6 package is not installed executing the function to install:"),"\n",
+        mkblu("install.or.load(instNew=T)"),"\n")
+    return(c(ms1,ms2))
 }
 
 # Load all Functions ---------------------
@@ -324,15 +324,16 @@ startLoadingAll <- function() {
     system("export RSTUDIO_PANDOC=/Applications/RStudio.app/Contents/MacOS/pandoc")
     gh.inst("rmarkdown", 'rstudio/rmarkdown')
     if (rq("mgmtstp27")) {
-      dLoc <- "~/Desktop/temp.tar.gz"
-      download.file(url = mgmtLn, destfile = dLoc)
-      sw(install.packages(dLoc, repos = NULL, type = "source"))
+        dLoc <- "~/Desktop/temp.tar.gz"
+        download.file(url = mgmtLn, destfile = dLoc)
+        sw(install.packages(dLoc, repos = NULL, type = "source"))
     }
     if (rq("sest")) {sw(srcInst(sexEst))}
     if (rq("mnpqc")) {install.packages(mnqDir, repos = NULL, type="source", verbose=T)}
+    if (rq("mnp.v11b4")) {install.or.load("Methylation_classifier_v11b4/mnp.v11b4")}
     if (rq("mnp.v11b6")) {
-      cat(ms[2]);install.or.load(instNew = T)}else{
-      cat(ms[1]);install.or.load(instNew = F)
-    }
+        cat(ms[2]);install.or.load(instNew = T)}else{
+        cat(ms[1]);install.or.load(instNew = F)
+        }
 }
 startLoadingAll()
