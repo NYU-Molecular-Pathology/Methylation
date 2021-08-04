@@ -326,13 +326,11 @@ grab.recent <- function(ws.type, td = NULL, doAll = F) {
   if (ws.type == "PACT") {file.list <- dir(ws, pattern = fend, full.names = T)
   } else {
     file.list <- dir(ws, pattern = fend, full.names = T)
-    }
+  }
   if (doAll == T) {return(removePattern(file.list))}
   file.list <- removePattern(file.list)
   recentMod <- grab.today(file.list)
-  if (is.null(recentMod)) {
-    return(recentMod)
-    } else {
+  if (is.null(recentMod)) {return(recentMod)} else {
     recentFi <- gmt(recentMod)
     return(recentFi)
     }
@@ -420,7 +418,6 @@ xL2csv <- function(file.list, xl.range, ws.type) {
 }
 
 pullRedcap <- function(dat.io, rcon, col2swap) {
-
   fl <- c("record_id", col2swap)
   bqCurr <-
     as.data.frame(redcapAPI::exportRecords(
@@ -458,7 +455,7 @@ dropNAvals <- function(dat.io) {
   if (length(names(table(dat.io == "NA"))) > 1) {
     idx <- which(dat.io == "NA", arr.ind=TRUE)
     if(length(idx)>0){dat.io[idx] <- ""}
-    idx <- which(dat.io == NA, arr.ind=TRUE)
+    idx <- which(is.na(dat.io), arr.ind=TRUE)
     if(length(idx)>0){dat.io[idx] <- ""}
   }
   #if (length(names(table(is.na(dat.io)))) > 1) {dat.io[is.na(dat.io)] <- ""}
@@ -473,8 +470,12 @@ checkDupes <- function(rcon, dat.io, block = NULL) {
     bqCurr <- pullRedcap(dat.io, rcon, col2swap)
     if (!is.null(bqCurr) & nrow(bqCurr) > 0) {
       rcd = NULL
-      bqSwap <- foreach::foreach(rcd = 1:nrow(bqCurr), .combine = "rbind") %dopar% {combBQ(dat.io, bqCurr, rcd, col2swap)}
-      dat.io[, 2] <- paste(bqSwap)
+      bqSwap <- foreach::foreach(rcd = 1:nrow(bqCurr), .combine = "rbind") %dopar% {
+        combBQ(dat.io, bqCurr, rcd, col2swap)
+      }
+      bqSwap <- paste(bqSwap)
+      bqSwap <-gsub("NA ","",bqSwap)
+      dat.io[, 2] <- bqSwap
     }
   }
   return(as.data.frame(dat.io))
@@ -491,6 +492,7 @@ msg.io <- function(dat.io = NULL, ws.type = NULL, rez = NULL) {
   if (length(dat.io) > 0 & !is.null(ws.type)) {
     io_name <- paste(format(Sys.Date(), "%b%d"), ws.type, "sheets.csv", sep = "_")
     message("\nSaving CSV: ", io_name, "\n")
+    dat.io <- dropNAvals(dat.io)
     readr::write_csv(dat.io, file.path("~/Desktop",io_name), na = "")
   }
 }
@@ -518,6 +520,10 @@ csv2redcap <- function(dat.io, api.tkn, ws.type) {
   dat.io <- checkDupes(rcon, dat.io)
   msg.io(dat.io, ws.type, NULL)
   dat.io <- dat.io[,!names(dat.io)%in%"fileName"]
+  dat.io <- dropNAvals(dat.io)
+  if(ws.type=="METH"){
+    dat.io <- dat.io[,1:3]
+  }
   pushRedcap(jsonlite::toJSON(dat.io), rcon)
 }
 
@@ -571,4 +577,3 @@ sheets.to.redcap(api.tkn,ws.type,doAll)
 # cmd <- cronR::cron_rscript(scriptPath)
 # cronR::cron_add(cmd, frequency = "*/5 * * * *", days_of_week=c(1:6))
 # cronR::cron_njobs(); cronR::cron_ls()
-
