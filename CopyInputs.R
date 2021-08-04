@@ -33,16 +33,17 @@ checkValidRun <- function(runID){
 copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
     if (is.null(runID)){runID=paste0(basename(getwd()))} else {runID=runID}
     stopifnot(!is.null(runID))
-    if (is.null(runYear)){
+    #if (is.null(runYear)){
+    grabyear<- function(yr) {
+        rnum <- NULL
+        if(nchar(yr)>2){rnum <- substring(yr, 3)}else{rnum <- yr}
+        if(nchar(yr)>0){rnum <- paste0("20",rnum)}else{rnum}
+        return(rnum)
+    }
+
     yr <- stringr::str_split_fixed(runID,"-",2)[,1]
-        grabyear<- function(yr) {
-            rnum <- NULL
-            if(nchar(yr)>2){rnum <- substring(yr, 3)}else{rnum <- yr}
-            if(nchar(yr)>0){rnum <- paste0("20",rnum)}else{rnum}
-            return(rnum)
-        }
-        runYear=grabyear(yr)
-        }
+    runYear=grabyear(yr)
+     #   }
     isMC = sjmisc::str_contains(runID, "MGDM")|sjmisc::str_contains(runID, "MC")
     assign("isMC", isMC); message("Is methylation run Clinical? ",isMC)
     rschDrv <- "/Volumes/snudem01labspace/Methylation_Worksheets"
