@@ -209,7 +209,7 @@ install.or.load <- function(pathtoFile=NULL, instNew=T, rmpkg=F) {
     if(is.null(pathtoFile)){
         mnp.pk.loc = file.path(cbio, "in_house/mnp.v116/mnp.v11b6")
     }else{mnp.pk.loc<-file.path(cbio, pathtoFile)}
-    if(rmpkg){remove.packages("mnp.v11b6", lib=.libPaths()[[1]][1])}
+    if(rmpkg){remove.packages(basename(mnp.pk.loc), lib=.libPaths()[[1]][1])}
     if(instNew){
         install.packages(mnp.pk.loc, repos=NULL, type="source", force=T, Ncpus = 6)
         install.or.load(instNew=F)
@@ -252,7 +252,7 @@ loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bioPks=bioc
             message("If there is a compile error, try running fixCompiles() and then try loadPacks() again")
         }
     )
-    
+
 }
 
 fixCompiles <- function(){
@@ -330,10 +330,18 @@ startLoadingAll <- function() {
     }
     if (rq("sest")) {sw(srcInst(sexEst))}
     if (rq("mnpqc")) {install.packages(mnqDir, repos = NULL, type="source", verbose=T)}
-    if (rq("mnp.v11b4")) {install.or.load("Methylation_classifier_v11b4/mnp.v11b4")}
+    if (rq("mnp.v11b4")) {install.or.load("Methylation_classifier_v11b4/mnp.v11b4")}else{
+      if(packageVersion("mnp.v11b4")=='0.1.124'){
+        install.or.load("Methylation_classifier_v11b4/mnp.v11b4", rmpkg=T)
+      }
+    }
     if (rq("mnp.v11b6")) {
-        cat(ms[2]);install.or.load(instNew = T)}else{
-        cat(ms[1]);install.or.load(instNew = F)
+        cat(ms[2]);install.or.load(instNew = T)}
+        }else{
+          if(packageVersion("mnp.v11b6")=='0.1.126'){
+            else{cat(ms[1])
+              install.or.load(instNew = T, rmpkg=T)
+          }
         }
 }
 startLoadingAll()
