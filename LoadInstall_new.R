@@ -314,34 +314,48 @@ colorMsg <- function(){
 
 # Load all Functions ---------------------
 startLoadingAll <- function() {
-    sexEst = "https://github.com/jungch/sest/raw/master/sest.tar"
-    mgmtLn = "https://git.io/JWKTo"
-    cbioLn = "/Volumes/CBioinformatics/Methylation/"
-    mnqDir = file.path(cbioLn,"in_house/mnp.v116/mnpqc_0.1.0.tar.gz")
-    startmsg(); loadPacks()
-    ms <- colorMsg()
-    Sys.setenv(RSTUDIO_PANDOC="/Applications/RStudio.app/Contents/MacOS/pandoc")
-    system("export RSTUDIO_PANDOC=/Applications/RStudio.app/Contents/MacOS/pandoc")
-    gh.inst("rmarkdown", 'rstudio/rmarkdown')
-    if (rq("mgmtstp27")) {
-        dLoc <- "~/Desktop/temp.tar.gz"
-        download.file(url = mgmtLn, destfile = dLoc)
-        sw(install.packages(dLoc, repos = NULL, type = "source"))
+  sexEst = "https://github.com/jungch/sest/raw/master/sest.tar"
+  mgmtLn = "https://git.io/JWKTo"
+  cbioLn = "/Volumes/CBioinformatics/Methylation/"
+  mnqDir = file.path(cbioLn, "in_house/mnp.v116/mnpqc_0.1.0.tar.gz")
+  startmsg()
+  loadPacks()
+  ms <- colorMsg()
+  Sys.setenv(RSTUDIO_PANDOC = "/Applications/RStudio.app/Contents/MacOS/pandoc")
+  system("export RSTUDIO_PANDOC=/Applications/RStudio.app/Contents/MacOS/pandoc")
+  gh.inst("rmarkdown", 'rstudio/rmarkdown')
+  if (rq("mgmtstp27")) {
+    dLoc <- "~/Desktop/temp.tar.gz"
+    download.file(url = mgmtLn, destfile = dLoc)
+    sw(install.packages(dLoc, repos = NULL, type = "source"))
+  }
+  if (rq("sest")) {
+    sw(srcInst(sexEst))
+  }
+  if (rq("mnpqc")) {
+    install.packages(mnqDir,
+                     repos = NULL,
+                     type = "source",
+                     verbose = T)
+  }
+  if (rq("mnp.v11b4")) {
+    install.or.load("Methylation_classifier_v11b4/mnp.v11b4")
+  } else {
+    if (packageVersion("mnp.v11b4") == '0.1.124') {
+      install.or.load("Methylation_classifier_v11b4/mnp.v11b4", rmpkg = T)
     }
-    if (rq("sest")) {sw(srcInst(sexEst))}
-    if (rq("mnpqc")) {install.packages(mnqDir, repos = NULL, type="source", verbose=T)}
-    if (rq("mnp.v11b4")) {install.or.load("Methylation_classifier_v11b4/mnp.v11b4")}else{
-      if(packageVersion("mnp.v11b4")=='0.1.124'){
-        install.or.load("Methylation_classifier_v11b4/mnp.v11b4", rmpkg=T)
-      }
+  }
+  if (rq("mnp.v11b6")) {
+    cat(ms[2])
+    install.or.load(instNew = T)
+  } else{
+    if (packageVersion("mnp.v11b6") == '0.1.126') {
+      cat(ms[1])
+      install.or.load(instNew = T, rmpkg = T)
+    } else{
+      install.or.load(instNew = F)
     }
-    if (rq("mnp.v11b6")) {
-        cat(ms[2]);install.or.load(instNew = T)}
-        }else{
-          if(packageVersion("mnp.v11b6")=='0.1.126'){
-            else{cat(ms[1])
-              install.or.load(instNew = T, rmpkg=T)
-          }
-        }
+  }
 }
+
 startLoadingAll()
