@@ -205,9 +205,9 @@ cpMakeV <- function(editFile=F){
 
 # FUN: Load Classifier Versions -
 install.or.load <- function(pathtoFile=NULL, instNew=T, rmpkg=F) {
-    cbio="/Volumes/CBioinformatics"
+    cbio="/Volumes/CBioinformatics/Methylation"
     if(is.null(pathtoFile)){
-        mnp.pk.loc = file.path(cbio, "Methylation/in_house/mnp.v116/mnp.v11b6")
+        mnp.pk.loc = file.path(cbio, "in_house/mnp.v116/mnp.v11b6")
     }else{mnp.pk.loc<-pathtoFile}
     if(rmpkg){remove.packages("mnp.v11b6", lib=.libPaths()[[1]][1])}
     if(instNew){
