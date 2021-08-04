@@ -208,7 +208,7 @@ install.or.load <- function(pathtoFile=NULL, instNew=T, rmpkg=F) {
     cbio="/Volumes/CBioinformatics/Methylation"
     if(is.null(pathtoFile)){
         mnp.pk.loc = file.path(cbio, "in_house/mnp.v116/mnp.v11b6")
-    }else{mnp.pk.loc<-pathtoFile}
+    }else{mnp.pk.loc<-file.path(cbio, pathtoFile)}
     if(rmpkg){remove.packages("mnp.v11b6", lib=.libPaths()[[1]][1])}
     if(instNew){
         install.packages(mnp.pk.loc, repos=NULL, type="source", force=T, Ncpus = 6)
