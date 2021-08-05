@@ -323,6 +323,8 @@ startLoadingAll <- function() {
   ms <- colorMsg()
   Sys.setenv(RSTUDIO_PANDOC = "/Applications/RStudio.app/Contents/MacOS/pandoc")
   system("export RSTUDIO_PANDOC=/Applications/RStudio.app/Contents/MacOS/pandoc")
+    system("export RSTUDIO_WHICH_R=/usr/local/bin/R")
+    Sys.setenv(RSTUDIO_WHICH_R="/usr/local/bin/R")
   gh.inst("rmarkdown", 'rstudio/rmarkdown')
   if (rq("mgmtstp27")) {
     dLoc <- "~/Desktop/temp.tar.gz"
