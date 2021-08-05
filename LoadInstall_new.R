@@ -344,9 +344,9 @@ startLoadingAll <- function() {
     install.or.load("Methylation_classifier_v11b4/mnp.v11b4")
   } else {
     if (packageVersion("mnp.v11b4") == '0.1.124') {
-        unloadNamespace("mnp.v11b4")
         detach("package:mnp.v11b4", unload = T)
       install.or.load("Methylation_classifier_v11b4/mnp.v11b4", rmpkg = T)
+        startLoadingAll()
     } else{
       install.or.load(
         "Methylation_classifier_v11b4/mnp.v11b4",
@@ -361,9 +361,9 @@ startLoadingAll <- function() {
   } else{
     if (packageVersion("mnp.v11b6") == '0.1.126') {
       cat(ms[1])
-                unloadNamespace("mnp.v11b6")
                 detach("package:mnp.v11b6", unload = T)
       install.or.load(instNew = T, rmpkg = T)
+        startLoadingAll()
     } else{
       install.or.load(instNew = F)
     }
