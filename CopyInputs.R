@@ -36,16 +36,19 @@ copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
     #if (is.null(runYear)){
     grabyear<- function(yr) {
         rnum <- NULL
-        if(nchar(yr)>2){rnum <- substring(yr, 3)}else{rnum <- yr}
-        if(nchar(yr)>0){rnum <- paste0("20",rnum)}else{rnum}
+        if(nchar(yr)>2){
+            rnum <- substring(yr, 3)
+        }else{rnum <- yr}
+        if(nchar(yr)>0){
+            rnum <- paste0("20",rnum)
+        }else{rnum}
         return(rnum)
     }
-
     yr <- stringr::str_split_fixed(runID,"-",2)[,1]
     runYear=grabyear(yr)
      #   }
     isMC = sjmisc::str_contains(runID, "MGDM")|sjmisc::str_contains(runID, "MC")
-    assign("isMC", isMC); message("Is methylation run Clinical? ",isMC)
+    assign("isMC", isMC); message("\nIs methylation run Clinical? ",isMC)
     rschDrv <- "/Volumes/snudem01labspace/Methylation_Worksheets"
     mountLoc <- ifelse(isMC,file.path(gb$clinDrv,"WORKSHEETS"),rschDrv)
     message("\nCopying file from: "); cat(mountLoc,"\n")
