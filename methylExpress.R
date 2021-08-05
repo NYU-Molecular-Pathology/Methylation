@@ -8,7 +8,7 @@ if(length(selectRDs)==0){selectRDs=NULL}else{if(is.na(selectRDs))selectRDs=NULL}
 
 # Check Input Params
 stopifnot(!is.null(token))
-message("Parameters input:",token, runID, selectRDs)
+cat("\n~~~~~~Parameters input:",token, runID, selectRDs,sep='\n')
 
 # Paths to the GitHub Repo files
 mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
