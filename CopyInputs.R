@@ -2,14 +2,28 @@
 gb <- globalenv(); assign("gb", gb)
 apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
 
+grabyear<- function(yr) {
+    rnum <- NULL
+    if(nchar(yr)>2){
+        rnum <- substring(yr, 3)
+    }else{rnum <- yr}
+    if(nchar(yr)>0){
+        rnum <- paste0("20",rnum)
+    }else{rnum}
+    return(rnum)
+}
+
+
 # Returns a text string of the latest modified Run name, if isMC=False then research directory is returned
-listMolecularSheets <- function(isMC=T, getAll=F) {
+listMolecularSheets <- function(isMC=T, getAll=F,runID=gb$runID) {
     researchWorksheets <- "/Volumes/snudem01labspace/Methylation_Worksheets"
+    runYear=grabyear(stringr::str_split_fixed(runID,"-",2)[,1])
+
     if(isMC){
-        wsPath <- file.path(gb$clinDrv,"WORKSHEETS",format(Sys.time(),"%Y"))
+        wsPath <- file.path(gb$clinDrv,"WORKSHEETS",runYear)
         prevMC <- dir(path=wsPath, pattern="MGDM", full.names=T)
     } else {
-        wsPath <- file.path(researchWorksheets,format(Sys.time(),"%Y"))
+        wsPath <- file.path(researchWorksheets,runYear)
         prevMC <- dir(path=wsPath, pattern="MR", full.names=T)
     }
     if(getAll==T){return(prevMC)}
@@ -24,7 +38,7 @@ listMolecularSheets <- function(isMC=T, getAll=F) {
 # Verifies if the runID inputted is valid
 checkValidRun <- function(runID){
     isMC = sjmisc::str_contains(runID, "MGDM")|sjmisc::str_contains(runID, "MC")
-    ws.list <- listMolecularSheets(isMC,getAll=T)
+    ws.list <- listMolecularSheets(isMC,getAll=T,runID)
     found <- paste0(runID,".xlsm") %in% basename(ws.list)
     return(found)
 }
@@ -34,16 +48,6 @@ copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
     if (is.null(runID)){runID=paste0(basename(getwd()))} else {runID=runID}
     stopifnot(!is.null(runID))
     #if (is.null(runYear)){
-    grabyear<- function(yr) {
-        rnum <- NULL
-        if(nchar(yr)>2){
-            rnum <- substring(yr, 3)
-        }else{rnum <- yr}
-        if(nchar(yr)>0){
-            rnum <- paste0("20",rnum)
-        }else{rnum}
-        return(rnum)
-    }
     yr <- stringr::str_split_fixed(runID,"-",2)[,1]
     runYear=grabyear(yr)
      #   }
