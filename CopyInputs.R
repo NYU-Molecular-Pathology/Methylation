@@ -70,12 +70,13 @@ copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
 
 # Sets the methylation run directory named by the new run name
 setRunDir <- function(runID=NULL, workFolder=NULL){
-    runID <- gb$ckNull(runID, paste0(basename(getwd())), deparse(substitute(runID,env=.GlobalEnv)))
-    workFolder <- gb$ckNull(workFolder, gb$methDir, deparse(substitute(workFolder,env=.GlobalEnv)))
+    runID <- gb$ckNull(runID, paste0(basename(getwd())), deparse(substitute(runID,env=gb)))
+    workFolder <- gb$ckNull(workFolder, gb$methDir, deparse(substitute(workFolder,env=gb)))
     newRun <- file.path(workFolder, runID)
     assign("newRunPath", newRun)
-    if(runID=="21-MGDM_TEST" & dir.exists(newRun)){unlink(newRun, T, T);dir.create(newRun)
-        try(unlink("~/Desktop/21-MGDM_TEST",recursive = T),silent = T)
+    if(grepl("TEST",runID) & dir.exists(newRun)){
+        unlink(newRun, T, T); dir.create(newRun)
+        try(unlink(file.path("~/Desktop",runID), T, T),silent = T)
     }
     if(!dir.exists(newRun)){
         dir.create(newRun);cat("creating folder: ",newRun)
