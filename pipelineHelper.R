@@ -208,7 +208,11 @@ checkMounts <- function(){
 prepareRun <- function(token){
     runValid <- gb$checkValidRun(gb$runID)
     message("Is the runID valid? ", runValid)
-    if(!runValid){message("runID ",gb$runID," is not valid"); stopifnot(runValid)}
+    if(!runValid){
+        message(crayon::bgRed$white$bold("runID",gb$runID,"is not valid"))
+        message(crayon::bgBlue$white$bold(paste0(gb$runID,".xlsm"),"not found in worksheets folder"))
+        stopifnot(runValid)
+        }
     methylPath <- gb$setRunDir(gb$runID)
     message("Working directory set to:"); cat(crayon::bgGreen(methylPath)); setwd(methylPath)
     gb$setVar("ApiToken", token) # assign the ApiToken & print params

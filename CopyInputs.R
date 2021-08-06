@@ -26,13 +26,16 @@ listMolecularSheets <- function(isMC=T, getAll=F,runID=gb$runID) {
         wsPath <- file.path(researchWorksheets,runYear)
         prevMC <- dir(path=wsPath, pattern="MR", full.names=T)
     }
-    if(getAll==T){return(prevMC)}
-    newestFile <- which.max(file.info(prevMC)$mtime)
-    prevMC <- sub(".xlsm","",basename(prevMC))
-    newestRun = paste0(prevMC[newestFile])
-    cat(crayon::bgCyan("List of Runs Found:\n"));cat(prevMC,sep="\n")
-    cat(crayon::black$bgYellow("Newest Run Found:", crayon::red$bold(paste0(newestRun))))
-    return(newestRun)
+    if(getAll==T){
+        return(prevMC)
+        }else{
+        newestFile <- which.max(file.info(prevMC)$mtime)
+        prevMC <- sub(".xlsm","",basename(prevMC))
+        newestRun = paste0(prevMC[newestFile])
+        cat(crayon::bgCyan("List of Runs Found:\n"));cat(prevMC,sep="\n")
+        cat(crayon::black$bgYellow("Newest Run Found:", crayon::red$bold(paste0(newestRun))))
+        return(newestRun)
+    }
 }
 
 # Verifies if the runID inputted is valid
