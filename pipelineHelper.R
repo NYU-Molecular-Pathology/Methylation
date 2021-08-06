@@ -139,7 +139,7 @@ loopRender <- function(samList = NULL, data){
     }
 
     cat(crayon::black$bgGreen$bold(dsh,"RUN COMPLETE",dsh),sep="\n")
-
+    beepr::beep(3)
 }
 
 #' REPORT: Generates Html reports to cwd with samplesheet.csv
@@ -166,11 +166,15 @@ makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
     if(skipQC==F){
         create.QC.record(runID)
         generateQCreport()
+
     }
     if(grepl("TEST",runID)){cpReport=F;redcapUp=F;email=F}
     if(cpReport==T){file.list <- gb$copy2outFolder(gb$clinDrv, runID)}
     if(redcapUp==T){file.list <- dir(pattern="*.html", full.names = T); gb$uploadToRedcap(file.list)}
-    if(email==T){launchEmailNotify(runID)}
+    if(email==T){
+        launchEmailNotify(runID)
+        beepr::beep(4)
+        }
     tidyUpFiles(runID)
 }
 
