@@ -46,7 +46,8 @@ cranPkgs <-
         "RColorBrewer",
         "readxl",
         "stringr",
-        "tinytex"
+        "tinytex",
+        "future.apply"
     )
 
 # GitHub Packages ----

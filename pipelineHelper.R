@@ -113,7 +113,7 @@ checkRunOutput <- function(runID) {
 
 tidyUpFiles <- function(runID){
     deskDir <- file.path("~/Desktop",runID)
-    backupD <- file.path(gb$methDir,"csvRedcap",runID)
+    backupD <- file.path(gb$methDir,"csvRedcap")
     if(!dir.exists(backupD)){dir.create(backupD)}
     file.copy(deskDir, backupD,overwrite=T, recursive = T, copy.mode = T)
     unlink(deskDir,T,T)
@@ -154,7 +154,7 @@ loopRender <- function(samList = NULL, data){
 makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
                             skipQC=F,email=T,cpReport=F,redcapUp=T){
     assign("genCn",genCn, envir = gb)
-    if (is.null(runPath)) {runPath=gb$workDir}
+
     if (is.null(sheetName)) {sheetName="samplesheet.csv"}
 
     data <- read.csv(sheetName, strip.white=T)
@@ -163,11 +163,7 @@ makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
     loopRender(selectSams, data)
 
     checkRunOutput(runID)
-    if(skipQC==F){
-        create.QC.record(runID)
-        generateQCreport()
-
-    }
+    if(skipQC==F){create.QC.record(runID);generateQCreport()}
     if(grepl("TEST",runID)){cpReport=F;redcapUp=F;email=F}
     if(cpReport==T){file.list <- gb$copy2outFolder(gb$clinDrv, runID)}
     if(redcapUp==T){file.list <- dir(pattern="*.html", full.names = T); gb$uploadToRedcap(file.list)}
