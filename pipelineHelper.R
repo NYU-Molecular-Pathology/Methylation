@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 gb <- globalenv(); assign("gb", gb)
 apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
-
+dsh = "-----------"
 # Helper function to return the index of priority selected samples first
 reOrderRun <- function(selectRDs, sh=NULL){
     if(is.null(selectRDs)){return(NULL)}; if(is.null(sh)){sh<-"samplesheet.csv"}
@@ -111,24 +111,21 @@ checkRunOutput <- function(runID) {
     } else {fs::file_copy(path=location, new_path=getwd(), overwrite = T)}
 }
 
-#' REPORT: Generates Html reports to cwd with samplesheet.csv
-#' @param runPath The location of samplesheet.csv and idats
-#' @param sheetName name of samplesheet if it is not "samplesheet.csv"
-#' @param selectSams vector of integer index of specific samples to run from samplesheet
-#' @param genCn also generate the CNV plot as a PNG file
-#' @param skipQC default is false set as true to skip QC generation
-#' @param email default is true, set to false to avoid email notification
-#' @param cpReport default is false, set to true to copy the reports to the Zdrive or research output directories
-#' @param redcapUp default is true, flag will upload output html files and dataframe to redcap
-makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,skipQC=F,email=T,cpReport=F,redcapUp=T){
-    dsh <- "-----------"
-    bky <- function(txtVar,...){crayon::black$bgYellow$bold(txtVar,...)}
-    if (is.null(runPath)) {runPath=gb$workDir}
-    if (is.null(sheetName)) {sheetName="samplesheet.csv"}
-    data <- read.csv(sheetName, strip.white=T)
-    runID<-paste0(data$RunID[1])
-    normList <- 1:length(as.character(data$SentrixID_Pos))
-    if(is.null(selectSams)){samList <-normList} else {samList <-selectSams}
+tidyUpFiles <- function(runID){
+    deskDir <- file.path("~/Desktop",runID)
+    backupD <- file.path(gb$methDir,"csvRedcap",runID)
+    if(!dir.exists(backupD)){dir.create(backupD)}
+    file.copy(deskDir, backupD,overwrite=T, recursive = T, copy.mode = T)
+    unlink(deskDir,T,T)
+}
+
+bky <- function(txtVar,...){crayon::black$bgYellow$bold(txtVar,...)}
+
+loopRender <- function(samList = NULL, data){
+    if(is.null(samList)){
+        samList<-1:length(as.character(data$SentrixID_Pos))
+    }
+
     for (i in samList) {
         outFileN = paste0(data[i,1],".html")
         outPathN = file.path(gb$workFolder,gb$runID,outFileN)
@@ -137,29 +134,54 @@ makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
             next
         } else {
             cat(bky("\n",dsh,"Now Running", i, "of", length(samList),dsh),sep="\n")
-            do_report(data=data[i, ], genCn)
-        }
+            do_report(data=data[i, ], gb$genCn)
+            }
     }
+
     cat(crayon::black$bgGreen$bold(dsh,"RUN COMPLETE",dsh),sep="\n")
+
+}
+
+#' REPORT: Generates Html reports to cwd with samplesheet.csv
+#' @param runPath The location of samplesheet.csv and idats
+#' @param sheetName name of samplesheet if it is not "samplesheet.csv"
+#' @param selectSams vector of integer index of specific samples to run from samplesheet
+#' @param genCn also generate the CNV plot as a PNG file
+#' @param skipQC default is false set as true to skip QC generation
+#' @param email default is true, set to false to avoid email notification
+#' @param cpReport default false, set TRUE to copy the reports to the Zdrive/research output Dir
+#' @param redcapUp default is true, flag will upload output html files and dataframe to redcap
+makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
+                            skipQC=F,email=T,cpReport=F,redcapUp=T){
+    assign("genCn",genCn, envir = gb)
+    if (is.null(runPath)) {runPath=gb$workDir}
+    if (is.null(sheetName)) {sheetName="samplesheet.csv"}
+
+    data <- read.csv(sheetName, strip.white=T)
+    runID<-paste0(data$RunID[1])
+
+    loopRender(selectSams, data)
+
     checkRunOutput(runID)
     if(skipQC==F){
         create.QC.record(runID)
         generateQCreport()
-         # creates a redcap QC record and Knits the QC RMD file
+    }
+    if(grepl("TEST",runID)){cpReport=F;redcapUp=F;email=F}
     if(cpReport==T){file.list <- gb$copy2outFolder(gb$clinDrv, runID)}
     if(redcapUp==T){file.list <- dir(pattern="*.html", full.names = T); gb$uploadToRedcap(file.list)}
     if(email==T){launchEmailNotify(runID)}
-    deskDir <- file.path("~/Desktop",runID)
-    unlink(deskDir,T,T)
-    }
+    tidyUpFiles(runID)
 }
 
 # Function to just run a default clinical run without changes, input selectRDs to prioritize samples running first
 startRun <- function(selectRDs=NULL, runID=NULL, emailNotify=T){
     if(!is.null(selectRDs)){
-        sampleOrder <- reOrderRun(selectRDs) # Re-order sample report generation for priority samples first
+        sampleOrder <- reOrderRun(selectRDs) # Re-order sample report generation for priority
         makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=T, selectSams=sampleOrder, redcapUp=T)
-    } else {makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=F, selectSams=NULL, redcapUp=T)}
+    } else {
+        makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=F, selectSams=NULL, redcapUp=T)
+        }
 }
 
 # FUN: Checks if all the paths are accessible to the Rscript location
