@@ -81,8 +81,9 @@ setRunDir <- function(runID=NULL, workFolder=NULL){
     workFolder <- gb$ckNull(workFolder, gb$methDir, deparse(substitute(workFolder,env=gb)))
     newRun <- file.path(workFolder, runID)
     assign("newRunPath", newRun)
-    if(grepl("TEST",runID) & dir.exists(newRun)){
-        unlink(newRun, T, T); dir.create(newRun)
+    if(grepl("TEST",runID)){
+        if(dir.exists(newRun)){unlink(newRun, T, T)}
+        dir.create(newRun)
         try(unlink(file.path("~/Desktop",runID), T, T),silent = T)
     }
     if(!dir.exists(newRun)){
