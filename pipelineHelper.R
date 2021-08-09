@@ -159,7 +159,7 @@ makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
 
     data <- read.csv(sheetName, strip.white=T)
     runID<-paste0(data$RunID[1])
-
+    load("/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData")
     loopRender(selectSams, data)
 
     checkRunOutput(runID)
