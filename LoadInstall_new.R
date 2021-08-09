@@ -356,8 +356,8 @@ startLoadingAll <- function() {
   if (rq("mnpqc")) {install.packages(mnqDir,repos = NULL,type = "source",verbose = T)}
   # Check if mnp.v11b4 is installed
   if (rq("mnp.v11b4")) {
-    install.or.load(mnpV4)
     cat(ms[2])
+    install.or.load(mnpV4)
   } else {
     if (packageVersion("mnp.v11b4") != '0.1.126') {
       cat(ms[1])
