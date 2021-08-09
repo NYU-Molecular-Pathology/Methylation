@@ -79,8 +79,10 @@ easyPkgs <- c('tidyverse','sjmisc','stringi','digest','RCurl','gridExtra','needs
 # Helper Functions ----
 sw <- function(pkgOb){try(return(suppressMessages(suppressWarnings(pkgOb))),silent=T)}
 #rq <- function(pkg){return(sw(!require(pkg, character.only=T)))}
-ld <- function(libName){sw(suppressPackageStartupMessages(library(libName,character.only=T)))}
-up <- function(){update.packages(repos='http://cran.rstudio.com/',type = "source", ask=F, checkBuilt=T)}
+ld <- function(libName){sw(suppressPackageStartupMessages(library(
+  libName,character.only=T, verbose=F,warn.conflicts = F)))}
+up <- function(){update.packages(repos='http://cran.rstudio.com/',
+                                 type = "source", ask=F, checkBuilt=T)}
 
 rq <- function(packageName){
   allPackages <- row.names(installed.packages())
