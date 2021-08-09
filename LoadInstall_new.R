@@ -217,7 +217,7 @@ cpMakeV <- function(editFile=F){
     if(file.exists(mkFi)){file.copy(mkFi,"~/.R/", overwrite=T )}
 }
 
-# FUN: Load Classifier Versions -
+# FUN: Load Classifier Versions
 install.or.load <- function(pathtoFile=NULL, instNew=T, rmpkg=F) {
     cbio="/Volumes/CBioinformatics/Methylation"
     if(is.null(pathtoFile)){
@@ -228,10 +228,8 @@ install.or.load <- function(pathtoFile=NULL, instNew=T, rmpkg=F) {
     if(rmpkg){remove.packages(basename(mnp.pk.loc), lib=.libPaths()[[1]][1])}
     if(instNew){
         install.packages(mnp.pk.loc, repos=NULL, type="source", force=T, Ncpus = 6)
-        install.or.load(instNew=F)
-        }else{
-          ld("mnp.v11b6")
-          }
+        install.or.load(pathtoFile,F,F)
+        } else {ld(basename(mnp.pk.loc))}
 }
 
 # Loads default packages or custom if input provided
