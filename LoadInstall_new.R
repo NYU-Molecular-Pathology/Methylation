@@ -115,6 +115,7 @@ pk.inst <- function(pkg){
             easypackages::packages(pkg,prompt=F, Ncpus = 6);message(cond)}
     )
 }
+
 # FUN: Installs package from github link
 gh.inst <- function(pkNam, ghLnk,...){
     message("Checking ", pkNam, "...")
