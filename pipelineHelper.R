@@ -48,17 +48,19 @@ do_report <-function(data = NULL, genCn=F) {
         RGset = RGsetEpic
         sampleID=paste0(samplename_data)
         FFPE = NULL
-        output_dir = getwd()
+        outDir = getwd()
         sample = 1
-        output_file <- paste0(sampleID,".html")
+        outFi <- paste0(sampleID,".html")
         if(genCn==T){generateCNVpng(RGsetEpic,sampleID)}
         message(paste("Now running:", samplename_data, run_id, barcode, pathEpic,"\n"))
-        rmarkdown::render(
-            system.file("report.Rmd", package="mnp.v11b6"),
-            output_dir = output_dir,
-            output_format = "html_document",
-            output_file = output_file,
-            clean = T
+        reportMd <- system.file("report.Rmd", package="mnp.v11b6")
+        tryCatch(
+            rmarkdown::render(reportMd, "html_document", outFi, outDir),
+            error=function(e){
+                message(crayon::bgRed$bold$white("Report Generation Failed:"),"\n", outFi,"\n")
+                message(crayon::bgRed$bold$white("The following error returned:"),"\n", e)
+            },
+            finally=print("running next sample")
         )
     } else {message("your data is null")}
 }
