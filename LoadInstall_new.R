@@ -227,9 +227,10 @@ install.or.load <- function(pathtoFile=NULL, instNew=T, rmpkg=F) {
       }
     if(rmpkg){remove.packages(basename(mnp.pk.loc), lib=.libPaths()[[1]][1])}
     if(instNew){
-        install.packages(mnp.pk.loc, repos=NULL, type="source", force=T, Ncpus = 6)
-        install.or.load(pathtoFile,F,F)
-        } else {ld(basename(mnp.pk.loc))}
+      message("Installing package: ", basename(mnp.pk.loc))
+      install.packages(mnp.pk.loc, repos=NULL, type="source", force=T, Ncpus = 6)
+      install.or.load(pathtoFile,F,F)
+    } else {ld(basename(mnp.pk.loc))}
 }
 
 # Loads default packages or custom if input provided
