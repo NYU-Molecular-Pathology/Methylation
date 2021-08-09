@@ -2,29 +2,45 @@
 gb <- globalenv(); assign("gb", gb)
 apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
 
+grabyear<- function(yr) {
+    rnum <- NULL
+    if(nchar(yr)>2){
+        rnum <- substring(yr, 3)
+    }else{rnum <- yr}
+    if(nchar(yr)>0){
+        rnum <- paste0("20",rnum)
+    }else{rnum}
+    return(rnum)
+}
+
 # Returns a text string of the latest modified Run name, if isMC=False then research directory is returned
-listMolecularSheets <- function(isMC=T, getAll=F) {
+listMolecularSheets <- function(isMC=T, getAll=F,runID=gb$runID) {
     researchWorksheets <- "/Volumes/snudem01labspace/Methylation_Worksheets"
+    runYear=grabyear(stringr::str_split_fixed(runID,"-",2)[,1])
+
     if(isMC){
-        wsPath <- file.path(gb$clinDrv,"WORKSHEETS",format(Sys.time(),"%Y"))
+        wsPath <- file.path(gb$clinDrv,"WORKSHEETS",runYear)
         prevMC <- dir(path=wsPath, pattern="MGDM", full.names=T)
     } else {
-        wsPath <- file.path(researchWorksheets,format(Sys.time(),"%Y"))
+        wsPath <- file.path(researchWorksheets,runYear)
         prevMC <- dir(path=wsPath, pattern="MR", full.names=T)
     }
-    if(getAll==T){return(prevMC)}
-    newestFile <- which.max(file.info(prevMC)$mtime)
-    prevMC <- sub(".xlsm","",basename(prevMC))
-    newestRun = paste0(prevMC[newestFile])
-    cat(crayon::bgCyan("List of Runs Found:\n"));cat(prevMC,sep="\n")
-    cat(crayon::black$bgYellow("Newest Run Found:", crayon::red$bold(paste0(newestRun))))
-    return(newestRun)
+    if(getAll==T){
+        return(prevMC)
+    }else{
+        newestFile <- which.max(file.info(prevMC)$mtime)
+        prevMC <- sub(".xlsm","",basename(prevMC))
+        newestRun = paste0(prevMC[newestFile])
+        cat(crayon::bgCyan("List of Runs Found:\n"));cat(prevMC,sep="\n")
+        cat(crayon::black$bgYellow("Newest Run Found:", crayon::red$bold(paste0(newestRun))))
+        return(newestRun)
+    }
 }
 
 # Verifies if the runID inputted is valid
 checkValidRun <- function(runID){
     isMC = sjmisc::str_contains(runID, "MGDM")|sjmisc::str_contains(runID, "MC")
-    ws.list <- listMolecularSheets(isMC,getAll=T)
+    ws.list <- listMolecularSheets(isMC,getAll=T,runID)
     found <- paste0(runID,".xlsm") %in% basename(ws.list)
     return(found)
 }
@@ -34,18 +50,11 @@ copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
     if (is.null(runID)){runID=paste0(basename(getwd()))} else {runID=runID}
     stopifnot(!is.null(runID))
     #if (is.null(runYear)){
-    grabyear<- function(yr) {
-        rnum <- NULL
-        if(nchar(yr)>2){rnum <- substring(yr, 3)}else{rnum <- yr}
-        if(nchar(yr)>0){rnum <- paste0("20",rnum)}else{rnum}
-        return(rnum)
-    }
-
     yr <- stringr::str_split_fixed(runID,"-",2)[,1]
     runYear=grabyear(yr)
-     #   }
+    #   }
     isMC = sjmisc::str_contains(runID, "MGDM")|sjmisc::str_contains(runID, "MC")
-    assign("isMC", isMC); message("Is methylation run Clinical? ",isMC)
+    assign("isMC", isMC); message("\nIs methylation run Clinical? ",isMC)
     rschDrv <- "/Volumes/snudem01labspace/Methylation_Worksheets"
     mountLoc <- ifelse(isMC,file.path(gb$clinDrv,"WORKSHEETS"),rschDrv)
     message("\nCopying file from: "); cat(mountLoc,"\n")
@@ -67,12 +76,14 @@ copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
 
 # Sets the methylation run directory named by the new run name
 setRunDir <- function(runID=NULL, workFolder=NULL){
-    runID <- gb$ckNull(runID, paste0(basename(getwd())), deparse(substitute(runID,env=.GlobalEnv)))
-    workFolder <- gb$ckNull(workFolder, gb$methDir, deparse(substitute(workFolder,env=.GlobalEnv)))
+    runID <- gb$ckNull(runID, paste0(basename(getwd())), deparse(substitute(runID,env=gb)))
+    workFolder <- gb$ckNull(workFolder, gb$methDir, deparse(substitute(workFolder,env=gb)))
     newRun <- file.path(workFolder, runID)
     assign("newRunPath", newRun)
-    if(runID=="21-MGDM_TEST" & dir.exists(newRun)){unlink(newRun, T, T);dir.create(newRun)
-        try(unlink("~/Desktop/21-MGDM_TEST",recursive = T),silent = T)
+    if(grepl("TEST",runID)){
+        if(dir.exists(newRun)){unlink(newRun, T, T)}
+        dir.create(newRun)
+        try(unlink(file.path("~/Desktop",runID), T, T),silent = T)
     }
     if(!dir.exists(newRun)){
         dir.create(newRun);cat("creating folder: ",newRun)
@@ -132,7 +143,7 @@ readSampleSheet <- function(runID=F, totalSam=F, wks=F) {
         runNum <- readxl::read_excel(sampleSheet, sheet=1, col_names=F, range="B4")
         runNum <- as.numeric(runNum)
         return(runNum)
-        }
+    }
     if (wks == T) {return(worksheet)}
 }
 
