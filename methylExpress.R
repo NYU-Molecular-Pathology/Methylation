@@ -4,20 +4,23 @@ library("base"); gb <- globalenv(); assign("gb", gb)
 
 # Main Parameters trailing commandline
 token<-args[1]; runID<-args[2]; selectRDs<-args[3]
-if(length(selectRDs)==0){selectRDs=NULL}else{
-  if(is.na(selectRDs)){selectRDs=NULL}
-  }
+if(length(selectRDs)==0){
+    selectRDs=NULL
+    }else{
+        if(is.na(selectRDs)){selectRDs=NULL}
+    }
 
 # Check Input Params
 cat("\n~~~~~~Parameters input:",token, runID, selectRDs,sep='\n')
-message("~~~~~~~~~~~~~~~~~~~~~")
-
-stopifnot(!is.null(token))
-stopifnot(!is.null(runID))
+message("~~~~~~~~~~~~~~~~~~~~~"); stopifnot(!is.null(token)); stopifnot(!is.null(runID))
 
 # Paths to the GitHub Repo files
 mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
-script.list = c("LoadInstall_new.R","SetRunParams.R","CopyInputs.R","CopyOutput.R", "pipelineHelper.R")
+script.list = c(
+    "LoadInstall_new.R","SetRunParams.R",
+    "CopyInputs.R","CopyOutput.R",
+    "pipelineHelper.R"
+    )
 
 # Source GitHub Scripts
 scripts = paste0(mainHub, script.list)

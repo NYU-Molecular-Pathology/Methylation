@@ -2,7 +2,7 @@
 gb <- globalenv(); assign("gb", gb)
 apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
 
-grabyear<- function(yr) {
+grabYear<- function(yr) {
     rnum <- NULL
     if(nchar(yr)>2){
         rnum <- substring(yr, 3)
@@ -16,8 +16,7 @@ grabyear<- function(yr) {
 # Returns a text string of the latest modified Run name, if isMC=False then research directory is returned
 listMolecularSheets <- function(isMC=T, getAll=F,runID=gb$runID) {
     researchWorksheets <- "/Volumes/snudem01labspace/Methylation_Worksheets"
-    runYear=grabyear(stringr::str_split_fixed(runID,"-",2)[,1])
-
+    runYear=grabYear(stringr::str_split_fixed(runID,"-",2)[,1])
     if(isMC){
         wsPath <- file.path(gb$clinDrv,"WORKSHEETS",runYear)
         prevMC <- dir(path=wsPath, pattern="MGDM", full.names=T)
@@ -51,7 +50,7 @@ copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
     stopifnot(!is.null(runID))
     #if (is.null(runYear)){
     yr <- stringr::str_split_fixed(runID,"-",2)[,1]
-    runYear=grabyear(yr)
+    runYear=grabYear(yr)
     #   }
     isMC = sjmisc::str_contains(runID, "MGDM")|sjmisc::str_contains(runID, "MC")
     assign("isMC", isMC); message("\nIs methylation run Clinical? ",isMC)

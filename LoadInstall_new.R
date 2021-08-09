@@ -2,53 +2,53 @@
 options(Ncpus = 6)
 # Cran Packages ----
 cranPkgs <-
-    c(
-        'devtools',
-        'remotes',
-        'sjmisc',
-        'stringi',
-        'digest',
-        'RCurl',
-        'rlang',
-        'parallel',
-        'grid',
-        'gridExtra',
-        'knitr',
-        'kableExtra',
-        'ggplot2',
-        'plotly',
-        'ggfortify',
-        'ggrepel',
-        'gplots',
-        'fastmatch',
-        'pals',
-        'Polychrome',
-        'qdapTools',
-        'beepr',
-        'xtable',
-        'pander',
-        'grDevices',
-        'graphics',
-        'stats',
-        'utils',
-        'magick',
-        'ade4',
-        "MASS",
-        "R.utils",
-        "optparse",
-        "targets",
-        "usethis",
-        "webshot",
-        "reshape2",
-        "data.table",
-        "DT",
-        "scales",
-        "RColorBrewer",
-        "readxl",
-        "stringr",
-        "tinytex",
-        "future.apply"
-    )
+  c(
+    'devtools',
+    'remotes',
+    'sjmisc',
+    'stringi',
+    'digest',
+    'RCurl',
+    'rlang',
+    'parallel',
+    'grid',
+    'gridExtra',
+    'knitr',
+    'kableExtra',
+    'ggplot2',
+    'plotly',
+    'ggfortify',
+    'ggrepel',
+    'gplots',
+    'fastmatch',
+    'pals',
+    'Polychrome',
+    'qdapTools',
+    'beepr',
+    'xtable',
+    'pander',
+    'grDevices',
+    'graphics',
+    'stats',
+    'utils',
+    'magick',
+    'ade4',
+    "MASS",
+    "R.utils",
+    "optparse",
+    "targets",
+    "usethis",
+    "webshot",
+    "reshape2",
+    "data.table",
+    "DT",
+    "scales",
+    "RColorBrewer",
+    "readxl",
+    "stringr",
+    "tinytex",
+    "future.apply"
+  )
 
 # GitHub Packages ----
 gHubPkgs <-
@@ -59,27 +59,35 @@ gHubPkgs <-
         redcapAPI = 'nutterb/redcapAPI',
         crayon = "r-lib/crayon",
         redcap = "epicentre-msf/redcap"
-    )
+        )
 
 # BioConductor Packages ----
 biocPkgs <-
     c(
-        'HDF5Array', 'rngtools', 'bumphunter','GEOquery', 'minfi', 'lumi', 'methylumi',
-        'randomForest', 'glmnet','IlluminaHumanMethylation450kmanifest',
-        'IlluminaHumanMethylation450kanno.ilmn12.hg19', 'Rtsne',
-        'IlluminaHumanMethylationEPICmanifest', 'IlluminaHumanMethylationEPICanno.ilm10b2.hg19',
-        'IlluminaHumanMethylationEPICanno.ilm10b4.hg19', 'MethylAid', 'conumee','BiocParallel',
-        "Biobase","limma"
-    )
+      'HDF5Array', 'rngtools', 'bumphunter','GEOquery', 'minfi', 'lumi', 'methylumi',
+      'randomForest', 'glmnet','IlluminaHumanMethylation450kmanifest',
+      'IlluminaHumanMethylation450kanno.ilmn12.hg19', 'Rtsne',
+      'IlluminaHumanMethylationEPICmanifest',
+      'IlluminaHumanMethylationEPICanno.ilm10b2.hg19',
+      'IlluminaHumanMethylationEPICanno.ilm10b4.hg19',
+      'MethylAid', 'conumee','BiocParallel', "Biobase","limma"
+      )
 
 # Extra Libraries ----
 easyPkgs <- c('tidyverse','sjmisc','stringi','digest','RCurl','gridExtra','needs')
 
 # Helper Functions ----
 sw <- function(pkgOb){try(return(suppressMessages(suppressWarnings(pkgOb))),silent=T)}
-rq <- function(pkg){return(sw(!require(pkg, character.only=T)))}
+#rq <- function(pkg){return(sw(!require(pkg, character.only=T)))}
 ld <- function(libName){sw(suppressPackageStartupMessages(library(libName,character.only=T)))}
 up <- function(){update.packages(repos='http://cran.rstudio.com/',type = "source", ask=F, checkBuilt=T)}
+
+rq <- function(packageName){
+  allPackages <- row.names(installed.packages())
+  if(packageName %in% allPackages){
+    return(F)
+  }else{return(T)}
+}
 
 #' pk.inst will load a package library or install it if it does not exist
 #'
@@ -174,14 +182,16 @@ checkNeeds <- function(){
                 fixNeeds();fixProf()
             }else{
                 fixNeeds();fixProf()
-            }
+              }
         },
         error=function(cond){
-            devtools::install_github("joshkatz/needs", ref = "development",dependencies=T,verbose=T,upgrade="always")
+            devtools::install_github("joshkatz/needs", ref = "development",
+                                     dependencies=T,verbose=T,upgrade="always")
             fixNeeds();fixProf()
         },
         warning=function(cond){
-            devtools::install_github("joshkatz/needs", ref = "development",dependencies=T,verbose=T,upgrade="always")
+            devtools::install_github("joshkatz/needs", ref = "development",
+                                     dependencies=T,verbose=T,upgrade="always")
             fixNeeds();fixProf()
         }
     )
@@ -209,12 +219,16 @@ install.or.load <- function(pathtoFile=NULL, instNew=T, rmpkg=F) {
     cbio="/Volumes/CBioinformatics/Methylation"
     if(is.null(pathtoFile)){
         mnp.pk.loc = file.path(cbio, "in_house/mnp.v116/mnp.v11b6")
-    }else{mnp.pk.loc<-file.path(cbio, pathtoFile)}
+    }else{
+      mnp.pk.loc<-file.path(cbio, pathtoFile)
+      }
     if(rmpkg){remove.packages(basename(mnp.pk.loc), lib=.libPaths()[[1]][1])}
     if(instNew){
         install.packages(mnp.pk.loc, repos=NULL, type="source", force=T, Ncpus = 6)
         install.or.load(instNew=F)
-    }else{ld("mnp.v11b6")}
+        }else{
+          ld("mnp.v11b6")
+          }
 }
 
 # Loads default packages or custom if input provided
@@ -228,11 +242,13 @@ loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bioPks=bioc
     tryCatch(
         expr={
             setOptions(); fixProf()
-            if (rq("devtools")) {install.packages("devtools",dependencies=T,verbose=T)}else{library("devtools")}
+            if (rq("devtools")) {install.packages("devtools",dependencies=T,verbose=T)
+              }else{library("devtools")}
             checkNeeds()
             gh.inst("easypackages","jakesherman/easypackages")
             if (rq("tidyverse")) {pk.inst("tidyverse")}else{ld("tidyverse")}
-            easypackages::packages("parallel","doSNOW","doParallel", "foreach","compiler", prompt=F)
+            easypackages::packages(
+              "parallel","doSNOW","doParallel", "foreach","compiler", prompt=F)
             if(suppressWarnings(!require("BiocManager"))){
                 install.packages("BiocManager", Ncpus = 6)
                 BiocManager::install(version="3.10",update=T, ask=F, type="source")
@@ -303,14 +319,16 @@ colorMsg <- function(){
     mkred <- function(strMsg) {return(crayon::white$bgRed$bold(strMsg))}
     mkblu <- function(strMsg) {return(crayon::white$bgBlue$bold(strMsg))}
     ms1 <- paste0(
-        crayon::white$bgGreen("Your mnp.v11b6 package is installed and loading"),"\n",
-        crayon::white$bgGreen("To update in-house classifier to current version run:"),"\n",
+        crayon::white$bgGreen("Updating in-house classifier to current version:"),"\n",
         mkblu("install.or.load(pathtoFile=NULL, instNew=F, rmpkg=F)"),"\n"
-    )
+        )
     ms2 <- paste0(
-        mkred("mnp.v11b6 package is not installed executing the function to install:"),"\n",
-        mkblu("install.or.load(instNew=T)"),"\n")
-    return(c(ms1,ms2))
+        mkred("mnp.v11 package is not installed installing classifier"),"\n"
+        )
+    ms3 <- paste0(
+    crayon::white$bgGreen("Your mnp.v11 package is up-to-date and loading"),"\n"
+    )
+    return(c(ms1,ms2,ms3))
 }
 
 # Load all Functions ---------------------
@@ -319,53 +337,45 @@ startLoadingAll <- function() {
   mgmtLn = "https://git.io/JWKTo"
   cbioLn = "/Volumes/CBioinformatics/Methylation/"
   mnqDir = file.path(cbioLn, "in_house/mnp.v116/mnpqc_0.1.0.tar.gz")
+  mnpV4 = "Methylation_classifier_v11b4/mnp.v11b4"
   startmsg()
   loadPacks()
   ms <- colorMsg()
   Sys.setenv(RSTUDIO_PANDOC = "/Applications/RStudio.app/Contents/MacOS/pandoc")
   system("export RSTUDIO_PANDOC=/Applications/RStudio.app/Contents/MacOS/pandoc")
-    system("export RSTUDIO_WHICH_R=/usr/local/bin/R")
-    Sys.setenv(RSTUDIO_WHICH_R="/usr/local/bin/R")
+  system("export RSTUDIO_WHICH_R=/usr/local/bin/R")
+  Sys.setenv(RSTUDIO_WHICH_R = "/usr/local/bin/R")
   gh.inst("rmarkdown", 'rstudio/rmarkdown')
   if (rq("mgmtstp27")) {
     dLoc <- "~/Desktop/temp.tar.gz"
     download.file(url = mgmtLn, destfile = dLoc)
     sw(install.packages(dLoc, repos = NULL, type = "source"))
   }
-  if (rq("sest")) {
-    sw(srcInst(sexEst))
-  }
-  if (rq("mnpqc")) {
-    install.packages(mnqDir,
-                     repos = NULL,
-                     type = "source",
-                     verbose = T)
-  }
+  if (rq("sest")) {sw(srcInst(sexEst))}
+  if (rq("mnpqc")) {install.packages(mnqDir,repos = NULL,type = "source",verbose = T)}
+  # Check if mnp.v11b4 is installed
   if (rq("mnp.v11b4")) {
-    install.or.load("Methylation_classifier_v11b4/mnp.v11b4")
+    install.or.load(mnpV4)
+    cat(ms[2])
   } else {
-    if (packageVersion("mnp.v11b4") == '0.1.124') {
-        detach("package:mnp.v11b4", unload = T)
-      install.or.load("Methylation_classifier_v11b4/mnp.v11b4", rmpkg = T)
-        startLoadingAll()
-    } else{
-      install.or.load(
-        "Methylation_classifier_v11b4/mnp.v11b4",
-        instNew = F,
-        rmpkg = F
-      )
+    if (packageVersion("mnp.v11b4") != '0.1.126') {
+      cat(ms[1])
+      install.or.load(mnpV4, rmpkg = T)
+    } else {
+      cat(ms[3])
+      install.or.load(mnpV4,F,T)
     }
   }
+  # Check if mnp.v11b6 is installed
   if (rq("mnp.v11b6")) {
-    cat(ms[2])
-    install.or.load(instNew = T)
-  } else{
-    if (packageVersion("mnp.v11b6") == '0.1.126') {
+    cat(ms[2]); install.or.load(instNew = T)
+  } else {
+    if (packageVersion("mnp.v11b6") != '0.1.129') {
       cat(ms[1])
-                detach("package:mnp.v11b6", unload = T)
       install.or.load(instNew = T, rmpkg = T)
-        startLoadingAll()
+      startLoadingAll()
     } else{
+      cat(ms[3])
       install.or.load(instNew = F)
     }
   }
