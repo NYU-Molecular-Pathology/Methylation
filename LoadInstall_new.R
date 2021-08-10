@@ -264,7 +264,7 @@ classifierInstall <- function(pathtoFile=NULL, instNew=T, rmpkg=F) {
 }
 
 checkBioC <- function(){
-    if(suppressWarnings(!require("BiocManager"))){
+    if(sw(suppressPackageStartupMessages((!require("BiocManager"))))){
         install.packages("BiocManager", Ncpus = 6)
         BiocManager::install(version="3.10", update=T, ask=F, type="source")
     } else{ld("BiocManager")}
@@ -276,9 +276,9 @@ loadMainPkgs <- function(){
     setOptions()
     if(rq("devtools")){install.packages("devtools",dependencies=T,verbose=T)}else{ld("devtools")}
     checkNeeds()
-    gh.inst("easypackages","jakesherman/easypackages")
+    gh.inst(data.frame(easypackages="jakesherman/easypackages"))
     pk.inst("tidyverse")
-    easypackages::packages(cpuPacks, prompt=F)
+    sw(suppressPackageStartupMessages(easypackages::packages(cpuPacks, prompt=F)))
     checkBioC()
 }
 
