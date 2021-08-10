@@ -3,7 +3,7 @@ cbioLn = "/Volumes/CBioinformatics/Methylation"
 
 # Classifier Packages and Versions
 mnpV4 <-
-    c(
+    data.frame(
         mnpVers = "mnp.v11b4",
         mnpPath = "Methylation_classifier_v11b4/mnp.v11b4",
         mnpNumb = "0.1.126")
@@ -17,7 +17,7 @@ mnpV6 <-
 classPacks <- c(
     sest = "https://github.com/jungch/sest/raw/master/sest.tar",
     mgmtstp27 = "https://git.io/JWKTo",
-    mnpqc = file.path(cbioLn, "in_house/mnp.v116/mnpqc_0.1.0.tar.gz")
+    mnpqc = paste0(file.path(cbioLn, "in_house/mnp.v116/mnpqc_0.1.0.tar.gz"))
 )
 
 # Cran Packages ----
@@ -164,7 +164,7 @@ gh.inst <- function(pkNam, ...) {
 
 # FUN: Installs package from Source link
 srcInst <- function(fn){
-    msgCheck(basename(fn))
+    msgCheck(names(fn))
     if (rq(names(fn))) {
         params <- list(pkgs=fn[[1]], repos = NULL, type = "source")
         tryCatch(
@@ -395,10 +395,10 @@ checkClassifier <- function(mnpClass) {
         classifierInstall(mnpClass[, 2])
     } else {
         if (packageVersion(mnpClass[, 1]) != mnpClass[, 3]) {
-            cat(ms[1]); cat(mnpClass[, 1], sep = "\n")
+            cat(ms[1])
             classifierInstall(mnpClass[, 2], T, T)
         } else {
-            cat(ms[3]); cat(mnpClass[, 1], sep = "\n")
+            cat(ms[3])
             classifierInstall(mnpClass[, 2], F, F)
         }
     }
