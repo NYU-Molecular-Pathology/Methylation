@@ -365,7 +365,7 @@ startLoadingAll <- function() {
       install.or.load(mnpV4, rmpkg = T)
     } else {
       cat(ms[3])
-      install.or.load(mnpV4,F,T)
+      install.or.load(mnpV4,F,F)
     }
   }
   # Check if mnp.v11b6 is installed
