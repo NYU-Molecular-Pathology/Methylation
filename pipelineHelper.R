@@ -220,7 +220,7 @@ prepareRun <- function(token){
     gb$readSheetWrite() # reads xlsm and generates input .csv samplesheet
     gb$get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
     gb$moveSampleSheet(gb$methDir) #copies outputs temp to desktop for QC.Rmd
-    gb$classifierInstall(instNew = F, rmpkg = F) # Loads pipeline or installs new
+    #gb$classifierInstall(instNew = F, rmpkg = F) # Loads pipeline or installs new
 }
 
 checkMounts()
