@@ -43,6 +43,9 @@ Alternatively, you can source then run the github script locally using [methylEx
 
 `curl -o PactMethMatch.R -L https://git.io/J41Wp; Rscript --verbose PactMethMatch.R 'TOKENAPI12345667891011' '/Users/PATH/TO/CSV/Desktop/210715_NB501073_9999_ABCDEFGHIJRLK-SampleSheet.csv'`
 
+# Email PACT csv file:
+`curl -o parsePact.R -L https://git.io/JR9qG; Rscript --verbose parsePact.R 'TOKENAPI12345667891011' 'PACT-21-##'`
+
 ## Pipeline Functions Overview
 ### First function is LoadInstall_new.R which lists all the dependencies and required packages 
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/421ecaf2793e8260d83fba35ce6d130e58fc3f0c/screenshots/loadinstall.png" alt="drawing" width="450"/><br />
