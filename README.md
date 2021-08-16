@@ -44,7 +44,7 @@ Alternatively, you can source then run the github script locally using [methylEx
 `curl -o PactMethMatch.R -L https://git.io/J41Wp; Rscript --verbose PactMethMatch.R 'TOKENAPI12345667891011' '/Users/PATH/TO/CSV/Desktop/210715_NB501073_9999_ABCDEFGHIJRLK-SampleSheet.csv'`
 
 # Email PACT csv file:
-`curl -o parsePact.R -L https://git.io/JR9qG; Rscript --verbose parsePact.R 'TOKENAPI12345667891011' 'PACT-21-##'`
+`curl -o pactParse.R -L https://git.io/J0kfR; Rscript --verbose pactParse.R 'TOKENAPI12345667891011' 'PACT-21-##'`
 
 ## Pipeline Functions Overview
 ### First function is LoadInstall_new.R which lists all the dependencies and required packages 
