@@ -10,7 +10,7 @@ token<-args[1]; inputSheet<-args[2]
 message(dsh,"\nParameters input",dsh)
 message("token: ",token)
 readFlag <- endsWith(inputSheet,".csv")==T
-
+library("rlang")
 stopifnot(rlang::is_bool(readFlag))
 
 # REDcap Heading Fields -----
