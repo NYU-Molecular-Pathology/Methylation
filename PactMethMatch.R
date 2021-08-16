@@ -5,7 +5,8 @@ token=NULL;inputSheet=NULL
 # Main Parameters trailing commandline
 token<-args[1]; inputSheet<-args[2]
 # Check Input Params -----
-message("====Parameters input====\ntoken: ",token,"\n","Worksheet: ", inputSheet,"\n"); stopifnot(!is.null(token))
+message("====Parameters input====\ntoken: ",token,"\n","Worksheet: ", inputSheet,"\n")
+stopifnot(!is.null(token)); stopifnot(!is.null(inputSheet))
 
 readFlag <- endsWith(inputSheet,".csv")==T
 
