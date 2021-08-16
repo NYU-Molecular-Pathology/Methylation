@@ -5,12 +5,16 @@ dsh="\n================"
 
 # Main arguments input in comandline
 #token<-args[1]; inputSheet<-args[2]
-token<-args[2]; inputSheet<-args[1]
+token<-args[1]; inputSheet<-args[2]
 
 # Displays the Input args -----
 message(dsh,"\nParameters input",dsh)
 message("token: ",token)
 message("inputSheet: ", inputSheet)
+
+stopifnot(!is.na(token))
+stopifnot(!is.na(inputSheet))
+
 readFlag <- endsWith(inputSheet,".csv")==T
 library("rlang")
 stopifnot(rlang::is_bool(readFlag))
