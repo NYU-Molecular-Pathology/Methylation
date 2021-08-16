@@ -10,7 +10,7 @@ token<-args[1]; inputSheet<-args[2]
 # Displays the Input args -----
 message(dsh,"\nParameters input",dsh)
 message("token: ",token)
-message("inputSheet: ", inputSheet)
+message("inputSheet: ", inputSheet,"\n")
 
 stopifnot(!is.na(token))
 stopifnot(!is.na(inputSheet))
@@ -87,9 +87,9 @@ output <- unique(rbind(methResA, methResB))
 if(readFlag){
     runId <- paste0(head(read.csv(inputSheet))[3,2])
 }else{
-    runId <- paste0(head(readxl::read_excel(inputFi, sheet=7))[3,2])
+    runId <- paste0(head(suppressMessages(readxl::read_excel(inputFi, sheet=7)))[3,2])
 }
-message("======",runId,"======")
+
 yearPat <- stringr::str_split_fixed(output$run_number,"-",2)[,1]
 yearPath <- lapply(yearPat, function(yr) {
     rnum <- NULL
@@ -142,11 +142,11 @@ datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
 res <- RCurl::postForm(rcon$url,token=rcon$token,content='record',format='json',
                        type='flat',data=datarecord, returnContent = 'count', returnFormat = 'csv')
 cat(res,sep="\n")
-redcapAPI::importFiles(rcon,file= file.path("~/Desktop",outFi), runId, field="other_file", repeat_instance=1)
+suppressMessages(redcapAPI::importFiles(rcon,file= file.path("~/Desktop",outFi), runId, field="other_file", repeat_instance=1))
 
 record$comments <- "pact_sample_list_email"
 datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
 res<-RCurl::postForm(rcon$url,token=rcon$token,content='record',format='json',type='flat',
                      data=datarecord,returnContent = 'ids', returnFormat = 'csv')
 cat(res)
-message(dsh,"Email Notification Created====")
+message(dsh,"\nEmail Notification Created",dsh)
