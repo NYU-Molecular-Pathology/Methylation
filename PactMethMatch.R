@@ -4,7 +4,8 @@ library("base"); gb <- globalenv(); assign("gb", gb)
 dsh="\n================"
 
 # Main arguments input in comandline
-token<-args[1]; inputSheet<-args[2]
+#token<-args[1]; inputSheet<-args[2]
+token<-args[2]; inputSheet<-args[1]
 
 # Displays the Input args -----
 message(dsh,"\nParameters input",dsh)
