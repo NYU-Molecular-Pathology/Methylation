@@ -10,6 +10,7 @@ token<-args[2]; inputSheet<-args[1]
 # Displays the Input args -----
 message(dsh,"\nParameters input",dsh)
 message("token: ",token)
+message("inputSheet: ", inputSheet)
 readFlag <- endsWith(inputSheet,".csv")==T
 library("rlang")
 stopifnot(rlang::is_bool(readFlag))
