@@ -9,7 +9,7 @@ message("====Parameters input====\ntoken: ",token,"\n","Worksheet: ", inputSheet
 
 readFlag=F
 
-if(endsWith(inputSheet,".csv")){
+if(endsWith(inputSheet,".csv")==T){
     readFlag=T
 }
 
