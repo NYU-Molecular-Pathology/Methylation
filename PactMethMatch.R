@@ -9,6 +9,7 @@ message("====Parameters input====\ntoken: ",token,"\n","Worksheet: ", inputSheet
 stopifnot(!is.null(token)); stopifnot(!is.null(inputSheet))
 
 readFlag <- endsWith(inputSheet,".csv")==T
+stopifnot(is_bool(readFlag))
 
 # REDcap Heading Fields -----
 flds = c("record_id","b_number","tm_number","accession_number","block","diagnosis","organ","tissue_comments","run_number")
@@ -45,8 +46,8 @@ searchDb <- function(vals, db){
 }
 
 # Import csv Worksheet -----
-inputFi =NULL
-if(readFlag==T){
+inputFi = NULL
+if(readFlag){
     vals2find <- utils::read.csv(inputSheet, skip=19)[,c(6,7,9)]
     vals2find <- vals2find[!grepl("H20|SERACARE|HAPMAP", vals2find[,2]),]
 }else{
@@ -76,7 +77,7 @@ print(query2)
 methResB <- searchDb(query2, db)
 output <- unique(rbind(methResA, methResB))
 
-if(readFlag==T){
+if(readFlag){
     runId <- paste0(head(read.csv(inputSheet))[3,2])
 }else{
     runId <- paste0(head(readxl::read_excel(inputFi, sheet=7))[3,2])
