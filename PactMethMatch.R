@@ -7,11 +7,7 @@ token<-args[1]; inputSheet<-args[2]
 # Check Input Params -----
 message("====Parameters input====\ntoken: ",token,"\n","Worksheet: ", inputSheet,"\n"); stopifnot(!is.null(token))
 
-readFlag=F
-
-if(endsWith(inputSheet,".csv")==T){
-    readFlag=T
-}
+readFlag <- endsWith(inputSheet,".csv")==T
 
 # REDcap Heading Fields -----
 flds = c("record_id","b_number","tm_number","accession_number","block","diagnosis","organ","tissue_comments","run_number")
