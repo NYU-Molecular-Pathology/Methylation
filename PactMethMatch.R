@@ -9,7 +9,7 @@ message("====Parameters input====\ntoken: ",token,"\n","Worksheet: ", inputSheet
 stopifnot(!is.null(token)); stopifnot(!is.null(inputSheet))
 
 readFlag <- endsWith(inputSheet,".csv")==T
-stopifnot(is_bool(readFlag))
+stopifnot(rlang::is_bool(readFlag))
 
 # REDcap Heading Fields -----
 flds = c("record_id","b_number","tm_number","accession_number","block","diagnosis","organ","tissue_comments","run_number")
