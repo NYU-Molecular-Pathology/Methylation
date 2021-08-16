@@ -1,14 +1,16 @@
 #!/usr/bin/env Rscript
 args <- commandArgs(TRUE)
 library("base"); gb <- globalenv(); assign("gb", gb)
-token=NULL;inputSheet=NULL
-# Main Parameters trailing commandline
-token<-args[1]; inputSheet<-args[2]
-# Check Input Params -----
-message("====Parameters input====\ntoken: ",token,"\n","Worksheet: ", inputSheet,"\n")
-stopifnot(!is.null(token)); stopifnot(!is.null(inputSheet))
+dsh="\n================"
 
+# Main arguments input in comandline
+token<-args[1]; inputSheet<-args[2]
+
+# Displays the Input args -----
+message(dsh,"\nParameters input",dsh)
+message("token: ",token)
 readFlag <- endsWith(inputSheet,".csv")==T
+
 stopifnot(rlang::is_bool(readFlag))
 
 # REDcap Heading Fields -----
