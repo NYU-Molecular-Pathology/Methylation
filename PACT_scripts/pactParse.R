@@ -96,7 +96,7 @@ pushToRedcap <- function(runId,outFile,token){
     redcapAPI::importFiles(rcon=rcon, file=outFile, record=runId, field="pact_csv_sheet", repeat_instance=1)
     record$pact_csv_email<-"pact_csv_email"
     emailNotify(record, rcon)
-    unlink(outFile)
+    #unlink(outFile)
 }
 
 # Gets dataframe and saves as CSV file -----
