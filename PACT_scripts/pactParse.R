@@ -53,15 +53,27 @@ loadPacks <- function(){
 }
 
 # Returns Path to xlsx file -----
-getExcelPath <- function(inputSheet){
+getExcelPath <- function(inputSheet, pathType=1){
     drive = file.path("", "Volumes", "molecular", "MOLECULAR LAB ONLY")
     folder = file.path("NYU PACT Patient Data", "Workbook")
     runyr <- stringr::str_split_fixed(inputSheet, "-", 3)[, 2]
-    return(file.path(drive, folder, paste0("20", runyr),inputSheet,paste0(inputSheet, ".xlsx")))
+    ending <-ifelse(pathType==1,".xlsx","_FinalExportedList.xlsx")
+    return(file.path(drive, folder, paste0("20", runyr),inputSheet,
+                     paste0(inputSheet, ending)))
+}
+
+sanitizeSheet <- function(sheetVals){
+    mainSheet <- sheetVals[!is.na(sheetVals[,1]),]
+    for(i in 1:ncol(mainSheet)){
+        mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub("[\r\n]", "", x) })
+        mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub(",", "", x) })
+        mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub(" ", "", x) })
+    }
+    return(mainSheet)
 }
 
 # Parses xlsx file and writes as csv file -----
-parseExcelFile <- function(inputFi){
+parseExcelFile <- function(inputFi,inputFi2){
     shNames <- readxl::excel_sheets(inputFi)
     sh <- which(grepl("SampleSheet", shNames, ignore.case = T))[1]
     runId <- paste0(head(readxl::read_excel(inputFi, sheet = shNames[sh]))[3, 2])
@@ -69,13 +81,23 @@ parseExcelFile <- function(inputFi){
     sheetHead[is.na(sheetHead)] <- ""
     sheetHead <- rbind(sheetHead,c("",""),c("[Data]",""))
     sheetVals <- as.data.frame(readxl::read_excel(inputFi,sheet = shNames[sh],skip = 19,col_types = "text"))
-    mainSheet <- sheetVals[!is.na(sheetVals[,1]),]
-    for(i in 1:ncol(mainSheet)){
-        mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub("[\r\n]", "", x) })
-        mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub(",", "", x) })
-        mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub(" ", "", x) })
-    }
+    mainSheet <- sanitizeSheet(sheetVals)
     batchID <- mainSheet[1,"Run_Number"]
+    cnvSheet <- mainSheet[,1:15]
+    if(dir.exists(inputFi2)){
+        philipVals <- as.data.frame(
+            readxl::read_excel(inputFi2,sheet = 1,skip = 3,col_types = "text"))
+        testIndex <- 
+            which(mainSheet$Test_Number%in% philipVals$`Test Number`  , arr.ind = T)
+        genderFill <- c(philipVals$Gender[testIndex], 
+                        rep_len(NA, nrow(cnvSheet)-
+                                    length(philipVals$Gender[testIndex])))
+        cnvSheet$Gender <- genderFill
+        
+        write.table(cnvSheet,quote=FALSE, sep='\t', 
+            file=file.path("~","Desktop",paste0(runId,".tsv")),row.names=F)
+        
+    }
     outFile <- file.path("~","Desktop",paste(batchID,"SampleSheet.csv",sep="-"))
     write.table(sheetHead,sep=",", file=outFile, row.names=F, col.names=F)
     suppressWarnings(write.table(mainSheet,sep=",", file=outFile, row.names=F, col.names=T, append=T))
@@ -107,13 +129,14 @@ pushToRedcap <- function(runId,outFile,token){
 # Gets dataframe and saves as CSV file -----
 writeSampleSheet <- function(inputSheet, token){
     inputFi <- getExcelPath(inputSheet)
+    inputFi2 <- getExcelPath(inputSheet,2)
     if (file.exists(inputFi)) {
-        outputVals <- suppressMessages(parseExcelFile(inputFi))
+        outputVals <- suppressMessages(parseExcelFile(inputFi, inputFi2))
         pushToRedcap(runId=outputVals[[1]], outFile=outputVals[[2]], token)
     } else {
         message(crayon::bgRed("The PACT run worksheet was not found:"),"\n", inputFi, dsh)
         stopifnot(file.exists(inputFi))
-        }
+    }
 }
 
 loadPacks()
