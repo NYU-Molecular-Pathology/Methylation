@@ -71,7 +71,9 @@ parseExcelFile <- function(inputFi){
     sheetVals <- as.data.frame(readxl::read_excel(inputFi,sheet = shNames[sh],skip = 19,col_types = "text"))
     mainSheet <- sheetVals[!is.na(sheetVals[,1]),]
     for(i in 1:ncol(mainSheet)){
-    mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub("[\r\n]", "", x) })
+        mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub("[\r\n]", "", x) })
+        mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub(",", "", x) })
+        mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub(" ", "", x) })
     }
     batchID <- mainSheet[1,"Run_Number"]
     outFile <- file.path("~","Desktop",paste(batchID,"SampleSheet.csv",sep="-"))
