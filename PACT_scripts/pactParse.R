@@ -10,7 +10,7 @@ token<-args[1]; inputSheet<-args[2]
 # Displays the Input args -----
 message(dsh,"\nParameters input",dsh)
 message("token: ",token)
-message("Worksheet: ", inputSheet,".xlsx")
+message("Worksheet: ", inputSheet,".xlsx\n")
 
 # Check Input Params -----
 stopifnot(exists("token")|!is.null(token))
