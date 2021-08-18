@@ -84,7 +84,7 @@ parseExcelFile <- function(inputFi,inputFi2){
     mainSheet <- sanitizeSheet(sheetVals)
     batchID <- mainSheet[1,"Run_Number"]
     cnvSheet <- mainSheet[,1:15]
-    if(dir.exists(inputFi2)){
+    if(file.exists(inputFi2)){
         philipVals <- as.data.frame(
             readxl::read_excel(inputFi2,sheet = 1,skip = 3,col_types = "text"))
         testIndex <- 
