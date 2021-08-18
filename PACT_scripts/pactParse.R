@@ -62,6 +62,7 @@ getExcelPath <- function(inputSheet, pathType=1){
                      paste0(inputSheet, ending)))
 }
 
+# Removes and fixes newlines, commas, and blanks from samplesheet
 sanitizeSheet <- function(sheetVals){
     mainSheet <- sheetVals[!is.na(sheetVals[,1]),]
     for(i in 1:ncol(mainSheet)){
@@ -72,36 +73,31 @@ sanitizeSheet <- function(sheetVals){
     return(mainSheet)
 }
 
+# Reads the genders and outputs a .tsv file on desktop
+getPhilipsGender <- function(mainSheet,inputFi2){
+    cnvSheet <- mainSheet[,1:15]
+    runId <- cnvSheet[1,"Sample_Project"]
+    if(file.exists(inputFi2)){
+        philipVals <- as.data.frame(readxl::read_excel(inputFi2,sheet = 1,skip = 3,col_types = "text"))
+        cnvSheet$Gender <- philipVals$Gender[match(cnvSheet$Test_Number, philipVals$`Test Number`)]
+        write.table(cnvSheet,quote=F, sep='\t', file=file.path("~","Desktop",paste0(runId,".tsv")),row.names=F)
+    }else{message("No Philips Gender sheet found yet in folder:\n", inputFi2)}
+}
+
 # Parses xlsx file and writes as csv file -----
 parseExcelFile <- function(inputFi,inputFi2){
     shNames <- readxl::excel_sheets(inputFi)
     sh <- which(grepl("SampleSheet", shNames, ignore.case = T))[1]
-    runId <- paste0(head(readxl::read_excel(inputFi, sheet = shNames[sh]))[3, 2])
     sheetHead <- as.data.frame(readxl::read_excel(inputFi,sheet = shNames[sh], na="", range="A1:B17", col_types = "text", col_names=F))
     sheetHead[is.na(sheetHead)] <- ""
     sheetHead <- rbind(sheetHead,c("",""),c("[Data]",""))
     sheetVals <- as.data.frame(readxl::read_excel(inputFi,sheet = shNames[sh],skip = 19,col_types = "text"))
     mainSheet <- sanitizeSheet(sheetVals)
-    batchID <- mainSheet[1,"Run_Number"]
-    cnvSheet <- mainSheet[,1:15]
-    if(file.exists(inputFi2)){
-        philipVals <- as.data.frame(
-            readxl::read_excel(inputFi2,sheet = 1,skip = 3,col_types = "text"))
-        testIndex <- 
-            which(mainSheet$Test_Number%in% philipVals$`Test Number`  , arr.ind = T)
-        genderFill <- c(philipVals$Gender[testIndex], 
-                        rep_len(NA, nrow(cnvSheet)-
-                                    length(philipVals$Gender[testIndex])))
-        cnvSheet$Gender <- genderFill
-        
-        write.table(cnvSheet,quote=FALSE, sep='\t', 
-            file=file.path("~","Desktop",paste0(runId,".tsv")),row.names=F)
-        
-    }
-    outFile <- file.path("~","Desktop",paste(batchID,"SampleSheet.csv",sep="-"))
+    getPhilipsGender(mainSheet,inputFi2)
+    outFile <- file.path("~","Desktop",paste(mainSheet[1,"Run_Number"],"SampleSheet.csv",sep="-"))
     write.table(sheetHead,sep=",", file=outFile, row.names=F, col.names=F)
     suppressWarnings(write.table(mainSheet,sep=",", file=outFile, row.names=F, col.names=T, append=T))
-    return(c(runId=runId, outFile=outFile))
+    return(c(runId=mainSheet[1,"Sample_Project"], outFile=outFile))
 }
 
 # Generate Email notification and attach csv file
@@ -131,8 +127,8 @@ writeSampleSheet <- function(inputSheet, token){
     inputFi <- getExcelPath(inputSheet)
     inputFi2 <- getExcelPath(inputSheet,2)
     if (file.exists(inputFi)) {
-        outputVals <- suppressMessages(parseExcelFile(inputFi, inputFi2))
-        pushToRedcap(runId=outputVals[[1]], outFile=outputVals[[2]], token)
+        outVals <- suppressMessages(parseExcelFile(inputFi, inputFi2))
+        pushToRedcap(runId=outVals[[1]], outFile=outVals[[2]], token)
     } else {
         message(crayon::bgRed("The PACT run worksheet was not found:"),"\n", inputFi, dsh)
         stopifnot(file.exists(inputFi))
