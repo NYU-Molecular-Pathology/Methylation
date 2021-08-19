@@ -74,40 +74,25 @@ sanitizeSheet <- function(sheetVals){
 }
 
 # Reads the genders and outputs a .tsv file on desktop
-getPhilipsGender <- function(mainSheet,inputFi2){
+getPhilipsGender <- function(mainSheet,inputFi, sh2){
     cnvSheet <- mainSheet[,1:15]
     runId <- cnvSheet[1,"Sample_Project"]
-    if(file.exists(inputFi2)){
-        philipVals <- as.data.frame(readxl::read_excel(inputFi2,sheet = 1,skip = 3,col_types = "text"))
-        cnvSheet$Gender <- philipVals$Gender[match(cnvSheet$Test_Number, philipVals$`Test Number`)]
-        write.table(cnvSheet,quote=F, sep='\t', file=file.path("~","Desktop",paste0(runId,".tsv")),row.names=F)
-    }else{
-        message("No Philips Gender sheet found yet in folder:\n", inputFi2)
-        inputFi2 <- gsub(paste0("/",basename(inputFi2)),"",inputFi2)
-        potentialFi <- list.files(path=inputFi2,full.names=T)
-        message(crayon::bgRed("Checking the following files:"), dsh)
-        if(length(potentialFi)>=1){
-            print(potentialFi)
-            wbFiles <- stringr::str_which(basename(potentialFi),pattern="export|Export")
-            potentialFi <- potentialFi[wbFiles]
-            potentialFi <- potentialFi[!stringr::str_detect(potentialFi,"\\$")]
-            philipVals <- as.data.frame(readxl::read_excel(potentialFi[1],sheet = 1,skip = 3,col_types = "text"))
-            cnvSheet$Gender <- philipVals$Gender[match(cnvSheet$Test_Number, philipVals$`Test Number`)]
-            write.table(cnvSheet,quote=F, sep='\t', file=file.path("~","Desktop",paste0(runId,".tsv")),row.names=F)
-        }
-        }
+    philipVals <- as.data.frame(readxl::read_excel(inputFi,sheet = sh2,skip = 3,col_types = "text"))
+    cnvSheet$Gender <- philipVals$Gender[match(cnvSheet$Test_Number, philipVals$`Test Number`)]
+    write.table(cnvSheet,quote=F, sep='\t', file=file.path("~","Desktop",paste0(runId,".tsv")),row.names=F)
 }
 
 # Parses xlsx file and writes as csv file -----
-parseExcelFile <- function(inputFi,inputFi2){
+parseExcelFile <- function(inputFi){
     shNames <- readxl::excel_sheets(inputFi)
     sh <- which(grepl("SampleSheet", shNames, ignore.case = T))[1]
+    sh2 <- which(grepl("Philips", shNames, ignore.case = T))[1]
     sheetHead <- as.data.frame(readxl::read_excel(inputFi,sheet = shNames[sh], na="", range="A1:B17", col_types = "text", col_names=F))
     sheetHead[is.na(sheetHead)] <- ""
     sheetHead <- rbind(sheetHead,c("",""),c("[Data]",""))
     sheetVals <- as.data.frame(readxl::read_excel(inputFi,sheet = shNames[sh],skip = 19,col_types = "text"))
     mainSheet <- sanitizeSheet(sheetVals)
-    getPhilipsGender(mainSheet,inputFi2)
+    getPhilipsGender(mainSheet,inputFi, sh2)
     outFile <- file.path("~","Desktop",paste(mainSheet[1,"Run_Number"],"SampleSheet.csv",sep="-"))
     write.table(sheetHead,sep=",", file=outFile, row.names=F, col.names=F,quote=F)
     suppressWarnings(write.table(mainSheet,sep=",", file=outFile, row.names=F, col.names=T, append=T,quote=F))
@@ -139,9 +124,8 @@ pushToRedcap <- function(runId,outFile,token){
 # Gets dataframe and saves as CSV file -----
 writeSampleSheet <- function(inputSheet, token){
     inputFi <- getExcelPath(inputSheet)
-    inputFi2 <- getExcelPath(inputSheet,2)
     if (file.exists(inputFi)) {
-        outVals <- suppressMessages(parseExcelFile(inputFi, inputFi2))
+        outVals <- suppressMessages(parseExcelFile(inputFi))
         pushToRedcap(runId=outVals[[1]], outFile=outVals[[2]], token)
     } else {
         message(crayon::bgRed("The PACT run worksheet was not found:"),"\n", inputFi, dsh)
@@ -156,7 +140,7 @@ writeSampleSheet <- function(inputSheet, token){
         }
         if (file.exists(potentialFi[1])) {
             message("Now trying to read:\n",potentialFi[1])
-            outVals <- suppressMessages(parseExcelFile(potentialFi, inputFi2))
+            outVals <- suppressMessages(parseExcelFile(potentialFi))
             pushToRedcap(runId=outVals[[1]], outFile=outVals[[2]], token)
         }else{
             message(crayon::bgRed("The PACT run worksheet was not found:"),"\n", inputFi, dsh)
