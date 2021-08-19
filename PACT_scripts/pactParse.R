@@ -149,7 +149,7 @@ writeSampleSheet <- function(inputSheet, token){
                 stopifnot(file.exists(potentialFi[1]))
                 }
 }
-
+}
 loadPacks()
 checkMounts()
 writeSampleSheet(inputSheet, token)
