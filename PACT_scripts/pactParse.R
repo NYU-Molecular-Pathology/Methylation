@@ -95,8 +95,8 @@ parseExcelFile <- function(inputFi,inputFi2){
     mainSheet <- sanitizeSheet(sheetVals)
     getPhilipsGender(mainSheet,inputFi2)
     outFile <- file.path("~","Desktop",paste(mainSheet[1,"Run_Number"],"SampleSheet.csv",sep="-"))
-    write.table(sheetHead,sep=",", file=outFile, row.names=F, col.names=F)
-    suppressWarnings(write.table(mainSheet,sep=",", file=outFile, row.names=F, col.names=T, append=T))
+    write.table(sheetHead,sep=",", file=outFile, row.names=F, col.names=F,quote=F)
+    suppressWarnings(write.table(mainSheet,sep=",", file=outFile, row.names=F, col.names=T, append=T,quote=F))
     return(c(runId=mainSheet[1,"Sample_Project"], outFile=outFile))
 }
 
