@@ -131,8 +131,23 @@ writeSampleSheet <- function(inputSheet, token){
         pushToRedcap(runId=outVals[[1]], outFile=outVals[[2]], token)
     } else {
         message(crayon::bgRed("The PACT run worksheet was not found:"),"\n", inputFi, dsh)
-        stopifnot(file.exists(inputFi))
-    }
+        inputFi <- gsub(paste0("/",basename(inputFi)),"",inputFi)
+        potentialFi <- list.files(path=inputFi,full.names=T)
+        message(crayon::bgRed("Checking the following files:"),"\n", dsh)
+        if(length(potentialFi>=1)){
+            print(potentialFi)
+            wbFiles <- stringr::str_which(basename(potentialFi),pattern="book|Book")
+            potentialFi <- potentialFi[wbFiles]
+            potentialFi <- potentialFi[!stringr::str_detect(potentialFi,"\\$")]
+        }
+        if (file.exists(potentialFi[1])) {
+            message("Now trying to read:\n",potentialFi[1])
+            outVals <- suppressMessages(parseExcelFile(potentialFi, inputFi2))
+            pushToRedcap(runId=outVals[[1]], outFile=outVals[[2]], token)
+            }else{
+                message(crayon::bgRed("The PACT run worksheet was not found:"),"\n", inputFi, dsh)
+                stopifnot(file.exists(potentialFi[1]))
+                }
 }
 
 loadPacks()
