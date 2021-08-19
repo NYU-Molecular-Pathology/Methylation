@@ -81,7 +81,21 @@ getPhilipsGender <- function(mainSheet,inputFi2){
         philipVals <- as.data.frame(readxl::read_excel(inputFi2,sheet = 1,skip = 3,col_types = "text"))
         cnvSheet$Gender <- philipVals$Gender[match(cnvSheet$Test_Number, philipVals$`Test Number`)]
         write.table(cnvSheet,quote=F, sep='\t', file=file.path("~","Desktop",paste0(runId,".tsv")),row.names=F)
-    }else{message("No Philips Gender sheet found yet in folder:\n", inputFi2)}
+    }else{
+        message("No Philips Gender sheet found yet in folder:\n", inputFi2)
+        inputFi2 <- gsub(paste0("/",basename(inputFi2)),"",inputFi2)
+        potentialFi <- list.files(path=inputFi2,full.names=T)
+        message(crayon::bgRed("Checking the following files:"), dsh)
+        if(length(potentialFi)>=1){
+            print(potentialFi)
+            wbFiles <- stringr::str_which(basename(potentialFi),pattern="export|Export")
+            potentialFi <- potentialFi[wbFiles]
+            potentialFi <- potentialFi[!stringr::str_detect(potentialFi,"\\$")]
+            philipVals <- as.data.frame(readxl::read_excel(potentialFi[1],sheet = 1,skip = 3,col_types = "text"))
+            cnvSheet$Gender <- philipVals$Gender[match(cnvSheet$Test_Number, philipVals$`Test Number`)]
+            write.table(cnvSheet,quote=F, sep='\t', file=file.path("~","Desktop",paste0(runId,".tsv")),row.names=F)
+        }
+        }
 }
 
 # Parses xlsx file and writes as csv file -----
@@ -134,7 +148,7 @@ writeSampleSheet <- function(inputSheet, token){
         inputFi <- gsub(paste0("/",basename(inputFi)),"",inputFi)
         potentialFi <- list.files(path=inputFi,full.names=T)
         message(crayon::bgRed("Checking the following files:"),"\n", dsh)
-        if(length(potentialFi>=1)){
+        if(length(potentialFi)>=1){
             print(potentialFi)
             wbFiles <- stringr::str_which(basename(potentialFi),pattern="book|Book")
             potentialFi <- potentialFi[wbFiles]
@@ -144,12 +158,13 @@ writeSampleSheet <- function(inputSheet, token){
             message("Now trying to read:\n",potentialFi[1])
             outVals <- suppressMessages(parseExcelFile(potentialFi, inputFi2))
             pushToRedcap(runId=outVals[[1]], outFile=outVals[[2]], token)
-            }else{
-                message(crayon::bgRed("The PACT run worksheet was not found:"),"\n", inputFi, dsh)
-                stopifnot(file.exists(potentialFi[1]))
-                }
+        }else{
+            message(crayon::bgRed("The PACT run worksheet was not found:"),"\n", inputFi, dsh)
+            stopifnot(file.exists(potentialFi[1]))
+        }
+    }
 }
-}
+
 loadPacks()
 checkMounts()
 writeSampleSheet(inputSheet, token)
