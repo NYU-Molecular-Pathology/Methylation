@@ -69,3 +69,13 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL, symbolsLabel
     }
     return(groupTsne)
 }
+
+ getTsneVal <- function(TSNE, saNames, samGrp, colorGrp, symGrp) {
+        tsne_plot <- data.frame(
+            x = TSNE$Y[, 1],
+            y = TSNE$Y[, 2],
+            z = TSNE$Y[, 3],
+            GROUPS = samGrp, col = colorGrp,
+            samples = saNames, symbol = symGrp)
+        return(tsne_plot)
+ }
