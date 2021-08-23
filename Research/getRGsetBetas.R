@@ -99,3 +99,23 @@ if (!file.exists(rgOut)) {
 }
   return(RGSet)
 }
+
+getMdsPlot <- function(RGSet, samNames, topN=1000) {
+  mSetSq <- preprocessQuantile(RGSet)
+  mSetSq <- addSnpInfo(mSetSq)
+  mSetSq <- dropLociWithSnps(mSetSq, snps = c("SBE", "CpG"), maf = 0) # drop the loci which has snps
+  annot = getAnnotation(mSetSq)
+  sex_probes = annot$Name[annot$chr %in% c("chrX", "chrY")]
+  mSetSq = mSetSq[!(rownames(mSetSq) %in% sex_probes), ]
+  mSetSq.beta <- minfi::getBeta(mSetSq)
+  colnames(mSetSq.beta) <- mSetSq$Sample_Name
+  mmds <-
+    plotMDS(
+      getM(mSetSq),
+      top = topN,
+      gene.selection = "common",
+      pch = 17,
+      plot = T
+    )
+  return(mmds)
+}
