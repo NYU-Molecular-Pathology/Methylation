@@ -119,3 +119,13 @@ getMdsPlot <- function(RGSet, samNames, topN=1000) {
     )
   return(mmds)
 }
+
+cleanRawProbes <- function(rawBetaDat, RGSet, samNames, targets) {
+  if (!file.exists(rawBetaDat)) {
+    betas <- gb$cleanUpProbes(RGSet, samNames, targets)
+    saveRDS(betas, file = rawBetaDat)
+  } else{
+    betas <- readRDS(rawBetaDat)
+  }
+  return(betas)
+}
