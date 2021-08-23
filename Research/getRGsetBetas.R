@@ -1,3 +1,4 @@
+gb <- globalenv(); assign("gb", gb)
 # FUN: Obtain RGSet with Probes common to 450K Array ---------------------------
 combine.EPIC.450K <- function(targets, batchFilter=NULL){
     if(length(targets$Batch)>0){
@@ -109,6 +110,7 @@ getMdsPlot <- function(RGSet, samNames, topN=1000) {
   mSetSq = mSetSq[!(rownames(mSetSq) %in% sex_probes), ]
   mSetSq.beta <- minfi::getBeta(mSetSq)
   colnames(mSetSq.beta) <- mSetSq$Sample_Name
+  assign("mSetSq.beta",mSetSq.beta, envir=gb)
   mmds <-
     plotMDS(
       getM(mSetSq),
