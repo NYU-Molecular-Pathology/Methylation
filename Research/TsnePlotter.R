@@ -79,3 +79,46 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL, symbolsLabel
             samples = saNames, symbol = symGrp)
         return(tsne_plot)
  }
+
+generateTitles <- function(clusterTitle, topTitle, titlemain) {
+  tsne_titles <- as.data.frame(foreach::foreach(
+    ti = 1:length(clusterTitle),
+    .combine = "rbind",
+    .packages = 'foreach'
+  ) %do% {
+    foreach::foreach(
+      topV = 1:length(topTitle),
+      .combine = "rbind",
+      .packages = 'foreach'
+    ) %do% {
+      return(paste0(
+        clusterTitle[ti],
+        " ",
+        titlemain,
+        " ",
+        topTitle[topV],
+        " Variance Probes"
+      ))
+    }
+  })[, 1]
+  print(tsne_titles)
+  return(tsne_titles)
+}
+
+getTopPlot <- function(samNames){
+          mds <-
+            limma::plotMDS(
+                gb$mSetSq.beta,
+                top = 1000,
+                gene.selection = "common",
+                plot = T,
+                ndim = 3
+            )
+        toplot_Histo <- data.frame(
+            Dim1 = mds$cmdscale.out[, 1],
+            Dim2 = mds$cmdscale.out[, 2],
+            Dim3 = mds$cmdscale.out[, 3],
+            Sample = samNames
+        )
+        return(toplot_Histo)
+        }
