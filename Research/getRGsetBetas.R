@@ -85,3 +85,17 @@ batchCorrectBs <- function(betas,RGSet,topVar=NULL, supervise = F) {
     topVarBetas <- ifelse(topVarBetas > 1, 1, topVarBetas)
     return(topVarBetas)
 }
+
+getRgset <- function(rgOut, targets){
+if (!file.exists(rgOut)) {
+  if (batchCorrect==T & !is.null(targets$Batch)) {
+    RGSet <- gb$combine.EPIC.450K(targets = targets)
+  } else{
+    RGSet <- read.metharray.exp(base = getwd(), targets = targets, verbose = T, force = T)
+  }
+  saveRDS(RGSet, file = rgOut)
+} else{
+  RGSet <- readRDS(rgOut)
+}
+  return(RGSet)
+}
