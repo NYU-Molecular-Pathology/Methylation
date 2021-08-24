@@ -115,7 +115,7 @@ getMdsPlot <-function(RGSet, samNames,samTypes, topN=1000) {
     myColors <- RColorBrewer::brewer.pal(length(unique(samTypes)),"Set1")
     names(myColors) <- unique(samTypes)
     color_easy = c(myColors)[samTypes]
-    png(filename=plotNam, width = 1400, height = 800, res=400) 
+    png(filename=plotNam, width = 12, height = 8, res=200, units="in") 
     plotMDS(
         mSetSq.beta,
         top = topN,
@@ -123,16 +123,16 @@ getMdsPlot <-function(RGSet, samNames,samTypes, topN=1000) {
         plot = T,
         #pch = c(1:length(unique(samTypes))),
         main = paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot"),
-        col =color_easy,
-        labels=samNames
-    )
+        col = color_easy,
+        labels = samNames
+        )
     legend(
         "topright",
         legend = c(names(myColors)),
         col = paste(as.list(myColors)),
         pch = 15,
-        cex = 1.5
-    )
+        cex = 0.8
+        )
     dev.off()
     return(mSetSq.beta)
 }
