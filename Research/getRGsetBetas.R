@@ -101,27 +101,40 @@ if (!file.exists(rgOut)) {
   return(RGSet)
 }
 
-getMdsPlot <- function(RGSet, samNames, topN=1000) {
-  mSetSq <- preprocessQuantile(RGSet)
-  mSetSq <- addSnpInfo(mSetSq)
-  mSetSq <- dropLociWithSnps(mSetSq, snps = c("SBE", "CpG"), maf = 0) # drop the loci which has snps
-  annot = getAnnotation(mSetSq)
-  sex_probes = annot$Name[annot$chr %in% c("chrX", "chrY")]
-  mSetSq = mSetSq[!(rownames(mSetSq) %in% sex_probes), ]
-  mSetSq.beta <- minfi::getBeta(mSetSq)
-  colnames(mSetSq.beta) <- mSetSq$Sample_Name
-  assign("mSetSq.beta",mSetSq.beta, envir=gb)
-    plotNam <- paste0("top_",topN,".png")
+getMdsPlot <-function(RGSet, samNames,samTypes, topN=1000) {
+    mSetSq <- preprocessQuantile(RGSet)
+    mSetSq <- addSnpInfo(mSetSq)
+    mSetSq <- dropLociWithSnps(mSetSq, snps = c("SBE", "CpG"), maf = 0) # drop the loci which has snps
+    annot = getAnnotation(mSetSq)
+    sex_probes = annot$Name[annot$chr %in% c("chrX", "chrY")]
+    mSetSq = mSetSq[!(rownames(mSetSq) %in% sex_probes), ]
+    mSetSq.beta <- minfi::getBeta(mSetSq)
+    colnames(mSetSq.beta) <- mSetSq$Sample_Name
+    assign("mSetSq.beta",mSetSq.beta, envir=gb)
+    plotNam <- paste0("top_",topN,"_msetBeta",".png")
+    myColors <- RColorBrewer::brewer.pal(length(unique(samTypes)),"Set1")
+    names(myColors) <- unique(samTypes)
+    color_easy = c(myColors)[samTypes]
     png(plotNam) 
     plotMDS(
-      getM(mSetSq),
-      top = topN,
-      gene.selection = "common",
-      pch = 17,
-      plot = T
+        mSetSq.beta,
+        top = topN,
+        gene.selection = "common",
+        plot = T,
+        #pch = c(1:length(unique(samTypes))),
+        main = paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot"),
+        col =color_easy,
+        labels=samNames
+    )
+    legend(
+        "topright",
+        legend = c(names(myColors)),
+        col = paste(as.list(myColors)),
+        pch = 15,
+        cex = 1.5
     )
     dev.off()
-  return(mSetSq.beta)
+    return(mSetSq.beta)
 }
 
 cleanRawProbes <- function(rawBetaDat, RGSet, samNames, targets) {
