@@ -1,3 +1,7 @@
+#' getHeatAnno returns a heatmap annotation object where you input the list of variables you would like
+#'
+#' @param colorValues the variable name paired with color for each sample by variable
+#' @param anno_df the dataframe that ou are annotating, these are the filtered columns of the varColumns
 getHeatAnno <- function(colorValues,anno_df){
     ha <- ComplexHeatmap::HeatmapAnnotation(
         df = anno_df,
@@ -26,6 +30,11 @@ getHeatAnno <- function(colorValues,anno_df){
     return(ha)
 }
 
+#' assignColors returns a ComplexHeatmap annotation object with a list of variable columns you have
+#'
+#' @param targets your dataframe of sample IDs, and variables i.e. Age, Sex, Tumor, etc.
+#' @param varColumns string name of the columns you want to create colors for in the complexheatmap within targets
+#' @param col_vect NULL is default, these are all the colors you want to use in you heatmap annotations
 assignColors <- function(targets, varColumns = c("Type", "Grade"), col_vect = NULL) {
     if (is.null(col_vect)) {col_vect <- glasbey()}
     dimnames(targets)[[2]]
