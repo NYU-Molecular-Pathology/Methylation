@@ -111,7 +111,8 @@ getMdsPlot <- function(RGSet, samNames, topN=1000) {
   mSetSq.beta <- minfi::getBeta(mSetSq)
   colnames(mSetSq.beta) <- mSetSq$Sample_Name
   assign("mSetSq.beta",mSetSq.beta, envir=gb)
-  mmds <-
+    plotNam <- paste0("top_",topN,".png")
+    png(plotNam) 
     plotMDS(
       getM(mSetSq),
       top = topN,
@@ -119,7 +120,8 @@ getMdsPlot <- function(RGSet, samNames, topN=1000) {
       pch = 17,
       plot = T
     )
-  return(mmds)
+    dev.off()
+  return(mSetSq.beta)
 }
 
 cleanRawProbes <- function(rawBetaDat, RGSet, samNames, targets) {
