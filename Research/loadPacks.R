@@ -38,7 +38,9 @@ biocPkgs <-
         "IlluminaHumanMethylationEPICmanifest",
         "limma",
         "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
-        "ComplexHeatmap"
+        "ComplexHeatmap",
+        "DNAcopy",
+        "CopyNumberPlots"
     )
 
 # Extra Libraries ----
@@ -132,7 +134,7 @@ srcInst <- function(fn){
 bc.inst <- function(pknm){
     message("Checking ", pknm, "...")
     if(rq(pknm)) {
-        bio.opt <- list(pkgs=pknm, update=F, ask=F)
+        bio.opt <- list(pkgs=pknm, ask=F,update=T)
         tryCatch(
             expr = {sw(do.call(BiocManager::install, c(bio.opt)))},
             error = function(cond) {message("Package already loaded")},
