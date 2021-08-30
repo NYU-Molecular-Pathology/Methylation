@@ -29,12 +29,13 @@ generateTvals <- function(betas){
     return(TSNE)
 }
 
-genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL, symbolsLabel=NULL, colorLabel=NULL){
+genTsnePlot<-function(tsne_plot, titleLabel, groupToLabel = NULL, symbolsLabel=NULL, colorLabel=NULL){
     col_vect <- pals::glasbey()
     colours <- col_vect[1:(length(unique(tsne_plot$GROUPS)))]
     colours[6] = "#eb7d34" #changing dark forest to orange color
     symFlags <- !is.null(symbolsLabel)
-    options("device.ask.default"=T)
+    options("device.ask.default"=F)
+    devAskNewPage(ask=F)
     if(symFlags==T){
         shapeVals <- c(17, 19, 15, 7, 8, 9, 1, 3, 4, 5)
         sv <- shapeVals[1:length(unique(tsne_plot$symbol))]
@@ -42,7 +43,6 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL, symbolsLabel
         symShape <- as.factor(tsne_plot$symbol)
     }else{symShape <- shapeVals <- shapeLabels <- NULL}
     et <- element_text(size = 24)
-
     groupTsne <- ggplot(tsne_plot,aes(x=tsne_plot$x,y=tsne_plot$y,group=tsne_plot$GROUPS)) +
         geom_point(aes(x,y,color=tsne_plot$GROUPS, shape= symShape), size=4,alpha=0.85)
     if(symFlags==T){
