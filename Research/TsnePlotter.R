@@ -46,6 +46,7 @@ generateTvals <- function(betas) {
                 optPC,
                 "\n"
             )
+            return(TSNE)
         },
         error = function(e) {
             
@@ -67,13 +68,10 @@ generateTvals <- function(betas) {
                 optPC,
                 "\n"
             )
+            return(TSNE)
         }
     )
-    
-    return(TSNE)
 }
-
-
 
 genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL, symbolsLabel=NULL, colorLabel=NULL,names2Label=NULL){
     col_vect <- pals::glasbey()
