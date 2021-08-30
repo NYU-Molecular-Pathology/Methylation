@@ -29,12 +29,12 @@ generateTvals <- function(betas){
     return(TSNE)
 }
 
-genTsnePlot<-function(tsne_plot, titleLabel, groupToLabel = NULL, symbolsLabel=NULL, colorLabel=NULL){
+genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL, symbolsLabel=NULL, colorLabel=NULL,names2Label=NULL){
     col_vect <- pals::glasbey()
     colours <- col_vect[1:(length(unique(tsne_plot$GROUPS)))]
     colours[6] = "#eb7d34" #changing dark forest to orange color
     symFlags <- !is.null(symbolsLabel)
-    options("device.ask.default"=F)
+    #options("device.ask.default"=F)
     devAskNewPage(ask=F)
     if(symFlags==T){
         shapeVals <- c(17, 19, 15, 7, 8, 9, 1, 3, 4, 5)
@@ -59,11 +59,22 @@ genTsnePlot<-function(tsne_plot, titleLabel, groupToLabel = NULL, symbolsLabel=N
     # Below only runs to label sample IDs if label group is provided
     if (!is.null(groupToLabel)) {
         groupTsne <- groupTsne + ggrepel::geom_label_repel(
-            data = subset(tsne_plot, tsne_plot$GROUPS == groupToLabel),
+            data = subset(tsne_plot, tsne_plot$samples == groupToLabel),
             aes(x = x,  y = y, label = samples, size = 2),
             alpha = 0.85, segment.alpha = 0.70, nudge_x = -30, nudge_y = 4,
             direction = "both", fontface = "bold",
-            box.padding = 0.5, fill = "#FF0000", min.segment.length = 0.01, color = "black",
+            box.padding = 0.5, fill = "pink", min.segment.length = 0.01, color = "black",
+            label.size = 1.0, size = 4, label.padding = unit(0.5, "lines"),
+            label.r = unit(0.5, "lines"), force = 8, show.legend = F)
+    }
+    
+    if (!is.null(names2Label)) {
+        groupTsne <- groupTsne + ggrepel::geom_label_repel(
+            data = tsne_plot,
+            aes(x = x,  y = y, label = samples, size = 2),
+            alpha = 0.85, segment.alpha = 0.70, nudge_x = -30, nudge_y = 4,
+            direction = "both", fontface = "bold",
+            box.padding = 0.5, fill = "pink", min.segment.length = 0.01, color = "black",
             label.size = 1.0, size = 4, label.padding = unit(0.5, "lines"),
             label.r = unit(0.5, "lines"), force = 8, show.legend = F)
     }
