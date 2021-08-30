@@ -18,17 +18,60 @@ getPerplexity <- function(expr) {
     return(round(sqrt(N_cells), 0))
 }
 
+
 # FUN: Generate T-sne values given betas --------
-generateTvals <- function(betas){
+generateTvals <- function(betas) {
     betas <- as.data.frame(betas)
     X <- t(betas)
     optPC <- getOptPC(X)
     opPer <- getPerplexity(betas)
-    TSNE <- Rtsne::Rtsne(X, dims = 3, theta = 0, perplexity = opPer, initial_dims = optPC, verbose = T, max_iter = 10000)
-    message("\nOptimal Perplexity for T-sne is: ", opPer,"\n", "Optimal #PCs are: ", optPC, "\n")
+    
+    tryCatch(
+        expr = {
+            TSNE <-
+                Rtsne::Rtsne(
+                    X,
+                    dims = 3,
+                    theta = 0,
+                    perplexity = opPer,
+                    initial_dims = optPC,
+                    verbose = T,
+                    max_iter = 10000
+                )
+            message(
+                "\nOptimal Perplexity for T-sne is: ",
+                opPer,
+                "\n",
+                "Optimal #PCs are: ",
+                optPC,
+                "\n"
+            )
+        },
+        error = function(e) {
+            message(e)
+            SNE <-
+                Rtsne::Rtsne(
+                    X,
+                    dims = 3,
+                    theta = 0,
+                    perplexity = opPer - 1,
+                    initial_dims = optPC,
+                    verbose = T,
+                    max_iter = 10000
+                )
+            message(
+                "\nOptimal Perplexity for T-sne is: ",
+                opPer,
+                "\n",
+                "Optimal #PCs are: ",
+                optPC,
+                "\n"
+            )
+        }
+    )
+    
     return(TSNE)
 }
-
 genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL, symbolsLabel=NULL, colorLabel=NULL,names2Label=NULL){
     col_vect <- pals::glasbey()
     colours <- col_vect[1:(length(unique(tsne_plot$GROUPS)))]
