@@ -25,22 +25,51 @@ generateTvals <- function(betas) {
     X <- t(betas)
     optPC <- getOptPC(X)
     opPer <- getPerplexity(betas)
-    TSNE <-
-        Rtsne::Rtsne(
-            X,
-            dims = 3,
-            theta = 0,
-            perplexity = opPer,
-            initial_dims = optPC,
-            verbose = T,
-            max_iter = 10000
-        )
-    message("\nOptimal Perplexity for T-sne is: ",
-            opPer,
-            "\n",
-            "Optimal #PCs are: ",
-            optPC,
-            "\n")
+    
+    tryCatch(
+        expr = {
+            TSNE <-
+                Rtsne::Rtsne(
+                    X,
+                    dims = 3,
+                    theta = 0,
+                    perplexity = 1,
+                    initial_dims = optPC,
+                    verbose = T,
+                    max_iter = 10000
+                )
+            message(
+                "\nOptimal Perplexity for T-sne is: ",
+                opPer,
+                "\n",
+                "Optimal #PCs are: ",
+                optPC,
+                "\n"
+            )
+        },
+        error = function(e) {
+            message(e)
+            TSNE <-
+                Rtsne::Rtsne(
+                    X,
+                    dims = 3,
+                    theta = 0,
+                    perplexity = 1,
+                    initial_dims = optPC,
+                    verbose = T,
+                    max_iter = 10000
+                )
+            message(
+                "\nOptimal Perplexity for T-sne is: ",
+                opPer,
+                "\n",
+                "Optimal #PCs are: ",
+                optPC,
+                "\n"
+            )
+        }
+    )
+    
     return(TSNE)
 }
 
