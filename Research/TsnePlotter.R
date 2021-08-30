@@ -25,7 +25,7 @@ generateTvals <- function(betas) {
     X <- t(betas)
     optPC <- getOptPC(X)
     opPer <- getPerplexity(betas)
-    
+    TSNE=NULL
     tryCatch(
         expr = {
             TSNE <-
@@ -49,12 +49,12 @@ generateTvals <- function(betas) {
         },
         error = function(e) {
             message(e)
-            SNE <-
+            TSNE <-
                 Rtsne::Rtsne(
                     X,
                     dims = 3,
                     theta = 0,
-                    perplexity = opPer - 1,
+                    perplexity = 1,
                     initial_dims = optPC,
                     verbose = T,
                     max_iter = 10000
