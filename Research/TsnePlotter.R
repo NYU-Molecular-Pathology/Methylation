@@ -33,7 +33,7 @@ generateTvals <- function(betas) {
                     X,
                     dims = 3,
                     theta = 0,
-                    perplexity = 1,
+                    perplexity = opPer,
                     initial_dims = optPC,
                     verbose = T,
                     max_iter = 10000
@@ -48,13 +48,13 @@ generateTvals <- function(betas) {
             )
         },
         error = function(e) {
-            message(e)
+            
             TSNE <-
                 Rtsne::Rtsne(
                     X,
                     dims = 3,
                     theta = 0,
-                    perplexity = 1,
+                    perplexity = opPer-1,
                     initial_dims = optPC,
                     verbose = T,
                     max_iter = 10000
@@ -72,6 +72,7 @@ generateTvals <- function(betas) {
     
     return(TSNE)
 }
+
 
 
 genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL, symbolsLabel=NULL, colorLabel=NULL,names2Label=NULL){
