@@ -18,6 +18,7 @@ writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
     if (is.null(bn)) {bn = file.path(getwd(), df$barcode_and_row_column)}
     message("~~~Writing from redcap samplesheet.csv:")
     names(df)
+    df<- df[!is.na(df[, "barcode_and_row_column"]),]
     samplesheet_csv = data.frame(
         Sample_Name = df[, "record_id"],
         DNA_Number = df[,"b_number"],
