@@ -1,3 +1,4 @@
+gb <- globalenv(); assign("gb", gb)
 # FUN: Sets your directory and sources the helper functions
 sourceFuns <- function(workingPath = NULL) {
     mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
