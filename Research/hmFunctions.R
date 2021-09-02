@@ -47,7 +47,7 @@ assignColors <- function(targets, varColumns = c("Type", "Grade"), col_vect = NU
             names(colorValues[x][[1]]) = c(vars2Color[x][[1]])
         }
     }
-    if( names(colorValues) == names(anno_df) ){
+    if(all(names(colorValues)==names(anno_df))){
         return(getHeatAnno(colorValues,anno_df))
     }
 }
