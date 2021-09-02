@@ -70,6 +70,7 @@ sanitizeSheet <- function(sheetVals){
         mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub(",", "", x) })
         mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub(" ", "", x) })
     }
+    mainSheet$Paired_Normal[mainSheet$Paired_Normal==0] <-""
     return(mainSheet)
 }
 
@@ -140,7 +141,7 @@ writeSampleSheet <- function(inputSheet, token){
         }
         if (file.exists(potentialFi[1])) {
             message("Now trying to read:\n",potentialFi[1])
-            outVals <- suppressMessages(parseExcelFile(potentialFi))
+            outVals <- suppressMessages(parseExcelFile(inputFi=potentialFi[1]))
             pushToRedcap(runId=outVals[[1]], outFile=outVals[[2]], token)
         }else{
             message(crayon::bgRed("The PACT run worksheet was not found:"),"\n", inputFi, dsh)
