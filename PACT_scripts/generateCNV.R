@@ -96,7 +96,9 @@ grabRGset <- function(runPath, sentrix){
 save.png.files <- function(rds, token){
     get.rd.info(rds, token=token) # input your RD-numbers here rd_numbers = c("RD-21-21")
     mySentrix <- gb$search.redcap(rd_numbers = rds, token)
-    for (sam in 1:nrow(mySentrix)) {
+    mySentrix <- mySentrix[!is.na(mySentrix$barcode_and_row_column),]
+    
+    for (sam in rownames(mySentrix)) {
         sentrix <- mySentrix$barcode_and_row_column[sam]
         RGsetEpic <- grabRGset(getwd(),sentrix)
         gen.cnv.png(RGsetEpic, sampleName=mySentrix$record_id[sam])
