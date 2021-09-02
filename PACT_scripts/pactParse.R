@@ -65,6 +65,7 @@ getExcelPath <- function(inputSheet, pathType=1){
 # Removes and fixes newlines, commas, and blanks from samplesheet
 sanitizeSheet <- function(sheetVals){
     mainSheet <- sheetVals[!is.na(sheetVals[,1]),]
+    mainSheet$Tumor_Type <- gsub(" ", "-", mainSheet$Tumor_Type)
     for(i in 1:ncol(mainSheet)){
         mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub("[\r\n]", "", x) })
         mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub(",", "", x) })
