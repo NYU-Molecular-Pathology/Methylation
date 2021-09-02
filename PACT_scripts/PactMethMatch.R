@@ -177,4 +177,5 @@ rds <- output$record_id
 
 cnvscript = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/generateCNV.R"
 devtools::source_url(cnvscript)
+ApiToken = token
 gb$save.png.files(rds, token)
