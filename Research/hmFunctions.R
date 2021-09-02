@@ -82,7 +82,7 @@ getHeatMap <- function(betaRanges, titleValue, ha){
         row_title_side = "left",
         row_names_gp = gpar(fontsize = 10),
         row_title_gp = gpar(fontsize = 16, fontface = "bold"),
-        show_row_dend = T,
+        show_row_dend = F,
         show_column_dend = T,
         use_raster=T,
         show_heatmap_legend = T,
@@ -98,7 +98,7 @@ getHeatMap <- function(betaRanges, titleValue, ha){
             title_gp = gpar(fontsize = 18, fontface = "bold"),
             legend_direction = "vertical",
             heatmap_legend_side = "right", annotation_legend_side = "right",
-            legend_height =  unit(3, "in")
+            legend_height =  unit(2.5, "in")
         )
     )
     return(drawHeatMap(hmTopNumbers))
