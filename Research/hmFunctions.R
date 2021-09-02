@@ -68,7 +68,7 @@ drawHeatMap <- function(yourHeatMap) {
     )
 }
 
-getHeatMap <- function(betaRanges, titleValue, ha){
+getHeatMap <- function(betaRanges, titleValue, ha, colSplt = NULL, rwsplt=NULL){
     titleOfPlot <- paste("Heatmap of",titleValue,sep = " ")
     hmTopNumbers <- Heatmap(
         betaRanges,
@@ -99,7 +99,9 @@ getHeatMap <- function(betaRanges, titleValue, ha){
             legend_direction = "vertical",
             heatmap_legend_side = "right", annotation_legend_side = "right",
             legend_height =  unit(2.5, "in")
-        )
+        ),
+        column_split = colSplt,
+        row_split= rwsplt
     )
     return(drawHeatMap(hmTopNumbers))
 }
