@@ -53,7 +53,7 @@ do_report <-function(data = NULL, genCn=F) {
         outFi <- paste0(sampleID,".html")
         if(genCn==T){generateCNVpng(RGsetEpic,sampleID)}
         message(paste("Now running:", samplename_data, run_id, barcode, pathEpic,"\n"))
-        reportMd <- system.file("report.Rmd", package="mnp.v11b6")
+        reportMd <- "/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/inst/report.Rmd" #system.file("report.Rmd", package="mnp.v11b6")
         tryCatch(
             rmarkdown::render(reportMd, "html_document", outFi, outDir),
             error=function(e){
