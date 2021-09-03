@@ -111,6 +111,7 @@ checkRunOutput <- function(runID) {
     } else {fs::file_copy(path=location, new_path=getwd(), overwrite = T)}
 }
 
+# gets rid of desktop files if run is successful
 tidyUpFiles <- function(runID){
     deskDir <- file.path("~/Desktop",runID)
     backupD <- file.path(gb$methDir,"csvRedcap")
