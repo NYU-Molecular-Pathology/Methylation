@@ -32,6 +32,8 @@ writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
         tech2 = df$second_tech,
         Date = df$arrived
     )
+    samplesheet_csv <- samplesheet_csv[!is.na(samplesheet_csv$SentrixID_Pos),]
+    
     print(samplesheet_csv)
     write.csv(
         samplesheet_csv,
