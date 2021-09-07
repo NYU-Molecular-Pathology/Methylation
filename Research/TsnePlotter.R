@@ -84,7 +84,7 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL, symbolsLabel
     if(symFlags==T){
         shapeVals <- c(17, 19, 15, 7, 8, 9, 1, 3, 4, 5)
         sv <- shapeVals[1:length(unique(tsne_plot$symbol))]
-        shapeLabels <- "Sample Type" #levels(as.factor(tsne_plot$symbol))
+        shapeLabels <- levels(as.factor(tsne_plot$symbol)) #"Sample Type"
         symShape <- as.factor(tsne_plot$symbol)
     }else{symShape <- shapeVals <- shapeLabels <- NULL}
     et <- element_text(size = 24)
