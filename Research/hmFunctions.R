@@ -36,8 +36,9 @@ getHeatAnno <- function(colorValues,anno_df){
 #' @param varColumns string name of the columns you want to create colors for in the complexheatmap within targets
 #' @param col_vect NULL is default, these are all the colors you want to use in you heatmap annotations
 assignColors <- function(targets, varColumns = c("Type", "Grade"), col_vect = NULL) {
-    if (is.null(col_vect)) {col_vect <- glasbey()}
-    dimnames(targets)[[2]]
+    if (is.null(col_vect)) {col_vect <- pals::glasbey()}
+  col_vect <- col_vect[sample(1:length(col_vect))]
+    #dimnames(targets)[[2]]
     dat <- targets[,varColumns]
     anno_df <- data.frame(dat)
     vars2Color <- as.list(lapply(dat, unique))
