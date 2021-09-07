@@ -103,9 +103,9 @@ save.png.files <- function(rds, token){
     mySentrix <- mySentrix[!is.na(mySentrix$barcode_and_row_column),]
     
     for (sam in rownames(mySentrix)) {
-        sentrix <- mySentrix$barcode_and_row_column[sam]
+        sentrix <- mySentrix[sam,2]
         RGsetEpic <- grabRGset(getwd(),sentrix)
-        gen.cnv.png(RGsetEpic, sampleName=mySentrix$record_id[sam])
+        gen.cnv.png(RGsetEpic, sampleName=mySentrix[sam,1])
     }
     unlink("~/Desktop/temp.html")
     the.cnvs <- dir(path="~/Desktop",pattern="_cnv.png", full.names=T)
