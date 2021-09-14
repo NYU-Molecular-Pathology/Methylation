@@ -71,7 +71,7 @@ drawHeatMap <- function(yourHeatMap) {
 
 getHeatMap <- function(betaRanges, titleValue, ha, colSplt = NULL, rwsplt=NULL){
     titleOfPlot <- paste("Heatmap of",titleValue,sep = " ")
-    hmTopNumbers <- Heatmap(
+    hmTopNumbers <- ComplexHeatmap::Heatmap(
         betaRanges,
         col = col_fun,  ## Define the color scale
         cluster_columns = T,  ## Cluster the columns
