@@ -11,7 +11,7 @@ mnpV6 <-
     data.frame(
         mnpVers = "mnp.v11b6",
         mnpPath = "in_house/mnp.v116/mnp.v11b6",
-        mnpNumb = "0.1.130")
+        mnpNumb = "0.1.140")
 
 # Custom Classifier packages:
 classPacks <- c(
