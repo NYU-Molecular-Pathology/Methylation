@@ -1,5 +1,5 @@
 gb <- globalenv(); assign("gb", gb)
-
+supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
 # FUN: Sets your directory and sources the helper functions
 sourceFuns <- function(workingPath = NULL) {
     mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
@@ -79,12 +79,13 @@ gen.cnv.png <- function(RGsetEpic, sampleName) {
     sex <- ifelse((yest == TRUE && yest1 == TRUE), "male", "female")
     message("Generating ", sampleName, " cnv plot...")
     xx <- mnp.v11b6::MNPcnv(Mset,sex = sex,main = sampleID)
-    thePlot<-mnp.v11b6::MNPcnvggplotly(xx, getTables = F)
-    p<-plotly::ggplotly(thePlot)
+    thePlot<-supM(mnp.v11b6::MNPcnvggplotly(xx, getTables = F))
+    p<-supM(plotly::ggplotly(thePlot))
     fn=file.path("~/Desktop",imgName)
-    htmlwidgets::saveWidget(plotly::as.widget(p), "~/Desktop/temp.html")
-    webshot2::webshot("~/Desktop/temp.html", file = fn, cliprect = "viewport", vwidth = 1152, vheight = 672)
-    dev.off(); message("File saved:\n",imgName,"\n")
+    supM(htmlwidgets::saveWidget(plotly::as.widget(p), "~/Desktop/temp.html"))
+    supM(webshot2::webshot("~/Desktop/temp.html", file = fn, cliprect = "viewport", vwidth = 1152, vheight = 672))
+    dev.off()
+    message("File saved:\n",imgName,"\n")
 }
 
 grabRGset <- function(runPath, sentrix){
