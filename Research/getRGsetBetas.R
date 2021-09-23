@@ -24,14 +24,19 @@ combine.EPIC.450K <- function(targets, batchFilter=NULL){
 }
 
 # Remove Low Quality and select probes using annotations
-cleanUpProbes <- function(RGSet, saNames, targets, getfunorm=F){
+cleanUpProbes <- function(RGSet, targets, getfunorm=F){
     detP <- detectionP(RGSet)
-    colnames(detP) <- saNames
+    colnames(detP) <- RGSet@colData@listData[["Sample_Name"]]
     keep <- colMeans(detP) < 0.05
     RGSet <- RGSet[, keep]
     targets <- targets[keep,]
     detP <- detP[, keep]
-    mSetSq <- preprocessQuantile(RGSet)
+    dropping <- table(keep)["FALSE"]>0
+    if(dropping==TRUE){message("Dropping probes: ")
+        print(table(keep))}
+    
+    mSetSq <- suppressWarnings(preprocessQuantile(RGSet))
+    
     detP <- detP[match(featureNames(mSetSq), rownames(detP)), ]
     keep <- rowSums(detP < 0.01) == ncol(mSetSq)
     gset.funnorm <- addSnpInfo(mSetSq[keep, ])
@@ -39,9 +44,11 @@ cleanUpProbes <- function(RGSet, saNames, targets, getfunorm=F){
     annot = getAnnotation(gset.funnorm) #getting annotation file
     sex_probes = annot$Name[annot$chr %in% c("chrX", "chrY")] # dropping sex probes
     gset.funnorm = gset.funnorm[!(rownames(gset.funnorm) %in% sex_probes),]
-    if (getfunorm){return(gset.funnorm)} else {
-        betas <- getBeta(gset.funnorm)
-        colnames(betas) <- saNames
+    if (getfunorm) {
+        return(gset.funnorm)
+    } else {
+        betas <- minfi::getBeta(gset.funnorm)
+        colnames(betas) <- RGSet@colData@listData[["Sample_Name"]]
         return(betas)
     }
 }
@@ -141,7 +148,7 @@ getMdsPlot <-function(RGSet, samNames,samTypes, topN=1000) {
 
 cleanRawProbes <- function(rawBetaDat, RGSet, samNames, targets) {
   if (!file.exists(rawBetaDat)) {
-    betas <- gb$cleanUpProbes(RGSet, samNames, targets)
+    betas <- gb$cleanUpProbes(RGSet, targets)
     saveRDS(betas, file = rawBetaDat)
   } else{
     betas <- readRDS(rawBetaDat)
