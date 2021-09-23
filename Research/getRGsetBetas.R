@@ -9,7 +9,8 @@ combine.EPIC.450K <- function(targets, batchFilter=NULL){
             return(print(paste("450K duplicated basenames:", anyDuplicated(targets_450k$Basename))))}
         if (!anyDuplicated(targets_450k$Basename) == F) {
             return(print(paste("850K duplicated basenames:", anyDuplicated(targets_850k$Basename))))}
-        else{cat("reading 450K arrays...")
+        else{
+            cat("reading 450K arrays...")
             RGSet_450k <- minfi::read.metharray.exp(targets = targets_450k, force = T, verbose = T)
             cat("reading EPIC arrays...")
             RGSet_850k <- minfi::read.metharray.exp(targets = targets_850k, force = T, verbose = T)
@@ -88,17 +89,18 @@ batchCorrectBs <- function(betas,RGSet,topVar=NULL, supervise = F) {
 }
 
 getRgset <- function(rgOut, targets){
-if (!file.exists(rgOut)) {
-  if (batchCorrect==T & !is.null(targets$Batch)) {
-    RGSet <- gb$combine.EPIC.450K(targets = targets)
-  } else{
-    RGSet <- read.metharray.exp(base = getwd(), targets = targets, verbose = T, force = T)
-  }
-  saveRDS(RGSet, file = rgOut)
-} else{
-  RGSet <- readRDS(rgOut)
-}
-  return(RGSet)
+    require("minfi")
+    if (!file.exists(rgOut)) {
+        if (batchCorrect==T & !is.null(targets$Batch)) {
+            RGSet <- gb$combine.EPIC.450K(targets = targets)
+        } else{
+            RGSet <- minfi::read.metharray.exp(base = getwd(), targets = targets, verbose = T, force = T)
+        }
+        saveRDS(RGSet, file = rgOut)
+    } else{
+        RGSet <- readRDS(rgOut)
+    }
+    return(RGSet)
 }
 
 getMdsPlot <-function(RGSet, samNames,samTypes, topN=1000) {
