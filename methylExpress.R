@@ -28,4 +28,24 @@ invisible(lapply(scripts, function(i) {devtools::source_url(i)}))
 
 # Execute Methylation Run
 if(!is.null(runID)){gb$setVar("runID", runID)}
-gb$prepareRun(token); gb$startRun(selectRDs)
+
+# Executes the functions in order to setup a run
+prepareRun <- function(token){
+    runValid <- gb$checkValidRun(gb$runID)
+    message("Is the runID valid? ", runValid)
+    if(!runValid){
+        message(crayon::bgRed$white$bold("runID",gb$runID,"is not valid"))
+        message(crayon::bgBlue$white$bold(paste0(gb$runID,".xlsm"),"not found in worksheets folder"))
+        stopifnot(runValid)
+        }
+    methylPath <- gb$setRunDir(gb$runID)
+    message("Working directory set to:"); cat(crayon::bgGreen(methylPath)); setwd(methylPath)
+    gb$setVar("ApiToken", token) # assign the ApiToken & print params
+    gb$copyWorksheetFile(runID = gb$runID) # copies the xlsm file
+    gb$readSheetWrite() # reads xlsm and generates input .csv samplesheet
+    gb$get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
+    gb$moveSampleSheet(gb$methDir) #copies outputs temp to desktop for QC.Rmd
+    #gb$classifierInstall(instNew = F, rmpkg = F) # Loads pipeline or installs new
+}
+
+prepareRun(token); gb$startRun(selectRDs)
