@@ -5,6 +5,13 @@ printPlotTab <- function(thePlot, theTabName){
   return(supM(print(thePlot)))
 }
 
+grabPngNames <- function(tsne_titles=NULL, keywrd="Top"){
+  outDirs <- stringr::str_split_fixed(tsne_titles, " ", 16)
+  colNumb <- grep(keywrd, outDirs[1,], ignore.case = T)
+  outDirs <- outDirs[, c(1, colNumb, colNumb + 1)]
+  return(outDirs)
+}
+
 makePlotly <- function(fig){
   otherPlot <- supM(plotly::ggplotly(fig, dynamicTicks = T, height = 800,width = 1200))
   otherPlot$x[["layout"]][["annotations"]] <- NULL
