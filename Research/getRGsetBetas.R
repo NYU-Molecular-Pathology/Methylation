@@ -32,11 +32,11 @@ cleanUpProbes <- function(RGSet, targets, getfunorm=F){
     targets <- targets[keep,]
     detP <- detP[, keep]
     dropping <- table(keep)["FALSE"]>0
-    if(dropping==TRUE){message("Dropping probes: ")
-        print(table(keep))}
-    
+    if(dropping==TRUE){
+      message("Dropping probes: ")
+        table(keep)
+        }
     mSetSq <- suppressWarnings(preprocessQuantile(RGSet))
-    
     detP <- detP[match(featureNames(mSetSq), rownames(detP)), ]
     keep <- rowSums(detP < 0.01) == ncol(mSetSq)
     gset.funnorm <- addSnpInfo(mSetSq[keep, ])
@@ -110,7 +110,15 @@ getRgset <- function(rgOut, targets){
     return(RGSet)
 }
 
-getMdsPlot <-function(RGSet, samNames,samTypes, topN=1000) {
+cleanRawProbes <- function(rawBetaDat, RGSet, samNames, targets) {
+    if (!file.exists(rawBetaDat)) {
+        betas <- gb$cleanUpProbes(RGSet=RGSet, targets=targets)
+        saveRDS(betas, file = rawBetaDat)
+    } else{betas <- readRDS(rawBetaDat)}
+    return(betas)
+}
+
+getMdsPlot <- function(RGSet, samNames,samTypes, topN=1000) {
     mSetSq <- preprocessQuantile(RGSet)
     mSetSq <- addSnpInfo(mSetSq)
     mSetSq <- dropLociWithSnps(mSetSq, snps = c("SBE", "CpG"), maf = 0) # drop the loci which has snps
@@ -125,7 +133,8 @@ getMdsPlot <-function(RGSet, samNames,samTypes, topN=1000) {
     names(myColors) <- unique(samTypes)
     color_easy = c(myColors)[samTypes]
     png(filename=plotNam, width = 12, height = 8, res=200, units="in") 
-    plotMDS(
+    
+    limma::plotMDS(
         mSetSq.beta,
         top = topN,
         gene.selection = "common",
@@ -134,24 +143,18 @@ getMdsPlot <-function(RGSet, samNames,samTypes, topN=1000) {
         main = paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot"),
         col = color_easy,
         labels = samNames
-        )
+    )
+    
     legend(
-        "topright",
-        legend = c(names(myColors)),
-        col = paste(as.list(myColors)),
-        pch = 15,
-        cex = 0.8
-        )
+      "topright",
+      legend = c(names(myColors)),
+      col = paste(as.list(myColors)),
+      pch = 15,
+      cex = 0.8
+    )
+    
     dev.off()
+    thepng <-paste0('./',plotNam)
+    knitr::include_graphics(thepng)
     return(mSetSq.beta)
-}
-
-cleanRawProbes <- function(rawBetaDat, RGSet, samNames, targets) {
-  if (!file.exists(rawBetaDat)) {
-    betas <- gb$cleanUpProbes(RGSet, targets)
-    saveRDS(betas, file = rawBetaDat)
-  } else{
-    betas <- readRDS(rawBetaDat)
-  }
-  return(betas)
 }
