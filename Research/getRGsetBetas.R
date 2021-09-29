@@ -158,3 +158,10 @@ getMdsPlot <- function(RGSet, samNames,samTypes, topN=1000) {
     knitr::include_graphics(thepng)
     return(mSetSq.beta)
 }
+
+dropGroup <- function(targets, filterCol=NULL, group2rm=NULL) {
+    remov <- ifelse(!is.null(group2rm),
+                    c(targets[,filterCol] == group2rm),
+                    targets[,filterCol] != group2rm)
+    return(targets[!remov, ])
+}
