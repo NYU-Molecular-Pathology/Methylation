@@ -106,3 +106,18 @@ getHeatMap <- function(betaRanges, titleValue, ha, colSplt = NULL, rwsplt=NULL){
     )
     return(drawHeatMap(hmTopNumbers))
 }
+
+assignColors2 <- function(targets, varColumns = c("Type","Origin"), col_vect = NULL) {
+    if (is.null(col_vect)) {col_vect <- pals::glasbey()}
+    #col_vect <- col_vect[sample(1:length(col_vect))]
+    col_vect[6] = "#eb7d34" #changing dark forest to orange color
+    dimnames(targets)[[2]]
+    dat <- targets[,varColumns] # varColumns
+    anno_df <- data.frame(dat)
+    vars2Color <- as.list(lapply(dat, unique))
+    colorValues <-lapply(vars2Color, function(x) {x = (col_vect)[1:(length(x))]})
+    for (x in 1:length(vars2Color)) {
+        for (varNum in 1:length(vars2Color[x])) {names(colorValues[x][[1]]) = c(vars2Color[x][[1]])}
+    }
+    if(all(names(colorValues)==names(anno_df))){return(gb$getHeatAnno(colorValues,anno_df))}
+}
