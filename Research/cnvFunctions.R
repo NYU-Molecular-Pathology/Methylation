@@ -105,3 +105,45 @@ if(!file.exists(seg_clust_file)){
 }
 return(cnData)
 }
+
+grabGsetFun <- function(gsetFile, RGSet, targets) {
+  if (!file.exists(file.path(getwd(), gsetFile))) {
+    gset.funnorm <- gb$cleanUpProbes(RGSet, targets, getfunorm = T)
+    saveRDS(gset.funnorm, file = gsetFile)
+  } else{
+    gset.funnorm <- readRDS(gsetFile)
+  }
+  return(gset.funnorm)
+}
+
+grabGsetBeta <- function(gsetbeta, gset.funnorm) {
+  if (!file.exists(file.path(getwd(), gsetbeta))) {
+    gset.funnorm.beta <- supM(minfi::getBeta(gset.funnorm))
+    saveRDS(gset.funnorm.beta, file = gsetbeta)
+  } else{
+    gset.funnorm.beta <- readRDS(gsetbeta)
+  }
+  return(gset.funnorm.beta)
+}
+
+#colnames(gset.funnorm.beta) <- gset.funnorm$Sample_Group
+getDmpData <- function(ClusfiNam, gset.funnorm, gset.funnorm.beta){
+if(!file.exists(file.path(getwd(),ClusfiNam))){
+  annot = minfi::getAnnotation(gset.funnorm)
+  condition <- minfi::pData(gset.funnorm)$Sample_Group
+  dmp <- minfi::dmpFinder(gset.funnorm.beta, pheno = condition, type = "categorical")
+  dmp <- cbind(dmp, ID = rownames(dmp))
+  dmp_annot_combined <- cbind(annot[row.names(dmp), ], dmp)
+  dmp_annot_combined_df <- as.data.frame(dmp_annot_combined)
+  dmp_annot_significant <- subset(dmp_annot_combined_df, dmp_annot_combined_df$qval < 0.05)
+  write.csv(dmp_annot_significant,file=ClusfiNam)
+  theDmpData <- read.csv(ClusfiNam,header = T,sep = ",")
+  }else{
+    theDmpData <- read.csv(ClusfiNam,header = T,sep = ",")
+    }
+  gene_char_split <- strsplit(as.character(theDmpData$UCSC_RefGene_Name),';')
+  gene_char_unlist <- unlist(gene_char_split)
+  gene_char_unique <- as.data.frame(unique(gene_char_unlist))
+  colnames(gene_char_unique) <- 'Genes_By_Sample'
+  return(gene_char_unique)
+}
