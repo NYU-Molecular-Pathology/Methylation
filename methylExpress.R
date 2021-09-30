@@ -20,11 +20,7 @@ message("~~~~~~~~~~~~~~~~~~~~~"); stopifnot(!is.null(token)); stopifnot(!is.null
 
 # Paths to the GitHub Repo files
 mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
-script.list = c(
-    "LoadInstall_new.R","SetRunParams.R",
-    "CopyInputs.R","CopyOutput.R",
-    "pipelineHelper.R"
-    )
+script.list = c("LoadInstall_new.R","SetRunParams.R", "CopyInputs.R","CopyOutput.R", "pipelineHelper.R")
 
 # Source GitHub Scripts
 scripts = paste0(mainHub, script.list)
@@ -51,5 +47,12 @@ prepareRun <- function(token){
     gb$moveSampleSheet(gb$methDir) #copies outputs temp to desktop for QC.Rmd
     #gb$classifierInstall(instNew = F, rmpkg = F) # Loads pipeline or installs new
 }
+
+#gb$startRun <- function(selectRDs=NULL, runID=NULL, emailNotify=T){
+#    if(!is.null(selectRDs)){
+#        sampleOrder <- reOrderRun(selectRDs) # Re-order sample report generation for priority
+#        makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=T, selectSams=sampleOrder, redcapUp=T)
+#    } else {makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=F, selectSams=NULL, redcapUp=T)}
+#}
 
 prepareRun(token); gb$startRun(selectRDs)
