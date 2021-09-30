@@ -1,5 +1,23 @@
 gb <- .GlobalEnv; assign("gb", gb)
 
+library("grid")
+if(!require("GenVisR")){BiocManager::install("GenVisR")}
+library("minfi")
+library("conumee")
+library("mnp.v11b6")
+library("foreach")
+library("ggplot2")
+library("plotly")
+library("graphics")
+if(!require("clusterProfiler")){BiocManager::install("clusterProfiler", ask=F)}
+if(!require("org.Hs.eg.db")){BiocManager::install("org.Hs.eg.db", ask=F)}
+if(!require("pathview")){BiocManager::install("pathview", ask=F)}
+library("org.Hs.eg.db")
+library("clusterProfiler")
+library("minfi")
+library("pathview")
+
+
 cranPkgs <-
     c(
         "Rtsne",
@@ -14,6 +32,7 @@ cranPkgs <-
         "compiler",
         "circlize",
         "grid",
+        "gridExtra",
         "gridtext",
         "feather"
     )
