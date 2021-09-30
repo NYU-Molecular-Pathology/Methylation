@@ -2,6 +2,10 @@
 args <- commandArgs(TRUE)
 library("base"); gb <- globalenv(); assign("gb", gb)
 
+# If you have issues with conda and r, try running the following:
+# conda create -n r_env r-essentials r-base
+# conda activate r_env
+
 # Main Parameters trailing commandline
 token<-args[1]; runID<-args[2]; selectRDs<-args[3]
 if(length(selectRDs)==0){
