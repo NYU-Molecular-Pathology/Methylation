@@ -6,7 +6,6 @@ library("minfi")
 library("conumee")
 library("mnp.v11b6")
 library("foreach")
-library("ggplot2")
 library("plotly")
 library("graphics")
 if(!require("clusterProfiler")){BiocManager::install("clusterProfiler", ask=F)}
@@ -35,7 +34,9 @@ cranPkgs <-
         "gridExtra",
         "gridtext",
         "feather",
-        "sqldf"
+        "sqldf",
+        "reshape2",
+        "ggplot2"
     )
 
 # GitHub Packages ----
