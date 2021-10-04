@@ -36,7 +36,8 @@ cranPkgs <-
         "feather",
         "sqldf",
         "reshape2",
-        "ggplot2"
+        "ggplot2",
+        "ggnewscale"
     )
 
 # GitHub Packages ----
