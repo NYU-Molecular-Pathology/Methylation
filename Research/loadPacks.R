@@ -37,7 +37,8 @@ cranPkgs <-
         "sqldf",
         "reshape2",
         "ggplot2",
-        "ggnewscale"
+        "ggnewscale",
+        "ggupset"
     )
 
 # GitHub Packages ----
