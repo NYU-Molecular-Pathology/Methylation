@@ -34,7 +34,8 @@ cranPkgs <-
         "grid",
         "gridExtra",
         "gridtext",
-        "feather"
+        "feather",
+        "sqldf"
     )
 
 # GitHub Packages ----
