@@ -73,7 +73,7 @@ get.rd.info <- function(rd_numbers=NULL, token=NULL, sh_name=NULL){
 gen.cnv.png <- function(RGsetEpic, sampleName) {
     RGset=RGsetEpic
     imgName <- paste(sampleName, "cnv.png", sep="_")
-    fn=file.path("~/Desktop",imgName)
+    fn=file.path("/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG",imgName)
     if(file.exists(fn)){
         message("File already exists, skipping:", fn)
     }else{
@@ -113,13 +113,12 @@ save.png.files <- function(rds, token){
     mySentrix <- gb$search.redcap(rd_numbers = rds, token)
     mySentrix <- mySentrix[!is.na(mySentrix$barcode_and_row_column),]
     mySentrix <- mySentrix[!is.null(mySentrix$barcode_and_row_column),]
-    
     for (sam in rownames(mySentrix)) {
         sentrix <- mySentrix[sam,2]
         RGsetEpic <- grabRGset(getwd(),sentrix)
         gen.cnv.png(RGsetEpic, sampleName=mySentrix[sam,1])
     }
     unlink("~/Desktop/temp.html")
-    the.cnvs <- dir(path="~/Desktop",pattern="_cnv.png", full.names=T)
-    print(the.cnvs)
+    #the.cnvs <- dir(path="~/Desktop",pattern="_cnv.png", full.names=T)
+    #print(the.cnvs)
 }
