@@ -53,11 +53,15 @@ searchDb <- function(vals, db){
     return(foreach::foreach(i=1:ncol(db), .combine='rbind') %do% {db[grepl(v2f,db[,i]),]})
 }
 
-getFilePath <- function(inputSheet){
+getFilePath <- function(inputSheet, normFlag=F){
     drive = file.path("", "Volumes", "molecular", "MOLECULAR LAB ONLY")
     folder <- file.path("NYU PACT Patient Data", "Workbook")
     runyr <- stringr::str_split_fixed(inputSheet,"-",3)[,2]
+    if(normFlag==F){
     return(file.path(drive, folder, paste0("20", runyr),inputSheet,paste0(inputSheet,".xlsx")))
+    }else{
+        return(file.path(drive, folder, paste0("20", runyr),inputSheet))
+        }
 }
 
 parseWorksheet <- function(inputFi){
@@ -80,7 +84,18 @@ getCaseValues <- function(inputSheet,readFlag){
         if(file.exists(inputFi)){
             vals2find <- parseWorksheet(inputFi)
             return(vals2find)
-        }else{message(dsh,"The PACT run worksheet was not found:\n", inputFi, dsh)}
+        }else{
+            message(dsh,"The PACT run worksheet was not found:\n", inputFi, dsh)
+            inputFi <- getFilePath(inputSheet, T)
+            allFi <- list.files(path=inputFi, pattern="*.xlsx")
+            allFi <- allFi[!grepl( "~$", allFi, fixed = T)]
+            allFi <- allFi[!grepl( "export", allFi, fixed = F,ignore.case=T)]
+            allFi <- allFi[grepl( "Book", allFi, fixed = F,ignore.case=T)]
+            if(length(allFi)>1){allFi <- allFi[1]}
+            inputFi <- file.path(inputFi,allFi)
+            vals2find <- parseWorksheet(inputFi)
+            return(vals2find)
+            }
     }
 }
 
@@ -177,7 +192,8 @@ rds <- output$record_id
 assign("rds", rds)
 
 supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
-# FUN: Sets your directory and sources the helper functions
+
+# FUN: Sets your directory and sources the helper functions for cnv
 sourceFuns2 <- function(workingPath = NULL) {
     mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
     script.list <- c("SetRunParams.R","CopyInputs.R","PACT_scripts/generateCNV.R")
@@ -191,8 +207,7 @@ sourceFuns2 <- function(workingPath = NULL) {
 }
 
 library("conumee");library("sest");library("mnp.v11b6")
-require(plotly)
-require(htmlwidgets)
+require("plotly");require("htmlwidgets")
 sourceFuns2()
 ApiToken = gb$token
 gb$save.png.files(gb$rds, token)
