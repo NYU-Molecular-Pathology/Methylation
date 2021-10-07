@@ -41,6 +41,24 @@ search.redcap <- function(rd_numbers, ApiToken=NULL) {
     return(result)
 }
 
+
+get.idats2<-function(csvNam = "samplesheet.csv"){
+    rsch.idat <- gb$rsch.idat;clin.idat <- gb$clin.idat
+    if(!dir.exists(rsch.idat)){warnMount(rsch.idat)}; if(!dir.exists(clin.idat)){warnMount(clin.idat)}
+    stopifnot(dir.exists(rsch.idat)|dir.exists(clin.idat))
+    if (file.exists(csvNam)) {
+        allFi <- getAllFiles(idatDir = c(rsch.idat, clin.idat), csvNam = csvNam)
+        allFi = allFi[file.exists(allFi)]
+        if (length(allFi) > 0) {
+            message("Files found: "); print(allFi)
+            cur.idat <- dir(pattern = "*.idat$")
+            bcds <- paste0(basename(allFi))
+            if (all(bcds %in% cur.idat)) {message(".idat files already copied")}
+            if (!all(bcds %in% cur.idat)) {copyBaseIdats(allFi[!(bcds %in% cur.idat)])}
+        } else {message("No .idat files found! Check worksheet and input folder path")}
+    } else {message(paste("Cannot find your sheet named:", csvNam))}
+}
+
 # FUN: Copies .idat files to your directory and saves samplesheet.csv
 get.rd.info <- function(rd_numbers=NULL, token=NULL, sh_name=NULL){
     if (is.null(rd_numbers)){message("Input RD-numbers using get.rd.info(rd_numbers)")}
@@ -48,7 +66,7 @@ get.rd.info <- function(rd_numbers=NULL, token=NULL, sh_name=NULL){
     result <- gb$search.redcap(rd_numbers, token)
     samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[, "barcode_and_row_column"], "_", 2))
     writeFromRedcap(result, samplesheet_ID) # writes API export as minfi dataframe sheet
-    gb$get.idats(csvNam = sh_name)  # copies idat files from return to current directory
+    gb$get.idats2(csvNam = sh_name)  # copies idat files from return to current directory
     return(result)
 }
 
@@ -87,7 +105,7 @@ grabRGset <- function(runPath, sentrix){
 }
 
 save.png.files <- function(rds, token){
-    get.rd.info(rds, token=token) # input your RD-numbers here rd_numbers = c("RD-21-21")
+    get.rd.info(rd_numbers=rds, token=token,sh_name=NULL) # input your RD-numbers here rd_numbers = c("RD-21-21")
     mySentrix <- gb$search.redcap(rd_numbers = rds, token)
     mySentrix <- mySentrix[!is.na(mySentrix$barcode_and_row_column),]
     mySentrix <- mySentrix[!is.null(mySentrix$barcode_and_row_column),]
