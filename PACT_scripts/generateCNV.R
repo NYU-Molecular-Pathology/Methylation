@@ -76,7 +76,9 @@ get.rd.info <- function(rd_numbers=NULL, token=NULL, sh_name=NULL){
 gen.cnv.png <- function(RGsetEpic, sampleName) {
     RGset=RGsetEpic
     imgName <- paste(sampleName, "cnv.png", sep="_")
-    fn=file.path("/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG",imgName)
+    savePath <- file.path("~","Desktop")
+    fn=file.path(savePath,imgName)
+    tempPathFi <- file.path(savePath,"temp.html")
     if(file.exists(fn)){
         message("File already exists, skipping:", fn)
     }else{
@@ -94,12 +96,13 @@ gen.cnv.png <- function(RGsetEpic, sampleName) {
     xx <- mnp.v11b6::MNPcnv(Mset,sex = sex,main = sampleID)
     thePlot<-supM(mnp.v11b6::MNPcnvggplotly(xx, getTables = F))
     p<-supM(plotly::ggplotly(thePlot))
-    supM(htmlwidgets::saveWidget(plotly::as.widget(p), "~/Desktop/temp.html"))
-    supM(webshot2::webshot("~/Desktop/temp.html", file = fn, cliprect = "viewport", vwidth = 1152, vheight = 672))
+    supM(htmlwidgets::saveWidget(widget=plotly::as.widget(p), file=tempPathFi))
+    supM(webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", vwidth = 1152, vheight = 672))
     dev.off()
     message("File saved:\n",imgName,"\n")
     }
 }
+
 
 grabRGset <- function(runPath, sentrix){
     barcode = stringr::str_split_fixed(sentrix, "_",2)[1]
@@ -122,6 +125,11 @@ save.png.files <- function(rds, token){
         gen.cnv.png(RGsetEpic, sampleName=mySentrix[sam,1])
     }
     unlink("~/Desktop/temp.html")
-    #the.cnvs <- dir(path="~/Desktop",pattern="_cnv.png", full.names=T)
-    #print(the.cnvs)
+    the.cnvs <- dir(path="~/Desktop",pattern="_cnv.png", full.names=T)
+    savePath <- file.path("/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG", basename(the.cnvs))
+    fs::file_copy(path=the.cnvs,new_path=savePath)
 }
+
+if(!require("chromote")){remotes::install_github("rstudio/chromote",upgrade ="never")}
+
+library("chromote")
