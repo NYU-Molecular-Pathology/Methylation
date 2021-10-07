@@ -174,8 +174,25 @@ emailFile(runId, outFi, rcon)
 
 #db[db$record_id %in% output$record_id,]
 rds <- output$record_id
+assign("rds", rds)
 
-cnvscript = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/generateCNV.R"
-devtools::source_url(cnvscript)
-ApiToken = token
-gb$save.png.files(rds, token)
+supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
+# FUN: Sets your directory and sources the helper functions
+sourceFuns2 <- function(workingPath = NULL) {
+    mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
+    script.list <- c("SetRunParams.R","CopyInputs.R","PACT_scripts/generateCNV.R")
+    if(!require("redcapAPI")){install.packages("redcapAPI", dependencies = T, type="both",ask=F)
+        library("redcapAPI")}
+    if (is.null(workingPath)) {workingPath = getwd()}
+    scripts <- paste0(mainHub, script.list)
+    invisible(lapply(scripts, function(i){devtools::source_url(i)}))
+    gb$setDirectory(workingPath)
+    return(gb$defineParams())
+}
+
+library("conumee");library("sest");library("mnp.v11b6")
+require(plotly)
+require(htmlwidgets)
+sourceFuns2()
+ApiToken = gb$token
+gb$save.png.files(gb$rds, token)
