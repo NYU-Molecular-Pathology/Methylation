@@ -21,7 +21,7 @@ writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
         Date = df$arrived
     )
     samplesheet_csv <- samplesheet_csv[!is.na(samplesheet_csv$SentrixID_Pos),]
-    
+
     print(samplesheet_csv)
     write.csv(
         samplesheet_csv,
@@ -41,20 +41,23 @@ search.redcap <- function(rd_numbers, ApiToken=NULL) {
     return(result)
 }
 
+warnMount <- function(idat.dir){
+    cat(crayon::bgRed("\nDirectory not found, make sure idat folder location is mounted:\n", idat.dir))
+}
 
 get.idats2<-function(csvNam = "samplesheet.csv"){
     rsch.idat <- gb$rsch.idat;clin.idat <- gb$clin.idat
     if(!dir.exists(rsch.idat)){warnMount(rsch.idat)}; if(!dir.exists(clin.idat)){warnMount(clin.idat)}
     stopifnot(dir.exists(rsch.idat)|dir.exists(clin.idat))
     if (file.exists(csvNam)) {
-        allFi <- getAllFiles(idatDir = c(rsch.idat, clin.idat), csvNam = csvNam)
+        allFi <- gb$getAllFiles(idatDir = c(rsch.idat, clin.idat), csvNam = csvNam)
         allFi = allFi[file.exists(allFi)]
         if (length(allFi) > 0) {
             message("Files found: "); print(allFi)
             cur.idat <- dir(pattern = "*.idat$")
             bcds <- paste0(basename(allFi))
             if (all(bcds %in% cur.idat)) {message(".idat files already copied")}
-            if (!all(bcds %in% cur.idat)) {copyBaseIdats(allFi[!(bcds %in% cur.idat)])}
+            if (!all(bcds %in% cur.idat)) {gb$copyBaseIdats(allFi[!(bcds %in% cur.idat)])}
         } else {message("No .idat files found! Check worksheet and input folder path")}
     } else {message(paste("Cannot find your sheet named:", csvNam))}
 }
