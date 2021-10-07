@@ -1,17 +1,6 @@
 gb <- globalenv(); assign("gb", gb)
 supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
 # FUN: Sets your directory and sources the helper functions
-sourceFuns <- function(workingPath = NULL) {
-    mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
-    script.list <- c("SetRunParams.R","CopyInputs.R")
-    if(!require("redcapAPI")){install.packages("redcapAPI", dependencies = T, type="both",ask=F)
-        library("redcapAPI")}
-    if (is.null(workingPath)) {workingPath = getwd()}
-    scripts <- paste0(mainHub, script.list)
-    invisible(lapply(scripts, function(i){devtools::source_url(i)}))
-    gb$setDirectory(workingPath)
-    return(gb$defineParams())
-}
 
 #  Copy idats and Worksheets creation
 writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
@@ -112,8 +101,3 @@ save.png.files <- function(rds, token){
     the.cnvs <- dir(path="~/Desktop",pattern="_cnv.png", full.names=T)
     print(the.cnvs)
 }
-
-library("conumee");library("sest");library("mnp.v11b6")
-require(plotly)
-require(htmlwidgets)
-sourceFuns()
