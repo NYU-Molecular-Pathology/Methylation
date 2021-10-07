@@ -73,11 +73,15 @@ get.rd.info <- function(rd_numbers=NULL, token=NULL, sh_name=NULL){
 gen.cnv.png <- function(RGsetEpic, sampleName) {
     RGset=RGsetEpic
     imgName <- paste(sampleName, "cnv.png", sep="_")
+    fn=file.path("~/Desktop",imgName)
+    if(file.exists(fn)){
+        message("File already exists, skipping:", fn)
+    }else{
     Mset <- mnp.v11b6::MNPpreprocessIllumina(RGsetEpic)
     Mset@annotation=c(array="IlluminaHumanMethylationEPIC", annotation="ilm10b4.hg19")
-    FFPE <- mnp.v11b6::MNPgetFFPE(RGset)
+    FFPE <- mnp.v11b6::MNPgetFFPE(RGsetEpic)
     Mset_ba <- mnp.v11b6::MNPbatchadjust(Mset, FFPE)
-    detP <- minfi::detectionP(RGset)
+    detP <- minfi::detectionP(RGsetEpic)
     bs <- minfi::getBeta(Mset)
     sexEstimate <-as.data.frame(signif(sest::get.proportion_table(bs, detP), digits = 2))
     yest <- as.double(sexEstimate$`p.Y:(-18,-5]`) >= 0.75
@@ -87,11 +91,11 @@ gen.cnv.png <- function(RGsetEpic, sampleName) {
     xx <- mnp.v11b6::MNPcnv(Mset,sex = sex,main = sampleID)
     thePlot<-supM(mnp.v11b6::MNPcnvggplotly(xx, getTables = F))
     p<-supM(plotly::ggplotly(thePlot))
-    fn=file.path("~/Desktop",imgName)
     supM(htmlwidgets::saveWidget(plotly::as.widget(p), "~/Desktop/temp.html"))
     supM(webshot2::webshot("~/Desktop/temp.html", file = fn, cliprect = "viewport", vwidth = 1152, vheight = 672))
     dev.off()
     message("File saved:\n",imgName,"\n")
+    }
 }
 
 grabRGset <- function(runPath, sentrix){
