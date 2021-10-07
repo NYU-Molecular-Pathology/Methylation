@@ -114,6 +114,21 @@ grabRGset <- function(runPath, sentrix){
     return(RGsetEpic)
 }
 
+copyOutputPng <- function(){
+    unlink("~/Desktop/temp.html")
+    the.cnvs <- dir(path="~/Desktop",pattern="_cnv.png", full.names=T)
+    outFolder <- "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
+    savePath <- file.path(outFolder, basename(the.cnvs))
+    message("Copying png files to Molecular folder:\n")
+    message(outFolder)
+    try(fs::file_copy(path=the.cnvs,new_path=savePath),silent = T)
+    if(any(!file.exists(savePath))){
+        message("The following failed to copy from the desktop:\n")
+        print(basename(savePath[!file.exists(savePath)]))
+    }
+    while (!is.null(dev.list()))  dev.off()
+}
+
 save.png.files <- function(rds, token){
     get.rd.info(rd_numbers=rds, token=token,sh_name=NULL) # input your RD-numbers here rd_numbers = c("RD-21-21")
     mySentrix <- gb$search.redcap(rd_numbers = rds, token)
@@ -124,12 +139,8 @@ save.png.files <- function(rds, token){
         RGsetEpic <- grabRGset(getwd(),sentrix)
         gen.cnv.png(RGsetEpic, sampleName=mySentrix[sam,1])
     }
-    unlink("~/Desktop/temp.html")
-    the.cnvs <- dir(path="~/Desktop",pattern="_cnv.png", full.names=T)
-    savePath <- file.path("/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG", basename(the.cnvs))
-    fs::file_copy(path=the.cnvs,new_path=savePath)
+
+    copyOutputPng()
 }
-
-if(!require("chromote")){remotes::install_github("rstudio/chromote",upgrade ="never")}
-
+if(!require("chromote")){remotes::install_github("rstudio/chromote", upgrade ="never")}
 library("chromote")
