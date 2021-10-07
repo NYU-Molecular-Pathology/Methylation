@@ -19,12 +19,13 @@ stopifnot(exists("inputSheet")|!is.null(inputSheet))
 # FUN: Checks if z-drive is accessible to the Rscript
 checkMounts <- function(){
     molecDrive = "/Volumes/molecular/MOLECULAR LAB ONLY"
+    zDrive = "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular"
     failMount <- ifelse(dir.exists(molecDrive),T,F)
     if(failMount!=T){
         cat("PATH does not exist, ensure path is mounted:")
         cat(crayon::white$bgRed$bold(molecDrive))
-        cat("You must mount the network Z-drive path:")
-        cat("smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular\n")
+        cat("You must mount the network Z-drive path:\n")
+        cat(crayon::white$bgRed$bold(zDrive),"\n")
         stopifnot(!any(failMount==T))
     } else {message("Z-drive path is accessible")}
 }
@@ -81,7 +82,9 @@ getPhilipsGender <- function(mainSheet,inputFi, sh2){
     runId <- cnvSheet[1,"Sample_Project"]
     philipVals <- as.data.frame(readxl::read_excel(inputFi,sheet = sh2,skip = 3,col_types = "text"))
     cnvSheet$Gender <- philipVals$Gender[match(cnvSheet$Test_Number, philipVals$`Test Number`)]
-    write.table(cnvSheet,quote=F, sep='\t', file=file.path("~","Desktop",paste0(runId,".tsv")),row.names=F)
+    cnvPath <- "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
+    write.table(cnvSheet,quote=F, sep='\t', file=file.path(cnvPath,paste0(runId,".tsv")),row.names=F)
+    
 }
 
 # Parses xlsx file and writes as csv file -----
