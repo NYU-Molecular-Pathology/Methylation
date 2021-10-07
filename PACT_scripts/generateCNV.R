@@ -1,6 +1,5 @@
 gb <- globalenv(); assign("gb", gb)
 supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
-# FUN: Sets your directory and sources the helper functions
 
 #  Copy idats and Worksheets creation
 writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
@@ -91,6 +90,7 @@ save.png.files <- function(rds, token){
     get.rd.info(rds, token=token) # input your RD-numbers here rd_numbers = c("RD-21-21")
     mySentrix <- gb$search.redcap(rd_numbers = rds, token)
     mySentrix <- mySentrix[!is.na(mySentrix$barcode_and_row_column),]
+    mySentrix <- mySentrix[!is.null(mySentrix$barcode_and_row_column),]
     
     for (sam in rownames(mySentrix)) {
         sentrix <- mySentrix[sam,2]
