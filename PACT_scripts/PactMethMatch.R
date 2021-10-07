@@ -53,14 +53,24 @@ searchDb <- function(vals, db){
     return(foreach::foreach(i=1:ncol(db), .combine='rbind') %do% {db[grepl(v2f,db[,i]),]})
 }
 
-getFilePath <- function(inputSheet, normFlag=F){
+getFilePath <- function(inputSheet){
     drive = file.path("", "Volumes", "molecular", "MOLECULAR LAB ONLY")
     folder <- file.path("NYU PACT Patient Data", "Workbook")
     runyr <- stringr::str_split_fixed(inputSheet,"-",3)[,2]
-    if(normFlag==F){
-    return(file.path(drive, folder, paste0("20", runyr),inputSheet,paste0(inputSheet,".xlsx")))
-    }else{
-        return(file.path(drive, folder, paste0("20", runyr),inputSheet))
+    inputFi <- file.path(drive, folder, paste0("20", runyr),inputSheet,paste0(inputSheet,".xlsx"))
+    if(file.exists(inputFi)) {
+        return(inputFi)
+    } else{
+        inputFi <- file.path(drive, folder, paste0("20", runyr), inputSheet)
+        message(dsh, "The PACT run worksheet was not found:\n", inputFi, dsh)
+        allFi <- list.files(path=inputFi, pattern="*.xlsx")
+        allFi <- allFi[!grepl( "~$", allFi, fixed = T)]
+        allFi <- allFi[!grepl( "export", allFi, fixed = F,ignore.case=T)]
+        allFi <- allFi[grepl( "Book", allFi, fixed = F,ignore.case=T)]
+        if(length(allFi)>1){allFi <- allFi[1]}
+        inputFi <- file.path(inputFi,allFi)
+        message(dsh,"Using this workbook instead:\n", inputFi, dsh)
+        return(inputFi)
         }
 }
 
@@ -81,21 +91,8 @@ getCaseValues <- function(inputSheet,readFlag){
         return(vals2find)
     }else{
         inputFi <- getFilePath(inputSheet)
-        if(file.exists(inputFi)){
-            vals2find <- parseWorksheet(inputFi)
-            return(vals2find)
-        }else{
-            message(dsh,"The PACT run worksheet was not found:\n", inputFi, dsh)
-            inputFi <- getFilePath(inputSheet, T)
-            allFi <- list.files(path=inputFi, pattern="*.xlsx")
-            allFi <- allFi[!grepl( "~$", allFi, fixed = T)]
-            allFi <- allFi[!grepl( "export", allFi, fixed = F,ignore.case=T)]
-            allFi <- allFi[grepl( "Book", allFi, fixed = F,ignore.case=T)]
-            if(length(allFi)>1){allFi <- allFi[1]}
-            inputFi <- file.path(inputFi,allFi)
-            vals2find <- parseWorksheet(inputFi)
-            return(vals2find)
-            }
+        vals2find <- parseWorksheet(inputFi)
+        return(vals2find)
     }
 }
 
@@ -181,8 +178,12 @@ rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/",
 vals2find <- getCaseValues(inputSheet,readFlag)
 db <- grabAllRecords(flds, rcon)
 output <- queryCases(vals2find, db)
-runId <- ifelse(readFlag==T, paste0(head(read.csv(inputSheet))[3,2]),
-                paste0(head(suppressMessages(readxl::read_excel(getFilePath(inputSheet), sheet=7)))[3,2]))
+theExcel <- getFilePath(inputSheet)
+
+runId <- ifelse(readFlag == T, paste0(head(read.csv(inputSheet))[3, 2]),
+                paste0(head(suppressMessages(
+                    readxl::read_excel(theExcel, sheet = 7)
+                ))[3, 2]))
 output <- modifyOutput(output,vals2find)
 outFi <- createXlFile(runId,output)
 emailFile(runId, outFi, rcon)
@@ -192,8 +193,7 @@ rds <- output$record_id
 assign("rds", rds)
 
 supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
-
-# FUN: Sets your directory and sources the helper functions for cnv
+# FUN: Sets your directory and sources the helper functions
 sourceFuns2 <- function(workingPath = NULL) {
     mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
     script.list <- c("SetRunParams.R","CopyInputs.R","PACT_scripts/generateCNV.R")
