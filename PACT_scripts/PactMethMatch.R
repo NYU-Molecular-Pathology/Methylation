@@ -19,7 +19,8 @@ readFlag <- endsWith(inputSheet,".csv")==T
 stopifnot(rlang::is_bool(readFlag))
 
 # REDcap Heading Fields -----
-flds = c("record_id","b_number","tm_number","accession_number","block","diagnosis","organ","tissue_comments","run_number")
+flds = c("record_id","b_number","tm_number","accession_number","block","diagnosis",
+         "organ","tissue_comments","run_number", "nyu_mrn")
 
 # Load redcapAPI Package -----
 if(suppressWarnings(!require("redcapAPI"))){
@@ -43,8 +44,8 @@ loadPacks <- function(){
 # API Call functions -----
 grabAllRecords <- function(flds, rcon){
     params = list(rcon, fields=flds, labels=F, dates = F, survey = F, dag = F, factors=F, form_complete_auto=F)
-    dbColumns <- do.call(redcapAPI::exportRecords, c(params))
-    return(as.data.frame(dbColumns))
+    dbCols <- do.call(redcapAPI::exportRecords, c(params))
+    return(as.data.frame(dbCols))
 }
 
 # Database search function -----
@@ -56,7 +57,7 @@ searchDb <- function(vals, db){
 getFilePath <- function(inputSheet){
     drive = file.path("", "Volumes", "molecular", "MOLECULAR LAB ONLY")
     folder <- file.path("NYU PACT Patient Data", "Workbook")
-    runyr <- stringr::str_split_fixed(inputSheet,"-",3)[,2]
+    runyr <- stringr::str_split_fixed(inputSheet,"-", 3)[,2]
     inputFi <- file.path(drive, folder, paste0("20", runyr),inputSheet,paste0(inputSheet,".xlsx"))
     if(file.exists(inputFi)) {
         return(inputFi)
@@ -71,14 +72,15 @@ getFilePath <- function(inputSheet){
         inputFi <- file.path(inputFi,allFi)
         message(dsh,"Using this workbook instead:\n", inputFi, dsh)
         return(inputFi)
-        }
+    }
 }
 
 parseWorksheet <- function(inputFi){
     shNames <- readxl::excel_sheets(inputFi)
-    sh <- which(grepl("SampleSheet",shNames,ignore.case=T))[1]
-    vals2find <-  as.data.frame(readxl::read_excel(inputFi, sheet=shNames[sh], skip=19, col_types ="text")[,c(6,7,9)])
-    vals2find <- vals2find[!grepl("H20|SERACARE|HAPMAP", vals2find[,2]),]
+    sheet2Read <- "PhilipsExport"
+    sh <- which(grepl(sheet2Read,shNames,ignore.case=T))[1]
+    pactShCol <- c("Tumor Specimen ID","Tumor DNA/RNA Number", "MRN", "Test Number")
+    vals2find <-  as.data.frame(readxl::read_excel(inputFi, sheet=shNames[sh], skip=3, col_types ="text")[,pactShCol])
     vals2find <- vals2find[!is.na(vals2find[,1]),]
     return(vals2find)
 }
@@ -96,16 +98,18 @@ getCaseValues <- function(inputSheet,readFlag){
     }
 }
 
+genQuery <- function(dbCol,vals2find){
+    currCol <- vals2find[, dbCol]
+    q1 <- currCol[currCol != 0 & !is.na(currCol) & currCol != ""]
+    return(unique(q1))
+}
+
 # Get Methylation and Molecular Samples list ----
 queryCases <- function(vals2find, db) {
-    query1 <- vals2find[, 1][vals2find[, 1] != 0 & vals2find[, 1] != ""]
-    methResA <- searchDb(query1, db)
-    query2 <- vals2find[, 2][vals2find[, 2] != 0 & vals2find[, 2] != ""]
-    message("\n~~~ Queried Cases:\n")
-    print(query1)
-    print(query2)
-    methResB <- searchDb(query2, db)
-    return(unique(rbind(methResA, methResB)))
+    i=NULL
+    queryList <- foreach::foreach(i=1:ncol(vals2find), .combine="c") %do% {genQuery(i,vals2find)}
+    methQuery <- searchDb(queryList, db)
+    return(unique(methQuery))
 }
 
 addOutputLinks <- function(output){
@@ -131,9 +135,10 @@ modifyOutput <- function(output,vals2find){
             currRow <- paste(output[i, ])
             theMatch <- which(pat %in% currRow[currRow != "0" & currRow != "NA"])
             if (length(theMatch) > 0) {
-                theVal <- vals2find$Test_Number[theMatch]
+                theVal <- vals2find$`Test Number`[theMatch]
             }
         }
+        
         output$Test_Number[i] <- theVal
     }
     output <- addOutputLinks(output)
@@ -149,7 +154,8 @@ createXlFile <- function(runId,output){
             x <- c(output$'Report Link'[fiLn])
             names(x) <- paste0(output$record_id[fiLn],".html")
             class(x) <- "hyperlink"
-            openxlsx::writeData(wb, sheet = runId, x = x, startCol = 11, startRow=fiLn+1)
+            colNum <- which(colnames(output)=="Report Link")
+            openxlsx::writeData(wb, sheet = runId, x = x, startCol = colNum, startRow=fiLn+1)
         }
     }
     outFi <-file.path("~","Desktop", paste0(runId,"_MethylMatch.xlsx"))
@@ -175,7 +181,7 @@ emailFile <- function(runId, outFi, rcon){
 
 loadPacks()
 rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", token)
-vals2find <- getCaseValues(inputSheet,readFlag)
+vals2find <- getCaseValues(inputSheet, readFlag)
 db <- grabAllRecords(flds, rcon)
 output <- queryCases(vals2find, db)
 theExcel <- getFilePath(inputSheet)
@@ -210,4 +216,19 @@ library("conumee");library("sest");library("mnp.v11b6")
 require("plotly");require("htmlwidgets")
 sourceFuns2()
 ApiToken = gb$token
+
+get.rd.info<-function(rd_numbers=NULL, token=NULL, sh_name=NULL){
+    if (is.null(rd_numbers)){message("Input RD-numbers using get.rd.info(rd_numbers)")}
+    if (is.null(sh_name)) {sh_name = "samplesheet.csv"}
+    result <- gb$search.redcap(rd_numbers, token)
+    result <- result[!is.na(result$barcode_and_row_column),]
+    rownames(result)<- 1:nrow(result)
+    samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[, "barcode_and_row_column"], "_", 2))
+    gb$writeFromRedcap(result, samplesheet_ID) # writes API export as minfi dataframe sheet
+    gb$get.idats2(csvNam = sh_name)  # copies idat files from return to current directory
+    return(result)
+}
+
 gb$save.png.files(gb$rds, token)
+
+
