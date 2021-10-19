@@ -98,7 +98,7 @@ gen.cnv.png <- function(RGsetEpic, sampleName) {
     p<-supM(plotly::ggplotly(thePlot))
     supM(htmlwidgets::saveWidget(widget=plotly::as.widget(p), file=tempPathFi))
     supM(webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", vwidth = 1152, vheight = 672))
-    dev.off()
+    #dev.off()
     message("File saved:\n",imgName,"\n")
     }
 }
@@ -126,7 +126,7 @@ copyOutputPng <- function(){
         message("The following failed to copy from the desktop:\n")
         print(basename(savePath[!file.exists(savePath)]))
     }
-    while (!is.null(dev.list()))  dev.off()
+   # while (!is.null(dev.list()))  dev.off()
 }
 
 save.png.files <- function(rds, token){
