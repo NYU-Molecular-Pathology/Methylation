@@ -179,6 +179,8 @@ emailFile <- function(runId, outFi, rcon){
     message(dsh,"\nEmail Notification Created",dsh)
 }
 
+# Searching REDCap Worksheets for MRN Match -------------------------------------
+
 loadPacks()
 rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", token)
 vals2find <- getCaseValues(inputSheet, readFlag)
@@ -194,11 +196,13 @@ output <- modifyOutput(output,vals2find)
 outFi <- createXlFile(runId,output)
 emailFile(runId, outFi, rcon)
 
-#db[db$record_id %in% output$record_id,]
-rds <- output$record_id
+# CNV PNG Creation -------------------------------------
+
+rds <- output$record_id[output$report_complete=="YES"]
 assign("rds", rds)
 
 supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
+
 # FUN: Sets your directory and sources the helper functions
 sourceFuns2 <- function(workingPath = NULL) {
     mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
@@ -212,23 +216,68 @@ sourceFuns2 <- function(workingPath = NULL) {
     return(gb$defineParams())
 }
 
-library("conumee");library("sest");library("mnp.v11b6")
-require("plotly");require("htmlwidgets")
-sourceFuns2()
-ApiToken = gb$token
+message("\nStarting CNV PNG Creation\n")
 
-get.rd.info<-function(rd_numbers=NULL, token=NULL, sh_name=NULL){
-    if (is.null(rd_numbers)){message("Input RD-numbers using get.rd.info(rd_numbers)")}
-    if (is.null(sh_name)) {sh_name = "samplesheet.csv"}
-    result <- gb$search.redcap(rd_numbers, token)
-    result <- result[!is.na(result$barcode_and_row_column),]
-    rownames(result)<- 1:nrow(result)
-    samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[, "barcode_and_row_column"], "_", 2))
-    gb$writeFromRedcap(result, samplesheet_ID) # writes API export as minfi dataframe sheet
-    gb$get.idats2(csvNam = sh_name)  # copies idat files from return to current directory
-    return(result)
+sourceFuns2()
+
+gen.cnv.png <- function(RGsetEpic, sampleName) {
+    RGset=RGsetEpic
+    imgName <- paste(sampleName, "cnv.png", sep="_")
+    savePath <- file.path("~","Desktop")
+    fn=file.path(savePath,imgName)
+    tempPathFi <- file.path(savePath,"temp.html")
+    if(file.exists(fn)){
+        message("File already exists, skipping:", fn)
+    }else{
+        Mset <- mnp.v11b6::MNPpreprocessIllumina(RGsetEpic)
+        Mset@annotation=c(array="IlluminaHumanMethylationEPIC", annotation="ilm10b4.hg19")
+        FFPE <- mnp.v11b6::MNPgetFFPE(RGsetEpic)
+        Mset_ba <- mnp.v11b6::MNPbatchadjust(Mset, FFPE)
+        detP <- minfi::detectionP(RGsetEpic)
+        bs <- minfi::getBeta(Mset)
+        sexEstimate <-as.data.frame(signif(sest::get.proportion_table(bs, detP), digits = 2))
+        yest <- as.double(sexEstimate$`p.Y:(-18,-5]`) >= 0.75
+        yest1 <- as.double(sexEstimate$`Y:(0,0.1]`) >= 0.12
+        sex <- ifelse((yest == TRUE && yest1 == TRUE), "male", "female")
+        message("Generating ", sampleName, " cnv plot...")
+        xx <- mnp.v11b6::MNPcnv(Mset,sex = sex,main = sampleID)
+        thePlot<-supM(mnp.v11b6::MNPcnvggplotly(xx, getTables = F))
+        p<-supM(plotly::ggplotly(thePlot))
+        supM(htmlwidgets::saveWidget(widget=plotly::as.widget(p), file=tempPathFi))
+        supM(webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", vwidth = 1152, vheight = 672))
+        #dev.off()
+        message("File saved:\n",imgName,"\n")
+    }
 }
 
+
+grabRGset <- function(runPath, sentrix){
+    barcode = stringr::str_split_fixed(sentrix, "_",2)[1]
+    RGsetEpic <- minfi::read.metharray(file.path(runPath, sentrix), verbose = T, force = T)
+    aEpic=c(array="IlluminaHumanMethylationEPIC", annotation="ilm10b4.hg19")
+    a450k=c(array="IlluminaHumanMethylation450k", annotation="ilmn12.hg19")
+    if (barcode >= as.numeric("204220033000")) {RGsetEpic@annotation=aEpic}
+    if (RGsetEpic@annotation['array']=="IlluminaHumanMethylation450k") {RGsetEpic@annotation=a450k}
+    return(RGsetEpic)
+}
+
+copyOutputPng <- function(){
+    unlink("~/Desktop/temp.html")
+    the.cnvs <- dir(path="~/Desktop",pattern="_cnv.png", full.names=T)
+    outFolder <- "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
+    savePath <- file.path(outFolder, basename(the.cnvs))
+    message("Copying png files to Molecular folder:\n")
+    message(outFolder)
+    try(fs::file_copy(path=the.cnvs,new_path=savePath),silent = T)
+    if(any(!file.exists(savePath))){
+        message("The following failed to copy from the desktop:\n")
+        print(basename(savePath[!file.exists(savePath)]))
+    }
+    # while (!is.null(dev.list()))  dev.off()
+}
+
+
+library("conumee");library("sest");library("mnp.v11b6")
+require("plotly");require("htmlwidgets")
+ApiToken = gb$token
 gb$save.png.files(gb$rds, token)
-
-
