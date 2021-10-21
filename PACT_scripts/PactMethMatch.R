@@ -57,14 +57,14 @@ searchDb <- function(vals, db){
 getFilePath <- function(inputSheet){
     drive = file.path("", "Volumes", "molecular", "MOLECULAR LAB ONLY")
     folder <- file.path("NYU PACT Patient Data", "Workbook")
-    runyr <- stringr::str_split_fixed(inputSheet,"-", 3)[,2]
-    inputFi <- file.path(drive, folder, paste0("20", runyr),inputSheet,paste0(inputSheet,".xlsx"))
+    runyr <- stringr::str_split_fixed(inputSheet,"-",3)[,2]
+    inputFi <- file.path(drive, folder, paste0("20", runyr),inputSheet,paste0(inputSheet,".xlsm"))
     if(file.exists(inputFi)) {
         return(inputFi)
     } else{
         inputFi <- file.path(drive, folder, paste0("20", runyr), inputSheet)
         message(dsh, "The PACT run worksheet was not found:\n", inputFi, dsh)
-        allFi <- list.files(path=inputFi, pattern="*.xlsx")
+        allFi <- list.files(path=inputFi, pattern="*.xlsm")
         allFi <- allFi[!grepl( "~$", allFi, fixed = T)]
         allFi <- allFi[!grepl( "export", allFi, fixed = F,ignore.case=T)]
         allFi <- allFi[grepl( "Book", allFi, fixed = F,ignore.case=T)]
@@ -72,7 +72,7 @@ getFilePath <- function(inputSheet){
         inputFi <- file.path(inputFi,allFi)
         message(dsh,"Using this workbook instead:\n", inputFi, dsh)
         return(inputFi)
-    }
+        }
 }
 
 parseWorksheet <- function(inputFi){
