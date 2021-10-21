@@ -72,7 +72,9 @@ sanitizeSheet <- function(sheetVals){
         mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub(",", "", x) })
         mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub(" ", "", x) })
     }
-    mainSheet$Paired_Normal[mainSheet$Paired_Normal==0] <-""
+    mainSheet$Paired_Normal[mainSheet$Paired_Normal==0|is.na(mainSheet$Paired_Normal)] <-""
+    mainSheet$Tumor_Type[mainSheet$Tumor_Type==0] <- "NA"
+    mainSheet[,1:16] <- sapply(mainSheet[,1:16], function(x) { gsub("\\\\", "-", x) })
     return(mainSheet)
 }
 
