@@ -10,7 +10,7 @@ token<-args[1]; inputSheet<-args[2]
 # Displays the Input args -----
 message(dsh,"\nParameters input",dsh)
 message("token: ",token)
-message("Worksheet: ", inputSheet,".xlsx\n")
+message("Worksheet: ", inputSheet,".xlsm\n")
 
 # Check Input Params -----
 stopifnot(exists("token")|!is.null(token))
@@ -58,7 +58,7 @@ getExcelPath <- function(inputSheet, pathType=1){
     drive = file.path("", "Volumes", "molecular", "MOLECULAR LAB ONLY")
     folder = file.path("NYU PACT Patient Data", "Workbook")
     runyr <- stringr::str_split_fixed(inputSheet, "-", 3)[, 2]
-    ending <-ifelse(pathType==1,".xlsx","_FinalExportedList.xlsx")
+    ending <-ifelse(pathType==1,".xlsm","_FinalExportedList.xlsx")
     return(file.path(drive, folder, paste0("20", runyr),inputSheet,
                      paste0(inputSheet, ending)))
 }
@@ -139,7 +139,7 @@ writeSampleSheet <- function(inputSheet, token){
         message(crayon::bgRed("Checking the following files:"),"\n", dsh)
         if(length(potentialFi)>=1){
             print(potentialFi)
-            wbFiles <- stringr::str_which(basename(potentialFi),pattern="book|Book")
+            wbFiles <- stringr::str_which(basename(potentialFi),pattern="xlsm")
             potentialFi <- potentialFi[wbFiles]
             potentialFi <- potentialFi[!stringr::str_detect(potentialFi,"\\$")]
         }
