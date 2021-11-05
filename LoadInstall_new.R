@@ -248,6 +248,7 @@ setOptions <- function(){
 cpMakeV <- function(editFile=F){
     mkFi <- "/Volumes/CBioinformatics/jonathan/Rprojects/Methylation-scripts/Makevars"
     message("Copying Makevars to local dotfiles: ", mkFi)
+    if(!dir.exists("~/.R/")){dir.create("~/.R/")}
     if(editFile){file.edit(mkFi)}
     if(file.exists(mkFi)){file.copy(mkFi,"~/.R/", overwrite=T )}
 }
