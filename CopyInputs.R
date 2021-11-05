@@ -62,7 +62,7 @@ copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
         if (file.exists(fileLoc)) {
             message("\n\nCopying worksheet from Worksheets Folder:")
             if(!file.exists(file.path(getwd(),basename(fileLoc)))){
-                fs::file_copy(fileLoc, getwd())}
+                fs::file_copy(fileLoc, getwd(),overwrite=T)}
         } else {
             message("File not found:");cat(fileLoc)
             message("\nMake sure your path is correct, try print(gb$copyWorksheetFile)")
@@ -198,7 +198,7 @@ getAllFiles <- function(idatDir, csvNam=NULL) {
 # FUN: Copies .idat files to your current directory using sample sheet
 copyBaseIdats <- function(allFi) {
     cat(crayon::white$bgCyan("Copying idats to current directory..."),"\n")
-    fs::file_copy(allFi, file.path(getwd()))
+    fs::file_copy(allFi, file.path(getwd()),overwrite=T)
     idcs = basename(allFi)
     idatsCopied <- idcs[idcs != ""]
     success = file.exists(idatsCopied)
