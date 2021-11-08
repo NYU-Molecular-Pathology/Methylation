@@ -97,7 +97,7 @@ gen.cnv.png <- function(RGsetEpic, sampleName) {
     thePlot<-supM(mnp.v11b6::MNPcnvggplotly(xx, getTables = F))
     p<-supM(plotly::ggplotly(thePlot))
     supM(htmlwidgets::saveWidget(widget=plotly::as.widget(p), file=tempPathFi))
-    supM(webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", vwidth = 1152, vheight = 672))
+    supM(webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", vwidth = 2304, vheight = 1254))
     #dev.off()
     message("File saved:\n",imgName,"\n")
     }
