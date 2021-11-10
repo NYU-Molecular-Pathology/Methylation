@@ -129,19 +129,19 @@ pk.inst <- function(pkg){
         tryCatch(
             expr = {
                 do.call(install.packages, c(pk.opt, list(type = "both")))
-                },
+            },
             warning = function(cond) { msgCheck(cond,T)
                 do.call(install.packages, c(pk.opt, list(type = "source")))
-                },
+            },
             error = function(cond) { msgCheck(cond,T)
                 do.call(install.packages, c(pk.opt, list(type = "binary")))
-                },
+            },
             custom_error = function(cond) { msgCheck(cond,T)
                 easypackages::packages(pkg, prompt = F, Ncpus = 6)
-                },
+            },
             finally={ld(pkg)}
         )
-        } else {ld(pkg)}
+    } else {ld(pkg)}
 }
 
 # FUN: Installs package from github link
@@ -153,7 +153,7 @@ gh.inst <- function(pkNam, ...) {
             expr = {
                 params <- c(gh.opt, list(type = "source"))
                 do.call(devtools::install_github, params)
-                },
+            },
             error = function(cond) {
                 params  <- c(gh.opt, list(type = "binary"))
                 do.call(devtools::install_github, params)
@@ -170,13 +170,13 @@ srcInst <- function(fn){
         tryCatch(
             expr = {
                 do.call(install.packages, c(params, Ncpus = 6))
-                },
+            },
             error = function(cond) { msgCheck(cond,T)
                 do.call(install.packages, c(params, method = "libcurl"))
-                },
+            },
             warning = function(cond) { msgCheck(cond,T)
                 do.call(install.packages, c(params, method = "auto"))
-                },
+            },
             finally = {ld(names(fn))}
         )} else {ld(names(fn))}
 }
@@ -190,8 +190,8 @@ bc.inst <- function(pknm){
             expr = {sw(do.call(BiocManager::install, c(bio.opt)))},
             error = function(cond) {message("Package already loaded")},
             finally = {ld(pknm)}
-            )
-        } else {ld(pknm)}
+        )
+    } else {ld(pknm)}
 }
 
 fixProf <- function(){
@@ -219,8 +219,8 @@ checkNeeds <- function(){
                 fixNeeds();fixProf()
             }else{
                 fixNeeds();fixProf()
-                }
-            },
+            }
+        },
         error=function(cond){
             devtools::install_github("joshkatz/needs", ref = "development",
                                      dependencies=T,verbose=T,upgrade="always")
@@ -305,12 +305,12 @@ loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bcPks=biocP
             installAll(ghPk, gh.inst)
             installAll(bcPks, bc.inst)
             readyPkgs(ezLibs)
-            },
+        },
         error = function(cond){
             message("\n~~~You encountered the following error during install:\n", cond,"\n")
             message("If there is a compile error, try running fixCompiles() and then try loadPacks() again")
-            }
-        )
+        }
+    )
 }
 
 
@@ -357,7 +357,7 @@ colorMsg <- function(){
     ms1 <- paste0(
         crayon::white$bgGreen("Updating in-house classifier to current version:"),"\n",
         mkblu("classifierInstall(pathtoFile=NULL, instNew=F, rmpkg=F)"),"\n"
-        )
+    )
     ms2 <- paste0(mkred("Classifier package is not installed installing classifier"),"\n")
     ms3 <- paste0(crayon::white$bgGreen("Your classifier package is up-to-date and loading"),"\n")
     return(c(ms1,ms2,ms3))
@@ -390,12 +390,14 @@ setEnviron <- function(){
 # classifier mnpPath currVers
 checkClassifier <- function(mnpClass) {
     ms <- colorMsg()
-    if (rq(mnpClass[, 1])) {
+    isInstalled <- mnpClass[,1] %in% rownames(installed.packages())
+    if (isInstalled==F) {
         cat(ms[2])
         cat(mnpClass[, 1], sep = "\n")
-        classifierInstall(mnpClass[, 2])
+        classifierInstall(mnpClass[, 2], T, F)
     } else {
-        if (packageVersion(mnpClass[, 1]) != mnpClass[, 3]) {
+    
+        if (utils::packageVersion(mnpClass[, 1]) != mnpClass[, 3]) {
             cat(ms[1])
             classifierInstall(mnpClass[, 2], T, T)
         } else {
