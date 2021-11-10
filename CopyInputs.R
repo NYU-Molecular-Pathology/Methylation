@@ -85,7 +85,9 @@ setRunDir <- function(runID=NULL, workFolder=NULL){
         try(unlink(file.path("~/Desktop",runID), T, T),silent = T)
     }
     if(!dir.exists(newRun)){
-        dir.create(newRun);cat("creating folder: ",newRun)
+        base::dir.create(newRun, mode = "777", recursive=T)
+        Sys.chmod(newRun, mode = "777")
+        cat("Creating folder: ",newRun)
         gb$setDirectory(newRun)
     } else {gb$setDirectory(newRun)}
     return(newRun)
