@@ -396,13 +396,17 @@ checkClassifier <- function(mnpClass) {
         cat(mnpClass[, 1], sep = "\n")
         classifierInstall(mnpClass[, 2], T, F)
     } else {
-    
-        if (utils::packageVersion(mnpClass[, 1]) != mnpClass[, 3]) {
-            cat(ms[1])
-            classifierInstall(mnpClass[, 2], T, T)
-        } else {
+        currentVers <- as.character(utils::packageVersion(mnpClass[, 1]))
+        latestVers <- as.character(mnpClass[, 3])
+        message("Current Version Installed: ", currentVers, "\nNewest Package Version: ",latestVers,"\n")
+
+        if (currentVers==latestVers) {
             cat(ms[3])
             classifierInstall(mnpClass[, 2], F, F)
+        } else {
+            cat(ms[1])
+            classifierInstall(mnpClass[, 2], T, T)
+            
         }
     }
 }
