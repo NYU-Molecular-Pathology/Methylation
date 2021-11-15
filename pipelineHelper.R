@@ -188,7 +188,7 @@ startRun <- function(selectRDs=NULL, runID=NULL, emailNotify=T){
 # FUN: Checks if all the paths are accessible to the Rscript location
 checkMounts <- function(){
     # List of three mount paths needed to run the pipleine
-    critialMnts <- c("/Volumes/CBioinformatics/jonathan",
+    critialMnts <- c("/Volumes/CBioinformatics",
                      "/Volumes/molecular/MOLECULAR LAB ONLY", "/Volumes/snudem01labspace/idats")
     failMount <- lapply(critialMnts, function(driveMount){
         ifelse(!dir.exists(driveMount),return(T),return(F))})
