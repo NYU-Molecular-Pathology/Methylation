@@ -6,7 +6,7 @@ Download **RStudio 1.4**: [https://download1.rstudio.org/desktop/macos/RStudio-1
 Download **XQuartz**: [https://github.com/XQuartz/XQuartz/releases/download/XQuartz-2.8.1/XQuartz-2.8.1.dmg](https://github.com/XQuartz/XQuartz/releases/download/XQuartz-2.8.1/XQuartz-2.8.1.dmg)<br />
 Download **LaTeX** for Mac: [https://www.tug.org/mactex/mactex-download.html](https://www.tug.org/mactex/mactex-download.html)<br />
 Download **Homebrew**: https://brew.sh/ you can install using the following line in terminal:<br />
-`/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh`
+`/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh`<br />
 Download and Install XCode 12.0 or higher for Mac OS: [https://developer.apple.com/download/all/?q=xcode](https://developer.apple.com/download/all/?q=xcode)<br>
 
 - R v4.1 includes compile and Tckl dependencies. brew can install libomp and cairo if needed.
