@@ -51,7 +51,7 @@ getDefaults <- function() {
     defaultParams <- data.frame(
         mnp.pk.loc = paste0(file.path(cbVol, "Methylation/in_house/mnp.v116/mnp.v11b6")),
         ApiToken = "",
-        methDir = paste0(file.path(cbVol, "Methylation/Clinical_Runs/")),
+        methDir = paste0(file.path(cbVol, "Methylation/Clinical_Runs")),
         #methDir = paste0(file.path(cbVol)),
         clinDrv = paste0(file.path(moVol, "MOLECULAR LAB ONLY/NYU-METHYLATION")),
         rschOut = paste0(file.path(cbVol, "Methylation/Research_runs/")),
