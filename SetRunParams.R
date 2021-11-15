@@ -54,7 +54,7 @@ getDefaults <- function() {
         methDir = paste0(file.path(cbVol, "Methylation/Clinical_Runs")),
         #methDir = paste0(file.path(cbVol)),
         clinDrv = paste0(file.path(moVol, "MOLECULAR LAB ONLY/NYU-METHYLATION")),
-        rschOut = paste0(file.path(cbVol, "Methylation/Research_runs/")),
+        rschOut = paste0(file.path(rsVol, "FINAL_PDF_Reports_Brain")),
         #rschOut = paste0(file.path(cbVol)),
         clinOut = paste0(file.path(moVol, "MOLECULAR/MethylationClassifier")),
         rsch.idat = paste0(file.path(rsVol,"idats")),
