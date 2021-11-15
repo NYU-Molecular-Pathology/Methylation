@@ -130,6 +130,9 @@ loopRender <- function(samList = NULL, data){
     for (i in samList) {
         outFileN = paste0(data[i,1],".html")
         outPathN = file.path(gb$workFolder,gb$runID,outFileN)
+        message(gb$workFolder)
+        message(outPathN)
+        message(outFileN)
         if(file.exists(outPathN)){
             cat(bky(outFileN, "exists skipping sample","\n"))
             next
