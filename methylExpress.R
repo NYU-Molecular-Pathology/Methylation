@@ -26,6 +26,9 @@ script.list = c("LoadInstall_new.R","SetRunParams.R", "CopyInputs.R","CopyOutput
 scripts = paste0(mainHub, script.list)
 invisible(lapply(scripts, function(i) {devtools::source_url(i)}))
 
+
+gb$defineParams() # Define any custom directories here
+
 # Execute Methylation Run
 if(!is.null(runID)){gb$setVar("runID", runID)}
 
