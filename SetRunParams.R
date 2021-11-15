@@ -93,7 +93,7 @@ defineParams <- function(
     loadClassifierPacks()
     i=1:length(defVars)
     invisible(sapply(i,FUN=function(i){assignVar(names((defVars[i])), paste0(defVars[,i]))}))
-    if(!isMC) {methDir=rschOut;assign("workDir","/Volumes/CBioinformatics/jonathan/Rprojects/Research_runs/")}
+    if(!isMC) {methDir=rschOut;assign("workDir","/Volumes/CBioinformatics/")}
 }
 
 # Changes the working directory using the system CD command
