@@ -188,7 +188,7 @@ startRun <- function(selectRDs=NULL, runID=NULL, emailNotify=T){
 # FUN: Checks if all the paths are accessible to the Rscript location
 checkMounts <- function(){
     # List of three mount paths needed to run the pipleine
-    critialMnts <- c("/Volumes/CBioinformatics",
+    critialMnts <- c("/Volumes/CBioinformatics/Methylation",
                      "/Volumes/molecular/MOLECULAR LAB ONLY", "/Volumes/snudem01labspace/idats")
     failMount <- lapply(critialMnts, function(driveMount){
         ifelse(!dir.exists(driveMount),return(T),return(F))})
@@ -215,7 +215,7 @@ prepareRun <- function(token){
         stopifnot(runValid)
         }
     methylPath <- gb$setRunDir(gb$runID)
-    message("Working directory set to:"); cat(crayon::bgGreen(methylPath)); setwd(methylPath)
+    message("\n","Working directory set to:","\n"); cat(crayon::bgGreen(methylPath)); setwd(methylPath)
     gb$setVar("ApiToken", token) # assign the ApiToken & print params
     gb$copyWorksheetFile(runID = gb$runID) # copies the xlsm file
     gb$readSheetWrite() # reads xlsm and generates input .csv samplesheet
