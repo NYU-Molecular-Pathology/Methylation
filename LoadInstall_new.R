@@ -91,7 +91,7 @@ biocPkgs <-
         'IlluminaHumanMethylationEPICmanifest',
         'IlluminaHumanMethylationEPICanno.ilm10b2.hg19',
         'IlluminaHumanMethylationEPICanno.ilm10b4.hg19',
-        'MethylAid', 'conumee','BiocParallel', "Biobase","limma"
+        'MethylAid', 'conumee','BiocParallel', "Biobase","limma","MatrixGenerics"
     )
 
 # Extra Libraries ----
