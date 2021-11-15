@@ -67,7 +67,8 @@ cranPkgs <-
         "readxl",
         "stringr",
         "tinytex",
-        "future.apply"
+        "future.apply",
+        "Rcpp", "httpuv", "shiny"
     )
 
 # GitHub Packages ----
