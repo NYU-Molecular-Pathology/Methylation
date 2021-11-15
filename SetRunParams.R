@@ -58,7 +58,8 @@ getDefaults <- function() {
         rsch.idat = paste0(file.path(rsVol,"idats")),
         clin.idat = paste0(file.path(moVol, "MOLECULAR/iScan")),
         QC_file = paste0(system.file('Methyl_QC.Rmd', package = "mnp.v11b6")),
-        baseDir = paste0(file.path(cbVol, "jonathan/Rprojects")),
+        #baseDir = paste0(file.path(cbVol, "jonathan/Rprojects")),
+        baseDir = paste0(file.path(cbVol)),
         stringsAsFactors=F
     )
     return(defaultParams)
