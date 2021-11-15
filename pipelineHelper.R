@@ -225,4 +225,4 @@ prepareRun <- function(token){
 }
 
 checkMounts()
-gb$defineParams()
+#gb$defineParams()
