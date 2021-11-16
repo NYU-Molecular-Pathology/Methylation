@@ -2,21 +2,53 @@
 args <- commandArgs(TRUE)
 library("base"); gb <- globalenv(); assign("gb", gb)
 
+if(!require("devtools")){install.packages("devtools")}
+
 # If you have issues with conda and r, try running the following:
 # conda create -n r_env r-essentials r-base
 # conda activate r_env
 
 # Main Parameters trailing commandline
 token<-args[1]; runID<-args[2]; selectRDs<-args[3]
-if(length(selectRDs)==0){
-    selectRDs=NULL
-    }else{
-        if(is.na(selectRDs)){selectRDs=NULL}
-    }
+baseFolder <-args[4]
+
+# Check Parameters Input
+if(length(selectRDs)==0){selectRDs=NULL}else {
+    if(is.na(selectRDs)){selectRDs=NULL}
+}
+
+if(length(baseFolder)==0){baseFolder=NULL}else {
+    if(is.na(baseFolder)){baseFolder=NULL}
+}
 
 # Check Input Params
-cat("\n~~~~~~Parameters input:",token, runID, selectRDs,sep='\n')
+cat("\n~~~~~~Parameters input:",token, runID, selectRDs, baseFolder, sep='\n')
 message("~~~~~~~~~~~~~~~~~~~~~"); stopifnot(!is.null(token)); stopifnot(!is.null(runID))
+
+
+if(length(baseFolder)!=0 & !is.na(baseFolder) & !is.null(baseFolder)){
+    message("Trying custom run directory from input:","\n", baseFolder,"\n")
+    isValid <- dir.exists(baseFolder)
+    message("Checking if directory exists: ", isValid)
+    if(isValid==F){
+        message("Directory does not exist, trying to create path:\n", baseFolder,"\n")
+        
+        tryCatch(
+            expr={dir.create(baseFolder)},
+            warning=function(er){
+                message("\n","One warning during directory creation","\n")
+                message("\n",er,"\n")
+            },
+            error=function(er){
+                message("\n","An Error during directory creation:","\n")
+                message("\n",er,"\n")
+            },
+            finally={
+                stopifnot(dir.exists(baseFolder))
+            }
+        )
+    }
+}
 
 # Paths to the GitHub Repo files
 mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
@@ -26,7 +58,11 @@ script.list = c("LoadInstall_new.R","SetRunParams.R", "CopyInputs.R","CopyOutput
 scripts = paste0(mainHub, script.list)
 invisible(lapply(scripts, function(i) {devtools::source_url(i)}))
 
-gb$defineParams() # Define any custom directories here, default is NULL
+# Define any custom directories here, default is NULL
+gb$defineParams(
+    methDir = baseFolder,
+    baseDir = baseFolder
+)
 #mnp.pk.loc = NULL, ApiToken = NULL, methDir = NULL, clinDrv = NULL, rschOut = NULL, clinOut = NULL,
 #rsch.idat = NULL, clin.idat = NULL, QC_file = NULL, isMC = T, baseDir = NULL, runID = NULL
 
@@ -41,7 +77,7 @@ prepareRun <- function(token){
         message(crayon::bgRed$white$bold("runID",gb$runID,"is not valid"))
         message(crayon::bgBlue$white$bold(paste0(gb$runID,".xlsm"),"not found in worksheets folder"))
         stopifnot(runValid)
-        }
+    }
     methylPath <- gb$setRunDir(gb$runID)
     message("Working directory set to:"); cat(crayon::bgGreen(methylPath)); setwd(methylPath)
     gb$setVar("ApiToken", token) # assign the ApiToken & print params
@@ -59,4 +95,5 @@ prepareRun <- function(token){
 #    } else {makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=F, selectSams=NULL, redcapUp=T)}
 #}
 
-prepareRun(token); gb$startRun(selectRDs)
+prepareRun(token)
+gb$startRun(selectRDs)
