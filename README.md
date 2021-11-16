@@ -37,6 +37,7 @@ If you have issues with wget, you can also use curl to run the script:
 `arg[1]` is the **token** for the API call ('#######################')<br />
 `arg[2]` is the **RunID** which if NULL runs the latest Clinical Worksheet ('MR21-099')<br />
 `arg[3]` is the **selectRds** parameter which is to prioritize samples being run (NULL)<br />
+`arg[4]` is the **baseFolder** parameter which is optional if you want to run/save output to a different directory (NULL)<br />
 
 Alternatively, you can source then run the github script locally using [methylExpress.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/methylExpress.R)
 
