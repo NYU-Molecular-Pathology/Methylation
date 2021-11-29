@@ -136,6 +136,7 @@ loopRender <- function(samList = NULL, data){
         } else {
             cat(bky("\n",dsh,"Now Running", i, "of", length(samList),dsh),sep="\n")
             do_report(data=data[i, ], gb$genCn)
+            cat(bky("\n",dsh,"Completed Report", i, "of", length(samList),dsh),sep="\n")
             }
     }
 
