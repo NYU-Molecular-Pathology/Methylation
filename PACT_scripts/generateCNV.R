@@ -100,7 +100,7 @@ gen.cnv.png <- function(RGsetEpic, sampleName) {
             htmlwidgets::saveWidget(widget=plotly::as.widget(p), file=tempPathFi)
         #)
         #supM(
-            webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", delay = 1.5, vwidth = 2340, vheight = 1344)
+            webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", delay = 2.5, vwidth = 2340, vheight = 1344)
         #)
         #dev.off()
         message("File saved: ",imgName,"\n")
