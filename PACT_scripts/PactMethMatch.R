@@ -46,7 +46,7 @@ checkMounts <- function(){
 
 # Functions to load packages and get redcap info -----
 loadPacks <- function(){
-    pkgs = c("data.table", "foreach", "openxlsx","jsonlite","RCurl","readxl","stringr","webshot","tidyverse","crayon","plotly","htmlwidgets")
+    pkgs = c("data.table", "foreach", "openxlsx","jsonlite","RCurl","readxl","stringr","webshot","tidyverse","crayon","plotly","htmlwidgets","tinytex")
     rlis = getOption("repos")
     rlis["CRAN"] = "http://cran.us.r-project.org"
     options(repos = rlis)
@@ -60,6 +60,7 @@ loadPacks <- function(){
     if(!require("chromote")){remotes::install_github("rstudio/chromote", upgrade ="never")}
     if(!require("webshot2")){remotes::install_github("rstudio/webshot2")}
     library("chromote")
+         try(tinytex:::install_prebuilt(),silent=T)
 }
 
 # API Call functions -----
