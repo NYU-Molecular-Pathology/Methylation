@@ -46,7 +46,7 @@ checkMounts <- function(){
 
 # Functions to load packages and get redcap info -----
 loadPacks <- function(){
-    pkgs = c("data.table", "foreach", "openxlsx","jsonlite","RCurl","readxl","stringr","chromote","webshot","tidyverse","crayon","plotly","htmlwidgets")
+    pkgs = c("data.table", "foreach", "openxlsx","jsonlite","RCurl","readxl","stringr","webshot","tidyverse","crayon","plotly","htmlwidgets")
     rlis = getOption("repos")
     rlis["CRAN"] = "http://cran.us.r-project.org"
     options(repos = rlis)
@@ -55,8 +55,11 @@ loadPacks <- function(){
             install.packages(pk,dependencies=T, verbose=T, repos="http://cran.us.r-project.org", type="both")
         }}))
     if(!require("systemfonts")){devtools::install_github('r-lib/systemfonts')}
+         
     if(!require("remotes")){install.packages("remotes", dependencies=T)}
+    if(!require("chromote")){remotes::install_github("rstudio/chromote", upgrade ="never")}
     if(!require("webshot2")){remotes::install_github("rstudio/webshot2")}
+    library("chromote")
 }
 
 # API Call functions -----
@@ -209,8 +212,7 @@ theExcel <- getFilePath(inputSheet)
 
 runId <- ifelse(readFlag == T, paste0(head(read.csv(inputSheet))[3, 2]),
                 paste0(head(suppressMessages(
-                    readxl::read_excel(theExcel, sheet = 7)
-                ))[3, 2]))
+                    readxl::read_excel(theExcel, sheet = 7)))[3, 2]))
 output <- modifyOutput(output,vals2find)
 outFi <- createXlFile(runId,output)
 emailFile(runId, outFi, rcon)
@@ -238,63 +240,6 @@ sourceFuns2 <- function(workingPath = NULL) {
 message("\nStarting CNV PNG Creation\n")
 
 sourceFuns2()
-
-gen.cnv.png <- function(RGsetEpic, sampleName) {
-    RGset=RGsetEpic
-    imgName <- paste(sampleName, "cnv.png", sep="_")
-    savePath <- file.path("~","Desktop")
-    fn=file.path(savePath,imgName)
-    tempPathFi <- file.path(savePath,"temp.html")
-    if(file.exists(fn)){
-        message("File already exists, skipping:", fn)
-    }else{
-        Mset <- mnp.v11b6::MNPpreprocessIllumina(RGsetEpic)
-        Mset@annotation=c(array="IlluminaHumanMethylationEPIC", annotation="ilm10b4.hg19")
-        FFPE <- mnp.v11b6::MNPgetFFPE(RGsetEpic)
-        Mset_ba <- mnp.v11b6::MNPbatchadjust(Mset, FFPE)
-        detP <- minfi::detectionP(RGsetEpic)
-        bs <- minfi::getBeta(Mset)
-        sexEstimate <-as.data.frame(signif(sest::get.proportion_table(bs, detP), digits = 2))
-        yest <- as.double(sexEstimate$`p.Y:(-18,-5]`) >= 0.75
-        yest1 <- as.double(sexEstimate$`Y:(0,0.1]`) >= 0.12
-        sex <- ifelse((yest == TRUE && yest1 == TRUE), "male", "female")
-        message("Generating ", sampleName, " cnv plot...")
-        xx <- mnp.v11b6::MNPcnv(Mset,sex = sex,main = sampleID)
-        thePlot<-supM(mnp.v11b6::MNPcnvggplotly(xx, getTables = F))
-        p<-supM(plotly::ggplotly(thePlot))
-        supM(htmlwidgets::saveWidget(widget=plotly::as.widget(p), file=tempPathFi))
-        supM(webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", vwidth = 1152, vheight = 672))
-        #dev.off()
-        message("File saved:\n",imgName,"\n")
-    }
-}
-
-
-grabRGset <- function(runPath, sentrix){
-    barcode = stringr::str_split_fixed(sentrix, "_",2)[1]
-    RGsetEpic <- minfi::read.metharray(file.path(runPath, sentrix), verbose = T, force = T)
-    aEpic=c(array="IlluminaHumanMethylationEPIC", annotation="ilm10b4.hg19")
-    a450k=c(array="IlluminaHumanMethylation450k", annotation="ilmn12.hg19")
-    if (barcode >= as.numeric("204220033000")) {RGsetEpic@annotation=aEpic}
-    if (RGsetEpic@annotation['array']=="IlluminaHumanMethylation450k") {RGsetEpic@annotation=a450k}
-    return(RGsetEpic)
-}
-
-copyOutputPng <- function(){
-    unlink("~/Desktop/temp.html")
-    the.cnvs <- dir(path="~/Desktop",pattern="_cnv.png", full.names=T)
-    outFolder <- "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
-    savePath <- file.path(outFolder, basename(the.cnvs))
-    message("Copying png files to Molecular folder:\n")
-    message(outFolder)
-    try(fs::file_copy(path=the.cnvs,new_path=savePath),silent = T)
-    if(any(!file.exists(savePath))){
-        message("The following failed to copy from the desktop:\n")
-        print(basename(savePath[!file.exists(savePath)]))
-    }
-    # while (!is.null(dev.list()))  dev.off()
-}
-
 
 library("conumee")
 library("sest")
