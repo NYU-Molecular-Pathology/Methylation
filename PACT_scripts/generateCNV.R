@@ -92,14 +92,14 @@ gen.cnv.png <- function(RGsetEpic, sampleName) {
         yest <- as.double(sexEstimate$`p.Y:(-18,-5]`) >= 0.75
         yest1 <- as.double(sexEstimate$`Y:(0,0.1]`) >= 0.12
         sex <- ifelse((yest == TRUE && yest1 == TRUE), "male", "female")
-        message("Generating ", sampleName, " cnv plot...")
+        message("~~~~~~~~~~~~~~~Generating ", sampleName, " cnv plot...")
         xx <- mnp.v11b6::MNPcnv(Mset,sex = sex,main = sampleID)
         thePlot<-supM(mnp.v11b6::MNPcnvggplotly(xx, getTables = F))
         p<-supM(plotly::ggplotly(thePlot))
         supM(htmlwidgets::saveWidget(widget=plotly::as.widget(p), file=tempPathFi))
-        supM(webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", vwidth = 1152, vheight = 672))
+        supM(webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", delay = 1.5, vwidth = 2340, vheight = 1344))
         #dev.off()
-        message("File saved:\n",imgName,"\n")
+        message("File saved: ",imgName,"\n")
     }
 }
 
@@ -135,10 +135,18 @@ save.png.files <- function(rds, token){
     mySentrix <- mySentrix[!is.na(mySentrix$barcode_and_row_column),]
     mySentrix <- mySentrix[!is.null(mySentrix$barcode_and_row_column),]
     for (sam in rownames(mySentrix)) {
-        sentrix <- mySentrix[sam,2]
-        RGsetEpic <- grabRGset(getwd(),sentrix)
-        gen.cnv.png(RGsetEpic, sampleName=mySentrix[sam,1])
-    }
+    sentrix <- mySentrix[sam,2]
+    RGsetEpic <- grabRGset(getwd(),sentrix)
+    tryCatch(
+        expr= {gen.cnv.png(RGsetEpic, sampleName=mySentrix[sam,1])},
+        error= function(e){
+            message("An error occured with ",mySentrix[sam,1]," png creation:\n")
+            message(e)
+            message("Trying next sample")
+        }
+    
+    )
+}
 
     copyOutputPng()
 }
