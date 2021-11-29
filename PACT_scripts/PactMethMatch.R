@@ -60,6 +60,7 @@ loadPacks <- function(){
     if(!require("chromote")){remotes::install_github("rstudio/chromote", upgrade ="never")}
     if(!require("webshot2")){remotes::install_github("rstudio/webshot2")}
     library("chromote")
+         try(tinytex::tlmgr_install(),silent=T)
          try(tinytex:::install_prebuilt(),silent=T)
 }
 
