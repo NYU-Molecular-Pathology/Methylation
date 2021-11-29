@@ -82,24 +82,24 @@ gen.cnv.png <- function(RGsetEpic, sampleName) {
     if(file.exists(fn)){
         message("File already exists, skipping:", fn)
     }else{
-    Mset <- mnp.v11b6::MNPpreprocessIllumina(RGsetEpic)
-    Mset@annotation=c(array="IlluminaHumanMethylationEPIC", annotation="ilm10b4.hg19")
-    FFPE <- mnp.v11b6::MNPgetFFPE(RGsetEpic)
-    Mset_ba <- mnp.v11b6::MNPbatchadjust(Mset, FFPE)
-    detP <- minfi::detectionP(RGsetEpic)
-    bs <- minfi::getBeta(Mset)
-    sexEstimate <-as.data.frame(signif(sest::get.proportion_table(bs, detP), digits = 2))
-    yest <- as.double(sexEstimate$`p.Y:(-18,-5]`) >= 0.75
-    yest1 <- as.double(sexEstimate$`Y:(0,0.1]`) >= 0.12
-    sex <- ifelse((yest == TRUE && yest1 == TRUE), "male", "female")
-    message("Generating ", sampleName, " cnv plot...")
-    xx <- mnp.v11b6::MNPcnv(Mset,sex = sex,main = sampleID)
-    thePlot<-supM(mnp.v11b6::MNPcnvggplotly(xx, getTables = F))
-    p<-supM(plotly::ggplotly(thePlot))
-    supM(htmlwidgets::saveWidget(widget=plotly::as.widget(p), file=tempPathFi))
-    supM(webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", vwidth = 2304, vheight = 1254))
-    #dev.off()
-    message("File saved:\n",imgName,"\n")
+        Mset <- mnp.v11b6::MNPpreprocessIllumina(RGsetEpic)
+        Mset@annotation=c(array="IlluminaHumanMethylationEPIC", annotation="ilm10b4.hg19")
+        FFPE <- mnp.v11b6::MNPgetFFPE(RGsetEpic)
+        Mset_ba <- mnp.v11b6::MNPbatchadjust(Mset, FFPE)
+        detP <- minfi::detectionP(RGsetEpic)
+        bs <- minfi::getBeta(Mset)
+        sexEstimate <-as.data.frame(signif(sest::get.proportion_table(bs, detP), digits = 2))
+        yest <- as.double(sexEstimate$`p.Y:(-18,-5]`) >= 0.75
+        yest1 <- as.double(sexEstimate$`Y:(0,0.1]`) >= 0.12
+        sex <- ifelse((yest == TRUE && yest1 == TRUE), "male", "female")
+        message("Generating ", sampleName, " cnv plot...")
+        xx <- mnp.v11b6::MNPcnv(Mset,sex = sex,main = sampleID)
+        thePlot<-supM(mnp.v11b6::MNPcnvggplotly(xx, getTables = F))
+        p<-supM(plotly::ggplotly(thePlot))
+        supM(htmlwidgets::saveWidget(widget=plotly::as.widget(p), file=tempPathFi))
+        supM(webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", vwidth = 1152, vheight = 672))
+        #dev.off()
+        message("File saved:\n",imgName,"\n")
     }
 }
 
@@ -126,7 +126,7 @@ copyOutputPng <- function(){
         message("The following failed to copy from the desktop:\n")
         print(basename(savePath[!file.exists(savePath)]))
     }
-   # while (!is.null(dev.list()))  dev.off()
+    # while (!is.null(dev.list()))  dev.off()
 }
 
 save.png.files <- function(rds, token){
@@ -142,5 +142,4 @@ save.png.files <- function(rds, token){
 
     copyOutputPng()
 }
-if(!require("chromote")){remotes::install_github("rstudio/chromote", upgrade ="never")}
-library("chromote")
+
