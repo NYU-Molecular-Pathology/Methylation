@@ -95,9 +95,13 @@ gen.cnv.png <- function(RGsetEpic, sampleName) {
         message("~~~~~~~~~~~~~~~Generating ", sampleName, " cnv plot...")
         xx <- mnp.v11b6::MNPcnv(Mset,sex = sex,main = sampleID)
         thePlot<-supM(mnp.v11b6::MNPcnvggplotly(xx, getTables = F))
-        p<-supM(plotly::ggplotly(thePlot))
-        supM(htmlwidgets::saveWidget(widget=plotly::as.widget(p), file=tempPathFi))
-        supM(webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", delay = 1.5, vwidth = 2340, vheight = 1344))
+        p<-plotly::ggplotly(thePlot)
+        #supM(
+            htmlwidgets::saveWidget(widget=plotly::as.widget(p), file=tempPathFi)
+        #)
+        #supM(
+            webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", delay = 1.5, vwidth = 2340, vheight = 1344)
+        #)
         #dev.off()
         message("File saved: ",imgName,"\n")
     }
