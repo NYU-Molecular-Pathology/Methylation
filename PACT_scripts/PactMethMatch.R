@@ -2,13 +2,14 @@
 args <- commandArgs(TRUE)
 library("base"); gb <- globalenv(); assign("gb", gb)
 dsh="\n================"
+dsh2="================\n"
 
 # Main arguments input in comandline
 #token<-args[1]; inputSheet<-args[2]
 token<-args[1]; inputSheet<-args[2]
 
 # Displays the Input args -----
-message(dsh,"\nParameters input",dsh)
+message(dsh,"Parameters input",dsh2)
 message("token: ",token)
 message("inputSheet: ", inputSheet,"\n")
 
@@ -28,9 +29,24 @@ if(suppressWarnings(!require("redcapAPI"))){
     do.call(devtools::install_github,c(params))
 }
 
+# FUN: Checks if z-drive is accessible to the Rscript
+checkMounts <- function(){
+    molecDrive = "/Volumes/molecular/MOLECULAR LAB ONLY"
+    zDrive = "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular"
+    failMount <- ifelse(dir.exists(molecDrive),T,F)
+    if(failMount!=T){
+        cat("PATH does not exist, ensure path is mounted:")
+        cat(crayon::white$bgRed$bold(molecDrive))
+        cat("You must mount the network Z-drive path:\n")
+        cat(crayon::white$bgRed$bold(zDrive),"\n")
+        stopifnot(!any(failMount==T))
+    } else {message("Z-drive path is accessible")}
+}
+
+
 # Functions to load packages and get redcap info -----
 loadPacks <- function(){
-    pkgs = c("data.table", "foreach", "openxlsx","jsonlite","RCurl","readxl","stringr")
+    pkgs = c("data.table", "foreach", "openxlsx","jsonlite","RCurl","readxl","stringr","chromote","webshot","tidyverse","crayon","plotly","htmlwidgets")
     rlis = getOption("repos")
     rlis["CRAN"] = "http://cran.us.r-project.org"
     options(repos = rlis)
@@ -38,6 +54,8 @@ loadPacks <- function(){
         if(suppressWarnings(!require(pk, character.only=T))){
             install.packages(pk,dependencies=T, verbose=T, repos="http://cran.us.r-project.org", type="both")
         }}))
+    if(!require("systemfonts")){devtools::install_github('r-lib/systemfonts')}
+    if(!require("remotes")){install.packages("remotes", dependencies=T)}
     if(!require("webshot2")){remotes::install_github("rstudio/webshot2")}
 }
 
@@ -63,16 +81,16 @@ getFilePath <- function(inputSheet){
         return(inputFi)
     } else{
         inputFi <- file.path(drive, folder, paste0("20", runyr), inputSheet)
-        message(dsh, "The PACT run worksheet was not found:\n", inputFi, dsh)
+        message(dsh, "This PACT run worksheet was not found", dsh2,inputFi, dsh)
         allFi <- list.files(path=inputFi, pattern="*.xlsm")
         allFi <- allFi[!grepl( "~$", allFi, fixed = T)]
         allFi <- allFi[!grepl( "export", allFi, fixed = F,ignore.case=T)]
         allFi <- allFi[grepl( "Book", allFi, fixed = F,ignore.case=T)]
         if(length(allFi)>1){allFi <- allFi[1]}
         inputFi <- file.path(inputFi,allFi)
-        message(dsh,"Using this workbook instead:\n", inputFi, dsh)
+        message(dsh,"Using this workbook instead", dsh2, inputFi, dsh)
         return(inputFi)
-        }
+    }
 }
 
 parseWorksheet <- function(inputFi){
@@ -138,7 +156,7 @@ modifyOutput <- function(output,vals2find){
                 theVal <- vals2find$`Test Number`[theMatch]
             }
         }
-        
+
         output$Test_Number[i] <- theVal
     }
     output <- addOutputLinks(output)
@@ -182,6 +200,7 @@ emailFile <- function(runId, outFi, rcon){
 # Searching REDCap Worksheets for MRN Match -------------------------------------
 
 loadPacks()
+checkMounts()
 rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", token)
 vals2find <- getCaseValues(inputSheet, readFlag)
 db <- grabAllRecords(flds, rcon)
@@ -277,7 +296,10 @@ copyOutputPng <- function(){
 }
 
 
-library("conumee");library("sest");library("mnp.v11b6")
-require("plotly");require("htmlwidgets")
+library("conumee")
+library("sest")
+library("mnp.v11b6")
+require("plotly")
+require("htmlwidgets")
 ApiToken = gb$token
 gb$save.png.files(gb$rds, token)
