@@ -18,4 +18,4 @@ Both curl calls can be run consecutively using parsePact.sh with the same two ar
 `curl -o pactParse.R -L https://git.io/J0kfR -s; Rscript pactParse.R $APITOKEN "$pactID"`<br>
 `curl -o PactMethMatch.R -L https://git.io/JEp7l -s; Rscript PactMethMatch.R $methAPI "$pactID"`
 
-The API tokens are saved within the shell files
+The API tokens are saved within the shell files and $pactID is the experiment name arg1 input by the user.
