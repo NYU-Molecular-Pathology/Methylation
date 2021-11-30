@@ -143,7 +143,7 @@ writeSampleSheet <- function(inputSheet, token){
             print(potentialFi)
             message(dsh)
             wbFiles <- stringr::str_which(basename(potentialFi),pattern="xlsm")
-            if(is.na(wbFiles)){
+            if(length(wbFiles)==0){
                 message("Checking if workbook is not .xlsm and only .xlsx file version exists:\n")
                 wbFiles <- stringr::str_which(basename(potentialFi),pattern="book")
             }
