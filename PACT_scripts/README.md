@@ -15,7 +15,7 @@ makePactSheet.sh and methylMatch.sh can be saved locally or symlinked to make th
 
 Both curl calls can be run consecutively using parsePact.sh with the same two arguments as makePactSheet.sh:
 
-`curl -o pactParse.R -L https://git.io/J0kfR -s; Rscript pactParse.R $APITOKEN "$pactID"`
+`curl -o pactParse.R -L https://git.io/J0kfR -s; Rscript pactParse.R $APITOKEN "$pactID"`<br>
 `curl -o PactMethMatch.R -L https://git.io/JEp7l -s; Rscript PactMethMatch.R $methAPI "$pactID"`
 
 The API tokens are saved within the shell files
