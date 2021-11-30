@@ -35,7 +35,9 @@ If you encounter a system abort or memory allocation error, it may just be a tim
 The cnv script works by generating the CNV ggplot from the mnpv11b6 package and then saving it as a ggplot widget and rendering the html as a png file.<br>
 
 ## System Memory or output error
-Check if you have an existing temp file in ~/Desktop/temp.html and delete it.  The temp file is the ggplotly object saved as html which is then opened in a headless chromium browser and then webshot into a PNG file.  It may be because the temp.html file could not be overwritten<br>
+Check if you have an existing temp file in ~/Desktop/temp.html and delete it.  The temp file is the ggplotly object saved as html which is then opened in a headless chromium browser and then webshot into a PNG file.  It may be because the temp.html file could not be overwritten
+<br>
+
 For example, where the following variables:<br>
 `
 sampleName = "RD-21-322"
