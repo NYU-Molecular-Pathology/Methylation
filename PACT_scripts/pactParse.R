@@ -141,7 +141,6 @@ writeSampleSheet <- function(inputSheet, token){
         message(crayon::bgRed("Checking the following files:"), dsh)
         if(length(potentialFi)>=1){
             print(potentialFi)
-            message(dsh)
             wbFiles <- stringr::str_which(basename(potentialFi),pattern="xlsm")
             if(length(wbFiles)==0){
                 message("Checking if workbook is not .xlsm and only .xlsx file version exists:\n")
