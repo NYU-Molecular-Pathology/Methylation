@@ -143,6 +143,10 @@ writeSampleSheet <- function(inputSheet, token){
             print(potentialFi)
             message(dsh)
             wbFiles <- stringr::str_which(basename(potentialFi),pattern="xlsm")
+            if(is.na(wbFiles)){
+                message("Checking if workbook is not .xlsm and only .xlsx file version exists:\n")
+                wbFiles <- stringr::str_which(basename(potentialFi),pattern="book")
+            }
             potentialFi <- potentialFi[wbFiles]
             potentialFi <- potentialFi[!stringr::str_detect(potentialFi,"\\$")]
         }
@@ -151,15 +155,11 @@ writeSampleSheet <- function(inputSheet, token){
             outVals <- suppressMessages(parseExcelFile(inputFi=potentialFi[1]))
             pushToRedcap(runId=outVals[[1]], outFile=outVals[[2]], token)
         }else{
-            message("\n",crayon::bgRed("The PACT run worksheet was not found:"),"\n", inputFi,potentialFi[1], "\n")
-            message("Checking if workbook is not .xlsm and only .xlsx file version exists:\n")
-            oldFile <- stringr::str_which(potentialFi,pattern="book")
-            potentialFi <- paste0(inputFi,oldFile[1])
-            message("Using", potentialFi, "instead","\n")
-            stopifnot(file.exists(potentialFi))
-            outVals <- suppressMessages(parseExcelFile(inputFi=potentialFi))
+            message("\n",crayon::bgRed("The PACT run worksheet was not found:"),"\n", inputFi, potentialFi[1], "\n")
+            message("Trying ", potentialFi[2], " instead","\n")
+            stopifnot(file.exists(potentialFi[2]))
+            outVals <- suppressMessages(parseExcelFile(inputFi=potentialFi[2]))
             pushToRedcap(runId=outVals[[1]], outFile=outVals[[2]], token)
-            
         }
     }
 }
