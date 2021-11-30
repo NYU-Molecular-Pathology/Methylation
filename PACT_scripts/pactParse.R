@@ -22,9 +22,9 @@ checkMounts <- function(){
     zDrive = "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular"
     failMount <- ifelse(dir.exists(molecDrive),T,F)
     if(failMount!=T){
-        cat("PATH does not exist, ensure path is mounted:")
+        cat("\nPATH does not exist, ensure path is mounted:\n")
         cat(crayon::white$bgRed$bold(molecDrive))
-        cat("You must mount the network Z-drive path:\n")
+        cat("\nYou must mount the network Z-drive path:\n")
         cat(crayon::white$bgRed$bold(zDrive),"\n")
         stopifnot(!any(failMount==T))
     } else {message("Z-drive path is accessible")}
@@ -138,9 +138,10 @@ writeSampleSheet <- function(inputSheet, token){
         message(crayon::bgRed("The PACT run worksheet was not found:"),"\n", inputFi, dsh)
         inputFi <- gsub(paste0("/",basename(inputFi)),"",inputFi)
         potentialFi <- list.files(path=inputFi,full.names=T)
-        message(crayon::bgRed("Checking the following files:"),"\n", dsh)
+        message(crayon::bgRed("Checking the following files:"), dsh)
         if(length(potentialFi)>=1){
             print(potentialFi)
+            message(dsh)
             wbFiles <- stringr::str_which(basename(potentialFi),pattern="xlsm")
             potentialFi <- potentialFi[wbFiles]
             potentialFi <- potentialFi[!stringr::str_detect(potentialFi,"\\$")]
@@ -150,7 +151,8 @@ writeSampleSheet <- function(inputSheet, token){
             outVals <- suppressMessages(parseExcelFile(inputFi=potentialFi[1]))
             pushToRedcap(runId=outVals[[1]], outFile=outVals[[2]], token)
         }else{
-            message(crayon::bgRed("The PACT run worksheet was not found:"),"\n", inputFi, dsh)
+            message("\n",crayon::bgRed("The PACT run worksheet was not found:"),"\n", inputFi,potentialFi[1], "\n")
+            message("Checking if .xlsx only file version exists")
             stopifnot(file.exists(potentialFi[1]))
         }
     }
