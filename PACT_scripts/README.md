@@ -56,6 +56,7 @@ After lines 96:
 `htmlwidgets::saveWidget(widget=plotly::as.widget(p), file=tempPathFi)` # saves as widget in temp.html<br>
 
 `# Below saves a screenshot of the temp.html file as a PNG image`<br>
+
 `webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", delay = 2.5, vwidth = 2340, vheight = 1344)`<br>              
 
 ## File Copy or Mount Path issue
