@@ -50,10 +50,10 @@ https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/PACT_scripts/ge
 After lines 96:
 <br>
 `message("~~~~~~~~~~~~~~~Generating ", sampleName, " cnv plot...")`<br>
-`xx <- mnp.v11b6::MNPcnv(Mset,sex = sex,main = sampleID) # Get cnv object`<br>
-`thePlot<-supM(mnp.v11b6::MNPcnvggplotly(xx, getTables = F)) # saves cnv ggplot`<br>
-`p<-plotly::ggplotly(thePlot) # converts plot to ggplotly`<br>
-`htmlwidgets::saveWidget(widget=plotly::as.widget(p), file=tempPathFi) # saves as widget in temp.html`<br>
+`xx <- mnp.v11b6::MNPcnv(Mset,sex = sex,main = sampleID)` # Get cnv object<br>
+`thePlot<-supM(mnp.v11b6::MNPcnvggplotly(xx, getTables = F))` # saves cnv ggplot<br>
+`p<-plotly::ggplotly(thePlot)` # converts plot to ggplotly<br>
+`htmlwidgets::saveWidget(widget=plotly::as.widget(p), file=tempPathFi)` # saves as widget in temp.html<br>
 
 `# Below saves a screenshot of the temp.html file as a PNG image`<br>
 `webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", delay = 2.5, vwidth = 2340, vheight = 1344)`<br>              
