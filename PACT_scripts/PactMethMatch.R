@@ -268,13 +268,13 @@ startCNVmaker <- function(output, token) {
                 message("The following error occured:\n",e)
                 message("\n\nTry checking the troubleshooting section on GitHub:\n")
                 message("https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/PACT_scripts/README.md\n")
-            }
+            },
+                 finally={gb$copyOutputPng()}
         )
     } else{message(crayon::bgGreen("This PACT run has no cases with methylation complete.  No CNV png images to generate."))}
 }
 
-
-# Searching REDCap Worksheets for MRN Match -------------------------------------
+# Search REDCap Worksheets for MRN Match for output -------------------------------------
 loadPacks()
 checkMounts()
 output <- getOuputData(token, flds, inputSheet)
