@@ -42,7 +42,7 @@ search.redcap <- function(rd_numbers, ApiToken=NULL) {
 }
 
 warnMount <- function(idat.dir){
-    message("\n",crayon::bgRed("Directory not found, you may need this idat folder location mounted:"),"\n", idat.dir))
+    message("\n",crayon::bgRed("Directory not found, you may need this idat folder location mounted:"),"\n", idat.dir,"\n")
 }
 
 get.idats2<-function(csvNam = "samplesheet.csv"){
@@ -73,40 +73,41 @@ get.rd.info <- function(rd_numbers=NULL, token=NULL, sh_name=NULL){
     return(result)
 }
 
+grabSexEst <- function(bs, detP){
+    sexEstimate <-as.data.frame(signif(sest::get.proportion_table(bs, detP), digits = 2))
+    yest <- as.double(sexEstimate$`p.Y:(-18,-5]`) >= 0.75
+    yest1 <- as.double(sexEstimate$`Y:(0,0.1]`) >= 0.12
+    sex <- ifelse((yest == TRUE && yest1 == TRUE), "male", "female")
+    return(sex)
+}
+
+getCnWebshot <- function(xx, fn){
+    tempPathFi <- file.path("~","Desktop","temp.html")
+    thePlot<-supM(mnp.v11b6::MNPcnvggplotly(xx, getTables = F))
+    p<-plotly::ggplotly(thePlot)
+    htmlwidgets::saveWidget(widget=plotly::as.widget(p), file=tempPathFi)
+    webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", delay = 2.5, vwidth = 2340, vheight = 1344)
+    message("\nFile saved: ",fn,"\n")
+}
+
 gen.cnv.png <- function(RGsetEpic, sampleName) {
     RGset=RGsetEpic
     imgName <- paste(sampleName, "cnv.png", sep="_")
-    savePath <- file.path("~","Desktop")
-    fn=file.path(savePath,imgName)
-    tempPathFi <- file.path(savePath,"temp.html")
+    fn = file.path("~","Desktop",imgName)
     if(file.exists(fn)){
-        message("File already exists, skipping:", fn)
-    }else{
+        message("\nFile already exists, skipping:", fn,"\n")
+    } else{
         Mset <- mnp.v11b6::MNPpreprocessIllumina(RGsetEpic)
         Mset@annotation=c(array="IlluminaHumanMethylationEPIC", annotation="ilm10b4.hg19")
         FFPE <- mnp.v11b6::MNPgetFFPE(RGsetEpic)
-        Mset_ba <- mnp.v11b6::MNPbatchadjust(Mset, FFPE)
         detP <- minfi::detectionP(RGsetEpic)
         bs <- minfi::getBeta(Mset)
-        sexEstimate <-as.data.frame(signif(sest::get.proportion_table(bs, detP), digits = 2))
-        yest <- as.double(sexEstimate$`p.Y:(-18,-5]`) >= 0.75
-        yest1 <- as.double(sexEstimate$`Y:(0,0.1]`) >= 0.12
-        sex <- ifelse((yest == TRUE && yest1 == TRUE), "male", "female")
-        message("~~~~~~~~~~~~~~~Generating ", sampleName, " cnv plot...")
+        sex = grabSexEst(bs, detP)
+        message("\n~~~~~~~~~~~~~~~Generating ", sampleName, " cnv plot...\n")
         xx <- mnp.v11b6::MNPcnv(Mset,sex = sex,main = sampleID)
-        thePlot<-supM(mnp.v11b6::MNPcnvggplotly(xx, getTables = F))
-        p<-plotly::ggplotly(thePlot)
-        #supM(
-        htmlwidgets::saveWidget(widget=plotly::as.widget(p), file=tempPathFi)
-        #)
-        #supM(
-        webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", delay = 2.5, vwidth = 2340, vheight = 1344)
-        #)
-        #dev.off()
-        message("File saved: ",imgName,"\n")
+        getCnWebshot(xx, fn)
     }
 }
-
 
 grabRGset <- function(runPath, sentrix){
     barcode = stringr::str_split_fixed(sentrix, "_",2)[1]
