@@ -112,7 +112,7 @@ emailNotify <- function(record,rcon){
     datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
     res<-RCurl::postForm(rcon$url, token=rcon$token, content='record',format='json',type='flat',
                          data = datarecord, returnContent = 'ids', returnFormat = 'csv')
-    cat(res);message("\n",dsh2,"Email Notification Created",dsh2)
+    cat(res, sep="=");message("\n",dsh2,"Email Notification Created",dsh2)
 }
 
 # Connect to REDCap and send email attachments of csv file ----
