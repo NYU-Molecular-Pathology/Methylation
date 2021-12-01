@@ -3,6 +3,7 @@ args <- commandArgs(TRUE)
 library("base")
 #token=NULL;inputSheet=NULL
 dsh="\n================"
+dsh2="\n=========================\n"
 
 # Main arguments input in comandline
 token<-args[1]; inputSheet<-args[2]
@@ -111,7 +112,7 @@ emailNotify <- function(record,rcon){
     datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
     res<-RCurl::postForm(rcon$url, token=rcon$token, content='record',format='json',type='flat',
                          data = datarecord, returnContent = 'ids', returnFormat = 'csv')
-    cat(res);message(dsh,"\nEmail Notification Created",dsh)
+    cat(res);message(dsh2,"Email Notification Created",dsh2)
 }
 
 # Connect to REDCap and send email attachments of csv file ----
@@ -120,7 +121,8 @@ pushToRedcap <- function(runId,outFile,token){
     record = data.frame(record_id = runId, pact_run_number = runId)
     datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
     res <- RCurl::postForm(rcon$url,token=rcon$token,content='record',format='json',
-                           type='flat',data=datarecord, returnContent = 'count', returnFormat = 'csv')
+                           type='flat',data=datarecord, returnContent = 'nothing', returnFormat = 'csv')
+    message("\nREDCap Output:\n")
     cat(res,sep="\n")
     redcapAPI::importFiles(rcon=rcon, file=outFile, record=runId, field="pact_csv_sheet", repeat_instance=1)
     record$pact_csv_email<-"pact_csv_email"
@@ -150,7 +152,7 @@ writeSampleSheet <- function(inputSheet, token){
             potentialFi <- potentialFi[!stringr::str_detect(potentialFi,"\\$")]
         }
         if (file.exists(potentialFi[1])) {
-            message("Now trying to read:\n",potentialFi[1])
+            message(crayon::bgGreen("Now trying to read:"),"\n",potentialFi[1],"\n")
             outVals <- suppressMessages(parseExcelFile(inputFi=potentialFi[1]))
             pushToRedcap(runId=outVals[[1]], outFile=outVals[[2]], token)
         }else{
