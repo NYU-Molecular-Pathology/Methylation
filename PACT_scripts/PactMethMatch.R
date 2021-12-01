@@ -29,6 +29,8 @@ if(suppressWarnings(!require("redcapAPI"))){
     do.call(devtools::install_github,c(params))
 }
 
+supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
+
 # FUN: Checks if z-drive is accessible to the Rscript
 checkMounts <- function(){
     molecDrive = "/Volumes/molecular/MOLECULAR LAB ONLY"
@@ -40,7 +42,7 @@ checkMounts <- function(){
         cat("You must mount the network Z-drive path:\n")
         cat(crayon::white$bgRed$bold(zDrive),"\n")
         stopifnot(!any(failMount==T))
-    } else {message("Z-drive path is accessible")}
+    } else {message("\n",crayon::bgGreen("Z-drive path is accessible"),"\n")}
 }
 
 
@@ -55,13 +57,14 @@ loadPacks <- function(){
             install.packages(pk,dependencies=T, verbose=T, repos="http://cran.us.r-project.org", type="both")
         }}))
     if(!require("systemfonts")){devtools::install_github('r-lib/systemfonts')}
-         
+    if(!require("redcapAPI")){install.packages("redcapAPI", dependencies = T, type="both",ask=F)}
     if(!require("remotes")){install.packages("remotes", dependencies=T)}
     if(!require("chromote")){remotes::install_github("rstudio/chromote", upgrade ="never")}
     if(!require("webshot2")){remotes::install_github("rstudio/webshot2")}
+    library("redcapAPI")
     library("chromote")
-         try(tinytex::tlmgr_install(),silent=T)
-         try(tinytex:::install_prebuilt(),silent=T)
+    #try(tinytex::tlmgr_install(),silent=T)
+    #try(tinytex:::install_prebuilt(),silent=T)
 }
 
 # API Call functions -----
@@ -77,29 +80,50 @@ searchDb <- function(vals, db){
     return(foreach::foreach(i=1:ncol(db), .combine='rbind') %do% {db[grepl(v2f,db[,i]),]})
 }
 
-getFilePath <- function(inputSheet){
-    drive = file.path("", "Volumes", "molecular", "MOLECULAR LAB ONLY")
-    folder <- file.path("NYU PACT Patient Data", "Workbook")
-    runyr <- stringr::str_split_fixed(inputSheet,"-",3)[,2]
-    inputFi <- file.path(drive, folder, paste0("20", runyr),inputSheet,paste0(inputSheet,".xlsm"))
-    if(file.exists(inputFi)) {
-        return(inputFi)
-    } else{
-        inputFi <- file.path(drive, folder, paste0("20", runyr), inputSheet)
-        message(dsh, "This PACT run worksheet was not found", dsh2,inputFi, dsh)
-        allFi <- list.files(path=inputFi, pattern="*.xlsm")
-        allFi <- allFi[!grepl( "~$", allFi, fixed = T)]
-        allFi <- allFi[!grepl( "export", allFi, fixed = F,ignore.case=T)]
-        allFi <- allFi[grepl( "Book", allFi, fixed = F,ignore.case=T)]
-        if(length(allFi)>1){allFi <- allFi[1]}
-        inputFi <- file.path(inputFi,allFi)
-        message(dsh,"Using this workbook instead", dsh2, inputFi, dsh)
-        return(inputFi)
+# Filters list of possible files in the directory for worksheet
+filterFiles <- function(potentialFi) {
+    wbFiles <- stringr::str_which(basename(potentialFi), pattern = "xlsm")
+    if (length(wbFiles) == 0) {
+        message("\nNo .xlsm worksheet found. Checking .xlsx files...\n")
+        wbFiles <- stringr::str_which(basename(potentialFi), pattern = "book")
     }
+    potentialFi <- potentialFi[wbFiles]
+    potentialFi <- potentialFi[!stringr::str_detect(potentialFi, "\\$")]
+    return(potentialFi)
 }
 
+getAltPath <- function(inputFi){
+    message("\n", crayon::bgRed("This PACT run worksheet was not found:"), "\n", inputFi)
+    message(dsh, "Checking other files in PACT folder: ", basename(dirname(inputFi)), "================")
+    potentialFi <- list.files(dirname(inputFi), full.names=T)
+    print(basename(potentialFi))
+    altFi <- filterFiles(potentialFi)
+    if(length(altFi)>1){altFi <- altFi[1]}
+    message(crayon::bgGreen("Using this workbook instead:"), basename(altFi), "\n")
+    stopifnot(file.exists(altFi)==T)
+    return(altFi)
+}
+
+# Returns the path to /Volumes/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Workbook/YYYY/PACT-YY-##"
+getPactFolder <- function(inputSheet){
+    drive <- file.path("", "Volumes", "molecular", "MOLECULAR LAB ONLY")
+    folder <- file.path("NYU PACT Patient Data", "Workbook")
+    runyr <- stringr::str_split_fixed(inputSheet,"-",3)[,2]
+    runFolder <- file.path(drive, folder, paste0("20", runyr), inputSheet)
+    print(runFolder); stopifnot(dir.exists(runFolder)==T); return(runFolder)
+}
+
+# Returns path to run worksheet if path is valid
+getFilePath <- function(inputSheet){
+    runFolder <- getPactFolder(inputSheet)
+    inputFi <- file.path(runFolder,paste0(inputSheet,".xlsm"))
+    if(file.exists(inputFi)) {return(inputFi)} else{return(getAltPath(inputFi))}
+}
+
+# Parses the input file for the "PhilipsExport" tab
 parseWorksheet <- function(inputFi){
     shNames <- readxl::excel_sheets(inputFi)
+    message("Excel sheet names:"); print(shNames)
     sheet2Read <- "PhilipsExport"
     sh <- which(grepl(sheet2Read,shNames,ignore.case=T))[1]
     pactShCol <- c("Tumor Specimen ID","Tumor DNA/RNA Number", "MRN", "Test Number")
@@ -109,7 +133,7 @@ parseWorksheet <- function(inputFi){
 }
 
 # Import csv Worksheet -----
-getCaseValues <- function(inputSheet,readFlag){
+getCaseValues <- function(inputSheet, readFlag){
     if(readFlag){
         vals2find <- utils::read.csv(inputSheet, skip=19)[,c(6,7,9)]
         vals2find <- vals2find[!grepl("H20|SERACARE|HAPMAP", vals2find[,2]),]
@@ -160,37 +184,37 @@ modifyOutput <- function(output,vals2find){
             if (length(theMatch) > 0) {
                 theVal <- vals2find$`Test Number`[theMatch]
             }
-        }
-
+            }
         output$Test_Number[i] <- theVal
-    }
+        }
     output <- addOutputLinks(output)
     return(output)
+}
+
+addExcelLink <- function(output,fiLn,wb,runId){
+    x <- c(output$'Report Link'[fiLn])
+    names(x) <- paste0(output$record_id[fiLn],".html")
+    class(x) <- "hyperlink"
+    colNum <- which(colnames(output)=="Report Link")
+    openxlsx::writeData(wb, sheet=runId, x=x, startCol=colNum, startRow=fiLn+1)
 }
 
 createXlFile <- function(runId,output){
     wb <- openxlsx::createWorkbook()
     openxlsx::addWorksheet(wb, runId)
-    openxlsx::writeData(wb, sheet=runId, x= output)
+    openxlsx::writeData(wb, sheet=runId, x=output)
     for (fiLn in 1:length(output$'Report Link')) {
-        if(output$'Report Link'[fiLn]!=''){
-            x <- c(output$'Report Link'[fiLn])
-            names(x) <- paste0(output$record_id[fiLn],".html")
-            class(x) <- "hyperlink"
-            colNum <- which(colnames(output)=="Report Link")
-            openxlsx::writeData(wb, sheet = runId, x = x, startCol = colNum, startRow=fiLn+1)
-        }
+        if(output$'Report Link'[fiLn]!=''){addExcelLink(output,fiLn,wb,runId)}
     }
-    outFi <-file.path("~","Desktop", paste0(runId,"_MethylMatch.xlsx"))
+    outFi <-file.path(fs::path_home(),"Desktop", paste0(runId,"_MethylMatch.xlsx"))
     openxlsx::saveWorkbook(wb, outFi, overwrite = T)
     return(outFi)
 }
 
 postData <- function(rcon, record){
     datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
-    res <- RCurl::postForm(rcon$url,token=rcon$token,content='record',format='json',type='flat',
-                           data=datarecord, returnContent = 'ids', returnFormat = 'csv')
-    cat(res,sep="\n")
+    res <- RCurl::postForm(rcon$url,token=rcon$token,content='record',format='json',type='flat', data=datarecord, returnContent = 'nothing', returnFormat = 'csv')
+    cat(res)
 }
 
 emailFile <- function(runId, outFi, rcon){
@@ -199,54 +223,61 @@ emailFile <- function(runId, outFi, rcon){
     suppressMessages(redcapAPI::importFiles(rcon,file= outFi, runId, field="other_file", repeat_instance=1))
     record$comments <- "pact_sample_list_email"
     postData(rcon, record)
-    message(dsh,"\nEmail Notification Created",dsh)
+    message(dsh,"\nEmail Notification Created",dsh,"\n")
 }
 
-# Searching REDCap Worksheets for MRN Match -------------------------------------
-
-loadPacks()
-checkMounts()
-rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", token)
-vals2find <- getCaseValues(inputSheet, readFlag)
-db <- grabAllRecords(flds, rcon)
-output <- queryCases(vals2find, db)
-theExcel <- getFilePath(inputSheet)
-
-runId <- ifelse(readFlag == T, paste0(head(read.csv(inputSheet))[3, 2]),
-                paste0(head(suppressMessages(
-                    readxl::read_excel(theExcel, sheet = 7)))[3, 2]))
-output <- modifyOutput(output,vals2find)
-outFi <- createXlFile(runId,output)
-emailFile(runId, outFi, rcon)
-
-# CNV PNG Creation -------------------------------------
-
-rds <- output$record_id[output$report_complete=="YES"]
-assign("rds", rds)
-
-supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
+# Main workflow to get dataframe
+getOuputData <- function(token, flds, inputSheet){
+    apiUrl="https://redcap.nyumc.org/apps/redcap/api/"
+    rcon <- redcapAPI::redcapConnection(apiUrl, token)
+    vals2find <- getCaseValues(inputSheet, readFlag)
+    db <- grabAllRecords(flds, rcon)
+    output <- queryCases(vals2find, db)
+    runId <- ifelse(readFlag == T, substr(inputSheet,1,nchar(inputSheet)-4), inputSheet)
+    output <- modifyOutput(output, vals2find)
+    outFi <- createXlFile(runId, output)
+    emailFile(runId, outFi, rcon)
+    return(output)
+}
 
 # FUN: Sets your directory and sources the helper functions
 sourceFuns2 <- function(workingPath = NULL) {
     mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
     script.list <- c("SetRunParams.R","CopyInputs.R","PACT_scripts/generateCNV.R")
-    if(!require("redcapAPI")){install.packages("redcapAPI", dependencies = T, type="both",ask=F)
-        library("redcapAPI")}
     if (is.null(workingPath)) {workingPath = getwd()}
     scripts <- paste0(mainHub, script.list)
     invisible(lapply(scripts, function(i){devtools::source_url(i)}))
+    library("sest")
+    library("mnp.v11b6")
+    require("plotly")
+    require("htmlwidgets")
     gb$setDirectory(workingPath)
     return(gb$defineParams())
 }
 
-message("\nStarting CNV PNG Creation\n")
+startCNVmaker <- function(output, token) {
+    rds <- output$record_id[output$report_complete == "YES"]
+    if (length(rds) > 0) {
+        assign("rds", rds)
+        message(dsh, crayon::bgMagenta("Starting CNV PNG Creation"),dsh2)
+        sourceFuns2()
+        ApiToken = gb$token
+        tryCatch(
+            expr = {gb$save.png.files(gb$rds, token)},
+            error = function(e) {
+                message("The following error occured:\n",e)
+                message("\n\nTry checking the troubleshooting section on GitHub:\n")
+                message("https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/PACT_scripts/README.md\n")
+            }
+        )
+    } else{message(crayon::bgGreen("This PACT run has no cases with methylation complete.  No CNV png images to generate."))}
+}
 
-sourceFuns2()
 
-library("conumee")
-library("sest")
-library("mnp.v11b6")
-require("plotly")
-require("htmlwidgets")
-ApiToken = gb$token
-gb$save.png.files(gb$rds, token)
+# Searching REDCap Worksheets for MRN Match -------------------------------------
+loadPacks()
+checkMounts()
+output <- getOuputData(token, flds, inputSheet)
+
+# CNV PNG Creation -------------------------------------
+startCNVmaker(output, token)
