@@ -110,9 +110,8 @@ parseExcelFile <- function(inputFi){
 # Generate Email notification and attach csv file
 emailNotify <- function(record,rcon){
     datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
-    res<-RCurl::postForm(rcon$url, token=rcon$token, content='record',format='json',type='flat',
-                         data = datarecord, returnContent = 'ids', returnFormat = 'csv')
-    cat(res, sep="=");message("\n",dsh2,"Email Notification Created",dsh2)
+    res<-RCurl::postForm(rcon$url, token=rcon$token, content='record',format='json',type='flat', data = datarecord, returnContent = 'ids', returnFormat = 'csv')
+    cat(res);message("\n",dsh2,"Email Notification Created",dsh2)
 }
 
 # Connect to REDCap and send email attachments of csv file ----
@@ -122,12 +121,24 @@ pushToRedcap <- function(runId,outFile,token){
     datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
     res <- RCurl::postForm(rcon$url,token=rcon$token,content='record',format='json',
                            type='flat',data=datarecord, returnContent = 'nothing', returnFormat = 'csv')
-    message("REDCap Output:")
-    cat(res,sep="=")
+    message(crayon::bgMagenta("REDCap Output:"))
+    cat(res)
     redcapAPI::importFiles(rcon=rcon, file=outFile, record=runId, field="pact_csv_sheet", repeat_instance=1)
     record$pact_csv_email<-"pact_csv_email"
     emailNotify(record, rcon)
     #unlink(outFile)
+}
+
+# Filters list of possible files in the directory for worksheet
+filterFiles <- function(potentialFi) {
+    wbFiles <- stringr::str_which(basename(potentialFi), pattern = "xlsm")
+    if (length(wbFiles) == 0) {
+        message("No .xlsm worksheet found. Checking if .xlsx file exists:\n")
+        wbFiles <- stringr::str_which(basename(potentialFi), pattern = "book")
+    }
+    potentialFi <- potentialFi[wbFiles]
+    potentialFi <- potentialFi[!stringr::str_detect(potentialFi, "\\$")]
+    return(potentialFi)
 }
 
 # Gets dataframe and saves as CSV file -----
@@ -137,19 +148,13 @@ writeSampleSheet <- function(inputSheet, token){
         outVals <- suppressMessages(parseExcelFile(inputFi))
         pushToRedcap(runId=outVals[[1]], outFile=outVals[[2]], token)
     } else {
-        message(crayon::bgRed("The PACT run worksheet was not found:"),"\n", inputFi, dsh)
+        message(crayon::bgRed("The PACT run worksheet was not found:"),"\n", inputFi, "\n")
         inputFi <- gsub(paste0("/",basename(inputFi)),"",inputFi)
         potentialFi <- list.files(path=inputFi,full.names=T)
-        message(crayon::bgRed("Checking the following files:"), dsh)
+        message(crayon::bgRed("Checking other existing files:"), "\n")
         if(length(potentialFi)>=1){
             print(potentialFi)
-            wbFiles <- stringr::str_which(basename(potentialFi),pattern="xlsm")
-            if(length(wbFiles)==0){
-                message("Checking if workbook is not .xlsm and only .xlsx file version exists:\n")
-                wbFiles <- stringr::str_which(basename(potentialFi),pattern="book")
-            }
-            potentialFi <- potentialFi[wbFiles]
-            potentialFi <- potentialFi[!stringr::str_detect(potentialFi,"\\$")]
+            potentialFi <- filterFiles(potentialFi)
         }
         if (file.exists(potentialFi[1])) {
             message(crayon::bgGreen("Now trying to read:"),"\n",potentialFi[1],"\n")
