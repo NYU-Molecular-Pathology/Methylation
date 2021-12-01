@@ -21,7 +21,7 @@ writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
         Date = df$arrived
     )
     samplesheet_csv <- samplesheet_csv[!is.na(samplesheet_csv$SentrixID_Pos),]
-
+    
     print(samplesheet_csv)
     write.csv(
         samplesheet_csv,
@@ -42,7 +42,7 @@ search.redcap <- function(rd_numbers, ApiToken=NULL) {
 }
 
 warnMount <- function(idat.dir){
-    cat(crayon::bgRed("\nDirectory not found, make sure idat folder location is mounted:\n", idat.dir))
+    message("\n",crayon::bgRed("Directory not found, you may need this idat folder location mounted:"),"\n", idat.dir))
 }
 
 get.idats2<-function(csvNam = "samplesheet.csv"){
@@ -97,10 +97,10 @@ gen.cnv.png <- function(RGsetEpic, sampleName) {
         thePlot<-supM(mnp.v11b6::MNPcnvggplotly(xx, getTables = F))
         p<-plotly::ggplotly(thePlot)
         #supM(
-            htmlwidgets::saveWidget(widget=plotly::as.widget(p), file=tempPathFi)
+        htmlwidgets::saveWidget(widget=plotly::as.widget(p), file=tempPathFi)
         #)
         #supM(
-            webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", delay = 2.5, vwidth = 2340, vheight = 1344)
+        webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", delay = 2.5, vwidth = 2340, vheight = 1344)
         #)
         #dev.off()
         message("File saved: ",imgName,"\n")
@@ -139,19 +139,16 @@ save.png.files <- function(rds, token){
     mySentrix <- mySentrix[!is.na(mySentrix$barcode_and_row_column),]
     mySentrix <- mySentrix[!is.null(mySentrix$barcode_and_row_column),]
     for (sam in rownames(mySentrix)) {
-    sentrix <- mySentrix[sam,2]
-    RGsetEpic <- grabRGset(getwd(),sentrix)
-    tryCatch(
-        expr= {gen.cnv.png(RGsetEpic, sampleName=mySentrix[sam,1])},
-        error= function(e){
-            message("An error occured with ",mySentrix[sam,1]," png creation:\n")
-            message(e)
-            message("Trying next sample")
-        }
-    
-    )
-}
-
-    copyOutputPng()
+        sentrix <- mySentrix[sam,2]
+        RGsetEpic <- grabRGset(getwd(),sentrix)
+        tryCatch(
+            expr= {gen.cnv.png(RGsetEpic, sampleName=mySentrix[sam,1])},
+            error= function(e){
+                erTxt <- paste0("An error occured with ", mySentrix[sam,1]," png creation:")
+                message(crayon::bgRed(erTxt),"\n",e,"\n")
+                message(crayon::bgGreen("Trying next sample"))
+            }
+        )
+    }
 }
 
