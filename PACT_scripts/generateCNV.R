@@ -102,8 +102,8 @@ gen.cnv.png2 <- function(RGsetEpic, sampleName) {
     } else{
         Mset <- mnp.v11b6::MNPpreprocessIllumina(RGsetEpic)
         Mset@annotation=c(array="IlluminaHumanMethylationEPIC", annotation="ilm10b4.hg19")
-		if (is.null(FFPE)) {FFPE <- mnp.v11b6::MNPgetFFPE(RGset)}
-		Mset_ba <- mnp.v11b6::MNPbatchadjust(Mset, FFPE)
+	FFPE <- mnp.v11b6::MNPgetFFPE(RGset)
+	Mset_ba <- mnp.v11b6::MNPbatchadjust(Mset, FFPE)
         FFPE <- mnp.v11b6::MNPgetFFPE(RGsetEpic)
         detP <- minfi::detectionP(RGsetEpic)
         bs <- minfi::getBeta(Mset_ba) #Mset
