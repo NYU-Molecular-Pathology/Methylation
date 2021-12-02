@@ -79,7 +79,7 @@ getCnWebshot <- function(xx, fn){
     tempPathFi <- file.path("~","Desktop","temp.html")
     thePlot<-supM(mnp.v11b6::MNPcnvggplotly(xx, getTables = F))
     p<-supM(plotly::ggplotly(thePlot))
-    supM(htmlwidgets::saveWidget(widget=plotly::as.widget(p), file=tempPathFi))
+    supM(htmlwidgets::saveWidget(widget=plotly::as_widget(p), file=tempPathFi))
     message("\nSaving WebShot from temp.html...\n")
     webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", delay = 2.5, vwidth = 2340, vheight = 1344)
     try(file.remove(tempPathFi),silent=T)
