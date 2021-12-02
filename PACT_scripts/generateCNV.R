@@ -86,30 +86,30 @@ getCnWebshot <- function(xx, fn){
     thePlot<-supM(mnp.v11b6::MNPcnvggplotly(xx, getTables = F))
     p<-plotly::ggplotly(thePlot)
     htmlwidgets::saveWidget(widget=plotly::as.widget(p), file=tempPathFi)
-    message("\nSaving WebShot\n")
+    message("\nSaving WebShot from temp.html...\n")
     webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", delay = 2.5, vwidth = 2340, vheight = 1344)
-    dev.off()
-    file.remove(tempPathFi)
-    message("\nFile saved: ",fn,"\n")
+    try(file.remove(tempPathFi),silent=T)
 }
 
+calculateCnv <- function(RGsetEpic, sampleName) {
+    Mset <- mnp.v11b6::MNPpreprocessIllumina(RGsetEpic)
+    Mset@annotation = c(array = "IlluminaHumanMethylationEPIC", annotation = "ilm10b4.hg19")
+    FFPE <- mnp.v11b6::MNPgetFFPE(RGsetEpic)
+    Mset_ba <- mnp.v11b6::MNPbatchadjust(Mset, FFPE)
+    bs <- minfi::getBeta(Mset_ba) #Mset
+    sex <- grabSexEst(bs, minfi::detectionP(RGsetEpic))
+    xx <- mnp.v11b6::MNPcnv(Mset, sex = sex, main = sampleName)
+    return(xx)
+}
+# gets the mset and converts mnp cnv analysis obj to png
 gen.cnv.png2 <- function(RGsetEpic, sampleName) {
-    RGset=RGsetEpic
     imgName <- paste(sampleName, "cnv.png", sep="_")
     fn = file.path("~","Desktop",imgName)
     if(file.exists(fn)){
         message("\nFile already exists, skipping:", fn,"\n")
     } else{
-        Mset <- mnp.v11b6::MNPpreprocessIllumina(RGsetEpic)
-        Mset@annotation=c(array="IlluminaHumanMethylationEPIC", annotation="ilm10b4.hg19")
-	FFPE <- mnp.v11b6::MNPgetFFPE(RGset)
-	Mset_ba <- mnp.v11b6::MNPbatchadjust(Mset, FFPE)
-        FFPE <- mnp.v11b6::MNPgetFFPE(RGsetEpic)
-        detP <- minfi::detectionP(RGsetEpic)
-        bs <- minfi::getBeta(Mset_ba) #Mset
-        sex = grabSexEst(bs, detP)
         message("\n~~~~~~~~~~~~~~~Generating ", sampleName, " cnv plot...\n")
-        xx <- mnp.v11b6::MNPcnv(Mset,sex = sex,main = sampleID)
+        xx <- calculateCnv(RGsetEpic, sampleName)
         getCnWebshot(xx, fn)
     }
 }
@@ -156,5 +156,6 @@ save.png.files <- function(rds, token){
             }
         )
     }
+	while (!is.null(dev.list()))  dev.off()
 }
 
