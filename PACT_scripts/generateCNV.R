@@ -78,8 +78,8 @@ grabSexEst <- function(bs, detP){
 getCnWebshot <- function(xx, fn){
     tempPathFi <- file.path("~","Desktop","temp.html")
     thePlot<-supM(mnp.v11b6::MNPcnvggplotly(xx, getTables = F))
-    p<-plotly::ggplotly(thePlot)
-    htmlwidgets::saveWidget(widget=plotly::as.widget(p), file=tempPathFi)
+    p<-supM(plotly::ggplotly(thePlot))
+    supM(htmlwidgets::saveWidget(widget=plotly::as.widget(p), file=tempPathFi))
     message("\nSaving WebShot from temp.html...\n")
     webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", delay = 2.5, vwidth = 2340, vheight = 1344)
     try(file.remove(tempPathFi),silent=T)
@@ -142,6 +142,7 @@ save.png.files <- function(rds, token){
     mySentrix <- mySentrix[!is.null(mySentrix$barcode_and_row_column),]
     for (sam in rownames(mySentrix)) {
         sentrix <- mySentrix[sam,2]
+	    message("\nGetting RGset for ",sentrix,"\n")
         RGsetEpic <- grabRGset(getwd(),sentrix)
         tryCatch(
             expr= {gen.cnv.png2(RGsetEpic, sampleName=mySentrix[sam,1])},
