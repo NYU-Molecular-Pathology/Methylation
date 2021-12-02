@@ -92,7 +92,7 @@ getCnWebshot <- function(xx, fn){
     message("\nFile saved: ",fn,"\n")
 }
 
-gen.cnv.png <- function(RGsetEpic, sampleName) {
+gen.cnv.png2 <- function(RGsetEpic, sampleName) {
     RGset=RGsetEpic
     imgName <- paste(sampleName, "cnv.png", sep="_")
     fn = file.path("~","Desktop",imgName)
@@ -147,7 +147,7 @@ save.png.files <- function(rds, token){
         sentrix <- mySentrix[sam,2]
         RGsetEpic <- grabRGset(getwd(),sentrix)
         tryCatch(
-            expr= {gen.cnv.png(RGsetEpic, sampleName=mySentrix[sam,1])},
+            expr= {gen.cnv.png2(RGsetEpic, sampleName=mySentrix[sam,1])},
             error= function(e){
                 erTxt <- paste0("An error occured with ", mySentrix[sam,1]," png creation:")
                 message(crayon::bgRed(erTxt),"\n",e,"\n")
