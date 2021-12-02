@@ -16,6 +16,7 @@ checkQCpkg <- function(){
     suppressPackageStartupMessages(suppressMessages(easypackages::packages(methylQCpacks,prompt=F)))
     reqPkg <- list("ggplot2","pals","stringr","scales","grid")
     invisible(lapply(reqPkg, FUN = function(X) {suppressPackageStartupMessages(suppressMessages(do.call("require", list(X))))}))
+    message("Packages loading finished\n")
 }
 
 # Helper functions to get and set global variables
