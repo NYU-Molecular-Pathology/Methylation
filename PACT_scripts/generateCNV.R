@@ -101,9 +101,11 @@ gen.cnv.png <- function(RGsetEpic, sampleName) {
     } else{
         Mset <- mnp.v11b6::MNPpreprocessIllumina(RGsetEpic)
         Mset@annotation=c(array="IlluminaHumanMethylationEPIC", annotation="ilm10b4.hg19")
+		if (is.null(FFPE)) {FFPE <- mnp.v11b6::MNPgetFFPE(RGset)}
+		Mset_ba <- mnp.v11b6::MNPbatchadjust(Mset, FFPE)
         FFPE <- mnp.v11b6::MNPgetFFPE(RGsetEpic)
         detP <- minfi::detectionP(RGsetEpic)
-        bs <- minfi::getBeta(Mset)
+        bs <- minfi::getBeta(Mset_ba) #Mset
         sex = grabSexEst(bs, detP)
         message("\n~~~~~~~~~~~~~~~Generating ", sampleName, " cnv plot...\n")
         xx <- mnp.v11b6::MNPcnv(Mset,sex = sex,main = sampleID)
