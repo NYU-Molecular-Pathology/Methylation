@@ -4,7 +4,7 @@ supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
 #  Copy idats and Worksheets creation
 writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
     if (is.null(bn)) {bn = file.path(getwd(), df$barcode_and_row_column)}
-    message("~~~Writing from redcap samplesheet.csv:")
+    message(crayon::bgCyan("~~~Writing from redcap samplesheet.csv:"))
     names(df)
     df<- df[!is.na(df[, "barcode_and_row_column"]),]
     samplesheet_csv = data.frame(
@@ -21,14 +21,8 @@ writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
         Date = df$arrived
     )
     samplesheet_csv <- samplesheet_csv[!is.na(samplesheet_csv$SentrixID_Pos),]
-    
     print(samplesheet_csv)
-    write.csv(
-        samplesheet_csv,
-        file = "samplesheet.csv",
-        quote = F,
-        row.names = F
-    )
+    write.csv(samplesheet_csv, file = "samplesheet.csv", quote = F,row.names = F)
 }
 
 search.redcap <- function(rd_numbers, ApiToken=NULL) {
@@ -101,14 +95,16 @@ calculateCnv <- function(RGsetEpic, sampleName) {
     xx <- mnp.v11b6::MNPcnv(Mset, sex = sex, main = sampleName)
     return(xx)
 }
+
 # gets the mset and converts mnp cnv analysis obj to png
 gen.cnv.png2 <- function(RGsetEpic, sampleName) {
-    imgName <- paste(sampleName, "cnv.png", sep="_")
-    fn = file.path("~","Desktop",imgName)
-    if(file.exists(fn)){
-        message("\nFile already exists, skipping:", fn,"\n")
+    imgName <- paste(sampleName, "cnv.png", sep = "_")
+    fn = file.path("~", "Desktop", imgName)
+    if (file.exists(fn)) {
+        message("\nFile already exists, skipping:", fn, "\n")
     } else{
-        message("\n~~~~~~~~~~~~~~~Generating ", sampleName, " cnv plot...\n")
+        cnvMsg <- paste("Generating", sampleName, "cnv plot...")
+        message("\n", crayon::bgYellow(cnvMsg), "\n")
         xx <- calculateCnv(RGsetEpic, sampleName)
         getCnWebshot(xx, fn)
     }
@@ -151,7 +147,7 @@ save.png.files <- function(rds, token){
             expr= {gen.cnv.png2(RGsetEpic, sampleName=mySentrix[sam,1])},
             error= function(e){
                 erTxt <- paste0("An error occured with ", mySentrix[sam,1]," png creation:")
-                message(crayon::bgRed(erTxt),"\n",e,"\n")
+                message(crayon::bgRed(erTxt),"\n",e)
                 message(crayon::bgGreen("Trying next sample"))
             }
         )
