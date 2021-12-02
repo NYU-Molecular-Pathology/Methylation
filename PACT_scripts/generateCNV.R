@@ -87,6 +87,8 @@ getCnWebshot <- function(xx, fn){
     p<-plotly::ggplotly(thePlot)
     htmlwidgets::saveWidget(widget=plotly::as.widget(p), file=tempPathFi)
     webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", delay = 2.5, vwidth = 2340, vheight = 1344)
+    dev.off()
+    file.remove(tempPathFi)
     message("\nFile saved: ",fn,"\n")
 }
 
