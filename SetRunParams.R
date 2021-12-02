@@ -6,16 +6,16 @@ checkQCpkg <- function(){
     methylQCpacks <- c(
         "kableExtra","magick","webshot","plyr","ggplot2","knitr","reshape2",
         "data.table","DT","plotly", "MethylAid","minfi","scales",
-        #"IlluminaHumanMethylation450kmanifest",
-        #"IlluminaHumanMethylationEPICanno.ilm10b2.hg19",
+        "IlluminaHumanMethylation450kmanifest",
+        "IlluminaHumanMethylationEPICanno.ilm10b2.hg19",
         "IlluminaHumanMethylationEPICmanifest",
         "IlluminaHumanMethylationEPICanno.ilm10b4.hg19","Biobase", "RColorBrewer","limma","ggfortify","Rtsne",
         "qdapTools","gplots","readxl","stringr","ggrepel","Polychrome",
         "tinytex","gridExtra","rmarkdown", "BiocParallel", "grid"
     )
-    suppressMessages(easypackages::packages(methylQCpacks,prompt=F))
+    suppressPackageStartupMessages(suppressMessages(easypackages::packages(methylQCpacks,prompt=F)))
     reqPkg <- list("ggplot2","pals","stringr","scales","grid")
-    invisible(lapply(reqPkg, FUN = function(X) {suppressMessages(do.call("require", list(X)))}))
+    invisible(lapply(reqPkg, FUN = function(X) {suppressPackageStartupMessages(suppressMessages(do.call("require", list(X))))}))
 }
 
 # Helper functions to get and set global variables
