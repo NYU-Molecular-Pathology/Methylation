@@ -66,3 +66,27 @@ Alternatively, you can source then run the github script locally using [methylEx
 
 ### The main script that is run from the command line is methylExpress.R which sources each of these scripts into the global environment and takes in the user parameters
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/5e54893b0cc7d54212508f78d3239e787cf09c26/screenshots/methEx.png" alt="drawing" width="850"/><br />
+
+## **RUNNING METHYLATION CLI**
+To run the Clinical or Research Methylation pipeline, simply use the locally stored Shell Script in:<br>
+`/Volumes/CBioinformatics/Methylation/runMeth.sh`
+The shell script takes the following argument parameters:<br>
+`#!/bin/bash`
+
+`methAPI='XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' # RedCap API Token`
+`methRun=${1-NULL} # if arg $1 is empty assign NULL as default`
+`PRIORITY=${2-NULL} # if arg $2 is empty assign NULL as default`
+`runPath=${3-NULL} # if arg $3 is empty assign NULL as default`
+`BIuser="$(whoami)"`
+
+`# Print helpFunction in case methRun parameter is empty`
+`if [ -z "$methRun" ]`
+`then`
+`   echo "You did not provide a Methylation Run ID name. Ex. '21-MGDM30'";`
+`   exit 1`
+`fi`
+
+`# Begin script in case all parameters are entered`
+`curl -o methylExpress.R -L https://git.io/JWujj; Rscript --verbose methylExpress.R $methAPI $methRun $PRIORITY $runPath`<br>
+
+You can locally copy or symlink the runMeth.sh file to execute more easily
