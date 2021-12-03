@@ -68,8 +68,8 @@ do_report <-function(data = NULL, genCn=F) {
 # QC REPORT maker: knits the QC RMD file
 generateQCreport <- function(runID=NULL, qc=NULL) {
     runID<-gb$ckNull(nullVar = runID, subVar=gb$runID, deparse(substitute(runID,env=.GlobalEnv)))
-    QC_file <- system.file('Methyl_QC.Rmd', package = "mnp.v11b6")
-    if (!file.exists(QC_file)){message("Check Working directory, QC_file.rmd not found")}
+    QC_file <- "/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/inst/Methyl_QC.Rmd" #system.file('Methyl_QC.Rmd', package = "mnp.v11b6")
+    if (!file.exists(QC_file)){message(crayon::bgRed("Check Working directory, QC_file.rmd not found"))}
     fs::file_copy(QC_file, getwd(), overwrite = T)
     currentQC = dir(getwd(),"*QC.Rmd", full.names=T)
     qcFile = paste0(runID,"_QC.html") # output file name
