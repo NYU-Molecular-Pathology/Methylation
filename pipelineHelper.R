@@ -58,11 +58,11 @@ do_report <-function(data = NULL, genCn=F) {
         msgUpdate <- paste("Now running:", samplename_data, run_id, barcode, pathEpic)
         message(bky(msgUpdate), "\n")
         tryCatch(
-            expr={rmarkdown::render(reportMd, "html_document", outFi, outDir, quiet=T)},
+            expr={rmarkdown::render(reportMd, "html_document", outFi, outDir, quiet=F)},
             error=function(e){
                 message(bkRed("Report Generation Failed:"),"\n", outFi,"\n")
                 message(bkRed("The following error returned:"),"\n", e)
-                }, finally=print("\nRunning next sample\n")
+                }, finally=message("\nRunning next sample\n")
         )
     } else {message(bkRed("Your data is null, check your SampleSheet.csv"))}
 }
