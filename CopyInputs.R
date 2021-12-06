@@ -64,12 +64,12 @@ copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
             if(!file.exists(file.path(getwd(),basename(fileLoc)))){
                 fs::file_copy(fileLoc, getwd(),overwrite=T)}
         } else {
-            message("File not found:");cat(fileLoc)
-            message("\nMake sure your path is correct, try print(gb$copyWorksheetFile)")
+            message("\nFile not found:\n",fileLoc)
+            message("\nMake sure your path is correct, try print(gb$copyWorksheetFile)\n")
         }
     } else {
-        message("Folder not found:\n"); cat(mountLoc)
-        message("\nEnsure your volume path is correct, check print(copyWorksheetFile)")
+        message("\nFolder not found:\n",mountLoc)
+        message("\nEnsure the path to this network Volume is correct\n")
     }
 }
 
@@ -175,9 +175,10 @@ readSheetWrite <- function(sampleNumb= NULL, runID = NULL) {
         if (is.null(df$Tech)){warning(ww1); df$Tech <- "NA"}
         if (is.null(df$MP_number)){warning(ww2); df$MP_number <- "none"}
         writeSampleSheet(df, samplesheet_ID=samplesheet_ID,bn=bn, sampleName, dnaNumber, Sentrix)
-    } else {cat(crayon::white$bgGreen(
-        "samplesheet.csv already exists! To Create a new csv, Delete existing samplesheet.csv\n"
-    ))}
+    } else {
+        msgCvs = "samplesheet.csv already exists! To Create a new csv file, Delete the existing samplesheet.csv"
+        message("\n", crayon::white$bgGreen(msgCvs),"\n")
+        }
 }
 
 # FUN: Returns a list of idat files given an idat drive location -
@@ -211,7 +212,7 @@ copyBaseIdats <- function(allFi) {
 
 # Helper FUN called during copying idats to notify if a network mount is not found
 warnMount <- function(idat.dir){
-    cat(crayon::bgRed("\nDirectory not found, make sure idat folder location is mounted:\n", idat.dir))
+    cat(crayon::bgRed("Directory not found, ensure the idat folder location is accessible:"),idat.dir,sep="\n")
 }
 
 # FUN: Returns a list of idat files that exist on Molecular and Snuderl lab drives -
