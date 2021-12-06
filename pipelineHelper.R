@@ -2,6 +2,9 @@
 gb <- globalenv(); assign("gb", gb)
 apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
 dsh = "-----------"
+bky <- function(txtVar,...){crayon::black$bgYellow$bold(txtVar,...)}
+bkRed <- function(txtVar,...){crayon::bgRed$bold$white(txtVar,...)}
+
 # Helper function to return the index of priority selected samples first
 reOrderRun <- function(selectRDs, sh=NULL){
     if(is.null(selectRDs)){return(NULL)}; if(is.null(sh)){sh<-"samplesheet.csv"}
@@ -32,7 +35,7 @@ getRGset <- function(runPath, sentrix){
 
 # Helper function called by makeReports.v11b6 to generate the HTML report
 do_report <-function(data = NULL, genCn=F) {
-    require(rmarkdown)
+    reportMd <- "/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/inst/report.Rmd" #system.file("report.Rmd", package="mnp.v11b6")
     if(!is.null(data)){
         samplename_data = paste0(data[,1])
         sentrix_pos_list = (data[,5])
@@ -46,29 +49,28 @@ do_report <-function(data = NULL, genCn=F) {
         pathEpic = file.path(runPath, sentrix_pos_list)
         RGsetEpic <- getRGset(runPath, sentrix_pos_list)
         RGset = RGsetEpic
-        sampleID=paste0(samplename_data)
+        sampleID = paste0(samplename_data)
         FFPE = NULL
         outDir = getwd()
         sample = 1
         outFi <- paste0(sampleID,".html")
         if(genCn==T){generateCNVpng(RGsetEpic,sampleID)}
-        message(paste("Now running:", samplename_data, run_id, barcode, pathEpic,"\n"))
-        reportMd <- "/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/inst/report.Rmd" #system.file("report.Rmd", package="mnp.v11b6")
+        msgUpdate <- paste("Now running:", samplename_data, run_id, barcode, pathEpic)
+        message(bky(msgUpdate), "\n")
         tryCatch(
-            rmarkdown::render(reportMd, "html_document", outFi, outDir),
+            expr={rmarkdown::render(reportMd, "html_document", outFi, outDir, quiet=T)},
             error=function(e){
-                message(crayon::bgRed$bold$white("Report Generation Failed:"),"\n", outFi,"\n")
-                message(crayon::bgRed$bold$white("The following error returned:"),"\n", e)
-            },
-            finally=print("running next sample")
+                message(bkRed("Report Generation Failed:"),"\n", outFi,"\n")
+                message(bkRed("The following error returned:"),"\n", e)
+                }, finally=print("\nRunning next sample\n")
         )
-    } else {message("your data is null")}
+    } else {message(bkRed("Your data is null, check your SampleSheet.csv"))}
 }
 
 # QC REPORT maker: knits the QC RMD file
 generateQCreport <- function(runID=NULL, qc=NULL) {
-    runID<-gb$ckNull(nullVar = runID, subVar=gb$runID, deparse(substitute(runID,env=.GlobalEnv)))
     QC_file <- "/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/inst/Methyl_QC.Rmd" #system.file('Methyl_QC.Rmd', package = "mnp.v11b6")
+    runID<-gb$ckNull(nullVar = runID, subVar=gb$runID, deparse(substitute(runID,env=.GlobalEnv)))
     if (!file.exists(QC_file)){message(crayon::bgRed("Check Working directory, QC_file.rmd not found"))}
     fs::file_copy(QC_file, getwd(), overwrite = T)
     currentQC = dir(getwd(),"*QC.Rmd", full.names=T)
@@ -86,10 +88,11 @@ launchEmailNotify <-function(runID){
     sam_id = paste0(runID,"_QC")
     com <- ifelse(isMC==T, "sample_qc", "sample_research") # research or clinical notification
     record = data.frame(record_id=sam_id,comments=com)
-    datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T);print(datarecord)
+    datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
     res<-RCurl::postForm(ur,token=tk,content='record',format='json',type='flat',data=datarecord)
-    cat(crayon::black$bgGreen$bold("Email Notification Created\n"))
-    cat(crayon::white$bgBlue$bold("Check email to confirm run notifcation\n"));cat(res)
+    cat(crayon::black$bgGreen$bold("Email Notification Created"), sep="\n")
+    cat(crayon::white$bgBlue$bold("Check email to confirm run notifcation"), sep="\n")
+    cat(res)
 }
 
 # FUN: Creates the QC record for the current run on redcap if it does not exist
@@ -100,15 +103,17 @@ create.QC.record <- function(runID=NULL){
     record = c(record_id=paste0(runID,"_QC"), run_number=runID)
     qcdata <- jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
     rr<-RCurl::postForm(uri,token=tk,content='record',format='json', type='flat',data=qcdata)
-    rr;message("Created QC Record"); print(qcdata)
+    rr;message(dsh,"Created QC Record",dsh); print(qcdata)
 }
 
 # Check if the QC File will be read
 checkRunOutput <- function(runID) {
-    location <- file.path("~/Desktop",runID,paste0(runID,"_Redcap.csv"))
-    if (!file.exists(location)) {
-        message("File not found: "); cat(location,sep="\n"); message("QC Summary Table will not Knit")
-    } else {fs::file_copy(path=location, new_path=getwd(), overwrite = T)}
+    csvLocation <- file.path(fs::path_home(),"Desktop",runID,paste0(runID,"_Redcap.csv"))
+    if (!file.exists(csvLocation)) {
+        message(bkRed("File not found:")," ", csvLocation,"\n",bkRed("QC Summary Table will not Knit"),"\n")
+    } else{
+        fs::file_copy(path=csvLocation, new_path=getwd(), overwrite = T)
+        }
 }
 
 # gets rid of desktop files if run is successful
@@ -120,26 +125,23 @@ tidyUpFiles <- function(runID){
     unlink(deskDir,T,T)
 }
 
-bky <- function(txtVar,...){crayon::black$bgYellow$bold(txtVar,...)}
-
 loopRender <- function(samList = NULL, data){
     if(is.null(samList)){
         samList<-1:length(as.character(data$SentrixID_Pos))
     }
-
+    require(rmarkdown)
     for (i in samList) {
         outFileN = paste0(data[i,1],".html")
         outPathN = file.path(gb$workFolder,gb$runID,outFileN)
         if(file.exists(outPathN)){
-            cat(bky(outFileN, "exists skipping sample","\n"))
+            cat(bky(outFileN, "already exists! Skipping sample"),"\n")
             next
         } else {
-            cat(bky("\n",dsh,"Now Running", i, "of", length(samList),dsh),sep="\n")
+            cat("\n",bky(dsh,"Now Running", i, "of", length(samList),dsh),sep="\n")
             do_report(data=data[i, ], gb$genCn)
             cat(bky("\n",dsh,"Completed Report", i, "of", length(samList),dsh),sep="\n")
             }
     }
-
     cat(crayon::black$bgGreen$bold(dsh,"RUN COMPLETE",dsh),sep="\n")
     #beepr::beep(3)
 }
@@ -156,16 +158,16 @@ loopRender <- function(samList = NULL, data){
 makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
                             skipQC=F,email=T,cpReport=F,redcapUp=T){
     assign("genCn",genCn, envir = gb)
-
     if (is.null(sheetName)) {sheetName="samplesheet.csv"}
-
     data <- read.csv(sheetName, strip.white=T)
-    runID<-paste0(data$RunID[1])
+    runID <- paste0(data$RunID[1])
     load("/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData")
     loopRender(selectSams, data)
-
     checkRunOutput(runID)
-    if(skipQC==F){create.QC.record(runID);generateQCreport()}
+    if (skipQC == F) {
+        create.QC.record(runID)
+        generateQCreport()
+    }
     if(grepl("TEST",runID)){cpReport=F;redcapUp=F;email=F}
     if(cpReport==T){file.list <- gb$copy2outFolder(gb$clinDrv, runID)}
     if(redcapUp==T){file.list <- dir(pattern="*.html", full.names = T); gb$uploadToRedcap(file.list)}
@@ -195,12 +197,14 @@ checkMounts <- function(){
         ifelse(!dir.exists(driveMount),return(T),return(F))})
     if(any(failMount==T)){
         toFix <- paste(critialMnts[which(failMount==T)])
-        cat("PATH does not exist, ensure path is mounted:", crayon::white$bgRed$bold(toFix),"\n")
-        cat("You must mount each of the following paths:\n",
+        cat("PATH does not exist, ensure path is mounted:", bkRed(toFix),"\n")
+        cat("You may need to mount one of the following paths:",
+            crayon::white$bgBlue$bold(
+                "smb://research-cifs.nyumc.org/Research/CBioinformatics/"),
+            crayon::white$bgCyan$bold(
+                "smb://research-cifs.nyumc.org/Research/snudem01lab/snudem01labspace"),
             crayon::white$bgGreen$bold(
-                "smb://research-cifs.nyumc.org/Research/CBioinformatics/\n",
-                "smb://research-cifs.nyumc.org/Research/snudem01lab/snudem01labspace\n",
-                "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular\n")
+                "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular"), sep="\n"
         )
         stopifnot(!any(failMount==T))
     }
