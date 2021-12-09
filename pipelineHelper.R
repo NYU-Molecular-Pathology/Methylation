@@ -55,7 +55,8 @@ do_report <-function(data = NULL, genCn=F) {
         sample = 1
         outFi <- paste0(sampleID,".html")
         if(genCn==T){generateCNVpng(RGsetEpic,sampleID)}
-        msgUpdate <- paste("Now running:", samplename_data, run_id, barcode, pathEpic)
+        msgUpdate <- paste("Current Sample:\n", "samplename_data: ", samplename_data, 
+                           "run_id: ", run_id, "barcode: ",barcode, "pathEpic:\n", pathEpic)
         message(bky(msgUpdate), "\n")
         tryCatch(
             expr={rmarkdown::render(reportMd, "html_document", outFi, outDir, quiet=T)},
