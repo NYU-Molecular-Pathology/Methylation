@@ -24,8 +24,6 @@ if(length(baseFolder)==0){baseFolder=NULL}else {
 # Check Input Params
 cat("\n~~~~~~Parameters input:",token, runID, selectRDs, baseFolder, sep='\n')
 message("~~~~~~~~~~~~~~~~~~~~~"); stopifnot(!is.null(token)); stopifnot(!is.null(runID))
-
-
 if(length(baseFolder)!=0 & !is.na(baseFolder) & !is.null(baseFolder)){
     message("Trying custom run directory from input:","\n", baseFolder,"\n")
     isValid <- dir.exists(baseFolder)
