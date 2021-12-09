@@ -59,12 +59,14 @@ scripts = paste0(mainHub, script.list)
 invisible(lapply(scripts, function(i) {devtools::source_url(i)}))
 
 # Define any custom directories here, default is NULL
-gb$defineParams(
-    methDir = baseFolder,
-    baseDir = baseFolder
-)
 #mnp.pk.loc = NULL, ApiToken = NULL, methDir = NULL, clinDrv = NULL, rschOut = NULL, clinOut = NULL,
 #rsch.idat = NULL, clin.idat = NULL, QC_file = NULL, isMC = T, baseDir = NULL, runID = NULL
+
+gb$defineParams(
+    methDir = baseFolder,
+    baseDir = baseFolder,
+    ApiToken = token
+)
 
 # Execute Methylation Run
 if(!is.null(runID)){gb$setVar("runID", runID)}
