@@ -59,6 +59,7 @@ cranPkgs <-
         "targets",
         "usethis",
         "webshot",
+        "reshape",
         "reshape2",
         "data.table",
         "DT",
