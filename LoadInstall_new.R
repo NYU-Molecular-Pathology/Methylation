@@ -136,11 +136,13 @@ pk.inst <- function(pkg){
                 message("\nWarning on package:\n", pkg, "\n-----------\n",cond)
                 do.call(install.packages, c(pk.opt, list(type = "source")))
             },
-            error = function(cond) { msgCheck(cond,T)
+            error = function(cond) {
+                msgCheck(cond,T)
                 do.call(install.packages, c(pk.opt, list(type = "binary")))
             },
-            custom_error = function(cond) { msgCheck(cond,T)
-                message("\Custom_error on package:\n", pkg, "\n-----------\n",cond)
+            custom_error = function(cond) {
+                msgCheck(cond,T)
+                message("\nCustom_error on package:\n", pkg, "\n-----------\n",cond)
                 easypackages::packages(pkg, prompt = F, Ncpus = 6)
             },
             finally={ld(pkg)}
