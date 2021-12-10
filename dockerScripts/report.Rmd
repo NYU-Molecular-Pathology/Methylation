@@ -124,9 +124,11 @@ RGset2 <- RGset
 FFPE=NULL
 
 stopifnot(!is.null(run_id)|!is.null(tech)|!is.null(tech2)|!is.null(bnumber)|!is.null(RGset))
+outPath <- getwd()
 
-redcsv <- paste("~/Desktop/",run_id,"/",run_id,"_Redcap.csv", sep = "")
-redfolder <- paste("~/Desktop/",run_id,"/",sep = "")
+outFiName <- paste0(run_id,"_Redcap.csv")
+redcsv <- file.path(outPath,run_id,outFiName)
+redfolder <- file.path(outPath, run_id)
 is450k <- RGset@annotation[[1]] == "IlluminaHumanMethylation450k"
 
 redcapDF <- data.frame(
@@ -271,10 +273,10 @@ out_class_family %>%
 			
 out %>% 
 	knitr::kable("html",kgh,align='clc')%>%
-    kableExtra::kable_styling(kgb,full_width=F,position="left")%>%
-	kableExtra::column_spec(column=c(1,2),extra_css=xtraCss3)%>%
-	kableExtra::column_spec(column=2,background="rgb(204,230,255)",extra_css=txtc)%>%
-	kableExtra::row_spec(row=0,font_size=16,background="rgb(135,174,237)",color="black")%>%
+    kableExtra::kable_styling(kgb,full_width=F,position="left") %>%
+	kableExtra::column_spec(column=c(1,2),extra_css=xtraCss3) %>%
+	kableExtra::column_spec(column=2,background="rgb(204,230,255)",extra_css=txtc) %>%
+	kableExtra::row_spec(row=0,font_size=16,background="rgb(135,174,237)",color="black") %>%
 	kableExtra::row_spec(row=1,extra_css=xtraCss4)
 
 familia <- out_class_family$`Methylation Family`[1]
@@ -584,7 +586,7 @@ drawPlotTab <- function(mlhP){
 		mlhP %>% knitr::kable("html",be, align = 'clc') %>% 
 		    kableExtra::kable_styling(kgb,full_width = F, position="left") %>%
 		    kableExtra::column_spec(column = 2, background = "rgb(204, 255, 204)", extra_css = txtc) %>% 
-		    column_spec(column = 2, bold = T, border_right = T)
+		    kableExtra::column_spec(column = 2, bold = T, border_right = T)
 		)
 	}
 
@@ -648,10 +650,10 @@ writeRedcap <- function(redcsv, dfNewRed,dfRedcap){
 	#write.table(dfNewRed, file= redcsv, row.names=F, col.names=T, append=T, quotes=F)
 	write.csv(x = redDF,file = redcsv, row.names = F)
 }
-
-redcsv <- paste("~/Desktop/",run_id,"/",run_id,"_Redcap.csv",sep = "")
+outFiName <- paste0(run_id,"_Redcap.csv")
+redcsv <- file.path(outPath,run_id,outFiName)
 dfRedcap = read.csv(redcsv, header = T, row.names = NULL)
-dfRedcap <- as.data.frame(dfRedcap,row.names = NULL)
+dfRedcap <- as.data.frame(dfRedcap, row.names = NULL)
 writeRedcap(redcsv, dfNewRed, dfRedcap)
 ```
 </div>
@@ -667,6 +669,4 @@ David Capper, David T. W. Jones, Martin Sill, Volker Hovestadt, Daniel Schrimpf,
 <b>Implementation of the results in a clinical setting is in the sole responsibility of the treating physician.</b>
 </span>
 </p>
-
-
-
+	
