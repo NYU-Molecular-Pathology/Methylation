@@ -117,7 +117,7 @@ msgCheck <- function(pkg, warn = F) {
     if (warn == F) {
         message("Checking ", pkg, "...")
     } else{
-        message("\nError caught:\n", cond, "\n-----------")
+        message("\nError caught for package:\n", pkg, "\n-----------")
     }
 }
 
@@ -310,8 +310,8 @@ loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bcPks=biocP
             readyPkgs(ezLibs)
         },
         error = function(cond){
-            message("\n~~~You encountered the following error during install:\n", cond,"\n")
-            message("If there is a compile error, try running fixCompiles() and then try loadPacks() again")
+            message("\n~~~You encountered the following error during install:\n", cond)
+            message("If there is a compile error, try running gb$fixCompiles() and then try gb$loadPacks() again")
         }
     )
 }
