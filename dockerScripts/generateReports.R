@@ -482,5 +482,5 @@ gb$startRun <- function(selectRDs=NULL, runID=NULL, emailNotify=T){
     } else {makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=F, selectSams=NULL, redcapUp=T)}
 }
 
-prepareRun(token,runID)
+gb$prepareRun(token,runID)
 gb$startRun()
