@@ -128,7 +128,7 @@ getTotalSamples <- function(){
     if (length(worksheet) == 0) {
         message("Samplesheet ", thisSh[1]," is invalid format, manually edit")
         message("Try copying the template:\n", templateDir)
-    } else {message("Total sample count found is: ", worksheet[1])}
+    } else {message("\nTotal sample count found is: ", worksheet[1])}
     return(paste0(worksheet[1]))
 }
 
@@ -221,41 +221,6 @@ getAllFiles <- function(idatDir, csvNam=NULL) {
         allFi <- c(allFi, green.files,red.files)
     }
     return(allFi)
-}
-
-# FUN: Copies .idat files to your current directory using sample sheet
-copyBaseIdats <- function(allFi) {
-    cat(crayon::white$bgCyan("Copying idats to current directory..."),"\n")
-    fs::file_copy(allFi, file.path(getwd()),overwrite=T)
-    idcs = basename(allFi)
-    idatsCopied <- idcs[idcs != ""]
-    success = file.exists(idatsCopied)
-    all(success)
-    message(".idat files that failed to copy:")
-    if (all(success)) {cat("none","\n")} else {print(idatsCopied[!success])}
-}
-
-# Helper FUN called during copying idats to notify if a network mount is not found
-warnMount <- function(idat.dir){
-    cat(crayon::bgRed("Directory not found, ensure the idat folder location is accessible:"),idat.dir,sep="\n")
-}
-
-# FUN: Returns a list of idat files that exist on Molecular and Snuderl lab drives -
-get.idats <-function(csvNam = "samplesheet.csv"){
-    rsch.idat <- gb$rsch.idat;clin.idat <- gb$clin.idat
-    if(!dir.exists(rsch.idat)){warnMount(rsch.idat)}; if(!dir.exists(clin.idat)){warnMount(clin.idat)}
-    stopifnot(dir.exists(rsch.idat)|dir.exists(clin.idat))
-    if (file.exists(csvNam)) {
-        allFi <- getAllFiles(idatDir = c(rsch.idat, clin.idat), csvNam = csvNam)
-        allFi = allFi[file.exists(allFi)]
-        if (length(allFi) > 0) {
-            message("Files found: "); print(allFi)
-            cur.idat <- dir(pattern = "*.idat$")
-            bcds <- paste0(basename(allFi))
-            if (all(bcds %in% cur.idat)) {message(".idat files already copied")}
-            if (length(cur.idat) < length(allFi)) {copyBaseIdats(allFi[!(bcds %in% cur.idat)])}
-        } else {message("No .idat files found! Check worksheet and input folder path")}
-    } else {message(paste("Cannot find your sheet named:", csvNam))}
 }
 
 # FUN: Copies samplesheet to Desktop folder
@@ -490,7 +455,9 @@ startRun <- function(selectRDs=NULL, runID=NULL, emailNotify=T){
 # Executes the functions in order to setup a run
 prepareRun <- function(token,runID){
     methylPath <- getwd()
-    message("\n","Working directory set to:","\n"); cat(crayon::bgGreen(methylPath)); setwd(methylPath)
+    message("\n","Working directory set to:")
+    cat(crayon::bgGreen(methylPath))
+    setwd(methylPath)
     gb$setVar("ApiToken", token) # assign the ApiToken & print params
     gb$readSheetWrite() # reads xlsm and generates input .csv samplesheet
     gb$methDir <- methylPath
