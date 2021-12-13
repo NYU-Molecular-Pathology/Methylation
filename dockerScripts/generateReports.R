@@ -244,7 +244,7 @@ moveSampleSheet <- function(methDir, runID=NULL) {
     endDir = paste0(baseFolder, runID, "_samplesheet.csv")
     fs::file_copy(path=paste0(currDir,"/samplesheet.csv"),new_path=baseFolder,overwrite=T)
     file.rename(from=paste0(baseFolder,"samplesheet.csv"), to=endDir)
-    }
+}
 
 #  Copy idats and Worksheets creation
 writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
@@ -313,7 +313,7 @@ getRGset <- function(runPath, sentrix){
 
 # Helper function called by makeReports.v11b6 to generate the HTML report
 do_report <-function(data = NULL, genCn=F) {
-    reportMd <- system.file("report.Rmd", package="mnp.v11b6")
+    reportMd <- "/report.Rmd"
     if(!is.null(data)){
         samplename_data = paste0(data[,1])
         sentrix_pos_list = (data[,5])
@@ -346,7 +346,7 @@ do_report <-function(data = NULL, genCn=F) {
 
 # QC REPORT maker: knits the QC RMD file
 generateQCreport <- function(runID=NULL, qc=NULL) {
-    QC_file <- system.file('Methyl_QC.Rmd', package = "mnp.v11b6")
+    QC_file <- 'Methyl_QC.Rmd' #system.file('Methyl_QC.Rmd', package = "mnp.v11b6")
     runID<-gb$ckNull(nullVar = runID, subVar=gb$runID, deparse(substitute(runID,env=.GlobalEnv)))
     if (!file.exists(QC_file)){message(crayon::bgRed("Check Working directory, QC_file.rmd not found"))}
     fs::file_copy(QC_file, getwd(), overwrite = T)
