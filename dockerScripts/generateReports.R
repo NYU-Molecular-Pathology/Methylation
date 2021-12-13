@@ -237,7 +237,7 @@ get.idats <-function(csvNam = "samplesheet.csv"){
 
 # FUN: Copies samplesheet to Desktop folder
 moveSampleSheet <- function(methDir, runID=NULL) {
-    if (is.null(runID)){runID=paste0(basename(dir(file.path(getwd(),"methclassifier"))))}
+    if (is.null(runID)){runID=paste0(basename(file.path(getwd()))}
     baseFolder=file.path(getwd(),runID)
     if(!dir.exists(baseFolder)){dir.create(baseFolder)}
     currDir=paste0(methDir, "/",runID)
@@ -465,13 +465,13 @@ startRun <- function(selectRDs=NULL, runID=NULL, emailNotify=T){
 }
 
 # Executes the functions in order to setup a run
-prepareRun <- function(token){
+prepareRun <- function(token,runID){
     methylPath <- getwd()
     message("\n","Working directory set to:","\n"); cat(crayon::bgGreen(methylPath)); setwd(methylPath)
     gb$setVar("ApiToken", token) # assign the ApiToken & print params
     gb$readSheetWrite() # reads xlsm and generates input .csv samplesheet
     gb$methDir <- methylPath
-    gb$moveSampleSheet() #copies outputs temp to desktop for QC.Rmd
+    gb$moveSampleSheet(runID=runID) #copies outputs temp to desktop for QC.Rmd
     #gb$classifierInstall(instNew = F, rmpkg = F) # Loads pipeline or installs new
 }
 
@@ -482,5 +482,5 @@ gb$startRun <- function(selectRDs=NULL, runID=NULL, emailNotify=T){
        } else {makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=F, selectSams=NULL, redcapUp=T)}
 }
 
-prepareRun(token)
+prepareRun(token,runID)
 gb$startRun()
