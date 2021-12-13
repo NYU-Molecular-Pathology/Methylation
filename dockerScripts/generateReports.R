@@ -244,7 +244,7 @@ moveSampleSheet <- function(methDir, runID=NULL) {
     endDir = paste0(baseFolder, runID, "_samplesheet.csv")
     fs::file_copy(path=paste0(currDir,"/samplesheet.csv"),new_path=baseFolder,overwrite=T)
     file.rename(from=paste0(baseFolder,"samplesheet.csv"), to=endDir)
-}
+    }
 
 #  Copy idats and Worksheets creation
 writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
@@ -471,15 +471,15 @@ prepareRun <- function(token,runID){
     gb$setVar("ApiToken", token) # assign the ApiToken & print params
     gb$readSheetWrite() # reads xlsm and generates input .csv samplesheet
     gb$methDir <- methylPath
-    gb$moveSampleSheet(runID=runID) #copies outputs temp to desktop for QC.Rmd
+    gb$moveSampleSheet(methDir, runID=runID) #copies outputs temp to desktop for QC.Rmd
     #gb$classifierInstall(instNew = F, rmpkg = F) # Loads pipeline or installs new
 }
 
 gb$startRun <- function(selectRDs=NULL, runID=NULL, emailNotify=T){
-       if(!is.null(selectRDs)){
-           sampleOrder <- reOrderRun(selectRDs) # Re-order sample report generation for priority
-           makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=T, selectSams=sampleOrder, redcapUp=T)
-       } else {makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=F, selectSams=NULL, redcapUp=T)}
+    if(!is.null(selectRDs)){
+        sampleOrder <- reOrderRun(selectRDs) # Re-order sample report generation for priority
+        makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=T, selectSams=sampleOrder, redcapUp=T)
+    } else {makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=F, selectSams=NULL, redcapUp=T)}
 }
 
 prepareRun(token,runID)
