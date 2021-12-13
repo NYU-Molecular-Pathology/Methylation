@@ -3,6 +3,7 @@ args <- commandArgs(TRUE)
 library("base"); gb <- globalenv(); assign("gb", gb)
 
 if(!require("devtools")){install.packages("devtools")}
+if(!require("minfi")){BiocManager::install("minfi")}
 
 # If you have issues with conda and r, try running the following:
 # conda create -n r_env r-essentials r-base
