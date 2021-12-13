@@ -41,28 +41,6 @@ ckNull <- function(nullVar, subVar, varName){
         return(paste0(subVar))} else {return(paste0(nullVar))}
 }
 
-# Returns a text string of the latest modified Run name, if isMC=False then research directory is returned
-listMolecularSheets <- function(isMC=T, getAll=F,runID=gb$runID) {
-    researchWorksheets <- "/Volumes/snudem01labspace/Methylation_Worksheets"
-    runYear=grabYear(stringr::str_split_fixed(runID,"-",2)[,1])
-    if(isMC){
-        wsPath <- file.path(gb$clinDrv,"WORKSHEETS",runYear)
-        prevMC <- dir(path=wsPath, pattern="MGDM", full.names=T)
-    } else {
-        wsPath <- file.path(researchWorksheets,runYear)
-        prevMC <- dir(path=wsPath, pattern="MR", full.names=T)
-    }
-    if(getAll==T){
-        return(prevMC)
-    }else{
-        newestFile <- which.max(file.info(prevMC)$mtime)
-        prevMC <- sub(".xlsm","",basename(prevMC))
-        newestRun = paste0(prevMC[newestFile])
-        cat(crayon::bgCyan("List of Runs Found:\n"));cat(prevMC,sep="\n")
-        cat(crayon::black$bgYellow("Newest Run Found:", crayon::red$bold(paste0(newestRun))))
-        return(newestRun)
-    }
-}
 
 # FUN: copies the molecular or research lab Worksheet xlsm to cwd
 copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
@@ -383,11 +361,11 @@ checkRunOutput <- function(runID) {
 
 # gets rid of desktop files if run is successful
 tidyUpFiles <- function(runID){
-    deskDir <- file.path("~/Desktop",runID)
+    deskDir <- file.path(getwd())
     backupD <- file.path(gb$methDir,"csvRedcap")
     if(!dir.exists(backupD)){dir.create(backupD)}
     file.copy(deskDir, backupD,overwrite=T, recursive = T, copy.mode = T)
-    unlink(deskDir,T,T)
+    #unlink(deskDir,T,T)
 }
 
 loopRender <- function(samList = NULL, data){
@@ -398,6 +376,7 @@ loopRender <- function(samList = NULL, data){
     for (i in samList) {
         outFileN = paste0(data[i,1],".html")
         outPathN = file.path(getwd(),outFileN)
+        message(outPathN)
         if(file.exists(outPathN)){
             cat(bky(outFileN, "already exists! Skipping sample"),"\n")
             next
