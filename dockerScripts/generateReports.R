@@ -231,7 +231,7 @@ moveSampleSheet <- function(methDir, runID=NULL) {
     currDir=methDir
     endDir = file.path(baseFolder,paste0(runID,"_samplesheet.csv"))
     #fs::file_copy(path=paste0(currDir,"/samplesheet.csv"),new_path=baseFolder,overwrite=T)
-    file.rename(from=file.path(baseFolder,"samplesheet.csv"), to=endDir)
+    #file.rename(from=file.path(baseFolder,"samplesheet.csv"), to=endDir)
 }
 
 #  Copy idats and Worksheets creation
@@ -424,7 +424,7 @@ makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
                             skipQC=F,email=T,cpReport=F,redcapUp=T){
     assign("genCn",genCn, envir = gb)
     if (is.null(sheetName)) {sheetName="samplesheet.csv"}
-    data <- read.csv(sheetName, strip.white=T)
+    data <- read.csv(file.path(getwd(), sheetName), strip.white=T)
     runID <- paste0(data$RunID[1])
     loopRender(selectSams, data)
     checkRunOutput(runID)
