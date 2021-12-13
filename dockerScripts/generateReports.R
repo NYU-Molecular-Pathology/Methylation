@@ -237,7 +237,7 @@ get.idats <-function(csvNam = "samplesheet.csv"){
 
 # FUN: Copies samplesheet to Desktop folder
 moveSampleSheet <- function(methDir, runID=NULL) {
-    if (is.null(runID)){runID=paste0(basename(file.path(getwd()))}
+    if (is.null(runID)){runID=basename(getwd())}
     baseFolder=file.path(getwd(),runID)
     if(!dir.exists(baseFolder)){dir.create(baseFolder)}
     currDir=paste0(methDir, "/",runID)
