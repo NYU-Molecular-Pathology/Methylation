@@ -10,7 +10,7 @@ params:
 runID = paste0(basename(getwd()))
 message(paste("Using", runID, "as RunID"))
 	
-baseDir = paste0("~/Desktop/", runID)
+baseDir = paste0("/meth_data/", runID)
 message(baseDir)
 sheetNamePath = list.files(baseDir,pattern = "_samplesheet.csv")
 if (length(sheetNamePath) > 1){warning(">1 samplesheet in the folder")}
