@@ -176,7 +176,8 @@ readSampleSheet <- function(runID=F, totalSam=F, wks=F) {
 readSheetWrite <- function(sampleNumb= NULL, runID = NULL) {
     if(is.null(sampleNumb)){sampleNumb<-getTotalSamples()}
     if(is.null(runID)){runID<-paste0(basename(getwd()))}
-    current.run.Folder <- file.path(gb$methDir,runID)
+    current.run.Folder <- getwd()
+    message("\nCurrent Run folder:", current.run.Folder,"\n")
     ww1=crayon::bgRed("No tech name found: check df$Tech in samplesheet")
     ww2=crayon::bgRed("No tech name found: check df$MP_number in samplesheet")
     if (!file.exists("samplesheet.csv")) {
