@@ -226,11 +226,11 @@ getAllFiles <- function(idatDir, csvNam=NULL) {
 # FUN: Copies samplesheet to Desktop folder
 moveSampleSheet <- function(methDir, runID=NULL) {
     if (is.null(runID)){runID=basename(getwd())}
-    baseFolder=file.path(getwd(),runID)
+    baseFolder=getwd()
     if(!dir.exists(baseFolder)){dir.create(baseFolder)}
-    currDir=paste0(methDir, "/",runID)
+    currDir=file.path(methDir,runID)
     endDir = paste0(baseFolder, runID, "_samplesheet.csv")
-    fs::file_copy(path=paste0(currDir,"/samplesheet.csv"),new_path=baseFolder,overwrite=T)
+    #fs::file_copy(path=paste0(currDir,"/samplesheet.csv"),new_path=baseFolder,overwrite=T)
     file.rename(from=paste0(baseFolder,"samplesheet.csv"), to=endDir)
 }
 
