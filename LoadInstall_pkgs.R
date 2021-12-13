@@ -405,3 +405,5 @@ startLoadingAll <- function() {
 }
 
 startLoadingAll()
+print("CURRENT DIRECTORY:")
+print(getwd())
