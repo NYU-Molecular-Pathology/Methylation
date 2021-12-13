@@ -119,7 +119,10 @@ getTotalSamples <- function(){
     thisSh <- dir(getwd(), "*.xlsm")
     temp <- stringi::stri_detect_fixed(thisSh, "~$")
     thisSh <- thisSh[!temp]
-    if(length(thisSh)==0){print("No .xlsm sheet, defaulting to 16");return(16)}
+    if(length(thisSh)==0){print("No .xlsm sheet, defaulting to 16")
+                          print(getwd())
+                          return(16)
+                         }
     worksheet <- readxl::read_excel(thisSh[1], col_names="Total", range="B4:B4")
     if (length(worksheet) == 0) {
         message("Samplesheet ", thisSh[1]," is invalid format, manually edit")
