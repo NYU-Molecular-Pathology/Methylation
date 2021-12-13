@@ -124,11 +124,11 @@ RGset2 <- RGset
 FFPE=NULL
 
 stopifnot(!is.null(run_id)|!is.null(tech)|!is.null(tech2)|!is.null(bnumber)|!is.null(RGset))
-outPath <- file.path(getwd(),run_id)
+outPath <- getwd()
 
 outFiName <- paste0(run_id,"_Redcap.csv")
-redcsv <- file.path(outPath,run_id,outFiName)
-redfolder <- file.path(outPath, run_id)
+redcsv <- file.path(outPath,outFiName)
+redfolder <- getwd()
 is450k <- RGset@annotation[[1]] == "IlluminaHumanMethylation450k"
 
 redcapDF <- data.frame(
