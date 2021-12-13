@@ -228,10 +228,10 @@ moveSampleSheet <- function(methDir, runID=NULL) {
     if (is.null(runID)){runID=basename(getwd())}
     baseFolder=getwd()
     if(!dir.exists(baseFolder)){dir.create(baseFolder)}
-    currDir=file.path(methDir,runID)
-    endDir = paste0(baseFolder, runID, "_samplesheet.csv")
+    currDir=methDir
+    endDir = file.path(baseFolder,paste0(runID,"_samplesheet.csv"))
     #fs::file_copy(path=paste0(currDir,"/samplesheet.csv"),new_path=baseFolder,overwrite=T)
-    file.rename(from=paste0(baseFolder,"samplesheet.csv"), to=endDir)
+    file.rename(from=file.path(baseFolder,"samplesheet.csv"), to=endDir)
 }
 
 #  Copy idats and Worksheets creation
