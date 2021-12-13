@@ -335,7 +335,7 @@ getRGset <- function(runPath, sentrix){
 
 # Helper function called by makeReports.v11b6 to generate the HTML report
 do_report <-function(data = NULL, genCn=F) {
-    reportMd <- "/report.Rmd"
+    reportMd <- "report.Rmd"
     if(!is.null(data)){
         samplename_data = paste0(data[,1])
         sentrix_pos_list = (data[,5])
