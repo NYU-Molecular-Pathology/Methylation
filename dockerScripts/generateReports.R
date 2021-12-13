@@ -397,7 +397,7 @@ loopRender <- function(samList = NULL, data){
     require(rmarkdown)
     for (i in samList) {
         outFileN = paste0(data[i,1],".html")
-        outPathN = file.path(gb$workFolder,gb$runID,outFileN)
+        outPathN = file.path(getwd(),outFileN)
         if(file.exists(outPathN)){
             cat(bky(outFileN, "already exists! Skipping sample"),"\n")
             next
