@@ -23,6 +23,24 @@ grabYear<- function(yr) {
     return(rnum)
 }
 
+setVar <- function(valueName,val){return(assign(valueName, val, envir=.GlobalEnv))}
+assignVar <- function(varStr, assignedVal){
+    return(
+        tryCatch(
+            expr = {if(!is.null(get(varStr))){cat("")}},
+            error = {setVar(varStr,assignedVal)},
+            finally = message(varStr," = ",assignedVal)
+            )
+        )
+}
+
+# Checks if variable is null and assigns value
+ckNull <- function(nullVar, subVar, varName){
+    if (is.null(nullVar)){
+        setVar(as.character(varName),as.character(subVar))
+        return(paste0(subVar))} else {return(paste0(nullVar))}
+}
+
 # Returns a text string of the latest modified Run name, if isMC=False then research directory is returned
 listMolecularSheets <- function(isMC=T, getAll=F,runID=gb$runID) {
     researchWorksheets <- "/Volumes/snudem01labspace/Methylation_Worksheets"
