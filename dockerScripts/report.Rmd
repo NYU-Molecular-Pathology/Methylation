@@ -124,7 +124,7 @@ RGset2 <- RGset
 FFPE=NULL
 
 stopifnot(!is.null(run_id)|!is.null(tech)|!is.null(tech2)|!is.null(bnumber)|!is.null(RGset))
-outPath <- getwd()
+outPath <- file.path(getwd(),run_id)
 
 outFiName <- paste0(run_id,"_Redcap.csv")
 redcsv <- file.path(outPath,run_id,outFiName)
@@ -651,7 +651,7 @@ writeRedcap <- function(redcsv, dfNewRed,dfRedcap){
 	write.csv(x = redDF,file = redcsv, row.names = F)
 }
 outFiName <- paste0(run_id,"_Redcap.csv")
-redcsv <- file.path(outPath,run_id,outFiName)
+redcsv <- file.path(outPath,outFiName)
 dfRedcap = read.csv(redcsv, header = T, row.names = NULL)
 dfRedcap <- as.data.frame(dfRedcap, row.names = NULL)
 writeRedcap(redcsv, dfNewRed, dfRedcap)
