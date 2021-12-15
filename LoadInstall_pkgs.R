@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-cbioLn = "/"
+cbioLn = "/class_packs/"
 
 # Classifier Packages and Versions
 mnpV4 <-
