@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-cbioLn = "./"
+cbioLn = "/"
 
 # Classifier Packages and Versions
 mnpV4 <-
@@ -402,6 +402,7 @@ startLoadingAll <- function() {
     installAll(classPacks, srcInst)
     checkClassifier(mnpV4)
     checkClassifier(mnpV6)
+    library("mnp.v11b6")
 }
 
 startLoadingAll()
