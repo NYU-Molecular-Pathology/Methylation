@@ -374,6 +374,7 @@ loopRender <- function(samList = NULL, data){
         samList<-1:length(as.character(data$SentrixID_Pos))
     }
     require(rmarkdown)
+    require(mnp.v11b6)
     for (i in samList) {
         outFileN = paste0(data[i,1],".html")
         outPathN = file.path(getwd(),outFileN)
