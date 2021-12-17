@@ -227,7 +227,7 @@ emailFile <- function(runId, outFi, rcon){
 }
 
 # Main workflow to get dataframe
-getOuputData <- function(token, flds, inputSheet){
+getOuputData <- function(token, flds, inputSheet, readFlag){
     apiUrl="https://redcap.nyumc.org/apps/redcap/api/"
     rcon <- redcapAPI::redcapConnection(apiUrl, token)
     vals2find <- getCaseValues(inputSheet, readFlag)
@@ -277,7 +277,7 @@ startCNVmaker <- function(output, token) {
 # Search REDCap Worksheets for MRN Match for output -------------------------------------
 loadPacks()
 checkMounts()
-output <- getOuputData(token, flds, inputSheet)
+output <- getOuputData(token, flds, inputSheet, readFlag)
 
 # CNV PNG Creation -------------------------------------
 startCNVmaker(output, token)
