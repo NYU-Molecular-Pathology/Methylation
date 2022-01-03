@@ -4,9 +4,10 @@ supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
 #  Copy idats and Worksheets creation
 writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
     if (is.null(bn)) {bn = file.path(getwd(), df$barcode_and_row_column)}
-    message(crayon::bgCyan("~~~Writing from redcap samplesheet.csv:"))
-    names(df)
+    message(crayon::bgCyan("~~~Writing from redcap samplesheet.csv using dataframe:"))
+
     df<- df[!is.na(df[, "barcode_and_row_column"]),]
+	    print(df)
     samplesheet_csv = data.frame(
         Sample_Name = df[, "record_id"],
         DNA_Number = df[,"b_number"],
@@ -58,7 +59,10 @@ get.idats2<-function(csvNam = "samplesheet.csv"){
 
 # FUN: Copies .idat files to your directory and saves samplesheet.csv
 get.rd.info <- function(rd_numbers=NULL, token=NULL, sh_name=NULL){
-    if (is.null(rd_numbers)){message("Input RD-numbers using get.rd.info(rd_numbers)")}
+    if (is.null(rd_numbers)){message("No RD-numbers found, Input RD-numbers using get.rd.info(rd_numbers)")
+			    return(NULL)
+			    }
+	print(rd_numbers)
     if (is.null(sh_name)) {sh_name = "samplesheet.csv"}
     result <- gb$search.redcap(rd_numbers, token)
     samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[, "barcode_and_row_column"], "_", 2))
