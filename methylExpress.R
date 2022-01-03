@@ -10,7 +10,9 @@ if(!require("devtools")){install.packages("devtools")}
 
 # Main Parameters trailing commandline
 token<-args[1]; runID<-args[2]; selectRDs<-args[3]
-baseFolder <- NULL #args[4]
+baseFolder <- args[4] #NULL
+
+message("basefolder is: ", baseFolder)
 
 # Check Parameters Input
 if(length(selectRDs)==0){selectRDs=NULL}else {
