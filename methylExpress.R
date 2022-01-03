@@ -12,8 +12,6 @@ if(!require("devtools")){install.packages("devtools")}
 token<-args[1]; runID<-args[2]; selectRDs<-args[3]
 baseFolder <- args[4] #NULL
 
-message("basefolder is: ", baseFolder)
-
 # Check Parameters Input
 if(length(selectRDs)==0){selectRDs=NULL}else {
     if(is.na(selectRDs)){selectRDs=NULL}
@@ -26,8 +24,15 @@ if(length(baseFolder)==0){
 }
 
 # Check Input Params
-cat("\n~~~~~~Parameters input:",token, runID, selectRDs, baseFolder, sep='\n')
-message("~~~~~~~~~~~~~~~~~~~~~"); stopifnot(!is.null(token)); stopifnot(!is.null(runID))
+cat("\n~~~~~~Parameters input:")
+message("token: ", token)
+message("runID: ", runID)
+message("selectRDs: ", selectRDs)
+message("baseFolder: ", baseFolder)
+message("~~~~~~~~~~~~~~~~~~~~~")
+
+# Cancel if no token or runID
+stopifnot(!is.null(token)); stopifnot(!is.null(runID))
 
 if(!is.na(baseFolder) & !is.null(baseFolder)){
     message("Trying custom run directory from input:","\n", baseFolder,"\n")
@@ -35,7 +40,7 @@ if(!is.na(baseFolder) & !is.null(baseFolder)){
     message("Checking if directory exists: ", isValid)
     if(isValid==F){
         message("Directory does not exist, trying to create path:\n", baseFolder,"\n")
-        
+
         tryCatch(
             expr={dir.create(baseFolder)},
             warning=function(er){
