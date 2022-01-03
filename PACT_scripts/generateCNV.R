@@ -7,6 +7,7 @@ writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
     message(crayon::bgCyan("~~~Writing from redcap samplesheet.csv using dataframe:"))
 
     df<- df[!is.na(df[, "barcode_and_row_column"]),]
+    df<- df[!is.null(df[, "barcode_and_row_column"]),]
 	    print(df)
     samplesheet_csv = data.frame(
         Sample_Name = df[, "record_id"],
