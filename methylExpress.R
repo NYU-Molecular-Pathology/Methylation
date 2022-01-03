@@ -17,7 +17,7 @@ if(length(selectRDs)==0){selectRDs=NULL}else {
     if(is.na(selectRDs)){selectRDs=NULL}
 }
 
-if(!exists(baseFolder)){
+if(length(baseFolder)==0){
     baseFolder=NULL
 }else {
     if(is.na(baseFolder)){baseFolder=NULL}
