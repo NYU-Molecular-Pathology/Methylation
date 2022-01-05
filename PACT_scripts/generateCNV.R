@@ -83,13 +83,20 @@ grabSexEst <- function(bs, detP){
     return(sex)
 }
 
-getCnWebshot <- function(xx, fn){
+getCnWebshot <- function(xx, fn, asPNG=T){
     tempPathFi <- file.path("~","Desktop","temp.html")
     thePlot<-supM(mnp.v11b6::MNPcnvggplotly(xx, getTables = F))
     p<-supM(plotly::ggplotly(thePlot))
     supM(htmlwidgets::saveWidget(widget=plotly::as_widget(p), file=tempPathFi))
+	if(asPNG==F){
+		newFi = paste0(substr(fn,1,nchar(fn)-3),"html")
+		supM(htmlwidgets::saveWidget(widget=plotly::as_widget(p), file=newFi))
+		     
+	message("\nSaving html cnv ",newFi,"\n")		  
+			  }else{
     message("\nSaving WebShot from temp.html...\n")
     webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", delay = 2.5, vwidth = 2340, vheight = 1344)
+		}
     try(file.remove(tempPathFi),silent=T)
 }
 
@@ -105,7 +112,7 @@ calculateCnv <- function(RGsetEpic, sampleName) {
 }
 
 # gets the mset and converts mnp cnv analysis obj to png
-gen.cnv.png2 <- function(RGsetEpic, sampleName) {
+gen.cnv.png2 <- function(RGsetEpic, sampleName, asPNG=T) {
     imgName <- paste(sampleName, "cnv.png", sep = "_")
     fn = file.path("~", "Desktop", imgName)
     if (file.exists(fn)) {
@@ -114,7 +121,7 @@ gen.cnv.png2 <- function(RGsetEpic, sampleName) {
         cnvMsg <- paste("Generating", sampleName, "cnv plot...")
         message("\n", crayon::bgYellow(cnvMsg), "\n")
         xx <- calculateCnv(RGsetEpic, sampleName)
-        getCnWebshot(xx, fn)
+        getCnWebshot(xx, fn,asPNG)
     }
 }
 
@@ -143,7 +150,7 @@ copyOutputPng <- function(){
     # while (!is.null(dev.list()))  dev.off()
 }
 
-save.png.files <- function(rds, token){
+save.png.files <- function(rds, token,asPNG=T){
     get.rd.info(rd_numbers=rds, token=token,sh_name=NULL) # input your RD-numbers here rd_numbers = c("RD-21-21")
     mySentrix <- gb$search.redcap(rd_numbers = rds, token)
     mySentrix <- mySentrix[!is.na(mySentrix$barcode_and_row_column),]
@@ -153,7 +160,7 @@ save.png.files <- function(rds, token){
 	    message("\nGetting RGset for ",sentrix,"\n")
         RGsetEpic <- grabRGset(getwd(),sentrix)
         tryCatch(
-            expr= {gen.cnv.png2(RGsetEpic, sampleName=mySentrix[sam,1])},
+            expr= {gen.cnv.png2(RGsetEpic, sampleName=mySentrix[sam,1],asPNG)},
             error= function(e){
                 erTxt <- paste0("An error occured with ", mySentrix[sam,1]," png creation:")
                 message(crayon::bgRed(erTxt),"\n",e)
