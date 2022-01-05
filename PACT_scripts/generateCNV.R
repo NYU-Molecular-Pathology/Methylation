@@ -1,6 +1,6 @@
 gb <- globalenv(); assign("gb", gb)
 supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
-
+require("mnp.v11b6")
 #  Copy idats and Worksheets creation
 writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
     if (is.null(bn)) {bn = file.path(getwd(), df$barcode_and_row_column)}
