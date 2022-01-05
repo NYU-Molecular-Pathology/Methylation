@@ -1,6 +1,7 @@
 gb <- globalenv(); assign("gb", gb)
 supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
-require("mnp.v11b6")
+instLin <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/LoadInstall_new.R"
+if(!require("mnp.v11b6")){devtools::source_url(instLin)}
 require("minfi")
 require("sest")
 #  Copy idats and Worksheets creation
