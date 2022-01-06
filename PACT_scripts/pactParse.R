@@ -86,13 +86,16 @@ getPhilipsGender <- function(mainSheet,inputFi, sh2){
     philipVals <- as.data.frame(readxl::read_excel(inputFi,sheet = sh2,skip = 3,col_types = "text"))
     cnvSheet$Gender <- philipVals$Gender[match(cnvSheet$Test_Number, philipVals$`Test Number`)]
     cnvPath <- "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
-    write.table(cnvSheet,quote=F, sep='\t', file=file.path(cnvPath,paste0(runId,".tsv")),row.names=F)
-    
+    cnvPath <- file.path(cnvPath,paste0(runId,".tsv"))
+    message("Writing table to: ", cnvPath)
+    write.table(cnvSheet,quote=F, sep='\t', file=cnvPath,row.names=F)
 }
 
 # Parses xlsx file and writes as csv file -----
 parseExcelFile <- function(inputFi){
     shNames <- readxl::excel_sheets(inputFi)
+    message("Sheet names:")
+    print(as.data.frame(shNames))
     sh <- which(grepl("SampleSheet", shNames, ignore.case = T))[1]
     sh2 <- which(grepl("Philips", shNames, ignore.case = T))[1]
     sheetHead <- as.data.frame(readxl::read_excel(inputFi,sheet = shNames[sh], na="", range="A1:B17", col_types = "text", col_names=F))
