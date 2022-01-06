@@ -1,11 +1,10 @@
 #!/usr/bin/env Rscript
-args <- commandArgs(TRUE)
+#args <- commandArgs(TRUE)
 library("base"); gb <- globalenv(); assign("gb", gb)
 dsh="\n================"
 dsh2="================\n"
 
 # Main arguments input in comandline
-#token<-args[1]; inputSheet<-args[2]
 token<-args[1]; inputSheet<-args[2]
 
 # Displays the Input args -----
@@ -184,9 +183,9 @@ modifyOutput <- function(output,vals2find){
             if (length(theMatch) > 0) {
                 theVal <- vals2find$`Test Number`[theMatch]
             }
-            }
-        output$Test_Number[i] <- theVal
         }
+        output$Test_Number[i] <- theVal
+    }
     output <- addOutputLinks(output)
     return(output)
 }
@@ -258,10 +257,13 @@ sourceFuns2 <- function(workingPath = NULL) {
 startCNVmaker <- function(output, token) {
     rds <- output$record_id[output$report_complete == "YES"]
     if (length(rds) > 0) {
+         message("\nRD-numbers with idats:\n")
+             print(rds)
         assign("rds", rds)
         message(dsh, crayon::bgMagenta("Starting CNV PNG Creation"),dsh2)
         sourceFuns2()
         ApiToken = gb$token
+        assign("ApiToken", ApiToken)
         tryCatch(
             expr = {gb$save.png.files(gb$rds, token)},
             error = function(e) {
@@ -269,7 +271,7 @@ startCNVmaker <- function(output, token) {
                 message("\n\nTry checking the troubleshooting section on GitHub:\n")
                 message("https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/PACT_scripts/README.md\n")
             },
-                 finally={gb$copyOutputPng()}
+            finally={gb$copyOutputPng()}
         )
     } else{message(crayon::bgGreen("This PACT run has no cases with methylation complete.  No CNV png images to generate."))}
 }
