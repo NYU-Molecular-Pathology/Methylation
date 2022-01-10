@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-#args <- commandArgs(TRUE)
+args <- commandArgs(TRUE)
 library("base"); gb <- globalenv(); assign("gb", gb)
 dsh="\n================"
 dsh2="================\n"
