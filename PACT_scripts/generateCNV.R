@@ -36,8 +36,8 @@ search.redcap <- function(rd_numbers, ApiToken=NULL) {
     if(is.null(ApiToken)){message("You must provide an ApiToken!")}
     rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", ApiToken)
     flds = c("record_id","b_number","primary_tech","second_tech","run_number","barcode_and_row_column","accession_number","arrived")
-    result <- redcapAPI::exportRecords(rcon,records = rd_numbers,fields = flds,dag = F,factors = F,
-                                       labels = F,dates = F, form_complete_auto = F,format = 'csv')
+    result <- redcapAPI::exportRecords(
+	    rcon, records = rd_numbers, fields = flds, dag = F, factors = F, labels = F, dates = F, form_complete_auto = F, format = 'csv')
     result <- as.data.frame(result)
     return(result)
 }
@@ -85,21 +85,32 @@ grabSexEst <- function(bs, detP){
     return(sex)
 }
 
-getCnWebshot <- function(xx, fn, asPNG=T){
-    tempPathFi <- file.path("~","Desktop","temp.html")
-    thePlot<-supM(mnp.v11b6::MNPcnvggplotly(xx, getTables = F))
-    p<-supM(plotly::ggplotly(thePlot))
-    supM(htmlwidgets::saveWidget(widget=plotly::as_widget(p), file=tempPathFi))
-	if(asPNG==F){
-		newFi = paste0(substr(fn,1,nchar(fn)-3),"html")
-		supM(htmlwidgets::saveWidget(widget=plotly::as_widget(p), file=newFi))
-		     
-	message("\nSaving html cnv ",newFi,"\n")		  
-			  }else{
+
+getHtmlCN <- function(fn){
+    newFi = paste0(substr(fn, 1, nchar(fn) - 3), "html")
+    supM(htmlwidgets::saveWidget(plotly::as_widget(p), newFi))
+    message("\nSaving html cnv ", newFi, "\n")
+}
+
+getPngFile <- function(fn, tempPathFi){
     message("\nSaving WebShot from temp.html...\n")
-    webshot2::webshot(url=tempPathFi, file = fn, cliprect = "viewport", delay = 2.5, vwidth = 2340, vheight = 1344)
-		}
-    try(file.remove(tempPathFi),silent=T)
+    webshot2::webshot(
+        url = tempPathFi,
+        file = fn,
+        cliprect = "viewport",
+        delay = 2.5,
+        vwidth = 1560,
+        vheight = 896
+    )
+}
+
+getCnWebshot <- function(xx, fn, asPNG=T) {
+    tempPathFi <- file.path("~", "Desktop", "temp.html")
+    thePlot <- supM(mnp.v11b6::MNPcnvggplotly(xx, getTables = F))
+    p <- supM(plotly::ggplotly(thePlot))
+    supM(htmlwidgets::saveWidget(plotly::as_widget(p), tempPathFi))
+    if (asPNG == F) {getHtmlCN(fn)} else{getPngFile(fn, tempPathFi)}
+    try(file.remove(tempPathFi), silent = T)
 }
 
 calculateCnv <- function(RGsetEpic, sampleName) {
