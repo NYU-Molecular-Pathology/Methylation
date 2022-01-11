@@ -169,10 +169,11 @@ copyOutputPng <-
         # while (!is.null(dev.list()))  dev.off()
 }
 
-save.png.files <- function(rds, token,asPNG=T){
+save.png.files <- function(rds, token, asPNG=T){
     get.rd.info(rd_numbers=rds, token=token,sh_name=NULL) # input your RD-numbers here rd_numbers = c("RD-21-21")
     myDt <- gb$search.redcap(rd_numbers = rds, token)
     mySentrix <- myDt[myDt[,2] %like% "_R0", ]
+    if(nrow(mySentrix)>0){
     for (sam in rownames(mySentrix)) {
         sampleName<-mySentrix[sam,1]
         fn = file.path("~", "Desktop", paste0(sampleName, "_cnv.png"))
@@ -182,16 +183,18 @@ save.png.files <- function(rds, token,asPNG=T){
             sentrix <- mySentrix[sam,2]
             message("\nGetting RGset for ",sentrix,"\n")
             RGsetEpic <- grabRGset(getwd(),sentrix)
-        tryCatch(
-            expr= {gen.cnv.png2(RGsetEpic,sampleName ,asPNG)},
-            error= function(e){
-                erTxt <- paste0("An error occured with ", mySentrix[sam,1]," png creation:")
-                message(crayon::bgRed(erTxt),"\n",e)
-                message(crayon::bgGreen("Trying next sample"))
-            }
-        )
+            tryCatch(
+                expr= {gen.cnv.png2(RGsetEpic, sampleName, asPNG)},
+                error= function(e){
+                    erTxt <- paste0("An error occured with ", mySentrix[sam,1]," png creation:")
+                    message(crayon::bgRed(erTxt),"\n",e)
+                    message(crayon::bgGreen("Trying next sample"))
+                }
+            )
         }
-    }
+    }}else{
+        message("The RD-number(s) provided do not have idat files listed in REDCap:/n")
+        print(rds)
+        }
     while (!is.null(dev.list()))  dev.off()
 }
-
