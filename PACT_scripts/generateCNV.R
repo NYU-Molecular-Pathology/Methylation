@@ -4,8 +4,10 @@ instLin <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylatio
 if(!require("mnp.v11b6")){devtools::source_url(instLin)}
 require("minfi")
 require("sest")
+library(data.table)
 library(dplyr)
 library(tibble)
+
 #  Copy idats and Worksheets creation
 writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
     if (is.null(bn)) {bn = file.path(getwd(), df$barcode_and_row_column)}
@@ -65,9 +67,10 @@ get.idats2<-function(csvNam = "samplesheet.csv"){
 
 # FUN: Copies .idat files to your directory and saves samplesheet.csv
 get.rd.info <- function(rd_numbers=NULL, token=NULL, sh_name=NULL){
-    if (is.null(rd_numbers)){message("No RD-numbers found, Input RD-numbers using get.rd.info(rd_numbers)")
-			    return(NULL)
-			    }
+    if (is.null(rd_numbers)){
+	    message("No RD-numbers found, Input RD-numbers using get.rd.info(rd_numbers)")
+	    return(NULL)
+    }
 	print(rd_numbers)
     if (is.null(sh_name)) {sh_name = "samplesheet.csv"}
     result <- gb$search.redcap(rd_numbers, token)
@@ -148,40 +151,47 @@ grabRGset <- function(runPath, sentrix){
     return(RGsetEpic)
 }
 
-copyOutputPng <- function(){
-    outFolder <- "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
-    unlink("~/Desktop/temp.html")
-    the.cnvs <- dir(path="~/Desktop", pattern= "_cnv.png", full.names=T) %>% file.info() %>% 
-        rownames_to_column() %>% filter(as.Date(ctime) == Sys.Date()) %>% pull(rowname)
-    savePath <- file.path(outFolder, basename(the.cnvs))
-    message("Copying png files to Molecular folder: ",outFolder,"\n")
-    cat(the.cnvs, sep = "\n")
-    try(fs::file_copy(path=the.cnvs,new_path=savePath), silent = T)
-    if(any(!file.exists(savePath))){
-        message("The following failed to copy from the desktop:\n")
-        print(basename(savePath[!file.exists(savePath)]))
-    }
-    # while (!is.null(dev.list()))  dev.off()
+copyOutputPng <-
+    function(outFolder = "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG") {
+        try(unlink("~/Desktop/temp.html"), silent = T)
+        the.cnvs <- dir("~/Desktop", "_cnv.png", full.names = T) %>% file.info() %>%
+            rownames_to_column() %>% filter(as.Date(ctime) == Sys.Date()) %>% pull(rowname)
+        if (length(the.cnvs) > 0) {
+            savePath <- file.path(outFolder, basename(the.cnvs))
+            message("Copying png files to Molecular folder: ", outFolder, "\n")
+            cat(the.cnvs, sep = "\n")
+            try(fs::file_copy(path = the.cnvs, new_path = savePath), T)
+            if (any(!file.exists(savePath))) {
+                message("The following failed to copy from the desktop:\n")
+                print(basename(savePath[!file.exists(savePath)]))
+            }
+        } else{message("No CNV files found on Desktop to copy")}
+        # while (!is.null(dev.list()))  dev.off()
 }
 
 save.png.files <- function(rds, token,asPNG=T){
     get.rd.info(rd_numbers=rds, token=token,sh_name=NULL) # input your RD-numbers here rd_numbers = c("RD-21-21")
-    mySentrix <- gb$search.redcap(rd_numbers = rds, token)
-    mySentrix <- mySentrix[!is.na(mySentrix$barcode_and_row_column),]
-    mySentrix <- mySentrix[!is.null(mySentrix$barcode_and_row_column),]
+    myDt <- gb$search.redcap(rd_numbers = rds, token)
+    mySentrix <- myDt[myDt[,2] %like% "_R0", ]
     for (sam in rownames(mySentrix)) {
-        sentrix <- mySentrix[sam,2]
-	    message("\nGetting RGset for ",sentrix,"\n")
-        RGsetEpic <- grabRGset(getwd(),sentrix)
+        sampleName<-mySentrix[sam,1]
+        fn = file.path("~", "Desktop", paste0(sampleName, "_cnv.png"))
+        if (file.exists(fn)) {
+            message("\nFile already exists, skipping:", fn, "\n")
+        } else{
+            sentrix <- mySentrix[sam,2]
+            message("\nGetting RGset for ",sentrix,"\n")
+            RGsetEpic <- grabRGset(getwd(),sentrix)
         tryCatch(
-            expr= {gen.cnv.png2(RGsetEpic, sampleName=mySentrix[sam,1],asPNG)},
+            expr= {gen.cnv.png2(RGsetEpic,sampleName ,asPNG)},
             error= function(e){
                 erTxt <- paste0("An error occured with ", mySentrix[sam,1]," png creation:")
                 message(crayon::bgRed(erTxt),"\n",e)
                 message(crayon::bgGreen("Trying next sample"))
             }
         )
+        }
     }
-	while (!is.null(dev.list()))  dev.off()
+    while (!is.null(dev.list()))  dev.off()
 }
 
