@@ -4,6 +4,8 @@ instLin <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylatio
 if(!require("mnp.v11b6")){devtools::source_url(instLin)}
 require("minfi")
 require("sest")
+library(dplyr)
+library(tibble)
 #  Copy idats and Worksheets creation
 writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
     if (is.null(bn)) {bn = file.path(getwd(), df$barcode_and_row_column)}
@@ -136,13 +138,14 @@ grabRGset <- function(runPath, sentrix){
 }
 
 copyOutputPng <- function(){
-    unlink("~/Desktop/temp.html")
-    the.cnvs <- dir(path="~/Desktop",pattern="_cnv.png", full.names=T)
     outFolder <- "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
+    unlink("~/Desktop/temp.html")
+    the.cnvs <- dir(path="~/Desktop", pattern= "_cnv.png", full.names=T) %>% file.info() %>% 
+        rownames_to_column() %>% filter(as.Date(ctime) == Sys.Date()) %>% pull(rowname)
     savePath <- file.path(outFolder, basename(the.cnvs))
-    message("Copying png files to Molecular folder:\n")
-    message(outFolder)
-    try(fs::file_copy(path=the.cnvs,new_path=savePath),silent = T)
+    message("Copying png files to Molecular folder: ",outFolder,"\n")
+    cat(the.cnvs, sep = "\n")
+    try(fs::file_copy(path=the.cnvs,new_path=savePath), silent = T)
     if(any(!file.exists(savePath))){
         message("The following failed to copy from the desktop:\n")
         print(basename(savePath[!file.exists(savePath)]))
