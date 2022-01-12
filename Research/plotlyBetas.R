@@ -51,7 +51,8 @@ makePlotly <- function(fig) {
         for (grpLabNam in 1:length(otherPlot[["x"]][["data"]])) {
             currLabNam <- otherPlot[["x"]][["data"]][[grpLabNam]]$name
             if (str_contains(currLabNam, grpNam)) {
-                hoverinfo <- paste0("Sample: ", samLabs[currGrp] , "</br></br>")
+                 hoverinfo <- paste0("Sample: ", samLabs[currGrp], 
+                                  " (", grpNam, ")", "</br></br>")
                 otherPlot[["x"]][["data"]][[grpLabNam]][["text"]] <- hoverinfo
             }
         }
