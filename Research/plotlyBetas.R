@@ -12,39 +12,57 @@ grabPngNames <- function(tsne_titles=NULL, keywrd="Top"){
   return(outDirs)
 }
 
-makePlotly <- function(fig){
-  otherPlot <- supM(plotly::ggplotly(fig, dynamicTicks = T, height = 800,width = 1200))
-  otherPlot$x[["layout"]][["annotations"]] <- NULL
-  opLayout <-otherPlot[["x"]][["layout"]]
-  opLayout[["font"]][["size"]] <- 12
-  opLayout[["title"]][["font"]][["size"]] <- 24
-  opLayout[["xaxis"]][["title"]][["font"]][["size"]]<- 16
-  opLayout[["yaxis"]][["title"]][["font"]][["size"]]<- 16
-  opLayout[["xaxis"]][["tickfont"]][["size"]]<- 16
-  opLayout[["yaxis"]][["tickfont"]][["size"]]<- 16
-  otherPlot[["x"]][["layout"]] <- opLayout
-  hoverinfo <-paste0("Sample: ",fig[["data"]][["samples"]],"</br></br>")
-  opInfo <- otherPlot[["x"]][["data"]]
-
-  for (sam in 1:length(opInfo)) {
-    opInfo[[sam]][["hoverinfo"]] <- "none"
-    opInfo[[sam]][["marker"]][["symbol"]] <- 'circle'
-    opInfo[[sam]][["marker"]][["size"]] <- 10
-    opInfo[[sam]][["hoverinfo"]] <- c("text") #"text", 
-  }
-  
-  otherPlot[["x"]][["data"]] <- opInfo
-  uniGrp <- unique(fig[["data"]]$GROUPS)
-  
-  for (grpT in 1:length(uniGrp)) {
-    currGrp <- fig[["data"]]$GROUPS==uniGrp[grpT]
-    samLabs <- fig[["data"]]$samples
-    hoverinfo <-paste0("Sample: ", samLabs[currGrp] ,"</br></br>")
-    otherPlot[["x"]][["data"]][[grpT]][["text"]] <- hoverinfo
-  }
-  otherPlot<- otherPlot %>% plotly::layout(legend = list(title = list(text = "<b>Legend</b><br>", font = list(size = 24)), font = list(size = 14)))
-
-  return(otherPlot)
+makePlotly <- function(fig) {
+    otherPlot <-
+        supM(plotly::ggplotly(
+            fig,
+            dynamicTicks = T,
+            height = 800,
+            width = 1200
+        ))
+    otherPlot$x[["layout"]][["annotations"]] <- NULL
+    opLayout <- otherPlot[["x"]][["layout"]]
+    opLayout[["font"]][["size"]] <- 12
+    opLayout[["title"]][["font"]][["size"]] <- 24
+    opLayout[["xaxis"]][["title"]][["font"]][["size"]] <- 16
+    opLayout[["yaxis"]][["title"]][["font"]][["size"]] <- 16
+    opLayout[["xaxis"]][["tickfont"]][["size"]] <- 16
+    opLayout[["yaxis"]][["tickfont"]][["size"]] <- 16
+    otherPlot[["x"]][["layout"]] <- opLayout
+    hoverinfo <-
+        paste0("Sample: ", fig[["data"]][["samples"]], "</br></br>")
+    opInfo <- otherPlot[["x"]][["data"]]
+    
+    for (sam in 1:length(opInfo)) {
+        opInfo[[sam]][["hoverinfo"]] <- "none"
+        opInfo[[sam]][["marker"]][["symbol"]] <- 'circle'
+        opInfo[[sam]][["marker"]][["size"]] <- 10
+        opInfo[[sam]][["hoverinfo"]] <- c("text") #"text",
+    }
+    
+    otherPlot[["x"]][["data"]] <- opInfo
+    uniGrp <- unique(fig[["data"]]$GROUPS)
+    
+    for (grpT in 1:length(uniGrp)) {
+        grpNam <- uniGrp[grpT]
+        currGrp <- fig[["data"]]$GROUPS == grpNam
+        samLabs <- fig[["data"]]$samples
+        
+        for (grpLabNam in 1:length(otherPlot[["x"]][["data"]])) {
+            currLabNam <- otherPlot[["x"]][["data"]][[grpLabNam]]$name
+            if (str_contains(currLabNam, grpNam)) {
+                hoverinfo <- paste0("Sample: ", samLabs[currGrp] , "</br></br>")
+                otherPlot[["x"]][["data"]][[grpLabNam]][["text"]] <- hoverinfo
+            }
+        }
+    }
+    otherPlot <-
+        otherPlot %>% plotly::layout(legend = list(
+            title = list(text = "<b>Legend</b><br>", font = list(size = 24)),
+            font = list(size = 14)
+        ))
+    
+    return(otherPlot)
 }
 
 selectPlots <- function(doPlotly=F,tplots,ty,tps,outDirs){
