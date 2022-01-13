@@ -37,6 +37,7 @@ generateTvals <- function(betas) {
                     perplexity = opPer,
                     initial_dims = optPC,
                     verbose = F,
+                    partial_pca=T,
                     max_iter = 10000
                 )
             message(
@@ -59,6 +60,7 @@ generateTvals <- function(betas) {
                     perplexity = opPer-1,
                     initial_dims = optPC,
                     verbose = F,
+                    partial_pca=T,
                     max_iter = 10000
                 )
             message(
@@ -74,7 +76,8 @@ generateTvals <- function(betas) {
     )
 }
 
-genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL, symbolsLabel=NULL, colorLabel=NULL,names2Label=NULL){
+genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL, symbolsLabel=NULL, colorLabel=NULL,
+                        names2Label=NULL){
     col_vect <- pals::glasbey()
     colours <- col_vect[1:(length(unique(tsne_plot$GROUPS)))]
     colours[6] = "#eb7d34" #changing dark forest to orange color
@@ -92,16 +95,29 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL, symbolsLabel
     groupTsne <- ggplot(tsne_plot,aes(x=tsne_plot$x,y=tsne_plot$y,group=tsne_plot$GROUPS)) +
         geom_point(aes(x,y,color=tsne_plot$GROUPS, shape= symShape), size=4,alpha=0.85)
     if(symFlags==T){
-        groupTsne <- groupTsne + scale_shape_manual(name="Sample Type",values=sv,labels=shapeLabels)
+        groupTsne <- groupTsne + 
+            scale_shape_manual(name="Sample Type",values=sv,labels=shapeLabels)
     }
     groupTsne <- groupTsne +
-        scale_color_manual(values=colours) +
-        labs(color=colorLabel,size=4) + theme_bw(base_size=24) +
-        theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
-              panel.background=element_blank(),text=et) +
-        ggtitle(label=titleLabel) +
-        theme(plot.title=et,legend.text=et,text=et,legend.position="right",axis.text.y=et,axis.text.x=et) +
-        labs(x="TSNE 1",y="TSNE 2")
+        scale_color_manual(values=colours, name= "Sample Label") +
+        labs(color = colorLabel, size = 4) + theme_bw(base_size = 24) +
+        theme(
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            panel.background = element_blank(),
+            text = et
+        ) +
+        ggtitle(label = titleLabel) +
+        theme(
+            plot.title = et,
+            legend.text = et,
+            text = et,
+            legend.position = "right",
+            axis.text.y = et,
+            axis.text.x = et
+        ) +
+        guides(fill = guide_legend(title = "Sample Legend")) +
+        labs(x = "TSNE 1", y = "TSNE 2")
     # Below only runs to label sample IDs if label group is provided
     if (!is.null(groupToLabel)) {
         groupTsne <- groupTsne + ggrepel::geom_label_repel(
@@ -126,6 +142,7 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL, symbolsLabel
     }
     return(groupTsne)
 }
+
 
  getTsneVal <- function(TSNE, saNames, samGrp, colorGrp, symGrp) {
         tsne_plot <- data.frame(
