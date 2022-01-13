@@ -29,8 +29,7 @@ makePlotly <- function(fig) {
     opLayout[["xaxis"]][["tickfont"]][["size"]] <- 16
     opLayout[["yaxis"]][["tickfont"]][["size"]] <- 16
     otherPlot[["x"]][["layout"]] <- opLayout
-    hoverinfo <-
-        paste0("Sample: ", fig[["data"]][["samples"]], "</br></br>")
+    hoverinfo <- paste0("Sample: ", fig[["data"]][["samples"]], "</br></br>")
     opInfo <- otherPlot[["x"]][["data"]]
     
     for (sam in 1:length(opInfo)) {
@@ -49,11 +48,13 @@ makePlotly <- function(fig) {
         samLabs <- fig[["data"]]$samples
         
         for (grpLabNam in 1:length(otherPlot[["x"]][["data"]])) {
-            currLabNam <- otherPlot[["x"]][["data"]][[grpLabNam]]$name
-            if (str_contains(currLabNam, grpNam)) {
-                 hoverinfo <- paste0("Sample: ", samLabs[currGrp], 
-                                  " (", grpNam, ")", "</br></br>")
-                otherPlot[["x"]][["data"]][[grpLabNam]][["text"]] <- hoverinfo
+             currLabNam <- otherPlot[["x"]][["data"]][[grpLabNam]]$name
+            currLabNam <- stringr::str_split_fixed(currLabNam,",",2)[,2]
+            currLabNam <- stringr::str_remove_all(currLabNam, ")")
+            message(currLabNam, " and ", grpNam)
+            if (currLabNam == grpNam) {
+              hoverinfo <- paste0("Sample: ", samLabs[currGrp], " (", grpNam, ")", "</br></br>")
+              otherPlot[["x"]][["data"]][[grpLabNam]][["text"]] <- hoverinfo
             }
         }
     }
