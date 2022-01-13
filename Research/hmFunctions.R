@@ -13,13 +13,13 @@ getHeatAnno <- function(colorValues,anno_df){
                 lineheight = 2,
                 fontface = "bold"
             ),
-            labels_gp = gpar(fontsize = 14, lineheight = 2),
+            labels_gp = gpar(fontsize = 12, lineheight = 2),
             grid_height = unit(0.8, "cm"),
             grid_width = unit(0.8, "cm"),
             gt_render = list(padding = unit(c(2, 2, 2, 2), "cm"))
         ),
         annotation_name_gp = gpar(
-            fontsize = 14,
+            fontsize = 12,
             fontface = "bold",
             lineheight = 2,
             gt_render = list(padding = unit(c(2, 2, 2, 2), "cm"))
