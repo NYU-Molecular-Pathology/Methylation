@@ -31,29 +31,29 @@ makePlotly <- function(fig) {
     otherPlot[["x"]][["layout"]] <- opLayout
     hoverinfo <- paste0("Sample: ", fig[["data"]][["samples"]], "</br></br>")
     opInfo <- otherPlot[["x"]][["data"]]
-    
+
     for (sam in 1:length(opInfo)) {
         opInfo[[sam]][["hoverinfo"]] <- "none"
         opInfo[[sam]][["marker"]][["symbol"]] <- 'circle'
         opInfo[[sam]][["marker"]][["size"]] <- 10
         opInfo[[sam]][["hoverinfo"]] <- c("text") #"text",
     }
-    
+
     otherPlot[["x"]][["data"]] <- opInfo
     uniGrp <- unique(fig[["data"]]$GROUPS)
-    
+
     for (grpT in 1:length(uniGrp)) {
         grpNam <- uniGrp[grpT]
         currGrp <- fig[["data"]]$GROUPS == grpNam
         samLabs <- fig[["data"]]$samples
-        
+
         for (grpLabNam in 1:length(otherPlot[["x"]][["data"]])) {
-             currLabNam <- otherPlot[["x"]][["data"]][[grpLabNam]]$name
+            currLabNam <- otherPlot[["x"]][["data"]][[grpLabNam]]$name
             currLabNam <- stringr::str_split_fixed(currLabNam,",",2)[,2]
-            currLabNam <- stringr::str_remove_all(currLabNam, ")")
+            currLabNam <- stringr::str_remove_all(currLabNam, "[()]")
             message(currLabNam, " and ", grpNam)
             if (currLabNam == grpNam) {
-              hoverinfo <- paste0("Sample: ", samLabs[currGrp], " (", grpNam, ")", "</br></br>")
+              hoverinfo <- paste0("Sample: ", samLabs[currGrp] , " (", grpNam, ")", "</br></br>")
               otherPlot[["x"]][["data"]][[grpLabNam]][["text"]] <- hoverinfo
             }
         }
@@ -63,7 +63,7 @@ makePlotly <- function(fig) {
             title = list(text = "<b>Legend</b><br>", font = list(size = 24)),
             font = list(size = 14)
         ))
-    
+
     return(otherPlot)
 }
 
