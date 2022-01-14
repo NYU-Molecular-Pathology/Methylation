@@ -29,3 +29,16 @@ makeDt <- function(targets) {
   return(theDt)
 }
 
+smallTab <- function(dtObj) {
+  dtTable <- knitr::kable(dtObj, row.names = F, "html")
+  dtTable <-
+    kableExtra::kable_styling(
+      dtTable,
+      bootstrap_options = c("striped", "condensed"),
+      full_width = F,
+      position = "left"
+    )
+  dtTable <-
+    kableExtra::column_spec(dtTable, 1:ncol(dtObj), width = "4cm")
+  return(dtTable)
+}
