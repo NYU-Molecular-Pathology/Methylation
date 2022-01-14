@@ -1,3 +1,4 @@
+gb <- globalenv(); assign("gb", gb)
 require("ggplot2")
 printPlotTab <- function(thePlot, theTabName){
   cat(theTabName)
@@ -12,7 +13,7 @@ grabPngNames <- function(tsne_titles=NULL, keywrd="Top"){
   return(outDirs)
 }
 
-makePlotly <- function(fig) {
+makePlotly<-function(fig) {
     otherPlot <-
         supM(plotly::ggplotly(
             fig,
@@ -81,19 +82,56 @@ selectPlots <- function(doPlotly=F,tplots,ty,tps,outDirs){
         xx <- paste('###', tps[ty, 1], outDirs[zz, 3], '\n\n')
         cat(xx)
         fig <- tplots[[zz]]
-        op <- makePlotly(fig)
-        
+        op <- gb$makePlotly(fig)
         supM(print(htmltools::tagList(ggplotly(op))))
         cat('\n\n')
       }
     }
 }
 
-grabAllBeta <- function(targets1, betas) {
+grabAllBeta <-function(targets1, betas) {
   betas1 <- betas[ ,targets1$SampleFilter] # filtering betas
   unBets <- gb$takeTopVariance(betas1, topVar = 1:10000)
   allBetas1 <-list(unBets[1:100,], unBets[1:1000,], unBets)
   return(allBetas1)
+}
+
+doMultiple <- function(allBetas1,tsne_titles, outDirs, targets1, tps,ty,custom){
+    plotN = NULL
+    tsneList <-lapply(X = 1:length(allBetas1), FUN=function(X){
+      return(suppressMessages(gb$generateTvals(allBetas1[[X]])))
+      })
+    plotList <- list(foreach::foreach(plotN = 1:length(tsneList))%do%{
+###################### TO CHANGE ########################      
+      tsne_plot <- gb$getTsneVal(
+        TSNE = tsneList[[plotN]],
+        saNames = targets1$SampleFilter,
+        samGrp = targets1$Type,
+        colorGrp = targets1$Type,
+        symGrp = targets1[,gb$col_samGroup]
+        ) #targets1[,col_samGroup]
+###################### TO CHANGE ########################
+      return(tsne_plot)
+      })[[1]]
+    return(plotList)
+}
+
+
+plotSaver <- function(outDirs,tsne_titles,tps,ty,plotList,custom) {
+  plotN=NULL
+  options("device.ask.default"=F)
+ pltList <- foreach::foreach(plotN = 1:length(plotList)) %do% {
+    pL<- plotList[[plotN]]
+###################### TO CHANGE ########################
+    return(gb$genTsnePlot(
+      tsne_plot=plotList[[plotN]],
+      titleLabel=tsne_titles[plotN],
+      symbolsLabel = pL$symbol,
+      colorLabel = pL$GROUPS,
+      names2Label = NULL))
+###################### TO CHANGE ########################
+ }
+ return(pltList)
 }
 
 subsetBetas <- function(targFilter,samGroup, betas, targets, samNames,tsne_titles, doPlotly=F) {
@@ -106,27 +144,37 @@ subsetBetas <- function(targFilter,samGroup, betas, targets, samNames,tsne_title
     custom = tps[ty, 1]
     message("Current: ", custom)
     targets1 <- targets[targFilter == custom,]
-    allBetas1 <- grabAllBeta(targets1,betas)
-    outDirs <- grabPngNames(tsne_titles)[1:3, ]
+    allBetas1 <- gb$grabAllBeta(targets1,betas)
+    outDirs <- gb$grabPngNames(tsne_titles)[1:3, ]
     plotList = NULL
     plotList <-  gb$doMultiple(allBetas1,tsne_titles, outDirs, targets1, tps,ty, custom)
     tplots <- NULL
-    
-    tplots <- plotSaver2(outDirs, tsne_titles, tps, ty, plotList, custom)
-    selectPlots(doPlotly,tplots,ty,tps,outDirs)
+    tplots <- plotSaver(outDirs, tsne_titles, tps, ty, plotList, custom)
+    gb$selectPlots(doPlotly,tplots,ty,tps,outDirs)
     }
 }
 
-tierBetas <- function(betas, batchCorrect = F, getSuper = F) {
-    selectSams <- RGSet@colData@listData[["SentrixID_Position"]][RGSet@colData@listData[["Sample_ID"]] %in%  colnames(betas)]
-    if (batchCorrect == T) {
-        unBetas <- gb$batchCorrectBs(betas, RGSet[,RGSet@colData@rownames==selectSams], topVar = 1:10000)
-        superbetas <- gb$batchCorrectBs(betas, RGSet[,RGSet@colData@rownames==selectSams], topVar = 1:10000, T)
-    } else{ unBetas <- gb$takeTopVariance(betas, topVar = 1:10000)}
-    if (getSuper == T) {
-        superbetas <- gb$getSupervise(betas, RGSet[,RGSet@colData@rownames==selectSams], topVar = 1:10000)
-        return(superbetas)
-    } else{return(unBetas)}
+takeTopVariance <- function(betas, topVar){
+    var_probes <- apply(betas, 1.0, var)
+    select_var <- names(sort(var_probes[topVar], decreasing = T))
+    top_var_beta <- betas[select_var, ]
+    return(top_var_beta)
 }
+
+tierBetas <- function(betas, col_sentrix, RGSet, batchCorrect = F, getSuper = F) {
+    selectSams <- RGSet@colData@listData[[col_sentrix]][RGSet@colData@listData[["Sample_ID"]] %in%  colnames(betas)]
+    if (batchCorrect == T) {
+      unBetas <- gb$batchCorrectBs(betas, RGSet[, RGSet@colData@rownames == selectSams], topVar = 1:10000)
+      superbetas <- gb$batchCorrectBs(betas, RGSet[, RGSet@colData@rownames == selectSams], topVar = 1:10000, T)
+    } else{
+      unBetas <- gb$takeTopVariance(betas, topVar = 1:10000)
+    }
+    if (getSuper == T) {
+      superbetas <- gb$getSupervise(betas, RGSet[, RGSet@colData@rownames == selectSams], topVar = 1:10000)
+      return(superbetas)
+    } else{
+      return(unBetas)
+    }
+  }
 
 assign("subsetBetas", subsetBetas)
