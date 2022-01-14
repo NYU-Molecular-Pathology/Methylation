@@ -137,10 +137,10 @@ grabGsetBeta <- function(gsetbeta, gset.funnorm) {
 }
 
 #colnames(gset.funnorm.beta) <- gset.funnorm$Sample_Group
-getDmpData <- function(ClusfiNam, gset.funnorm, gset.funnorm.beta){
+getDmpData <- function(ClusfiNam, gset.funnorm, condition){
 if(!file.exists(file.path(getwd(),ClusfiNam))){
   annot = minfi::getAnnotation(gset.funnorm)
-  condition <- minfi::pData(gset.funnorm)$Sample_Group
+  gset.funnorm.beta <- gb$grabGsetBeta(gBetaFile , gset.funnorm)
   dmp <- minfi::dmpFinder(gset.funnorm.beta, pheno = condition, type = "categorical")
   dmp <- cbind(dmp, ID = rownames(dmp))
   dmp_annot_combined <- cbind(annot[row.names(dmp), ], dmp)
@@ -157,3 +157,5 @@ if(!file.exists(file.path(getwd(),ClusfiNam))){
   colnames(gene_char_unique) <- 'Genes_By_Sample'
   return(gene_char_unique)
 }
+
+
