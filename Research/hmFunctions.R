@@ -9,7 +9,7 @@ getHeatAnno <- function(colorValues,anno_df){
         na_col = "white",
         annotation_legend_param = list(
             title_gp = gpar(
-                fontsize = 14,
+                fontsize = 13,
                 lineheight = 2,
                 fontface = "bold"
             ),
@@ -77,7 +77,7 @@ getHeatMap <- function(betaRanges, titleValue, ha, colSplt = NULL, rwsplt=NULL){
         cluster_columns = T,  ## Cluster the columns
         #cluster_rows = rowcluster,
         show_column_names = T,  ## Show the Column Names (which is sample #)
-        column_names_gp = gpar(fontsize = 16),  ## Column Name Size
+        column_names_gp = gpar(fontsize = 13),  ## Column Name Size
         show_row_names = F,  ## Show Row names (which is probes)
         row_names_side = "left",
         row_title_side = "left",
@@ -95,8 +95,8 @@ getHeatMap <- function(betaRanges, titleValue, ha, colSplt = NULL, rwsplt=NULL){
         heatmap_legend_param = list(
             title = "Beta Value",
             #legend_height = unit(5, "in"),
-            labels_gp = gpar( fontsize = 14),
-            title_gp = gpar(fontsize = 16, fontface = "bold"),
+            labels_gp = gpar( fontsize = 13),
+            title_gp = gpar(fontsize = 13, fontface = "bold"),
             legend_direction = "vertical",
             heatmap_legend_side = "right", annotation_legend_side = "right",
             legend_height =  unit(2.5, "in")
