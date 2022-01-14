@@ -158,4 +158,12 @@ if(!file.exists(file.path(getwd(),ClusfiNam))){
   return(gene_char_unique)
 }
 
+##Convert to entrz ids for kegg enrichment analysis##
+entrz2kegg <- function(gene_char_unique){
+  ids <- supM(clusterProfiler::bitr(gene_char_unique$Genes_By_Sample, fromType = "SYMBOL",toType = "ENTREZID",OrgDb = "org.Hs.eg.db"))
+  kk <- supM(clusterProfiler::enrichKEGG(gene = ids$ENTREZID, organism = 'hsa', pvalueCutoff = 0.05, universe=NULL))
+  enrichplot::dotplot(kk)
+  kk_final <- DOSE::setReadable(kk, OrgDb = org.Hs.eg.db::org.Hs.eg.db, keyType = "ENTREZID")
+  return(kk_final)
+}
 
