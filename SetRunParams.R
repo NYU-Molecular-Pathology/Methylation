@@ -13,9 +13,9 @@ checkQCpkg <- function(){
         "qdapTools","gplots","readxl","stringr","ggrepel","Polychrome",
         "tinytex","gridExtra","rmarkdown", "BiocParallel", "grid"
     )
-    suppressPackageStartupMessages(suppressMessages(easypackages::packages(methylQCpacks,prompt=F)))
+    suppressPackageStartupMessages(easypackages::packages(methylQCpacks,prompt=F))
     reqPkg <- list("ggplot2","pals","stringr","scales","grid")
-    invisible(lapply(reqPkg, FUN = function(X) {suppressPackageStartupMessages(suppressMessages(do.call("require", list(X))))}))
+    invisible(lapply(reqPkg, FUN = function(X) {suppressPackageStartupMessages(do.call("require", list(X)))}))
     message("Packages loading finished\n")
 }
 
