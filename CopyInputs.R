@@ -148,13 +148,43 @@ readSampleSheet <- function(runID=F, totalSam=F, wks=F) {
     if (wks == T) {return(worksheet)}
 }
 
+checkSampleSheet <- function(df){
+    ww1=crayon::bgRed("No tech name found: check df$Tech in samplesheet.csv assinging NA")
+    ww2=crayon::bgRed("No tech name found: check df$MP_number in samplesheet.csv assinging NA")
+    ww3=crayon::bgRed("Duplicated sample name found: check df$Sample_Name in samplesheet.csv assigning as None")
+    ww4=crayon::bgRed("Some Samples are missing RD-numbers Check df$Sample_Name in samplesheet.csv")
+    ww5=crayon::bgRed("Some Samples are missing B-numbers Check df$b_number in samplesheet.csv")
+    if (is.null(df$Tech)) {
+        warning(ww1)
+        df$Tech <- "NA"
+    }
+    if (is.null(df$MP_number)) {
+        warning(ww2)
+        df$MP_number <- "none"
+        print(df$MP_number)
+    }
+    if (is.null(df$b_number)) {
+        warning(ww5)
+        df$b_number <- "blank"
+        print(df$b_number)
+    }
+    if (any(duplicated(df$Sample_Name))) {
+        warning(ww3)
+        print(df[, c(1, 3, 8:11)])
+    }
+    if (any(!grepl("RD-", df$Sample_Name, fixed = T))) {
+        warning(ww4)
+        print(df[, c(1, 3, 8:11)]
+              }
+    
+    return(df)
+}
+
 # FUN: reads the .xlsm worksheet and outputs the .csv methyl experiment for MINFI
 readSheetWrite <- function(sampleNumb= NULL, runID = NULL) {
     if(is.null(sampleNumb)){sampleNumb<-getTotalSamples()}
     if(is.null(runID)){runID<-paste0(basename(getwd()))}
     current.run.Folder <- file.path(gb$methDir,runID)
-    ww1=crayon::bgRed("No tech name found: check df$Tech in samplesheet")
-    ww2=crayon::bgRed("No tech name found: check df$MP_number in samplesheet")
     if (!file.exists("samplesheet.csv")) {
         sampleNumb=as.integer(sampleNumb)
         worksheet=readSampleSheet(wks=T)
@@ -172,13 +202,12 @@ readSheetWrite <- function(sampleNumb= NULL, runID = NULL) {
         message("Basename layout:\n",bn[1])
         note=paste(df$Notes[1])
         df$Notes <- note
-        if (is.null(df$Tech)){warning(ww1); df$Tech <- "NA"}
-        if (is.null(df$MP_number)){warning(ww2); df$MP_number <- "none"}
+        df <- checkSampleSheet(df)
         writeSampleSheet(df, samplesheet_ID=samplesheet_ID,bn=bn, sampleName, dnaNumber, Sentrix)
     } else {
         msgCvs = "samplesheet.csv already exists! To Create a new csv file, Delete the existing samplesheet.csv"
         message("\n", crayon::white$bgGreen(msgCvs),"\n")
-        }
+    }
 }
 
 # FUN: Returns a list of idat files given an idat drive location -
