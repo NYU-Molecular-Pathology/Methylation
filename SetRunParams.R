@@ -42,8 +42,10 @@ ckNull <- function(nullVar, subVar, varName){
 loadClassifierPacks <- function(){
     ldPkg <- tryCatch(
         expr={checkQCpkg()},
-        error=function(cond){message("error in loading QC package dependency:\n");message(cond)},
-        warning=function(cond){message("Warning in loading QC package dependency:\n");message(cond)}
+        error=function(cond){message("error in loading QC package dependency:\n")
+                             message(cond)},
+        warning=function(cond){message("Warning in loading QC package dependency:\n")
+                               message(cond)}
     )
     return(ldPkg)
 }
