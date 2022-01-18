@@ -131,6 +131,11 @@ loopRender <- function(samList = NULL, data){
         samList<-1:length(as.character(data$SentrixID_Pos))
     }
     require(rmarkdown)
+    samSh <- dir(path = getwd(), full.names = T, ".xlsm")
+sampleNumb <- getTotalSamples()
+sampleNumb = as.integer(sampleNumb)
+sh_Dat <- as.data.frame(
+    readxl::read_excel(samSh,sheet = 3,range = "A1:N97",col_types = c("text")))[, 1:13]
     for (i in samList) {
         outFileN = paste0(data[i,1],".html")
         outPathN = file.path(gb$workFolder,gb$runID,outFileN)
@@ -141,6 +146,10 @@ loopRender <- function(samList = NULL, data){
             cat("\n",bky(dsh,"Now Running", i, "of", length(samList),dsh),sep="\n")
             do_report(data=data[i, ], gb$genCn)
             cat(bky("\n",dsh,"Completed Report", i, "of", length(samList),dsh),sep="\n")
+            sh_Dat = sh_Dat[1:sampleNumb, ]
+            currSam <- sh_Dat[,1]==data[i,1]
+
+            gb$importSingle(sh_Dat=sh_Dat[currSam,])
             }
     }
     cat(crayon::black$bgGreen$bold(dsh,"RUN COMPLETE",dsh),sep="\n")
