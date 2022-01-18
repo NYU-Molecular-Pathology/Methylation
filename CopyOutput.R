@@ -54,9 +54,10 @@ importDesktopCsv <- function(rcon,samsheet=NULL) {
             data = data[!duplicated(data$record_id),]
         }
         for (n in 1:nrow(data)) {
-            datarecord = jsonlite::toJSON((as.list(data[n,])), auto_unbox=T);print(datarecord)
-            message("\n~~Record Uploaded:")
-            RCurl::postForm(ur, token = tk, content = 'record', format = 'csv', type = 'flat', data = datarecord)
+            datarecord = jsonlite::toJSON((as.list(data[n,])), auto_unbox=T)
+            print(datarecord)
+            message("~~",crayon::bgBlue("Record Uploaded:"))
+            RCurl::postForm(ur, token = tk, content = 'record', format = 'csv', type = 'flat', data = datarecord, returnFormat='csv')
             cat(redcapAPI::importRecords(rcon,data,"normal","ids",returnData = F))
         }
     } else {message("no redcap file found")}
@@ -106,8 +107,7 @@ importRedcapStart <- function(nfldr){
     sh_Dat <-as.data.frame(readxl::read_excel(samSh,sheet=3,range="A1:N97", col_types=c("text")))[,1:13]
     sampleNumb=as.integer(sampleNumb);sh_Dat = sh_Dat[1:sampleNumb,]
     runName <- gb$runID
-    filnm = paste0(sh_Dat$record_id, "_cnv.png")
-    pathNam = file.path(nfldr,paste0(runName,"_CNVs"),filnm)
+    pathNam = file.path(nfldr,paste0(runName,"_CNVs"), paste0(sh_Dat$record_id, "_cnv.png"))
     rms=paste(c("control_","low_"),collapse ='|')
     pathNam <- stringr::str_replace(pathNam, rms, "")
     pathNam <- stringr::str_replace(pathNam, "//", "/")
@@ -117,7 +117,8 @@ importRedcapStart <- function(nfldr){
             record=c(sh_Dat[n,])
             datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
             res<-RCurl::postForm(uri,token=tk,content='record',format='json',type='flat',data=datarecord)
-            message("Record Uploaded"); print(res)
+            message("Record Uploaded")
+            print(res)
         }
     }
 }
@@ -134,9 +135,7 @@ uploadToRedcap <- function(file.list, deskCSV=T) {
         pth = file.list[idx]
         recordName = paste0(records[idx])
         runID = paste0(runIDs[idx])
-        message("\nImporting Record:")
-        cat(recordName, sep = "\n")
-        cat(pth, sep = "\n")
+        message(crayon::white$bgBlue("Importing Record Report:"))
         data = data.frame(record_id = recordName, run_number = runID)
         redcapAPI::importRecords(rcon, data, overwriteBehavior = "normal",returnContent = "ids", returnData = T)
         redcapAPI::importFiles(rcon = rcon,file = pth,record = recordName,field = "classifier_pdf",repeat_instance = 1)
@@ -145,21 +144,19 @@ uploadToRedcap <- function(file.list, deskCSV=T) {
 
 # Imports the xlsm sheet 3 data
 importSingle <- function(sh_Dat) {
-    nfldr = file.path(stringr::str_split_fixed(gb$clinDrv, " ", 2)[1],
-                      "MethylationClassifier")
+    nfldr = file.path(stringr::str_split_fixed(gb$clinDrv, " ", 2)[1],"MethylationClassifier")
     rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
     uri = paste0(rcon$url)
     tk = rcon$token
-    runName <- gb$runID
     filnm = paste0(sh_Dat$record_id, "_cnv.png")
-    pathNam = file.path(nfldr, paste0(runName, "_CNVs"), filnm)
+    pathNam = file.path(nfldr, paste0(gb$runID, "_CNVs"), filnm)
     rms = paste(c("control_", "low_"), collapse = '|')
     pathNam <- stringr::str_replace(pathNam, rms, "")
     pathNam <- stringr::str_replace(pathNam, "//", "/")
     sh_Dat$cnv_file_path <- pathNam
     record = c(sh_Dat[1,])
     datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox = T)
-    print(datarecord)
+    print(sh_Dat)
     res <-
         RCurl::postForm(
             uri,
@@ -169,8 +166,8 @@ importSingle <- function(sh_Dat) {
             type = 'flat',
             data = datarecord
         )
-    message("Record Uploaded")
-    print(res)
+    message(crayon::white$bgBlue("Record Uploaded"))
+    invisible(res)
     uploadToRedcap(file.list = paste0(record[1], ".html"), deskCSV = F)
 }
 
