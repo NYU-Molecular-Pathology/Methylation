@@ -127,7 +127,7 @@ importRedcapStart <- function(nfldr){
 uploadToRedcap <- function(file.list, deskCSV=T) {
     rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
     message("\nFiles to Import:\n"); print(file.list)
-    if(deskCSV==T){importDesktopCsv(rcon)}
+    if(deskCSV==T){importDesktopCsv(rcon)}else{
     recordName <-stringr::str_replace_all(string = paste0(file.list), ".html", "")
     runIDs <- rep(gb$runID, length(recordName))
     records <- basename(recordName)
@@ -139,6 +139,7 @@ uploadToRedcap <- function(file.list, deskCSV=T) {
         data = data.frame(record_id = recordName, run_number = runID)
         redcapAPI::importRecords(rcon, data, overwriteBehavior = "normal",returnContent = "ids", returnData = T)
         redcapAPI::importFiles(rcon = rcon,file = pth,record = recordName,field = "classifier_pdf",repeat_instance = 1)
+    }
     }
 }
 
