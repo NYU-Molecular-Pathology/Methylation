@@ -103,7 +103,7 @@ easyPkgs <- c('tidyverse','sjmisc','stringi','digest','RCurl','gridExtra','needs
 # Helper Functions ----
 sw <- function(pkgOb){try(return(suppressMessages(suppressWarnings(pkgOb))),silent=T)}
 ld <- function(libName) {
-    lib.opts <- list(package = libName, character.only = T, verbose = F, warn.conflicts = F, quietly =T)
+    lib.opts <- list(package = libName, character.only = T, verbose = T, warn.conflicts = F, quietly =F)
     sw(suppressPackageStartupMessages(do.call(library, c(lib.opts))))
     message(libName, " ...load successful")
 }
