@@ -95,7 +95,7 @@ batchCorrectBs <- function(betas,RGSet,topVar=NULL, supervise = F) {
     return(topVarBetas)
 }
 
-getRgset <- function(rgOut, targets){
+getRgset <- function(rgOut, targets, batchCorrect=F){
     require("minfi")
     if (!file.exists(rgOut)) {
         if (batchCorrect==T & !is.null(targets$Batch)) {
