@@ -101,7 +101,7 @@ doMultiple <- function(allBetas1,tsne_titles, outDirs, targets1, tps,ty,custom){
     tsneList <-lapply(X = 1:length(allBetas1), FUN=function(X){
       return(suppressMessages(gb$generateTvals(allBetas1[[X]])))
       })
-    plotList <- list(foreach::foreach(plotN = 1:length(tsneList))%do%{
+    plotList <- list(foreach::foreach(plotN = 1:length(tsneList),.packages="foreach")%do%{
 ###################### TO CHANGE ########################      
       tsne_plot <- gb$getTsneVal(
         TSNE = tsneList[[plotN]],
@@ -120,7 +120,7 @@ doMultiple <- function(allBetas1,tsne_titles, outDirs, targets1, tps,ty,custom){
 plotSaver <- function(outDirs,tsne_titles,tps,ty,plotList,custom) {
   plotN=NULL
   options("device.ask.default"=F)
- pltList <- foreach::foreach(plotN = 1:length(plotList)) %do% {
+ pltList <- foreach::foreach(plotN = 1:length(plotList),.packages="foreach") %do% {
     pL<- plotList[[plotN]]
 ###################### TO CHANGE ########################
     return(gb$genTsnePlot(
