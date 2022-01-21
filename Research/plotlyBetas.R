@@ -164,13 +164,13 @@ takeTopVariance <- function(betas, topVar){
 tierBetas <- function(betas, col_sentrix, RGSet, batchCorrect = F, getSuper = F) {
     selectSams <- RGSet@colData@listData[[col_sentrix]][RGSet@colData@listData[["Sample_ID"]] %in%  colnames(betas)]
     if (batchCorrect == T) {
-      unBetas <- gb$batchCorrectBs(betas, RGSet[, RGSet@colData@rownames == selectSams], topVar = 1:10000)
-      superbetas <- gb$batchCorrectBs(betas, RGSet[, RGSet@colData@rownames == selectSams], topVar = 1:10000, T)
+      unBetas <- gb$batchCorrectBs(betas, RGSet[, RGSet@colData@rownames %in% selectSams], topVar = 1:10000)
+      superbetas <- gb$batchCorrectBs(betas, RGSet[, RGSet@colData@rownames %in% selectSams], topVar = 1:10000, T)
     } else{
       unBetas <- gb$takeTopVariance(betas, topVar = 1:10000)
     }
     if (getSuper == T) {
-      superbetas <- gb$getSupervise(betas, RGSet[, RGSet@colData@rownames == selectSams], topVar = 1:10000)
+      superbetas <- gb$getSupervise(betas, RGSet[, RGSet@colData@rownames %in% selectSams], topVar = 1:10000)
       return(superbetas)
     } else{
       return(unBetas)
