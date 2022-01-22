@@ -69,10 +69,23 @@ drawHeatMap <- function(yourHeatMap) {
     )
 }
 
+calc_ht_size = function(ht, unit = "inch") {
+    pdf(NULL)
+    ht = draw(ht)
+    w = ComplexHeatmap:::width(ht)
+    w = convertX(w, unit, valueOnly = TRUE)
+    h = ComplexHeatmap:::height(ht)
+    h = convertY(h, unit, valueOnly = TRUE)
+    dev.off()
+    c(w, h)
+}
+
 getHeatMap <- function(betaRanges, titleValue, ha, colSplt = NULL, rwsplt=NULL){
     titleOfPlot <- paste("Heatmap of",titleValue,sep = " ")
     hmTopNumbers <- ComplexHeatmap::Heatmap(
         betaRanges,
+        width = ncol(betaRanges)*unit(10, "mm"), 
+        height = nrow(betaRanges)*unit(10, "mm"),
         col = col_fun,  ## Define the color scale
         cluster_columns = T,  ## Cluster the columns
         #cluster_rows = rowcluster,
@@ -104,6 +117,8 @@ getHeatMap <- function(betaRanges, titleValue, ha, colSplt = NULL, rwsplt=NULL){
         column_split = colSplt,
         row_split= rwsplt
     )
+    size = calc_ht_size(hmTopNumbers)
+    size
     return(drawHeatMap(hmTopNumbers))
 }
 
