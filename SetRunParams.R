@@ -1,8 +1,15 @@
 #!/usr/bin/env Rscript
-options(stringsAsFactors = FALSE);gb <- globalenv(); assign("gb", gb)
+options(stringsAsFactors = FALSE)
+gb <- globalenv(); assign("gb", gb)
+setRunLnk = "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/SetRunParams.R"
+
+msgFunName <- function(pthLnk, funNam){
+    message("\nExecuting function: ", funNam, " from RScript in:\n", pthLnk,"\n")
+}
 
 # FUN: Loads all the packages used in the RMD Methylation QC file
 checkQCpkg <- function(){
+    msgFunName(setRunLnk,"checkQCpkg")
     methylQCpacks <- c(
         "kableExtra","magick","webshot","plyr","ggplot2","knitr","reshape2",
         "data.table","DT","plotly", "MethylAid","minfi","scales",
@@ -20,8 +27,12 @@ checkQCpkg <- function(){
 }
 
 # Helper functions to get and set global variables
-setVar <- function(valueName,val){return(assign(valueName, val, envir=.GlobalEnv))}
+setVar <- function(valueName,val){
+    msgFunName(setRunLnk,"setVar")
+    return(assign(valueName, val, envir=.GlobalEnv))
+}
 assignVar <- function(varStr, assignedVal){
+    msgFunName(setRunLnk,"assignVar")
     return(
         tryCatch(
             expr = {if(!is.null(get(varStr))){cat("")}},
@@ -33,6 +44,7 @@ assignVar <- function(varStr, assignedVal){
 
 # Checks if variable is null and assigns value
 ckNull <- function(nullVar, subVar, varName){
+    msgFunName(setRunLnk,"checkQCpkg")
     if (is.null(nullVar)){
         setVar(as.character(varName),as.character(subVar))
         return(paste0(subVar))} else {return(paste0(nullVar))}
@@ -40,6 +52,7 @@ ckNull <- function(nullVar, subVar, varName){
 
 # FUN: Loads the main packages and dependencies checks if any are not installed
 loadClassifierPacks <- function(){
+    msgFunName(setRunLnk,"loadClassifierPacks")
     ldPkg <- tryCatch(
         expr={checkQCpkg()},
         error=function(cond){message("error in loading QC package dependency:\n")
@@ -49,7 +62,11 @@ loadClassifierPacks <- function(){
     )
     return(ldPkg)
 }
+
+# Sets default variable paths/names
 getDefaults <- function() {
+    msgFunName(setRunLnk,"getDefaults")
+    
     cbVol = "/Volumes/CBioinformatics"
     moVol = "/Volumes/molecular"
     rsVol = "/Volumes/snudem01labspace"
@@ -72,7 +89,10 @@ getDefaults <- function() {
     return(defaultParams)
 }
 
+# returns assigned global variable values
 getSetvars <- function() {
+    msgFunName(setRunLnk,"getSetvars")
+    
     assignedVars <- data.frame(
         mnp.pk.loc = gb$mnp.pk.loc,
         ApiToken = gb$ApiToken,
@@ -94,6 +114,8 @@ defineParams <- function(
     mnp.pk.loc = NULL, ApiToken = NULL, methDir = NULL, clinDrv = NULL, rschOut = NULL, clinOut = NULL,
     rsch.idat = NULL, clin.idat = NULL, QC_file = NULL, isMC = T, baseDir = NULL, runID = NULL
     ){
+    msgFunName(setRunLnk,"defineParams")
+    
     defVars <- getDefaults()
     inVars <- list(mnp.pk.loc, ApiToken, methDir, clinDrv, rschOut, clinOut,rsch.idat, clin.idat, QC_file, baseDir)
     i=1:length(inVars)
@@ -107,6 +129,7 @@ defineParams <- function(
 
 # Changes the working directory using the system CD command
 setDirectory <- function(foldr) {
+    msgFunName(setRunLnk,"setDirectory")
     bsDir = paste("cd", foldr); mm2 = crayon::white$bgRed("Location Not Found:", foldr)
     if (dir.exists(foldr)) {system(bsDir);setwd(foldr);assign("workDir", foldr)} else{warning(mm2)}
 }
