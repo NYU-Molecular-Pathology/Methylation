@@ -1,9 +1,15 @@
 #!/usr/bin/env Rscript
 options(stringsAsFactors = FALSE);gb <- globalenv(); assign("gb", gb)
 apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
+cpOutLnk = "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/CopyOutput.R"
+
+msgFunName <- function(pthLnk, funNam){
+message("\nExecuting function: ", funNam, " from RScript in:\n", pthLnk,"\n")
+}
 
 # FUN: Generate CNV image
 saveCNVhtml <- function(data) {
+    msgFunName(cpOutLnk, "saveCNVhtml")
     # get RGSet for sample
     RGsetEpic <- minfi::read.metharray(file.path(getwd(),'idats',unlist(data[4])), verbose = F, force = T)
     # Save the CNV as a png file
@@ -16,6 +22,7 @@ saveCNVhtml <- function(data) {
 
 # Helper archive function: creates a "previous" folder when reports already exists
 save.prev.folder <- function(prevs,oldFi){
+        msgFunName(cpOutLnk, "save.prev.folder")
     cat("\n")
     cat(crayon::white$bgRed('Output folder already exists, moving existing reports to new folder named "Previous"'))
     cat("\n")
@@ -25,6 +32,7 @@ save.prev.folder <- function(prevs,oldFi){
 
 # FUN: Copies Reports to Z drive
 copy.to.clinical <- function(clinOut, runID, runYear) {
+        msgFunName(cpOutLnk, "copy.to.clinical")
     newFolder <- file.path(clinOut, runYear,runID); message(newFolder)
     if (!dir.exists(newFolder)) {dir.create(newFolder)}
     if (dir.exists(newFolder)) {
@@ -42,6 +50,7 @@ copy.to.clinical <- function(clinOut, runID, runYear) {
 # REDCap: API call & Upload
 # uploads the redcap classifier values must convert to JSON first
 importDesktopCsv <- function(rcon,samsheet=NULL) {
+        msgFunName(cpOutLnk, "importDesktopCsv")
     rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
     ur=paste0(rcon$url);tk=rcon$token
     if(is.null(samsheet)){
@@ -65,6 +74,7 @@ importDesktopCsv <- function(rcon,samsheet=NULL) {
 
 # Copy Output cnv Files if generated
 copy.cnv.files <- function(newFolder, runID, runYear=NULL) {
+        msgFunName(cpOutLnk, "copy.cnv.files")
     if (is.null(runYear)){runYear=paste0(format(Sys.Date(), "%Y"))}
     cnv_folder <- file.path(newFolder,paste0(runID,"_CNVs/"))
     cnvNames <- dir(path=getwd(), full.names=T, "*_cnv.png")
@@ -77,6 +87,7 @@ copy.cnv.files <- function(newFolder, runID, runYear=NULL) {
 
 # Uploads any created cnv png files to redcap database
 uploadCnPng <- function() {
+        msgFunName(cpOutLnk, "uploadCnPng")
     rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
     samSh <- dir(path=getwd(), full.names=T, ".xlsm")
     sampleNumb <- gb$getTotalSamples()
@@ -100,6 +111,7 @@ uploadCnPng <- function() {
 
 # Imports the xlsm sheet 3 data
 importRedcapStart <- function(nfldr){
+        msgFunName(cpOutLnk, "importRedcapStart")
     rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
     uri=paste0(rcon$url); tk=rcon$token
     samSh <- dir(path=getwd(), full.names=T, ".xlsm")
@@ -125,6 +137,7 @@ importRedcapStart <- function(nfldr){
 
 # Creates QC record and uploads reports to redcap
 uploadToRedcap <- function(file.list, deskCSV=T) {
+        msgFunName(cpOutLnk, "uploadToRedcap")
     rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
     message("\nFiles to Import:\n"); print(file.list)
     if(deskCSV==T){importDesktopCsv(rcon)}else{
@@ -145,6 +158,7 @@ uploadToRedcap <- function(file.list, deskCSV=T) {
 
 # Imports the xlsm sheet 3 data
 importSingle <- function(sh_Dat) {
+        msgFunName(cpOutLnk, "importSingle")
     nfldr = file.path(stringr::str_split_fixed(gb$clinDrv, " ", 2)[1],"MethylationClassifier")
     rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
     uri = paste0(rcon$url)
@@ -174,6 +188,7 @@ importSingle <- function(sh_Dat) {
 
 # FUN: Copies Reports to Z drive
 copy2outFolder <-function(clinDrv = NULL, runID, runYear = NULL) {
+        msgFunName(cpOutLnk, "copy2outFolder")
     if (is.null(runYear)) {runYear = paste0(format(Sys.Date(), "%Y"))}
     if (is.null(clinDrv)) {clinDrv <- gb$clinDrv}
     isMC = sjmisc::str_contains(runID, "MGDM") | sjmisc::str_contains(runID, "MC")
