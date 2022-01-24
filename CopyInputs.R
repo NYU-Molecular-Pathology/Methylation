@@ -1,8 +1,14 @@
 #!/usr/bin/env Rscript
 gb <- globalenv(); assign("gb", gb)
 apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
+cpInLnk = "https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/CopyInputs.R"
+
+msgFunName <- function(pthLnk, funNam){
+message("\nExecuting function: ", funNam, " from RScript in:\n", pthLnk,"\n")
+}
 
 grabYear<- function(yr) {
+    msgFunName(cpInLnk, "grabYear")
     rnum <- NULL
     if(nchar(yr)>2){
         rnum <- substring(yr, 3)
@@ -15,6 +21,7 @@ grabYear<- function(yr) {
 
 # Returns a text string of the latest modified Run name, if isMC=False then research directory is returned
 listMolecularSheets <- function(isMC=T, getAll=F,runID=gb$runID) {
+        msgFunName(cpInLnk, "listMolecularSheets")
     researchWorksheets <- "/Volumes/snudem01labspace/Methylation_Worksheets"
     runYear=grabYear(stringr::str_split_fixed(runID,"-",2)[,1])
     if(isMC){
@@ -38,6 +45,7 @@ listMolecularSheets <- function(isMC=T, getAll=F,runID=gb$runID) {
 
 # Verifies if the runID inputted is valid
 checkValidRun <- function(runID){
+    msgFunName(cpInLnk, "checkValidRun")
     isMC = sjmisc::str_contains(runID, "MGDM")|sjmisc::str_contains(runID, "MC")
     ws.list <- listMolecularSheets(isMC,getAll=T,runID)
     found <- paste0(runID,".xlsm") %in% basename(ws.list)
@@ -46,6 +54,7 @@ checkValidRun <- function(runID){
 
 # FUN: copies the molecular or research lab Worksheet xlsm to cwd
 copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
+    msgFunName(cpInLnk, "copyWorksheetFile")
     if (is.null(runID)){runID=paste0(basename(getwd()))} else {runID=runID}
     stopifnot(!is.null(runID))
     #if (is.null(runYear)){
@@ -75,6 +84,7 @@ copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
 
 # Sets the methylation run directory named by the new run name
 setRunDir <- function(runID=NULL, workFolder=NULL){
+        msgFunName(cpInLnk, "setRunDir")
     runID <- gb$ckNull(runID, paste0(basename(getwd())), deparse(substitute(runID,env=gb)))
     workFolder <- gb$ckNull(workFolder, gb$methDir, deparse(substitute(workFolder,env=gb)))
     newRun <- file.path(workFolder, runID)
@@ -95,6 +105,7 @@ setRunDir <- function(runID=NULL, workFolder=NULL){
 
 # Returns Total Sample Count in the run
 getTotalSamples <- function(){
+    msgFunName(cpInLnk, "getTotalSamples")
     templateDir = "Clinical_Methylation/methylation_run_TEMPLATE_new.xlsm"
     thisSh <- dir(getwd(), "*.xlsm")
     temp <- stringi::stri_detect_fixed(thisSh, "~$")
@@ -110,6 +121,7 @@ getTotalSamples <- function(){
 
 # FUN: translates the xlsm excel file to the .csv samplesheet for redcap and minfi
 writeSampleSheet <- function(df, samplesheet_ID, bn = NULL, sampleName, dnaNumber, Sentrix) {
+    msgFunName(cpInLnk, "writeSampleSheet")
     if (is.null(bn)) {bn = file.path(getwd(), df$Sentrix)}
     samplesheet_csv = data.frame(
         Sample_Name =  df[, sampleName],
@@ -129,6 +141,7 @@ writeSampleSheet <- function(df, samplesheet_ID, bn = NULL, sampleName, dnaNumbe
 
 # FUN: Reads the csv samplesheet for minfi input
 readSampleSheet <- function(runID=F, totalSam=F, wks=F) {
+    msgFunName(cpInLnk, "readSampleSheet")
     file.list <- dir(path=getwd(), "*.xlsm")
     temps <- stringi::stri_detect_fixed(file.list, "~$")
     file.list <- file.list[!temps]
@@ -149,6 +162,7 @@ readSampleSheet <- function(runID=F, totalSam=F, wks=F) {
 }
 
 checkSampleSheet <- function(df){
+    msgFunName(cpInLnk, "checkSampleSheet")
     ww1=crayon::bgRed("No tech name found: check df$Tech in samplesheet.csv assinging NA")
     ww2=crayon::bgRed("No tech name found: check df$MP_number in samplesheet.csv assinging NA")
     ww3=crayon::bgRed("Duplicated sample name found: check df$Sample_Name in samplesheet.csv assigning as None")
@@ -182,6 +196,7 @@ checkSampleSheet <- function(df){
 
 # FUN: reads the .xlsm worksheet and outputs the .csv methyl experiment for MINFI
 readSheetWrite <- function(sampleNumb= NULL, runID = NULL) {
+    msgFunName(cpInLnk, "readSheetWrite")
     if(is.null(sampleNumb)){sampleNumb<-getTotalSamples()}
     if(is.null(runID)){runID<-paste0(basename(getwd()))}
     current.run.Folder <- file.path(gb$methDir,runID)
@@ -212,6 +227,7 @@ readSheetWrite <- function(sampleNumb= NULL, runID = NULL) {
 
 # FUN: Returns a list of idat files given an idat drive location -
 getAllFiles <- function(idatDir, csvNam=NULL) {
+    msgFunName(cpInLnk, "getAllFiles")
     if(!is.null(csvNam)){ssheet=read.csv(csvNam,strip.white=T)
     barcode=as.vector(ssheet$Sentrix_ID)} else {
         ssheet=read.csv(csvNam,strip.white=T)
@@ -229,6 +245,7 @@ getAllFiles <- function(idatDir, csvNam=NULL) {
 
 # FUN: Copies .idat files to your current directory using sample sheet
 copyBaseIdats <- function(allFi) {
+    msgFunName(cpInLnk, "copyBaseIdats")
     cat(crayon::white$bgCyan("Copying idats to current directory..."),"\n")
     fs::file_copy(allFi, file.path(getwd()),overwrite=T)
     idcs = basename(allFi)
@@ -241,11 +258,13 @@ copyBaseIdats <- function(allFi) {
 
 # Helper FUN called during copying idats to notify if a network mount is not found
 warnMount <- function(idat.dir){
+    msgFunName(cpInLnk, "warnMount")
     cat(crayon::bgRed("Directory not found, ensure the idat folder location is accessible:"),idat.dir,sep="\n")
 }
 
 # FUN: Returns a list of idat files that exist on Molecular and Snuderl lab drives -
 get.idats <-function(csvNam = "samplesheet.csv"){
+    msgFunName(cpInLnk, "get.idats")
     rsch.idat <- gb$rsch.idat;clin.idat <- gb$clin.idat
     if(!dir.exists(rsch.idat)){warnMount(rsch.idat)}; if(!dir.exists(clin.idat)){warnMount(clin.idat)}
     stopifnot(dir.exists(rsch.idat)|dir.exists(clin.idat))
@@ -264,6 +283,7 @@ get.idats <-function(csvNam = "samplesheet.csv"){
 
 # FUN: Copies samplesheet to Desktop folder
 moveSampleSheet <- function(methDir, runID=NULL) {
+    msgFunName(cpInLnk, "moveSampleSheet")
     if (is.null(runID)){runID=paste0(basename(getwd()))}
     baseFolder=paste0("~/Desktop/",runID,"/")
     if(!dir.exists(baseFolder)){dir.create(baseFolder)}
@@ -274,6 +294,7 @@ moveSampleSheet <- function(methDir, runID=NULL) {
 
 #  Copy idats and Worksheets creation
 writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
+     msgFunName(cpInLnk, "writeFromRedcap")
     if (is.null(bn)) {bn = file.path(getwd(), df$barcode_and_row_column)}
     message("~~~Writing from redcap samplesheet.csv:")
     names(df)
@@ -301,6 +322,7 @@ writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
 
 #' FUN: Returns dataframe of redcap search using default worksheet header and fields
 search.redcap <- function(rd_numbers, token=NULL, flds=NULL) {
+    msgFunName(cpInLnk, "search.redcap")
     if(!require("redcapAPI")){install.packages("redcapAPI", dependencies = T, type="both",ask=F);library("redcapAPI")}
     if(is.null(token)){message("You must provide an ApiToken!")};stopifnot(!is.null(token))
     rcon <- redcapAPI::redcapConnection(gb$apiLink, token)
@@ -313,6 +335,7 @@ search.redcap <- function(rd_numbers, token=NULL, flds=NULL) {
 
 # FUN: Copies .idat files to your directory and saves samplesheet.csv
 get.rd.info <- function(rd_numbers=NULL, token=NULL, sh_name=NULL){
+    msgFunName(cpInLnk, "get.rd.info")
     if (is.null(rd_numbers)){message("Input RD-numbers using get.rd.info(rd_numbers)")}
     if (is.null(sh_name)) {sh_name = "samplesheet.csv"}
     if(is.null(token)){message("You must provide an ApiToken!")};stopifnot(!is.null(token))
