@@ -104,7 +104,7 @@ easyPkgs <- c('tidyverse','sjmisc','stringi','digest','RCurl','gridExtra','needs
 sw <- function(pkgOb){try(return(suppressMessages(suppressWarnings(pkgOb))),silent=T)}
 ld <- function(libName) {
     lib.opts <- list(package = libName, character.only = T, verbose = T, warn.conflicts = F, quietly =F)
-    sw(suppressPackageStartupMessages(do.call(library, c(lib.opts))))
+suppressPackageStartupMessages(do.call(library, c(lib.opts)))
     message(libName, " ...load successful")
 }
 up <- function(){update.packages(repos='http://cran.rstudio.com/',
@@ -193,7 +193,7 @@ bc.inst <- function(pknm){
     if(rq(pknm)) {
         bio.opt <- list(pkgs=pknm, update=F, ask=F)
         tryCatch(
-            expr = {sw(do.call(BiocManager::install, c(bio.opt)))},
+            expr = {do.call(BiocManager::install, c(bio.opt))},
             error = function(cond) {message("Package already loaded")},
             finally = {ld(pknm)}
         )
@@ -286,7 +286,7 @@ loadMainPkgs <- function(){
     checkNeeds()
     gh.inst(data.frame(easypackages="jakesherman/easypackages"))
     pk.inst("tidyverse")
-    sw(suppressPackageStartupMessages(easypackages::packages(cpuPacks, prompt=F)))
+suppressPackageStartupMessages(easypackages::packages(cpuPacks, prompt=F))
     checkBioC()
 }
 
