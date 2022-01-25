@@ -52,7 +52,7 @@ makePlotly<-function(fig) {
             currLabNam <- otherPlot[["x"]][["data"]][[grpLabNam]]$name
             currLabNam <- stringr::str_split_fixed(currLabNam,",",2)[,2]
             currLabNam <- stringr::str_remove_all(currLabNam, "[()]")
-            message(currLabNam, " and ", grpNam)
+            #message(currLabNam, " and ", grpNam)
             if (currLabNam == grpNam) {
               hoverinfo <- paste0("Sample: ", samLabs[currGrp] , " (", grpNam, ")", "</br></br>")
               otherPlot[["x"]][["data"]][[grpLabNam]][["text"]] <- hoverinfo
