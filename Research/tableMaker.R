@@ -18,7 +18,7 @@ makeDt <- function(targets) {
       options = list(
         scrollX = T,
         info = T,
-        autoWidth = F,
+        autoWidth = T,
         pageLength = 15,
         rownames = F,
         lengthChange = T,
