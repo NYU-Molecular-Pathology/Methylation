@@ -128,6 +128,7 @@ assignColors2 <- function(targets, varColumns = c("Type","Origin"), col_vect = N
     col_vect[6] = "#eb7d34" #changing dark forest to orange color
     dimnames(targets)[[2]]
     dat <- targets[,varColumns] # varColumns
+    #colours <- col_vect[1:(length(unique(dat)))]
     anno_df <- data.frame(dat)
     vars2Color <- as.list(lapply(dat, unique))
     colorValues <-lapply(vars2Color, function(x) {x = (col_vect)[1:(length(x))]})
