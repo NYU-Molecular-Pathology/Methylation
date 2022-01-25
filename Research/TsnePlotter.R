@@ -79,8 +79,8 @@ generateTvals <- function(betas) {
 genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL, symbolsLabel=NULL, colorLabel=NULL,
                         names2Label=NULL){
     col_vect <- pals::glasbey()
+    col_vect[6] = "#eb7d34" #changing dark forest to orange color
     colours <- col_vect[1:(length(unique(tsne_plot$GROUPS)))]
-    colours[6] = "#eb7d34" #changing dark forest to orange color
     symFlags <- !is.null(symbolsLabel)
     #options("device.ask.default"=F)
     devAskNewPage(ask=F)
