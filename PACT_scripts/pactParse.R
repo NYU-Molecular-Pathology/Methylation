@@ -56,6 +56,7 @@ loadPacks <- function(){
 
 # Returns Path to xlsx file -----
 getExcelPath <- function(inputSheet, pathType=1){
+    if(stringr::str_detect(inputSheet,"/")==T){return(inputSheet)}
     drive = file.path("", "Volumes", "molecular", "MOLECULAR LAB ONLY")
     folder = file.path("NYU PACT Patient Data", "Workbook")
     runyr <- stringr::str_split_fixed(inputSheet, "-", 3)[, 2]
