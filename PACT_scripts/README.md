@@ -1,11 +1,11 @@
 # Shell Scripts
 ## makePactSheet.sh
 The shell script command bellow generate and email the samplesheet.csv and copy to BigPurple:<br>
-`/Volumes/CBioinformatics/PACT/makePactSheet.sh PACT-21-## kerberosID`<br>
+`/Volumes/CBioinformatics/PACT/makePactSheet.sh PACT-YY-##`<br>
 
 ## methylMatch.sh
 To generate the PACT-21-##_MethylMatch.xlsx email and save CNV png files execute:<br>
-`/Volumes/CBioinformatics/PACT/methylMatch.sh PACT-21-##`
+`/Volumes/CBioinformatics/PACT/methylMatch.sh PACT-22-##`
 
 makePactSheet.sh and methylMatch.sh can be saved locally or symlinked to make the script easier to execute.
 
