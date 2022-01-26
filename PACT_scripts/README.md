@@ -2,6 +2,7 @@
 ## makePactSheet.sh
 The shell script command bellow generate and email the samplesheet.csv and copy to BigPurple:<br>
 `/Volumes/CBioinformatics/PACT/makePactSheet.sh PACT-YY-##`<br>
+Alternatively, you can also pass the path to the .xlsm worksheet emailed from the wetlab.
 
 ## methylMatch.sh
 To generate the PACT-21-##_MethylMatch.xlsx email and save CNV png files execute:<br>
