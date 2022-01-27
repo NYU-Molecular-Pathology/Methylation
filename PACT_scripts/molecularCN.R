@@ -27,7 +27,7 @@ dsh2="================\n"
 message(dsh,"Parameters input",dsh2)
 message("token: ",token)
 message("Args input:")
-print (myMolecular[[1]])
+print (myMolecular)
 message("")
 
 stopifnot(!is.na(token))
