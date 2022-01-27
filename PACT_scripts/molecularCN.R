@@ -18,7 +18,7 @@ opt <- arguments$options
 args <- arguments$args
 
 token <- opt$token
-myMolecular <- strsplit(opt$molecular, " ")[[1]]
+myMolecular <- strsplit(opt$molecular, " ")
 
 dsh="\n================"
 dsh2="================\n"
@@ -27,7 +27,7 @@ dsh2="================\n"
 message(dsh,"Parameters input",dsh2)
 message("token: ",token)
 message("Args input:")
-print (args)
+print (myMolecular[[1]])
 message("")
 
 stopifnot(!is.na(token))
@@ -44,6 +44,7 @@ if(suppressWarnings(!require("redcapAPI"))){
 }
 
 supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
+supPk <- function(sobj){return(suppressPackageStartupMessages(suppressWarnings(sobj)))}
 
 # FUN: Checks if z-drive is accessible to the Rscript
 checkMounts <- function(){
@@ -173,17 +174,17 @@ sourceFuns2 <- function(workingPath = NULL) {
     script.list <- c("SetRunParams.R","CopyInputs.R","PACT_scripts/generateCNV.R")
     if (is.null(workingPath)) {workingPath = getwd()}
     scripts <- paste0(mainHub, script.list)
-    invisible(lapply(scripts, function(i){devtools::source_url(i)}))
-    library("sest")
-    library("mnp.v11b6")
-    require("plotly")
-    require("htmlwidgets")
+    invisible(lapply(scripts, function(i){supPk(devtools::source_url(i))}))
+    supPk(library("sest"))
+    supPk(library("mnp.v11b6"))
+    supPk(require("plotly"))
+    supPk(require("htmlwidgets"))
     gb$setDirectory(workingPath)
     return(gb$defineParams())
 }
 
 msgRDs <- function(rds,token){
-    message("\nRD-numbers with idats:\n")
+    message("\nRD-numbers with idats:")
     print(rds)
     assign("rds", rds)
     message(dsh, crayon::bgMagenta("Starting CNV PNG Creation"),dsh2)
