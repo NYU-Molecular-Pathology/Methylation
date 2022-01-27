@@ -276,7 +276,7 @@ get.idats <-function(csvNam = "samplesheet.csv"){
             cur.idat <- dir(pattern = "*.idat$")
             bcds <- paste0(basename(allFi))
             if (all(bcds %in% cur.idat)) {message(".idat files already copied")}
-            if (length(cur.idat) < length(allFi)) {copyBaseIdats(allFi[!(bcds %in% cur.idat)])}
+            if (!all(bcds %in% cur.idat)) {copyBaseIdats(allFi[!(bcds %in% cur.idat)])} #length(cur.idat) < length(allFi)
         } else {message("No .idat files found! Check worksheet and input folder path")}
     } else {message(paste("Cannot find your sheet named:", csvNam))}
 }
