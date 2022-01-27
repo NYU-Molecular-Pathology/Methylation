@@ -97,11 +97,7 @@ getHtmlCN <- function(fn){
 
 getPngFile <- function(fn, tempPathFi){
     message("\nSaving WebShot from temp.html...\n")
-    webshot2::webshot(
-        url = tempPathFi,
-        file = fn,
-        cliprect = "viewport",
-        delay = 2.5,
+    webshot2::webshot(url = tempPathFi, file = fn,cliprect = "viewport", delay = 3.5,
         vwidth = 1560,
         vheight = 896
     )
