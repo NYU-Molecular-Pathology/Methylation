@@ -9,7 +9,7 @@ option_list <- list(
                           help = "REDCap API token (default %default)",),
     optparse::make_option(c("-m", "--molecular"),
                           default = NULL,
-                          help = "Single-spaced list of molecular numbers (default %default)")
+                          help = "Single-spaced list of molecular TS or TM (default %default)")
 )
 
 parser <- optparse::OptionParser(option_list=option_list)
