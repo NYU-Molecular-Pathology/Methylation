@@ -120,7 +120,7 @@ defineParams <- function(
     inVars <- list(mnp.pk.loc, ApiToken, methDir, clinDrv, rschOut, clinOut,rsch.idat, clin.idat, QC_file, baseDir)
     i=1:length(inVars)
     invisible(lapply(i,function(x){if(!is.null(inVars[[x]])){setVar(names(defVars[x]), inVars[[x]])}}))
-    message("\nLoading Packages Silently...\n")
+#    message("\nLoading Packages Silently...\n")
     loadClassifierPacks()
     i=1:length(defVars)
     invisible(sapply(i,FUN=function(i){assignVar(names((defVars[i])), paste0(defVars[,i]))}))
