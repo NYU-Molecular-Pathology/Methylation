@@ -5,7 +5,8 @@ dsh="\n================"
 dsh2="================\n"
 
 # Main arguments input in comandline
-token<-args[1]; inputSheet<-args[2]
+token <- args[1]
+inputSheet <- args[2]
 
 # Displays the Input args -----
 message(dsh,"Parameters input",dsh2)
@@ -133,6 +134,10 @@ parseWorksheet <- function(inputFi){
 
 # Import csv Worksheet -----
 getCaseValues <- function(inputSheet, readFlag){
+    if(stringr::str_detect(inputSheet,"/")==T){
+        vals2find <- parseWorksheet(inputSheet)
+        return(vals2find)
+    }
     if(readFlag){
         vals2find <- utils::read.csv(inputSheet, skip=19)[,c(6,7,9)]
         vals2find <- vals2find[!grepl("H20|SERACARE|HAPMAP", vals2find[,2]),]
@@ -231,7 +236,10 @@ getOuputData <- function(token, flds, inputSheet, readFlag){
     rcon <- redcapAPI::redcapConnection(apiUrl, token)
     vals2find <- getCaseValues(inputSheet, readFlag)
     db <- grabAllRecords(flds, rcon)
-    output <- queryCases(vals2find, db)
+    if(nrow(vals2find)!=0){
+        output <- queryCases(vals2find, db)
+    }
+
     runId <- ifelse(readFlag == T, substr(inputSheet,1,nchar(inputSheet)-4), inputSheet)
     output <- modifyOutput(output, vals2find)
     outFi <- createXlFile(runId, output)
@@ -254,18 +262,63 @@ sourceFuns2 <- function(workingPath = NULL) {
     return(gb$defineParams())
 }
 
+msgRDs <- function(rds,token){
+    message("\nRD-numbers with idats:\n")
+    print(rds)
+    assign("rds", rds)
+    message(dsh, crayon::bgMagenta("Starting CNV PNG Creation"),dsh2)
+    sourceFuns2()
+    ApiToken = token
+    assign("ApiToken", ApiToken)
+}
+
+grabRDs <- function(rd_numbers, token){
+    result <- gb$search.redcap(rd_numbers, token)
+    result <- result[!is.na(result$barcode_and_row_column),]
+    samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[,"barcode_and_row_column"],"_",2))
+    gb$writeFromRedcap(result, samplesheet_ID) # writes API export as minfi dataframe sheet
+    gb$get.idats()  # copies idat files from return to current directory
+}
+
+makeCNV <- function(myDt, asPNG = T) {
+    mySentrix <- myDt[myDt[, "SentrixID_Pos"] %like% "_R0",]
+    if (nrow(mySentrix) > 0) {
+        for (sam in rownames(mySentrix)) {
+            sampleName <- mySentrix[sam, 1]
+            fn = file.path("~", "Desktop", paste0(sampleName, "_cnv.png"))
+            if (file.exists(fn)) {
+                message("\nFile already exists, skipping:", fn, "\n")
+            } else{
+                sentrix <- mySentrix[sam, "SentrixID_Pos"]
+                message("\nGetting RGset for ", sentrix, "\n")
+                RGsetEpic <- gb$grabRGset(getwd(), sentrix)
+                tryCatch(
+                    expr = {
+                        gb$gen.cnv.png2(RGsetEpic, sampleName, asPNG)
+                    },
+                    error = function(e) {
+                        erTxt <- paste0("An error occured with ", mySentrix[sam, 1]," png creation:")
+                        message(crayon::bgRed(erTxt), "\n", e)
+                        message(crayon::bgGreen("Trying next sample"))
+                    }
+                )
+            }
+        }
+    } else{
+        message("The RD-number(s) provided do not have idat files listed in REDCap:/n")
+        print(myDt)
+    }
+    while(!is.null(dev.list())){dev.off()}
+}
+
 startCNVmaker <- function(output, token) {
     rds <- output$record_id[output$report_complete == "YES"]
     if (length(rds) > 0) {
-         message("\nRD-numbers with idats:\n")
-             print(rds)
-        assign("rds", rds)
-        message(dsh, crayon::bgMagenta("Starting CNV PNG Creation"),dsh2)
-        sourceFuns2()
-        ApiToken = gb$token
-        assign("ApiToken", ApiToken)
+        msgRDs(rds, token)
+        grabRDs(rds, token)
+        myDt <- read.csv("samplesheet.csv")
         tryCatch(
-            expr = {gb$save.png.files(gb$rds, token)},
+            expr = {gb$makeCNV(myDt)},
             error = function(e) {
                 message("The following error occured:\n",e)
                 message("\n\nTry checking the troubleshooting section on GitHub:\n")
