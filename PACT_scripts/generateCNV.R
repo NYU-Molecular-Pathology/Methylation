@@ -154,7 +154,7 @@ copyOutputPng <-
             rownames_to_column() %>% filter(as.Date(ctime) == Sys.Date()) %>% pull(rowname)
         if (length(the.cnvs) > 0) {
             savePath <- file.path(outFolder, basename(the.cnvs))
-            message("Copying png files to Molecular folder: ", outFolder, "\n")
+            message("\nCopying png files to Molecular folder: ", outFolder, "\n")
             cat(the.cnvs, sep = "\n")
             try(fs::file_copy(path = the.cnvs, new_path = savePath), T)
             if (any(!file.exists(savePath))) {
