@@ -12,8 +12,8 @@ option_list <- list(
                           help = "Single-spaced list of molecular numbers (default %default)")
 )
 
-parser <-optparse::OptionParser(option_list=option_list)
-arguments <- optparse::parse_args (parser, positional_arguments=TRUE)
+parser <- optparse::OptionParser(option_list=option_list)
+arguments <- optparse::parse_args(parser)
 opt <- arguments$options
 args <- arguments$args
 
