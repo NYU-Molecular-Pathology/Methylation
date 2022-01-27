@@ -224,7 +224,9 @@ postData <- function(rcon, record){
 emailFile <- function(runId, outFi, rcon){
     record = data.frame(record_id = runId, run_number = runId)
     postData(rcon, record)
-    suppressMessages(redcapAPI::importFiles(rcon,file= outFi, runId, field="other_file", repeat_instance=1))
+    suppressMessages(
+        redcapAPI::importFiles(rcon,file= outFi, runId, field="other_file", repeat_instance=1)
+        )
     record$comments <- "pact_sample_list_email"
     postData(rcon, record)
     message(dsh,"\nEmail Notification Created",dsh,"\n")
@@ -280,35 +282,51 @@ grabRDs <- function(rd_numbers, token){
     gb$get.idats()  # copies idat files from return to current directory
 }
 
-makeCNV <- function(myDt, asPNG = T) {
-    mySentrix <- myDt[myDt[, "SentrixID_Pos"] %like% "_R0",]
-    if (nrow(mySentrix) > 0) {
-        for (sam in rownames(mySentrix)) {
-            sampleName <- mySentrix[sam, 1]
-            fn = file.path("~", "Desktop", paste0(sampleName, "_cnv.png"))
-            if (file.exists(fn)) {
-                message("\nFile already exists, skipping:", fn, "\n")
-            } else{
-                sentrix <- mySentrix[sam, "SentrixID_Pos"]
-                message("\nGetting RGset for ", sentrix, "\n")
-                RGsetEpic <- gb$grabRGset(getwd(), sentrix)
-                tryCatch(
-                    expr = {
-                        gb$gen.cnv.png2(RGsetEpic, sampleName, asPNG)
-                    },
-                    error = function(e) {
-                        erTxt <- paste0("An error occured with ", mySentrix[sam, 1]," png creation:")
-                        message(crayon::bgRed(erTxt), "\n", e)
-                        message(crayon::bgGreen("Trying next sample"))
-                    }
-                )
-            }
-        }
-    } else{
-        message("The RD-number(s) provided do not have idat files listed in REDCap:/n")
-        print(myDt)
+msgCreated <- function(mySentrix){
+    pngFiles <- paste0(file.path("~","Desktop",mySentrix[, 1]),"_cnv.png")
+    cnvMade <- file.exists(pngFiles)
+    if(any(cnvMade==F)){
+        message("The following failed to be created:")
+        print(pngFiles[!cnvMade])
+        message("Try running again or check GitHub troubleshooting")
     }
-    while(!is.null(dev.list())){dev.off()}
+    if(any(cnvMade==T)){
+        message("The following were created successfully:")
+        print(pngFiles[cnvMade])
+    }
+}
+
+loopCNV <- function(mySentrix, asPNG){
+    for (sam in rownames(mySentrix)) {
+        sampleName <- mySentrix[sam, 1]
+        fn = file.path("~", "Desktop", paste0(sampleName, "_cnv.png"))
+        if (file.exists(fn)) {
+            message("\nFile already exists, skipping:", fn, "\n")
+        } else{
+            sentrix <- mySentrix[sam, "SentrixID_Pos"]
+            message("\nGetting RGset for ", sentrix, "\n")
+            RGsetEpic <- gb$grabRGset(getwd(), sentrix)
+            tryCatch(
+                expr = {gb$gen.cnv.png2(RGsetEpic, sampleName, asPNG)},
+                error = function(e) {
+                    erTxt <-paste0("An error occured with ", mySentrix[sam, 1]," png creation:")
+                    message(crayon::bgRed(erTxt), "\n", e)
+                    message(crayon::bgGreen("Trying next sample"))}
+            )
+        }
+    }
+}
+
+makeCNV <- function(myDt, asPNG = T) {
+    mySentrix <- myDt[myDt[, "SentrixID_Pos"] %like% "_R0", ]
+    if (nrow(mySentrix) > 0) {
+        loopCNV(mySentrix, asPNG)
+        } else{
+            message("The RD-number(s) do not have idat files in REDCap:/n")
+            print(myDt)
+            }
+    msgCreated(mySentrix)
+    while (!is.null(dev.list())) {dev.off()}
 }
 
 startCNVmaker <- function(output, token) {
@@ -320,7 +338,7 @@ startCNVmaker <- function(output, token) {
         tryCatch(
             expr = {gb$makeCNV(myDt)},
             error = function(e) {
-                message("The following error occured:\n",e)
+                message("The following error occured:\n", e)
                 message("\n\nTry checking the troubleshooting section on GitHub:\n")
                 message("https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/PACT_scripts/README.md\n")
             },
