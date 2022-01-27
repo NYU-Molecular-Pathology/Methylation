@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 library("base"); gb <- globalenv(); assign("gb", gb)
 if(!require("optparse")){install.packages("optparse", dependencies = T, quiet = F)}
-library (optparse)
+library(optparse)
 
 option_list <- list(
     optparse::make_option(c("-t", "--token"),
@@ -13,7 +13,7 @@ option_list <- list(
 )
 
 parser <- optparse::OptionParser(option_list=option_list)
-arguments <- optparse::parse_args(parser)
+arguments <- optparse::parse_args(parser,positional_arguments = T)
 opt <- arguments$options
 args <- arguments$args
 
