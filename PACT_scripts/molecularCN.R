@@ -13,12 +13,12 @@ option_list <- list(
 )
 
 parser <- optparse::OptionParser(option_list=option_list)
-arguments <- optparse::parse_args(parser,positional_arguments = T)
+arguments <- optparse::parse_args(parser, positional_arguments = T)
 opt <- arguments$options
 args <- arguments$args
 
 token <- opt$token
-myMolecular <- strsplit(opt$molecular, " ")
+myMolecular <- strsplit(opt$molecular, " ")[[1]]
 
 dsh="\n================"
 dsh2="================\n"
@@ -28,7 +28,6 @@ message(dsh,"Parameters input",dsh2)
 message("token: ",token)
 message("Args input:")
 print (myMolecular)
-print (args)
 message("")
 
 stopifnot(!is.na(token))
