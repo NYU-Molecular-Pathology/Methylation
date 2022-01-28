@@ -70,7 +70,6 @@ grabAllRecords <- function(flds, rcon){
 }
 
 search.redcap <- function(rd_numbers, token=NULL) {
-    msgFunName(cpInLnk, "search.redcap")
     if(is.null(token)){message("You must provide an ApiToken!")};stopifnot(!is.null(token))
     rcon <- redcapAPI::redcapConnection(gb$apiLink, token)
     if (is.null(flds)){flds = c("record_id","b_number","primary_tech","second_tech","run_number",
