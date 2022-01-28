@@ -8,6 +8,8 @@ dsh2="================\n"
 token <- args[1]
 inputSheet <- args[2]
 
+apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
+
 # Displays the Input args -----
 message(dsh,"Parameters input",dsh2)
 message("token: ",token)
