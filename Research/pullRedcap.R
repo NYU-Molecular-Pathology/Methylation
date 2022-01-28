@@ -13,7 +13,7 @@ apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
 moVol = "/Volumes/molecular"
 rsVol = "/Volumes/snudem01labspace"
 rsch.idat = paste0(file.path(rsVol,"idats"))
-clin.idat = paste0(file.path(moVol, "MOLECULAR/iScan")
+clin.idat = paste0(file.path(moVol, "MOLECULAR/iScan"))
                    
 # Displays the Input args -----
 message(dsh,"Parameters input",dsh2)
