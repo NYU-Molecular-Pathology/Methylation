@@ -110,7 +110,8 @@ sourceFuns <- function(workingPath = NULL) {
     script.list <- c("SetRunParams.R","CopyInputs.R","PACT_scripts/generateCNV.R")
     if (is.null(workingPath)) {workingPath = getwd()}
     scripts <- paste0(mainHub, script.list)
-    invisible(lapply(scripts, function(i){devtools::source_url(i)}))
+    
+  invisible(lapply(scripts, function(i){devtools::source_url(i)}))
     gb$setDirectory(workingPath)
     return(gb$defineParams())
 }                   
