@@ -19,16 +19,6 @@ stopifnot(!is.na(inputSheet))
 readFlag <- endsWith(inputSheet,".csv")==T
 stopifnot(rlang::is_bool(readFlag))
 
-readInfo <- function(inputSheet, readFlag) {
-    if (readFlag == T) {
-        rds <- as.data.frame(read.csv(inputSheet))[, 1]
-        
-    } else{
-        rds <- readxl::read_excel(inputSheet, sheet = 1)[, 1]
-    }
-    return(rds)
-}
-
 # REDcap Heading Fields -----
 flds = c("record_id","b_number","tm_number","accession_number","block","diagnosis",
          "organ","tissue_comments","run_number", "nyu_mrn")
@@ -85,6 +75,16 @@ grabRDs <- function(rd_numbers, token){
     samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[,"barcode_and_row_column"],"_",2))
     gb$writeFromRedcap(result, samplesheet_ID) # writes API export as minfi dataframe sheet
     gb$get.idats()  # copies idat files from return to current directory
+}
+
+readInfo <- function(inputSheet, readFlag) {
+    if (readFlag == T) {
+        rds <- as.data.frame(read.csv(inputSheet))[, 1]
+        
+    } else{
+        rds <- readxl::read_excel(inputSheet, sheet = 1)[, 1]
+    }
+    return(rds)
 }
 
 # Search REDCap Worksheets for MRN Match for output -------------------------------------
