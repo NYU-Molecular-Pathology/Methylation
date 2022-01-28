@@ -102,4 +102,6 @@ loadPacks()
 checkMounts()
 
 rds <- readInfo(inputSheet,readFlag)
+message("Your RDs:)
+print(rds)
 grabRDs(rds, token)
