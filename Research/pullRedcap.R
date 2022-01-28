@@ -103,11 +103,23 @@ readInfo <- function(inputSheet, readFlag) {
     }
     return(rds)
 }
+                   
+# FUN: Sets your directory and sources the helper functions
+sourceFuns <- function(workingPath = NULL) {
+    mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
+    script.list <- c("SetRunParams.R","CopyInputs.R","PACT_scripts/generateCNV.R")
+    if (is.null(workingPath)) {workingPath = getwd()}
+    scripts <- paste0(mainHub, script.list)
+    invisible(lapply(scripts, function(i){devtools::source_url(i)}))
+    gb$setDirectory(workingPath)
+    return(gb$defineParams())
+}                   
 
 # Search REDCap Worksheets for MRN Match for output -------------------------------------
 loadPacks()
 checkMounts()
-
+sourceFuns()
+ApiToken <- token
 rds <- readInfo(inputSheet,readFlag)
 message("Your RDs:")
 print(rds)
