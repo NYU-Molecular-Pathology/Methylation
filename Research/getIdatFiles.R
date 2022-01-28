@@ -1,3 +1,9 @@
+cbVol = "/Volumes/CBioinformatics"
+moVol = "/Volumes/molecular"
+rsVol = "/Volumes/snudem01labspace"
+rsch.idat = paste0(file.path(rsVol,"idats"))
+clin.idat = paste0(file.path(moVol, "MOLECULAR/iScan"))
+
 getAllFiles <- function(idatDir, csvNam="samplesheet.csv") {
     ssheet <- read.csv(csvNam, strip.white=T)
     senP=ssheet[,grepl("Pos|Sentrix",colnames(ssheet))]
