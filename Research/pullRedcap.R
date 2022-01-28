@@ -47,9 +47,9 @@ checkMounts <- function(){
     zDrive = "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular"
     failMount <- ifelse(dir.exists(molecDrive),T,F)
     if(failMount!=T){
-        cat("PATH does not exist, ensure path is mounted:")
+        cat("\nPATH does not exist, ensure path is mounted:\n")
         cat(crayon::white$bgRed$bold(molecDrive))
-        cat("You must mount the network Z-drive path:\n")
+        cat("\nYou must mount the network Z-drive path:\n")
         cat(crayon::white$bgRed$bold(zDrive),"\n")
         stopifnot(!any(failMount==T))
     } else {message("\n",crayon::bgGreen("Z-drive path is accessible"),"\n")}
