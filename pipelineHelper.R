@@ -267,9 +267,8 @@ prepareRun <- function(token, baseFolder=NULL){
         message(crayon::bgBlue$white$bold(paste0(gb$runID,".xlsm"),"not found in worksheets folder"))
         stopifnot(runValid)
         }
-    if(is.null(baseFolder)){
-        baseFolder <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
-        }
+    if(is.null(baseFolder)){baseFolder <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"}
+    gb$methDir <- baseFolder
     methylPath <- gb$setRunDir(gb$runID, baseFolder)
     message("\n","Working directory set to:","\n")
     cat(crayon::bgGreen(methylPath))
