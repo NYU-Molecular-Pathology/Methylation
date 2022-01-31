@@ -4,7 +4,7 @@ apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
 cpInLnk = "https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/CopyInputs.R"
 
 msgFunName <- function(pthLnk, funNam){
-message("Executing function: ", funNam, " from RScript in:\n", pthLnk)
+message("Executing function: ", crayon::bgYellow(funNam), " from RScript in:\n", pthLnk)
 }
 
 grabYear<- function(yr) {
