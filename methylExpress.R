@@ -94,4 +94,8 @@ gb$prepareRun <- function(token, baseFolder=NULL){
 }
 
 prepareRun(token, baseFolder)
+
+if(!is.null(selectRDs)){
+    selectRDs <- stringr::str_split(selectRDs, ",")
+}
 gb$startRun(selectRDs)
