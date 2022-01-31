@@ -68,6 +68,11 @@ gb$prepareRun <- function(token, baseFolder=NULL){
         gb$methDir <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
         gb$baseDir <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
         }
+    if(str_detect(baseFolder, pattern="Desktop")==T){
+        warning("Trying to run methylation from Desktop working directory is not allowed")
+        message("Try setting baseFolder to '~/Documents/' instead")
+        stopifnot(str_detect(baseFolder, pattern="Desktop")==F)
+    }
     runValid <- gb$checkValidRun(gb$runID)
     message("Is the runID valid? ", runValid)
     if(!runValid){
@@ -76,11 +81,6 @@ gb$prepareRun <- function(token, baseFolder=NULL){
         stopifnot(runValid)
     }
     methylPath <- gb$setRunDir(gb$runID, workFolder = baseFolder)
-    if(str_detect(baseFolder, pattern="Desktop")==T){
-        warning("Trying to run methylation from Desktop working directory is not allowed")
-        message("Try setting baseFolder to '~/Documents/' instead")
-        stopifnot(str_detect(baseFolder, pattern="Desktop")==F)
-        }
     message("Working directory set to:")
     cat(crayon::bgGreen(methylPath))
     message(" ")
