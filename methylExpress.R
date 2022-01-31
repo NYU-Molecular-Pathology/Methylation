@@ -4,24 +4,13 @@ library("base"); gb <- globalenv(); assign("gb", gb)
 
 if(!require("devtools")){install.packages("devtools")}
 
-# If you have issues with conda and r, try running the following:
-# conda create -n r_env r-essentials r-base
-# conda activate r_env
-
 # Main Parameters trailing commandline
 token<-args[1]; runID<-args[2]; selectRDs<-args[3]
 baseFolder <- args[4] #NULL
 
 # Check Parameters Input
-if(length(selectRDs)==0){selectRDs=NULL}else {
-    if(is.na(selectRDs)){selectRDs=NULL}
-}
-
-if(length(baseFolder)==0){
-    baseFolder<-NULL
-}else {
-    if(is.na(baseFolder)){baseFolder<-NULL}
-}
+if(length(selectRDs)==0){selectRDs=NULL}else {if(is.na(selectRDs)){selectRDs=NULL}}
+if(length(baseFolder)==0){baseFolder<-NULL}else {if(is.na(baseFolder)){baseFolder<-NULL}}
 
 # Check Input Params
 cat("\n~~~~~~Parameters input:")
@@ -104,12 +93,6 @@ prepareRun <- function(token,baseFolder){
     gb$moveSampleSheet(gb$methDir) #copies outputs temp to desktop for QC.Rmd
     #gb$classifierInstall(instNew = F, rmpkg = F) # Loads pipeline or installs new
 }
-#gb$startRun <- function(selectRDs=NULL, runID=NULL, emailNotify=T){
-#    if(!is.null(selectRDs)){
-#        sampleOrder <- reOrderRun(selectRDs) # Re-order sample report generation for priority
-#        makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=T, selectSams=sampleOrder, redcapUp=T)
-#    } else {makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=F, selectSams=NULL, redcapUp=T)}
-#}
 
 prepareRun(token, baseFolder)
 gb$startRun(selectRDs)
