@@ -14,7 +14,7 @@ if(length(baseFolder)==0){baseFolder<-NULL}else {if(is.na(baseFolder)){baseFolde
 
 # Check Input Params
 message("\n~~~~~~~~~~~~~~~~~~~~~Parameters input~~~~~~~~~~~~~~~~~~~~~\n")
-message("token: ", token,"\nrunID: ", runID,"\nselectRDs: ", selectRDs,"\nbaseFolder: ", baseFolder))
+message("token: ", token,"\nrunID: ", runID,"\nselectRDs: ", selectRDs,"\nbaseFolder: ", baseFolder)
 message("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
 # Cancel if no token or runID
