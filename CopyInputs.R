@@ -88,8 +88,6 @@ setRunDir <- function(runID=NULL, workFolder=NULL){
         workFolder<- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
     assign("workFolder", "/Volumes/CBioinformatics/Methylation/Clinical_Runs")
     }
-    
-        
     newRun <- file.path(workFolder, runID)
     if(str_detect(newRun, "NULL")==T){
          newRun <- file.path(gb$methDir, runID)
@@ -102,7 +100,7 @@ setRunDir <- function(runID=NULL, workFolder=NULL){
         try(unlink(file.path("~/Desktop",runID), T, T),silent = T)
     }
     
-    message(newRun,"\n","newRunPath: ",newRunPath)
+    message(newRun,"\n", crayon::bgGreen("newRunPath: "),newRunPath)
     
     if(!dir.exists(newRun)){
         base::dir.create(newRun, mode = "777", recursive=T)
