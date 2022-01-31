@@ -62,7 +62,12 @@ gb$defineParams(
 if(!is.null(runID)){gb$setVar("runID", runID)}
 
 # Executes the functions in order to setup a run
-prepareRun <- function(token,baseFolder){
+gb$prepareRun <- function(token, baseFolder=NULL){
+    if(is.null(baseFolder)){
+        gb$baseFolder <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
+        gb$methDir <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
+        gb$baseDir <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
+        }
     runValid <- gb$checkValidRun(gb$runID)
     message("Is the runID valid? ", runValid)
     if(!runValid){
@@ -70,11 +75,6 @@ prepareRun <- function(token,baseFolder){
         message(crayon::bgBlue$white$bold(paste0(gb$runID,".xlsm"),"not found in worksheets folder"))
         stopifnot(runValid)
     }
-    if(is.null(baseFolder)){
-        baseFolder <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
-        }
-    gb$methDir <- baseFolder
-    gb$baseDir <- baseFolder
     methylPath <- gb$setRunDir(gb$runID, workFolder = baseFolder)
     if(str_detect(baseFolder, pattern="Desktop")==T){
         warning("Trying to run methylation from Desktop working directory is not allowed")
