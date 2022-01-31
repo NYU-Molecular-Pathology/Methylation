@@ -344,5 +344,6 @@ get.rd.info <- function(rd_numbers=NULL, token=NULL, sh_name=NULL){
     samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[,"barcode_and_row_column"],"_",2))
     writeFromRedcap(result, samplesheet_ID) # writes API export as minfi dataframe sheet
     get.idats(csvNam = sh_name)  # copies idat files from return to current directory
+    
     return(result)
 }
