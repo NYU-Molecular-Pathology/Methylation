@@ -10,7 +10,9 @@ baseFolder <- args[4] #NULL
 
 # Check Parameters Input
 if(length(selectRDs)==0){selectRDs=NULL}else {if(is.na(selectRDs)){selectRDs=NULL}}
-if(length(baseFolder)==0){baseFolder<-NULL}else {if(is.na(baseFolder)){baseFolder<-NULL}}
+if(length(baseFolder)==0){
+    gb$baseFolder<-NULL
+}else {if(is.na(baseFolder)){baseFolder<-NULL}}
 
 # Check Input Params
 message("\n~~~~~~~~~~~~~~~~~~~~~Parameters input~~~~~~~~~~~~~~~~~~~~~\n")
@@ -20,7 +22,7 @@ message("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 # Cancel if no token or runID
 stopifnot(!is.null(token)); stopifnot(!is.null(runID))
 
-if(!is.na(baseFolder) & !is.null(baseFolder) & baseFolder!="NULL" & baseFolder!=NULL){
+if(!is.na(baseFolder) & !is.null(baseFolder) & length(baseFolder)>0){
     message("Trying custom run directory from input:","\n", baseFolder,"\n")
     isValid <- dir.exists(baseFolder)
     message("Checking if directory exists: ", isValid)
