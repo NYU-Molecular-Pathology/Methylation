@@ -20,7 +20,7 @@ message("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 # Cancel if no token or runID
 stopifnot(!is.null(token)); stopifnot(!is.null(runID))
 
-if(!is.na(baseFolder) & !is.null(baseFolder)){
+if(!is.na(baseFolder) & !is.null(baseFolder) & baseFolder!="NULL"){
     message("Trying custom run directory from input:","\n", baseFolder,"\n")
     isValid <- dir.exists(baseFolder)
     message("Checking if directory exists: ", isValid)
@@ -32,7 +32,7 @@ if(!is.na(baseFolder) & !is.null(baseFolder)){
             finally={stopifnot(dir.exists(baseFolder))}
         )
     }
-}
+}else {baseFolder=NULL}
 
 # Paths to the GitHub Repo files
 mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
