@@ -31,10 +31,7 @@ if(!is.na(baseFolder) & !is.null(baseFolder)){
         message("Directory does not exist, trying to create path:\n", baseFolder,"\n")
         tryCatch(
             expr={dir.create(baseFolder)},
-            warning=function(er){
-                message("\n","One warning during directory creation","\n")
-                message("\n",er,"\n")
-            },
+            warning=function(er){message("\n","One warning during directory creation","\n",er)},
             error=function(er){message("\n","An Error during directory creation:","\n",er,"\n")},
             finally={stopifnot(dir.exists(baseFolder))}
         )
@@ -93,7 +90,7 @@ gb$prepareRun <- function(token, baseFolder=NULL){
     #gb$classifierInstall(instNew = F, rmpkg = F) # Loads pipeline or installs new
 }
 
-prepareRun(token, baseFolder)
+gb$prepareRun(token, baseFolder)
 
 if(!is.null(selectRDs)){
     selectRDs <- stringr::str_split(selectRDs, ",")
