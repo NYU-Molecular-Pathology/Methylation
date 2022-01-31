@@ -130,6 +130,11 @@ defineParams <- function(
 # Changes the working directory using the system CD command
 setDirectory <- function(foldr) {
     msgFunName(setRunLnk,"setDirectory")
-    bsDir = paste("cd", foldr); mm2 = crayon::white$bgRed("Location Not Found:", foldr)
-    if (dir.exists(foldr)) {system(bsDir);setwd(foldr);assign("workDir", foldr)} else{warning(mm2)}
+    bsDir = paste("cd", foldr)
+    mm2 = crayon::white$bgRed("Location Not Found:", foldr)
+    
+    if (dir.exists(foldr)) {
+        system(bsDir)
+        setwd(foldr)
+        assign("workDir", foldr)} else{warning(mm2)}
 }
