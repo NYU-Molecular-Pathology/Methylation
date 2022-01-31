@@ -48,7 +48,6 @@ script.list = c("LoadInstall_new.R","SetRunParams.R", "CopyInputs.R","CopyOutput
 # Source GitHub Scripts
 scripts = paste0(mainHub, script.list)
 invisible(lapply(scripts, function(i) {devtools::source_url(i)}))
-
 # Define any custom directories here, default is NULL
 #mnp.pk.loc = NULL, ApiToken = NULL, methDir = NULL, clinDrv = NULL, rschOut = NULL, clinOut = NULL,
 #rsch.idat = NULL, clin.idat = NULL, QC_file = NULL, isMC = T, baseDir = NULL, runID = NULL
