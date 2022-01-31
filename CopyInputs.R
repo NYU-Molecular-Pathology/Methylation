@@ -7,6 +7,10 @@ msgFunName <- function(pthLnk, funNam){
 message("Executing function: ", crayon::bgYellow(funNam), " from RScript in:\n", pthLnk)
 }
 
+msgParams <- function(...){
+    message("Params passed: ", crayon::bgYellow(paste(...)))
+}
+
 grabYear<- function(yr) {
     msgFunName(cpInLnk, "grabYear")
     rnum <- NULL
@@ -51,6 +55,8 @@ checkValidRun <- function(runID){
 # FUN: copies the molecular or research lab Worksheet xlsm to cwd
 copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
     msgFunName(cpInLnk, "copyWorksheetFile")
+    msgParams(runID, runYear)
+    
     if (is.null(runID)){runID=paste0(basename(getwd()))} else {runID=runID}
     stopifnot(!is.null(runID))
     #if (is.null(runYear)){
@@ -81,6 +87,7 @@ copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
 # Sets the methylation run directory named by the new run name
 setRunDir <- function(runID=NULL, workFolder=NULL){
     msgFunName(cpInLnk, "setRunDir")
+    msgParams(runID, workFolder)
     #runID <- gb$ckNull(runID, paste0(basename(getwd())), deparse(substitute(runID,env=gb)))
     if(is.null(gb$methDir)){gb$methDir<- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"}
     workFolder <- gb$ckNull(workFolder, gb$methDir, deparse(substitute(workFolder,env=gb)))
