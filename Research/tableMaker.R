@@ -4,6 +4,39 @@ setDirectory<-function(foldr) {
     if (dir.exists(foldr)) {system(bsDir);setwd(foldr);assign("runDir", foldr)} else{warning(mm2)}
 }
 
+#knitr::opts_chunk$set(fig.width=15, fig.height=10)
+library("foreach")
+require("foreach")
+library("dplyr")
+library("kableExtra")
+if(!require("GenVisR")){BiocManager::install("GenVisR")}
+library("minfi")
+require("minfi")
+library("conumee")
+library("mnp.v11b6")
+library("enrichplot")
+library("limma")
+library("stringr")
+library(tidyverse)
+require(tidyr)
+library("DOSE")
+library(ggnewscale)
+library("enrichplot")
+require("enrichplot")
+if(!require("assertr")){install.packages("assertr")}
+suppressPackageStartupMessages(library(ComplexHeatmap))
+require("ComplexHeatmap")
+library("Biobase")
+if(!require("magick")){install.packages("magick", quiet =T)}
+if(!require("irlba")){install.packages("irlba", quiet =T)}
+library(magick)
+library(grid)
+require(grid)
+library(gridExtra)
+require(gridExtra)
+library(Cairo)
+require(Cairo)
+
 makeDt <- function(targets) {
   theDt <-
     DT::datatable(
@@ -11,7 +44,7 @@ makeDt <- function(targets) {
       selection = "single",
       filter = list(
         position = 'top',
-        clear = F,
+        clear = T,
         plain = T
       ),
       autoHideNavigation = T,
@@ -23,7 +56,7 @@ makeDt <- function(targets) {
         rownames = F,
         lengthChange = T,
         searchable = T,
-        columnDefs = list(list(width = '10%', visible=TRUE, targets = c(1:ncol(targets))))
+        columnDefs = list(list(className = 'dt-left', width = '10%', position="left", visible=TRUE, targets = c(1:ncol(targets))))
       )
     )
   return(theDt)
