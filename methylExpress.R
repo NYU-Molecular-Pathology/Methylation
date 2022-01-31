@@ -80,7 +80,7 @@ gb$defineParams(
 if(!is.null(runID)){gb$setVar("runID", runID)}
 
 # Executes the functions in order to setup a run
-prepareRun <- function(token){
+prepareRun <- function(token,baseFolder){
     runValid <- gb$checkValidRun(gb$runID)
     message("Is the runID valid? ", runValid)
     if(!runValid){
@@ -93,6 +93,8 @@ prepareRun <- function(token){
     gb$setVar("ApiToken", token) # assign the ApiToken & print params
     gb$copyWorksheetFile(runID = gb$runID) # copies the xlsm file
     gb$readSheetWrite() # reads xlsm and generates input .csv samplesheet
+    methDir = baseFolder
+    baseDir = baseFolder
     gb$get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
     gb$moveSampleSheet(gb$methDir) #copies outputs temp to desktop for QC.Rmd
     #gb$classifierInstall(instNew = F, rmpkg = F) # Loads pipeline or installs new
@@ -105,5 +107,5 @@ prepareRun <- function(token){
 #    } else {makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=F, selectSams=NULL, redcapUp=T)}
 #}
 
-prepareRun(token)
+prepareRun(token,baseFolder)
 gb$startRun(selectRDs)
