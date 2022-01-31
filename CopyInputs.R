@@ -123,7 +123,10 @@ getTotalSamples <- function(){
 # FUN: translates the xlsm excel file to the .csv samplesheet for redcap and minfi
 writeSampleSheet <- function(df, samplesheet_ID, bn = NULL, sampleName, dnaNumber, Sentrix) {
     msgFunName(cpInLnk, "writeSampleSheet")
-    if (is.null(bn)) {bn = file.path(getwd(), df$Sentrix)}
+    if (is.null(bn)) {
+        #bn = file.path(getwd(), df$Sentrix)
+        bn = file.path(gb$methDir, df$Batch, df$Sentrix)
+    }
     samplesheet_csv = data.frame(
         Sample_Name =  df[, sampleName],
         DNA_Number =df[, dnaNumber],
