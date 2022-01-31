@@ -168,6 +168,7 @@ sh_Dat <- as.data.frame(
     for (i in samList) {
         outFileN = paste0(data[i,1],".html")
         outPathN = file.path(gb$workFolder,gb$runID,outFileN)
+        message("outPathN= ", outPathN)
         if(file.exists(outPathN)){
             cat(bky(outFileN, "already exists! Skipping sample"),"\n")
             next
