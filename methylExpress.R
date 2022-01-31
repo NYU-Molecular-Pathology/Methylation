@@ -17,7 +17,7 @@ if(length(baseFolder)==0){
 # Check Input Params
 message("\n~~~~~~~~~~~~~~~~~~~~~Parameters input~~~~~~~~~~~~~~~~~~~~~\n")
 message("token: ", token,"\nrunID: ", runID,"\nselectRDs: ", selectRDs, "\nbaseFolder: ", baseFolder)
-message("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+message("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
 # Cancel if no token or runID
 stopifnot(!is.null(token)); stopifnot(!is.null(runID))
