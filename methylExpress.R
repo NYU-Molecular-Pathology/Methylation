@@ -40,20 +40,14 @@ if(!is.na(baseFolder) & !is.null(baseFolder)){
     message("Checking if directory exists: ", isValid)
     if(isValid==F){
         message("Directory does not exist, trying to create path:\n", baseFolder,"\n")
-
         tryCatch(
             expr={dir.create(baseFolder)},
             warning=function(er){
                 message("\n","One warning during directory creation","\n")
                 message("\n",er,"\n")
             },
-            error=function(er){
-                message("\n","An Error during directory creation:","\n")
-                message("\n",er,"\n")
-            },
-            finally={
-                stopifnot(dir.exists(baseFolder))
-            }
+            error=function(er){message("\n","An Error during directory creation:","\n",er,"\n")},
+            finally={stopifnot(dir.exists(baseFolder))}
         )
     }
 }
@@ -99,11 +93,13 @@ prepareRun <- function(token,baseFolder){
         message("Try setting baseFolder to '~/Documents/' instead")
         stopifnot(str_detect(baseFolder, pattern="Desktop")==F)
         }
-    message("Working directory set to:"); cat(crayon::bgGreen(methylPath)); setwd(methylPath)
+    message("Working directory set to:")
+    cat(crayon::bgGreen(methylPath))
+    message(" ")
+    setwd(methylPath)
     gb$setVar("ApiToken", token) # assign the ApiToken & print params
     gb$copyWorksheetFile(runID = gb$runID) # copies the xlsm file
     gb$readSheetWrite() # reads xlsm and generates input .csv samplesheet
-    
     gb$get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
     gb$moveSampleSheet(gb$methDir) #copies outputs temp to desktop for QC.Rmd
     #gb$classifierInstall(instNew = F, rmpkg = F) # Loads pipeline or installs new
