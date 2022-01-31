@@ -88,13 +88,15 @@ prepareRun <- function(token,baseFolder){
         message(crayon::bgBlue$white$bold(paste0(gb$runID,".xlsm"),"not found in worksheets folder"))
         stopifnot(runValid)
     }
-    methylPath <- gb$setRunDir(gb$runID, baseFolder)
+    gb$methDir <- baseFolder
+    gb$baseDir <- baseFolder
+    methylPath <- gb$setRunDir(gb$runID, workFolder = baseFolder)
+
     message("Working directory set to:"); cat(crayon::bgGreen(methylPath)); setwd(methylPath)
     gb$setVar("ApiToken", token) # assign the ApiToken & print params
     gb$copyWorksheetFile(runID = gb$runID) # copies the xlsm file
     gb$readSheetWrite() # reads xlsm and generates input .csv samplesheet
-    gb$methDir <- baseFolder
-    gb$baseDir <- baseFolder
+    
     gb$get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
     gb$moveSampleSheet(gb$methDir) #copies outputs temp to desktop for QC.Rmd
     #gb$classifierInstall(instNew = F, rmpkg = F) # Loads pipeline or installs new
