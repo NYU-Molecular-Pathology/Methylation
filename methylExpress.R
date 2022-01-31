@@ -13,9 +13,9 @@ if(length(selectRDs)==0){selectRDs=NULL}else {if(is.na(selectRDs)){selectRDs=NUL
 if(length(baseFolder)==0){baseFolder<-NULL}else {if(is.na(baseFolder)){baseFolder<-NULL}}
 
 # Check Input Params
-message("\n~~~~~~Parameters input:\n")
+message("\n~~~~~~~~~~~~~~~~~~~~~Parameters input~~~~~~~~~~~~~~~~~~~~~\n")
 message("token: ", token,"\nrunID: ", runID,"\nselectRDs: ", selectRDs,"\nbaseFolder: ", baseFolder))
-message("~~~~~~~~~~~~~~~~~~~~~")
+message("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
 # Cancel if no token or runID
 stopifnot(!is.null(token)); stopifnot(!is.null(runID))
