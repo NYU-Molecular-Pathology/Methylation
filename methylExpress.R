@@ -12,7 +12,8 @@ baseFolder <- args[4] #NULL
 # Check Parameters Input
 if(length(selectRDs)==0 | identical(selectRDs,NULL) | identical(selectRDs,"NULL")
 ){selectRDs=NULL}else {if(is.na(selectRDs)){selectRDs=NULL}}
-if(length(baseFolder)==0 | identical(baseFolder,NULL) | identical(baseFolder,"NULL")){
+if(length(baseFolder)==0 | identical(baseFolder,NULL) | identical(baseFolder,"NULL")
+){
     gb$baseFolder<-NULL
 }else {if(is.na(baseFolder)){gb$baseFolder<-NULL}}
 
@@ -24,7 +25,7 @@ message("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 # Cancel if no token or runID
 stopifnot(!is.null(token)); stopifnot(!is.null(runID))
 
-if(!is.na(baseFolder) & !is.null(baseFolder) & !identical(baseFolder,NULL)){
+if(!is.null(baseFolder) & !identical(baseFolder,NULL)){
     message("Trying custom run directory from input:","\n", baseFolder,"\n")
     isValid <- dir.exists(baseFolder)
     message("Checking if directory exists: ", isValid)
@@ -80,7 +81,6 @@ gb$prepareRun <- function(token, baseFolder=NULL){
         message(crayon::bgBlue$white$bold(paste0(gb$runID,".xlsm"),"not found in worksheets folder"))
         stopifnot(runValid)
     }
-  
     methylPath <- gb$setRunDir(gb$runID, workFolder = baseFolder)
     message("Working directory set to:")
     cat(crayon::bgGreen(methylPath))
