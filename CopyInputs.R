@@ -88,7 +88,7 @@ setRunDir <- function(runID=NULL, workFolder=NULL){
     runID <- gb$ckNull(runID, paste0(basename(getwd())), deparse(substitute(runID,env=gb)))
     if(is.null(gb$methDir)){gb$methDir<- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"}
     workFolder <- gb$ckNull(workFolder, gb$methDir, deparse(substitute(workFolder,env=gb)))
-    
+    if(is.null(workFolder)){gb$workFolder<- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"}
     newRun <- file.path(workFolder, runID)
     assign("newRunPath", newRun)
     if(grepl("TEST",runID)){
@@ -96,7 +96,7 @@ setRunDir <- function(runID=NULL, workFolder=NULL){
         dir.create(newRun)
         try(unlink(file.path("~/Desktop",runID), T, T),silent = T)
     }
-    message(newRun)
+    message(newRun,"\n","newRunPath: ",newRunPath)
     if(!dir.exists(newRun)){
         base::dir.create(newRun, mode = "777", recursive=T)
         Sys.chmod(newRun, mode = "777")
