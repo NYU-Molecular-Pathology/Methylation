@@ -80,7 +80,7 @@ copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
 
 # Sets the methylation run directory named by the new run name
 setRunDir <- function(runID=NULL, workFolder=NULL){
-        msgFunName(cpInLnk, "setRunDir")
+    msgFunName(cpInLnk, "setRunDir")
     #runID <- gb$ckNull(runID, paste0(basename(getwd())), deparse(substitute(runID,env=gb)))
     if(is.null(gb$methDir)){gb$methDir<- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"}
     workFolder <- gb$ckNull(workFolder, gb$methDir, deparse(substitute(workFolder,env=gb)))
