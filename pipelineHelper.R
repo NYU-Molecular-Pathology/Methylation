@@ -9,9 +9,7 @@ QC_file <- "/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/ins
 
 pipeLnk <- "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/pipelineHelper.R"
 
-msgFunName <- function(pthLnk, funNam){
-message("\nExecuting function: ", funNam, " from RScript in:\n", pthLnk,"\n")
-}
+msgFunName <- function(pthLnk, funNam){message("Executing function: ", funNam, " from RScript in:\n", pthLnk)}
 
 # Helper function to return the index of priority selected samples first
 reOrderRun <- function(selectRDs, sh=NULL){
