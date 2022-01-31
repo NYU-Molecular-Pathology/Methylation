@@ -88,7 +88,13 @@ setRunDir <- function(runID=NULL, workFolder=NULL){
         workFolder<- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
     assign("workFolder", "/Volumes/CBioinformatics/Methylation/Clinical_Runs")
     }
+    
+        
     newRun <- file.path(workFolder, runID)
+    if(str_detect(newRun, "NULL")==T){
+         newRun <- file.path(gb$methDir, runID)
+    }
+
     assign("newRunPath", newRun)
     if(grepl("TEST",runID)){
         if(dir.exists(newRun)){unlink(newRun, T, T)}
