@@ -88,7 +88,7 @@ prepareRun <- function(token,baseFolder){
         message(crayon::bgBlue$white$bold(paste0(gb$runID,".xlsm"),"not found in worksheets folder"))
         stopifnot(runValid)
     }
-    methylPath <- gb$setRunDir(gb$runID)
+    methylPath <- gb$setRunDir(gb$runID, baseFolder)
     message("Working directory set to:"); cat(crayon::bgGreen(methylPath)); setwd(methylPath)
     gb$setVar("ApiToken", token) # assign the ApiToken & print params
     gb$copyWorksheetFile(runID = gb$runID) # copies the xlsm file
@@ -99,7 +99,6 @@ prepareRun <- function(token,baseFolder){
     gb$moveSampleSheet(gb$methDir) #copies outputs temp to desktop for QC.Rmd
     #gb$classifierInstall(instNew = F, rmpkg = F) # Loads pipeline or installs new
 }
-
 #gb$startRun <- function(selectRDs=NULL, runID=NULL, emailNotify=T){
 #    if(!is.null(selectRDs)){
 #        sampleOrder <- reOrderRun(selectRDs) # Re-order sample report generation for priority
@@ -107,5 +106,5 @@ prepareRun <- function(token,baseFolder){
 #    } else {makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=F, selectSams=NULL, redcapUp=T)}
 #}
 
-prepareRun(token,baseFolder)
+prepareRun(token, baseFolder)
 gb$startRun(selectRDs)
