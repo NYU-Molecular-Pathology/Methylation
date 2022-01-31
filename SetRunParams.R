@@ -4,7 +4,7 @@ gb <- globalenv(); assign("gb", gb)
 setRunLnk = "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/SetRunParams.R"
 
 msgFunName <- function(pthLnk, funNam){
-    message("\nExecuting function: ", funNam, " from RScript in:\n", pthLnk,"\n")
+    message("Executing function: ", funNam, " from RScript in:\n", pthLnk,"\n")
 }
 
 # FUN: Loads all the packages used in the RMD Methylation QC file
