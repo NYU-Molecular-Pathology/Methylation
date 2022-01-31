@@ -94,7 +94,11 @@ prepareRun <- function(token,baseFolder){
     gb$methDir <- baseFolder
     gb$baseDir <- baseFolder
     methylPath <- gb$setRunDir(gb$runID, workFolder = baseFolder)
-
+    if(str_detect(baseFolder, pattern="Desktop")==T){
+        warning("Trying to run methylation from Desktop working directory is not allowed")
+        message("Try setting baseFolder to '~/Documents/' instead")
+        stopifnot(str_detect(baseFolder, pattern="Desktop")==F)
+        }
     message("Working directory set to:"); cat(crayon::bgGreen(methylPath)); setwd(methylPath)
     gb$setVar("ApiToken", token) # assign the ApiToken & print params
     gb$copyWorksheetFile(runID = gb$runID) # copies the xlsm file
