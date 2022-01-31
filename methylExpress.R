@@ -14,7 +14,7 @@ if(length(baseFolder)==0){baseFolder<-NULL}else {if(is.na(baseFolder)){baseFolde
 
 # Check Input Params
 message("\n~~~~~~~~~~~~~~~~~~~~~Parameters input~~~~~~~~~~~~~~~~~~~~~\n")
-message("token: ", token,"\nrunID: ", runID,"\nselectRDs: ", selectRDs,"\nbaseFolder: ", baseFolder)
+message("token: ", token,"\nrunID: ", runID,"\nselectRDs: ", selectRDs, "\nbaseFolder: ", baseFolder)
 message("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
 # Cancel if no token or runID
@@ -24,8 +24,7 @@ if(!is.na(baseFolder) & !is.null(baseFolder)){
     message("Trying custom run directory from input:","\n", baseFolder,"\n")
     isValid <- dir.exists(baseFolder)
     message("Checking if directory exists: ", isValid)
-    if(isValid==F){
-        message("Directory does not exist, trying to create path:\n", baseFolder,"\n")
+    if(isValid==F){message("Directory does not exist, trying to create path:\n", baseFolder,"\n")
         tryCatch(
             expr={dir.create(baseFolder)},
             warning=function(er){message("\n","One warning during directory creation","\n",er)},
