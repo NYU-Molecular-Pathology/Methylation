@@ -150,7 +150,7 @@ uploadToRedcap <- function(file.list, deskCSV=T) {
         runID = paste0(runIDs[idx])
         message(crayon::white$bgBlue("Importing Record Report:"))
         data = data.frame(record_id = recordName, run_number = runID)
-        redcapAPI::importRecords(rcon, data, overwriteBehavior = "normal",returnContent = "ids", returnData = T)
+        redcapAPI::importRecords(rcon, data, overwriteBehavior = "normal",returnContent = "ids", returnData = F)
         redcapAPI::importFiles(rcon = rcon,file = pth,record = recordName,field = "classifier_pdf",repeat_instance = 1)
     }
     }
