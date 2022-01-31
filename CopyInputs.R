@@ -10,12 +10,8 @@ message("Executing function: ", funNam, " from RScript in:\n", pthLnk,"\n")
 grabYear<- function(yr) {
     msgFunName(cpInLnk, "grabYear")
     rnum <- NULL
-    if(nchar(yr)>2){
-        rnum <- substring(yr, 3)
-    }else{rnum <- yr}
-    if(nchar(yr)>0){
-        rnum <- paste0("20",rnum)
-    }else{rnum}
+    if(nchar(yr)>2){rnum <- substring(yr, 3)}else{rnum <- yr}
+    if(nchar(yr)>0){rnum <- paste0("20",rnum)}else{rnum}
     return(rnum)
 }
 
