@@ -377,6 +377,10 @@ startmsg <- function(){
     if (!dir.exists(zdriv)) {warning(paste(wmm, zdriv))}
     message("You have the following drives mounted:")
     system("ls /Volumes")
+    message("Try running:\n",
+            "diskutil mountdisk ",cbio,"\n",
+            "diskutil mountdisk ", zdriv
+           )
     stopifnot(dir.exists(cbio) | dir.exists(zdriv))
 }
 
