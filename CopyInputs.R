@@ -7,9 +7,7 @@ msgFunName <- function(pthLnk, funNam){
 message("Executing function: ", crayon::bgYellow(funNam), " from RScript in:\n", pthLnk)
 }
 
-msgParams <- function(...){
-    message("Params passed: ", crayon::bgYellow(paste(...)))
-}
+msgParams <- function(...){message("Params passed: ", crayon::bgYellow(paste(..., sep = ",")))}
 
 grabYear<- function(yr) {
     msgFunName(cpInLnk, "grabYear")
