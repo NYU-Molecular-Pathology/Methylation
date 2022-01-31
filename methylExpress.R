@@ -20,7 +20,7 @@ message("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 # Cancel if no token or runID
 stopifnot(!is.null(token)); stopifnot(!is.null(runID))
 
-if(!is.na(baseFolder) & !is.null(baseFolder) & baseFolder!="NULL"){
+if(!is.na(baseFolder) & !is.null(baseFolder) & baseFolder!="NULL" & baseFolder!=NULL){
     message("Trying custom run directory from input:","\n", baseFolder,"\n")
     isValid <- dir.exists(baseFolder)
     message("Checking if directory exists: ", isValid)
