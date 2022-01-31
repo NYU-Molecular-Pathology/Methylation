@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 args <- commandArgs(TRUE)
-library("base"); gb <- globalenv(); assign("gb", gb)
+library("base")
+gb <- globalenv(); assign("gb", gb)
 
 if(!require("devtools")){install.packages("devtools")}
 
@@ -9,10 +10,9 @@ token<-args[1]; runID<-args[2]; selectRDs<-args[3]
 baseFolder <- args[4] #NULL
 
 # Check Parameters Input
-if(length(selectRDs)==0 | equals(selectRDs,NULL) | equals(selectRDs,"NULL")
-  ){selectRDs=NULL}else {if(is.na(selectRDs)){selectRDs=NULL}}
-if(length(baseFolder)==0 | equals(baseFolder,NULL) | equals(baseFolder,"NULL")
-  ){
+if(length(selectRDs)==0 | identical(selectRDs,NULL) | identical(selectRDs,"NULL")
+){selectRDs=NULL}else {if(is.na(selectRDs)){selectRDs=NULL}}
+if(length(baseFolder)==0 | identical(baseFolder,NULL) | identical(baseFolder,"NULL")){
     gb$baseFolder<-NULL
 }else {if(is.na(baseFolder)){gb$baseFolder<-NULL}}
 
@@ -24,7 +24,7 @@ message("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 # Cancel if no token or runID
 stopifnot(!is.null(token)); stopifnot(!is.null(runID))
 
-if(!is.na(baseFolder) & !is.null(baseFolder) & !equals(baseFolder,NULL)){
+if(!is.na(baseFolder) & !is.null(baseFolder) & !identical(baseFolder,NULL)){
     message("Trying custom run directory from input:","\n", baseFolder,"\n")
     isValid <- dir.exists(baseFolder)
     message("Checking if directory exists: ", isValid)
@@ -67,11 +67,11 @@ gb$prepareRun <- function(token, baseFolder=NULL){
     }
 
     if(length(baseFolder)>0){
-    if(str_detect(baseFolder, pattern="Desktop")==T){
-        warning("Trying to run methylation from Desktop working directory is not allowed")
-        message("Try setting baseFolder to '~/Documents/' instead")
-        stopifnot(str_detect(baseFolder, pattern="Desktop")==F)
-    }
+        if(str_detect(baseFolder, pattern="Desktop")==T){
+            warning("Trying to run methylation from Desktop working directory is not allowed")
+            message("Try setting baseFolder to '~/Documents/' instead")
+            stopifnot(str_detect(baseFolder, pattern="Desktop")==F)
+        }
     }
     runValid <- gb$checkValidRun(gb$runID)
     message("Is the runID valid? ", runValid)
@@ -80,6 +80,7 @@ gb$prepareRun <- function(token, baseFolder=NULL){
         message(crayon::bgBlue$white$bold(paste0(gb$runID,".xlsm"),"not found in worksheets folder"))
         stopifnot(runValid)
     }
+  
     methylPath <- gb$setRunDir(gb$runID, workFolder = baseFolder)
     message("Working directory set to:")
     cat(crayon::bgGreen(methylPath))
