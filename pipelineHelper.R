@@ -257,7 +257,7 @@ checkMounts <- function(){
 }
 
 # Executes the functions in order to setup a run
-prepareRun <- function(token){
+prepareRun <- function(token, baseFolder=NULL){
     msgFunName(pipeLnk,"prepareRun")
     
     runValid <- gb$checkValidRun(gb$runID)
@@ -267,8 +267,13 @@ prepareRun <- function(token){
         message(crayon::bgBlue$white$bold(paste0(gb$runID,".xlsm"),"not found in worksheets folder"))
         stopifnot(runValid)
         }
-    methylPath <- gb$setRunDir(gb$runID)
-    message("\n","Working directory set to:","\n"); cat(crayon::bgGreen(methylPath)); setwd(methylPath)
+    if(is.null(baseFolder)){
+        baseFolder <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
+        }
+    methylPath <- gb$setRunDir(gb$runID, baseFolder)
+    message("\n","Working directory set to:","\n")
+    cat(crayon::bgGreen(methylPath))
+    setwd(methylPath)
     gb$setVar("ApiToken", token) # assign the ApiToken & print params
     gb$copyWorksheetFile(runID = gb$runID) # copies the xlsm file
     gb$readSheetWrite() # reads xlsm and generates input .csv samplesheet
