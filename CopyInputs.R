@@ -124,7 +124,7 @@ getTotalSamples <- function(){
     temp <- stringi::stri_detect_fixed(thisSh, "~$")
     thisSh <- thisSh[!temp]
     if(length(thisSh)==0){print("No .xlsm sheet, defaulting to 16");return(16)}
-    worksheet <- readxl::read_excel(thisSh[1], col_names="Total", range="B4:B4")
+    worksheet <- suppressMessages(readxl::read_excel(thisSh[1], col_names="Total", range="B4:B4"))
     if (length(worksheet) == 0) {
         message("Samplesheet ", thisSh[1]," is invalid format, manually edit")
         message("Try copying the template:\n", templateDir)
@@ -163,14 +163,14 @@ readSampleSheet <- function(runID=F, totalSam=F, wks=F) {
     file.list <- file.list[!temps]
     sampleSheet <- paste0(file.list[1])
     message(paste0("Reading worksheet named: ", sampleSheet))
-    worksheet <- readxl::read_excel(sampleSheet, sheet=2, col_names=T, col_types="text", trim_ws=T)
+    worksheet <- suppressMessages(readxl::read_excel(sampleSheet, sheet=2, col_names=T, col_types="text", trim_ws=T))
     wsDate <-  as.data.frame(readxl::read_excel(sampleSheet, sheet=1, col_names=F, range="F4:F4", trim_ws=T))[1]
     names(wsDate)="Date"
     colnames(worksheet)
     worksheet$Date <- paste0(wsDate$Date[1])
     if (runID == T) {return(worksheet$Project[1])}
     if (totalSam == T){
-        runNum <- readxl::read_excel(sampleSheet, sheet=1, col_names=F, range="B4")
+        runNum <- suppressMessages(readxl::read_excel(sampleSheet, sheet=1, col_names=F, range="B4"))
         runNum <- as.numeric(runNum)
         return(runNum)
     }
