@@ -25,7 +25,7 @@ workDir <-  params$workDir # working Knit directory
 # To this Knit directory RMD, copy: 
 #"_MethylMatch.xlsx","-QC.tsv","-SampleSheet.csv", and all ".FACETS.cnv.plot.pdf" files
 outDir <- file.path(workDir, paste0(pactName,"_consensus"))
-message("Now Knitting ",pactName,".html")
+message("Now Knitting ", pactName, ".html")
 ```
 
 ---
@@ -39,19 +39,14 @@ author: "`r userName`"
 </style>
 
 ```{r setup, include=FALSE}
-library("knitr")
 knitr::opts_chunk$set(echo = FALSE)
-knitr::opts_knit$set(progress=TRUE, verbose=FALSE)
-options(width=1400)
-if(!require("animation")){install.packages("animation", dependencies=T)}
-if(!require("kableExtra")){install.packages("kableExtra",dependencies = T, quiet =T)}
-library("tidyverse"); library("readr"); library("ggplot2")
-library("data.table"); library("plotly"); library("DT"); library("animation")
-library("pdftools"); library("htmltools")
-animation::ani.options(autobrowse = FALSE)
+if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 6, quiet=T)}
+pkgs <- c("animation","tidyverse","knitr","kableExtra","readr","ggplot2","data.table","plotly","DT","pdftools", "htmltools")
+librarian::shelf(pkgs, ask=F)
+animation::ani.options(autobrowse = FALSE); options(width=1400)
 ```
 
-<span style="background-color: lightgreen;">PASS</span>  
+<span style="background-color:lightgreen;">PASS</span>  
 
 ```{r, label='Input Data', echo=FALSE, message=FALSE, warning=FALSE, error=FALSE}
 pngDir <- "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
@@ -62,20 +57,34 @@ descrip <- paste0(pactName,"_desc.csv")
 ```
 
 ```{r, label='Read in Data', echo=FALSE, message=FALSE, warning=FALSE, error=FALSE, include=FALSE}
+critialMnts <- c("/Volumes/CBioinformatics/Methylation", "/Volumes/molecular/MOLECULAR LAB ONLY")
+
+checkMounts <- function(critialMnts){
+    failMount <- lapply(critialMnts, function(driveMount){ifelse(!dir.exists(driveMount),return(T),return(F))})
+    if(any(failMount==T)){
+        toFix <- paste(critialMnts[which(failMount==T)])
+        cat("PATH does not exist, ensure drive is mounted:", toFix,"\n")
+        stopifnot(!any(failMount==T))}
+}
+
+checkMounts(critialMnts)
+
+if(!dir.exists(outDir){dir.create(outDir)})
 sysCmd <- paste("cd", outDir)
 system(sysCmd)
 setwd(outDir)
-samsheet <- list.files(pattern = "-SampleSheet.csv",all.files = T)[1]
-stopifnot(file.exists(samsheet))
-stopifnot(file.exists(methSheet))
+samsheet <- list.files(pattern = "-SampleSheet.csv", all.files = T)[1]
+stopifnot(file.exists(samsheet) & file.exists(methSheet))
 stopifnot(file.exists(qcTsv))
-stopifnot(dir.exists(philipsFtp))
+if(!file.exists(descrip)){
+  warning(paste("You must create/name your description file as:", descrip, "\nFile must be in same directory as Rmd:",getwd()))
+}
 stopifnot(file.exists(descrip))
-stopifnot(dir.exists(pngDir)) # checks if drive mounted to cnv png methylation
+stopifnot(dir.exists(pngDir) & dir.exists(philipsFtp)) # checks if drive mounted to cnv png methylation
 methData <- as.data.frame(readxl::read_excel(methSheet))
 methData <- methData[methData$report_complete=="YES",]
 methSams <- methData$Test_Number
-samList <- read.csv(samsheet,skip=19)[,c("Test_Number","Specimen_ID","Tumor_Content")] 
+samList <- read.csv(samsheet,skip=19)[, c("Test_Number","Specimen_ID","Tumor_Content")] 
 samples <- unique(samList$Test_Number)
 samples <- samples[samples!=0]
 sampleRows <- c(1:length(samples)) # if you have half part change to 1:8 or 32 etc
@@ -196,11 +205,8 @@ makeMethTab <- function(sam, methCn){
       message("Will create tab for each RD png file")
       for (rd in 1:length(currRD)) {
         rdTab <- paste0("Methylation", rd)
-        makeDT(rdTab, methCn,pdfFi=NULL,currRD[rd],sam)
-      }
-    } else{
-      makeDT("Methylation",methCn,NULL,currRD,sam)
-      }
+        makeDT(rdTab, methCn,pdfFi=NULL,currRD[rd],sam)}
+    } else{makeDT("Methylation",methCn,NULL,currRD,sam)}
   } else{cat("## **No Methylation** \n\n")}
 }
 
@@ -226,4 +232,3 @@ for (sam in samples) {
   makeMethTab(sam, methCn)
 }
 ```
-
