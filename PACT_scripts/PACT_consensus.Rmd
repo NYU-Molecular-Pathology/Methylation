@@ -69,7 +69,7 @@ checkMounts <- function(critialMnts){
 
 checkMounts(critialMnts)
 
-if(!dir.exists(outDir){dir.create(outDir)})
+if(!dir.exists(outDir)){dir.create(outDir)}
 sysCmd <- paste("cd", outDir)
 system(sysCmd)
 setwd(outDir)
