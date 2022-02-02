@@ -269,12 +269,11 @@ msgRDs <- function(rds,token){
     print(rds)
     assign("rds", rds)
     message(dsh, crayon::bgMagenta("Starting CNV PNG Creation"),dsh2)
-    sourceFuns2()
-    ApiToken = token
+    ApiToken <- token
     assign("ApiToken", ApiToken)
 }
 
-grabRDs <- function(rd_numbers, token){
+grabRDs1 <- function(rd_numbers, token){
     result <- gb$search.redcap(rd_numbers, token)
     result <- result[!is.na(result$barcode_and_row_column),]
     samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[,"barcode_and_row_column"],"_",2))
@@ -329,11 +328,12 @@ makeCNV <- function(myDt, asPNG = T) {
     while (!is.null(dev.list())) {dev.off()}
 }
 
-startCNVmaker <- function(output, token) {
+startCNVmaker2 <- function(output, token) {
     rds <- output$record_id[output$report_complete == "YES"]
-    if (length(rds) > 0) {
+    if (length(rds) > 0 & !is.null(rds) & !is.na(rds)) {
+             sourceFuns2()
         msgRDs(rds, token)
-        grabRDs(rds, token)
+        grabRDs1(rds, token)
         myDt <- read.csv("samplesheet.csv")
         tryCatch(
             expr = {gb$makeCNV(myDt)},
@@ -353,4 +353,4 @@ checkMounts()
 output <- getOuputData(token, flds, inputSheet, readFlag)
 
 # CNV PNG Creation -------------------------------------
-startCNVmaker(output, token)
+startCNVmaker2(output, token)
