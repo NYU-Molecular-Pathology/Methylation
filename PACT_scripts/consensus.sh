@@ -25,7 +25,7 @@ case "$workDir" in */)
     echo "${FG_CYA}$workDir${normal}";;
 esac
 
-concenDir="${workDir}${pactRun}_consensus/"
+consenDir="${workDir}${pactRun}_consensus/"
 
 csvFile="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/PACT_desc.csv"
 rmdFile="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/PACT_consensus.Rmd"
@@ -38,7 +38,8 @@ checkDir=`[ -d "${workDir}${pactRun}_consensus" ] || mkdir "${workDir}${pactRun}
 echo "$checkDir"
 
 echo "cd \"$workDir${FG_RED}$pactRun${normal}_consensus\""
-echo `cd $concenDir`
+changeDir=`cd $consenDir`
+#echo $changeDir
 
 echo "${bold}${BG_BLUE}To this directory, copy all the .cnv.plot.pdf facets files from:${normal}"
 echo "/gpfs/data/molecpathlab/production/NGS607/${FG_YLW}runID${normal}/output/cnv/FACETS/*.pdf"
@@ -49,14 +50,18 @@ echo "${FG_YLW}$runID${normal}-SampleSheet.csv"
 echo " "
 
 echo "${bold}${BG_BLUE}Copy the QC file below to the Rmd directory${normal}"
-echo "/gpfs/data/molecpathlab/production/NGS607/${FG_YLW}runID${normal}/${FG_RED}$pactRun${normal}-QC.tsv"
+
 echo " "
-echo "${bold}${BG_BLUE}Downloading files to working directory:${normal}"
-descFi="$concenDir${pactRun}_desc.csv"
-rmdFi="$concenDir${pactRun}_consensus.Rmd"
+echo "${bold}${BG_BLUE}Checking if files are in the directory directory:${normal}"
+
+descFi="$consenDir${pactRun}_desc.csv"
+rmdFi="$consenDir${pactRun}_consensus.Rmd"
+
+
+checkSam=`ls ${consenDir}*-SampleSheet.csv`
 
 if [ -f "$descFi" ]; then
-    echo "${FG_RED}$pactRun${normal}_desc.csv exists."
+    echo "${FG_GRN}${pactRun}_desc.csv${normal} exists."
 else 
     echo "Copying ${FG_RED}$pactRun${normal}_desc.csv from GitHub..."
     echo "curl -o ${FG_RED}$pactRun${normal}_desc.csv -L $csvFile -s"
@@ -64,12 +69,51 @@ else
 fi
 
 if [ -f "$rmdFi" ]; then
-    echo "${FG_RED}$pactRun${normal}_consensus.Rmd exists."
+    echo "${FG_GRN}${pactRun}_consensus.Rmd${normal} exists."
 else 
+    echo "~~~~~"
     echo "Copying ${FG_RED}$pactRun${normal}_consensus.Rmd from GitHub..."
     echo "curl -o ${FG_RED}$pactRun${normal}_consensus.Rmd -L $rmdFile -s"
     echo `curl -o $rmdFi -L $rmdFile -s`
 fi
+
+if [ -f "$checkSam" ]; then
+    echo "${FG_GRN}-SampleSheet.csv${normal} exists."
+else
+   echo "~~~~~"
+   echo "${FG_RED}-SampleSheet.csv${normal} is missing from the knit directory."
+   echo "Generating Samplesheet with makePactSheet.sh:"
+   echo `/Volumes/CBioinformatics/PACT/makePactSheet.sh ${pactRun}`
+   echo "Copy -SampleSheet.csv file to the knit directory and run again."
+   echo "Exiting"
+   exit 0
+fi
+
+if [ -f "$consenDir${pactRun}_MethylMatch.xlsx" ]; then
+    echo "${FG_GRN}${pactRun}_MethylMatch.xlsx${normal} exists."
+else 
+    echo "~~~~~"
+    echo "${FG_RED}${pactRun}_MethylMatch.xlsx${normal} is missing from the knit directory."
+    echo "Writing xlsx using /Volumes/CBioinformatics/PACT/methylMatch.sh:"
+    echo `/Volumes/CBioinformatics/PACT/methylMatch.sh ${pactRun}`
+    echo "Exiting"
+    exit 0
+fi
+
+if [ -f "$consenDir${pactRun}-QC.tsv" ]; then
+    echo "${FG_GRN}${pactRun}-QC.tsv${normal} exists."
+else 
+    echo "~~~~~"
+    echo "${FG_RED}${pactRun}-QC.tsv${normal} is missing from the knit directory."
+    echo "~~~~~"
+    echo "Copy the tsv file below:"
+    echo "/gpfs/data/molecpathlab/production/NGS607/${FG_YLW}runID${normal}/${FG_RED}$pactRun${normal}-QC.tsv"
+    echo "To your directory:"
+    echo "$consenDir"
+    echo "Exiting"
+    exit 0
+fi
+
 echo " "
 echo "${bold}${BG_BLUE}Knitting Rmd file with description csv:${normal}"
 echo "Rscript -e \"rmarkdown::render('${FG_RED}$pactRun${normal}_consensus.Rmd', params = list(pactName=${FG_RED}$pactRun${normal}, userName=${FG_GRN}$pactUser${normal}, workDir=${FG_CYA}$workDir${normal}${normal}))\""
