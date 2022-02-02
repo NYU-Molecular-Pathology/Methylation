@@ -53,7 +53,7 @@ loadPacks <- function(){
     rlis["CRAN"] = "http://cran.us.r-project.org"
     options(repos = rlis)
     invisible(lapply(pkgs, function(pk){
-        if(suppressWarnings(!require(pk, character.only=T))){
+        if(supM(!require(pk, character.only=T))){
             install.packages(pk,dependencies=T, verbose=T, repos="http://cran.us.r-project.org", type="both")
         }}))
     if(!require("systemfonts")){devtools::install_github('r-lib/systemfonts')}
@@ -61,8 +61,8 @@ loadPacks <- function(){
     if(!require("remotes")){install.packages("remotes", dependencies=T)}
     if(!require("chromote")){remotes::install_github("rstudio/chromote", upgrade ="never")}
     if(!require("webshot2")){remotes::install_github("rstudio/webshot2")}
-    library("redcapAPI")
-    library("chromote")
+    supM(library("redcapAPI"))
+    supM(library("chromote"))
     #try(tinytex::tlmgr_install(),silent=T)
     #try(tinytex:::install_prebuilt(),silent=T)
 }
@@ -257,10 +257,10 @@ sourceFuns2 <- function(workingPath = NULL) {
     script.list <- c("SetRunParams.R","CopyInputs.R","PACT_scripts/generateCNV.R")
     if (is.null(workingPath)) {workingPath = getwd()}
     scripts <- paste0(mainHub, script.list)
-    invisible(lapply(scripts, function(i){devtools::source_url(i)}))
-    library("sest")
-    library("mnp.v11b6")
-    require("plotly")
+    invisible(lapply(scripts, function(i){suppressPackageStartupMessages(devtools::source_url(i))}))
+    supM(library("sest"))
+    supM(library("mnp.v11b6"))
+    supM(require("plotly"))
     require("htmlwidgets")
     gb$setDirectory(workingPath)
     return(gb$defineParams())
