@@ -123,7 +123,9 @@ getFilePath <- function(inputSheet){
 # Parses the input file for the "PhilipsExport" tab
 parseWorksheet <- function(inputFi){
     shNames <- readxl::excel_sheets(inputFi)
-    message("Excel sheet names:"); print(shNames)
+    message("Excel sheet names:")
+         print(shNames)
+         stopifnot(!is.null(shNames) & length(shNames)>2)
     sheet2Read <- "PhilipsExport"
     sh <- which(grepl(sheet2Read,shNames,ignore.case=T))[1]
     pactShCol <- c("Tumor Specimen ID","Tumor DNA/RNA Number", "MRN", "Test Number")
