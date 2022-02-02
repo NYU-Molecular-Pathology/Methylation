@@ -122,9 +122,10 @@ getFilePath <- function(inputSheet){
 
 # Parses the input file for the "PhilipsExport" tab
 parseWorksheet <- function(inputFi){
+         message("Reading the file:", inputFi)
     shNames <- readxl::excel_sheets(inputFi)
     message("Excel sheet names:")
-         print(shNames)
+    message(paste(shNames))
          stopifnot(!is.null(shNames) & length(shNames)>2)
     sheet2Read <- "PhilipsExport"
     sh <- which(grepl(sheet2Read,shNames,ignore.case=T))[1]
@@ -268,7 +269,7 @@ sourceFuns2 <- function(workingPath = NULL) {
 
 msgRDs <- function(rds,token){
     message("\nRD-numbers with idats:\n")
-    print(rds)
+    message(paste(rds))
     assign("rds", rds)
     message(dsh, crayon::bgMagenta("Starting CNV PNG Creation"),dsh2)
     ApiToken <- token
