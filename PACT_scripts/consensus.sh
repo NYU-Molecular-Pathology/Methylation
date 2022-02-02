@@ -16,33 +16,61 @@ FG_BLU="$(tput setaf 4)" # makes console output text color blue
 FG_CYA="$(tput setaf 6)" # makes console output text color cyan
 normal=$(tput sgr0) # resets default console output text
 
+case "$workDir" in */)
+    echo "${FG_CYA}workDir:${normal}"
+    echo "${FG_CYA}$workDir${normal}";;
+*)
+    echo "${FG_CYA}workDir:${normal}"
+    workDir="$workDir/"
+    echo "${FG_CYA}$workDir${normal}";;
+esac
+
 concenDir="${workDir}${pactRun}_consensus/"
 
 csvFile="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/PACT_desc.csv"
 rmdFile="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/PACT_consensus.Rmd"
-
+echo " "
 echo "${bold}${BG_BLUE}Checking the directory for your PACT consensus:${normal}"
-echo "[ -d \"$workDir${FG_RED}$pactRun${normal}_consensus\" ] || mkdir \"$workDir${FG_RED}$pactRun${normal}_consensus\""
+echo "[ -d \"$workDir${FG_RED}$pactRun${normal}_consensus\" ] ||"
+echo "mkdir \"$workDir${FG_RED}$pactRun${normal}_consensus\""
+
 checkDir=`[ -d "${workDir}${pactRun}_consensus" ] || mkdir "${workDir}${pactRun}_consensus"`
 echo "$checkDir"
+
 echo "cd \"$workDir${FG_RED}$pactRun${normal}_consensus\""
 echo `cd $concenDir`
 
 echo "${bold}${BG_BLUE}To this directory, copy all the .cnv.plot.pdf facets files from:${normal}"
 echo "/gpfs/data/molecpathlab/production/NGS607/${FG_YLW}runID${normal}/output/cnv/FACETS/*.pdf"
+echo " "
 echo "${bold}${BG_BLUE}Copy the following files to the concenus Rmd directory:${normal}"
 echo "${FG_RED}$pactRun${normal}_MethylMatch.xlsx"
 echo "${FG_YLW}$runID${normal}-SampleSheet.csv"
+echo " "
+
 echo "${bold}${BG_BLUE}Copy the QC file below to the Rmd directory${normal}"
 echo "/gpfs/data/molecpathlab/production/NGS607/${FG_YLW}runID${normal}/${FG_RED}$pactRun${normal}-QC.tsv"
-
+echo " "
 echo "${bold}${BG_BLUE}Downloading files to working directory:${normal}"
-echo "curl -o ${FG_RED}$pactRun${normal}_desc.csv -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/PACT_desc.csv -s"
-echo "curl -o ${FG_RED}$pactRun${normal}_consensus.Rmd -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/PACT_consensus.Rmd -s"
+descFi="$concenDir${pactRun}_desc.csv"
+rmdFi="$concenDir${pactRun}_consensus.Rmd"
 
-echo `curl -o $concenDir/${pactRun}_desc.csv -L $csvFile -s`
-echo `curl -o $concenDir/${pactRun}_consensus.Rmd -L $rmdFile -s`
-rmdKnitFi="${pactRun}_consensus.Rmd"
-echo "Rscript -e \"rmarkdown::render('$concenDir$rmdKnitFi', params = list(pactName = $pactRun, userName=$pactUser, workDir=$workDir))\""
+if [ -f "$descFi" ]; then
+    echo "${FG_RED}$pactRun${normal}_desc.csv exists."
+else 
+    echo "Copying ${FG_RED}$pactRun${normal}_desc.csv from GitHub..."
+    echo "curl -o ${FG_RED}$pactRun${normal}_desc.csv -L $csvFile -s"
+    echo `curl -o ${descFi} -L $csvFile -s`
+fi
 
-echo `Rscript -e "rmarkdown::render('$concenDir$rmdKnitFi', params = list(pactName='${pactRun}', userName='$pactUser', workDir='$workDir'))"`
+if [ -f "$rmdFi" ]; then
+    echo "${FG_RED}$pactRun${normal}_consensus.Rmd exists."
+else 
+    echo "Copying ${FG_RED}$pactRun${normal}_consensus.Rmd from GitHub..."
+    echo "curl -o ${FG_RED}$pactRun${normal}_consensus.Rmd -L $rmdFile -s"
+    echo `curl -o $rmdFi -L $rmdFile -s`
+fi
+echo " "
+echo "${bold}${BG_BLUE}Knitting Rmd file with description csv:${normal}"
+echo "Rscript -e \"rmarkdown::render('${FG_RED}$pactRun${normal}_consensus.Rmd', params = list(pactName=${FG_RED}$pactRun${normal}, userName=${FG_GRN}$pactUser${normal}, workDir=${FG_CYA}$workDir${normal}${normal}))\""
+echo `Rscript -e "rmarkdown::render('$rmdFi', params = list(pactName='${pactRun}', userName='$pactUser', workDir='$workDir'))"`
