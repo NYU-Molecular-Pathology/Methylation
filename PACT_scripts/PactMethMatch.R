@@ -330,7 +330,7 @@ makeCNV <- function(myDt, asPNG = T) {
 
 startCNVmaker2 <- function(output, token) {
     rds <- output$record_id[output$report_complete == "YES"]
-    if (length(rds) > 0 & !is.null(rds) & !is.na(rds)) {
+    if (!is.null(rds) & !is.na(rds) & length(rds) > 0) {
              sourceFuns2()
         msgRDs(rds, token)
         grabRDs1(rds, token)
