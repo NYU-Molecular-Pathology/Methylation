@@ -45,7 +45,7 @@ assignVar <- function(varStr, assignedVal){
 
 # Checks if variable is null and assigns value
 ckNull <- function(nullVar, subVar, varName){
-    msgFunName(setRunLnk,"checkQCpkg")
+    msgFunName(setRunLnk,"ckNull")
     if (is.null(nullVar)){
         setVar(as.character(varName),as.character(subVar))
         return(paste0(subVar))} else {return(paste0(nullVar))}
@@ -113,7 +113,7 @@ getSetvars <- function() {
 # Sets the default parameters for a methylation Run
 defineParams <- function(
     mnp.pk.loc = NULL, ApiToken = NULL, methDir = NULL, clinDrv = NULL, rschOut = NULL, clinOut = NULL,
-    rsch.idat = NULL, clin.idat = NULL, QC_file = NULL, isMC = T, baseDir = NULL, runID = NULL
+    rsch.idat = NULL, clin.idat = NULL, QC_file = NULL, isMC = T, baseDir = NULL, runID = NULL, loadClassifier=T
     ){
     msgFunName(setRunLnk,"defineParams")
     
@@ -122,7 +122,7 @@ defineParams <- function(
     i=1:length(inVars)
     invisible(lapply(i,function(x){if(!is.null(inVars[[x]])){setVar(names(defVars[x]), inVars[[x]])}}))
 #    message("\nLoading Packages Silently...\n")
-    loadClassifierPacks()
+    if(loadClassifier==T){loadClassifierPacks()}
     i=1:length(defVars)
     invisible(sapply(i,FUN=function(i){assignVar(names((defVars[i])), paste0(defVars[,i]))}))
     if(!isMC) {methDir=rschOut;assign("workDir","/Volumes/CBioinformatics/")}
