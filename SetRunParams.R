@@ -20,6 +20,7 @@ checkQCpkg <- function(){
         "qdapTools","gplots","readxl","stringr","ggrepel","Polychrome",
         "tinytex","gridExtra","rmarkdown", "BiocParallel", "grid"
     )
+    message("Now Loading:\n", methylQCpacks,"\n")
     suppressPackageStartupMessages(easypackages::packages(methylQCpacks,prompt=F))
     reqPkg <- list("ggplot2","pals","stringr","scales","grid")
     invisible(lapply(reqPkg, FUN = function(X) {suppressPackageStartupMessages(do.call("require", list(X)))}))
