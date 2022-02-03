@@ -4,13 +4,15 @@ apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
 cpInLnk = "https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/CopyInputs.R"
 
 msgFunName <- function(pthLnk, funNam){
-message("Executing function: ", crayon::bgYellow(funNam), " from RScript in:\n", pthLnk)
+message("Executing function: ", crayon::black$bgYellow(funNam), " from RScript in:\n", pthLnk)
 }
 
-msgParams <- function(...){message("Params passed: ", crayon::bgYellow(paste(..., sep = ",")))}
+msgParams <- function(...){message("Params passed: ", crayon::bgBlue(paste(..., sep = ",")))}
 
 grabYear<- function(yr) {
     msgFunName(cpInLnk, "grabYear")
+    msgParams(yr)
+    
     rnum <- NULL
     if(nchar(yr)>2){rnum <- substring(yr, 3)}else{rnum <- yr}
     if(nchar(yr)>0){rnum <- paste0("20",rnum)}else{rnum}
@@ -20,6 +22,8 @@ grabYear<- function(yr) {
 # Returns a text string of the latest modified Run name, if isMC=False then research directory is returned
 listMolecularSheets <- function(isMC=T, getAll=F,runID=gb$runID) {
         msgFunName(cpInLnk, "listMolecularSheets")
+    msgParams("isMC=",isMC,"getAll=",getAll,"runID=",gb$runID)
+    
     researchWorksheets <- "/Volumes/snudem01labspace/Methylation_Worksheets"
     runYear=grabYear(stringr::str_split_fixed(runID,"-",2)[,1])
     if(isMC){
