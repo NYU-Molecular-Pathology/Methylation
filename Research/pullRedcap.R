@@ -14,7 +14,11 @@ moVol = "/Volumes/molecular"
 rsVol = "/Volumes/snudem01labspace"
 rsch.idat = paste0(file.path(rsVol,"idats"))
 clin.idat = paste0(file.path(moVol, "MOLECULAR/iScan"))
-                   
+
+# REDcap Heading Fields to pull for SampleSheet -----
+flds = c("record_id","b_number","tm_number","accession_number","block","diagnosis",
+         "organ","tissue_comments","run_number", "nyu_mrn")
+
 # Displays the Input args -----
 message(dsh,"Parameters input",dsh2)
 message("token: ",token)
@@ -25,10 +29,6 @@ stopifnot(!is.na(inputSheet))
 
 readFlag <- endsWith(inputSheet,".csv")==T
 stopifnot(rlang::is_bool(readFlag))
-
-# REDcap Heading Fields -----
-flds = c("record_id","b_number","tm_number","accession_number","block","diagnosis",
-         "organ","tissue_comments","run_number", "nyu_mrn")
 
 # Load redcapAPI Package -----
 if(suppressWarnings(!require("redcapAPI"))){
@@ -52,7 +52,6 @@ checkMounts <- function(){
     } else {message("\n",crayon::bgGreen("Z-drive path is accessible"),"\n")}
 }
 
-
 # Functions to load packages and get redcap info -----
 loadPacks <- function(){
     pkgs = c("data.table", "foreach", "openxlsx","jsonlite","RCurl","readxl","stringr","tidyverse","crayon")
@@ -70,8 +69,7 @@ loadPacks <- function(){
 
 # API Call functions -----
 grabAllRecords <- function(flds, rcon){
-    params = list(rcon, fields=flds, labels=F, dates = F, survey = F, dag = F, factors=F, 
-                  form_complete_auto=F)
+    params = list(rcon, fields=flds, labels=F, dates = F, survey = F, dag = F, factors=F, form_complete_auto=F)
     dbCols <- do.call(redcapAPI::exportRecords, c(params))
     return(as.data.frame(dbCols))
 }
@@ -86,42 +84,47 @@ search.redcap <- function(rd_numbers, token=NULL, flds=NULL) {
     return(as.data.frame(result))
 }
 
-grabRDs <- function(rd_numbers, token){
-    result <- gb$search.redcap(rd_numbers, token)
-    result <- result[!is.na(result$barcode_and_row_column),]
-    samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[,"barcode_and_row_column"],"_",2))
-    gb$writeFromRedcap(result, samplesheet_ID) # writes API export as minfi dataframe sheet
-    gb$get.idats()  # copies idat files from return to current directory
-}
-
-readInfo <- function(inputSheet, readFlag) {
-    if (readFlag == T) {
-        rds <- as.data.frame(read.csv(inputSheet))[, 1]
-        
-    } else{
-        rds <- readxl::read_excel(inputSheet, sheet = 1)[, 1]
-    }
-    return(rds)
-}
-                   
 # FUN: Sets your directory and sources the helper functions
 sourceFuns <- function(workingPath = NULL) {
     mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
     script.list <- c("SetRunParams.R","CopyInputs.R","PACT_scripts/generateCNV.R")
     if (is.null(workingPath)) {workingPath = getwd()}
     scripts <- paste0(mainHub, script.list)
-    
+
   invisible(lapply(scripts, function(i){devtools::source_url(i)}))
     gb$setDirectory(workingPath)
-    return(gb$defineParams())
-}                   
+    return(gb$defineParams(loadClassifier=F))
+}
+
+readInfo <- function(inputSheet, readFlag) {
+  if (readFlag == T) {
+    message("FileType is .csv, executing read.delim...")
+    rds <- read.delim(inputSheet, sep=",", colClasses=character(), row.names=NULL)[,1]
+  } else{
+    message("FileType is .xlsx, executing readxl::read_excel...")
+    rds <- readxl::read_excel(inputSheet, sheet = 1)[, 1]
+  }
+  if(typeof(rds)!="character"){
+    warning('Converting RD-numbers to "Character" [1], make sure readxl or read.delim is not output typeof == "list"')
+    rds <- as.data.frame(rds)[,1]
+  }
+  return(rds)
+}
+
+grabRDs <- function(rd_numbers, token, copyIdats=T){
+  result <- gb$search.redcap(rd_numbers, token)
+  result <- result[!is.na(result$barcode_and_row_column),]
+  samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[,"barcode_and_row_column"],"_",2))
+  gb$writeFromRedcap(result, samplesheet_ID) # writes API export as minfi dataframe sheet
+  if(copyIdats==T){gb$get.idats()}  # copies idat files from return to current directory
+}
 
 # Search REDCap Worksheets for MRN Match for output -------------------------------------
 loadPacks()
 checkMounts()
 sourceFuns()
 ApiToken <- token
-rds <- readInfo(inputSheet,readFlag)
+rds <- readInfo(inputSheet, readFlag)
 message("Your RDs:")
 print(rds)
-grabRDs(rds, token)
+grabRDs(rd_numbers=rds, token=token)
