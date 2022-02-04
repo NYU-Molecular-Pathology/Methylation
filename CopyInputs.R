@@ -91,6 +91,7 @@ setRunDir <- function(runID=NULL, workFolder=NULL){
     msgFunName(cpInLnk, "setRunDir")
     msgParams(runID, workFolder)
     #runID <- gb$ckNull(runID, paste0(basename(getwd())), deparse(substitute(runID,env=gb)))
+    if(!is.null(workFolder)){gb$methDir <- workFolder}
     if(is.null(gb$methDir)){gb$methDir<- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"}
     workFolder <- gb$ckNull(workFolder, gb$methDir, deparse(substitute(workFolder,env=gb)))
     if(is.null(workFolder)){
