@@ -62,12 +62,12 @@ importDesktopCsv <- function(rcon,samsheet=NULL) {
             message("Removing duplicates in redcap dataframe")
             data = data[!duplicated(data$record_id),]
         }
+        cat(redcapAPI::importRecords(rcon,data,"normal","ids",returnData = F))
         for (n in 1:nrow(data)) {
             datarecord = jsonlite::toJSON((as.list(data[n,])), auto_unbox=T)
             print(datarecord)
             message("~~",crayon::bgBlue("Record Uploaded:"))
             RCurl::postForm(ur, token = tk, content = 'record', format = 'csv', type = 'flat', data = datarecord, returnFormat='csv')
-            cat(redcapAPI::importRecords(rcon,data,"normal","ids",returnData = F))
         }
     } else {message("no redcap file found")}
 }
