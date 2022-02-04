@@ -8,6 +8,7 @@ reportMd <- "/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/in
 QC_file <- "/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/inst/Methyl_QC.Rmd" #system.file('Methyl_QC.Rmd', package = "mnp.v11b6")
 
 pipeLnk <- "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/pipelineHelper.R"
+predictionPath <- "/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData"
 
 msgFunName <- function(pthLnk, funNam){message("Executing function: ", funNam, " from RScript in:\n", pthLnk)}
 
@@ -201,7 +202,7 @@ makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
     if (is.null(sheetName)) {sheetName="samplesheet.csv"}
     data <- read.csv(sheetName, strip.white=T)
     runID <- paste0(data$RunID[1])
-    load("/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData")
+    load(predictionPath)
     loopRender(selectSams, data)
     checkRunOutput(runID)
     if (skipQC == F) {
