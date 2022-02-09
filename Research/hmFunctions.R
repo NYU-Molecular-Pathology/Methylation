@@ -2,6 +2,7 @@
 #'
 #' @param colorValues the variable name paired with color for each sample by variable
 #' @param anno_df the dataframe that ou are annotating, these are the filtered columns of the varColumns
+gb <- globalenv(); assign("gb", gb)
 getHeatAnno <- function(colorValues,anno_df){
     ha <- ComplexHeatmap::HeatmapAnnotation(
         df = anno_df,
@@ -54,11 +55,11 @@ assignColors <- function(targets, varColumns = c("Type", "Grade"), col_vect = NU
 }
 
 ## Define the Heatmap ----------------------
-col_fun <- circlize::colorRamp2(c(0, 0.25, 0.5, 0.75, 1), c("darkblue","deepskyblue", "white", "tomato","red"))
+col_fun2 <- circlize::colorRamp2(c(0, 0.25, 0.5, 0.75, 1), c("darkblue","deepskyblue", "white", "tomato","red"))
 
 drawHeatMap <- function(yourHeatMap) {
     return(
-        draw(
+        ComplexHeatmap::draw(
             yourHeatMap,
             merge_legend = T,
             ht_gap = unit(3, "cm"),
@@ -80,18 +81,19 @@ calc_ht_size = function(ht, unit = "inch") {
     c(w, h)
 }
 
-getHeatMap <- function(betaRanges, titleValue, ha, colSplt = NULL, rwsplt=NULL){
-    titleOfPlot <- paste("Heatmap of",titleValue,sep = " ")
+gb$getHeatMap <- function(betaRanges, titleValue, ha, colSplt = NULL, rwsplt=NULL){
+    titleOfPlot <- paste("Heatmap of",titleValue,sep = " ", geneNamesHeatMap=F)
     hmTopNumbers <- ComplexHeatmap::Heatmap(
         betaRanges,
-        width = ncol(betaRanges)*unit(10, "mm"), 
-        height = nrow(betaRanges)*unit(10, "mm"),
-        #col = col_fun,  ## Define the color scale
+      #  width = unit(5*ncol(betaRanges), "mm"), 
+       # height = unit(5*nrow(betaRanges), "mm"),
+        col = gb$col_fun2,  ## Define the color scale
         cluster_columns = T,  ## Cluster the columns
         #cluster_rows = rowcluster,
-        show_column_names = T,  ## Show the Column Names (which is sample #)
+        #raster_resize_mat = TRUE,
+        show_column_names = geneNamesHeatMap,  ## Show the Column Names (which is sample #)
         column_names_gp = gpar(fontsize = 12),  ## Column Name Size
-        show_row_names = T,  ## Show Row names (which is probes)
+        show_row_names = geneNamesHeatMap,  ## Show Row names (which is probes)
         row_names_side = "left",
         row_title_side = "left",
         row_names_gp = gpar(fontsize = 10),
@@ -103,7 +105,7 @@ getHeatMap <- function(betaRanges, titleValue, ha, colSplt = NULL, rwsplt=NULL){
         top_annotation = ha,
         column_title = titleOfPlot,
         column_title_gp = gpar(fontsize = 14,fontface = "bold"),
-        raster_device = "png",
+        raster_device = "CairoPNG",
         raster_quality = 3,
         heatmap_legend_param = list(
             title = "Beta Value",
@@ -115,11 +117,13 @@ getHeatMap <- function(betaRanges, titleValue, ha, colSplt = NULL, rwsplt=NULL){
             legend_height =  unit(2.5, "in")
         ),
         column_split = colSplt,
-        row_split= rwsplt
+        row_split= rwsplt,
+        heatmap_width = unit(10, "in"),
+        heatmap_height = unit(20, "in")
     )
-    size = calc_ht_size(hmTopNumbers)
-    size
-    return(drawHeatMap(hmTopNumbers))
+    #size = gb$calc_ht_size(hmTopNumbers)
+    #size
+    return(gb$drawHeatMap(hmTopNumbers))
 }
 
 assignColors2 <- function(targets, varColumns = c("Type","Origin"), col_vect = NULL) {
