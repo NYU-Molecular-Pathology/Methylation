@@ -103,20 +103,26 @@ Copy number frequency plots
 # Sample Information Sheet
 ```{r setup, include=FALSE, cache=TRUE}
 gb <- globalenv(); assign("gb", gb)
+# https://bookdown.org/yihui/rmarkdown-cookbook/custom-knit.html
 supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
 
 mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/"
 rFiles = c("loadPacks.R", "getRGsetBetas.R", "TsnePlotter.R", "getIdatFiles.R", "hmFunctions.R", 
-           "plotlyBetas.R", "cnvFunctions.R", "tableMaker.R")
-
-sourceScripts <- function(mainHub,rFiles) {scripts = paste0(mainHub, rFiles)
+             "plotlyBetas.R", "cnvFunctions.R", "tableMaker.R")
+sourceScripts <- function(mainHub,rFiles) {
+  scripts = paste0(mainHub, rFiles)
   suppressWarnings(invisible(lapply(scripts, function(i) {devtools::source_url(i)})))
 }
 sourceScripts(mainHub,rFiles)
-
-set.seed(1234)
-options(width = 1800)
-knitr::opts_chunk$set(rows.print=20)
+if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 6, quiet=T)}
+pkgs <- c("animation","tidyverse","knitr","kableExtra","readr","ggplot2","tidyr","foreach",
+          "dplyr","BiocManager","BiocVersion","GenVisR","conumee","enrichplot","limma", "Biobase",
+          "stringr","enrichplot","ComplexHeatmap","assertr","grid","gridExtra","ggnewscale","DOSE",
+          "parallel","iterators","doParallel")
+librarian::shelf(pkgs, ask=F, warn.conflicts=F)
+animation::ani.options(autobrowse = FALSE); options(width=1400)
+library("mnp.v11b6")
+set.seed(1234);knitr::opts_chunk$set(rows.print=20)
 ```
 
 ```{r, label='Input Params', echo=FALSE, message=FALSE, warning=FALSE, cache=FALSE, error=FALSE, out.width='50%'}
