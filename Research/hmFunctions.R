@@ -81,8 +81,8 @@ calc_ht_size = function(ht, unit = "inch") {
     c(w, h)
 }
 
-gb$getHeatMap <- function(betaRanges, titleValue, ha, colSplt = NULL, rwsplt=NULL){
-    titleOfPlot <- paste("Heatmap of",titleValue,sep = " ", geneNamesHeatMap=F)
+gb$getHeatMap <- function(betaRanges, titleValue, ha, geneNamesHeatMap=F, colSplt = NULL, rwsplt=NULL){
+    titleOfPlot <- paste("Heatmap of",titleValue,sep = " ")
     hmTopNumbers <- ComplexHeatmap::Heatmap(
         betaRanges,
       #  width = unit(5*ncol(betaRanges), "mm"), 
