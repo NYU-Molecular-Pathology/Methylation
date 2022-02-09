@@ -86,7 +86,7 @@ getHeatMap <- function(betaRanges, titleValue, ha, colSplt = NULL, rwsplt=NULL){
         betaRanges,
         width = ncol(betaRanges)*unit(10, "mm"), 
         height = nrow(betaRanges)*unit(10, "mm"),
-        col = col_fun,  ## Define the color scale
+        #col = col_fun,  ## Define the color scale
         cluster_columns = T,  ## Cluster the columns
         #cluster_rows = rowcluster,
         show_column_names = T,  ## Show the Column Names (which is sample #)
