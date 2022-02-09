@@ -134,7 +134,7 @@ plotSaver <- function(outDirs,tsne_titles,tps,ty,plotList,custom) {
  return(pltList)
 }
 
-subsetBetas <- function(targFilter,samGroup, betas, targets, samNames,tsne_titles, doPlotly=F) {
+subsetBetas <- function(targFilter,samGroup, betas, targets, samNames,tsne_titles, doPlotly=F, supervised=F) {
   tps <- unique(targFilter)
   targets$SamGroups <- targets$SampleFilter <- NULL
   targets$SampleFilter <- samNames # creating new column
@@ -144,12 +144,14 @@ subsetBetas <- function(targFilter,samGroup, betas, targets, samNames,tsne_title
     custom = tps[ty, 1]
     message("Current: ", custom)
     targets1 <- targets[targFilter == custom,]
-    allBetas1 <- gb$grabAllBeta(targets1,betas)
+    if(supervised==T) {
+      allBetas1 <- list(betas[1:100,], betas[1:1000,], betas)
+      }else{allBetas1 <- gb$grabAllBeta(targets1,betas)}
     outDirs <- gb$grabPngNames(tsne_titles)[1:3, ]
     plotList = NULL
     plotList <-  gb$doMultiple(allBetas1,tsne_titles, outDirs, targets1, tps,ty, custom)
     tplots <- NULL
-    tplots <- plotSaver(outDirs, tsne_titles, tps, ty, plotList, custom)
+    tplots <- gb$plotSaver(outDirs, tsne_titles, tps, ty, plotList, custom)
     gb$selectPlots(doPlotly,tplots,ty,tps,outDirs)
     }
 }
