@@ -142,7 +142,7 @@ subsetBetas <- function(targFilter,samGroup, betas, targets, samNames,tsne_title
   ty = NULL
   for (ty in 1:nrow(tps)) {
     custom = tps[ty, 1]
-    message("Current: ", custom)
+    message("Current Sample Group TSNE: ", custom)
     targets1 <- targets[targFilter == custom,]
     if(supervised==T) {
       allBetas1 <- list(betas[1:100,], betas[1:1000,], betas)
