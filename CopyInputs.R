@@ -7,7 +7,7 @@ msgFunName <- function(pthLnk, funNam){
 message("Executing function: ", crayon::black$bgYellow(funNam), " from RScript in:\n", pthLnk)
 }
 
-msgParams <- function(...){message("Params passed: ", crayon::bgBlue(paste(..., sep = ",")))}
+msgParams <- function(...){message("Params passed: ", crayon::bgGreen(paste(..., sep = ",")))}
 
 grabYear<- function(yr) {
     msgFunName(cpInLnk, "grabYear")
@@ -90,6 +90,7 @@ copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
 setRunDir <- function(runID=NULL, workFolder=NULL){
     msgFunName(cpInLnk, "setRunDir")
     msgParams(runID, workFolder)
+    
     #runID <- gb$ckNull(runID, paste0(basename(getwd())), deparse(substitute(runID,env=gb)))
     if(!is.null(workFolder)){gb$methDir <- workFolder}
     if(is.null(gb$methDir)){gb$methDir<- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"}
@@ -140,6 +141,7 @@ getTotalSamples <- function(){
 # FUN: translates the xlsm excel file to the .csv samplesheet for redcap and minfi
 writeSampleSheet <- function(df, samplesheet_ID, bn = NULL, sampleName, dnaNumber, Sentrix) {
     msgFunName(cpInLnk, "writeSampleSheet")
+    msgParams("df:", "samplesheet_ID", samplesheet_ID, "bn",bn, 'sampleName',sampleName, 'dnaNumber',dnaNumber, "Sentrix", Sentrix)
     if (is.null(bn)) {
         #bn = file.path(getwd(), df$Sentrix)
         bn = file.path(gb$methDir, df$Batch, df$Sentrix)
@@ -163,6 +165,9 @@ writeSampleSheet <- function(df, samplesheet_ID, bn = NULL, sampleName, dnaNumbe
 # FUN: Reads the csv samplesheet for minfi input
 readSampleSheet <- function(runID=F, totalSam=F, wks=F) {
     msgFunName(cpInLnk, "readSampleSheet")
+    msgParams("runID","totalSam","wks")
+    msgParams(runID, totalSam, wks)
+    
     file.list <- dir(path=getwd(), "*.xlsm")
     temps <- stringi::stri_detect_fixed(file.list, "~$")
     file.list <- file.list[!temps]
@@ -184,6 +189,7 @@ readSampleSheet <- function(runID=F, totalSam=F, wks=F) {
 
 checkSampleSheet <- function(df){
     msgFunName(cpInLnk, "checkSampleSheet")
+    
     ww1=crayon::bgRed("No tech name found: check df$Tech in samplesheet.csv assinging NA")
     ww2=crayon::bgRed("No tech name found: check df$MP_number in samplesheet.csv assinging NA")
     ww3=crayon::bgRed("Duplicated sample name found: check df$Sample_Name in samplesheet.csv assigning as None")
@@ -218,6 +224,9 @@ checkSampleSheet <- function(df){
 # FUN: reads the .xlsm worksheet and outputs the .csv methyl experiment for MINFI
 readSheetWrite <- function(sampleNumb= NULL, runID = NULL) {
     msgFunName(cpInLnk, "readSheetWrite")
+    msgParams("sampleNumb","runID")
+        msgParams(sampleNumb,runID)
+    
     if(is.null(sampleNumb)){sampleNumb<-getTotalSamples()}
     if(is.null(runID)){runID<-paste0(basename(getwd()))}
     current.run.Folder <- file.path(gb$methDir,runID)
@@ -249,6 +258,8 @@ readSheetWrite <- function(sampleNumb= NULL, runID = NULL) {
 # FUN: Returns a list of idat files given an idat drive location -
 getAllFiles <- function(idatDir, csvNam=NULL) {
     msgFunName(cpInLnk, "getAllFiles")
+    msgParams("idatDir","csvNam")
+    
     if(!is.null(csvNam)){ssheet=read.csv(csvNam,strip.white=T)
     barcode=as.vector(ssheet$Sentrix_ID)} else {
         ssheet=read.csv(csvNam,strip.white=T)
