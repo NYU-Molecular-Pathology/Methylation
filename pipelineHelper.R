@@ -10,7 +10,8 @@ QC_file <- "/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/ins
 pipeLnk <- "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/pipelineHelper.R"
 predictionPath <- "/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData"
 
-msgFunName <- function(pthLnk, funNam){message("Executing function: ", funNam, " from RScript in:\n", pthLnk)}
+msgFunName <- function(pthLnk, funNam){message("Executing function: ", crayon::black$bgYellow(funNam), " from RScript in:\n", pthLnk)}
+msgParams <- function(...){message("Params passed: ", crayon::bgGreen(paste(..., sep = ",")))}
 
 # Helper function to return the index of priority selected samples first
 reOrderRun <- function(selectRDs, sh=NULL){
