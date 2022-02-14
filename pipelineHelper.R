@@ -230,8 +230,10 @@ makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
 }
 
 # Function to just run a default clinical run without changes, input selectRDs to prioritize samples running first
-startRun <- function(selectRDs=NULL, runID=NULL, emailNotify=T){
+startRun <- function(selectRDs=NULL, emailNotify=T){
     msgFunName(pipeLnk,"startRun")
+    msgParams("selectRDs=NULL, emailNotify=T")
+    msgParams(selectRDs,emailNotify)
     
     if(!is.null(selectRDs)){
         sampleOrder <- reOrderRun(selectRDs) # Re-order sample report generation for priority
