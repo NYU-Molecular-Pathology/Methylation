@@ -152,37 +152,38 @@ tidyUpFiles <- function(runID){
 }
 
 # FUN: Iterates over each sample in the csv file to generate a report
-loopRender <- function(samList = NULL, data){
-    msgFunName(pipeLnk,"loopRender")
-    
-    if(is.null(samList)){
-        samList<-1:length(as.character(data$SentrixID_Pos))
-    }
-    require(rmarkdown)
-    samSh <- dir(path = getwd(), full.names = T, ".xlsm")
-sampleNumb <- getTotalSamples()
-sampleNumb = as.integer(sampleNumb)
-sh_Dat <- as.data.frame(
-    readxl::read_excel(samSh,sheet = 3,range = "A1:N97",col_types = c("text")))[, 1:13]
-    for (i in samList) {
-        outFileN = paste0(data[i,1],".html")
-        outPathN = file.path(gb$workFolder,gb$runID,outFileN)
-        message("outPathN= ", outPathN)
-        if(file.exists(outPathN)){
-            cat(bky(outFileN, "already exists! Skipping sample"),"\n")
-            next
-        } else {
-            cat("\n",bky(dsh,"Now Running", i, "of", length(samList),dsh),sep="\n")
-            do_report(data=data[i, ], gb$genCn)
-            cat(bky("\n",dsh,"Completed Report", i, "of", length(samList),dsh),sep="\n")
-            sh_Dat = sh_Dat[1:sampleNumb, ]
-            currSam <- sh_Dat[,1]==data[i,1]
-
-            gb$importSingle(sh_Dat=sh_Dat[currSam,])
+loopRender <- function(samList = NULL, data) {
+        msgFunName(pipeLnk, "loopRender")
+        msgParams("samList = NULL, data")
+        if (is.null(samList)) {
+            samList <- 1:length(as.character(data$SentrixID_Pos))
+        }
+        require(rmarkdown)
+        samSh <- dir(path = getwd(), full.names = T, ".xlsm")
+        message("Reading the following .xlsm in current directory:", samSh)
+        sampleNumb <- getTotalSamples()
+        sampleNumb = as.integer(sampleNumb)
+        sh_Dat <- as.data.frame(
+            readxl::read_excel(samSh, sheet = 3,range = "A1:N97",col_types = c("text")))[, 1:13]
+        stopifnot(!is.null(sh_Dat))
+        for (i in samList) {
+            outFileN = paste0(data[i, 1], ".html")
+            outPathN = file.path(gb$methDir, gb$runID, outFileN)
+            message("outPathN = file.path(gb$methDir,gb$runID,outFileN)", "\n", outPathN)
+            if (file.exists(outPathN)) {
+                cat(bky(outFileN, "already exists! Skipping sample"),"\n")
+                next
+            } else {
+                msgProgress(1,i,samList)
+                do_report(data = data[i,], gb$genCn)
+                msgProgress(2,i,samList)
+                sh_Dat = sh_Dat[1:sampleNumb,]
+                currSam <- sh_Dat[, 1] == data[i, 1]
+                gb$importSingle(sh_Dat = sh_Dat[currSam, ])
             }
-    }
-    cat(crayon::black$bgGreen$bold(dsh,"RUN COMPLETE",dsh),sep="\n")
-    #beepr::beep(3)
+        }
+        message(crayon::black$bgGreen$bold(dsh, "RUN COMPLETE", dsh))
+        #beepr::beep(3)
 }
 
 #' REPORT: Generates Html reports to cwd with samplesheet.csv
