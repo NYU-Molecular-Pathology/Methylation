@@ -152,6 +152,14 @@ tidyUpFiles <- function(runID){
     unlink(deskDir,T,T)
 }
 
+msgProgress <- function(msg,i,samList){
+    if(msg==1){
+        cat("\n",bky(dsh, "Now Running", i, "of", length(samList), dsh),sep = "\n")
+    }else{
+        cat(bky("\n",dsh,"Completed Report",i,"of",length(samList),dsh),sep = "\n")
+    }
+}
+
 # FUN: Iterates over each sample in the csv file to generate a report
 loopRender <- function(samList = NULL, data) {
         msgFunName(pipeLnk, "loopRender")
