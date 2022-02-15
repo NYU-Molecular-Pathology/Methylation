@@ -74,7 +74,8 @@ do_report <-function(data = NULL, genCn=F) {
                            "run_id=", run_id," ", "barcode=", barcode," ", "pathEpic:\n", pathEpic)
         message(bky(msgUpdate), "\n")
         tryCatch(
-            expr={rmarkdown::render(reportMd, "html_document", outFi, outDir, quiet=FALSE)},
+            expr={rmarkdown::render(reportMd, "html_document", outFi, outDir, quiet=FALSE,
+                                   params = list(token=gb$ApiToken))},
             error=function(e){
                 message(bkRed("Report Generation Failed:"),"\n", outFi,"\n")
                 message(bkRed("The following error returned:"),"\n", e)
