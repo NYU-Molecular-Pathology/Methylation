@@ -38,40 +38,22 @@ library(Cairo)
 require(Cairo)
 
 makeDt <- function(targets) {
-  theDt <-
-    DT::datatable(
-      targets,
-      selection = "single",
-      filter = list(
-        position = 'top',
-        clear = T,
-        plain = T
-      ),
-      autoHideNavigation = T,
-      options = list(
-        scrollX = T,
-        info = T,
-        autoWidth = T,
-        pageLength = 15,
-        rownames = F,
-        lengthChange = T,
-        searchable = T,
-        columnDefs = list(list(className = 'dt-left', width = '10%', position="left", visible=TRUE, targets = c(1:ncol(targets))))
-      )
-    )
-  return(theDt)
+  dtOpts <- list(scrollX = T, scrollY = T, info = F, pageLength=15,autoWidth = T, rownames = F,lengthChange = T,searchable = T)
+  theDt <- DT::datatable(
+    targets, selection = "single", autoHideNavigation = T, options = dtOpts
+  )
+    return(theDt)
 }
 
 smallTab <- function(dtObj) {
   dtTable <- knitr::kable(dtObj, row.names = F, "html")
-  dtTable <-
-    kableExtra::kable_styling(
+  dtTable <- kableExtra::kable_styling(
       dtTable,
       bootstrap_options = c("striped", "condensed"),
       full_width = F,
       position = "left"
-    )
-  dtTable <-
-    kableExtra::column_spec(dtTable, 1:ncol(dtObj), width = "4cm")
+  )
+    
+ dtTable <- kableExtra::column_spec(dtTable, 1:ncol(dtObj), width = "4cm")
   return(dtTable)
 }
