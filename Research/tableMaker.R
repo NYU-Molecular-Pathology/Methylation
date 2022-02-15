@@ -76,3 +76,27 @@ smallTab <- function(dtObj) {
  dtTable <- kableExtra::column_spec(dtTable, 1:ncol(dtObj), width = "4cm")
   return(dtTable)
 }
+
+# Adds colors to csv targets file to maintain same color scheme between plots
+colorTargets <- function(targets, varColumns = c("Type","Origin"), col_vect = NULL) {
+    if (is.null(col_vect)) {col_vect <- pals::glasbey()}
+    col_vect[6] = "#eb7d34" #changing dark forest to orange color
+    message("Dimnames:\n",paste(dimnames(targets)[[2]], collapse = " | "))
+    stopifnot(all(varColumns %in% dimnames(targets)[[2]]))
+    dat <- targets[,varColumns] # varColumns
+    anno_df <- data.frame(dat)
+    vars2Color <- as.list(lapply(dat, unique))
+    colorValues <-lapply(vars2Color, function(x) {x = (col_vect)[1:(length(x))]})
+    for (x in 1:length(vars2Color)) {
+        for (varNum in 1:length(vars2Color[x])) {
+          names(colorValues[x][[1]]) = c(vars2Color[x][[1]])}
+      }
+      targets$color <- NULL
+      for (colNam in varColumns) {
+        for (samNam in names(colorValues[colNam][[1]])) {
+          currColor <- targets$Type == samNam
+          targets$color[currColor] <- paste0(colorValues$Type[samNam])
+        }
+      }
+      return(targets)
+}
