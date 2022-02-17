@@ -185,8 +185,10 @@ sourceFuns2 <- function(workingPath = NULL) {
 
 msgRDs <- function(rds,token){
     message("\nRD-numbers with idats:")
-    print(rds)
+
     assign("rds", rds)
+rdPrnt <- paste(rds, collapse=" ")
+    message(rdPrnt)
     message(dsh, crayon::bgMagenta("Starting CNV PNG Creation"),dsh2)
     sourceFuns2()
     ApiToken = token
