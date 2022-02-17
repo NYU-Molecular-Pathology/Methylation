@@ -10,7 +10,7 @@ token<-args[1]
 runID<-args[2]
 selectRDs<-args[3]
 baseFolder <- args[4] #NULL
-redcapUpload <- arg[5]
+redcapUpload <- args[5]
 
 # Check Parameters Input
 if(length(selectRDs)==0 | identical(selectRDs,NULL) | identical(selectRDs,"NULL")
