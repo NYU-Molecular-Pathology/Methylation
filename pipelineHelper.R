@@ -162,7 +162,7 @@ msgProgress <- function(msg,i,samList){
 }
 
 # FUN: Iterates over each sample in the csv file to generate a report
-loopRender <- function(samList = NULL, data) {
+loopRender <- function(samList = NULL, data,redcapUp=T) {
         msgFunName(pipeLnk, "loopRender")
         msgParams("samList = NULL, data")
         if (is.null(samList)) {
@@ -187,9 +187,11 @@ loopRender <- function(samList = NULL, data) {
                 msgProgress(1,i,samList)
                 do_report(data = data[i,], gb$genCn)
                 msgProgress(2,i,samList)
+                if(redcapUp==T){
                 sh_Dat = sh_Dat[1:sampleNumb,]
                 currSam <- sh_Dat[, 1] == data[i, 1]
                 gb$importSingle(sh_Dat = sh_Dat[currSam, ])
+                    }
             }
         }
         message(crayon::black$bgGreen$bold(dsh, "RUN COMPLETE", dsh))
@@ -214,7 +216,7 @@ makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
     data <- read.csv(sheetName, strip.white=T)
     runID <- paste0(data$RunID[1])
     load(predictionPath)
-    loopRender(selectSams, data)
+    loopRender(selectSams, data, redcapUp)
     checkRunOutput(runID)
     if (skipQC == F) {
         create.QC.record(runID)
