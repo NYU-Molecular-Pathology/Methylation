@@ -219,7 +219,9 @@ makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
     loopRender(selectSams, data, redcapUp)
     checkRunOutput(runID)
     if (skipQC == F) {
-        create.QC.record(runID)
+        if(redcapUp==T){
+        try(create.QC.record(runID), silent=T)
+            }
         generateQCreport()
     }
     if(grepl("TEST",runID)){cpReport=F;redcapUp=F;email=F}
