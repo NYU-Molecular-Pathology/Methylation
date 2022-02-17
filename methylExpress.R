@@ -6,16 +6,22 @@ gb <- globalenv(); assign("gb", gb)
 if(!require("devtools")){install.packages("devtools")}
 
 # Main Parameters trailing commandline
-token<-args[1]; runID<-args[2]; selectRDs<-args[3]
+token<-args[1]
+runID<-args[2]
+selectRDs<-args[3]
 baseFolder <- args[4] #NULL
+redcapUpload <- arg[5]
 
 # Check Parameters Input
 if(length(selectRDs)==0 | identical(selectRDs,NULL) | identical(selectRDs,"NULL")
 ){selectRDs=NULL}else {if(is.na(selectRDs)){selectRDs=NULL}}
+
 if(length(baseFolder)==0 | identical(baseFolder,NULL) | identical(baseFolder,"NULL")
-){
-    gb$baseFolder<-NULL
-}else {if(is.na(baseFolder)){gb$baseFolder<-NULL}}
+  ){gb$baseFolder<-NULL}else {if(is.na(baseFolder)){gb$baseFolder<-NULL}}
+
+if(length(redcapUpload)==0 | identical(baseFolder,NULL) | identical(redcapUpload,"NULL")){
+    gb$redcapUpload<-T
+}else {if(is.na(redcapUpload)){redcapUpload<-T}}
 
 # Check Input Params
 message("\n~~~~~~~~~~~~~~~~~~~~~Parameters input~~~~~~~~~~~~~~~~~~~~~\n")
@@ -66,7 +72,7 @@ gb$prepareRun <- function(token, baseFolder=NULL){
         gb$methDir <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
         gb$baseDir <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
     }
-
+    
     if(length(baseFolder)>0){
         if(str_detect(baseFolder, pattern="Desktop")==T){
             warning("Trying to run methylation from Desktop working directory is not allowed")
@@ -100,4 +106,20 @@ gb$prepareRun <- function(token, baseFolder=NULL){
 gb$prepareRun(token, baseFolder)
 
 if(!is.null(selectRDs)){selectRDs <- stringr::str_split(selectRDs, ",")}
-gb$startRun(selectRDs)
+
+gb$startRun <-
+    function(selectRDs=NULL, emailNotify=T, redcapUp=T){
+        msgFunName(pipeLnk,"startRun")
+        msgParams("selectRDs=NULL, emailNotify=T")
+        msgParams(selectRDs,emailNotify)
+        
+        if(!is.null(selectRDs)){
+            sampleOrder <- reOrderRun(selectRDs) # Re-order sample report generation for priority
+            makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=T, selectSams=sampleOrder, redcapUp=T)
+        } else {
+            makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=F, selectSams=NULL, redcapUp=T)
+        }
+    }
+
+assign("redcapUpload", redcapUpload)
+gb$startRun(selectRDs, emailNotify=F,redcapUp=redcapUpload)
