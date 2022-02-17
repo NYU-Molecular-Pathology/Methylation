@@ -125,7 +125,7 @@ parseWorksheet <- function(inputFi){
          message("Reading the file:", inputFi)
     shNames <- readxl::excel_sheets(inputFi)
     message("Excel sheet names:")
-    message(paste(shNames))
+    message(paste(shNames, collapse=" "))
          stopifnot(!is.null(shNames) & length(shNames)>2)
     sheet2Read <- "PhilipsExport"
     sh <- which(grepl(sheet2Read,shNames,ignore.case=T))[1]
