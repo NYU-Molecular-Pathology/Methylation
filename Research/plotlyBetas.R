@@ -163,20 +163,30 @@ takeTopVariance <- function(betas, topVar){
     return(top_var_beta)
 }
 
-tierBetas <- function(betas, col_sentrix, RGSet, batchCorrect = F, getSuper = F) {
-    selectSams <- RGSet@colData@listData[[col_sentrix]][RGSet@colData@listData[["Sample_ID"]] %in%  colnames(betas)]
+tierBetas <- function(betas, col_sentrix, RGSet, batchCorrect = F, getSuper = F, topVar = 1:10000) {
+    rgLiDat <- RGSet@colData@listData
+    selectSams <- rgLiDat[[col_sentrix]][rgLiDat[["Sample_ID"]] %in% colnames(betas)]
+    rgColRows <- RGSet@colData@rownames
+    newRgset <- RGSet[, rgColRows %in% selectSams]
+    # Bath Corrected Samples
     if (batchCorrect == T) {
-      unBetas <- gb$batchCorrectBs(betas, RGSet[, RGSet@colData@rownames %in% selectSams], topVar = 1:10000)
-      superbetas <- gb$batchCorrectBs(betas, RGSet[, RGSet@colData@rownames %in% selectSams], topVar = 1:10000, T)
+      if (getSuper == T) {
+        superbetas <- gb$batchCorrectBs(betas, newRgset, topVar, T)
+        return(superbetas)
+      } else{
+        unBetas <- gb$batchCorrectBs(betas, newRgset , topVar)
+        return(unBetas)
+      }
+    # Regular Non-Batched Samples
     } else{
-      unBetas <- gb$takeTopVariance(betas, topVar = 1:10000)
+      if (getSuper == T) {
+        superbetas <- gb$getSupervise(betas, newRgset, topVar)
+        return(superbetas)
+      } else{
+        unBetas <- gb$takeTopVariance(betas, topVar)
+        return(unBetas)
+      }
     }
-    if (getSuper == T) {
-      superbetas <- gb$getSupervise(betas, RGSet[, RGSet@colData@rownames %in% selectSams], topVar = 1:10000)
-      return(superbetas)
-    } else{
-      return(unBetas)
-    }
-  }
+}
 
 assign("subsetBetas", subsetBetas)
