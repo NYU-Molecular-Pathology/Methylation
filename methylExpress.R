@@ -19,13 +19,19 @@ if(length(selectRDs)==0 | identical(selectRDs,NULL) | identical(selectRDs,"NULL"
 if(length(baseFolder)==0 | identical(baseFolder,NULL) | identical(baseFolder,"NULL")
   ){gb$baseFolder<-NULL}else {if(is.na(baseFolder)){gb$baseFolder<-NULL}}
 
-if(length(redcapUpload)==0 | identical(baseFolder,NULL) | identical(redcapUpload,"NULL")){
+if(length(redcapUpload)==0 | identical(redcapUpload,NULL) | identical(redcapUpload,"NULL")){
     gb$redcapUpload<-T
-}else {if(is.na(redcapUpload)){redcapUpload<-T}}
+}else {
+  if(is.na(redcapUpload)){
+    redcapUpload<-T
+  }else{
+    redcapUpload <- as.logical(args[5])
+  }
+}
 
 # Check Input Params
 message("\n~~~~~~~~~~~~~~~~~~~~~Parameters input~~~~~~~~~~~~~~~~~~~~~\n")
-message("token: ", token,"\nrunID: ", runID,"\nselectRDs: ", selectRDs, "\nbaseFolder: ", baseFolder)
+message("token: ", token,"\nrunID: ", runID,"\nselectRDs: ", selectRDs, "\nbaseFolder: ", baseFolder, "\nredcapUpload: ", redcapUpload)
 message("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
 # Cancel if no token or runID
