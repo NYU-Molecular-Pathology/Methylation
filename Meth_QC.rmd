@@ -26,11 +26,9 @@ message("Using the following base Directory:\n",baseDir)
 
 # Check if sheetNamePath provided else use Desktop to look for samplesheet pattern
 if(is.null(params$sheetNamePath)){
-    sheetNamePath = list.files(baseDir,pattern = "_samplesheet.csv")[1]
+    sheetNamePath = list.files(baseDir,pattern = "_samplesheet.csv", full.names = T)[1]
 }else{sheetNamePath = params$sheetNamePath}
 
-
-sheetNamePath <- list.files(baseDir,pattern = sheetNamePath, full.names = T)
 message(paste0("Sample sheet name is: ", sheetNamePath))
 fixerrors <- read.csv(sheetNamePath, strip.white = T)
 targets <- minfi::read.metharray.sheet(baseDir, pattern = sheetNamePath)
