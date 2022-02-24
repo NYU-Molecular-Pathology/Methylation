@@ -21,12 +21,12 @@ message(paste("Using", runID, "as RunID"))
 if(is.null(params$baseDir)){
     baseDir = paste0("~/Desktop/", runID)
 }else{baseDir=params$baseDir}
-
+fiPatt = "_samplesheet.csv"
 message("Using the following base Directory:\n",baseDir)
 
 # Check if sheetNamePath provided else use Desktop to look for samplesheet pattern
 if(is.null(params$sheetNamePath)){
-    sheetNamePath = list.files(baseDir,pattern = "_samplesheet.csv", full.names = T)[1]
+    sheetNamePath = list.files(baseDir,pattern = fiPatt, full.names = T)[1]
 }else{sheetNamePath = params$sheetNamePath}
 
 message(paste0("Sample sheet name is: ", sheetNamePath))
@@ -154,7 +154,7 @@ table{align:"left" !important;}
 ```{r Probes Getter, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
 library(ggplot2)
 ## Get MU Data & Colors --------------------------------------
-sheetName <- list.files(baseDir,pattern = "_samplesheet.csv")
+sheetName <- list.files(baseDir,pattern = fiPatt)
 sheetNamePath <- sheetName[1]
 message(paste0("sample sheet name is: ",sheetName))
 sheetName <- list.files(baseDir,pattern = sheetNamePath, full.names = T)
