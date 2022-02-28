@@ -32,10 +32,12 @@ cleanUpProbes <- function(RGSet, targets, getfunorm=F){
     targets <- targets[keep,]
     detP <- detP[, keep]
     dropping <- table(keep)["FALSE"]>0
+    if(!is.na(dropping)){
     if(dropping==TRUE){
       message("Dropping probes: ")
         table(keep)
         }
+    }
     mSetSq <- suppressWarnings(preprocessQuantile(RGSet))
     detP <- detP[match(featureNames(mSetSq), rownames(detP)), ]
     keep <- rowSums(detP < 0.01) == ncol(mSetSq)
