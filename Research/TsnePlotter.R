@@ -19,6 +19,61 @@ getPerplexity <- function(expr) {
     return(round(sqrt(N_cells), 0))
 }
 
+generateTvals <- function(betas) {
+    betas <- as.data.frame(betas)
+    X <- t(betas)
+    optPC <- getOptPC(X)
+    opPer <- getPerplexity(betas)
+    
+    tryCatch(
+        expr = {
+            TSNE <-
+                Rtsne::Rtsne(
+                    X,
+                    dims = 3,
+                    theta = 0,
+                    perplexity = opPer,
+                    initial_dims = optPC,
+                    verbose = F,
+                    partial_pca=T,
+                    max_iter = 10000
+                )
+            message(
+                "\nOptimal Perplexity for T-sne is: ",
+                opPer,
+                "\n",
+                "Optimal #PCs are: ",
+                optPC,
+                "\n"
+            )
+            return(TSNE)
+        },
+        error = function(e) {
+            
+            TSNE <-
+                Rtsne::Rtsne(
+                    X,
+                    dims = 3,
+                    theta = 0,
+                    perplexity = opPer-1,
+                    initial_dims = optPC,
+                    verbose = F,
+                    partial_pca=T,
+                    max_iter = 10000
+                )
+            message(
+                "\nOptimal Perplexity for T-sne is: ",
+                opPer,
+                "\n",
+                "Optimal #PCs are: ",
+                optPC,
+                "\n"
+            )
+            return(TSNE)
+        }
+    )
+}
+
 # Returns TSNE x,y,z coordinates and groups labels colors
 getTsneVal <- function(TSNE, saNames, samGrp, colorGrp, symGrp) {
         tsne_plot <- data.frame(
