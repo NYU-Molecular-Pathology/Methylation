@@ -22,6 +22,7 @@ userName <- params$userName
 workDir <-  params$workDir # working Knit directory
 # To Knit RMD, copy to same directory:"_MethylMatch.xlsx","-QC.tsv","-SampleSheet.csv", and all ".FACETS.cnv.plot.pdf" files
 outDir <- file.path(workDir, paste0(pactName,"_consensus"))
+opts_knit$set(root.dir = outDir)
 message("Now Knitting ", pactName, ".html")
 ```
 
