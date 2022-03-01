@@ -19,125 +19,8 @@ getPerplexity <- function(expr) {
     return(round(sqrt(N_cells), 0))
 }
 
-
-# FUN: Generate T-sne values given betas --------
-generateTvals <- function(betas) {
-    betas <- as.data.frame(betas)
-    X <- t(betas)
-    optPC <- getOptPC(X)
-    opPer <- getPerplexity(betas)
-    
-    tryCatch(
-        expr = {
-            TSNE <-
-                Rtsne::Rtsne(
-                    X,
-                    dims = 3,
-                    theta = 0,
-                    perplexity = opPer,
-                    initial_dims = optPC,
-                    verbose = F,
-                    partial_pca=T,
-                    max_iter = 10000
-                )
-            message(
-                "\nOptimal Perplexity for T-sne is: ",
-                opPer,
-                "\n",
-                "Optimal #PCs are: ",
-                optPC,
-                "\n"
-            )
-            return(TSNE)
-        },
-        error = function(e) {
-            
-            TSNE <-
-                Rtsne::Rtsne(
-                    X,
-                    dims = 3,
-                    theta = 0,
-                    perplexity = opPer-1,
-                    initial_dims = optPC,
-                    verbose = F,
-                    partial_pca=T,
-                    max_iter = 10000
-                )
-            message(
-                "\nOptimal Perplexity for T-sne is: ",
-                opPer,
-                "\n",
-                "Optimal #PCs are: ",
-                optPC,
-                "\n"
-            )
-            return(TSNE)
-        }
-    )
-}
-
-genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL, symbolsLabel=NULL, colorLabel=NULL, names2Label=NULL){
-    colours <- unique(tsne_plot$col)
-    symFlags <- !is.null(symbolsLabel)
-    #options("device.ask.default"=F)
-    devAskNewPage(ask=F)
-    # Assigns symbols to each unique sample type
-    if(symFlags==T) {
-      shapeVals <- c(17, 19, 15, 7, 8, 9, 1, 3, 4, 5)
-      sv <- shapeVals[1:length(unique(tsne_plot$symbol))]
-      shapeLabels <- levels(as.factor(tsne_plot$symbol)) #"Sample Type"
-      if (any(is.na(shapeLabels))) {shapeLabels <- colorLabel}
-      symShape <- as.factor(tsne_plot$symbol)
-    } else{
-        symShape <- shapeVals <- shapeLabels <- NULL
-        }
-    # Text size set
-    et <- element_text(size = 18)
-    # Theme parameters for ggrepel
-    labelParams <- as.list(
-      alpha = 0.85, segment.alpha = 0.70, nudge_x = -30, nudge_y = 4,
-      direction = "both", fontface = "bold", box.padding = 0.5, 
-      fill = "pink", min.segment.length = 0.01, color = "black",
-      label.size = 1.0, size = 3, label.padding = unit(0.5, "lines"),
-      label.r = unit(0.5, "lines"), force = 8, show.legend = F
-    )
-    # Main Plot
-    groupTsne <- ggplot(tsne_plot,aes(x=tsne_plot$x,y=tsne_plot$y,group=tsne_plot$GROUPS)) +
-        geom_point(aes(x, y, color=tsne_plot$GROUPS, shape=symShape), size=4, alpha=0.85)
-    if(symFlags==T){
-        groupTsne <- groupTsne + 
-          scale_shape_manual(name="Sample Type" , values=sv, labels=shapeLabels)
-    }
-     # Adding manual plot colors and titles
-    groupTsne <- groupTsne +
-      scale_color_manual(values=colours, name= "Sample Label") +
-      labs(color = colorLabel, size = 4) + theme_bw(base_size = 24) +
-      theme(
-            panel.grid.major = element_blank(),
-            panel.grid.minor = element_blank(),
-            panel.background = element_blank(),
-            text = et
-            ) +
-      ggtitle(label = titleLabel) +
-      theme(plot.title = et, legend.text = et, text = et,
-            legend.position = "right", 
-            axis.text.y = et, axis.text.x = et) +
-      guides(fill = guide_legend(title = "Sample Legend")) + 
-      labs(x = "TSNE 1", y = "TSNE 2")
-    # Below only runs to label sample IDs if label group is provided
-    if (!is.null(groupToLabel)) {
-        groupTsne <- groupTsne + ggrepel::geom_label_repel(
-            data = subset(tsne_plot, tsne_plot$samples == groupToLabel),
-            aes(x = x, y = y, label = samples, size = 2), labelParams)
-    }
-    # Below only runs if specific sample names are provided
-    if (!is.null(names2Label)) {
-        groupTsne <- groupTsne + ggrepel::geom_label_repel(
-            data = tsne_plot,
-            aes(x = x, y = y, label = samples, size = 2), labelParams)
-    }
-    return(groupTsne)
-}
+tsne_titles <- gb$generateTitles(clusterTitle, topTitle=as.character(varProbes), titleMain)
+#tsne_titles <- tsne_titles[1:3]
 
 getTsneVal <- function(TSNE, saNames, samGrp, colorGrp, symGrp) {
         tsne_plot <- data.frame(
@@ -149,30 +32,143 @@ getTsneVal <- function(TSNE, saNames, samGrp, colorGrp, symGrp) {
         return(tsne_plot)
  }
 
-generateTitles <- function(clusterTitle, topTitle, titlemain) {
-  tsne_titles <- as.data.frame(foreach::foreach(
-    ti = 1:length(clusterTitle),
-    .combine = "rbind",
-    .packages = 'foreach'
-  ) %do% {
-    foreach::foreach(
-      topV = 1:length(topTitle),
-      .combine = "rbind",
-      .packages = 'foreach'
-    ) %do% {
-      return(paste0(
-        clusterTitle[ti],
-        " ",
-        titlemain,
-        " ",
-        topTitle[topV],
-        " Variance Probes"
-      ))
+
+genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL, symbolsLabel=NULL, colorLabel=NULL, names2Label=NULL){
+    colours <- unique(tsne_plot$col)
+    symFlags <- !is.null(symbolsLabel)
+    #options("device.ask.default"=F)
+    devAskNewPage(ask=F)
+    if(symFlags==T){
+        shapeVals <- c(17, 19, 15, 7, 8, 9, 1, 3, 4, 5)
+        sv <- shapeVals[1:length(unique(tsne_plot$symbol))]
+        shapeLabels <- levels(as.factor(tsne_plot$symbol)) #"Sample Type"
+        if(any(is.na(shapeLabels))){shapeLabels<-colorLabel}
+        symShape <- as.factor(tsne_plot$symbol)
+    }else{symShape <- shapeVals <- shapeLabels <- NULL}
+    et <- element_text(size = 24)
+    groupTsne <- ggplot(tsne_plot,aes(x=tsne_plot$x,y=tsne_plot$y,group=tsne_plot$GROUPS)) +
+        geom_point(aes(x,y,color=tsne_plot$GROUPS, shape= symShape), size=4,alpha=0.85)
+    if(symFlags==T){
+        groupTsne <- groupTsne + 
+            scale_shape_manual(name="Sample Type",values=sv,labels=shapeLabels)
     }
-  })[, 1]
-  #print(tsne_titles)
-  return(tsne_titles)
+    groupTsne <- groupTsne +
+        scale_color_manual(values=colours, name= "Sample Label") +
+        labs(color = colorLabel, size = 4) + theme_bw(base_size = 24) +
+        theme(
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            panel.background = element_blank(),
+            text = et
+        ) +
+        ggtitle(label = titleLabel) +
+        theme(
+            plot.title = et,
+            legend.text = et,
+            text = et,
+            legend.position = "right",
+            axis.text.y = et,
+            axis.text.x = et
+        ) +
+        guides(fill = guide_legend(title = "Sample Legend")) +
+        labs(x = "TSNE 1", y = "TSNE 2")
+    # Below only runs to label sample IDs if label group is provided
+    if (!is.null(groupToLabel)) {
+        groupTsne <- groupTsne + ggrepel::geom_label_repel(
+            data = subset(tsne_plot, tsne_plot$samples == groupToLabel),
+            aes(x = x,  y = y, label = samples, size = 2),
+            alpha = 0.85, segment.alpha = 0.70, nudge_x = -30, nudge_y = 4,
+            direction = "both", fontface = "bold",
+            box.padding = 0.5, fill = "pink", min.segment.length = 0.01, color = "black",
+            label.size = 1.0, size = 3, label.padding = unit(0.5, "lines"),
+            label.r = unit(0.5, "lines"), force = 8, show.legend = F)
+    }
+    
+    if (!is.null(names2Label)) {
+        groupTsne <- groupTsne + ggrepel::geom_label_repel(
+            data = tsne_plot,
+            aes(x = x,  y = y, label = samples, size = 2),
+            alpha = 0.85, segment.alpha = 0.70, nudge_x = -30, nudge_y = 4,
+            direction = "both", fontface = "bold",
+            box.padding = 0.5, fill = "pink", min.segment.length = 0.01, color = "black",
+            label.size = 1.0, size = 3, label.padding = unit(0.5, "lines"),
+            label.r = unit(0.5, "lines"), force = 8, show.legend = F)
+    }
+    return(groupTsne)
 }
+
+gb$tierBetas <-
+  function(betas,
+           col_sentrix,
+           RGSet,
+           batchCorrect = F,
+           getSuper = F,
+           topVar = 1:10000) {
+    rgLiDat <- RGSet@colData@listData
+    selectSams <- rgLiDat[[col_sentrix]][rgLiDat[["Sample_ID"]] %in% colnames(betas)]
+    rgColRows <- RGSet@colData@rownames
+    newRgset <- RGSet[, rgColRows %in% selectSams]
+    if (batchCorrect == T) {
+      if (getSuper == T) {
+        superbetas <- gb$batchCorrectBs(betas, newRgset, topVar, T)
+        return(superbetas)
+      } else{
+        unBetas <- gb$batchCorrectBs(betas, newRgset , topVar)
+        return(unBetas)
+      }
+    } else{
+      if (getSuper == T) {
+        superbetas <- gb$getSupervise(betas, newRgset, topVar)
+        return(superbetas)
+      } else{
+        unBetas <- gb$takeTopVariance(betas, topVar)
+        return(unBetas)
+      }
+    }
+  }
+
+gb$selectPlots <- function(doPlotly=F,tplots,ty,tps,outDirs){
+  if (doPlotly == F) {
+      for (zz in 1:nrow(outDirs)) {
+        xx <- paste('###', tps[ty, 1], outDirs[zz, 3], '\n\n')
+        cat(xx)
+        fig <- tplots[[zz]]
+        supM(print(fig))
+        cat('\n\n')
+      }
+    } else{
+      for(zz in 1:length(tplots))  {
+        xx <- paste('###', tps[ty, 1], outDirs[zz, 3], '\n\n')
+        cat(xx)
+        fig <- tplots[[zz]]
+        op <- gb$makePlotly(fig)
+        supM(print(htmltools::tagList(ggplotly(op))))
+        cat('\n\n')
+      }
+    }
+  return(assign("diagPlot",tplots[[1]]))
+}
+
+doMultiple <- function(allBetas1,tsne_titles, outDirs, targets1, tps,ty,custom){
+    plotN = NULL
+    tsneList <-lapply(X = 1:length(allBetas1), FUN=function(X){
+      return(suppressMessages(gb$generateTvals(allBetas1[[X]])))
+      })
+    plotList <- list(foreach::foreach(plotN = 1:length(tsneList),.packages="foreach")%do%{
+###################### TO CHANGE ########################      
+      tsne_plot <- gb$getTsneVal(
+        TSNE = tsneList[[plotN]],
+        saNames = targets1$SampleFilter,
+        samGrp = targets1$Type,
+        colorGrp = targets1$color,
+        symGrp = targets1[,gb$col_samGroup]
+        ) #targets1[,col_samGroup]
+###################### TO CHANGE ########################
+      return(tsne_plot)
+      })[[1]]
+    return(plotList)
+}
+
 
 getTopPlot <- function(samNames){
           mds <-
