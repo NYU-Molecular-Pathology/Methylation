@@ -19,9 +19,7 @@ getPerplexity <- function(expr) {
     return(round(sqrt(N_cells), 0))
 }
 
-tsne_titles <- gb$generateTitles(clusterTitle, topTitle=as.character(varProbes), titleMain)
-#tsne_titles <- tsne_titles[1:3]
-
+# Returns TSNE x,y,z coordinates and groups labels colors
 getTsneVal <- function(TSNE, saNames, samGrp, colorGrp, symGrp) {
         tsne_plot <- data.frame(
             x = TSNE$Y[, 1],
@@ -31,7 +29,6 @@ getTsneVal <- function(TSNE, saNames, samGrp, colorGrp, symGrp) {
             samples = saNames, symbol = symGrp)
         return(tsne_plot)
  }
-
 
 genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL, symbolsLabel=NULL, colorLabel=NULL, names2Label=NULL){
     colours <- unique(tsne_plot$col)
@@ -191,8 +188,6 @@ getTopPlot <- function(samNames){
 plotSaver <- function(outDirs,tsne_titles,tps,ty,plotList,custom) {
   plotN=NULL
   options("device.ask.default"=F)
-  
-  
   invisible(foreach::foreach(plotN = 1:nrow(tps)) %do% {
     pL<- plotList[[plotN]]
     #message("Plot to Render:")
