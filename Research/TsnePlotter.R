@@ -30,6 +30,31 @@ getTsneVal <- function(TSNE, saNames, samGrp, colorGrp, symGrp) {
         return(tsne_plot)
  }
 
+generateTitles <- function(clusterTitle, topTitle, titlemain) {
+    tsne_titles <- as.data.frame(foreach::foreach(
+        ti = 1:length(clusterTitle),
+        .combine = "rbind",
+        .packages = 'foreach'
+    ) %do% {
+        foreach::foreach(
+            topV = 1:length(topTitle),
+            .combine = "rbind",
+            .packages = 'foreach'
+        ) %do% {
+            return(paste0(
+                clusterTitle[ti],
+                " ",
+                titlemain,
+                " ",
+                topTitle[topV],
+                " Variance Probes"
+            ))
+        }
+    })[, 1]
+    #print(tsne_titles)
+    return(tsne_titles)
+}
+
 genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL, symbolsLabel=NULL, colorLabel=NULL, names2Label=NULL){
     colours <- unique(tsne_plot$col)
     symFlags <- !is.null(symbolsLabel)
