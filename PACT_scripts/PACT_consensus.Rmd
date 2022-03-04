@@ -10,7 +10,7 @@ toc_collapsed: true
 editor_options: 
   chunk_output_type: console
 params:
-  pactName: "PACT-22-##"
+  pactName: "PACT-22-#"
   userName: "Jonathan Serrano"
   workDir: "/Volumes/CBioinformatics/jonathan/pact/consensus"
 ---
@@ -22,7 +22,6 @@ userName <- params$userName
 workDir <-  params$workDir # working Knit directory
 # To Knit RMD, copy to same directory:"_MethylMatch.xlsx","-QC.tsv","-SampleSheet.csv", and all ".FACETS.cnv.plot.pdf" files
 outDir <- file.path(workDir, paste0(pactName,"_consensus"))
-opts_knit$set(root.dir = outDir)
 message("Now Knitting ", pactName, ".html")
 ```
 
@@ -140,9 +139,9 @@ makeDT <- function(tabNam, objDat, pdfFi=NULL, rdNumb=NULL, sam=NULL){
   }
   if(stringr::str_detect(tabNam,"Specimen")==T){
     newTa <- knitr::kable(objDat, row.names=F, "html")
-    newTa <- kableExtra::kable_styling(newTa, bootstrap_options = c("striped","condensed"),
-                                       full_width = F, position="left") 
-    newTa <- kableExtra::column_spec(newTa, 1:5, width = "4cm")
+    newTa <- kableExtra::kable_styling(newTa, bootstrap_options = c("condensed"),
+                                       full_width = T, position="left") 
+    newTa <- kableExtra::column_spec(newTa, 1:5, width = "2cm")
     print(newTa)
     cat("\n\n")
   } else{
@@ -161,7 +160,7 @@ makeDT <- function(tabNam, objDat, pdfFi=NULL, rdNumb=NULL, sam=NULL){
         cat("\n\n")
     }
   }else{
-      cat("\n\nNo additional data table for this sample tab\n\n")
+    cat("\n\nNo additional data table for this sample tab\n\n")
     cat("\n\n")
   }
   }
@@ -246,13 +245,13 @@ convert.plots <- function(samList, pngOutDir) {
             " does not equal length of pdf files: ",
             length(pdfList))
     print(pdfList)
-    }
+  }
+  
   ngsOrder = which(sapply(tumors$Specimen_ID, grepl, pdfList), arr.ind = T)[, "row"] # re-order matching rows
   invisible(lapply(X=1:length(ngsOrder), FUN=function(X){
     pngName <- paste0(tumors$Test_Number[X], ".png") # output file
     pdfFile <- pdfList[ngsOrder[X]] # matching pdf FACET file
-    suppressWarnings(pdftools::pdf_convert(
-      pdfFile, filenames = file.path("cnvpng", pngName), dpi=200)
+    suppressWarnings(pdftools::pdf_convert(pdfFile, filenames = file.path("cnvpng", pngName), dpi=200)
       )}))
   pdfDir <- file.path(getwd(),"FACETpdfs")
   if(!dir.exists(pdfDir)){
