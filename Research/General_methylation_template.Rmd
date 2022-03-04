@@ -484,16 +484,8 @@ if(file.exists(annotFi)) {
 }
 
 addGeneName <- function(annot, oldBeta) {
-  cgProbs <- rownames(oldBeta) 
-    X <- NULL
-  foreach::foreach(X = cgProbs, .packages = "foreach") %do% {
-    theStr <- stringr::str_split(annot[X,"UCSC_RefGene_Name"], pattern = ";")
-    theStr <- unique(theStr[[1]])
-    if (length(theStr) > 1) {
-      theStr <- paste(theStr, collapse = "_")
-    }
-    rownames(oldBeta[X,]) <- paste(paste0(theStr),rownames(oldBeta), sep = "_")
-  }
+  rownames(oldBeta) <- paste(
+    annot[rownames(oldBeta), "UCSC_RefGene_Name"], rownames(oldBeta), sep = "_")
   return(oldBeta)
 }
 
