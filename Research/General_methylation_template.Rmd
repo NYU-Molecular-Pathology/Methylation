@@ -135,17 +135,23 @@ gb$setDirectory(runDir)
 targets <- read.csv(samsheet, strip.white=T)
 
 # cvs column names to subset samples -----
-col_samNames <- "Sample_Name"
-col_samTypes <- "Type"
-col_samGroup <- "Tumor"
+col_samNames <- "Sample_Name" # column containing unique sample IDS
+col_samTyp <- "Type" # groupings of sample kinds
+col_samGrp <- "Tumor" # header for sample groups/subtypes
+col_samGroup<-"Tumor" # header for sample groups/subtypes
+col_sentrix <- "SentrixID_Pos" # header name containing the sentrix ID
+col_other <- "Type" # any additional columns you would like to colorize/label in plots
+batchCorrect <- F # Do your samples need to be batch corrected?
+selectedVars <- c("Type", "Tumor") # vector of names of columns you want to target
 
-col_sentrix <- "SentrixID_Pos"
-col_other <- "Type"
+#Filter any targets here as target1, target2, etc
+targets1 <- targets #[targets$Type!="Papillary adenoma"& targets$Type!="PRNRP",]
+targets[ , col_samGrp] <- "SampleGroup1" # All same group one group of samples vs types
+gb$makeDt(targets) # prints out the samplesheet info in html
+```
 
-#Plot Parameters
-batchCorrect <- FALSE
-selectedVars <- c("Type", "Tumor")
-varProbes <- c(100,1000,10000) # Which top Variance probes to pull
+```{r, label='Input Plot Params', include=FALSE}
+varProbes <- c(100, 1000, 10000) # Which top Variance probes to pull i.e. can be just c(100, 1000)
 topN = 1000
 mdsTitle <- paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot")
 
@@ -188,6 +194,50 @@ sentrixColumn <- grepl(col_sentrix, colnames(targets))
 targets$Basename <- file.path(gb$runDir, targets[, sentrixColumn])
 assign("runDir",runDir)
 assign("targets", targets)
+```
+```{r, label='Optional Plot data files', include=FALSE}
+# Default output names by date run
+mbfile <- "mSetSq.beta.rds"
+unbetaOut <-"unsupervisedBetas_Jan21.rds"
+supbetaOut <-"supervisedBetas_Jan21.rds"
+
+# MDS default top N points and plot tiltle
+topN = 1000
+mdsTitle <- paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot")
+
+# CNV output file names  --------------------
+fiTd <- "dec14" #Sys.Date()for saving output
+annotFi <- "annotations.rds"
+cnvFile <- paste0("cnv_details_", fiTd, ".csv")
+segFile <- paste0("segmentsAll_", fiTd, ".csv")
+seg_clust_file <- paste0("data_seg_clusters_",fiTd,".txt")
+gsetFile <- paste0("gsetfunnorm",td,".rds")
+gBetaFile  <- paste0("gsetbeta",td,".rds")
+ClusfiNam <- paste0("dmp_kyung_",td,".csv")
+
+# HeatMaps
+geneNamesHeatMap <- F # Do you want to annotate the gene/probe names on heatmap y-axis?
+
+# change any of the chunks below to eval=TRUE to enable/disable plot types
+```
+```{r, label='Assign Params'}
+samNames <- targets[ ,col_samNames]
+
+# OPTIONAL
+targets$Sample_ID <- samNames # generates Sample_ID column if doesn't exist
+targets$Sample_Group <- targets[,col_other]
+
+## Adds pals high contrast colors per group by type --------
+targets <- gb$colorTargets(targets, selectedVars) 
+
+write.csv(targets, file="samplesheet.csv", quote=F, row.names=F)
+targets <- read.csv("samplesheet.csv", strip.white=T, row.names=NULL)
+if(class(targets)!="data.frame"){targets<- as.data.frame(targets)}
+
+## Assign Target idat basename using col_sentrix --------
+sentrixColumn <- grepl(col_sentrix, colnames(targets))
+targets$Basename <- file.path(gb$runDir, targets[, sentrixColumn]) # writes path to idat files
+assign("runDir",runDir); assign("targets", targets)
 ```
 
 ## Sample Types from Sample Sheet Above
