@@ -220,8 +220,8 @@ makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
     checkRunOutput(runID)
     if (skipQC == F) {
         if(redcapUp==T){
-        try(create.QC.record(runID), silent=T)
-            }
+        create.QC.record(runID)
+        }
         generateQCreport()
     }
     if(grepl("TEST",runID)){cpReport=F;redcapUp=F;email=F}
@@ -242,9 +242,9 @@ startRun <- function(selectRDs=NULL, emailNotify=T){
     
     if(!is.null(selectRDs)){
         sampleOrder <- reOrderRun(selectRDs) # Re-order sample report generation for priority
-        makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=T, selectSams=sampleOrder, redcapUp=T)
+        makeReports.v11b6(skipQC=F, email=T, cpReport=T, selectSams=sampleOrder, redcapUp=T)
     } else {
-        makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=F, selectSams=NULL, redcapUp=T)
+        makeReports.v11b6(skipQC=F, email=T, cpReport=T, selectSams=NULL, redcapUp=T)
         }
 }
 
