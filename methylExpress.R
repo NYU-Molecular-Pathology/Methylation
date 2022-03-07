@@ -128,4 +128,4 @@ gb$startRun <-
     }
 
 assign("redcapUpload", redcapUpload)
-gb$startRun(selectRDs, emailNotify=T,redcapUp=T)
+gb$startRun(selectRDs, emailNotify=T,redcapUp=T) # can change to default false
