@@ -208,7 +208,7 @@ loopRender <- function(samList = NULL, data,redcapUp=T) {
 #' @param cpReport default false, set TRUE to copy the reports to the Zdrive/research output Dir
 #' @param redcapUp default is true, flag will upload output html files and dataframe to redcap
 makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
-                            skipQC=F,email=T,cpReport=F,redcapUp=T){
+                            skipQC=F,email=T,cpReport=T,redcapUp=T){
     msgFunName(pipeLnk,"makeReports.v11b6")
     
     assign("genCn",genCn, envir = gb)
