@@ -170,8 +170,11 @@ dropGroup <- function(targets, filterCol=NULL, group2rm=NULL) {
 
 dropBadQc <- function(targets, betas) {
   dropping <- targets$Sample_Name %in% colnames(betas)
+    if(table(dropping)[1]>=1){
   theMissing <- targets[!dropping, ]
   targets <- targets[dropping, ]
+        }else{   theMissing <- NULL}
+
   rownames(targets) <- 1:nrow(targets)
   write.csv(targets,
             file = "samplesheet.csv",
