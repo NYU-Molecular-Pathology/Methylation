@@ -85,6 +85,7 @@ getTsneVal <- function(TSNE, saNames, samGrp, colorGrp, symGrp) {
         return(tsne_plot)
  }
 
+# Final TSNE plot title will combine: clusterTitle + titleMain + varProbes
 generateTitles <- function(clusterTitle, topTitle, titlemain) {
     tsne_titles <- as.data.frame(foreach::foreach(
         ti = 1:length(clusterTitle),
@@ -94,7 +95,7 @@ generateTitles <- function(clusterTitle, topTitle, titlemain) {
         foreach::foreach(
             topV = 1:length(topTitle),
             .combine = "rbind",
-            .packages = 'foreach'
+            .packages = c('foreach')
         ) %do% {
             return(paste0(
                 clusterTitle[ti],
