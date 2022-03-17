@@ -123,7 +123,7 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL, symbolsLabel
         if(any(is.na(shapeLabels))){shapeLabels<-colorLabel}
         symShape <- as.factor(tsne_plot$symbol)
     }else{symShape <- shapeVals <- shapeLabels <- NULL}
-    et <- element_text(size = 24)
+    et <- element_text(size = 14)
     groupTsne <- ggplot(tsne_plot,aes(x=tsne_plot$x,y=tsne_plot$y,group=tsne_plot$GROUPS)) +
         geom_point(aes(x,y,color=tsne_plot$GROUPS, shape= symShape), size=4,alpha=0.85)
     if(symFlags==T){
@@ -132,7 +132,7 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL, symbolsLabel
     }
     groupTsne <- groupTsne +
         scale_color_manual(values=colours, name= "Sample Label") +
-        labs(color = colorLabel, size = 4) + theme_bw(base_size = 24) +
+        labs(color = colorLabel, size = 4) + theme_bw(base_size = 14) +
         theme(
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
