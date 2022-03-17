@@ -124,3 +124,11 @@ getColors <- function(samTypes) {
   names(myColors) <- unique(samTypes)
   return(myColors)
 }
+
+sanitizeSheet <- function(inputFi, samsheet) {
+  samSh <- readxl::read_excel(inputFi)
+  samSh <- samSh %>% dplyr::mutate_all(stringr::str_replace, ",", "")
+  write.csv(samSh, samsheet, quote = F, row.names = F)
+  targets <- read.csv(samsheet, strip.white = T)
+  return(targets)
+}
