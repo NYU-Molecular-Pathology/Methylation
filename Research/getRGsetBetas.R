@@ -74,6 +74,24 @@ getSupervise <- function(the_beta, RGSet, topVar=1:10000){
     return(betas)
 }
 
+# Checks if supervised rds data exists to load, else calculates it 
+loadSupervise <- function(RGSet, betas, supbetaOut, varProbes, col_sentrix="SentrixID_Pos") {
+  if (!file.exists(supbetaOut)) {
+    rgRows <- RGSet@colData@rownames # ensure poor samples are dropped
+    rgLiDat <- RGSet@colData@listData
+    dropFilter <- rgLiDat[["Sample_ID"]] %in% colnames(betas)
+    samFltr <- rgLiDat[[col_sentrix]][dropFilter]
+    newRg <- RGSet[, rgRows %in% samFltr]
+    topVar = 1:max(varProbes)
+    # supervised dmp top Variance with getSupervise
+    superbetas <- gb$getSupervise(betas, newRg, topVar) 
+    saveRDS(superbetas, file = supbetaOut)
+  } else{
+    superbetas <- readRDS(supbetaOut)
+  }
+  return(superbetas)
+}
+
 # COMABAT batch correction between 2 groups
 batchCorrectBs <- function(betas,RGSet,topVar=NULL, supervise = F) {
     batch = targets$Batch
