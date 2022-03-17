@@ -141,3 +141,36 @@ assignColors2 <- function(targets, varColumns = c("Type","Origin"), col_vect = N
     }
     if(all(names(colorValues)==names(anno_df))){return(gb$getHeatAnno(colorValues,anno_df))}
 }
+
+assignColors3 <- function(targets, varColumns = c("Type","Origin"), col_vect = NULL) {
+    if (is.null(col_vect)) {col_vect <- pals::glasbey()}
+    col_vect[6] = "#eb7d34" #changing dark forest to orange color
+    dimnames(targets)[[2]]
+    dat <- targets[,varColumns] # varColumns
+    anno_df <- data.frame(dat)
+    vars2Color <- as.list(lapply(dat, unique))
+    colorValues <-lapply(vars2Color, function(x) {x = (col_vect)[1:(length(x))]})
+    for (x in 1:length(vars2Color)) {
+        for (varNum in 1:length(vars2Color[x])) {
+          names(colorValues[x][[1]]) = c(vars2Color[x][[1]])}
+      }
+    stopifnot(all(names(colorValues)==names(anno_df)))
+    ha <- gb$getHeatAnno(colorValues,anno_df)
+    
+    for (vCol in varColumns) {
+      colours <- unique(targets$color)
+      names(colours) <- sort(unique(targets[, vCol]))
+      colMap <- ha@anno_list[[vCol]]@color_mapping
+      colMap@full_col <- colours
+      colMap@colors <- colours
+      colMap@levels <- names(colours)
+      ha@anno_list[[vCol]]@color_mapping <- colMap
+    }
+    return(ha)
+}
+
+addGeneName <- function(annot, oldBeta) {
+  geneName <- annot[rownames(oldBeta), "UCSC_RefGene_Name"]
+  rownames(oldBeta) <- paste(geneName, rownames(oldBeta), sep = "_")
+  return(oldBeta)
+}
