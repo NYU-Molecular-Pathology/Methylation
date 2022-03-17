@@ -18,17 +18,17 @@ makePlotly<-function(fig) {
         supM(plotly::ggplotly(
             fig,
             dynamicTicks = T,
-            height = 800,
-            width = 1200
+            height = 960, #800
+            width = 1440 #1200
         ))
     otherPlot$x[["layout"]][["annotations"]] <- NULL
     opLayout <- otherPlot[["x"]][["layout"]]
     opLayout[["font"]][["size"]] <- 12
-    opLayout[["title"]][["font"]][["size"]] <- 24
-    opLayout[["xaxis"]][["title"]][["font"]][["size"]] <- 16
-    opLayout[["yaxis"]][["title"]][["font"]][["size"]] <- 16
-    opLayout[["xaxis"]][["tickfont"]][["size"]] <- 16
-    opLayout[["yaxis"]][["tickfont"]][["size"]] <- 16
+    opLayout[["title"]][["font"]][["size"]] <- 20
+    opLayout[["xaxis"]][["title"]][["font"]][["size"]] <- 14
+    opLayout[["yaxis"]][["title"]][["font"]][["size"]] <- 14
+    opLayout[["xaxis"]][["tickfont"]][["size"]] <- 12
+    opLayout[["yaxis"]][["tickfont"]][["size"]] <- 12
     otherPlot[["x"]][["layout"]] <- opLayout
     hoverinfo <- paste0("Sample: ", fig[["data"]][["samples"]], "</br></br>")
     opInfo <- otherPlot[["x"]][["data"]]
@@ -61,8 +61,8 @@ makePlotly<-function(fig) {
     }
     otherPlot <-
         otherPlot %>% plotly::layout(legend = list(
-            title = list(text = "<b>Legend</b><br>", font = list(size = 24)),
-            font = list(size = 14)
+            title = list(text = "<b>Legend</b><br>", font = list(size = 14)),
+            font = list(size = 12)
         ))
 
     return(otherPlot)
@@ -128,7 +128,7 @@ plotSaver <- function(outDirs,tsne_titles,tps,ty,plotList,custom) {
       titleLabel=tsne_titles[plotN],
       symbolsLabel = pL$symbol,
       colorLabel = pL$GROUPS,
-      names2Label = NULL))
+      names2Label = NULL)) # any specific sample names to label on the plot
 ###################### TO CHANGE ########################
  }
  return(pltList)
