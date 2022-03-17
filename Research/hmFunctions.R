@@ -3,32 +3,34 @@
 #' @param colorValues the variable name paired with color for each sample by variable
 #' @param anno_df the dataframe that ou are annotating, these are the filtered columns of the varColumns
 gb <- globalenv(); assign("gb", gb)
-getHeatAnno <- function(colorValues,anno_df){
-    ha <- ComplexHeatmap::HeatmapAnnotation(
-        df = anno_df,
-        col = colorValues,
-        na_col = "white",
-        annotation_legend_param = list(
-            title_gp = gpar(
-                fontsize = 12,
-                lineheight = 2,
-                fontface = "bold"
-            ),
-            labels_gp = gpar(fontsize = 12, lineheight = 2),
-            grid_height = unit(0.8, "cm"),
-            grid_width = unit(0.8, "cm"),
-            gt_render = list(padding = unit(c(2, 2, 2, 2), "cm"))
-        ),
-        annotation_name_gp = gpar(
-            fontsize = 12,
-            fontface = "bold",
-            lineheight = 2,
-            gt_render = list(padding = unit(c(2, 2, 2, 2), "cm"))
-        ),
-        annotation_name_side = "left"
-    )
-    par(c(1.5, 1.5, 1.5, 2.5) + 0.5)
-    return(ha)
+
+# Returns heatmap annotations to colors on variables
+getHeatAnno <- function(colorValues, anno_df) {
+  ha <- ComplexHeatmap::HeatmapAnnotation(
+    df = anno_df,
+    col = colorValues,
+    na_col = "white",
+    annotation_legend_param = list(
+      title_gp = gpar(
+        fontsize = 12,
+        lineheight = 2,
+        fontface = "bold"
+      ),
+      labels_gp = gpar(fontsize = 12, lineheight = 2),
+      grid_height = unit(0.8, "cm"),
+      grid_width = unit(0.8, "cm"),
+      gt_render = list(padding = unit(c(2, 2, 2, 2), "cm"))
+    ),
+    annotation_name_gp = gpar(
+      fontsize = 12,
+      fontface = "bold",
+      lineheight = 2,
+      gt_render = list(padding = unit(c(2, 2, 2, 2), "cm"))
+    ),
+    annotation_name_side = "left"
+  )
+  par(c(1.5, 1.5, 1.5, 2.5) + 0.5)
+  return(ha)
 }
 
 #' assignColors returns a ComplexHeatmap annotation object with a list of variable columns you have
