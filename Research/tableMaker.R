@@ -45,6 +45,7 @@ pkgs <- c(
   "irlba",
   "magick",
   "grid",
+  "RColorBrewer",
   "Cairo",
   "gridExtra"
 )
@@ -56,11 +57,26 @@ require("minfi")
 require("ComplexHeatmap")
 if(!require("GenVisR")){BiocManager::install("GenVisR")}
 
-makeDt <- function(targets) {
-  dtOpts <- list(scrollX = T, scrollY = T, info = F, pageLength=15,autoWidth = T, rownames = F,lengthChange = T,searchable = T)
-  theDt <- DT::datatable(
-    targets, selection = "single", autoHideNavigation = T, options = dtOpts
-  )
+makeDt <- 
+  function(targets) {
+    dtOpts <-
+      list(
+        columnDefs = list(list(className = 'dt-center', targets = "_all")),
+        scrollX = T,
+        scrollY = T,
+        info = F,
+        pageLength = 20,
+        autoWidth = F,
+        rownames = F,
+        lengthChange = F,
+        searchable = T
+      )
+    theDt <- DT::datatable(
+      targets,
+      selection = "single",
+      autoHideNavigation = F,
+      options = dtOpts
+    )
     return(theDt)
 }
 
@@ -99,4 +115,12 @@ colorTargets <- function(targets, varColumns = c("Type","Origin"), col_vect = NU
         }
       }
       return(targets)
+}
+
+getColors <- function(samTypes) {
+  qualCols = brewer.pal.info[brewer.pal.info$category == 'qual', ]
+  col_vector = unlist(mapply(brewer.pal, qualCols$maxcolors, rownames(qualCols)))
+  myColors = col_vector[1:length(unique(samTypes))]
+  names(myColors) <- unique(samTypes)
+  return(myColors)
 }
