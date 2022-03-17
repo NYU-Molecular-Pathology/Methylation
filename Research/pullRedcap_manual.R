@@ -94,8 +94,6 @@ readInfo <- function(inputSheet) {
         warning('Converting RD-numbers to "Character" [1], readxl or read.delim should not output typeof=="list" update version of tibble')
         rds <- as.data.frame(rds)[,1]
     }
-    message("Your RDs:")
-    print(rds)
     return(rds)
 }
 
@@ -128,7 +126,10 @@ grabRDCopyIdat <- function(rd_numbers, token, copyIdats=T){
     result <- result[!is.na(result$barcode_and_row_column),]
     samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[,"barcode_and_row_column"],"_",2))
     gb$makeSampleSheet(result, samplesheet_ID) # writes API export as minfi dataframe sheet
-    if(copyIdats==T){gb$get.idats()}  # copies idat files from return to current directory
+    # copies idat files from return to current directory
+    if(copyIdats==T){
+             supM(gb$get.idats(csvNam = "samplesheet_og.csv"))
+    }
 }
 
 # Search REDCap Worksheets for MRN Match for output -------------------------------------
