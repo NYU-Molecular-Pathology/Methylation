@@ -120,6 +120,7 @@ colorTargets <- function(targets, varColumns = c("Type","Origin"), col_vect = NU
 getColors <- function(samTypes) {
   qualCols = brewer.pal.info[brewer.pal.info$category == 'qual', ]
   col_vector = unlist(mapply(brewer.pal, qualCols$maxcolors, rownames(qualCols)))
+  col_vector <- unique(col_vector)
   myColors = col_vector[1:length(unique(samTypes))]
   names(myColors) <- unique(samTypes)
   return(myColors)
