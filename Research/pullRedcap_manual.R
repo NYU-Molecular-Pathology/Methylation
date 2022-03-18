@@ -132,6 +132,17 @@ grabRDCopyIdat <- function(rd_numbers, token, copyIdats=T){
     }
 }
 
+fillMissingDat <- function(targets, col_samNames){
+  newTarg <- read.csv("samplesheet_og.csv", strip.white=T, row.names=NULL)
+  targets <- merge(newTarg,targets, by=col_samNames, all=F, suffixes = c("",".xyzq"))
+  dupeDrop <- grepl(".xyzq", colnames(targets))==F
+  targets <- targets[,dupeDrop]
+  write.csv(targets, file="samplesheet.csv", quote=F, row.names=F)
+  targets <- read.csv("samplesheet.csv", strip.white=T, row.names=NULL)
+  if(class(targets)!="data.frame"){targets <- as.data.frame(targets)}
+  return(targets)
+}
+
 # Search REDCap Worksheets for MRN Match for output -------------------------------------
 loadPacks()
 checkMounts()
