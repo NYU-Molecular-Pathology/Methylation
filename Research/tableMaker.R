@@ -97,6 +97,7 @@ smallTab <- function(dtObj) {
 colorTargets <- function(targets, varColumns = c("Type","Origin"), col_vect = NULL) {
     if (is.null(col_vect)) {col_vect <- pals::glasbey()}
     col_vect[6] = "#eb7d34" #changing dark forest to orange color
+    col_vect <- unique(col_vect)
     message("Dimnames:\n",paste(dimnames(targets)[[2]], collapse = " | "))
     stopifnot(all(varColumns %in% dimnames(targets)[[2]]))
     dat <- targets[,varColumns] # varColumns
