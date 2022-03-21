@@ -137,7 +137,7 @@ genTsnePlot <- function(tsne_plot,
     # Parameters for text & geom_label_repel
     et <- element_text(size = 16)
     
-    labelParams <- list(
+    labelParams <- c(
         alpha = 0.85,
         segment.alpha = 0.70,
         nudge_x = -30,
@@ -184,13 +184,45 @@ genTsnePlot <- function(tsne_plot,
     if (!is.null(groupToLabel)) {
         groupTsne <- groupTsne + ggrepel::geom_label_repel(
             data = subset(tsne_plot, tsne_plot$samples == groupToLabel),
-            aes(x = x,  y = y, label = samples, size = 2), labelParams)
+            aes(x = x,  y = y, label = samples, size = 2),
+        alpha = 0.85,
+        segment.alpha = 0.70,
+        nudge_x = -30,
+        nudge_y = 4,
+        direction = "both",
+        fontface = "bold",
+        box.padding = 0.5,
+        fill = "pink",
+        min.segment.length = 0.01,
+        color = "black",
+        label.size = 1.0,
+        size = 3,
+        label.padding = unit(0.5, "lines"),
+        label.r = unit(0.5, "lines"),
+        force = 8,
+        show.legend = F)
     }
     # Below runs to label specific sample IDs if provided
     if (!is.null(names2Label)) {
         groupTsne <- groupTsne + ggrepel::geom_label_repel(
             data = tsne_plot,
-            aes(x=x,y=y,label=samples,size=2), labelParams)
+            aes(x=x,y=y,label=samples,size=2),
+        alpha = 0.85,
+        segment.alpha = 0.70,
+        nudge_x = -30,
+        nudge_y = 4,
+        direction = "both",
+        fontface = "bold",
+        box.padding = 0.5,
+        fill = "pink",
+        min.segment.length = 0.01,
+        color = "black",
+        label.size = 1.0,
+        size = 3,
+        label.padding = unit(0.5, "lines"),
+        label.r = unit(0.5, "lines"),
+        force = 8,
+        show.legend = F)
     }
     return(groupTsne)
 }
