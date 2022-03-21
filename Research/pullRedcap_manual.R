@@ -48,6 +48,8 @@ loadPacks <- function(){
     if(!require("redcapAPI")){install.packages("redcapAPI", dependencies = T, type="both",ask=F)}
     if(!require("remotes")){install.packages("remotes", dependencies=T)}
     library("redcapAPI")
+    library(dplyr)
+    require('foreach')
 }
 
 # API Call functions -----
