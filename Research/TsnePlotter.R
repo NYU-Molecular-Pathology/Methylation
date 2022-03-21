@@ -55,37 +55,38 @@ getTsneVal <- function(TSNE, saNames, samGrp, colorGrp, symGrp) {
 # Final TSNE plot title will combine: clusterTitle + titleMain + varProbes
 generateTitles <- function(clusterTitle, topTitle, titlemain) {
     library('foreach'); require('foreach')
-    
     tsne_titles <- as.data.frame(foreach::foreach(
-        ti = 1:length(clusterTitle),
-        .combine = "rbind",
-        .packages = c('foreach')
+        ti = 1:length(clusterTitle), .combine = "rbind", .packages = c('foreach')
     ) %do% {
         foreach::foreach(
-            topV = 1:length(topTitle),
-            .combine = "rbind",
-            .packages = c('foreach')
+            topV = 1:length(topTitle), .combine = "rbind", .packages = c('foreach')
         ) %do% {
-            return(paste0(
-                clusterTitle[ti],
-                " ",
-                titlemain,
-                " ",
-                topTitle[topV],
-                " Variance Probes"
-            ))
+            return(paste0(clusterTitle[ti], " ", titlemain, " ", topTitle[topV], " Variance Probes"))
         }
     })[, 1]
     return(tsne_titles)
 }
 
-genTsnePlot <- function(tsne_plot,
-                        titleLabel,
-                        groupToLabel = NULL,
-                        symbolsLabel = NULL,
-                        colorLabel = NULL,
-                        names2Label = NULL)
-{
+# FUNCTION: Appends ggrepel labels to T-sne plot
+addPlotLabels <- function(groupTsne, tsneData){
+    groupTsne <- groupTsne + ggrepel::geom_label_repel(
+        data = tsneData,
+        aes(x = x,  y = y, label = samples, size = 2),
+        alpha = 0.85, segment.alpha = 0.70,
+        nudge_x = -30, nudge_y = 4, direction = "both", fontface = "bold",
+        box.padding = 0.5, fill = "pink", min.segment.length = 0.01,
+        color = "black", label.size = 1.0, size = 3,
+        label.padding = unit(0.5, "lines"), label.r = unit(0.5, "lines"),
+        force = 8, show.legend = F)
+    
+    return(groupTsne)
+    
+}
+
+# FUNCTION: Generates a T-sne plot with or without additional labels
+genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL,
+                        symbolsLabel = NULL, colorLabel = NULL, names2Label = NULL)
+    {
     colours <- unique(tsne_plot$col)
     symFlags <- !is.null(symbolsLabel)
     devAskNewPage(ask=F) #options("device.ask.default"=F)
@@ -100,14 +101,11 @@ genTsnePlot <- function(tsne_plot,
     } else{
         symShape <- shapeVals <- shapeLabels <- NULL
     }
-    
     # Parameters for text & geom_label_repel
     et <- element_text(size = 16)
-    
     # Creating Main ggplot Object
     groupTsne <- ggplot(tsne_plot, aes(x=tsne_plot$x,y=tsne_plot$y,group=tsne_plot$GROUPS)) +
         geom_point(aes(x, y, color = tsne_plot$GROUPS, shape = symShape), size = 4, alpha = 0.85)
-    
     # Adding Symbols if provided
     if (symFlags == T) {
         groupTsne <- groupTsne + 
@@ -121,7 +119,7 @@ genTsnePlot <- function(tsne_plot,
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
             panel.background = element_blank(), text = et
-            ) +
+        ) +
         ggtitle(label = titleLabel) +
         theme(plot.title = et, legend.text = et, text = et,
               legend.position = "right", axis.text.y = et, axis.text.x = et) +
@@ -130,58 +128,18 @@ genTsnePlot <- function(tsne_plot,
     
     # Below only runs to label sample IDs if label group is provided
     if (!is.null(groupToLabel)) {
-        groupTsne <- groupTsne + ggrepel::geom_label_repel(
-            data = subset(tsne_plot, tsne_plot$samples == groupToLabel),
-            aes(x = x,  y = y, label = samples, size = 2),
-        alpha = 0.85,
-        segment.alpha = 0.70,
-        nudge_x = -30,
-        nudge_y = 4,
-        direction = "both",
-        fontface = "bold",
-        box.padding = 0.5,
-        fill = "pink",
-        min.segment.length = 0.01,
-        color = "black",
-        label.size = 1.0,
-        size = 3,
-        label.padding = unit(0.5, "lines"),
-        label.r = unit(0.5, "lines"),
-        force = 8,
-        show.legend = F)
+        tsneData = subset(tsne_plot, tsne_plot$samples == groupToLabel)
+        groupTsne <- addPlotLabels(groupTsne, tsneData)
     }
     # Below runs to label specific sample IDs if provided
     if (!is.null(names2Label)) {
-        groupTsne <- groupTsne + ggrepel::geom_label_repel(
-            data = tsne_plot,
-            aes(x=x,y=y,label=samples,size=2),
-        alpha = 0.85,
-        segment.alpha = 0.70,
-        nudge_x = -30,
-        nudge_y = 4,
-        direction = "both",
-        fontface = "bold",
-        box.padding = 0.5,
-        fill = "pink",
-        min.segment.length = 0.01,
-        color = "black",
-        label.size = 1.0,
-        size = 3,
-        label.padding = unit(0.5, "lines"),
-        label.r = unit(0.5, "lines"),
-        force = 8,
-        show.legend = F)
+        groupTsne <- addPlotLabels(groupTsne, tsne_plot)
     }
     return(groupTsne)
 }
 
-gb$tierBetas <-
-  function(betas,
-           col_sentrix,
-           RGSet,
-           batchCorrect = F,
-           getSuper = F,
-           topVar = 1:10000) {
+gb$tierBetas <- function(betas, col_sentrix, RGSet,
+                         batchCorrect = F, getSuper = F, topVar = 1:10000) {
     rgLiDat <- RGSet@colData@listData
     selectSams <- rgLiDat[[col_sentrix]][rgLiDat[["Sample_ID"]] %in% colnames(betas)]
     rgColRows <- RGSet@colData@rownames
@@ -203,7 +161,7 @@ gb$tierBetas <-
         return(unBetas)
       }
     }
-  }
+}
 
 gb$selectPlots <- function(doPlotly=F,tplots,ty,tps,outDirs){
   if (doPlotly == F) {
@@ -247,7 +205,6 @@ doMultiple <- function(allBetas1,tsne_titles, outDirs, targets1, tps,ty,custom){
       })[[1]]
     return(plotList)
 }
-
 
 getTopPlot <- function(samNames){
     mds <- limma::plotMDS(
