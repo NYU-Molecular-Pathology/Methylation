@@ -87,7 +87,7 @@ getTsneVal <- function(TSNE, saNames, samGrp, colorGrp, symGrp) {
 
 # Final TSNE plot title will combine: clusterTitle + titleMain + varProbes
 generateTitles <- function(clusterTitle, topTitle, titlemain) {
-    require('foreach')
+    library('foreach'); require('foreach')
     tsne_titles <- as.data.frame(foreach::foreach(
         ti = 1:length(clusterTitle),
         .combine = "rbind",
@@ -280,11 +280,12 @@ gb$selectPlots <- function(doPlotly=F,tplots,ty,tps,outDirs){
 }
 
 doMultiple <- function(allBetas1,tsne_titles, outDirs, targets1, tps,ty,custom){
+    library('foreach'); require('foreach')
     plotN = NULL
     tsneList <-lapply(X = 1:length(allBetas1), FUN=function(X){
       return(suppressMessages(gb$generateTvals(allBetas1[[X]])))
       })
-    plotList <- list(foreach::foreach(plotN = 1:length(tsneList),.packages="foreach")%do%{
+    plotList <- list(foreach::foreach(plotN = 1:length(tsneList),.packages="foreach") %do% {
 ###################### TO CHANGE ########################      
       tsne_plot <- gb$getTsneVal(
         TSNE = tsneList[[plotN]],
@@ -319,10 +320,11 @@ getTopPlot <- function(samNames){
 
 # FUN: Generate T-sne plot given TSNE values --------
 plotSaver <- function(outDirs,tsne_titles,tps,ty,plotList,custom) {
+  library('foreach'); require('foreach')
   plotN=NULL
   options("device.ask.default"=F)
   invisible(foreach::foreach(plotN = 1:nrow(tps)) %do% {
-    pL<- plotList[[plotN]]
+    pL <- plotList[[plotN]]
     #message("Plot to Render:")
     #print(plotList[[plotN]])
     thePlot <- suppressWarnings(gb$genTsnePlot(
