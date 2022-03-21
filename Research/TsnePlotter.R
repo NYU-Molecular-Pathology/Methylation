@@ -29,48 +29,13 @@ generateTvals <- function(betas) {
     
     tryCatch(
         expr = {
-            TSNE <-
-                Rtsne::Rtsne(
-                    X,
-                    dims = 3,
-                    theta = 0,
-                    perplexity = opPer,
-                    initial_dims = optPC,
-                    verbose = F,
-                    partial_pca=T,
-                    max_iter = 10000
-                )
-            message(
-                "\nOptimal Perplexity for T-sne is: ",
-                opPer,
-                "\n",
-                "Optimal #PCs are: ",
-                optPC,
-                "\n"
-            )
+            TSNE <- Rtsne::Rtsne(X, dims = 3, theta = 0, perplexity = opPer,
+                    initial_dims = optPC, verbose = F, partial_pca=T, max_iter = 10000)
             return(TSNE)
         },
         error = function(e) {
-            
-            TSNE <-
-                Rtsne::Rtsne(
-                    X,
-                    dims = 3,
-                    theta = 0,
-                    perplexity = opPer-1,
-                    initial_dims = optPC,
-                    verbose = F,
-                    partial_pca=T,
-                    max_iter = 10000
-                )
-            message(
-                "\nOptimal Perplexity for T-sne is: ",
-                opPer,
-                "\n",
-                "Optimal #PCs are: ",
-                optPC,
-                "\n"
-            )
+            TSNE <- Rtsne::Rtsne(X, dims = 3, theta = 0, perplexity = opPer-1,
+                    initial_dims = optPC, verbose = F, partial_pca=T, max_iter = 10000)
             return(TSNE)
         }
     )
@@ -111,7 +76,6 @@ generateTitles <- function(clusterTitle, topTitle, titlemain) {
             ))
         }
     })[, 1]
-    #print(tsne_titles)
     return(tsne_titles)
 }
 
@@ -139,25 +103,6 @@ genTsnePlot <- function(tsne_plot,
     
     # Parameters for text & geom_label_repel
     et <- element_text(size = 16)
-    
-    labelParams <- c(
-        alpha = 0.85,
-        segment.alpha = 0.70,
-        nudge_x = -30,
-        nudge_y = 4,
-        direction = "both",
-        fontface = "bold",
-        box.padding = 0.5,
-        fill = "pink",
-        min.segment.length = 0.01,
-        color = "black",
-        label.size = 1.0,
-        size = 3,
-        label.padding = unit(0.5, "lines"),
-        label.r = unit(0.5, "lines"),
-        force = 8,
-        show.legend = F
-    )
     
     # Creating Main ggplot Object
     groupTsne <- ggplot(tsne_plot, aes(x=tsne_plot$x,y=tsne_plot$y,group=tsne_plot$GROUPS)) +
