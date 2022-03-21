@@ -6,6 +6,7 @@ gb <- globalenv(); assign("gb", gb)
 
 suppressPackageStartupMessages(library("ComplexHeatmap"))
 require("ComplexHeatmap"); library('magick'); require('Cairo')
+library("grid"); require("grid")
 ht_opt$message = FALSE
 options(bitmapType='cairo')
 
