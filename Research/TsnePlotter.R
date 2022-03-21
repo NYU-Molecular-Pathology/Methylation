@@ -1,5 +1,7 @@
 gb <- globalenv(); assign("gb", gb)
 # FUN: Returns optimal number of PCs given X ---------------------------
+library(dplyr)
+require('foreach')
 getOptPC <- function(expr, getPval = F, n= 60){
     PC <- prcomp(t(log10(expr + 1)), center = T, scale = F)
     expl_var <- PC$sdev ^ 2 / sum(PC$sdev ^ 2)
@@ -88,6 +90,7 @@ getTsneVal <- function(TSNE, saNames, samGrp, colorGrp, symGrp) {
 # Final TSNE plot title will combine: clusterTitle + titleMain + varProbes
 generateTitles <- function(clusterTitle, topTitle, titlemain) {
     library('foreach'); require('foreach')
+    
     tsne_titles <- as.data.frame(foreach::foreach(
         ti = 1:length(clusterTitle),
         .combine = "rbind",
