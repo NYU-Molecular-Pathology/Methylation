@@ -259,7 +259,7 @@ doMultiple <- function(allBetas1,tsne_titles, outDirs, targets1, tps,ty,custom){
         saNames = targets1$SampleFilter,
         samGrp = targets1$Type,
         colorGrp = targets1$color,
-        symGrp = targets1[,gb$col_samGroup]
+        symGrp = targets1[,gb$col_samGrp]
         ) #targets1[,col_samGroup]
 ###################### TO CHANGE ########################
       return(tsne_plot)
