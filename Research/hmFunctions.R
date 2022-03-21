@@ -138,6 +138,7 @@ assignColors2 <- function(targets, varColumns = c("Type","Origin"), col_vect = N
     if (is.null(col_vect)) {col_vect <- pals::glasbey()}
     #col_vect <- col_vect[sample(1:length(col_vect))]
     col_vect[6] = "#eb7d34" #changing dark forest to orange color
+    col_vect[4] = "#add8e6"
     dimnames(targets)[[2]]
     dat <- targets[,varColumns] # varColumns
     #colours <- col_vect[1:(length(unique(dat)))]
@@ -153,6 +154,7 @@ assignColors2 <- function(targets, varColumns = c("Type","Origin"), col_vect = N
 assignColors3 <- function(targets, varColumns = c("Type","Origin"), col_vect = NULL) {
     if (is.null(col_vect)) {col_vect <- pals::glasbey()}
     col_vect[6] = "#eb7d34" #changing dark forest to orange color
+    col_vect[4] = "#add8e6" # black to light blue
     dimnames(targets)[[2]]
     dat <- targets[,varColumns] # varColumns
     anno_df <- data.frame(dat)
