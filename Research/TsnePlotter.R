@@ -320,38 +320,3 @@ getTopPlot <- function(samNames){
     )
     return(toplot_Histo)
 }
-
-# FUN: Generate T-sne plot given TSNE values --------
-plotSaver <- function(outDirs,tsne_titles,tps,ty,plotList,custom) {
-  library('foreach'); require('foreach')
-  plotN=NULL
-  options("device.ask.default"=F)
-  invisible(foreach::foreach(plotN = 1:nrow(tps)) %do% {
-    pL <- plotList[[plotN]]
-    #message("Plot to Render:")
-    #print(plotList[[plotN]])
-    thePlot <- suppressWarnings(gb$genTsnePlot(
-      tsne_plot=plotList[[plotN]],
-      titleLabel=tsne_titles[plotN],
-      symbolsLabel = pL$GROUPS,
-      colorLabel = pL$symbol,
-      names2Label = pL$samples
-      ))
-    #outDir <- paste(outDirs[plotN, ], collapse = "_")
-    #fn <- paste(outDir, colnames(tps), tps[ty, 1], "tnse.png", sep = "_")
-    devAskNewPage(ask = F)
-    return(print(thePlot))
-    # ggplot2::ggsave(
-    #   filename = fn,
-    #   device = "png",
-    #   path = getwd(),
-    #   plot = thePlot,
-    #   width = 15,
-    #   height = 15,
-    #   units = "in"
-    # )
-    options("device.ask.default"=F)
-   # message("Plot saved:")
-    #cat(fn, sep = "\n")
-  })
-}
