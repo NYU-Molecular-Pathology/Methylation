@@ -130,6 +130,7 @@ getColors <- function(samTypes) {
 }
 
 sanitizeSheet <- function(inputFi, samsheet) {
+    library("magrittr")
     library("dplyr")
   samSh <- readxl::read_excel(inputFi)
   samSh <- samSh %>% dplyr::mutate_all(stringr::str_replace, ",", "")
