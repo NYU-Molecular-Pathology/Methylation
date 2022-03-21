@@ -28,6 +28,7 @@ pkgs <- c(
   "foreach",
   "minfi",
   "magick",
+  "magrittr",
   "conumee",
   "mnp.v11b6",
   "enrichplot",
