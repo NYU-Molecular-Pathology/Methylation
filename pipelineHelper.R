@@ -86,17 +86,25 @@ do_report <-function(data = NULL, genCn=F) {
 
 # QC REPORT maker: knits the QC RMD file
 generateQCreport <- function(runID=NULL, qc=NULL) {
-    msgFunName(pipeLnk,"generateQCreport")
-    
-    runID<-gb$ckNull(nullVar = runID, subVar=gb$runID, deparse(substitute(runID,env=.GlobalEnv)))
-    if (!file.exists(QC_file)){message(crayon::bgRed("Check Working directory, QC_file.rmd not found"))}
-    fs::file_copy(QC_file, getwd(), overwrite = T)
-    currentQC = dir(getwd(),"*QC.Rmd", full.names=T)
-    qcFile = paste0(runID,"_QC.html") # output file name
-    rmarkdown::render(currentQC, output_file=file.path(dirname(currentQC), qcFile), params=list(runID=runID))
-    currentQC <- stringr::str_replace_all(string=currentQC, ".Rmd", "_cache")
-    unlink(currentQC, recursive=T) #clear cache
-    gb$uploadToRedcap(qcFile,F)
+    msgFunName(pipeLnk, "generateQCreport")
+  runID <- gb$ckNull(nullVar = runID,
+                     subVar = gb$runID,
+                     deparse(substitute(runID, env = .GlobalEnv)))
+  if (!file.exists(QC_file)) {
+    message(crayon::bgRed("Check Working directory, QC_file.rmd not found"))
+  }
+  fs::file_copy(QC_file, getwd(), overwrite = T)
+  currentQC = dir(getwd(), "*QC.Rmd", full.names = T)
+  qcFile = paste0(runID, "_QC.html") # output file name
+  qcFile <- file.path(dirname(currentQC), qcFile)
+  rmarkdown::render(
+    currentQC,
+    output_file = qcFile,
+    params = list(runID = runID)
+  )
+  currentQC <- stringr::str_replace_all(string = currentQC, ".Rmd", "_cache")
+  unlink(currentQC, recursive = T) #clear cache
+  gb$uploadToRedcap(qcFile,F)
 }
 
 # Sends an email notification that the run is complete from redcap admin
