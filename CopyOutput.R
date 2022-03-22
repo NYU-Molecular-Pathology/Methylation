@@ -136,25 +136,35 @@ importRedcapStart <- function(nfldr){
 }
 
 # Creates QC record and uploads reports to redcap
-uploadToRedcap <- function(file.list, deskCSV=T) {
-        msgFunName(cpOutLnk, "uploadToRedcap")
+uploadToRedcap <- function(file.list, deskCSV = T) {
+    msgFunName(cpOutLnk, "uploadToRedcap")
     rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
-    message("\nFiles to Import:\n"); print(file.list)
-    if(deskCSV==T){importDesktopCsv(rcon)}else{
-    recordName <-stringr::str_replace_all(string = paste0(file.list), ".html", "")
-    runIDs <- rep(gb$runID, length(recordName))
-    records <- basename(recordName)
-    for (idx in 1:length(records)) {
+    message("\nFiles to Import:\n")
+    print(file.list)
+    if (deskCSV == T) {importDesktopCsv(rcon)} else{
+      recordName <- stringr::str_replace_all(string = paste0(file.list), ".html", "")
+      runIDs <- rep(gb$runID, length(recordName))
+      records <- basename(recordName)
+      for (idx in 1:length(records)) {
         pth = file.list[idx]
         recordName = paste0(records[idx])
         runID = paste0(runIDs[idx])
         message(crayon::white$bgBlue("Importing Record Report:"))
         data = data.frame(record_id = recordName, run_number = runID)
-        redcapAPI::importRecords(rcon, data, overwriteBehavior = "normal",returnContent = "ids", returnData = F)
-        redcapAPI::importFiles(rcon = rcon,file = pth,record = recordName,field = "classifier_pdf",repeat_instance = 1)
+        
+        tryCatch(
+          expr = {redcapAPI::importRecords(
+            rcon,data,overwriteBehavior = "normal",returnContent = "ids",returnData = F)},
+          error = function(e){message(paste(recordName," Failed to redcap Import"))}
+        )
+        tryCatch(
+          expr = {redcapAPI::importFiles(
+              rcon = rcon,file = pth,record = recordName,field = "classifier_pdf",repeat_instance = 1)},
+          error = function(e){message(paste(recordName," Failed to redcap upload file"))}
+        )
+      }
     }
-    }
-}
+  }
 
 # Imports the xlsm sheet 3 data
 importSingle <- function(sh_Dat) {
