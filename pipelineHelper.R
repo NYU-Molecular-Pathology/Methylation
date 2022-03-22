@@ -96,6 +96,7 @@ generateQCreport <- function(runID=NULL, qc=NULL) {
     rmarkdown::render(currentQC, output_file=file.path(dirname(currentQC), qcFile), params=list(runID=runID))
     currentQC <- stringr::str_replace_all(string=currentQC, ".Rmd", "_cache")
     unlink(currentQC, recursive=T) #clear cache
+    gb$uploadToRedcap(qcFile,F)
 }
 
 # Sends an email notification that the run is complete from redcap admin
