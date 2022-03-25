@@ -312,6 +312,56 @@ loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bcPks=biocP
             installAll(ghPk, gh.inst)
             installAll(bcPks, bc.inst)
             readyPkgs(ezLibs)
+            if(!require("BiocManager")){install.packages("BiocManager",dependencies=T,quiet=T)}
+if(!require("MethylAid")){BiocManager::install("MethylAid",update=F, ask=F)}
+if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 6, quiet=T)}
+pkgs <- c(
+    "knitr",
+    "kableExtra",
+    "magick",
+    "webshot",
+    "plyr",
+    "ggplot2",
+    "knitr",
+    "reshape2",
+    "data.table",
+    "DT",
+    "plotly",
+    "MethylAid",
+    "minfi",
+    "scales",
+    "IlluminaHumanMethylation450kmanifest",
+    "IlluminaHumanMethylationEPICmanifest",
+    "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
+    "Biobase",
+    "RColorBrewer",
+    "limma",
+    "ggfortify",
+    "Rtsne",
+    "qdapTools",
+    "gplots",
+    "readxl",
+    "stringr",
+    "ggrepel",
+    "Polychrome",
+    "tinytex",
+    "gridExtra",
+    "rmarkdown",
+    "tinytex",
+    "BiocParallel",
+    'grid',
+    'grDevices',
+    "mdthemes",
+    "dplyr",
+    "sqldf"
+)
+librarian::shelf(pkgs, ask=F)
+require('grid')
+require("ggplot2")
+require("pals") 
+require("scales")
+require("stringr") 
+require("scales")
         },
         error = function(cond){
             message("\n~~~You encountered the following error during install:\n", cond)
