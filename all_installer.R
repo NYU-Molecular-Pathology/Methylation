@@ -1,5 +1,9 @@
 if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 6, quiet=T)}
-
+# Setting US CRAN REPO
+rlis = getOption("repos")
+rlis["CRAN"] = "http://cran.us.r-project.org"
+options(repos = rlis)
+# List of all Packages
 pkgs <- c(
     'abind',
     'ada',
@@ -757,6 +761,8 @@ pkgs <- c(
     'zlibbioc',
     'zoo'
 )
+
+# Load/install missing pacakges without asking
 librarian::shelf(pkgs, ask=F)
 
 
