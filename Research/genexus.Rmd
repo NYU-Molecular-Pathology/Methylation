@@ -15,7 +15,6 @@ params:
 
 ```{r, label='PACTNameInput', echo=FALSE, message=TRUE, warning=FALSE, error=FALSE, include=FALSE}
 # Input Parameters
-userName <- params$userName
 outDir <-  params$outDir # working Knit directory
 runName <- basename(outDir)
 ```
