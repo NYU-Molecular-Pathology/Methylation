@@ -302,21 +302,21 @@ getBamFi <- function(specimenCsv){
   demuxDir <- '/Volumes/molecular/Molecular/NGS607'
   currDemux <- file.path(demuxDir, currYear)
   bamNam <- specInfo$Run.Number[1] #Sample.Type=='tumor',]
-  bamsDir <- file.path(currDemux,bamNam, 'output/alignments/deduplicated')
+  bamsDir <- file.path(currDemux,bamNam, 'output')
   bamFiles <- list.files(path = bamsDir, pattern = ".bam",full.names = T)
   if(length(bamFiles==0)){
-    bamsDir <- file.path(currDemux, bamNam, 'output/')
+    bamsDir <- file.path(currDemux, bamNam, 'output')
     bamFiles <- list.files(path = bamsDir, pattern = ".bam",full.names = T, recursive = T)
   }
   if(length(bamFiles)==0) {
     demuxDir <- '/Volumes/molecular/Molecular/NGS607/2021'
-    bamsDir <- file.path(demuxDir, bamNam, 'output/')
+    bamsDir <- file.path(demuxDir, bamNam, 'output')
     bamFiles <- list.files(path = bamsDir, pattern = ".bam", full.names = T, recursive = T)
   }
   if(length(bamFiles)==0) {
     currYear <- format(Sys.Date(), "%Y")
     demuxDir <- paste0('/Volumes/molecular/Molecular/NGS607/', currYear)
-    bamsDir <- file.path(demuxDir, bamNam, 'output/')
+    bamsDir <- file.path(demuxDir, bamNam, 'output')
     bamFiles <- list.files(path = bamsDir, pattern = ".bam", full.names = T, recursive = T)
   }
   if(!(length(bamFiles)>0)){
@@ -327,6 +327,9 @@ getBamFi <- function(specimenCsv){
   bamFiles <- bamFiles[bams]
   bams <- stringr::str_detect(bamFiles, ".bai", negate = T)
   bamFiles <- bamFiles[bams]
+  bams <- stringr::str_detect(bamFiles, paste(specInfo$Accession.Identifier,collapse = "|"))
+  bamFiles <- bamFiles[bams]
+  
   return(bamFiles)
 }
 
@@ -337,6 +340,9 @@ makeSnapshot <- function(together,sam, kwd){
   cat(paste0("## **", 'IGV of ',kwd, "**","{.tabset}"," \n\n"))
   for (gn in unique(together$Gene)) {
     theLocus <- together[together$Gene == gn, 'Genexus Locus']
+    if(is.null(theLocus)){
+      theLocus <- together[together$Gene == gn, 'Locus']
+    }
     cat(paste0("### **", gn, "**","{.tabset}","\n\n"))
     for (locus in theLocus) {
       cat(paste0("#### **", locus, "**","\n\n"))
@@ -346,9 +352,9 @@ makeSnapshot <- function(together,sam, kwd){
       if(!file.exists(igvOut[1])) {system(sysBin)}
       img1 <- paste0('![',outFi[1],'](',igvOut[1],')','{width=500px}')
       if(file.exists(igvOut[1])){
-      #cat("\n\n")
+      cat("\n\n")
       cat(img1)
-      #cat("\n\n")
+      cat("\n\n")
       cat("\n\n**Bam Files Used**:\n\n")
       cat(bamFiles[1],sep = "\n\n")
       cat(bamFiles[2],sep = "\n\n")
