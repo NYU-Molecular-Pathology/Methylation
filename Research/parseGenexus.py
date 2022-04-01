@@ -11,14 +11,14 @@ from cmath import nan
 from functools import reduce
 from pathlib import Path
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 philipsFtp = "/Volumes/molecular/Molecular/Philips_SFTP"  # path to Philips data dump
 
 parser = argparse.ArgumentParser(description="Provide path to run directory's output dir")
 parser.add_argument('-z', '--zipdir', help='Your directory with zip files', required=True)
-parser.add_argument('-o', '--outdir', help='Your Genexus file output directory', required=True)
+parser.add_argument('-o', '--outdir', help='Your Genexus file output directory', required=False)
 args = parser.parse_args()
 
 #pd.set_option('display.max_columns', 100)
@@ -197,21 +197,30 @@ def parse_QCFile(tf):
 
 
 def readInput(outDir, spr):
+    catFi = None
     if(spr == "\t"):
         fiLi = getFiles(outDir, 'Summary.tsv')
         dfLists = list(map(lambda tf: parse_tsvFile(tf), fiLi))
-        catFi = mergeWrite(dfLists, "callerSum.csv", outDir)
-
+        if dfLists:
+            catFi = mergeWrite(dfLists, "callerSum.csv", outDir)
+        else:
+            print("callerSum.csv is empty")
+            
         fiLi = getFiles(outDir, 'Snvindel.tsv')
         dfLists = list(map(lambda tf: parse_indels(tf), fiLi))
-        catFi = mergeWrite(dfLists, "snvIndels.csv", outDir)
+        if dfLists:
+            catFi = mergeWrite(dfLists, "snvIndels.csv", outDir)
+        else:
+            print("snvIndels.csv is empty")
 
     else:
         fiLi = getFiles(outDir, 'Info.csv')
         dfLists = list(map(lambda tf: parse_QCFile(tf), fiLi))
-        catFi = mergeWrite(dfLists, "qcInfo.csv", outDir)
+        if dfLists:
+            catFi = mergeWrite(dfLists, "qcInfo.csv", outDir)
+        else:
+            print("Info.csv is empty")
     return(catFi)
-
 
 def cnvPhilips(cnvDf, sam):
     cnvDf.assign(Test_Case=sam, Variant='CNV', Mutation_Type=cnvDf['AberrationType'],
@@ -298,13 +307,13 @@ def checkDataDump(sam, outDir):
 
 def parseFiles(outDir):
     infoReads = readInput(outDir, ',')
-    summaryReads = readInput(outDir, '\t')
-
+    #summaryReads = readInput(outDir, '\t')
     samList = list(infoReads['Sample Name'])
     list(map(lambda sam: checkDataDump(sam, outDir), samList))
     ispmData = list(map(lambda sam: dataDumpCsv(
         outDir, sam, "aberration_snv.csv"), samList))
-    mergeWrite(ispmData, "snvPhilips.csv", outDir)
+    if ispmData[0] is not None:
+        mergeWrite(ispmData, "snvPhilips.csv", outDir)
     #nexusData = pd.read_csv(os.path.join(outDir, "snvIndel.csv"))
     #philipsData=pd.read_csv(os.path.join(outDir, "snvPhilips.csv"))
 
@@ -324,16 +333,27 @@ def knitReport(outDir):
     subprocess.call(command2)
 
 
-def main(zipdir, outDir):
-    if os.path.isdir(outDir):
-        parseFiles(outDir)
+def main(zipdir, outDir=None):
+    if "/" not in zipdir:
+        runYr = "20" + zipdir.split("-")[1] + "/"
+        outDir = "/Volumes/molecular/Molecular/Validation/Genexus/Results/" + runYr + zipdir
+        zipdir = "/Volumes/molecular/Molecular/Validation/Genexus/downloaded_data/" + zipdir + "/"
+        print("outDir set to:")
+        print(outDir)
+        print("Zip directory is :")
+        print(zipdir)
+    if not os.path.isdir(zipdir):
+        print("The directory is not found:")
+        print(zipdir)
     else:
-        un_zipFiles(zipdir, outDir)
-        parseFiles(outDir)
-    if os.path.isfile("genexus.Rmd")==False:
-        downloadFi()
-        
-    knitReport(outDir)
+        if os.path.isdir(outDir):
+            parseFiles(outDir)
+        else:
+            un_zipFiles(zipdir, outDir)
+            parseFiles(outDir)
+        if os.path.isfile("genexus.Rmd")==False:
+            downloadFi()
+        knitReport(outDir)
 
 #"/Volumes/molecular/Molecular/Validation/Genexus/downloaded_data/22-GX-009/"
 #"/Volumes/molecular/Molecular/Validation/Genexus/Results/2022/22-GX-009"
