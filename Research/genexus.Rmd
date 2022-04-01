@@ -10,7 +10,7 @@ toc_collapsed: true
 editor_options: 
   chunk_output_type: console
 params:
-  outDir: "/Volumes/molecular/Molecular/Validation/Genexus/Results/2022/new_run"
+  outDir: "/Volumes/molecular/Molecular/Validation/Genexus/Results/2022/22-GX-003"
 ---
 
 ```{r, label='PACTNameInput', echo=FALSE, message=TRUE, warning=FALSE, error=FALSE, include=FALSE}
@@ -134,8 +134,7 @@ getFile <- function(fiName){
   if(file.exists(fiName)){
     fiData <- read.csv(fiName, quote = "", row.names = NULL)
   }else{
-    message(fiName)
-    print(fiName)
+    message(fiName, "Not found!")
     stopifnot(file.exists(fiName))}
   return(fiData)
 }
@@ -152,7 +151,7 @@ samples <- samples[stringr::str_detect(samples, "NGS")==T & !is.na(samples)]
 htmltools::tagList(plotly::ggplotly(ggplot2::ggplot()))
 ```
 
-```{r, label='PNG Output', echo=FALSE, message=TRUE, warning=FALSE, results='asis', error=FALSE, fig.keep='all',  fig.align="left", fig.show="asis", out.width = '100%',  fig.width=15}
+```{r, label='PNG Output', echo=FALSE, message=TRUE, warning=FALSE, results='asis', error=FALSE, fig.keep='all', fig.align="left", fig.show="asis", out.width = '100%', fig.width=15}
 library("kableExtra")
 
 printTab <- function(objDat) {
@@ -204,7 +203,9 @@ makeQCTab <- function(objDat) {
   newTa <- kableExtra::column_spec(newTa, colVal, width = "1cm")
   print(newTa)
 }
+```
 
+```{r, label='Data Table Output', echo=FALSE, message=TRUE, warning=FALSE, results='asis', error=FALSE, fig.keep='all', fig.align="left", fig.show="asis", out.width = '100%', fig.width=15}
 #dtTab <- htmltools::tagList(DT::datatable(objDat, rownames = F, options=dtOpts,width = '100%', height = "120%"))
 makeDT <- function(tabNam, objDat, sam = NULL) {
   note1 = "\n\nNote: Philips SNV filter = tumor_freq >=5% normal_freq >2.0% and tumor depth > 200 \n\n"
@@ -238,26 +239,18 @@ makeNewTab <- function(sam){
   qcTab <- qcData[qcData$Sample.Name==sam,]
   return(qcTab)
 }
+```
 
-dropDots <- function(qcTab){
-  colnames(qcTab)<- stringr::str_replace_all(colnames(qcTab),"\\.", " ")
-  colnames(qcTab)<- stringr::str_replace_all(colnames(qcTab),"  ", " ")
-  colnames(qcTab)<- stringr::str_replace_all(colnames(qcTab),"_", " ")
-  return(qcTab)
+```{r, label='Format Output', echo=FALSE, message=TRUE, warning=FALSE, results='asis', error=FALSE, fig.keep='all', fig.align="left", fig.show="asis", out.width = '100%', fig.width=15}
+dropDots <- function(tabDf){
+  colnames(tabDf)<- stringr::str_replace_all(colnames(tabDf),"\\.", " ")
+  colnames(tabDf)<- stringr::str_replace_all(colnames(tabDf),"  ", " ")
+  colnames(tabDf)<- stringr::str_replace_all(colnames(tabDf),"_", " ")
+  tabDf <- select(tabDf, -contains("Unnamed"))
+  return(tabDf)
 }
 
-makeTogether <- function(nexus,philips){
-  nexus$Called.By.Genexus <- TRUE
-  philips$Called.By.PACT <- TRUE
-  together <- merge(philips, nexus, by='Gene', all=T)
-  together$Called.By.Genexus[is.na(together$Called.By.Genexus)] <- FALSE
-  together$Called.By.PACT[is.na(together$Called.By.PACT)] <- FALSE
-  together <- together %>% dplyr::relocate('Called.By.PACT','Called.By.Genexus')
-  together <- dropDots(together)
-  return(together)
-}
-
-modColNames <- function(kwd, modData, selected){
+modifyColumns <- function(kwd, modData, selected){
   modData <- modData[,selected]
   colList <- paste(kwd, colnames(modData))
   colnames(modData)<- colList
@@ -312,18 +305,18 @@ getBamFi <- function(specimenCsv){
   bamsDir <- file.path(currDemux,bamNam, 'output/alignments/deduplicated')
   bamFiles <- list.files(path = bamsDir, pattern = ".bam",full.names = T)
   if(length(bamFiles==0)){
-    bamsDir <- file.path(currDemux, bamNam, 'output/alignments')
+    bamsDir <- file.path(currDemux, bamNam, 'output/')
     bamFiles <- list.files(path = bamsDir, pattern = ".bam",full.names = T, recursive = T)
   }
   if(length(bamFiles)==0) {
     demuxDir <- '/Volumes/molecular/Molecular/NGS607/2021'
-    bamsDir <- file.path(demuxDir, bamNam, 'output/alignments')
+    bamsDir <- file.path(demuxDir, bamNam, 'output/')
     bamFiles <- list.files(path = bamsDir, pattern = ".bam", full.names = T, recursive = T)
   }
   if(length(bamFiles)==0) {
     currYear <- format(Sys.Date(), "%Y")
     demuxDir <- paste0('/Volumes/molecular/Molecular/NGS607/', currYear)
-    bamsDir <- file.path(demuxDir, bamNam, 'output/alignments')
+    bamsDir <- file.path(demuxDir, bamNam, 'output/')
     bamFiles <- list.files(path = bamsDir, pattern = ".bam", full.names = T, recursive = T)
   }
   if(!(length(bamFiles)>0)){
@@ -353,10 +346,10 @@ makeSnapshot <- function(together,sam, kwd){
       if(!file.exists(igvOut[1])) {system(sysBin)}
       img1 <- paste0('![',outFi[1],'](',igvOut[1],')','{width=500px}')
       if(file.exists(igvOut[1])){
-      cat("\n\n")
+      #cat("\n\n")
       cat(img1)
-      cat("\n\n")
-      cat("**Bam Files Used**:\n\n")
+      #cat("\n\n")
+      cat("\n\n**Bam Files Used**:\n\n")
       cat(bamFiles[1],sep = "\n\n")
       cat(bamFiles[2],sep = "\n\n")
       cat("\n\n")
@@ -380,25 +373,45 @@ makeDiffTab <- function(together, sam){
   makeSnapshot(bothCall, sam, "Called by both")
 }
 
+makeTogether <- function(nexus,philips){
+  nexus$Called.By.Genexus <- TRUE
+  philips$Called.By.PACT <- TRUE
+  together <- merge(philips, nexus, by='Gene', all=T)
+  together$Called.By.Genexus[is.na(together$Called.By.Genexus)] <- FALSE
+  together$Called.By.PACT[is.na(together$Called.By.PACT)] <- FALSE
+  together <- together %>% dplyr::relocate(Called.By.PACT,Called.By.Genexus)
+  together <- dropDots(together)
+  return(together)
+}
+
 makeCompare <- function(sam, snvOut) {
   nexus <- nexusSnv[nexusSnv[, 1] == sam, ]
+   if(nrow(nexus) > 0){
   tryCatch(
     expr = {
-      nexus <- modColNames(kwd = "Genexus", nexus, genxCol)
+      nexus <- modifyColumns(kwd = "Genexus", nexus, genxCol)
     },
     error = function(e) {
       genxCol[3:4] <- c("AA.Change", "Allele.Fraction")
-      nexus <- modColNames(kwd = "Genexus", nexus, genxCol)
+      nexus <- modifyColumns(kwd = "Genexus", nexus, genxCol)
     }
   )
-  philips <- modColNames(kwd = "PACT", snvOut, philCol)
-  together <- makeTogether(nexus, philips)
-  makeDT("Common Calls", together)
-  cat("\n\n")
-  makeDiffTab(together, sam)
+     philips <- modifyColumns(kwd = "PACT", snvOut, philCol)
+     if(nrow(philips) > 0) {
+       together <- makeTogether(nexus, philips)
+       makeDT("Common Calls", together)
+       cat("\n\n")
+       makeDiffTab(together, sam)
+     }else{
+        nexus <- dropDots(nexus)
+        makeDT("No Philips Data Availible", nexus)
+        cat("\n\n")
+        makeSnapshot(nexus, sam, "Genexus Called")
+       }
+     }else{makeDT("No Genexus Calls", NULL)}
 }
 
-makeAbTab <- function(sam) {
+makeVariantsTab <- function(sam) {
   snvOut <- pactSnv[!is.na(pactSnv$tumor_freq),]
   snvOut <- snvOut[snvOut$Sample == sam,]
   makeDT("Philips SNV", dropDots(snvOut))
@@ -406,7 +419,7 @@ makeAbTab <- function(sam) {
   makeCompare(sam, snvOut)
 }
 
-makeSpecimen <- function(sam){
+makeSpecimenTab <- function(sam){
   specimenCsv <- file.path(outDir, "philipsNGS", sam, "specimen.csv")
   if (file.exists(specimenCsv)) {
     samOut <- as.data.frame(read.delim(specimenCsv, sep = ","))
@@ -436,7 +449,7 @@ for (sam in samples) {
     nonMutant <- dropDots(nonMutant)
     makeDT("Genexus SNV/INDEL", objDat = nonMutant)
   }
-  makeAbTab(sam)
-  makeSpecimen(sam)
+  makeVariantsTab(sam)
+  makeSpecimenTab(sam)
 }
 ```
