@@ -184,6 +184,18 @@ formatCommon <- function(objDat) {
   cat("\n\n")
 }
 
+formatBoth <- function(objDat){
+  xtraCss <- "color:rgb(0,0,0);border-width:3px;border-style:solid;border-color:rgb(0,0,0);background:rgb(124,194,247);"
+  newTa <- objDat %>%
+    knitr::kable("html", booktabs = T, escape = F, linesep = "", row.names = F) %>%
+    kableExtra::kable_styling(bootstrap_options = c("striped", "condensed"), 
+                              full_width = F, position="left")
+  color.me <- which(stringr::str_detect(colnames(objDat),"Coordinate|Locus"))
+  newTa <- newTa  %>% column_spec(color.me, bold = T, extra_css = xtraCss)
+  print(newTa)
+    cat("\n\n")
+}
+
 makeSpecTab <- function(objDat){
   newTa <- knitr::kable(objDat, row.names=F, "html",table.attr = "style='width:100%;'") %>%
       kableExtra::kable_styling(bootstrap_options = c("condensed"), full_width = F, position="left") %>%
@@ -212,6 +224,10 @@ makeDT <- function(tabNam, objDat, sam = NULL) {
   note2 = "\n\nNo additional data table for this sample tab\n\n"
   cat(paste0("## **", tabNam, "** \n\n"))
   if (!is.null(objDat)) {
+    if (stringr::str_detect(tabNam, "Both") == T) {
+      formatBoth(objDat)
+    } else
+    
     if (stringr::str_detect(tabNam, "Specimen") == T) {
       makeSpecTab(objDat)
     } else
@@ -370,14 +386,16 @@ makeDiffTab <- function(together, sam){
   onBoth <- together$`Called By Genexus` == together$`Called By PACT`
   selec <- stringr::str_detect(colnames(together), 'PACT',negate=T)
   notPact <- together[onlyNexus,selec]
+  if(nrow(notPact)>0) {
   makeDT("Not Called by PACT", notPact)
   cat("\n\n")
   makeSnapshot(notPact, sam, "Genexus Called")
+  }
   bothCall <- together[onBoth,]
-  if(nrow(bothCall)>0){
-  makeDT("Called By Both", bothCall)
-  cat("\n\n")
-  makeSnapshot(bothCall, sam, "Called by both")
+  if(nrow(bothCall)>0) {
+    makeDT("Called By Both", bothCall)
+    cat("\n\n")
+    makeSnapshot(bothCall, sam, "Called by both")
   }
 }
 
