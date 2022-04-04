@@ -10,7 +10,7 @@ toc_collapsed: true
 editor_options: 
   chunk_output_type: console
 params:
-  outDir: "/Volumes/molecular/Molecular/Validation/Genexus/Results/2022/22-GX-003"
+  outDir: "/Volumes/molecular/Molecular/Validation/Genexus/Results/2022/22-GX-011"
 ---
 
 ```{r, label='PACTNameInput', echo=FALSE, message=TRUE, warning=FALSE, error=FALSE, include=FALSE}
@@ -374,9 +374,11 @@ makeDiffTab <- function(together, sam){
   cat("\n\n")
   makeSnapshot(notPact, sam, "Genexus Called")
   bothCall <- together[onBoth,]
+  if(nrow(bothCall)>0){
   makeDT("Called By Both", bothCall)
   cat("\n\n")
   makeSnapshot(bothCall, sam, "Called by both")
+  }
 }
 
 makeTogether <- function(nexus,philips){
