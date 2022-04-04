@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 __author__ = "Jonathan Serrano"
-__version__ = "1.0"
+__version__ = "1.1"
 
 import argparse
 import os
@@ -242,7 +242,8 @@ def snvPhilips(snvOut, sam):
                 "normal_freq", "tumor_dp", "normal_dp", "THERAPY_AVAILABILITY", "HGVSp_Short", "SomaticStatus"]
     # Canonical_HGVS_Protein
     varFilter = "splice|intron|UTR"  # splice synonymous #intron UTR variant
-    colFilter = ['tumor_freq', 'normal_freq', 'tumor_dp']
+    synFilter = "synonymous variant"
+    #colFilter = ['tumor_freq', 'normal_freq', 'tumor_dp']
 
     snvOut = snvOut[colOrder]  # reorder columns
     snvOut = snvOut.copy()
@@ -258,7 +259,10 @@ def snvPhilips(snvOut, sam):
     snvOut = snvOut.loc[rule1, :]
     snvOut = snvOut.loc[rule2, :]
     snvOut = snvOut.loc[rule3, :]
+    
     ngsMsk = snvOut['AberrationType'].str.contains(varFilter, na=False)
+    snvOut = snvOut[:][~ngsMsk]
+    ngsMsk = snvOut['AberrationType'].str.startswith(synFilter)
     snvOut = snvOut[:][~ngsMsk]
     return(snvOut)
 
@@ -307,7 +311,7 @@ def checkDataDump(sam, outDir):
 
 def parseFiles(outDir):
     infoReads = readInput(outDir, ',')
-    #summaryReads = readInput(outDir, '\t')
+    summaryReads = readInput(outDir, '\t')
     samList = list(infoReads['Sample Name'])
     list(map(lambda sam: checkDataDump(sam, outDir), samList))
     ispmData = list(map(lambda sam: dataDumpCsv(
@@ -335,8 +339,10 @@ def knitReport(outDir):
 
 def main(zipdir, outDir=None):
     if "/" not in zipdir:
-        runYr = "20" + zipdir.split("-")[1] + "/"
-        outDir = "/Volumes/molecular/Molecular/Validation/Genexus/Results/" + runYr + zipdir
+        runYr = "20" + zipdir.split("-")[0] 
+        if not runYr.isnumeric():
+            runYr = "20" + zipdir.split("-")[1]    
+        outDir = "/Volumes/molecular/Molecular/Validation/Genexus/Results/" + runYr+ "/" + zipdir
         zipdir = "/Volumes/molecular/Molecular/Validation/Genexus/downloaded_data/" + zipdir + "/"
         print("outDir set to:")
         print(outDir)
