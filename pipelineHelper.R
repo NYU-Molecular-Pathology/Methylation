@@ -47,43 +47,6 @@ getRGset <- function(runPath, sentrix){
     return(RGsetEpic)
 }
 
-# Helper function called by makeReports.v11b6 to generate the HTML report
-do_report <-function(data = NULL, genCn=F) {
-    msgFunName(pipeLnk,"do_report")
-    
-    if(!is.null(data)){
-        samplename_data = paste0(data[,1])
-        sentrix_pos_list = (data[,5])
-        tech = paste0(data[,9])
-        tech2 = paste0(data[,10])
-        mp_number = paste0(data[,8])
-        run_id = paste0(data[,7])
-        bnumber = paste0(data[,2])
-        runPath = getwd()
-        barcode = as.numeric(data[,3])
-        pathEpic = file.path(runPath, sentrix_pos_list)
-        RGsetEpic <- getRGset(runPath, sentrix_pos_list)
-        RGset = RGsetEpic
-        sampleID = paste0(samplename_data)
-        FFPE = NULL
-        outDir = getwd()
-        sample = 1
-        outFi <- paste0(sampleID,".html")
-        if(genCn==T){generateCNVpng(RGsetEpic,sampleID)}
-        msgUpdate <- paste0("Current Sample:\n", "samplename_data=", samplename_data, " ",
-                           "run_id=", run_id," ", "barcode=", barcode," ", "pathEpic:\n", pathEpic)
-        message(bky(msgUpdate), "\n")
-        tryCatch(
-            expr={rmarkdown::render(reportMd, "html_document", outFi, outDir, quiet=FALSE,
-                                   params = list(token=gb$ApiToken))},
-            error=function(e){
-                message(bkRed("Report Generation Failed:"),"\n", outFi,"\n")
-                message(bkRed("The following error returned:"),"\n", e)
-                }, finally=message("\nRunning next sample\n")
-        )
-    } else {message(bkRed("Your data is null, check your SampleSheet.csv"))}
-}
-
 # QC REPORT maker: knits the QC RMD file
 generateQCreport <- function(runID=NULL, qc=NULL) {
     msgFunName(pipeLnk, "generateQCreport")
@@ -169,6 +132,44 @@ msgProgress <- function(msg,i,samList){
         cat(bky("\n",dsh,"Completed Report",i,"of",length(samList),dsh),sep = "\n")
     }
 }
+
+# Helper function called by makeReports.v11b6 to generate the HTML report
+do_report <-function(data = NULL, genCn=F) {
+    msgFunName(pipeLnk,"do_report")
+    
+    if(!is.null(data)){
+        samplename_data = paste0(data[,1])
+        sentrix_pos_list = (data[,5])
+        tech = paste0(data[,9])
+        tech2 = paste0(data[,10])
+        mp_number = paste0(data[,8])
+        run_id = paste0(data[,7])
+        bnumber = paste0(data[,2])
+        runPath = getwd()
+        barcode = as.numeric(data[,3])
+        pathEpic = file.path(runPath, sentrix_pos_list)
+        RGsetEpic <- getRGset(runPath, sentrix_pos_list)
+        RGset = RGsetEpic
+        sampleID = paste0(samplename_data)
+        FFPE = NULL
+        outDir = getwd()
+        sample = 1
+        outFi <- paste0(sampleID,".html")
+        if(genCn==T){generateCNVpng(RGsetEpic,sampleID)}
+        msgUpdate <- paste0("Current Sample:\n", "samplename_data=", samplename_data, " ",
+                           "run_id=", run_id," ", "barcode=", barcode," ", "pathEpic:\n", pathEpic)
+        message(bky(msgUpdate), "\n")
+        tryCatch(
+            expr={rmarkdown::render(reportMd, "html_document", outFi, outDir, quiet=FALSE,
+                                   params = list(token=gb$ApiToken))},
+            error=function(e){
+                message(bkRed("Report Generation Failed:"),"\n", outFi,"\n")
+                message(bkRed("The following error returned:"),"\n", e)
+                }, finally=message("\nRunning next sample\n")
+        )
+    } else {message(bkRed("Your data is null, check your SampleSheet.csv"))}
+}
+
 
 # FUN: Iterates over each sample in the csv file to generate a report
 loopRender <- function(samList = NULL, data,redcapUp=T) {
