@@ -762,6 +762,13 @@ pkgs <- c(
     'zoo'
 )
 
+if(!dir.exists("~/.R/")){
+    message("No Makevars file in ~/.R/")
+    #dir.create("~/.R/")
+    }else{
+        system("rm -R ~/.R/")
+    }
+
 # Load/install missing pacakges without asking
 librarian::shelf(pkgs, ask=F)
 
