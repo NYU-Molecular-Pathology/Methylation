@@ -59,14 +59,18 @@ generateQCreport <- function(runID=NULL, qc=NULL) {
   fs::file_copy(QC_file, getwd(), overwrite = T)
   currentQC = dir(getwd(), "*QC.Rmd", full.names = T)
   qcFile = paste0(runID, "_QC.html") # output file name
-  qcFile <- file.path(dirname(currentQC), qcFile)
-  rmarkdown::render(
-    currentQC,
-    output_file = qcFile,
-    params = list(runID = runID)
-  )
+  if(file.exists(file.path(getwd(), qcFile)){
+      message(qcFile, "Already Exists!  Skipping render...")    
+  }else{
+    qcFile <- file.path(dirname(currentQC), qcFile)
+    rmarkdown::render(
+        currentQC,
+        output_file = qcFile,
+        params = list(runID = runID)
+    )
   currentQC <- stringr::str_replace_all(string = currentQC, ".Rmd", "_cache")
   unlink(currentQC, recursive = T) #clear cache
+      }
   gb$uploadToRedcap(qcFile,F)
 }
 
