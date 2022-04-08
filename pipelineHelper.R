@@ -59,7 +59,7 @@ generateQCreport <- function(runID=NULL, qc=NULL) {
   fs::file_copy(QC_file, getwd(), overwrite = T)
   currentQC = dir(getwd(), "*QC.Rmd", full.names = T)
   qcFile = paste0(runID, "_QC.html") # output file name
-  if(file.exists(file.path(getwd(), qcFile)){
+  if(file.exists(file.path(getwd(), qcFile))){
       message(qcFile, "Already Exists!  Skipping render...")    
   }else{
     qcFile <- file.path(dirname(currentQC), qcFile)
