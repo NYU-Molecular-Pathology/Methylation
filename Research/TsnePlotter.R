@@ -61,7 +61,7 @@ generateTitles <- function(clusterTitle, topTitle, titlemain) {
         foreach::foreach(
             topV = 1:length(topTitle), .combine = "rbind", .packages = c('foreach')
         ) %do% {
-            return(paste0(clusterTitle[ti], " ", titlemain, " ", topTitle[topV], " Variance Probes"))
+            return(paste0(clusterTitle[ti], " ", titlemain, " ", topTitle[topV], " Variance Probes","\n\n"))
         }
     })[, 1]
     return(tsne_titles)
