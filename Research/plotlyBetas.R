@@ -18,8 +18,8 @@ makePlotly<-function(fig) {
         supM(plotly::ggplotly(
             fig,
             dynamicTicks = T,
-            height = 960, #800
-            width = 1440 #1200
+            height = 800, #800
+            width = 1200 #1200
         ))
     otherPlot$x[["layout"]][["annotations"]] <- NULL
     opLayout <- otherPlot[["x"]][["layout"]]
