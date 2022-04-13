@@ -138,7 +138,7 @@ cleanRawProbes <- function(rawBetaDat, RGSet, samNames, targets) {
     return(betas)
 }
 
-getMdsPlot <- function(RGSet, samNames,samTypes, topN=1000) {
+gb$getMdsPlot <- function(RGSet, samNames,samTypes, topN=1000) {
     mSetSq <- preprocessQuantile(RGSet)
     mSetSq <- addSnpInfo(mSetSq)
     mSetSq <- dropLociWithSnps(mSetSq, snps = c("SBE", "CpG"), maf = 0) # drop the loci which has snps
@@ -148,35 +148,40 @@ getMdsPlot <- function(RGSet, samNames,samTypes, topN=1000) {
     mSetSq.beta <- minfi::getBeta(mSetSq)
     colnames(mSetSq.beta) <- mSetSq$Sample_Name
     assign("mSetSq.beta",mSetSq.beta, envir=gb)
-    plotNam <- paste0("top_",topN,"_msetBeta",".png")
-    myColors <- RColorBrewer::brewer.pal(length(unique(samTypes)),"Set1")
-    names(myColors) <- unique(samTypes)
-    color_easy = c(myColors)[samTypes]
-    png(filename=plotNam, width = 12, height = 8, res=200, units="in") 
-    
-    limma::plotMDS(
-        mSetSq.beta,
-        top = topN,
-        gene.selection = "common",
-        plot = T,
-        #pch = c(1:length(unique(samTypes))),
-        main = paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot"),
-        col = color_easy,
-        labels = samNames
-    )
-    
-    legend(
-      "topright",
-      legend = c(names(myColors)),
-      col = paste(as.list(myColors)),
-      pch = 15,
-      cex = 0.8
-    )
-    
-    dev.off()
-    thepng <-paste0('./',plotNam)
-    knitr::include_graphics(thepng)
     return(mSetSq.beta)
+}
+
+plot.mds  <- function(mSetSq.beta, samTypes,topN) {
+  library('RColorBrewer')
+  plotNam <- paste0("top_", topN, "_msetBeta", ".png")
+  myColors <- RColorBrewer::brewer.pal(length(unique(samTypes)), "Paired")
+  names(myColors) <- unique(samTypes)
+  png(
+    filename = plotNam,
+    width = 12,
+    height = 8,
+    res = 200,
+    units = "in"
+  )
+  limma::plotMDS(
+    mSetSq.beta,
+    top = topN,
+    gene.selection = "common",
+    plot = T,
+    pch = 16,
+    col = myColors,
+    main = paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot")
+  )
+  legend(
+    "topright",
+    legend = c(names(myColors)),
+    col = paste(as.list(myColors)),
+    pch = 15,
+    cex = 0.8
+  )
+  dev.off()
+  thepng <- paste0('./', plotNam)
+  return(knitr::include_graphics(thepng))
 }
 
 dropGroup <- function(targets, filterCol=NULL, group2rm=NULL) {
