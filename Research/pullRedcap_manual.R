@@ -134,7 +134,7 @@ grabRDCopyIdat <- function(rd_numbers, token, copyIdats=T){
     }
 }
 
-fillMissingDat <- function(targets, col_samNames){
+fillMissingDat <- function(targets, col_samNames="Sample_Name"){
   newTarg <- read.csv("samplesheet_og.csv", strip.white=T, row.names=NULL)
   targets <- merge(newTarg,targets, by=col_samNames, all=F, suffixes = c("",".xyzq"))
   dupeDrop <- grepl(".xyzq", colnames(targets))==F
