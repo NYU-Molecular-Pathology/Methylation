@@ -186,7 +186,7 @@ dropGroup <- function(targets, filterCol=NULL, group2rm=NULL) {
     return(targets[!remov, ])
 }
 
-dropBadQc <- function(targets, betas) {
+dropBadQc <- function(targets, betas, csvFi="samplesheet.csv") {
   dropping <- targets$Sample_Name %in% colnames(betas)
     if(table(dropping)[1]>=1){
   theMissing <- targets[!dropping, ]
@@ -195,7 +195,7 @@ dropBadQc <- function(targets, betas) {
 
   rownames(targets) <- 1:nrow(targets)
   write.csv(targets,
-            file = "samplesheet.csv",
+            file = csvFi,
             quote = F,
             row.names = F)
   return(theMissing)
