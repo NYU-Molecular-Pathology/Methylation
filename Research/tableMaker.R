@@ -139,3 +139,8 @@ sanitizeSheet <- function(inputFi, samsheet) {
   targets <- read.csv(samsheet, strip.white = T)
   return(targets)
 }
+
+animation::ani.options(autobrowse = FALSE); options(width=1200)
+library("mnp.v11b6")
+library(magrittr) # needs to be run every time you start R and want to use %>%
+library(dplyr)  
