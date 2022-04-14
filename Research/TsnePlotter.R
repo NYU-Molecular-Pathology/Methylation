@@ -91,7 +91,7 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL,
     symFlags <- !is.null(symbolsLabel)
     devAskNewPage(ask=F) #options("device.ask.default"=F)
     if(symFlags==T) {
-        shapeVals <- c(17, 19, 15, 7, 8, 9, 1, 3, 4, 5)
+        shapeVals <- c(19, 17, 15, 7, 8, 9, 1, 3, 4, 5)
         sv <- shapeVals[1:length(unique(tsne_plot$symbol))]
         shapeLabels <-levels(as.factor(tsne_plot$symbol))
         if (any(is.na(shapeLabels))) {
