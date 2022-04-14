@@ -101,7 +101,7 @@ grabAllBeta <- function(targets1, betas) {
     betas1 <- betas[ ,targets1$SampleFilter] # filtering betas
     if(file.exists(file.path(gb$runDir,gb$unbetaVariance))){
       unBets <- readRDS(unbetaVariance)
-      } else{
+    }else{
     unBets <- gb$takeTopVariance(betas1, topVar = 1:10000)
     saveRDS(unBets, file=file.path(gb$runDir,gb$unbetaVariance))
     }
