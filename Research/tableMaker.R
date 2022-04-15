@@ -144,3 +144,7 @@ animation::ani.options(autobrowse = FALSE); options(width=1200)
 library("mnp.v11b6")
 library(magrittr) # needs to be run every time you start R and want to use %>%
 library(dplyr)  
+require("tidyverse")
+require("plotly")
+require("ggplot2")
+library("DT")
