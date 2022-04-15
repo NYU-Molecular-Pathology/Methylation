@@ -2,33 +2,60 @@
 title: "Methylation Profiling Report (v11)"
 author: "Quick Links:"
 output: 
- html_document:
-  toc: true
-  toc_collapsed: false
-  includes:
-    in_header: logos.html
+ html_document: 
+   toc: yes
+   toc_collapsed: no
+   includes:
+     in_header: logos.html
+editor_options: 
+  chunk_output_type: console
+params:
+    token: "NONE"
 ---
 <style type="text/css">
 h1.title{color: white; background-image: linear-gradient(to right, indigo, indigo, indigo, white, white); border-radius:18px; padding:5px; border-padding:5px;}
 </style>
-```{r global_options, include=FALSE}
+```{r global_options, include=FALSE, warning=FALSE}
+
+if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, quiet=T)}
+# Setting US CRAN REPO
+rlis = getOption("repos")
+rlis["CRAN"] = "http://cran.us.r-project.org"
+try(options(repos = rlis), silent=T)
+# List of all Packages
+pkgs <- c(
+    "needs",
+    "knitr",
+    "jsonlite",
+    "crayon",
+    "RCurl",
+    "ggplot2",
+    "kableExtra",
+    "tidyverse",
+    "plotly",
+    "ggplot2",
+    "magrittr",
+    "compiler",
+    "minfi",
+    "parallel",
+    "doParallel")
+
+librarian::shelf(pkgs, ask=F,verbose=F, warn.conflicts = F, quietly = T)
+
 require("needs")
-library(knitr)
-knitr::opts_knit$set(progress = TRUE, verbose = FALSE, comment='')
-knitr::opts_chunk$set(error = FALSE, fig.keep = 'none', echo = FALSE, message = FALSE, warning = FALSE)
-knitr::opts_knit$set(progress=TRUE, verbose=FALSE, fig.align="left", self.contained=TRUE)
-knitr::opts_knit$set(progress = TRUE, verbose = FALSE)
-knitr::opts_chunk$set(results = 'hide', child=NULL)
+library("knitr")
+optsLi <- list(error = FALSE, echo = FALSE, message = FALSE, warning = FALSE, progress=TRUE, verbose=FALSE, fig.align="left", self.contained=TRUE, comment='', tidy.opts=FALSE, label_list=FALSE, highlight=FALSE, error = FALSE)
+
+knitr::opts_chunk$set(optsLi)
+knitr::opts_knit$set(optsLi)
+knitr::opts_current$set(optsLi)
+
 ```
 
-```{r setup, cache.path="cache/", include=FALSE, cache=TRUE}
-knitr::opts_chunk$set(cache.extra = list(R.version, sessionInfo(), format(Sys.Date(), '%Y-%m')))
-knitr::opts_chunk$set(self.contained=TRUE)
-knitr::opts_chunk$set(error = FALSE, fig.keep = 'none', echo = FALSE, message = FALSE, warning = FALSE)
-knitr::opts_knit$set(progress=TRUE, verbose=FALSE)
-knitr::opts_current$set(progress=TRUE, verbose=FALSE, fig.align="left", self.contained=TRUE, error = FALSE, fig.keep = 'none', echo = FALSE, message = FALSE, warning = FALSE)
+```{r setup, cache.path="cache/", include=FALSE, cache=FALSE}
+knitr::opts_chunk$set(error = FALSE, echo = FALSE, message = FALSE, warning = FALSE, self.contained=TRUE, comment = '', progress=TRUE, verbose=FALSE, cache.extra = list(R.version, sessionInfo(), format(Sys.Date(), '%Y-%m')))
 options(scipen = 5)
-require(compiler)
+require("compiler")
 supM <- function(objTing){return(suppressMessages(suppressWarnings(objTing)))}
 assign(x = "supM", value = supM, envir = .GlobalEnv)
 supM(compiler::enableJIT(3))
@@ -41,7 +68,9 @@ if(getRversion() >= 4.0){ #Sys.getenv("RSTUDIO") == "1" && !nzchar(Sys.getenv("R
 } else{message("~~~~~~~~~~~~Not using R >= 4.0\n")}
 
 # load ggplot2 silently
-suppressWarnings(library(verbose=F,warn.conflicts = F, quietly = T, package=ggplot2))
+supM(library(verbose=F,warn.conflicts = F, quietly = T, package=ggplot2))
+
+
 getScores <- function(Mset=NULL){
 	if(!is.null(Mset)){
   betas <- minfi::getBeta(Mset)
@@ -65,22 +94,8 @@ set.seed(seed = 12345)
 getScore_cache = compiler::cmpfun(getScores)
 tsne_cache = compiler::cmpfun(MNPtsne2)
 
-knitr::knit_hooks$set(time_it = local({
-  now <- NULL
-  function(before, options) {
-    if (before) {
-      # record the current time before each chunk
-      now <<- Sys.time()
-    } else {
-      # calculate the time difference after a chunk
-      res <- difftime(Sys.time(), now)
-      # return a character string to show the time
-      message("Time for this chunk to run: ", round(res, 2), " secs")
-    }
-  }
-}))
-knitr::opts_knit$set(progress=TRUE, verbose=FALSE)
-knitr::opts_chunk$set(comment = NA)
+knitr::opts_knit$set(progress=TRUE)
+knitr::opts_knit$set(verbose=FALSE)
 #tsne_cache <- local(MNPtsne.cmpfun())
 #bookdown::gitbook::html_document2()
 ```
@@ -108,10 +123,8 @@ Sample Information
 </h2>
 <div style="background-image: linear-gradient(180deg, BlanchedAlmond, white); font-size: 16px">
 
-```{r 'Sample Info'}
+```{r 'Sample Info', class.source="bg-success", size="normalsize"}
 knitr::opts_knit$set(progress=TRUE, verbose=FALSE)
-knitr::opts_chunk$set(comment = NA)
-#, class.source="bg-success", size="normalsize"
 sample = 1
 run_id = paste(run_id)
 tech = paste(tech)
@@ -124,11 +137,11 @@ RGset2 <- RGset
 FFPE=NULL
 
 stopifnot(!is.null(run_id)|!is.null(tech)|!is.null(tech2)|!is.null(bnumber)|!is.null(RGset))
-outPath <- getwd()
 
-outFiName <- paste0(run_id,"_Redcap.csv")
-redcsv <- file.path(outPath,outFiName)
-redfolder <- getwd()
+redfolder <- file.path("~","Desktop", run_id)
+redFile <- paste0(run_id,"_Redcap.csv")
+redcsv <- file.path(redfolder,redFile)
+
 is450k <- RGset@annotation[[1]] == "IlluminaHumanMethylation450k"
 
 redcapDF <- data.frame(
@@ -196,10 +209,9 @@ supM(pander::pander(t(suppinfo), split.table = Inf))
 </h3>
 <h3><p></p></h3>
 
-```{r 'Brain Classifier Family', size="normalsize", time_it=TRUE}
-knitr::opts_current$set(progress=TRUE, verbose=FALSE, fig.align="left", self.contained=TRUE, error = FALSE, fig.keep = 'none', echo = FALSE, message = FALSE, warning = FALSE)
-library(verbose=F,warn.conflicts = F, quietly = T, package="knitr")
-library(verbose=F,warn.conflicts = F, quietly = T, package="kableExtra")
+```{r 'Brain Classifier Family', size="normalsize"}
+library(verbose=F, warn.conflicts = F, quietly = T, package= "knitr")
+library(verbose=F, warn.conflicts = F, quietly = T, package= "kableExtra")
 if (is450k==T) {
     library(verbose=F,warn.conflicts = F, quietly = T, package="mnp.v11b4")
     probs <- mnp.v11b4::MNPpredict(Mset_ba[, 1], type = 'prob')
@@ -241,23 +253,39 @@ out <- as.data.frame(out)
 out_score <- as.numeric(paste0(out$`Subgroup Score`[1]))
 
 subVal_int <- NULL
+if (is.null(out_score)|is.na(out_score)) {
+    warning("out_score value (sub score) is NULL.  Assigning value of 0.00")
+    out_score <- 0.000
+}
 if (out_score >= 0.500) {subVal_int <- "Positive"}
-if (out_score < 0.500 & out_score > 0.100) {subVal_int <- "Indeterminate"}
+if (out_score < 0.500 & out_score >= 0.100) {subVal_int <- "Indeterminate"}
 if (out_score < 0.300) {subVal_int <- "Negative"}
+if (is.null(subVal_int)) {
+    warning("subscore value (subVal_int) is NULL")
+    subVal_int <- "Indeterminate"
+}
 
 out$Interpretation = c(subVal_int,"","","","")
 fsco <- as.numeric(paste0(out_class_family$`Class Score`[1]))
 
 famVal <- NULL
+if (is.null(fsco)|is.na(fsco)) {
+    warning("fsco value (family score) is NULL.  Assigning value of 0.00")
+    fsco <- 0.000
+}
 if (fsco >= 0.900) {famVal <- "Positive"}
 if (fsco < 0.900 & fsco > 0.300) {famVal <- "Indeterminate"}
-if (fsco < 0.300) {famVal <- "Negative"}
+if (fsco <= 0.300) {famVal <- "Negative"}
 
+
+if (is.null(famVal)) {
+    warning("family value (famVal) is NULL")
+    famVal <- "Indeterminate"
+}
 out_class_family$Interpretation = c(famVal,"","","","")
 xtraCss1="border-radius:0px;border-width:1px;border-style:solid;border-color:rgb(192,192,192);"
 xtraCss2="border-radius:0px;border-width:3px;border-style:solid;border-color:rgb(26,105,16);"
-xtraCss3="border-radius:0px;border-width:1px;border-style:solid;border-color:rgb(192,192,192);"
-xtraCss4="border-radius:0px;border-width:3px;border-style:solid;border-color:rgb(16,28,105);"
+xtraCss3="border-radius:0px;border-width:3px;border-style:solid;border-color:rgb(16,28,105);"
 txtc = "text-align:center;"
 btso = c("bordered")
 kgb <- c("striped",font_size = 14, bootstrap_options = btso)
@@ -274,10 +302,10 @@ out_class_family %>%
 out %>% 
 	knitr::kable("html",kgh,align='clc')%>%
     kableExtra::kable_styling(kgb,full_width=F,position="left") %>%
-	kableExtra::column_spec(column=c(1,2),extra_css=xtraCss3) %>%
-	kableExtra::column_spec(column=2,background="rgb(204,230,255)",extra_css=txtc) %>%
-	kableExtra::row_spec(row=0,font_size=16,background="rgb(135,174,237)",color="black") %>%
-	kableExtra::row_spec(row=1,extra_css=xtraCss4)
+	kableExtra::column_spec(column=c(1,2), extra_css=xtraCss1) %>%
+	kableExtra::column_spec(column=2,background="rgb(204,230,255)", extra_css=txtc) %>%
+	kableExtra::row_spec(row=0,font_size=16,background="rgb(135,174,237)", color="black") %>%
+	kableExtra::row_spec(row=1,extra_css=xtraCss3)
 
 familia <- out_class_family$`Methylation Family`[1]
 fscore <- out_class_family$`Class Score`[1]
@@ -317,7 +345,7 @@ indicates no matching methylation class (score <0.3) and for classifier subclass
 
 </h3>
 </div>
-```{r, label='TSNE Cluster', fig.height=8, fig.width=12,time_it=TRUE}
+```{r, label='TSNE Cluster', fig.height=8, fig.width=12}
 me.col <- c( "#1F78B4","#2980BA","#3388C1","#3D91C8","#4799CF","hotpink","hotpink","hotpink","hotpink","hotpink","hotpink","#58D68D","#8FCDC0","#96D1B3","#9ED5A7","#A6D99B","#AEDD8F","#A9DB82","#97D574","#85CF65","#74C957","#62C349","#50BD3A","#3EB72C","#2DB11D","#26AC17","#41AA27","#5BA737","#76A547","#ff4d00","#ABA068","#ff4d00","#E09C88","#FA9998","#ff4d00","#F48D78","#ff4d00","#ED8157","#EA7B47","#E77536","#E46F26","#E06916","#E26F1A","#E67A25","#E98531","#ED8F3C","#F09A47","#F4A452","#F7AF5E","#FBB969","#FDB368","#FD9C5A","#FD854D","#FD6D3F","#FE5632","#FE3F24","#FE2817","#FE110A","#FC0406","#F11421","#E6253B","#DC3556","#D14670","#C6568B","#BC67A5","#B177C0","#A687DB","#A17DDB","#9C72DC","#9668DC","#915DDD","#8B53DE","#8648DE","#803EDF","#7B33DF","#863FCB","#9653B0","#A66795","#B67B7A","#C68F5F","#D6A343","#E6B728","#F6CB0D","#FFFF00","#FFFF00","#FFFF00","#F6D916","#5e2f1b","#2980B9","#b8b8b8","#A9A9A9","#A9A9A9","#A9A9A9","#A9A9A9","#9E9E9E","#939393","#868686","#787878","#676767","#0400ff" )
 set.seed(12345)
 
@@ -365,35 +393,35 @@ supM(theplot)
 ### Copy Number Variation Profile
 </h3>
 </div>
-```{r, label='CNV Plot', fig.width = 12, fig.height=7,time_it=TRUE}
+```{r, label='CNV Plot', fig.width = 12, fig.height=7}
 if (is450k==TRUE) {
     library(verbose=F,warn.conflicts = F, quietly = T, package="mnp.v11b4")
-    MNPcnv450k <- function(Mset, sex = NULL, ...) {
+    MNPcnv450k <- function(Mset, sex = NULL, ...){
         path <- file.path(path.package('mnp.v11b4'), 'ext')
         if (is.null(sex)) {
             Rset <- ratioConvert(Mset, what = "both", keepCN = TRUE)
             sex <- ifelse(MNPgetSex(Rset)$predictedSex == "M", "Male", "Female")
         }
         load(file.path(path, "CNanalysis4_conumee_ANNO.vh20150715.RData"))
-        cndata <- CNV.load(Mset)
+        cndata <- conumee::CNV.load(Mset)
         if (sex == "Male") {
             load(file.path(path, "CNanalysis4_conumee_REF-M.vh20150715.RData"))
-            x <- CNV.fit(cndata, refM.data, annoXY)
+            x <- conumee::CNV.fit(cndata, refM.data, annoXY)
         }
         if (sex == "Female") {
             load(file.path(path, "CNanalysis4_conumee_REF-F.vh20150715.RData"))
-            x <- CNV.fit(cndata, refF.data, annoXY)
+            x <- conumee::CNV.fit(cndata, refF.data, annoXY)
         }
         x <- conumee::CNV.bin(x)
         x <- conumee::CNV.detail(x)
         x <- conumee::CNV.segment(x)
         return(x)
     }
-	xx <- MNPcnv450k(Mset,sex = sex, main = sampleID)
+    xx <- MNPcnv450k(Mset,sex = sex, main = sampleID)
 	#mnp.v11b4::MNPcnvggplotly(xx)
-	} else {
+    } else {
 	    xx <- supM(mnp.v11b6::MNPcnv(Mset,sex = sex,main = sampleID))
-	}
+	    }
 supM(mnp.v11b6::MNPcnvggplotly(xx, getTables = F))
 ```
 <p style= "font-size:14px">
@@ -402,7 +430,7 @@ Depiction of chromosomes 1 to 22 (and X/Y if automatic prediction was successful
 
 ### CNV Gains and Loss
 ```{r, label='CNV table'}
-#require(mnp.v11b6)
+require(mnp.v11b6)
 dra <- supM(mnp.v11b6::MNPcnvggplotly(xx,getTables = T))
 gDF <- t(data.frame(Gains = c(rownames(dra[(dra$Gain == T),]))))
 lDF <- t(data.frame(Loss = c(rownames(dra[(dra$Loss == T),]))))
@@ -413,13 +441,13 @@ tgDF <-
 	gDF %>% knitr::kable("html", kgh, align = 'clc') %>% 
 	kableExtra::kable_styling(kgb,position = "left",full_width = F) %>%
 	kableExtra::row_spec(row = 1, extra_css = extra_css1) %>% 
-    kableExtra::column_spec(column = 1,background = "palegreen", extra_css = txtc)
+    kableExtra::column_spec(column = 1, background = "palegreen", extra_css = txtc)
 
 tlDF <- 
 	lDF %>% knitr::kable("html", kgh, align = 'clc') %>% 
 	kableExtra::kable_styling(kgb,position = "left",full_width = F) %>%
 	kableExtra::row_spec(row = 1, extra_css = extra_css1) %>% 
-    kableExtra::column_spec(column = 1,background = "#CD5C5C", extra_css = txtc)
+    kableExtra::column_spec(column = 1, background = "#CD5C5C", extra_css = txtc)
 
 if (nrow(gDF) > 0) {tgDF}
 if (nrow(lDF) > 0) {tlDF}
@@ -444,8 +472,8 @@ require("ggplot2")
 htmltools::tagList(plotly::ggplotly(ggplot2::ggplot(),width = 500, height = 200))
 ```
 <div style="width:50%;height:200px">
-```{r,label='MGMTPred', results='asis', out.width='50%', out.height='200px', plotly=TRUE,time_it=TRUE}
-#include=TRUE,fig.keep='all', fig.height=0.3, fig.width=1.5, 
+```{r,label='MGMTPred', results='asis', out.width='50%', out.height='200px', plotly=TRUE, include=TRUE, fig.keep='all', fig.height=0.3, fig.width=1.5}
+#
 Mset_raw <- minfi::preprocessRaw(RGset) #, echo=FALSE, self.contained=TRUE
 
 MNPciplot_mgmt<- function(Mset,sample=1){
@@ -471,8 +499,8 @@ supM(print(theBarPlot))
 </div>
 #### MGMT Status
 
-```{r,label='MGMT tab', results='asis', fig.keep='all', out.width='50%', out.height='200px', plotly=TRUE,time_it=TRUE}
-#fig.height=1.5, fig.width=3.5, include=TRUE, self.contained=TRUE, 
+```{r,label='MGMT tab', results='asis', fig.keep='all', out.width='50%', out.height='200px', plotly=TRUE, fig.height=1.5, fig.width=3.5, include=TRUE, self.contained=TRUE}
+#
 if (is450k) {
     mgmtData <- mnp.v11b4::MNPpredict_mgmt(Mset_raw)
 } else{
@@ -495,8 +523,10 @@ grades, and CIMP-status.* Acta Neuropathologica, p.547-560, Number 4, 2012.</p>
 </h3>
 </div>
 <div>
-```{r, label='MLH1 Functions'}
-#, fig.align="center", fig.height=12, fig.width=12, dpi=40
+```{r, label='MLH1 Functions', fig.align="center", fig.height=12, fig.width=12, dpi=40}
+knitr::opts_knit$set(progress = TRUE, verbose = FALSE, comment='')
+knitr::opts_chunk$set(progress = TRUE, verbose = FALSE, comment='')
+knitr::opts_current$set(progress = TRUE, verbose = FALSE, comment='')
 get.clinical.data = function(ratioSet, RGset){
 	#Output is DF with sample information, betas for relevant MLH1 loci
 	MLH1_CGIDS = c("cg23658326","cg11600697","cg21490561","cg00893636")
@@ -586,7 +616,7 @@ drawPlotTab <- function(mlhP){
 		mlhP %>% knitr::kable("html",be, align = 'clc') %>% 
 		    kableExtra::kable_styling(kgb,full_width = F, position="left") %>%
 		    kableExtra::column_spec(column = 2, background = "rgb(204, 255, 204)", extra_css = txtc) %>% 
-		    kableExtra::column_spec(column = 2, bold = T, border_right = T)
+		    column_spec(column = 2, bold = T, border_right = T)
 		)
 	}
 
@@ -605,7 +635,7 @@ pipeline = function(RGset, getFig=F, getTable=F) {
 }
 ```
 
-```{r, label='MLH1 Prediction', fig.align="center", fig.height=8, fig.width=10, dpi=36,time_it=TRUE}
+```{r, label='MLH1 Prediction', fig.align="center", fig.height=8, fig.width=10, dpi=36}
 knitr::opts_knit$set(progress=TRUE, verbose=FALSE)
 knitr::opts_current$set(progress=TRUE, verbose=FALSE)
 theMlhplot <- pipeline(RGset, getFig = T, getTable = F) 
@@ -622,7 +652,10 @@ theMlhTab <- drawPlotTab(mlhP)
 theMlhTab
 ```
 
-```{r, label='REDCapWrite', include=FALSE}
+```{r, label='REDCapWrite', include=FALSE, message=TRUE, error=FALSE}
+library("jsonlite")
+library("crayon")
+library("RCurl")
 dfNewRed <- data.frame(
     record_id = sampleID,
     b_number = bnumber,
@@ -642,19 +675,34 @@ dfNewRed <- data.frame(
     tm_number = mp_number
 )
 
-#print(dfNewRed)
+datarecord = jsonlite::toJSON((as.list(dfNewRed[1,])), auto_unbox=T)
+message(datarecord)
+message("~~",crayon::bgBlue("Record Uploaded:"))
+
+makePost <- function(datarecord){
+    ur = "https://redcap.nyumc.org/apps/redcap/api/"
+    tk <- params$token
+    RCurl::postForm(ur, token = tk, content = 'record', format = 'csv', type = 'flat',
+                    data = datarecord, returnFormat = 'csv')
+}
+
+try(expr=makePost(datarecord),silent=T)
 
 writeRedcap <- function(redcsv, dfNewRed,dfRedcap){
-	redDF <- rbind(dfRedcap,dfNewRed)
+	redDF <- rbind(dfRedcap, dfNewRed)
 	row.names(redDF) = NULL
 	#write.table(dfNewRed, file= redcsv, row.names=F, col.names=T, append=T, quotes=F)
 	write.csv(x = redDF,file = redcsv, row.names = F)
 }
-outFiName <- paste0(run_id,"_Redcap.csv")
-redcsv <- file.path(outPath,outFiName)
+deskRunPath <- file.path("~", "Desktop", run_id)
+redcsv <- list.files(path= deskRunPath, pattern="_Redcap.csv", full.names=T)[1]
+if(!is.na(redcsv)){
 dfRedcap = read.csv(redcsv, header = T, row.names = NULL)
 dfRedcap <- as.data.frame(dfRedcap, row.names = NULL)
-writeRedcap(redcsv, dfNewRed, dfRedcap)
+try(writeRedcap(redcsv, dfNewRed, dfRedcap), silent=T)
+}else{
+    message("REDCap Upload failed for sample:", sampleID, "will attempt upload at run end.")
+}
 ```
 </div>
 
@@ -669,4 +717,3 @@ David Capper, David T. W. Jones, Martin Sill, Volker Hovestadt, Daniel Schrimpf,
 <b>Implementation of the results in a clinical setting is in the sole responsibility of the treating physician.</b>
 </span>
 </p>
-	
