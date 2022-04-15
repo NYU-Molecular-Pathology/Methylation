@@ -4,8 +4,10 @@ apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
 dsh = "-----------"
 bky <- function(txtVar,...){crayon::black$bgYellow$bold(txtVar,...)}
 bkRed <- function(txtVar,...){crayon::bgRed$bold$white(txtVar,...)}
-reportMd <- "/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/inst/report.Rmd" #system.file("report.Rmd", package="mnp.v11b6")
-QC_file <- "/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/inst/Methyl_QC.Rmd" #system.file('Methyl_QC.Rmd', package = "mnp.v11b6")
+reportMd <- "~/report.Rmd" #system.file("report.Rmd", package="mnp.v11b6")
+#/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/inst
+QC_file <- "~/Methyl_QC.Rmd" #system.file('Methyl_QC.Rmd', package = "mnp.v11b6") 
+#/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/inst/
 
 pipeLnk <- "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/pipelineHelper.R"
 predictionPath <- "/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData"
