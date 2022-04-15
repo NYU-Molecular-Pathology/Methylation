@@ -4,41 +4,62 @@ classoption: landscape
 editor_options: 
   chunk_output_type: console
 params:
-  runID: "21-MGDM"
+  runID: NULL
+  sheetNamePath: NULL
+  baseDir: NULL
+  author: "Jonathan Serrano"
 ---
 ```{r,include=FALSE, cache=FALSE, cache.path="cache/",echo=FALSE}
-runID = paste0(basename(getwd()))
-message(paste("Using", runID, "as RunID"))
-	
-baseDir = paste0("/meth_data/", runID)
-message(baseDir)
-sheetNamePath = list.files(baseDir,pattern = "_samplesheet.csv")
-if (length(sheetNamePath) > 1){warning(">1 samplesheet in the folder")}
-sheetName1 <- sheetNamePath[1]
-sheetNamePath <- list.files(baseDir,pattern = sheetName1, full.names = T)
-message(paste0("sample sheet name is: ", sheetName1))
-fixerrors <- read.csv(sheetNamePath, strip.white = T)
-targets <- minfi::read.metharray.sheet(baseDir,pattern = sheetName1)
+# Check if RunID provided else use basename of working directory
+if(is.null(params$runID)){
+    runID = paste0(basename(getwd()))
+}else{runID=params$runID}
 
-targets$basenames <- fixerrors$Basename
+message(paste("Using", runID, "as RunID"))
+
+# Check if baseDir provided else use Desktop
+if(is.null(params$baseDir)){
+    baseDir = file.path("~","Desktop",runID)
+}else{baseDir=params$baseDir}
+
+message("Using the following base Directory:\n",baseDir)
+
+# Check if sheetNamePath provided else use Desktop to look for samplesheet pattern
+if(is.null(params$sheetNamePath)){
+    sheetNamePath = list.files(baseDir,pattern = "_samplesheet.csv", full.names = T)[1]
+}else{sheetNamePath = params$sheetNamePath}
+
+message(paste0("Sample sheet name is: ", sheetNamePath))
+fixerrors <- read.csv(sheetNamePath, strip.white = T)
+targets <- minfi::read.metharray.sheet(baseDir, pattern = sheetNamePath)
+
+if(nrow(fixerrors)<8){
+    warning("Less than 8 samples are run, disabling biocparrallel")
+    totNum<-1
+}else{
+# Check here if you have odd number of arrays used in makeLabels function
+totNum <- nrow(fixerrors)/8 # total number of arrays for biocParrallel workers
+}
+targets$basenames <- fixerrors$Basename # path/to/idat/files
 runID <- paste0(targets$RunID[1])
 wsDate <- fixerrors$Date[1] #format(Sys.time(), '%d %B, %Y')
-redFile <- paste0( runID,"_Redcap.csv")
-location <- file.path(baseDir,redFile)
+location <- file.path(baseDir,paste0( runID,"_Redcap.csv")) # redcap brain classifier file
 
 if (!file.exists(location)) {
-	warning(paste0("File not found: ", location));warning("QC Summary Table will not generate")
-	}
-titleName <- paste("Methylation Sample QC for Batch", runID)
-fileName <- paste0(runID,"_QC.html")
-pSubTitle <- 'Clinical Methylation Run'
-summarName <- paste("Classifier Report Summary for", runID)
+	warning(paste0("File not found: ", location,
+	               "\nQC Summary Table will not generate"))
+}
+
+titleName <- paste("Methylation Sample QC for Batch", runID) #heading 1
+fileName <- paste0(runID,"_QC.html") # output file name
+pSubTitle <- 'Clinical Methylation Run' # subtitle
+summarName <- paste("Classifier Report Summary for", runID) # summary table heading
 ```
 
 ---
 title: "`r titleName`"
 subtitle: "`r pSubTitle`"
-author: "Jonathan"
+author: "`r paste0(params$author)`"
 date: "`r paste0(wsDate)`"
 output:
   html_notebook:
@@ -65,49 +86,57 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_knit$set(global.par = TRUE)
 knitr::opts_knit$set(ask = F)
 #knitr::opts_chunk$set(dev = "png", dev.args = list(type = "cairo-png"))
-library("knitr")
-library("kableExtra")
-library("magick")
-library("webshot")
-library("plyr")
-library("ggplot2")
-library("knitr")
-library("reshape2")
-library("data.table")
-library("DT")
-library("plotly")
-library("MethylAid")
-library("minfi")
-library("scales")
-library("IlluminaHumanMethylation450kmanifest")
-library("IlluminaHumanMethylationEPICmanifest")
-library("IlluminaHumanMethylationEPICanno.ilm10b4.hg19")
-library("Biobase")
-library("RColorBrewer")
-library("limma")
-library("ggfortify")
-library("Rtsne")
-library("qdapTools")
-library("gplots")
-library("readxl")
-library("stringr")
-library("ggrepel")
-library("Polychrome")
-library("tinytex")
-library("gridExtra") 
-library("rmarkdown")
-library("tinytex")
-library("BiocParallel")
-require("ggplot2")
-require("pals")
-require("scales")
-require("stringr")
-require("scales")
-library('grid')
-library('grDevices')
+if(!require("BiocManager")){install.packages("BiocManager",dependencies=T,quiet=T)}
+if(!require("MethylAid")){BiocManager::install("MethylAid",update=F, ask=F)}
+if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 6, quiet=T)}
+
+pkgs <- c(
+    "knitr",
+    "kableExtra",
+    "magick",
+    "webshot",
+    "plyr",
+    "ggplot2",
+    "knitr",
+    "reshape2",
+    "data.table",
+    "DT",
+    "plotly",
+    "MethylAid",
+    "minfi",
+    "scales",
+    "IlluminaHumanMethylation450kmanifest",
+    "IlluminaHumanMethylationEPICmanifest",
+    "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
+    "Biobase",
+    "RColorBrewer",
+    "limma",
+    "ggfortify",
+    "Rtsne",
+    "qdapTools",
+    "gplots",
+    "readxl",
+    "stringr",
+    "ggrepel",
+    "Polychrome",
+    "tinytex",
+    "gridExtra",
+    "rmarkdown",
+    "tinytex",
+    "BiocParallel",
+    'grid',
+    'grDevices',
+    "mdthemes",
+    "dplyr"
+)
+librarian::shelf(pkgs, ask=F)
 require('grid')
-if(!require("mdthemes")){install.packages("mdthemes")}
-library("mdthemes")
+require("ggplot2")
+require("pals") 
+require("scales")
+require("stringr") 
+require("scales")
+if(!require("mdthemes")){install.packages("mdthemes",dependencies=T,quiet=T)}
 grDevices::devAskNewPage(ask = F)
 R.utils::setOption("device.ask.default", FALSE)
 ```
@@ -127,26 +156,37 @@ table.table.table-striped{margin-left:0px;margin-right:auto;align:"left";}
 table{align:"left" !important;}
 </style>
 
-```{r Probes Getter, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+```{r SampleSheetfix, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
 library(ggplot2)
 ## Get MU Data & Colors --------------------------------------
-sheetName <- list.files(baseDir,pattern = "_samplesheet.csv")
-sheetName1 <- sheetName[1]
-message(paste0("sample sheet name is: ",sheetName))
-sheetName <- list.files(baseDir,pattern = sheetName1, full.names = T)
-fixerrors <- read.csv(sheetName)
+sheetNamePath <- list.files(baseDir,pattern = "_samplesheet.csv", full.names = T)[1]
+message(paste0("Sample sheet name is: ", sheetNamePath))
+fixerrors <- read.csv(sheetNamePath)
+fixerrors$Basename <- file.path(getwd(),fixerrors$SentrixID_Pos)
+```
+
+```{r BioCParallel, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
 mcc = parallel::detectCores()/2
 BiocParallel::register(BiocParallel::MulticoreParam(mcc))
 mcParam <- BiocParallel::MulticoreParam(workers = mcc, progressbar = T)
-sdata <- suppressWarnings(MethylAid::summarize(fixerrors, verbose=T, batchSize=8, BPPARAM = mcParam))
-qcProbes = list(BSI = "^BISULFITE CONVERSION I$", BSII = "^BISULFITE CONVERSION II$",
-                EC = "^EXTENSION$", SPI = "^SPECIFICITY I$", HYB = "^HYBRIDIZATION$", 
-                NP = "^NON-POLYMORPHIC$", SPII = "^SPECIFICITY II$", TR = "^TARGET REMOVAL$", SC = "^STAINING$", NC = "^NEGATIVE$"
-                )
+
+# MethylAid Summarize
+sdata <- suppressWarnings(
+    MethylAid::summarize(fixerrors, verbose=T, batchSize=4, BPPARAM = mcParam))
+
+qcProbes = list(BSI = "^BISULFITE CONVERSION I$", 
+                BSII = "^BISULFITE CONVERSION II$",
+                EC = "^EXTENSION$", SPI = "^SPECIFICITY I$", 
+                HYB = "^HYBRIDIZATION$", 
+                NP = "^NON-POLYMORPHIC$", 
+                SPII = "^SPECIFICITY II$", 
+                TR = "^TARGET REMOVAL$", 
+                SC = "^STAINING$", NC = "^NEGATIVE$")
 
 ## MU --------------------------------------
 rotateData <- function(data, columns){
-	data[,columns] <- c(0.5*(data[,columns[1]] + data[,columns[2]]), data[,columns[1]] - data[,columns[2]])
+	data[,columns] <- c(0.5*(data[,columns[1]] + data[,columns[2]]),
+	                    data[,columns[1]] - data[,columns[2]])
 	return(data)
 }
 ## Subset Custom Data --------------------------------------
@@ -157,16 +197,23 @@ getNewData <- function(data_final, cutoff){
 }
 ## Get MU Data & Colors --------------------------------------
 MU <- log2(t(sdata@MU)); targets <- sdata@targets; d <- sdata@plotdata
-data_rotated <- rotateData(merge(MU, targets, by = "row.names"), columns = c("Methylated", "Unmethylated"))
+data_rotated <- rotateData(
+    merge(MU, targets, by = "row.names"),
+    columns = c("Methylated", "Unmethylated")
+    )
 data_rotated$x = data_rotated[,2]; data_rotated$y = data_rotated[,3]
 MUvals <- getNewData(data_final = data_rotated, cutoff = 9)
+```
+
+```{r ProbesGetter, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
 
 # function to increase vertical spacing between legend keys
 draw_key_polygon3 <- function(data, params, size){
   lwd <- min(data$size, min(size) / 4)
   grid::rectGrob(
       width = grid::unit(1.5, "npc"), height = grid::unit(1.5, "npc"), 
-      gp = grid::gpar(col = data$colour, fill = scales::alpha(data$fill, data$alpha), lty = data$linetype, lwd = lwd * .pt, linejoin = "mitre"))
+      gp = grid::gpar(col = data$colour, fill = scales::alpha(data$fill, data$alpha), 
+                      lty = data$linetype, lwd = lwd * .pt, linejoin = "mitre"))
 }
 # register new key drawing fun, global & persistent during R session
 GeomBar$draw_key = draw_key_polygon3
@@ -174,7 +221,7 @@ set.seed(123)
 plot.colours <- glasbey()[1:(length(MUvals$final_data$Sample_Name))]
 
 ## Generate Plot labels  ------------------
-makeLabels <- function(xName, yName, plotName, thePlot) {
+makeLabels <- function(totNum, xName, yName, plotName, thePlot) {
     legendLabel <-
         thePlot + xlab(xName) + ylab(yName) +
         theme(
@@ -190,10 +237,10 @@ makeLabels <- function(xName, yName, plotName, thePlot) {
         theme(legend.direction = "horizontal", legend.position = "bottom") + 
         guides(col = guide_legend(
             ncol = 8,
-            nrow = 4,
+            nrow = totNum,
             byrow = TRUE
         )) +
-        guides(linetype = guide_legend(nrow = 4, byrow = TRUE)) +
+        guides(linetype = guide_legend(nrow = totNum, byrow = TRUE)) +
         theme(
             text = element_text(size = 14),
             axis.text.x = element_text(size = 14),
@@ -233,18 +280,17 @@ makeLabels <- function(xName, yName, plotName, thePlot) {
             title = "Samples",
             override.aes = list(shape = 19),
             ncol = 10,
-            byrow = TRUE
-        )) + coord_cartesian(clip = 'off') 
+            byrow = TRUE)) + coord_cartesian(clip = 'off') 
     return(legendLabel)
 }
 ## Generate Plots for Probes --------------------------------------
-plotParams <- function(dParam, xincept, yincept){
+plotParams <- function(totNum,dParam, xincept, yincept){
   dParam = dParam$final_data
   dParam$Sample_Name = paste(dParam$Sample_Name, dParam$MP_num,sep="\n")
   plot.colours <- glasbey()[1:(length(dParam$x))]
   
   thePlot <- ggplot(dParam, aes(x = dParam[,2], y = dParam[,3], color = dParam$Sample_Name, label = dParam$Sample_Name ), show.legend = F) + 
-      scale_color_manual(values = plot.colours) + geom_point(shape = 19, size = 5, alpha = 0.8) + guides(color = guide_legend(nrow = 4)) + theme_bw() +
+      scale_color_manual(values = plot.colours) + geom_point(shape = 19, size = 5, alpha = 0.8) + guides(color = guide_legend(nrow = totNum)) + theme_bw() +
       guides(color = guide_legend(ncol = 8)) + scale_fill_manual(values = plot.colours) 
   
   if (yincept == 0){
@@ -340,28 +386,28 @@ pltNames <- c(
 
 ## MU Plot --------------------------------------
 dat.mu <- swm(getNewData(data_rotated, cutoff = 9))
-plotMU <- swm(plotParams(dParam = dat.mu, xincept = 9, yincept = 0))
-plotMU <- swm(makeLabels(plotName = paste0(pltNames[1]), xName = "Log2 sqrt(M*U)", yName = "Log2 (M/U)", thePlot = plotMU))
+plotMU <- swm(plotParams(totNum, dParam = dat.mu, xincept = 9, yincept = 0))
+plotMU <- swm(makeLabels(totNum, plotName = paste0(pltNames[1]), xName = "Log2 sqrt(M*U)", yName = "Log2 (M/U)", thePlot = plotMU))
 
 ## Plot OP Sample Dependent QC ------------------------------------
 dat.op <- get.op.dat()
-plotOP <- swm(plotParams(dParam = dat.op, xincept = 11, yincept = 0))
-plotOP <- swm(makeLabels(plotName = paste0(pltNames[2]), xName = "log2 sqrt(R*G)", yName = "log2 (R/G)", thePlot = plotOP))
+plotOP <- swm(plotParams(totNum, dParam = dat.op, xincept = 11, yincept = 0))
+plotOP <- swm(makeLabels(totNum, plotName = paste0(pltNames[2]), xName = "log2 sqrt(R*G)", yName = "log2 (R/G)", thePlot = plotOP))
 
 ## Plot BS Biological Control --------------------------------------
 dat.bs <- get.bs.dat()
-plotBS <- swm(plotParams(dParam = dat.bs,xincept = 10,yincept = 0))
-plotBS <- swm(makeLabels(plotName = paste0(pltNames[3]),xName = "log2 sqrt(R*G)", yName = "log2 (R/G)", thePlot = plotBS))
+plotBS <- swm(plotParams(totNum, dParam = dat.bs,xincept = 10,yincept = 0))
+plotBS <- swm(makeLabels(totNum, plotName = paste0(pltNames[3]),xName = "log2 sqrt(R*G)", yName = "log2 (R/G)", thePlot = plotBS))
 
 ##Plot HC Hybridization Control--------------------------------------
 dat.hc <- get.hc.dat()
-plotHC <- swm(plotParams(dParam = getNewData(dat.hc, cutoff = 12.75),xincept = 12.75, yincept = 0))
-plotHC <- swm(makeLabels(plotName = paste0(pltNames[4]),xName = "log2 sqrt(H*L)", yName = "log2 (H/L)", thePlot = plotHC))
+plotHC <- swm(plotParams(totNum, dParam = getNewData(dat.hc, cutoff = 12.75),xincept = 12.75, yincept = 0))
+plotHC <- swm(makeLabels(totNum, plotName = paste0(pltNames[4]),xName = "log2 sqrt(H*L)", yName = "log2 (H/L)", thePlot = plotHC))
 
 ## Plot DP --------------------------------------
 df <- data.frame(x=1:length(sdata@DPfreq), y=sdata@DPfreq, row.names=names(sdata@DPfreq)); dat.dp <- mergeDF(df, tg=targets)
-plotDP <- swm(plotParams(dParam = getNewData(dat.dp, cutoff = 0.95), xincept = 0, yincept = 0.95))
-plotDP <- swm(makeLabels(plotName = paste0(pltNames[5]), xName = "Samples", yName = "Pvalue", thePlot = plotDP))
+plotDP <- swm(plotParams(totNum, dParam = getNewData(dat.dp, cutoff = 0.95), xincept = 0, yincept = 0.95))
+plotDP <- swm(makeLabels(totNum, plotName = paste0(pltNames[5]), xName = "Samples", yName = "Pvalue", thePlot = plotDP))
 ```
 \newpage
 
@@ -381,7 +427,7 @@ plotMU2 <-
     guides(color = guide_legend(override.aes = list(fill=NA))) + 
     theme(legend.key = element_blank(), legend.background = element_blank()) + theme_set(theme_bw() + theme(legend.key = element_blank())) + 
     theme(legend.direction = "horizontal", legend.position = "bottom", panel.grid.minor = element_blank(), panel.grid.major = element_blank()) +
-    guides(col = guide_legend(ncol = 8, nrow = 4, byrow = TRUE),linetype = guide_legend(nrow = 4, byrow = TRUE))
+    guides(col = guide_legend(ncol = 8, nrow = totNum, byrow = TRUE),linetype = guide_legend(nrow = totNum, byrow = TRUE))
 ```
 <hr class="solid">
 \newpage
@@ -392,14 +438,14 @@ failedOP <- plotOP$data$x <= 11; failedOP <- plotOP$data$MP_num[failedOP]
 ```
 <hr class="solid">
 \newpage
-```{r BS_Plot,   echo=FALSE, warning=FALSE, fig.align="center", message=FALSE, fig.margin = TRUE,fig.width=18.5, fig.height=12}
+```{r BS_Plot, echo=FALSE, warning=FALSE, fig.align="center", message=FALSE, fig.margin = TRUE,fig.width=18.5, fig.height=12}
 plotBS + ggplot2::labs(subtitle = "Bisulfite conversion quality is assessed based on Bisulfite Conversion I (BSI) control probes. BSI control probes use Infinium I probe design to monitor efficiency of bisulfite conversion.\nSamples falling **above threshold (BS > 10) pass** this QC and anything below the threshold are considered bad samples.\n", caption = paste(targets$RunID[1]))
 failedBS <- plotBS$data$x <= 10
 failedBS <- plotBS$data$MP_num[failedBS]
 ```
 <hr class="solid">
 \newpage
-```{r HC_Plot, echo=FALSE,  fig.margin=TRUE,  warning=FALSE, fig.align="center", message=FALSE,fig.width=18.5, fig.height=12}
+```{r HC_Plot, echo=FALSE,  fig.margin=TRUE,  warning=FALSE, fig.align="center", message=FALSE, fig.width=18.5, fig.height=12}
 plotHC + ggplot2::labs(subtitle = "Sample hybridization is assessed based on Hybridization control (HC) probes.\nHC probes test the overall performance of the entire assay using synthetic targets instead of amplified DNA.\n**Samples falling above threshold (SHC > 12.75) pass this QC** and anything below the threshold are considered QC Failed samples.",
 caption = paste(targets$RunID[1]))
 
@@ -408,7 +454,7 @@ failedHC <- plotHC$data$MP_num[failedHC]
 ```
 <hr class="solid">
 \newpage
-```{r DP_Plot,  fig.margin=TRUE,  echo=FALSE, warning=FALSE, fig.align="center", message=FALSE,fig.width=18, fig.height=12}
+```{r DP_Plot, fig.margin=TRUE,  echo=FALSE, warning=FALSE, fig.align="center", message=FALSE, fig.width=18, fig.height=12}
 
 plotDP + ggplot2::labs(subtitle = "Sample negative control is assessed based on negative control (NC) probes. NC are randomly permuted sequences that should not hybridize to DNA template.\nThe mean signal of these probes defines the background of the system.\nTo be considered as passing this QC, **less than 95%** of probes should be above the background signal.", 
                        caption = paste(targets$RunID[1]))
@@ -416,11 +462,11 @@ failedDP <- plotDP$data$y <= 0.95
 failedDP <- plotDP$data$MP_num[failedDP]
 ```
 \newpage
-```{r checkQC, include=FALSE,  echo=FALSE, warning=FALSE, message=FALSE}
+```{r checkQC, include=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
 summaryFail <- runName <- NULL
 runName <- paste(targets$RunID[1])
 if (is.null(runName)) {runName = paste0(basename(getwd()))}
-location <- file.path(baseDir,paste0(runName,"_Redcap.csv"))
+location <- file.path("~","Desktop","runName",paste0(runName,"_Redcap.csv"))
 if(!file.exists(location)){knitr::knit_exit()}
 ```
 <hr class="solid"><div style="background-image: linear-gradient(to right, mediumpurple,mediumpurple,mediumpurple, white, white); border-radius: 18px; padding: 5px; border-padding:6px;"><h2 style="color: White;">
@@ -429,7 +475,7 @@ cat(summarName)
 ```
 </h2></div>
 <div style="align:left;margin-right:auto;margin-left:0px;">
-```{r Summary, fig.align="left", message=FALSE,echo=FALSE, warning=FALSE}
+```{r Summary, fig.align="left", message=FALSE, echo=FALSE, warning=FALSE}
 library("kableExtra")
 library(dplyr)
 clas.tb <- read.csv(location, strip.white = T)
