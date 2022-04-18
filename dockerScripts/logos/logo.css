@@ -1,0 +1,9 @@
+#wrapper {
+    width: 600px;
+    float:right;
+}
+#second {
+    float:right; /* add this */
+    overflow: auto;
+    padding: 1em;
+}
