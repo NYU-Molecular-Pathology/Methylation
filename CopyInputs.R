@@ -309,8 +309,15 @@ get.idats <-function(csvNam = "samplesheet.csv"){
             bcds <- paste0(basename(allFi))
             if (all(bcds %in% cur.idat)) {message(".idat files already copied")}
             if (!all(bcds %in% cur.idat)) {copyBaseIdats(allFi[!(bcds %in% cur.idat)])} #length(cur.idat) < length(allFi)
-        } else {message("No .idat files found! Check worksheet and input folder path")}
-    } else {message(paste("Cannot find your sheet named:", csvNam))}
+        } else {cat(crayon::bgRed("No .idat files found! Check worksheet for barcode if found in the folder path:\n"))
+               cat(crayon::bgRed("/Volumes/molecular/Molecular/iScan/"))
+                filesFound = F
+                stopifnot(filesFound==T)
+               }
+    } else {message(paste("Cannot find your sheet named:", csvNam))
+           filesFound = F
+                stopifnot(filesFound==T)
+           }
 }
 
 # FUN: Copies samplesheet to Desktop folder
