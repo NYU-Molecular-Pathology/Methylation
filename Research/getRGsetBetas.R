@@ -138,7 +138,54 @@ cleanRawProbes <- function(rawBetaDat, RGSet, samNames, targets) {
     return(betas)
 }
 
-gb$getMdsPlot <- function(RGSet, samNames,samTypes, topN=1000) {
+# gb$getMdsPlot <- function(RGSet, samNames,samTypes, topN=1000) {
+#     mSetSq <- preprocessQuantile(RGSet)
+#     mSetSq <- addSnpInfo(mSetSq)
+#     mSetSq <- dropLociWithSnps(mSetSq, snps = c("SBE", "CpG"), maf = 0) # drop the loci which has snps
+#     annot = getAnnotation(mSetSq)
+#     sex_probes = annot$Name[annot$chr %in% c("chrX", "chrY")]
+#     mSetSq = mSetSq[!(rownames(mSetSq) %in% sex_probes), ]
+#     mSetSq.beta <- minfi::getBeta(mSetSq)
+#     colnames(mSetSq.beta) <- mSetSq$Sample_Name
+#     assign("mSetSq.beta",mSetSq.beta, envir=gb)
+#     return(mSetSq.beta)
+# }
+
+# plot.mds  <- function(mSetSq.beta, samTypes,topN) {
+#   library('RColorBrewer')
+#   plotNam <- paste0("top_", topN, "_msetBeta", ".png")
+#   myColors <- RColorBrewer::brewer.pal(length(unique(samTypes)), "Paired")
+#   names(myColors) <- unique(samTypes)
+#   png(
+#     filename = plotNam,
+#     width = 12,
+#     height = 8,
+#     res = 200,
+#     units = "in"
+#   )
+#   limma::plotMDS(
+#     mSetSq.beta,
+#     top = topN,
+#     gene.selection = "common",
+#     plot = T,
+#     pch = 16,
+#     col = myColors,
+#     main = paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot")
+#   )
+#   legend(
+#     "topright",
+#     legend = c(names(myColors)),
+#     col = paste(as.list(myColors)),
+#     pch = 15,
+#     cex = 0.8
+#   )
+#   dev.off()
+#   thepng <- paste0('./', plotNam)
+#   return(knitr::include_graphics(thepng))
+# }
+
+# Check if MDS data already loaded
+getMdsPlot <- function(RGSet, samNames,samTypes, topN=1000) {
     mSetSq <- preprocessQuantile(RGSet)
     mSetSq <- addSnpInfo(mSetSq)
     mSetSq <- dropLociWithSnps(mSetSq, snps = c("SBE", "CpG"), maf = 0) # drop the loci which has snps
@@ -151,34 +198,19 @@ gb$getMdsPlot <- function(RGSet, samNames,samTypes, topN=1000) {
     return(mSetSq.beta)
 }
 
-plot.mds  <- function(mSetSq.beta, samTypes,topN) {
+plot.mds  <- function(mSetSq.beta, samTypes, topN) {
   library('RColorBrewer')
   plotNam <- paste0("top_", topN, "_msetBeta", ".png")
-  myColors <- RColorBrewer::brewer.pal(length(unique(samTypes)), "Paired")
+  myColors <- RColorBrewer::brewer.pal(length(unique(samTypes)), "Set1")
+  if("#FFFF33" %in% myColors){myColors[myColors=="#FFFF33"]<-"#7CF72F"}
   names(myColors) <- unique(samTypes)
-  png(
-    filename = plotNam,
-    width = 12,
-    height = 8,
-    res = 200,
-    units = "in"
-  )
-  limma::plotMDS(
-    mSetSq.beta,
-    top = topN,
-    gene.selection = "common",
-    plot = T,
-    pch = 16,
-    col = myColors,
-    main = paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot")
-  )
-  legend(
-    "topright",
-    legend = c(names(myColors)),
-    col = paste(as.list(myColors)),
-    pch = 15,
-    cex = 0.8
-  )
+  png(filename = plotNam, width = 12, height = 8, res = 200, units = "in")
+  limma::plotMDS(mSetSq.beta, top = topN, gene.selection = "common",
+                 plot = T, col = myColors,
+                 main = paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot"),
+                 labels=colnames(mSetSq.beta)
+                 )
+  legend("topright", legend = c(names(myColors)), col = paste(as.list(myColors)), pch = 15, cex = 0.8)
   dev.off()
   thepng <- paste0('./', plotNam)
   return(knitr::include_graphics(thepng))
