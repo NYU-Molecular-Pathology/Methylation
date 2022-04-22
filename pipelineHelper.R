@@ -186,6 +186,12 @@ loopRender <- function(samList = NULL, data,redcapUp=T) {
         }
         require(rmarkdown)
         samSh <- dir(path = getwd(), full.names = T, ".xlsm")
+    if(length(samSh)>1){
+    warning("Multiple samplesheets found:\n")
+    print(samSh)
+    removeTemp <- stringr::str_detect(samSh,pattern = "\\$",negate = T)
+    samSh <- samSh[removeTemp]
+  }
         message("Reading the following .xlsm in current directory:", samSh)
         sampleNumb <- getTotalSamples()
         sampleNumb = as.integer(sampleNumb)
