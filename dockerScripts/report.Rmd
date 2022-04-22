@@ -44,16 +44,16 @@ librarian::shelf(pkgs, ask=F,verbose=F, warn.conflicts = F, quietly = T)
 
 require("needs")
 library("knitr")
-optsLi <- list(error = FALSE, echo = FALSE, message = FALSE, warning = FALSE, progress=TRUE, verbose=FALSE, fig.align="left", self.contained=TRUE, comment='', tidy.opts=FALSE, label_list=FALSE, highlight=FALSE, error = FALSE)
+optsLi <- list(error = TRUE, echo = FALSE, message = FALSE, warning = FALSE, progress=TRUE, verbose=FALSE, fig.align="left", self.contained=TRUE, comment='', tidy.opts=FALSE, label_list=FALSE, highlight=FALSE, error = TRUE)
 
 knitr::opts_chunk$set(optsLi)
 knitr::opts_knit$set(optsLi)
 knitr::opts_current$set(optsLi)
-
+knitr::opts_knit$set(progress=TRUE, verbose=FALSE, error=TRUE)
 ```
 
 ```{r setup, cache.path="cache/", include=FALSE, cache=FALSE}
-knitr::opts_chunk$set(error = FALSE, echo = FALSE, message = FALSE, warning = FALSE, self.contained=TRUE, comment = '', progress=TRUE, verbose=FALSE, cache.extra = list(R.version, sessionInfo(), format(Sys.Date(), '%Y-%m')))
+knitr::opts_chunk$set(error = TRUE, echo = FALSE, message = FALSE, warning = FALSE, self.contained=TRUE, comment = '', progress=TRUE, verbose=FALSE, cache.extra = list(R.version, sessionInfo(), format(Sys.Date(), '%Y-%m')))
 options(scipen = 5)
 require("compiler")
 supM <- function(objTing){return(suppressMessages(suppressWarnings(objTing)))}
