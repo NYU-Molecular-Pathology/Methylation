@@ -68,6 +68,7 @@ generateQCreport <- function(runID=NULL, qc=NULL) {
     rmarkdown::render(
         currentQC,
         output_file = qcFile,
+        quiet=T,
         params = list(runID = runID)
     )
   currentQC <- stringr::str_replace_all(string = currentQC, ".Rmd", "_cache")
