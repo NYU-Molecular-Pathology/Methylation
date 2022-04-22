@@ -49,7 +49,8 @@ optsLi <- list(error = TRUE, echo = FALSE, message = FALSE, warning = FALSE, pro
 knitr::opts_chunk$set(optsLi)
 knitr::opts_knit$set(optsLi)
 knitr::opts_current$set(optsLi)
-knitr::opts_knit$set(progress=TRUE, verbose=FALSE, error=TRUE)
+knitr::opts_knit$set(progress=FALSE, verbose=FALSE, error=TRUE)
+knitr::opts_knit$set(verbose=FALSE,progress=FALSE,rmarkdown.render.message=FALSE)
 ```
 
 ```{r setup, cache.path="cache/", include=FALSE, cache=FALSE}
