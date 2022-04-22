@@ -115,6 +115,12 @@ importRedcapStart <- function(nfldr){
     rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
     uri=paste0(rcon$url); tk=rcon$token
     samSh <- dir(path=getwd(), full.names=T, ".xlsm")
+    if(length(samSh)>1){
+    warning("Multiple samplesheets found:\n")
+    print(samSh)
+    removeTemp <- stringr::str_detect(samSh,pattern = "\\$",negate = T)
+    samSh <- samSh[removeTemp]
+  }
     sampleNumb <- getTotalSamples()
     sh_Dat <-as.data.frame(readxl::read_excel(samSh,sheet=3,range="A1:N97", col_types=c("text")))[,1:13]
     sampleNumb=as.integer(sampleNumb);sh_Dat = sh_Dat[1:sampleNumb,]
