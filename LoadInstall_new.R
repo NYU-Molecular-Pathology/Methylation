@@ -16,7 +16,7 @@ mnpV6 <-
 # Custom Classifier packages:
 classPacks <- c(
     sest = "https://github.com/jungch/sest/raw/master/sest.tar",
-    mgmtstp27 = "https://git.io/JWKTo",
+    mgmtstp27 = "https://github.com/badozor/mgmtstp27/blob/master/mgmtstp27_0.6-3.tar.gz", #https://git.io/JWKTo
     mnpqc = paste0(file.path(cbioLn, "in_house/mnp.v116/mnpqc_0.1.0.tar.gz"))
 )
 
