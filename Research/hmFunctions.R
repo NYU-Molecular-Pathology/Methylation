@@ -158,7 +158,7 @@ gb$assignColors3<- function(targets, varColumns = c("Type","Origin"), col_vect =
     anno_df <- data.frame(dat)
     
     vars2Color <- as.list(lapply(dat, unique))
-    colorValues <-lapply(vars2Color, function(x) {x = (!duplicated(col_vect))[1:(length(x))]})
+    colorValues <-lapply(vars2Color, function(x) {x = (unique(col_vect))[1:(length(x))]})
     for (x in 1:length(vars2Color)) {
       currvar = names(vars2Color)[x]
       varList = vars2Color[currvar]
