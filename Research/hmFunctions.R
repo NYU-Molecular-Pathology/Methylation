@@ -151,25 +151,37 @@ assignColors2 <- function(targets, varColumns = c("Type","Origin"), col_vect = N
     if(all(names(colorValues)==names(anno_df))){return(gb$getHeatAnno(colorValues,anno_df))}
 }
 
-assignColors3 <- function(targets, varColumns = c("Type","Origin"), col_vect = NULL) {
-    if (is.null(col_vect)) {col_vect <- pals::glasbey()}
-    col_vect[6] = "#eb7d34" #changing dark forest to orange color
-    col_vect[4] = "#ADD8E6" # black to light blue
+gb$assignColors3<- function(targets, varColumns = c("Type","Origin"), col_vect = NULL) {
+    col_vect <- targets$color
     dimnames(targets)[[2]]
     dat <- targets[,varColumns] # varColumns
     anno_df <- data.frame(dat)
+    
     vars2Color <- as.list(lapply(dat, unique))
-    colorValues <-lapply(vars2Color, function(x) {x = (col_vect)[1:(length(x))]})
+    colorValues <-lapply(vars2Color, function(x) {x = (!duplicated(col_vect))[1:(length(x))]})
     for (x in 1:length(vars2Color)) {
+      currvar = names(vars2Color)[x]
+      varList = vars2Color[currvar]
         for (varNum in 1:length(vars2Color[x])) {
-          names(colorValues[x][[1]]) = c(vars2Color[x][[1]])}
+          newLabels <- NULL
+          for(oneCol in colorValues[x][[1]]){
+            theVar <- targets[,currvar]
+            currLab <- theVar[targets$color == oneCol]
+            toName <- which(colorValues[["Type"]]==oneCol)
+            names(colorValues[[currvar]][toName]) == currLab[1]
+            newLabels <- c(newLabels ,currLab[1])
+          }
+          names(colorValues[[currvar]]) <- newLabels
+          }
       }
     stopifnot(all(names(colorValues)==names(anno_df)))
+    
     ha <- gb$getHeatAnno(colorValues,anno_df)
     
     for (vCol in varColumns) {
-      colours <- unique(targets$color)
-      names(colours) <- sort(unique(targets[, vCol]))
+      colours <-targets$color
+      names(colours) <- targets[, vCol]
+      colours <- colours[!duplicated(colours)]
       colMap <- ha@anno_list[[vCol]]@color_mapping
       colMap@full_col <- colours
       colMap@colors <- colours
