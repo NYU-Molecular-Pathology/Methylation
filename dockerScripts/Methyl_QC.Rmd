@@ -81,62 +81,13 @@ editor_options:
 ---
 
 ```{r set-options, include=FALSE, cache=FALSE, cache.path="cache/", echo=FALSE}
-#{.tabset} # .tabset-fade .tabset-pills
+pkgs <- 
+    c("knitr", "kableExtra", "magick", "webshot", "plyr", "ggplot2", "reshape2", "data.table", "DT", "plotly", "MethylAid", "minfi", "scales", "IlluminaHumanMethylation450kmanifest", "IlluminaHumanMethylationEPICmanifest", "IlluminaHumanMethylationEPICanno.ilm10b4.hg19", "Biobase", "RColorBrewer", "limma", "ggfortify", "Rtsne", "qdapTools", "gplots", "readxl", "stringr", "ggrepel", "Polychrome", "tinytex", "gridExtra", "rmarkdown", "BiocParallel", "pals", "grid", "grDevices")
+if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 4, quiet=T)}
+librarian::shelf(pkgs, ask=F)
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_knit$set(global.par = TRUE)
 knitr::opts_knit$set(ask = F)
-#knitr::opts_chunk$set(dev = "png", dev.args = list(type = "cairo-png"))
-if(!require("BiocManager")){install.packages("BiocManager",dependencies=T,quiet=T)}
-if(!require("MethylAid")){BiocManager::install("MethylAid",update=F, ask=F)}
-if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 6, quiet=T)}
-
-pkgs <- c(
-    "knitr",
-    "kableExtra",
-    "magick",
-    "webshot",
-    "plyr",
-    "ggplot2",
-    "knitr",
-    "reshape2",
-    "data.table",
-    "DT",
-    "plotly",
-    "MethylAid",
-    "minfi",
-    "scales",
-    "IlluminaHumanMethylation450kmanifest",
-    "IlluminaHumanMethylationEPICmanifest",
-    "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
-    "Biobase",
-    "RColorBrewer",
-    "limma",
-    "ggfortify",
-    "Rtsne",
-    "qdapTools",
-    "gplots",
-    "readxl",
-    "stringr",
-    "ggrepel",
-    "Polychrome",
-    "tinytex",
-    "gridExtra",
-    "rmarkdown",
-    "tinytex",
-    "BiocParallel",
-    'grid',
-    'grDevices',
-    "mdthemes",
-    "dplyr"
-)
-librarian::shelf(pkgs, ask=F)
-require('grid')
-require("ggplot2")
-require("pals") 
-require("scales")
-require("stringr") 
-require("scales")
-if(!require("mdthemes")){install.packages("mdthemes",dependencies=T,quiet=T)}
 grDevices::devAskNewPage(ask = F)
 R.utils::setOption("device.ask.default", FALSE)
 ```
