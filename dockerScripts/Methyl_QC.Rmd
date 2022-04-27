@@ -123,7 +123,7 @@ mcParam <- BiocParallel::MulticoreParam(workers = mcc, progressbar = T)
 
 # MethylAid Summarize
 sdata <- suppressWarnings(
-    MethylAid::summarize(fixerrors, verbose=T, batchSize=4, BPPARAM = mcParam))
+    MethylAid::summarize(fixerrors, verbose=T, batchSize=4, force=TRUE, BPPARAM = mcParam))
 
 qcProbes = list(BSI = "^BISULFITE CONVERSION I$", 
                 BSII = "^BISULFITE CONVERSION II$",
