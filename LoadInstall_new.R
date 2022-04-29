@@ -358,7 +358,8 @@ pkgs <- c(
     'grDevices',
     "mdthemes",
     "dplyr",
-    "sqldf"
+    "sqldf",
+    "gridExtra", "reshape"
 )
 librarian::shelf(pkgs, ask=F)
 require('grid')
