@@ -453,5 +453,12 @@ gb$startRun <- function(selectRDs=NULL, runID=NULL, emailNotify=T){
     } else {makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=F, selectSams=NULL, redcapUp=T)}
 }
 
-gb$prepareRun(token,runID)
+mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
+script.list = c("LoadInstall_new.R","SetRunParams.R", "CopyInputs.R","CopyOutput.R", "pipelineHelper.R")
+
+# Source GitHub Scripts
+scripts = paste0(mainHub, script.list)
+invisible(lapply(scripts, function(i) {devtools::source_url(i)}))
+
+#gb$prepareRun(token,runID)
 #gb$startRun()
