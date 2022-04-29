@@ -42,12 +42,10 @@ ___
 /Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/WORKSHEETS/2022/22-MGDM17.xlsm
 #### .idat files input directory:
 /Volumes/molecular/Molecular/iScan/
-
-___
 ## Output Paths
 ### Files are saved to MethylationClassifier/YEAR/RUNID, for example:<br />
 /Volumes/molecular/Molecular/MethylationClassifier/2022/22-MGDM17
-
+___
 ### There are two system Rscript to run methylExpress.R with the arguments in order:<br />
 `arg[1]` is the **token** for the API call ('#######################')<br />
 `arg[2]` is the **RunID** which if NULL runs the latest Clinical Worksheet ('MR21-099')<br />
