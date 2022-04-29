@@ -434,7 +434,7 @@ startRun <- function(selectRDs=NULL, runID=NULL, emailNotify=T){
 }
 
 # Executes the functions in order to setup a run
-prepareRun <- function(token,runID){
+gb$prepareRun <- function(token,runID){
     methylPath <- getwd()
     message("\n","Working directory set to:")
     cat(crayon::bgGreen(methylPath))
@@ -454,4 +454,4 @@ gb$startRun <- function(selectRDs=NULL, runID=NULL, emailNotify=T){
 }
 
 gb$prepareRun(token,runID)
-gb$startRun()
+#gb$startRun()
