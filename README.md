@@ -92,4 +92,18 @@ The shell script takes the following argument parameters:<br>
 `# Begin script in case all parameters are entered`
 `curl -o methylExpress.R -L https://git.io/JWujj; Rscript --verbose methylExpress.R $methAPI $methRun $PRIORITY $runPath`<br>
 
-You can locally copy or symlink the runMeth.sh file to execute more easily
+You can locally copy or symlink the runMeth.sh file to execute more easily<br>
+
+## Troubleshooting
+
+###How to upload manually to REDCap
+1. Login with your kerberos ID to https://redcap.nyumc.org/
+2. On the left-hand sidebar scroll all the way down the Reports Bookmarks until you see the folder: >>>>CURRENT Runs~~~~~ and 3) >>>>>CLINICAL Current Run
+3. Here, you can click on the RD-number of choice and then select "Upload html file" under the methylation menue
+4. Optionally, you can also select "  Add / Edit Records" menu in the left sidebar and find your RD-number in the "Search query" field
+
+###How to check worksheet
+1. In your current working directory or in the path /Volumes/CBioinformatics/Methylation/Clinical_Runs/22-MGDM##, open the RUNID.xlsm file
+2. On the Review ribbon, click unprotect worksheet and unprotect tab
+3. Right-click the "worksheet" tab at the bottom and unhide... raw_labels tab
+4. If any "#ref" errors either drag the formula down to correct or type "=" and select the cell in the first tab "worksheet" and press return.  For example "=worksheet!B25" references cell B25 in the tab named "worksheet"
