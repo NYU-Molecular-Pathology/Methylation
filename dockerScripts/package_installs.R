@@ -454,6 +454,8 @@ checkClassifier <- function(mnpClass) {
 startLoadingAll <- function() {
     setEnviron()
     loadPacks()
+    require('ggplot2')
+    require('gridExtra')
     installAll(classPacks, srcInst)
     checkClassifier(mnpV4)
     checkClassifier(mnpV6)
