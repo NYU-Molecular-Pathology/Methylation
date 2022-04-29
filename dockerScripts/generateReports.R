@@ -454,7 +454,7 @@ gb$startRun <- function(selectRDs=NULL, runID=NULL, emailNotify=T){
 }
 
 mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
-script.list = c("LoadInstall_new.R","SetRunParams.R", "CopyInputs.R","CopyOutput.R", "pipelineHelper.R")
+script.list = c("LoadInstall_new.R","SetRunParams.R", "CopyInputs.R","CopyOutput.R")
 
 # Source GitHub Scripts
 scripts = paste0(mainHub, script.list)
