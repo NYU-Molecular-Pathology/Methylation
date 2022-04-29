@@ -344,7 +344,8 @@ loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bcPks=biocP
                 'grDevices',
                 "mdthemes",
                 "dplyr",
-                "sqldf"
+                "sqldf",
+                "gridExtra", "reshape"
             )
             librarian::shelf(pkgs, ask=F)
             require('grid')
