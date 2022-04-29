@@ -35,6 +35,18 @@ ___
 If you have issues with wget, you can also use curl to run the script:
 
 `curl -o methylExpress.R -L https://git.io/JWujj; Rscript --verbose methylExpress.R '#######################' '21-MGDM_TEST' NULL`<br />
+___
+## Input Paths
+### Files are copied to the work directory by their RUNID name and YEAR, including the worksheet and idats for example:<br />
+#### Worksheet
+/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/WORKSHEETS/2022/22-MGDM17.xlsm
+#### .idat files input directory:
+/Volumes/molecular/Molecular/iScan/
+
+___
+## Output Paths
+### Files are saved to MethylationClassifier/YEAR/RUNID, for example:<br />
+/Volumes/molecular/Molecular/MethylationClassifier/2022/22-MGDM17
 
 ### There are two system Rscript to run methylExpress.R with the arguments in order:<br />
 `arg[1]` is the **token** for the API call ('#######################')<br />
