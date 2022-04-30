@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-cbioLn = "./class_packs"
+cbioLn = "~/class_packs"
 
 # Classifier Packages and Versions
 mnpV4 <-
@@ -17,7 +17,7 @@ mnpV6 <-
 classPacks <- c(
     sest = "https://github.com/jungch/sest/raw/master/sest.tar",
     mgmtstp27 = "https://github.com/badozor/mgmtstp27/raw/master/mgmtstp27_0.6-3.tar.gz", #https://git.io/JWKTo
-    mnpqc = "./class_packs/in_house/mnp.v116/mnpqc_0.1.0.tar.gz"
+    mnpqc = "~/class_packs/in_house/mnp.v116/mnpqc_0.1.0.tar.gz"
 )
 
 # Cran Packages ----
