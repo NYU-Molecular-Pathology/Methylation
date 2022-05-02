@@ -20,6 +20,13 @@ classPacks <- c(
     mnpqc = "~/class_packs/in_house/mnpqc"
 )
 
+mnpqcDir <- list.dirs()
+print(mnpqcDir)
+selec <- basename(mnpqcDir) == "mnpqcDir"
+mnpqcDir <- mnpqcDir[selec]
+classPacks$mnpqc <- paste0(mnpqcDir[1])
+print(classPacks$mnpqc)
+
 # Cran Packages ----
 cranPkgs <-
     c(
@@ -130,7 +137,7 @@ pk.inst <- function(pkg){
         pk.opt <- list(pkgs=pkg,dependencies=T,verbose=T,Ncpus = 6)
         tryCatch(
             expr = {
-                do.call(install.packages, c(pk.opt, list(type = "both")))
+                do.call(install.packages, c(pk.opt, list(type = "binary")))
             },
             warning = function(cond) {
                 message("\nWarning on package:\n", pkg, "\n-----------\n",cond)
