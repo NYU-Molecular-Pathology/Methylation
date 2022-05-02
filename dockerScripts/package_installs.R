@@ -390,7 +390,7 @@ runAllBrew <- function(){
 
 fixCompiles <- function(brewExtra=F){
     #system("/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)")
-    cpMakeV()
+    #cpMakeV()
     system("brew install llvm gcc")
     system("defaults write org.R-project.R NSAppSleepDisabled -bool YES")
     system('echo "export PATH="/usr/local/sbin:$PATH"" >> ~/.zshrc >')
@@ -423,7 +423,7 @@ colorMsg <- function(){
 setEnviron <- function(){
     options(Ncpus = 6)
     library("base")
-    try(cpMakeV(),silent=T)
+    #try(cpMakeV(),silent=T)
     rlis = getOption("repos")
     rlis["CRAN"] = "http://cran.us.r-project.org"
     options(repos = rlis)
