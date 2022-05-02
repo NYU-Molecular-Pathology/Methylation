@@ -70,6 +70,7 @@ getSupervise <- function(the_beta, RGSet, topVar=1:10000){
     betas_df <- as.data.frame(the_beta)
     final_sam <- row.names((t(betas_df[row.names(dmp[topVar, ]), ]))) #topVar=1:10000
     betas_df <- betas_df[, colnames(betas_df) %in% final_sam]
+    write.csv(betas_df, "dmp_methylation.csv", quote = F)
     betas <- as.matrix(betas_df)
     return(betas)
 }
