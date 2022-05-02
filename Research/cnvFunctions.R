@@ -82,7 +82,6 @@ savePlotPdf <- function(cnData, plotName, plotTitle){
     dev.off()
 }
 
-
 filterGrp <- function(cnData, typeGroup){
     subCn <- cnData[cnData$group==typeGroup,]
     return(subCn[,1:(ncol(subCn)-1)])
@@ -166,4 +165,3 @@ entrz2kegg <- function(gene_char_unique){
   kk_final <- DOSE::setReadable(kk, OrgDb = org.Hs.eg.db::org.Hs.eg.db, keyType = "ENTREZID")
   return(kk_final)
 }
-
