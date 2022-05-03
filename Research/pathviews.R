@@ -16,7 +16,7 @@ pkgs <- c(
 
 librarian::shelf(pkgs, ask=F)
 
-library(clusterProfiler)
+library(clusterProfiler); require("clusterProfiler")
 library(pathview)
 library(org.Hs.eg.db)
 library("DOSE"); require("DOSE")
@@ -27,7 +27,7 @@ data(geneList)
 pathview_promoter <- function(file, pathwayid) {
   pathway = read.csv(file, header = T, sep = ",", row.names = 1)
   
-  ids <- bitr(rownames(pathway),
+  ids <- clusterProfiler::bitr(rownames(pathway),
               fromType = "SYMBOL",
               toType = "ENTREZID",
               OrgDb = "org.Hs.eg.db")
@@ -36,7 +36,7 @@ pathview_promoter <- function(file, pathwayid) {
   names(geneList_promoter) <- as.character(ids[, 2])
   geneList_promoter <- sort(geneList_promoter, decreasing = TRUE)
   
-  pathview(
+  pathview::pathview(
     gene.data  = geneList_promoter,
     pathway.id = pathwayid,
     species    = "hsa",
@@ -47,7 +47,7 @@ pathview_promoter <- function(file, pathwayid) {
 
 pathview_body <- function(file, pathwayid) {
   pathway = read.csv(file, header = T, sep = ",", row.names = 1)
-  ids <- bitr(rownames(pathway),
+  ids <- clusterProfiler::bitr(rownames(pathway),
               fromType = "SYMBOL",
               toType = "ENTREZID",
               OrgDb = "org.Hs.eg.db")
@@ -56,7 +56,7 @@ pathview_body <- function(file, pathwayid) {
   names(geneList_body) <- as.character(ids[, 2])
   geneList_body <- sort(geneList_body, decreasing = TRUE)
   
-  pathwayid_body <- pathview(
+  pathwayid_body <- pathview::pathview(
     gene.data  = geneList_body,
     pathway.id = pathwayid,
     species    = "hsa",
