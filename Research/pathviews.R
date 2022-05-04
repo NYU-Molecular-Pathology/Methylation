@@ -23,7 +23,7 @@ library("DOSE"); require("DOSE")
 library("enrichplot"); require("enrichplot")
 data(geneList)
 
-subsetDmp <- function(annot, beta) {
+subsetDmp <- function(annot, beta,i) {
   reg1 ="TSS200|TSS1500"
   reg2="Body"
   dmp.sub <- subset(annot, grepl(i, annot$UCSC_RefGene_Name))
@@ -64,7 +64,7 @@ writeMeansDmp <-
         data_final <- data.frame(Promoter = numeric(0), Body = numeric(0))
         for (rw in 1:nrow(specific_genes)) {
             i = specific_genes[rw, 1]
-            beta.pb <- subsetDmp(annot, beta)
+            beta.pb <- subsetDmp(annot, beta, i)
             promo.mean <- mean(beta.pb$pro$Promoter_Mean)
             body.mean <- mean(beta.pb$bod$Body_Mean)
             avg.join <- c(promo.mean, body.mean)
