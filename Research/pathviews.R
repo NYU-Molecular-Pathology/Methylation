@@ -104,3 +104,10 @@ pathview_body <- function(file, pathwayid) {
     out.suffix = "body"
   )
 }
+
+splitByPathway <- function(pathDesc, geneVals) {
+  selectPath <- geneVals$Description == pathDesc
+  pathWayGenes <- data.frame(str_split(geneVals[selectPath, "geneID"], "/"))
+  colnames(pathWayGenes) <- pathDesc
+  return(pathWayGenes)
+}
