@@ -123,3 +123,11 @@ splitByPathway <- function(pathDesc, geneVals) {
   colnames(pathWayGenes) <- pathDesc
   return(pathWayGenes)
 }
+
+renameDots <- function(png1, txtIn){
+  newName <-stringr::str_remove(png1,"\\.")
+  file.rename(from=png1, to=newName)
+  newName <- file.path(getwd(),newName)
+  imageCap<- paste0("![",txtIn,"](",newName,"){width=90%}")
+  return(imageCap)
+}
