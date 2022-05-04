@@ -89,17 +89,15 @@ calc_ht_size = function(ht, unit = "inch") {
     c(w, h)
 }
 
-gb$getHeatMap <- function(betaRanges, titleValue, ha, geneNamesHeatMap=F, colSplt = NULL, rwsplt=NULL){
+getHeatMap <- function(betaRanges, titleValue, ha, geneNamesHeatMap=F, colSplt = NULL, rwsplt=NULL){
     titleOfPlot <- paste("Heatmap of",titleValue,sep = " ")
     hmTopNumbers <- ComplexHeatmap::Heatmap(
         betaRanges,
-      #  width = unit(5*ncol(betaRanges), "mm"), 
-       # height = unit(5*nrow(betaRanges), "mm"),
         col = gb$col_fun2,  ## Define the color scale
         cluster_columns = T,  ## Cluster the columns
         #cluster_rows = rowcluster,
         #raster_resize_mat = TRUE,
-        show_column_names = geneNamesHeatMap,  ## Show the Column Names (which is sample #)
+        show_column_names = F,  ## Show the Column Names (which is sample #)
         column_names_gp = gpar(fontsize = 12),  ## Column Name Size
         show_row_names = geneNamesHeatMap,  ## Show Row names (which is probes)
         row_names_side = "left",
