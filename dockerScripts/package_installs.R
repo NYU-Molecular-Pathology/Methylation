@@ -380,6 +380,8 @@ loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bcPks=biocP
             require("scales")
             require("stringr") 
             require("scales")
+            if(!require("sest")){install.packages(pkgs="https://github.com/jungch/sest/raw/master/sest.tar", repos=NULL, type="source", dependencies =TRUE)}
+            if(!require("mgmtstp27")){install.packages(pkgs="https://github.com/badozor/mgmtstp27/raw/master/mgmtstp27_0.6-3.tar.gz", repos=NULL, type="source", dependencies =TRUE)}
         },
         error = function(cond){
             message("\n~~~You encountered the following error during install:\n", cond)
