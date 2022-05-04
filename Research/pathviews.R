@@ -58,9 +58,9 @@ writeMeansDmp <-
         beta <- as.data.frame(betas)
         specific_genes <- as.data.frame(str_split(rap1$geneID, "/"))
         endFile <- paste0(rap1$ID[1], "_", pathCsvOut)
-        # if(file.exists(endFile)){
-        # message(endFile, " exists")  
-        # }else{
+        if(file.exists(endFile)){
+        message(endFile, " exists")
+        }else{
         data_final <- data.frame(Promoter = numeric(0), Body = numeric(0))
         for (rw in 1:nrow(specific_genes)) {
             i = specific_genes[rw, 1]
