@@ -92,6 +92,21 @@ gHubPkgs <-
     )
 
 # BioConductor Packages ----
+biocDeps <-
+c("GenomeInfoDbData",
+"FDb.InfiniumMethylation.hg18",
+"FDb.InfiniumMethylation.hg19",
+"IlluminaHumanMethylation450kmanifest",
+"IlluminaHumanMethylation450kanno.ilmn12.hg19",
+"minfiData",
+"minfiDataEPIC",
+"FlowSorted.Blood.450k",
+"lumiBarnes",
+"lumiHumanAll.db",
+"lumiHumanIDMapping",
+"TCGAMethylation450k",
+"Homo.sapiens")
+
 biocPkgs <-
     c(
         'HDF5Array', 'rngtools', 'bumphunter','GEOquery', 'minfi', 'lumi', 'methylumi',
@@ -306,12 +321,9 @@ loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bcPks=biocP
     tryCatch(
         expr = {
             loadMainPkgs()
-            installAll(pkgs, pk.inst)
-            installAll(ghPk, gh.inst)
-            installAll(bcPks, bc.inst)
-            readyPkgs(ezLibs)
+            
             if(!require("BiocManager")){install.packages("BiocManager",dependencies=T,quiet=T)}
-            if(!require("MethylAid")){BiocManager::install("MethylAid",update=F, ask=F)}
+            
             if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 6, quiet=T)}
             pkgs <- c(
                 "knitr",
@@ -356,6 +368,12 @@ loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bcPks=biocP
                 "minfi", "lumi", "ade4", "methylumi"
             )
             librarian::shelf(pkgs, ask=F)
+            installAll(pkgs, pk.inst)
+            installAll(ghPk, gh.inst)
+            installAll(biocDeps, bc.inst)
+            installAll(bcPks, bc.inst)
+            if(!require("MethylAid")){BiocManager::install("MethylAid",update=F, ask=F)}
+            readyPkgs(ezLibs)
             require('grid')
             require("ggplot2")
             require("pals") 
@@ -369,24 +387,6 @@ loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bcPks=biocP
         }
     )
 }
-
-
-runAllBrew <- function(){
-    # export RSTUDIO_WHICH_R=/usr/local/bin/R
-    system("brew install aspell gdal autoconf automake bash cairo cmake coreutils dos2unix exa fd fontconfig freetype fribidi fzf gawk gcc gdbm gdk-pixbuf gettext giflib git glib gmp gnu-sed gnu-tar gnutls graphite2 harfbuzz htop icu4c ilmbase imagemagick isl jpeg libcroco libde265 libevent libffi libgcrypt libgpg-error libheif libidn2 libmpc libomp libpng librsvg libtasn1 libtermkey libtiff libtool libunistring libuv libvterm libyaml little-cms2 llvm lua lua@5.1 luajit luarocks lzo mpfr msgpack multimarkdown ncurses neovim nettle nspr nss oniguruma openconnect openexr openjpeg openssl@1.1 p11-kit pandoc pandoc-citeproc pandoc-crossref pango pcre pcre2 pdfgrep perl pixman pkg-config poppler qt readline rename ripgrep ruby shared-mime-info shellcheck sqlite stoken swig texinfo tmux tree unbound unibilium vim webp wget x265")
-    system('export CFLAGS+=-isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
-  export CCFLAGS+=-isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
-  export CXXFLAGS+=-isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
-  export CPPFLAGS+=-isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk')
-    system("brew install golang libstfl")
-    if(dir.exists("/Library/Developer/CommandLineTools")){
-        if(length(list.dirs("/Library/Developer/CommandLineTools", recursive = F))>0){
-            system("ln -s /Applications/Xcode.app/Contents/Developer /Library/Developer/CommandLineTools")}}
-    system("brew unlink gcc && brew link gcc --force")
-    system('brew link --overwrite gcc')
-    system('brew doctor')
-}
-
 
 fixCompiles <- function(brewExtra=F){
     #system("/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)")
