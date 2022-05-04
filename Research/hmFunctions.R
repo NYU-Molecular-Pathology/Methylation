@@ -198,7 +198,7 @@ addGeneName <- function(annot, oldBeta) {
 }
 
 # FUNCTION: Removes duplicated gene annotations from the heatmap rownames if desired after addGeneName is called
-removeDupeAnnot <- function(geneBetas) {
+removeDupeAnnot <- function(geneBetas,out.fi="top_variance_genes_list.csv") {
   geneRows <- rownames(geneBetas)
   for (rw in 1:length(geneRows)) {
     spltRw <- stringr::str_split_fixed(geneRows[rw], pattern = "_", 2)
@@ -212,7 +212,7 @@ removeDupeAnnot <- function(geneBetas) {
   }
   toWrite <- as.data.frame(stringr::str_split_fixed(geneRows,"_",2))
   colnames(toWrite)<- c("Gene_Names", "Probe_Name")
-  write.csv(toWrite,"top_variance_genes_list.csv",quote=F)
+  write.csv(toWrite, out.fi, quote=F,row.names=F)
   geneRows <- lapply(geneRows, function(x){stringr::str_replace(x,"_cg",".")})
   rownames(geneBetas)<- geneRows
   return(geneBetas)
