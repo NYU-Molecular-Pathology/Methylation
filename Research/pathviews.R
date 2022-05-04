@@ -32,32 +32,34 @@ data(geneList)
 #'
 #' @return CSV file with promotor and body gene mean values
 #'
-writeMeansDmp <- 
-  function(topPaths, betas, annot, 
-           pathCsvOut="signaling_pathway.csv"){
+writeMeansDmp<-
+function(topPaths, betas, annot, geneListIn= "Genes_Pathway.csv",
+         pathCsvOut="signaling_pathway.csv"){
+    genelist <- read.delim(geneListIn,header = T,sep = ",",row.names = NULL)
     for (geneRow in 1:nrow(topPaths)) {
-      rap1 <- genelist[geneRow, ]
-      beta <- as.matrix(betas)
-      specific_genes <- as.data.frame(str_split(rap1$geneID, "/"))
-      endFile <- paste0(rap1$ID[1], "_", pathCsvOut)
-      data_final <- data.frame(Promoter = numeric(0), Body = numeric(0))
-      for (rw in 1:nrow(specific_genes)) {
-        i = specific_genes[rw, 1]
-        dmp.sub <- subset(annot, grepl(i, annot$UCSC_RefGene_Name))
-        sub.ucsc <- dmp.sub$UCSC_RefGene_Group
-        tss200.sub <- subset(dmp.sub, grepl("TSS200|TSS1500", sub.ucsc))
-        bod.probes <- subset(dmp.sub,grepl("Body", sub.ucsc))
-        beta.promo <- subset(beta, rownames(beta) %in% tss200.sub$Name)
-        beta.body <- subset(beta, rownames(beta) %in% bod.probes$Name)
-        beta.promo$Promoter_Mean <- rowMeans(beta.promo)
-        beta.body$Body_Mean <- rowMeans(beta.body)
-        promo.mean <- mean(beta.promo$Promoter_Mean)
-        body.mean <- mean(beta.body$Body_Mean)
-        means.joined <- c(promo.mean, body.mean)
-        means.joined_df <- data.frame(means.joined)
-        data_final[i,] <- c(means.joined[1], means.joined[2])
-      }
-      write.csv(data_final, file = endFile, quote = F)
+        rap1 <- genelist[geneRow, ]
+        beta <- as.matrix(betas)
+        specific_genes <- as.data.frame(str_split(rap1$geneID, "/"))
+        endFile <- paste0(rap1$ID[1], "_", pathCsvOut)
+        data_final <- data.frame(Promoter = numeric(0), Body = numeric(0))
+        message(endFile)
+        for (rw in 1:nrow(specific_genes)) {
+            i = specific_genes[rw, 1]
+            dmp.sub <- subset(annot, grepl(i, annot$UCSC_RefGene_Name))
+            sub.ucsc <- dmp.sub$UCSC_RefGene_Group
+            tss200.sub <- subset(dmp.sub, grepl("TSS200|TSS1500", sub.ucsc))
+            bod.probes <- subset(dmp.sub,grepl("Body", sub.ucsc))
+            beta.promo <- subset(beta, rownames(beta) %in% tss200.sub$Name)
+            beta.body <- subset(beta, rownames(beta) %in% bod.probes$Name)
+            beta.promo$Promoter_Mean <- rowMeans(beta.promo)
+            beta.body$Body_Mean <- rowMeans(beta.body)
+            promo.mean <- mean(beta.promo$Promoter_Mean)
+            body.mean <- mean(beta.body$Body_Mean)
+            means.joined <- c(promo.mean, body.mean)
+            means.joined_df <- data.frame(means.joined)
+            data_final[i,] <- c(means.joined[1], means.joined[2])
+        }
+        write.csv(data_final, file = endFile, quote = F)
     }
 }
 
