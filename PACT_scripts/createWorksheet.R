@@ -85,6 +85,8 @@ parseExcelFile <- function(inputFi){
     getPhilipsGender(mainSheet,inputFi, sh2)
     outFile <- file.path("~","Desktop",paste(mainSheet[1,"Run_Number"],"SampleSheet.csv",sep="-"))
     write.table(sheetHead,sep=",", file=outFile, row.names=F, col.names=F,quote=F)
+    controls <- which(grepl(pattern="NTC_H20|NC_HAPMAP|SC_SERACARE", mainSheet$Sample_Name))
+    mainSheet$Paired_Normal[controls] <-""
     suppressWarnings(write.table(mainSheet,sep=",", file=outFile, row.names=F, col.names=T, append=T,quote=F))
     return(c(runId=mainSheet[1,"Sample_Project"], outFile=outFile))
 }
