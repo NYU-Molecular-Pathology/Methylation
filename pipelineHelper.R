@@ -1,14 +1,13 @@
 #!/usr/bin/env Rscript
 gb <- globalenv(); assign("gb", gb)
-apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
 dsh = "-----------"
 bky <- function(txtVar,...){crayon::black$bgYellow$bold(txtVar,...)}
 bkRed <- function(txtVar,...){crayon::bgRed$bold$white(txtVar,...)}
-reportMd <- "~/report.Rmd" #system.file("report.Rmd", package="mnp.v11b6")
-#/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/inst
-QC_file <- "~/Methyl_QC.Rmd" #system.file('Methyl_QC.Rmd', package = "mnp.v11b6") 
-#/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/inst/
 
+# Global Variables ----------------------------------
+apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
+reportMd <- "~/report.Rmd" # From curl github download
+QC_file <- "~/Methyl_QC.Rmd" # From curl github download
 pipeLnk <- "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/pipelineHelper.R"
 predictionPath <- "/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData"
 
@@ -52,9 +51,7 @@ getRGset <- function(runPath, sentrix){
 # QC REPORT maker: knits the QC RMD file
 generateQCreport <- function(runID=NULL, qc=NULL) {
     msgFunName(pipeLnk, "generateQCreport")
-  runID <- gb$ckNull(nullVar = runID,
-                     subVar = gb$runID,
-                     deparse(substitute(runID, env = .GlobalEnv)))
+  runID <- gb$ckNull(nullVar = runID, subVar = gb$runID, deparse(substitute(runID, env = .GlobalEnv)))
   if (!file.exists(QC_file)) {
     message(crayon::bgRed("Check Working directory, QC_file.rmd not found"))
   }
@@ -65,12 +62,7 @@ generateQCreport <- function(runID=NULL, qc=NULL) {
       message(qcFile, "Already Exists!  Skipping render...")    
   }else{
     qcFile <- file.path(dirname(currentQC), qcFile)
-    rmarkdown::render(
-        currentQC,
-        output_file = qcFile,
-        quiet=T,
-        params = list(runID = runID)
-    )
+    rmarkdown::render(currentQC, output_file = qcFile, quiet=T, params = list(runID = runID))
   currentQC <- stringr::str_replace_all(string = currentQC, ".Rmd", "_cache")
   unlink(currentQC, recursive = T) #clear cache
       }
@@ -179,7 +171,7 @@ do_report <-function(data = NULL, genCn=F) {
 
 
 # FUN: Iterates over each sample in the csv file to generate a report
-loopRender <- function(samList = NULL, data,redcapUp=T) {
+loopRender <- function(samList = NULL, data, redcapUp=T) {
         msgFunName(pipeLnk, "loopRender")
         msgParams("samList = NULL, data")
         if (is.null(samList)) {
