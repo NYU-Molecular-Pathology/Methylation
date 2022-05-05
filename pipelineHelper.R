@@ -186,7 +186,7 @@ checkSamSh <- function(samList){
     shNames <- which(grepl("raw_labels",readxl::excel_sheets(samSh)))
     samSh <- readxl::read_excel(samSh, sheet=shNames, range = "A1:M97",col_types = c("text"))
     wksh <- as.data.frame(samSh)[1:length(samList), 1:13]
-    rownames(wksh)<- wksh$record_id
+    rownames(wksh)<- wksh$Sample_Name
     return(wksh)
 }
 
