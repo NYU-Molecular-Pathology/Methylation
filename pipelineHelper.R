@@ -169,48 +169,52 @@ do_report <-function(data = NULL, genCn=F) {
     } else {message(bkRed("Your data is null, check your SampleSheet.csv"))}
 }
 
+# FUN: Parses the WetLab .xlsm sheet in the current directory
+checkSamSh <- function(samList){
+    msgFunName(pipeLnk, "checkSamSh")
+    require(rmarkdown)
+    samSh <- dir(path = getwd(), full.names = T, ".xlsm")
+    if(length(samSh)>1){
+        message(crayon::black$bgRed$bold("Multiple samplesheets found:"))
+        cat(samSh,sep="\n")
+        removeTemp <- stringr::str_detect(samSh, pattern = "\\$",negate = T)
+        samSh <- samSh[removeTemp]
+    }
+    message("Reading the following .xlsm in current directory:")
+    cat(samSh,sep="\n")
+    stopifnot(!length(samSh)>1)
+    shNames <- which(grepl("raw_labels",readxl::excel_sheets(samSh)))
+    samSh <- readxl::read_excel(samSh, sheet=shNames, range = "A1:M97",col_types = c("text"))
+    wksh <- as.data.frame(samSh)[1:length(samList), 1:13]
+    rownames(wksh)<- wksh$record_id
+    return(wksh)
+}
+
 
 # FUN: Iterates over each sample in the csv file to generate a report
-loopRender <- function(samList = NULL, data, redcapUp=T) {
+loopRender <- function(samList = 1:length(data$SentrixID_Pos),data,redcapUp = T) 
+{
         msgFunName(pipeLnk, "loopRender")
-        msgParams("samList = NULL, data")
-        if (is.null(samList)) {
-            samList <- 1:length(as.character(data$SentrixID_Pos))
-        }
-        require(rmarkdown)
-        samSh <- dir(path = getwd(), full.names = T, ".xlsm")
-    if(length(samSh)>1){
-    warning("Multiple samplesheets found:\n")
-    print(samSh)
-    removeTemp <- stringr::str_detect(samSh,pattern = "\\$",negate = T)
-    samSh <- samSh[removeTemp]
-  }
-        message("Reading the following .xlsm in current directory:", samSh)
-        sampleNumb <- getTotalSamples()
-        sampleNumb = as.integer(sampleNumb)
-        sh_Dat <- as.data.frame(
-            readxl::read_excel(samSh, sheet = 3,range = "A1:N97",col_types = c("text")))[, 1:13]
-        stopifnot(!is.null(sh_Dat))
+        msgParams("samList = NULL, data, redcapUp = T")
+        stopifnot(!is.null(data))
+        wksh <- checkSamSh(samList)
+        stopifnot(!is.null(wksh))
         for (i in samList) {
-            outFileN = paste0(data[i, 1], ".html")
-            outPathN = file.path(gb$methDir, gb$runID, outFileN)
-            message("outPathN = file.path(gb$methDir,gb$runID,outFileN)", "\n", outPathN)
-            if (file.exists(outPathN)) {
-                cat(bky(outFileN, "already exists! Skipping sample"),"\n")
+            nOutDir = file.path(gb$methDir, gb$runID, paste0(data[i, 1], ".html"))
+            message("nOutDir=file.path(gb$methDir,gb$runID,nOutFi)\n",nOutDir)
+            if (file.exists(nOutDir)) {
+                cat(bky(basename(nOutDir), "already exists! Skipping..."), "\n")
                 next
             } else {
-                msgProgress(1,i,samList)
+                msgProgress(1, i, samList)
                 do_report(data = data[i,], gb$genCn)
-                msgProgress(2,i,samList)
-                if(redcapUp==T){
-                sh_Dat = sh_Dat[1:sampleNumb,]
-                currSam <- sh_Dat[, 1] == data[i, 1]
-                gb$importSingle(sh_Dat = sh_Dat[currSam, ])
-                    }
+                msgProgress(2, i, samList)
+                if (redcapUp == T) {
+                    gb$importSingle(wksh[data[i, 1], ])
+                }
             }
         }
         message(crayon::black$bgGreen$bold(dsh, "RUN COMPLETE", dsh))
-        #beepr::beep(3)
 }
 
 #' REPORT: Generates Html reports to cwd with samplesheet.csv
