@@ -135,7 +135,8 @@ getTotalSamples <- function(){
         message("Samplesheet ", thisSh[1]," is invalid format, manually edit")
         message("Try copying the template:\n", templateDir)
     } else {message("Total sample count found is: ", worksheet[1])}
-    return(paste0(worksheet[1]))
+    totNumb<- paste0(worksheet[1])
+    return(as.integer(totNumb))
 }
 
 # FUN: translates the xlsm excel file to the .csv samplesheet for redcap and minfi
