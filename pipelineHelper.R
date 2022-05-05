@@ -192,11 +192,14 @@ checkSamSh <- function(samList){
 
 
 # FUN: Iterates over each sample in the csv file to generate a report
-loopRender <- function(samList = 1:length(data$SentrixID_Pos),data,redcapUp = T) 
+loopRender <- function(samList = NULL,data,redcapUp = T) 
 {
         msgFunName(pipeLnk, "loopRender")
         msgParams("samList = NULL, data, redcapUp = T")
         stopifnot(!is.null(data))
+    if(is.null(samList)){
+        samList = 1:length(data$SentrixID_Pos)
+    }
         wksh <- checkSamSh(samList)
         stopifnot(!is.null(wksh))
         for (i in samList) {
