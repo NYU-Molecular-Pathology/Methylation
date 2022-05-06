@@ -43,8 +43,9 @@ ___
 #### .idat files input directory:
 /Volumes/molecular/Molecular/iScan/
 ## Output Paths
-### Files are saved to MethylationClassifier/YEAR/RUNID, for example:<br />
-/Volumes/molecular/Molecular/MethylationClassifier/2022/22-MGDM17
+### Files are saved to MethylationClassifier/YEAR/RUNID, for example:<br/>
+/Volumes/molecular/Molecular/MethylationClassifier/2022/22-MGDM17<br>
+/Volumes/molecular/Molecular/MethylationClassifier/2020/20-MGDM5
 ___
 ### There are two system Rscript to run methylExpress.R with the arguments in order:<br />
 `arg[1]` is the **token** for the API call ('#######################')<br />
