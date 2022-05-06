@@ -11,12 +11,13 @@ editor_options:
   chunk_output_type: console
 params:
     token: "NONE"
+    runData: NULL
 ---
 <style type="text/css">
 h1.title{color: white; background-image: linear-gradient(to right, indigo, indigo, indigo, white, white); border-radius:18px; padding:5px; border-padding:5px;}
 </style>
 ```{r global_options, include=FALSE, warning=FALSE}
-
+stopifnot(!is.null(params$runData))
 if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, quiet=T)}
 # Setting US CRAN REPO
 rlis = getOption("repos")
