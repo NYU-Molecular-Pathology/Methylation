@@ -11,7 +11,7 @@ editor_options:
   chunk_output_type: console
 params:
     token: "NONE"
-    runData: NULL
+    rundata: NULL
 ---
 <style type="text/css">
 h1.title{color: white; background-image: linear-gradient(to right, indigo, indigo, indigo, white, white); border-radius:18px; padding:5px; border-padding:5px;}
@@ -131,7 +131,7 @@ Sample Information
 
 ```{r 'Sample Info', class.source="bg-success", size="normalsize"}
 knitr::opts_knit$set(progress=FALSE, verbose=FALSE)
-	dat <- params$runData
+	dat <- params$rundata
 	sample = 1
 run_id = paste(dat$run_id)
 tech = paste(dat$tech)
