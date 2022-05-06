@@ -11,14 +11,17 @@ editor_options:
   chunk_output_type: console
 params:
     token: "NONE"
-    rundata: "NONE"
+    rundata: NULL
 ---
 <style type="text/css">
 h1.title{color: white; background-image: linear-gradient(to right, indigo, indigo, indigo, white, white); border-radius:18px; padding:5px; border-padding:5px;}
 </style>
 ```{r global_options, include=FALSE, warning=FALSE}
 stopifnot(!is.null(params$rundata))
-message(params$rundata)
+
+message("params$rundata")
+print(params$rundata)
+
 if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, quiet=T)}
 # Setting US CRAN REPO
 rlis = getOption("repos")
@@ -44,6 +47,9 @@ pkgs <- c(
     "doParallel")
 
 librarian::shelf(pkgs, ask=F,verbose=F, warn.conflicts = F, quietly = T)
+library(progressr)
+progressr::handlers("txtprogressbar")
+progressr::handlers(global = TRUE)
 
 require("needs")
 library("knitr")
@@ -54,6 +60,7 @@ knitr::opts_knit$set(optsLi)
 knitr::opts_current$set(optsLi)
 knitr::opts_knit$set(quiet = FALSE)
 knitr::opts_knit$set(progress = TRUE)
+knitr::opts_knit$set(verbose = TRUE)
 knitr::opts_knit$set(progress_handler = progressr::handlers(progressr::handler_progress()))
 ```
 
@@ -335,7 +342,7 @@ indicates no matching methylation class (score <0.3) and for classifier subclass
 <h4> Methylation Class Description</h4>
 
 <p style="font-size:14px; border-radius:10px; border-width:2px; border-style:solid; border-color:rgb(192,192,192); padding:15px;border-padding:10px">
-`r I(as.character(reflist[idx,7]))`
+`r I(as.character(mnp.v11b6::reflist[idx,7]))`
 </p>
 <hr class="solid">
 
