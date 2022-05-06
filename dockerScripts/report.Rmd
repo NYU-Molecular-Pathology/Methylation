@@ -11,13 +11,14 @@ editor_options:
   chunk_output_type: console
 params:
     token: "NONE"
-    rundata: NULL
+    rundata: "NONE"
 ---
 <style type="text/css">
 h1.title{color: white; background-image: linear-gradient(to right, indigo, indigo, indigo, white, white); border-radius:18px; padding:5px; border-padding:5px;}
 </style>
 ```{r global_options, include=FALSE, warning=FALSE}
-stopifnot(!is.null(params$runData))
+stopifnot(!is.null(params$rundata))
+message(params$rundata)
 if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, quiet=T)}
 # Setting US CRAN REPO
 rlis = getOption("repos")
@@ -46,20 +47,18 @@ librarian::shelf(pkgs, ask=F,verbose=F, warn.conflicts = F, quietly = T)
 
 require("needs")
 library("knitr")
-optsLi <- list(error = TRUE, echo = FALSE, message = FALSE, warning = FALSE, progress=FALSE, verbose=FALSE, fig.align="left", self.contained=TRUE, comment='', tidy.opts=FALSE, label_list=FALSE, highlight=FALSE, error = TRUE)
+optsLi <- list(error = TRUE, echo = FALSE, message = FALSE, warning = FALSE, fig.align="left", self.contained=TRUE, comment='', tidy.opts=FALSE, label_list=FALSE, highlight=FALSE, error = TRUE)
 
 knitr::opts_chunk$set(optsLi)
 knitr::opts_knit$set(optsLi)
 knitr::opts_current$set(optsLi)
-knitr::opts_knit$set(progress=FALSE, verbose=FALSE, error=TRUE)
-knitr::opts_knit$set(verbose=FALSE,progress=FALSE,rmarkdown.render.message=FALSE)
-knitr::knit(quiet = FALSE)
-knitr::knit(progress = FALSE)
+knitr::opts_knit$set(quiet = FALSE)
+knitr::opts_knit$set(progress = TRUE)
 knitr::opts_knit$set(progress_handler = progressr::handlers(progressr::handler_progress()))
 ```
 
 ```{r setup, cache.path="cache/", include=FALSE, cache=FALSE}
-knitr::opts_chunk$set(error = TRUE, echo = FALSE, message = FALSE, warning = FALSE, self.contained=TRUE, comment = '', progress=FALSE, verbose=FALSE, cache.extra = list(R.version, sessionInfo(), format(Sys.Date(), '%Y-%m')))
+knitr::opts_chunk$set(error = TRUE, echo = FALSE, message = FALSE, warning = FALSE, self.contained=TRUE, comment = '', cache.extra = list(R.version, sessionInfo(), format(Sys.Date(), '%Y-%m')))
 options(scipen = 5)
 require("compiler")
 supM <- function(objTing){return(suppressMessages(suppressWarnings(objTing)))}
@@ -99,9 +98,6 @@ MNPtsne2 <- function(scores=NULL){
 set.seed(seed = 12345)
 getScore_cache = compiler::cmpfun(getScores)
 tsne_cache = compiler::cmpfun(MNPtsne2)
-
-knitr::opts_knit$set(progress=FALSE)
-knitr::opts_knit$set(verbose=FALSE)
 #tsne_cache <- local(MNPtsne.cmpfun())
 #bookdown::gitbook::html_document2()
 ```
@@ -130,7 +126,6 @@ Sample Information
 <div style="background-image: linear-gradient(180deg, BlanchedAlmond, white); font-size: 16px">
 
 ```{r 'Sample Info', class.source="bg-success", size="normalsize"}
-knitr::opts_knit$set(progress=FALSE, verbose=FALSE)
 	dat <- params$rundata
 	sample = 1
 run_id = paste(dat$run_id)
@@ -532,9 +527,6 @@ grades, and CIMP-status.* Acta Neuropathologica, p.547-560, Number 4, 2012.</p>
 </div>
 <div>
 ```{r, label='MLH1 Functions', fig.align="center", fig.height=12, fig.width=12, dpi=40}
-knitr::opts_knit$set(progress = TRUE, verbose = FALSE, comment='')
-knitr::opts_chunk$set(progress = TRUE, verbose = FALSE, comment='')
-knitr::opts_current$set(progress = TRUE, verbose = FALSE, comment='')
 get.clinical.data = function(ratioSet, RGset){
 	#Output is DF with sample information, betas for relevant MLH1 loci
 	MLH1_CGIDS = c("cg23658326","cg11600697","cg21490561","cg00893636")
@@ -644,8 +636,6 @@ pipeline = function(RGset, getFig=F, getTable=F) {
 ```
 
 ```{r, label='MLH1 Prediction', fig.align="center", fig.height=8, fig.width=10, dpi=36}
-knitr::opts_knit$set(progress=TRUE, verbose=FALSE)
-knitr::opts_current$set(progress=TRUE, verbose=FALSE)
 theMlhplot <- pipeline(RGset, getFig = T, getTable = F) 
 supM(theMlhplot)
 ```
