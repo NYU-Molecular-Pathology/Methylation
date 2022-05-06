@@ -131,13 +131,14 @@ Sample Information
 
 ```{r 'Sample Info', class.source="bg-success", size="normalsize"}
 knitr::opts_knit$set(progress=FALSE, verbose=FALSE)
-sample = 1
-run_id = paste(run_id)
-tech = paste(tech)
-tech2 = paste(tech2)
-bnumber = paste(bnumber)
-mp_number = paste(mp_number)
-sampleID = paste(sampleID)
+	dat <- params$runData
+	sample = 1
+run_id = paste(dat$run_id)
+tech = paste(dat$tech)
+tech2 = paste(dat$tech2)
+bnumber = paste(dat$bnumber)
+mp_number = paste(dat$mp_number)
+sampleID = paste(dat$sampleID)
 RGset = RGsetEpic
 RGset <- RGset[,sample]
 RGset2 <- RGset
