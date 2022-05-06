@@ -44,7 +44,7 @@ librarian::shelf(pkgs, ask=F,verbose=F, warn.conflicts = F, quietly = T)
 
 require("needs")
 library("knitr")
-optsLi <- list(error = TRUE, echo = FALSE, message = FALSE, warning = FALSE, progress=TRUE, verbose=FALSE, fig.align="left", self.contained=TRUE, comment='', tidy.opts=FALSE, label_list=FALSE, highlight=FALSE, error = TRUE)
+optsLi <- list(error = TRUE, echo = FALSE, message = FALSE, warning = FALSE, progress=FALSE, verbose=FALSE, fig.align="left", self.contained=TRUE, comment='', tidy.opts=FALSE, label_list=FALSE, highlight=FALSE, error = TRUE)
 
 knitr::opts_chunk$set(optsLi)
 knitr::opts_knit$set(optsLi)
@@ -54,7 +54,7 @@ knitr::opts_knit$set(verbose=FALSE,progress=FALSE,rmarkdown.render.message=FALSE
 ```
 
 ```{r setup, cache.path="cache/", include=FALSE, cache=FALSE}
-knitr::opts_chunk$set(error = TRUE, echo = FALSE, message = FALSE, warning = FALSE, self.contained=TRUE, comment = '', progress=TRUE, verbose=FALSE, cache.extra = list(R.version, sessionInfo(), format(Sys.Date(), '%Y-%m')))
+knitr::opts_chunk$set(error = TRUE, echo = FALSE, message = FALSE, warning = FALSE, self.contained=TRUE, comment = '', progress=FALSE, verbose=FALSE, cache.extra = list(R.version, sessionInfo(), format(Sys.Date(), '%Y-%m')))
 options(scipen = 5)
 require("compiler")
 supM <- function(objTing){return(suppressMessages(suppressWarnings(objTing)))}
@@ -95,7 +95,7 @@ set.seed(seed = 12345)
 getScore_cache = compiler::cmpfun(getScores)
 tsne_cache = compiler::cmpfun(MNPtsne2)
 
-knitr::opts_knit$set(progress=TRUE)
+knitr::opts_knit$set(progress=FALSE)
 knitr::opts_knit$set(verbose=FALSE)
 #tsne_cache <- local(MNPtsne.cmpfun())
 #bookdown::gitbook::html_document2()
@@ -125,7 +125,7 @@ Sample Information
 <div style="background-image: linear-gradient(180deg, BlanchedAlmond, white); font-size: 16px">
 
 ```{r 'Sample Info', class.source="bg-success", size="normalsize"}
-knitr::opts_knit$set(progress=TRUE, verbose=FALSE)
+knitr::opts_knit$set(progress=FALSE, verbose=FALSE)
 sample = 1
 run_id = paste(run_id)
 tech = paste(tech)
