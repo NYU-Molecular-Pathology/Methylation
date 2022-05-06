@@ -133,6 +133,7 @@ tech2 = paste(tech2)
 bnumber = paste(bnumber)
 mp_number = paste(mp_number)
 sampleID = paste(sampleID)
+RGset = RGsetEpic
 RGset <- RGset[,sample]
 RGset2 <- RGset
 FFPE=NULL
