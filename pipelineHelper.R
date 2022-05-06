@@ -12,7 +12,7 @@ pipeLnk <- "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/pip
 predictionPath <- "/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData"
 
 msgFunName <- function(pthLnk, funNam){message("Executing function: ", bky(funNam), " from RScript in:\n", pthLnk)}
-msgParams <- function(...){cat("\nParams passed: ", crayon::bgGreen(paste(..., sep = " , ")))}
+msgParams <- function(...){cat("Params passed: ", crayon::bgGreen(paste(..., sep = " , ")))}
 
 # Helper function to return the index of priority selected samples first
 reOrderRun <- function(selectRDs, sh=NULL){
@@ -205,6 +205,19 @@ getRunList <- function(data, samList){
     return(toRun)
 }
 
+
+checkSamSh<-
+function(samList){
+    msgFunName(pipeLnk, "checkSamSh")
+    require(rmarkdown)
+    samSh <- msgSamSheet(dir(path = getwd(), ".xlsm", full.names = T))
+    shNames <- which(grepl("REDCap_Import",readxl::excel_sheets(samSh)))
+    samSh <- readxl::read_excel(samSh, sheet=shNames, range = "A1:M97",col_types = c("text"))
+    wksh <- as.data.frame(samSh)[c(1:length(samList)), 1:13]
+    rownames(wksh)<- wksh$record_id
+    stopifnot(!is.null(wksh))
+    return(wksh)
+}
 
 # FUN: Iterates over each sample in the csv file to generate a report
 loopRender <- function(samList = NULL, data, redcapUp = T){
