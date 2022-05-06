@@ -162,7 +162,7 @@ do_report <-function(data = NULL, genCn=F) {
                 reportMd, "html_document", dat$outFi, getwd(), quiet=FALSE,
                 params = list(token=gb$ApiToken, rundata=dat))},
             error=function(e){
-                message(bkRed("Report Generation Failed:"),"\n", outFi,"\n")
+                message(bkRed("Report Generation Failed:"),"\n", dat$outFi,"\n")
                 message(bkRed("The following error returned:"),"\n", e)
             }, finally=message("\nRunning next sample\n")
         )
