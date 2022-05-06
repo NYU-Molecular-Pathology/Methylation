@@ -55,7 +55,7 @@ knitr::opts_knit$set(progress=FALSE, verbose=FALSE, error=TRUE)
 knitr::opts_knit$set(verbose=FALSE,progress=FALSE,rmarkdown.render.message=FALSE)
 knitr::knit(quiet = FALSE)
 knitr::knit(progress = FALSE)
-knitr::opts_knit$set(progress_handler = progressr::handlers(progressr::handler_progress())
+knitr::opts_knit$set(progress_handler = progressr::handlers(progressr::handler_progress()))
 ```
 
 ```{r setup, cache.path="cache/", include=FALSE, cache=FALSE}
