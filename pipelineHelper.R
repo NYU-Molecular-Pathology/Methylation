@@ -254,6 +254,7 @@ makeReports.v11b6<-function(runPath=NULL,sheetName="samplesheet.csv",selectSams=
 
     data <- read.csv(sheetName, strip.white=T)
     runID <- paste0(data$RunID[1])
+    message("Loading data...\n",predictionPath,"\n")
     load(predictionPath)
     loopRender(selectSams, data, redcapUp)
     checkRunOutput(runID)
