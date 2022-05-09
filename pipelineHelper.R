@@ -94,7 +94,7 @@ create.QC.record <- function(runID=NULL){
     if(is.null(runID)){runID<-paste0(basename(gb$workDir))}
     record = c(record_id=paste0(runID,"_QC"), run_number=runID)
     qcdata <- jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
-    RCurl::postForm(msgParams,token=gb$ApiToken,content='record',format='json', type='flat',data=qcdata)
+    RCurl::postForm(gb$apiLink,token=gb$ApiToken,content='record',format='json', type='flat',data=qcdata)
     message(dsh,"Created QC Record",dsh)
     print(qcdata)
 }
