@@ -53,7 +53,7 @@ generateQCreport <- function(runID=NULL) {
     msgFunName(pipeLnk, "generateQCreport")
 
     QC_file <- "~/Methyl_QC.Rmd"
-    if (is.null(runID)){runID<-paste0(basename(gb$workDir))}
+    if (is.null(runID)){runID<-paste0(basename(getwd())}
     if (!file.exists(QC_file)) {
         message(crayon::bgRed("QC_file.rmd not found:"), "\n", QC_file)
     }
