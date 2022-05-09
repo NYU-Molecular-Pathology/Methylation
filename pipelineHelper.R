@@ -187,12 +187,12 @@ checkSamSh <- function(samList){
     require(rmarkdown)
     samSh <- msgSamSheet(dir(path = getwd(), ".xlsm", full.names = T))
     xlSheets <- readxl::excel_sheets(samSh)
-    shNames <- which(grepl("REDCap_Import",xlSheets)==T)
-    message(shNames)
+    redSheet <- paste0(which(grepl("REDCap_Import",xlSheets)==T))
+    message("redsheet",redSheet)
     print(xlSheets)
-    samSh <- readxl::read_excel(samSh, sheet=shNames, range = "A1:M97",col_types = c("text"))
+    samSh <- readxl::read_excel(samSh, sheet=3, range = "A1:M97",col_types = c("text"))
     wksh <- as.data.frame(samSh)[1:length(samList), 1:13]
-    rownames(wksh)<- wksh$Sample_Name
+    rownames(wksh)<- wksh[,1]
     stopifnot(!is.null(wksh))
     return(wksh)
 }
