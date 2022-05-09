@@ -205,7 +205,7 @@ htmltools::tagList(plotly::ggplotly(ggplot2::ggplot()))
 ```{r, label='Data Table Output', echo=FALSE, message=TRUE, warning=FALSE, error=FALSE, include=FALSE}
 library("kableExtra")
 # Default header text for QC tab for sample
-qcHeader <- c("Mapped Reads QC", "Deduplicated Reads QC", "Targets with <50 Coverage",
+qcHeader <- c("Sample", "Mapped Reads QC", "Deduplicated Reads QC", "Targets with <50 Coverage",
               "Avg and Median Coverage", "Overlapped HOMO SNP")
 # Options for Data.Table parameters
 dtOpts <- list(scrollX = T, scrollY=T, info = F, autoWidth = T, pageLength = 100, rownames=T, lengthChange = T, searchable = T)
