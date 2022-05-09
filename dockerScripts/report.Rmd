@@ -48,8 +48,8 @@ pkgs <- c(
     "doParallel")
 
 librarian::shelf(pkgs, ask=F,verbose=F, warn.conflicts = F, quietly = T)
-library(progressr)
-progressr::handlers("txtprogressbar")
+#library(progressr)
+#progressr::handlers("txtprogressbar")
 #progressr::handlers(global = TRUE)
 
 require("needs")
