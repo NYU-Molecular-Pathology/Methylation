@@ -50,7 +50,7 @@ pkgs <- c(
 librarian::shelf(pkgs, ask=F,verbose=F, warn.conflicts = F, quietly = T)
 library(progressr)
 progressr::handlers("txtprogressbar")
-progressr::handlers(global = TRUE)
+#progressr::handlers(global = TRUE)
 
 require("needs")
 library("knitr")
