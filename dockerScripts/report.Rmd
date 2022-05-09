@@ -38,6 +38,7 @@ pkgs <- c(
     "kableExtra",
     "tidyverse",
     "plotly",
+    "pkgdown",
     "ggplot2",
     "magrittr",
     "compiler",
@@ -61,7 +62,7 @@ knitr::opts_current$set(optsLi)
 knitr::opts_knit$set(quiet = FALSE)
 knitr::opts_knit$set(progress = TRUE)
 knitr::opts_knit$set(verbose = TRUE)
-knitr::opts_knit$set(progress_handler = progressr::handlers(progressr::handler_progress()))
+#knitr::opts_knit$set(progress_handler = progressr::handlers(progressr::handler_progress()))
 ```
 
 ```{r setup, cache.path="cache/", include=FALSE, cache=FALSE}
