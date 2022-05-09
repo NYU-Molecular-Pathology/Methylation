@@ -14,7 +14,7 @@ params:
 if(is.null(params$runID)){
     runID = paste0(basename(getwd()))
 }else{runID=params$runID}
-
+stopifnot(!is.null(runID))
 message(paste("Using", runID, "as RunID"))
 
 # Check if baseDir provided else use Desktop
@@ -46,8 +46,7 @@ wsDate <- fixerrors$Date[1] #format(Sys.time(), '%d %B, %Y')
 location <- file.path(baseDir,paste0( runID,"_Redcap.csv")) # redcap brain classifier file
 
 if (!file.exists(location)) {
-	warning(paste0("File not found: ", location,
-	               "\nQC Summary Table will not generate"))
+	warning(paste0("File not found: ", location,"\nQC Summary Table will not generate"))
 }
 
 titleName <- paste("Methylation Sample QC for Batch", runID) #heading 1
@@ -82,7 +81,7 @@ editor_options:
 
 ```{r set-options, include=FALSE, cache=FALSE, cache.path="cache/", echo=FALSE}
 pkgs <- 
-    c("knitr", "kableExtra", "magick", "webshot", "plyr", "ggplot2", "reshape2", "data.table", "DT", "plotly", "MethylAid", "minfi", "scales", "IlluminaHumanMethylation450kmanifest", "IlluminaHumanMethylationEPICmanifest", "IlluminaHumanMethylationEPICanno.ilm10b4.hg19", "Biobase", "RColorBrewer", "limma", "ggfortify", "Rtsne", "qdapTools", "gplots", "readxl", "stringr", "ggrepel", "Polychrome", "tinytex", "gridExtra", "rmarkdown", "BiocParallel", "pals", "grid", "grDevices","magrittr")
+    c("knitr", "kableExtra", "magick", "webshot", "plyr", "ggplot2", "reshape2", "data.table", "DT", "plotly", "MethylAid", "minfi", "scales", "IlluminaHumanMethylation450kmanifest", "IlluminaHumanMethylationEPICmanifest", "IlluminaHumanMethylationEPICanno.ilm10b4.hg19", "Biobase", "RColorBrewer", "limma", "ggfortify", "Rtsne", "qdapTools", "gplots", "readxl", "stringr", "ggrepel", "Polychrome", "tinytex", "gridExtra", "rmarkdown", "BiocParallel", "pals", "grid", "grDevices", "magrittr")
 if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 4, quiet=T)}
 librarian::shelf(pkgs, ask=F)
 knitr::opts_chunk$set(echo = TRUE)
@@ -123,7 +122,7 @@ mcParam <- BiocParallel::MulticoreParam(workers = mcc, progressbar = T)
 
 # MethylAid Summarize
 sdata <- suppressWarnings(
-    MethylAid::summarize(fixerrors, verbose=T, batchSize=round(totNum), force=TRUE, BPPARAM = mcParam))
+    MethylAid::summarize(fixerrors, verbose=T, batchSize=8, force=TRUE, BPPARAM = mcParam))
 
 qcProbes = list(BSI = "^BISULFITE CONVERSION I$", 
                 BSII = "^BISULFITE CONVERSION II$",
@@ -148,10 +147,9 @@ getNewData <- function(data_final, cutoff){
 }
 ## Get MU Data & Colors --------------------------------------
 MU <- log2(t(sdata@MU)); targets <- sdata@targets; d <- sdata@plotdata
-data_rotated <- rotateData(
-    merge(MU, targets, by = "row.names"),
-    columns = c("Methylated", "Unmethylated")
-    )
+data_rotated <- rotateData(merge(MU, targets, by = "row.names"),
+                           columns = c("Methylated", "Unmethylated")
+                           )
 data_rotated$x = data_rotated[,2]; data_rotated$y = data_rotated[,3]
 MUvals <- getNewData(data_final = data_rotated, cutoff = 9)
 ```
@@ -182,7 +180,6 @@ makeLabels <- function(totNum, xName, yName, plotName, thePlot) {
             axis.title = element_text(size = 14),
             legend.direction = "horizontal", 
             legend.position = "bottom",
-            #text = element_text(size = 14),
             axis.text.x = element_text(size = 14),
             axis.text.y = element_text(size = 14),
             plot.margin = grid::unit(c(1, 1, 1, 1), 'cm'),
@@ -194,14 +191,12 @@ makeLabels <- function(totNum, xName, yName, plotName, thePlot) {
             plot.caption = element_text(color = "darkgreen",face = "italic",size = 12)
             ) +
         labs(label = "", color = "") +
-        guides(
-            colour = guide_legend(
-                title = "Samples",
-                override.aes = list(fill = NA, shape = 19),
-                byrow = TRUE,
-                ncol = 9
-            )) +
-        coord_cartesian(clip = 'off') 
+        guides(colour = guide_legend(
+            title = "Samples",
+            override.aes = list(fill = NA, shape = 19),
+            byrow = TRUE,
+            ncol = 9
+            )) + coord_cartesian(clip = 'off') 
     return(legendLabel)
 }
 ## Generate Plots for Probes --------------------------------------
@@ -212,15 +207,13 @@ plotParams <- function(totNum, dParam, xincept, yincept) {
     
     thePlot <-
         ggplot(dParam,
-            aes(
-                x = dParam[, 2],
+            aes(x = dParam[, 2],
                 y = dParam[, 3],
                 color = dParam$Sample_Name,
-                label = dParam$Sample_Name
-                ), show.legend = F) +
-        scale_color_manual(values = plot.colours) + geom_point(shape = 19,
-                                                               size = 5,
-                                                               alpha = 0.8) + 
+                label = dParam$Sample_Name), 
+            show.legend = F) +
+        scale_color_manual(values = plot.colours) + 
+        geom_point(shape = 19, size = 5, alpha = 0.8) + 
         guides(color = guide_legend(nrow = totNum)) + theme_bw() +
         guides(color = guide_legend(ncol = 8)) + 
         scale_fill_manual(values = plot.colours) 
@@ -240,10 +233,13 @@ plotParams <- function(totNum, dParam, xincept, yincept) {
           color = "black", label.size = 0.4, size = 3,
           nudge_x = ifelse(thePlot$data$x>mean(thePlot$data$x), -0.15, 0),
           nudge_y = ifelse(thePlot$data$y > mean(thePlot$data$y), -0.05, 0),
-          point.padding = unit(0.25, "lines"), label.r = unit(0.5, "lines"), force = 12, max.iter = 10000) +
+          point.padding = unit(0.25, "lines"), label.r = unit(0.5, "lines"), 
+          force = 12, max.iter = 10000)
+      
+      thePlot <- thePlot +
           geom_vline(xintercept = xincept, linetype = 'dashed', colour = "red") +
           coord_cartesian(clip="off") +
-          expand_limits(x=min(dParam[,2]),y=max(dParam[,3])*0.25) +
+          expand_limits(x=min(dParam[,2]), y=max(dParam[,3])*0.25) +
           guides(fill = guide_legend(show.legend = F)) + theme(legend.position = "none") + 
           scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) + 
           scale_y_continuous(breaks = scales::pretty_breaks(n = 10))
@@ -252,7 +248,7 @@ plotParams <- function(totNum, dParam, xincept, yincept) {
       samlab <- c(str_replace(dParam$Sample_Name, c("\n"), "_"))
       thePlot <- thePlot + 
           geom_hline(yintercept = yincept, linetype = 'dashed', colour = "red") +
-          annotate("text",x = dParam[, 2],y = (dParam[, 3]) - 0.007, 
+          annotate("text", x = dParam[, 2], y = (dParam[, 3]) - 0.007, 
                    label = samlab, angle = 90, size = 3) + 
           scale_x_continuous(breaks = scales::pretty_breaks()) + 
           guides(fill = guide_legend(show.legend = F)) + 
@@ -407,7 +403,7 @@ failedDP <- plotDP$data$MP_num[failedDP]
 summaryFail <- runName <- NULL
 runName <- paste(targets$RunID[1])
 if (is.null(runName)) {runName = paste0(basename(getwd()))}
-location <- file.path("~","Desktop",runName,paste0(runName,"_Redcap.csv"))
+location <- file.path("~","Desktop",runName, paste0(runName,"_Redcap.csv"))
 if(!file.exists(location)){knitr::knit_exit()}
 ```
 <hr class="solid"><div style="background-image: linear-gradient(to right, mediumpurple,mediumpurple,mediumpurple, white, white); border-radius: 18px; padding: 5px; border-padding:6px;"><h2 style="color: White;">
@@ -434,8 +430,7 @@ summaryFail <- genSumFail(failedBS, "Bisulfite Conversion")
 summaryFail <- genSumFail(failedHC, "Probe Hybridization")
 summaryFail <- genSumFail(failedDP, "Negative Control")
 summaryFail <- paste(summaryFail, sep = "\n", collapse = "</li>\n")
-newHeads <- c("RD-number", "B-Number", "TM-number", "Methylation Class",
-			  "Classifier Score", "Subgroup", "Subscore", "MGMT Status")
+newHeads <- c("RD-number", "B-Number", "TM-number", "Methylation Class", "Classifier Score", "Subgroup", "Subscore", "MGMT Status")
 gCol <- ifelse(clas.tb$mgmt_status == "methylated", "red", "blue")
 gCel <- ifelse(clas.tb$classifier_value < 0.90, "red", "green")
 bNum =  clas.tb$b_number
