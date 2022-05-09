@@ -11,7 +11,7 @@ QC_file <- "~/Methyl_QC.Rmd" # From curl github download
 pipeLnk <- "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/pipelineHelper.R"
 predictionPath <- "/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData"
 
-msgFunName <- function(pthLnk, funNam){message("Executing function: ", bky(funNam), " from RScript in:\n", pthLnk)}
+msgFunName <- function(pthLnk, funNam){message("\nExecuting function: ", bky(funNam), " from RScript in:\n", pthLnk)}
 msgParams <- function(...){cat("\nParams passed: ", crayon::bgGreen(paste(..., sep = " , ")))}
 
 # Helper function to return the index of priority selected samples first
