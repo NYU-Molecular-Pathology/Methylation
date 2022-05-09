@@ -54,9 +54,7 @@ generateQCreport <- function(runID=NULL) {
 
     QC_file <- "~/Methyl_QC.Rmd"
     if (is.null(runID)){runID<-paste0(basename(getwd())}
-    if (!file.exists(QC_file)) {
-        message(crayon::bgRed("QC_file.rmd not found:"), "\n", QC_file)
-    }
+    if (!file.exists(QC_file)) {message(crayon::bgRed("QC_file.rmd not found:"), "\n", QC_file)}
     fs::file_copy(QC_file, getwd(), overwrite = T)
     currQc = dir(getwd(), "*QC.Rmd", full.names = T)
     qcFile = paste0(runID, "_QC.html") # output file name
