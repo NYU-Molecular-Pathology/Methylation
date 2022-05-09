@@ -183,9 +183,13 @@ msgSamSheet <- function(samSh) {
 # FUN: Parses the WetLab .xlsm sheet in the current directory
 checkSamSh <- function(samList){
     msgFunName(pipeLnk, "checkSamSh")
+    
     require(rmarkdown)
     samSh <- msgSamSheet(dir(path = getwd(), ".xlsm", full.names = T))
-    shNames <- which(grepl("REDCap_Import",readxl::excel_sheets(samSh)))
+    xlSheets <- readxl::excel_sheets(samSh)
+    shNames <- which(grepl("REDCap_Import",xlSheets)==T)
+    message(shNames)
+    print(xlSheets)
     samSh <- readxl::read_excel(samSh, sheet=shNames, range = "A1:M97",col_types = c("text"))
     wksh <- as.data.frame(samSh)[1:length(samList), 1:13]
     rownames(wksh)<- wksh$Sample_Name
@@ -204,19 +208,6 @@ getRunList <- function(data, samList){
     return(toRun)
 }
 
-
-checkSamSh<-
-function(samList){
-    msgFunName(pipeLnk, "checkSamSh")
-    require(rmarkdown)
-    samSh <- msgSamSheet(dir(path = getwd(), ".xlsm", full.names = T))
-    shNames <- which(grepl("REDCap_Import",readxl::excel_sheets(samSh)))
-    samSh <- readxl::read_excel(samSh, sheet=shNames, range = "A1:M97",col_types = c("text"))
-    wksh <- as.data.frame(samSh)[c(1:length(samList)), 1:13]
-    rownames(wksh)<- wksh$record_id
-    stopifnot(!is.null(wksh))
-    return(wksh)
-}
 
 # FUN: Iterates over each sample in the csv file to generate a report
 loopRender <- function(samList = NULL, data, redcapUp = T){
