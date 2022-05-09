@@ -52,6 +52,7 @@ getRGset <- function(runPath, sentrix){
 generateQCreport <- function(runID=NULL) {
     msgFunName(pipeLnk, "generateQCreport")
 
+    QC_file <- "~/Methyl_QC.Rmd"
     if (is.null(runID)){runID<-paste0(basename(gb$workDir))}
     if (!file.exists(QC_file)) {
         message(crayon::bgRed("QC_file.rmd not found:"), "\n", QC_file)
@@ -60,7 +61,7 @@ generateQCreport <- function(runID=NULL) {
     currQc = dir(getwd(), "*QC.Rmd", full.names = T)
     qcFile = paste0(runID, "_QC.html") # output file name
     if(file.exists(file.path(getwd(), qcFile))) {
-        message(qcFile, "Already Exists!  Skipping render...")
+        message(qcFile, "Already Exists!  Detete to create new QC. Skipping render...")
     } else{
         qcFile <- file.path(dirname(currQc), qcFile)
         rmarkdown::render(
