@@ -407,7 +407,7 @@ failedDP <- plotDP$data$MP_num[failedDP]
 summaryFail <- runName <- NULL
 runName <- paste(targets$RunID[1])
 if (is.null(runName)) {runName = paste0(basename(getwd()))}
-location <- file.path("~","Desktop","runName",paste0(runName,"_Redcap.csv"))
+location <- file.path("~","Desktop",runName,paste0(runName,"_Redcap.csv"))
 if(!file.exists(location)){knitr::knit_exit()}
 ```
 <hr class="solid"><div style="background-image: linear-gradient(to right, mediumpurple,mediumpurple,mediumpurple, white, white); border-radius: 18px; padding: 5px; border-padding:6px;"><h2 style="color: White;">
