@@ -70,8 +70,8 @@ generateQCreport <- function(runID=NULL) {
             quiet = T,
             params = list(runID = runID)
         )
-        currQc <- stringr::str_replace_all(string = currQc, ".Rmd", "_cache")
-        unlink(currQc, recursive = T) #clear cache
+        qcCache <- stringr::str_replace_all(string = currQc, ".Rmd", "_cache")
+        unlink(qcCache, recursive = T) #clear cache
     }
     gb$uploadToRedcap(qcFile,F)
 }
