@@ -163,7 +163,7 @@ checkMounts <- function(critialMnts){
 checkMounts(critialMnts)
 # Changes the working directory and creates output directory
 if(!dir.exists(outDir)){dir.create(outDir)}
-
+knitr::opts_knit$set(root.dir = outDir)
 sysCmd <- paste("cd", outDir)
 system(sysCmd)
 setwd(outDir)
