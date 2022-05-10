@@ -247,3 +247,18 @@ saveHmPng <- function(fi_prefix, fi_suffix, hm,topvar = "") {
 }
                                            
 col_fun3 <- circlize::colorRamp2(c(0, 0.20, 0.25, 0.5, 0.75, 1), c("black","darkblue","deepskyblue", "white", "tomato","red"))
+                                           
+saveHmPng <- function(fi_prefix, fi_suffix, hm,topvar = "") {
+  imgFile <- file.path(gb$runDir, paste0(fi_prefix, topvar, fi_suffix))
+  wd <- as.numeric(hm@ht_list_param[["width"]]) + 5
+  ht <- as.numeric(hm@ht_list_param[["height"]]) + 5
+  png(
+    file = imgFile,
+    width = wd,
+    height = ht,
+    units = "mm",
+    res = 200
+  )
+  ComplexHeatmap::draw(hm)
+  invisible(dev.off())
+}                
