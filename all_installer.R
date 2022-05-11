@@ -411,13 +411,13 @@ pkgs <- c(
     'memoise',
     'methods',
     'MethylAid',
-    'Methylation',
+#    'Methylation',
 #    'methylclock',
 #    'methylclockData',
     'methylumi',
     'mets',
     'mgcv',
-    'mgmtstp27',
+#    'mgmtstp27',
     'mime',
     'minfi',
     'miniUI',
@@ -431,7 +431,7 @@ pkgs <- c(
     'mmpf',
 #    'mnp.v11b4',
 #    'mnp.v11b6',
-    'mnpqc',
+ #   'mnpqc',
     'mockery',
     'ModelMetrics',
     'modelr',
@@ -555,7 +555,7 @@ pkgs <- c(
     'readr',
     'readxl',
     'recipes',
-    'redcap',
+  #  'redcap',
     'redcapAPI',
     'refund',
     'regioneR',
@@ -762,14 +762,7 @@ pkgs <- c(
     'zoo'
 )
 
-if(!dir.exists("~/.R/")){
-    message("No Makevars file in ~/.R/")
-    #dir.create("~/.R/")
-    }else{
-        system("rm -R ~/.R/")
-    }
+if(!dir.exists("~/.R/")){message("No Makevars file in ~/.R/")}else{system("rm -R ~/.R/")}
 
 # Load/install missing pacakges without asking
 librarian::shelf(pkgs, ask=F)
-
-
