@@ -87,25 +87,67 @@ filterGrp <- function(cnData, typeGroup){
     return(subCn[,1:(ncol(subCn)-1)])
 }
 
-savePlotPng <- function(cnData, plotName, plotTitle, plotChr = c(paste0("chr",1:22)), saveImg=F){
-    freqPlot <- suppressMessages(GenVisR::cnFreq(cnData, plotType = "frequency", plotChr = plotChr,
-                                                 plot_title= paste(plotTitle,"Samples Copy Number Frequency"),
-                                                 CN_Loss_colour = "#00B0EB", CN_Gain_colour = "#00A36D"))
-    freqDat <- suppressMessages(GenVisR::cnFreq(cnData, plotType = "frequency", plotChr = plotChr, out = "data",
-                                                plot_title= paste(plotTitle,"Samples Copy Number Frequency"),
-                                                CN_Loss_colour = "#00B0EB", CN_Gain_colour = "#00A36D"))
-    write.csv(freqDat, file = file.path(getwd(), paste(plotName, "cnv.csv", sep = "_")), row.names=F, col.names=T)
-    if(saveImg==F){
-        labelTitle <- paste("###", plotName, "Samples" ,'\n\n')
-        cat(labelTitle)
-        print(freqPlot)
-        cat('\n\n')
-    }else{
-        png(file=file.path(getwd(), paste(plotName,"cnv.png", sep="_")), height = 8, width = 15, units = "in", res = 200)
-        freqPlot
-        dev.off()
+gb$savePlotPng<-
+    function(cnData,
+             plotName,
+             plotTitle,
+             plotChr = c(paste0("chr", 1:22)),
+             saveImg = F) {
+        freqPlot <-
+            suppressMessages(
+                GenVisR::cnFreq(
+                    cnData,
+                    plotType = "frequency",
+                    plotChr = plotChr,
+                    plot_title = paste(plotTitle, "Samples Copy Number Frequency"),
+                    CN_Loss_colour = "#FF0000",
+                    CN_Gain_colour = "#00A36D",
+                    facet_lab_size= 9
+                )
+            )
+        freqPlot[["theme"]][["strip.text"]][["angle"]]<- -90
+        freqPlot[["theme"]][["strip.text"]]$margin <-margin(t = 10, r = 10, b = 10, l = 10, unit = "pt")
+        freqPlot[["theme"]][["strip.placement"]] <- 'outside'
+        freqPlot[["theme"]][["panel.spacing"]]<- unit(0, "points")
+        freqPlot[["theme"]][["strip.placement"]]="outside"
+        freqPlot[["facet"]][["shrink"]]<-FALSE
+        freqPlot[["coordinates"]][["clip"]]<-"off"
+        freqDat <-
+            suppressMessages(
+                GenVisR::cnFreq(
+                    cnData,
+                    plotType = "frequency",
+                    plotChr = plotChr,
+                    out = "data",
+                    plot_title = paste(plotTitle, "Samples Copy Number Frequency"),
+                    CN_Loss_colour = "#FF0000",
+                    CN_Gain_colour = "#00A36D",
+                    facet_lab_size= 5
+                )
+            )
+        write.csv(
+            freqDat,
+            file = file.path(getwd(), paste(plotName, "cnv.csv", sep = "_")),
+            row.names = F,
+            col.names = T
+        )
+        if (saveImg == F) {
+            labelTitle <- paste("###", plotName, "Samples" , '\n\n')
+            cat(labelTitle)
+            print(freqPlot)
+            cat('\n\n')
+        } else{
+            png(
+                file = file.path(getwd(), paste(plotName, "cnv.png", sep = "_")),
+                height = 8,
+                width = 15,
+                units = "in",
+                res = 200
+            )
+            freqPlot
+            dev.off()
+        }
     }
-}
 
 grabClusterDat <- function(seg_clust_file,segFile){
 cnData <- if(!file.exists(seg_clust_file)){
