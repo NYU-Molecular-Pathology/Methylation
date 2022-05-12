@@ -2,6 +2,7 @@ gb <- globalenv(); assign("gb", gb)
 # FUN: Returns optimal number of PCs given X ---------------------------
 library(dplyr)
 require('foreach')
+library(ggplot2)
 getOptPC <- function(expr, getPval = F, n= 60){
     PC <- prcomp(t(log10(expr + 1)), center = T, scale = F)
     expl_var <- PC$sdev ^ 2 / sum(PC$sdev ^ 2)
@@ -87,6 +88,7 @@ addPlotLabels <- function(groupTsne, tsneData){
 genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL,
                         symbolsLabel = NULL, colorLabel = NULL, names2Label = NULL)
     {
+    require('ggplot2')
     colours <- unique(tsne_plot$col)
     symFlags <- !is.null(symbolsLabel)
     devAskNewPage(ask=F) #options("device.ask.default"=F)
@@ -102,7 +104,7 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL,
         symShape <- shapeVals <- shapeLabels <- NULL
     }
     # Parameters for text & geom_label_repel
-    et <- element_text(size = 16)
+    et <- ggplot2::element_text(size = 16)
     # Creating Main ggplot Object
     groupTsne <- ggplot(tsne_plot, aes(x=tsne_plot$x,y=tsne_plot$y,group=tsne_plot$GROUPS)) +
         geom_point(aes(x, y, color = tsne_plot$GROUPS, shape = symShape), size = 4, alpha = 0.85)
@@ -116,9 +118,9 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL,
         scale_color_manual(values=colours, name= "Sample Label") +
         labs(color = colorLabel, size = 4) + theme_bw(base_size = 16) +
         theme(
-            panel.grid.major = element_blank(),
-            panel.grid.minor = element_blank(),
-            panel.background = element_blank(), text = et
+            panel.grid.major = ggplot2::element_blank(),
+            panel.grid.minor = ggplot2::element_blank(),
+            panel.background = ggplot2::element_blank(), text = et
         ) +
         ggtitle(label = titleLabel) +
         theme(plot.title = et, legend.text = et, text = et,
