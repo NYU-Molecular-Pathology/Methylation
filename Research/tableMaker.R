@@ -170,8 +170,10 @@ printMissing <- function(theMissing) {
 
 loadHtmlTag <- function(){
     require("tidyverse")
+    library("plotly")
     require("plotly")
     require("ggplot2")
+    library("ggplot2")
     library("DT")
     htmltools::tagList(DT::datatable(cars, options=list(pageLength = 15, width="100%")))
     par(ask=F); devAskNewPage(ask = F)
