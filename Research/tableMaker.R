@@ -148,3 +148,13 @@ require("tidyverse")
 require("plotly")
 require("ggplot2")
 library("DT")
+
+loadHtmlTag <- function(){
+    require("tidyverse")
+    require("plotly")
+    require("ggplot2")
+    library("DT")
+    htmltools::tagList(DT::datatable(cars, options=list(pageLength = 15, width="100%")))
+    par(ask=F); devAskNewPage(ask = F)
+    return(htmltools::tagList(plotly::ggplotly(ggplot2::ggplot())))
+}
