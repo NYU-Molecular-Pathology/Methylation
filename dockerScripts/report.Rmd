@@ -59,9 +59,9 @@ optsLi <- list(error = TRUE, echo = FALSE, message = FALSE, warning = FALSE, fig
 knitr::opts_chunk$set(optsLi)
 knitr::opts_knit$set(optsLi)
 knitr::opts_current$set(optsLi)
-knitr::opts_knit$set(quiet = FALSE)
+knitr::opts_knit$set(quiet = TRUE)
 knitr::opts_knit$set(progress = TRUE)
-knitr::opts_knit$set(verbose = TRUE)
+knitr::opts_knit$set(verbose = FALSE)
 #knitr::opts_knit$set(progress_handler = progressr::handlers(progressr::handler_progress()))
 ```
 
