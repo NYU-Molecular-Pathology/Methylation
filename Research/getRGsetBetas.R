@@ -191,3 +191,12 @@ dropBadQc <- function(targets, betas, csvFi="samplesheet.csv") {
             row.names = F)
   return(theMissing)
 }
+
+# Matches RGset to any dropped samples of cleaned Beta Values
+cleanRgset <- function(RGSet, col_sentrix, betas) {
+  rgDat <- RGSet@colData@listData
+  senDat <- rgDat[[col_sentrix]]
+  dropSam <- rgDat[["Sample_ID"]] %in% colnames(betas)
+  rgRows <- RGSet@colData@rownames
+  return(RGSet[, rgRows %in% senDat[dropSam]])
+}
