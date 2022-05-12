@@ -15,3 +15,10 @@ checkSamNam <- function(samNames, targets){
   samNames <- targets$Sample_ID = make.unique(samNames, sep="_")
   return(samNames) }else{return(samNames)}
 }
+
+getTargCsv <- function(csvFi = "samplesheet.csv") {
+  gc(verbose = F)
+  targets <- read.csv(csvFi, strip.white = T, row.names = NULL)
+  if (class(targets) != "data.frame") {targets <- as.data.frame(targets)}
+  return(targets)
+}
