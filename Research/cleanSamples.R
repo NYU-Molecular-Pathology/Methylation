@@ -1,4 +1,5 @@
 writeTargets <- function(targets, csvFi="samplesheet.csv"){
+  if(class(targets)!="data.frame"){targets<- as.data.frame(targets)}
   write.csv(targets, file, quote=F, row.names=F)
 }
 
