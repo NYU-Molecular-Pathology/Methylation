@@ -1,12 +1,17 @@
-writeTargets <- function(targets, csvFi="samplesheet.csv"){
+gb <- globalenv(); assign("gb", gb)
+
+dfTargets <- function(targets){
   if(class(targets)!="data.frame"){targets<- as.data.frame(targets)}
+  return(targets)
+  }
+
+writeTargets <- function(targets, csvFi="samplesheet.csv"){
+  targets <- dfTargets(dfTargets)
   write.csv(targets, file, quote=F, row.names=F)
 }
 
 setKeyColumns <- function(targets, col_samTypes, col_samNames, col_other) {
-    if (class(targets) != "data.frame") {
-      targets <- as.data.frame(targets)
-    }
+    targets <- dfTargets(dfTargets)
     targets$Type <- targets[, col_samTypes] # Creates any new "Type" column
     targets$Sample_Name <- targets$Sample_ID <- targets[, col_samNames] # generates Sample_ID column if doesn't exist
     targets$Sample_Group <- targets[, col_other]
@@ -23,6 +28,6 @@ checkSamNam <- function(samNames, targets){
 getTargCsv <- function(csvFi = "samplesheet.csv") {
   gc(verbose = F)
   targets <- read.csv(csvFi, strip.white = T, row.names = NULL)
-  if (class(targets) != "data.frame") {targets <- as.data.frame(targets)}
+  targets <- dfTargets(dfTargets)
   return(targets)
 }
