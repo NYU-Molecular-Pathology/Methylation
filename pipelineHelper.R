@@ -281,8 +281,7 @@ checkMounts <- function(){
     msgFunName(pipeLnk,"checkMounts")
 
     # List of three mount paths needed to run the pipleine
-    critialMnts <- c("/Volumes/CBioinformatics/Methylation",
-                     "/Volumes/molecular/MOLECULAR LAB ONLY", "/Volumes/snudem01labspace/idats")
+    critialMnts <- c("/Volumes/CBioinformatics/Methylation", "/Volumes/molecular/", "/Volumes/snudem01labspace/idats")
     failMount <- lapply(critialMnts, function(driveMount){
         ifelse(!dir.exists(driveMount),return(T),return(F))})
     if(any(failMount==T)){
