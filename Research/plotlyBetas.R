@@ -135,6 +135,7 @@ plotSaver <- function(outDirs,tsne_titles,tps,ty,plotList,custom) {
  pltList <- foreach::foreach(plotN = 1:length(plotList),.packages="foreach") %do% {
     pL<- plotList[[plotN]]
 ###################### TO CHANGE ########################
+    gc(verbose=F)
     return(gb$genTsnePlot(
       tsne_plot=plotList[[plotN]],
       titleLabel=tsne_titles[plotN],
@@ -166,6 +167,7 @@ gb$subsetBetas <-
       plotList = NULL
       plotList <- gb$doMultiple(allBetas1, tsne_titles, outDirs, targets1, tps, ty, custom)
       tplots <- NULL
+      gc(verbose=F)
       tplots <- gb$plotSaver(outDirs, tsne_titles, tps, ty, plotList, custom)
       gb$selectPlots(doPlotly, tplots, ty, tps, outDirs)
     }
