@@ -231,25 +231,13 @@ grabProbes <- function(your_genes, RGSet, region){
   return(z[1:cutt,])
 }
                                            
-saveHmPng <- function(fi_prefix, fi_suffix, hm,topvar = "") {
-  imgFile <- file.path(gb$runDir, paste0(fi_prefix, topvar, fi_suffix))
-  wd <- as.numeric(hm@ht_list_param[["width"]]) + 5
-  ht <- as.numeric(hm@ht_list_param[["height"]]) + 5
-  png(
-    file = imgFile,
-    width = wd,
-    height = ht,
-    units = "mm",
-    res = 200
-  )
-  ComplexHeatmap::draw(hm)
-  invisible(dev.off())
-}
-                                           
 col_fun3 <- circlize::colorRamp2(c(0, 0.20, 0.25, 0.5, 0.75, 1), c("black","darkblue","deepskyblue", "white", "tomato","red"))
                                            
-saveHmPng <- function(fi_prefix, fi_suffix, hm,topvar = "") {
-  imgFile <- file.path(gb$runDir, paste0(fi_prefix, topvar, fi_suffix))
+saveHmPng <- function(fi_prefix, fi_suffix, hm, topvar = "", outDir=NULL) {
+  if(is.null(outDir)){outDir<-gb$runDir}
+  hmOutDir <- file.path(outDir, "HeatMaps")
+  if(!dir.exists(hmOutDir)){dir.create(hmOutDir)}
+  imgFile <- file.path(hmOutDir, paste0(fi_prefix, topvar, fi_suffix))
   wd <- as.numeric(hm@ht_list_param[["width"]]) + 5
   ht <- as.numeric(hm@ht_list_param[["height"]]) + 5
   png(
@@ -261,4 +249,56 @@ saveHmPng <- function(fi_prefix, fi_suffix, hm,topvar = "") {
   )
   ComplexHeatmap::draw(hm)
   invisible(dev.off())
-}                
+}  
+                                           
+                                           
+gb$getHeatMap2 <-
+  function(betaRanges,
+           titleValue,
+           ha,
+           geneNamesHeatMap = F,
+           colSplt = NULL,
+           rwsplt = NULL,
+           rwOrder = NULL, 
+           clusRows = F,
+           clusCols = F) {
+    titleOfPlot <- paste("Heatmap of", titleValue, sep = " ")
+    hmTopNumbers <- ComplexHeatmap::Heatmap(betaRanges, 
+        col = gb$col_fun3,  ## Define the color scale
+        cluster_rows = clusRows,
+    cluster_row_slices = F,
+    cluster_column_slices = F,
+        cluster_columns = clusCols,  ## Cluster the columns
+        show_column_names = F,  ## Show the Column Names (which is sample #)
+        column_names_gp = gpar(fontsize = 12),  ## Column Name Size
+        show_row_names = geneNamesHeatMap,  ## Show Row names (which is probes)
+    row_order=rwOrder,    
+    row_names_side = "left",
+        row_title_side = "left",
+        row_names_gp = gpar(fontsize = 10),
+        row_title_gp = gpar(fontsize = 12, fontface = "bold"),
+        show_row_dend = F,
+        show_column_dend = F,
+        use_raster=T,
+        show_heatmap_legend = T,
+        top_annotation = ha,
+        column_title = titleOfPlot,
+        column_title_gp = gpar(fontsize = 14,fontface = "bold"),
+        raster_device = "CairoPNG",
+        raster_quality = 3,
+        heatmap_legend_param = list(
+            title = "Beta Value",
+            labels_gp = gpar( fontsize = 12),
+            title_gp = gpar(fontsize = 12, fontface = "bold"),
+            legend_direction = "vertical",
+            heatmap_legend_side = "right", 
+            annotation_legend_side = "right",
+            legend_height =  unit(2.5, "in")
+        ),
+        column_split = colSplt,
+        row_split= rwsplt,
+        heatmap_width = unit(10, "in"),
+        heatmap_height = unit(20, "in")
+    )
+    return(gb$drawHeatMap(hmTopNumbers))
+}
