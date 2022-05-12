@@ -137,6 +137,7 @@ sanitizeSheet <- function(inputFi, samsheet) {
   samSh <- samSh %>% dplyr::mutate_all(stringr::str_replace, ",", "")
   write.csv(samSh, samsheet, quote = F, row.names = F)
   targets <- read.csv(samsheet, strip.white = T)
+    if(class(targets)!="data.frame"){targets<- as.data.frame(targets)}
   return(targets)
 }
 
