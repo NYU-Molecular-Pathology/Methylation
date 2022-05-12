@@ -8,3 +8,10 @@ setKeyColumns <- function(targets, col_samTypes, col_samNames, col_other){
   targets$Sample_Name <- targets$Sample_ID <- targets[ , col_samNames] # generates Sample_ID column if doesn't exist
   targets$Sample_Group <- targets[,col_other]
 }
+
+checkSamNam <- function(samNames, targets){
+  if(anyDuplicated(samNames) > 0){
+  warning("Sample IDs contain duplicates, assigning unique names")
+  samNames <- targets$Sample_ID = make.unique(samNames, sep="_")
+  return(samNames) }else{return(samNames)}
+}
