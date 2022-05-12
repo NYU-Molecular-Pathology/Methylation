@@ -5,9 +5,9 @@ dfTargets <- function(targets){
   return(targets)
   }
 
-writeTargets <- function(targets, csvFi="samplesheet.csv"){
+writeTargets<- function(targets, csvFi="samplesheet.csv"){
   targets <- dfTargets(targets)
-  write.csv(targets, file, quote=F, row.names=F)
+  write.csv(targets, file=csvFi, quote=F, row.names=F)
 }
 
 setKeyColumns <- function(targets, col_samTypes, col_samNames, col_other) {
