@@ -131,3 +131,19 @@ renameDots <- function(png1, txtIn){
   imageCap<- paste0("![",txtIn,"](",newName,"){width=90%}")
   return(imageCap)
 }
+
+rmDupeAnno2 <- function(geneBetas,out.fi) {
+  geneRows <- rownames(geneBetas)
+  geneRows <-unlist(lapply(1:length(geneRows), function(rw){
+    spltRw <- stringr::str_split_fixed(geneRows[rw], pattern = "_", 2)
+    rowGene <- spltRw[1, 1]
+    if (rowGene == "") {rowGene = "NO.GENE.NAME"}
+    rowGene <- paste(unique(stringr::str_split(rowGene, ";")[[1]]), collapse = ";")
+    return(paste(rowGene, spltRw[1, 2], sep = "_"))
+  }))
+  toWrite <- as.data.frame(stringr::str_split_fixed(geneRows,"_",2))
+  colnames(toWrite)<- c("Gene_Names", "Probe_Name")
+  write.csv(toWrite, out.fi, quote=F,row.names=F)
+  rownames(geneBetas)<- geneRows
+  return(geneBetas)
+}
