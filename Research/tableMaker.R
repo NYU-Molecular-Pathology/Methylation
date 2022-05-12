@@ -175,5 +175,6 @@ loadHtmlTag <- function(){
     library("DT")
     htmltools::tagList(DT::datatable(cars, options=list(pageLength = 15, width="100%")))
     par(ask=F); devAskNewPage(ask = F)
+    doParallel::registerDoParallel(cores=2)
     return(htmltools::tagList(plotly::ggplotly(ggplot2::ggplot())))
 }
