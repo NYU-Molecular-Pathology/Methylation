@@ -149,6 +149,24 @@ require("plotly")
 require("ggplot2")
 library("DT")
 
+printMissing <- function(theMissing) {
+  if (!is.null(theMissing) & nrow(theMissing) > 0) {
+    selCols <-
+      c(
+        "Sample_Name",
+        gb$col_sentrix,
+        gb$col_samTypes,
+        gb$col_samGrp,
+        "Sample_ID",
+        "Sample_Group"
+      )
+    return(gb$smallTab(theMissing[, selCols]))
+  } else{
+    cat("\n\nNone\n\n")
+  }
+}
+
+
 loadHtmlTag <- function(){
     require("tidyverse")
     require("plotly")
