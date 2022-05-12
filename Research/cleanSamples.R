@@ -6,12 +6,12 @@ dfTargets <- function(targets){
   }
 
 writeTargets <- function(targets, csvFi="samplesheet.csv"){
-  targets <- dfTargets(dfTargets)
+  targets <- dfTargets(targets)
   write.csv(targets, file, quote=F, row.names=F)
 }
 
 setKeyColumns <- function(targets, col_samTypes, col_samNames, col_other) {
-    targets <- dfTargets(dfTargets)
+    targets <- dfTargets(targets)
     targets$Type <- targets[, col_samTypes] # Creates any new "Type" column
     targets$Sample_Name <- targets$Sample_ID <- targets[, col_samNames] # generates Sample_ID column if doesn't exist
     targets$Sample_Group <- targets[, col_other]
@@ -28,6 +28,6 @@ checkSamNam <- function(samNames, targets){
 getTargCsv <- function(csvFi = "samplesheet.csv") {
   gc(verbose = F)
   targets <- read.csv(csvFi, strip.white = T, row.names = NULL)
-  targets <- dfTargets(dfTargets)
+  targets <- dfTargets(targets)
   return(targets)
 }
