@@ -73,6 +73,7 @@ gb$selectPlots <- function(doPlotly=F,tplots,ty,tps,outDirs){
       for (zz in 1:nrow(outDirs)) {
         xx <- paste('###', tps[ty, 1], outDirs[zz, 3], '\n\n')
         cat(xx)
+         gc(verbose=F)
         fig <- tplots[[zz]]
         supM(print(fig))
         cat('\n\n')
@@ -81,6 +82,7 @@ gb$selectPlots <- function(doPlotly=F,tplots,ty,tps,outDirs){
       for(zz in 1:length(tplots))  {
         xx <- paste('###', tps[ty, 1], outDirs[zz, 3], '\n\n')
         cat(xx)
+         gc(verbose=F)
         fig <- tplots[[zz]]
         op <- gb$makePlotly(fig)
         supM(print(htmltools::tagList(ggplotly(op))))
@@ -115,7 +117,8 @@ doMultiple <- function(allBetas1,tsne_titles, outDirs, targets1, tps,ty,custom){
       return(suppressMessages(gb$generateTvals(allBetas1[[X]])))
       })
     plotList <- list(foreach::foreach(plotN = 1:length(tsneList),.packages="foreach")%do%{
-###################### TO CHANGE ########################      
+###################### TO CHANGE ########################
+      gc(verbose=F)
       tsne_plot <- gb$getTsneVal(
         TSNE = tsneList[[plotN]],
         saNames = targets1$SampleFilter,
