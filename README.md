@@ -55,6 +55,9 @@ ___
 
 Alternatively, you can source then run the github script locally using [methylExpress.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/methylExpress.R)
 
+## Run the Test Case after installation with the following command:<br />
+`/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST`<br />
+
 # Email List of Methylation samples which are PACT run
 
 `curl -o PactMethMatch.R -L https://git.io/J41Wp; Rscript --verbose PactMethMatch.R 'TOKENAPI12345667891011' '/Users/PATH/TO/CSV/Desktop/210715_NB501073_9999_ABCDEFGHIJRLK-SampleSheet.csv'`
