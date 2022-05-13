@@ -101,7 +101,7 @@ getScores <- function(Mset=NULL){
 }
 
 MNPtsne2 <- function(scores=NULL){
-	if(!is.null(scores)){Rtsne::Rtsne(scores, dims = 3, pca = F, max_iter = 1500, theta = 0, perplexity = 30, num_threads = 1, is_distance = F)}
+	if(!is.null(scores)){Rtsne::Rtsne(scores, dims = 3, pca = F, max_iter = 1500, theta = 0, perplexity = 30, num_threads = 0, is_distance = F)}
 }
 set.seed(seed = 12345)
 getScore_cache = compiler::cmpfun(getScores)
