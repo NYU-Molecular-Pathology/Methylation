@@ -31,3 +31,11 @@ getTargCsv <- function(csvFi = "samplesheet.csv") {
   targets <- dfTargets(targets)
   return(targets)
 }
+
+checkIdats<- function(samsheet, token, needFi=F){
+    if(needFi==T) {
+      rds <- gb$readInfo(inputSheet = samsheet) # inputSheet can be xlsx or csv
+      stopifnot(length(rds)>1 & stringr::str_detect(rds[1],"RD-"))
+      gb$grabRDCopyIdat(rd_numbers=rds, token, copyIdats=T) 
+    }
+}
