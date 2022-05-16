@@ -69,7 +69,7 @@ makePlotly<-function(fig) {
 }
 
 gb$selectPlots <- function(doPlotly=F,tplots,ty,tps,outDirs){
-  if (doPlotly == F) {
+#  if (doPlotly == F) {
       for (zz in 1:nrow(outDirs)) {
         xx <- paste('###', tps[ty, 1], outDirs[zz, 3], '\n\n')
         cat(xx)
@@ -78,7 +78,7 @@ gb$selectPlots <- function(doPlotly=F,tplots,ty,tps,outDirs){
         supM(print(fig))
         cat('\n\n')
       }
-    } else{
+#    } else{
       for(zz in 1:length(tplots))  {
         xx <- paste('###', tps[ty, 1], outDirs[zz, 3], '\n\n')
         cat(xx)
@@ -88,7 +88,7 @@ gb$selectPlots <- function(doPlotly=F,tplots,ty,tps,outDirs){
         supM(print(htmltools::tagList(ggplotly(op))))
         cat('\n\n')
       }
-    }
+#    }
   return(assign("diagPlot",tplots[[1]]))
 }
 
