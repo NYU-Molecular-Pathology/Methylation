@@ -164,8 +164,8 @@ plot.mds  <- function(mSetSq.beta, samTypes, topN) {
   png(filename = plotNam, width = 12, height = 8, res = 200, units = "in")
   limma::plotMDS(mSetSq.beta, top = topN, gene.selection = "common",
                  plot = T, col = myColors,
-                 main = paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot"),
-                 labels=colnames(mSetSq.beta)
+                 main = paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot")
+                 #labels=colnames(mSetSq.beta)
                  )
   legend("topright", legend = c(names(myColors)), col = paste(as.list(myColors)), pch = 15, cex = 0.8)
   invisible(dev.off())
