@@ -68,28 +68,22 @@ makePlotly<-function(fig) {
     return(otherPlot)
 }
 
-gb$selectPlots <- function(doPlotly=F,tplots,ty,tps,outDirs){
-#  if (doPlotly == F) {
-      for (zz in 1:nrow(outDirs)) {
-        xx <- paste('###', tps[ty, 1], outDirs[zz, 3], '\n\n')
-        cat(xx)
-         gc(verbose=F)
-        fig <- tplots[[zz]]
-        supM(print(fig))
-        cat('\n\n')
-      }
-#    } else{
-      for(zz in 1:length(tplots))  {
-        xx <- paste('###', tps[ty, 1], outDirs[zz, 3], '\n\n')
-        cat(xx)
-         gc(verbose=F)
-        fig <- tplots[[zz]]
-        op <- gb$makePlotly(fig)
-        supM(print(htmltools::tagList(ggplotly(op))))
-        cat('\n\n')
-      }
-#    }
-  return(assign("diagPlot",tplots[[1]]))
+gb$selectPlots <- function(doPlotly = F, tplots, ty, tps, outDirs) {
+  for (zz in 1:nrow(outDirs)) {
+    tabStart <- paste('### Top', tps[ty, 1], outDirs[zz, 3])
+    cat(paste(tabStart, '\n\n'))
+    gc(verbose = F)
+    fig <- tplots[[zz]]
+    supM(print(fig))
+    cat('\n\n')
+    
+    cat(paste(tabStart, '(Interactive)','\n\n'))
+    gc(verbose = F)
+    op <- gb$makePlotly(fig)
+    supM(print(htmltools::tagList(ggplotly(op))))
+    cat('\n\n')
+  }
+  return(assign("diagPlot", tplots[[1]]))
 }
 
 #grabAllBeta <-function(targets1, betas) {
