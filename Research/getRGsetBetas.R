@@ -203,3 +203,13 @@ cleanRgset <- function(RGSet, col_sentrix, betas) {
   rgRows <- RGSet@colData@rownames
   return(RGSet[, rgRows %in% senDat[dropSam]])
 }
+
+checkMdsRds <- function(mbfile, runDir, RGSet, targets) {
+  if (file.exists(file.path(runDir, mbfile))) {
+    mSetSq.beta <- readRDS(mbfile)
+  } else{
+    mSetSq.beta <- gb$supM(gb$getMdsPlot(RGSet, targets$Sample_ID, targets$Type))
+    saveRDS(mSetSq.beta, file = file.path(gb$runDir, gb$mbfile))
+  }
+  return(mSetSq.beta)
+}
