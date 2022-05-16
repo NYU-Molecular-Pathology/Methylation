@@ -63,11 +63,14 @@ takeTopVariance <- function(betas, topVar){
     return(top_var_beta)
 }
 
-getSupervise <- function(the_beta, RGSet, topVar=1:10000){
+getSupervise <- function(the_beta, RGSet, topVar=1:10000, cutOff=0.05){
     condition <- pData(RGSet)$Type
     dmp <- dmpFinder(the_beta, pheno = condition, type = "categorical")
     dmp <- cbind(dmp, ID = rownames(dmp))
     betas_df <- as.data.frame(the_beta)
+    qVals <- dmp$qval < cutOff
+    if(table(qVals)[["TRUE"]]>=max(topVar)) {dmp <- dmp[qVals, ]}
+    dmp <- dmp[dmp$pval < cutOff, ]
     final_sam <- row.names((t(betas_df[row.names(dmp[topVar, ]), ]))) #topVar=1:10000
     betas_df <- betas_df[, colnames(betas_df) %in% final_sam]
     write.csv(betas_df, "dmp_methylation.csv", quote = F)
