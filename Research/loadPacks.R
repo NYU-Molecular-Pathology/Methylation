@@ -38,7 +38,8 @@ cranPkgs <-
         "reshape2",
         "ggplot2",
         "ggnewscale",
-        "ggupset"
+        "ggupset",
+        "umap"
     )
 
 # GitHub Packages ----
