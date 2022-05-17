@@ -164,19 +164,19 @@ gb$savePlotPng<-
             row.names = F,
             col.names = T
         )
-        if (saveImg == F) {
+#        if (saveImg == F) {
             labelTitle <- paste("###", plotName, "Samples" , '\n\n')
             cat(labelTitle)
             print(freqPlot)
             cat('\n\n')
-        } else{
+ #       } else{
             png(
                 file = file.path(getwd(), paste(plotName, "cnv.png", sep = "_")),
                 height = 8,
                 width = 15,
                 units = "in",
                 res = 200
-            )
+  #          )
             freqPlot
             dev.off()
         }
