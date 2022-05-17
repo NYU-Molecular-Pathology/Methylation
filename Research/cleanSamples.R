@@ -39,3 +39,9 @@ checkIdats<- function(samsheet, token, needFi=F){
       gb$grabRDCopyIdat(rd_numbers=rds, token, copyIdats=T) 
     }
 }
+
+setKnitDir <- function(runDir) {
+  syscmd <- paste("cd", runDir)
+  system(syscmd); setwd(runDir)
+  knitr::opts_knit$set(root.dir = runDir)
+}
