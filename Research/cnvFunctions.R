@@ -58,6 +58,36 @@ writeSegTab <- function(segFile, sentrix.ids) {
   }
 }
 
+writeDetailTab<-function(segFile, targets) {
+  samNam <- as.character(targets$Sample_ID)
+  sentrix.ids <- as.character(targets$SentrixID_Pos)
+  samGroup <-as.character(targets$Type)
+  if (!file.exists(segFile)) {
+    addCols = NULL
+    for (i in 1:length(sentrix.ids)) {
+      sampleEpic <- sentrix.ids[i]
+        pathEpic <- file.path(getwd(), sampleEpic)
+        RGsetEpic <- read.metharray(pathEpic, verbose = T, force=T)
+        MsetEpic <- mnp.v11b6::MNPpreprocessIllumina(RGsetEpic, bg.correct = TRUE, normalize = "controls")
+        if(i==1){addCols <-T}else(addCols <- F)
+        
+        x <- gb$customCNV(MsetEpic)
+        q <- CNV.write(x, what='detail')
+        q$sample <- paste(samNam[i])
+        zz <- CNV.write(x, what='probes')
+        #Chromosome  Start    End    Feature 204776850101_R02C01
+        colnames(zz) <- c("Chromosome", "Start", "End", "Probe", "Value")
+        q$ID <- paste(samNam[i])
+        q$group <- paste(samGroup[i])
+        zz$ID <- paste(samNam[i])
+        zz$group <- paste(samGroup[i])
+        probeFi <- paste(samNam[i],"probeFile.csv",sep = "_")
+        write.table(q, file = segFile, append = T, quote=F, sep=",", col.names=addCols, row.names=F)
+        write.table(zz, file = probeFi, append = F, quote=F, sep=",", col.names=T, row.names=F)
+    }
+  }
+}
+
 saveClusters <- function(seg_clust_file,segFile){
     detailVals <- as.data.frame(read.csv(segFile, row.names=NULL))[,c("chrom","loc.start","loc.end", "seg.mean","ID")]
     colnames(detailVals) <- c("chromosome", "start", "end", "segmean", "sample")
