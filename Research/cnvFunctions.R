@@ -123,6 +123,9 @@ gb$savePlotPng<-
              plotTitle,
              plotChr = c(paste0("chr", 1:22)),
              saveImg = F) {
+        library(ggplot2)
+        library(GenVisR)
+        library(grDevices)
         freqPlot <-
             suppressMessages(
                 GenVisR::cnFreq(
@@ -136,7 +139,7 @@ gb$savePlotPng<-
                 )
             )
         freqPlot[["theme"]][["strip.text"]][["angle"]]<- -90
-        freqPlot[["theme"]][["strip.text"]]$margin <-margin(t = 10, r = 10, b = 10, l = 10, unit = "pt")
+        freqPlot[["theme"]][["strip.text"]]$margin <-ggplot2::margin(t = 10, r = 10, b = 10, l = 10, unit = "pt")
         freqPlot[["theme"]][["strip.placement"]] <- 'outside'
         freqPlot[["theme"]][["panel.spacing"]]<- unit(0, "points")
         freqPlot[["theme"]][["strip.placement"]]="outside"
