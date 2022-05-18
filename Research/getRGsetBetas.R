@@ -155,23 +155,25 @@ getMdsPlot <- function(RGSet, samNames,samTypes, topN=1000) {
     return(mSetSq.beta)
 }
 
-plot.mds  <- function(mSetSq.beta, samTypes, topN) {
-  library('RColorBrewer')
-  plotNam <- paste0("top_", topN, "_msetBeta", ".png")
-  myColors <- RColorBrewer::brewer.pal(length(unique(samTypes)), "Set1")
-  if("#FFFF33" %in% myColors){myColors[myColors=="#FFFF33"]<-"#7CF72F"}
-  names(myColors) <- unique(samTypes)
-  png(filename = plotNam, width = 12, height = 8, res = 200, units = "in")
-  limma::plotMDS(mSetSq.beta, top = topN, gene.selection = "common",
-                 plot = T, col = myColors,
-                 main = paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot")
-                 #labels=colnames(mSetSq.beta)
-                 )
-  legend("topright", legend = c(names(myColors)), col = paste(as.list(myColors)), pch = 15, cex = 0.8)
-  invisible(dev.off())
-  thepng <- paste0('./', plotNam)
-  return(knitr::include_graphics(thepng))
+plot.mds<- function(mSetSq.beta, targets, topN) {
+    library('RColorBrewer')
+    myColors <- c(targets$color)
+    names(myColors) <- targets$Sample_Name
+    plotNam <- paste0("top_", topN, "_msetBeta", ".png")
+    png(filename = plotNam, width = 12, height = 8, res = 200, units = "in")
+    limma::plotMDS(mSetSq.beta, top = topN, gene.selection = "common",
+                   plot = T, col = myColors, pch=19, labels=colnames(mSetSq.beta),
+                   main = paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot")
+                   #labels=colnames(mSetSq.beta)
+    )
+    names(myColors) <- targets$Type
+    legend("topright", legend = c(unique(names(myColors))), 
+           col = paste(as.list(unique(myColors))), pch = 15, cex = 0.8)
+    invisible(dev.off())
+    thepng <- paste0('./', plotNam)
+    return(knitr::include_graphics(thepng))
 }
+
 
 dropGroup <- function(targets, filterCol=NULL, group2rm=NULL) {
     remov <- ifelse(!is.null(group2rm),
