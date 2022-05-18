@@ -186,7 +186,7 @@ gb$savePlotPng<-
             )
             freqPlot
             dev.off()
-        }
+        
   }
 
 grabClusterDat <- function(seg_clust_file,segFile){
