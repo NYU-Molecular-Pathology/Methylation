@@ -163,7 +163,7 @@ printMissing <- function(theMissing) {
       )
     return(gb$smallTab(theMissing[, selCols]))
   } else{
-    cat("\n\nNone\n\n")
+    cat("None\n\n")
   }
 }
 
