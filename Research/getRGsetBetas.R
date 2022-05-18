@@ -156,15 +156,14 @@ getMdsPlot <- function(RGSet, samNames,samTypes, topN=1000) {
 }
 
 plot.mds<- function(mSetSq.beta, targets, topN) {
-    library('RColorBrewer')
     myColors <- c(targets$color)
     names(myColors) <- targets$Sample_Name
     plotNam <- paste0("top_", topN, "_msetBeta", ".png")
     png(filename = plotNam, width = 12, height = 8, res = 200, units = "in")
-    limma::plotMDS(mSetSq.beta, top = topN, gene.selection = "common",
-                   plot = T, col = myColors, pch=19, labels=colnames(mSetSq.beta),
-                   main = paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot")
-                   #labels=colnames(mSetSq.beta)
+    limma::plotMDS(
+      mSetSq.beta, top = topN, gene.selection = "common",
+      plot = T, col = myColors, pch=19, labels=colnames(mSetSq.beta),
+      main = paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot")
     )
     names(myColors) <- targets$Type
     legend("topright", legend = c(unique(names(myColors))), 
