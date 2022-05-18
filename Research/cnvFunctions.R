@@ -312,3 +312,14 @@ saveClusters<-function(seg_clust_file,segFile){
     cnData <- read.delim(seg_clust_file,header = T,sep = "\t",row.names=NULL)
     return(cnData)
 }
+
+rmDupeAnnotation <- function(dupeRows) {
+    dupeRows2 <- unlist(mclapply(
+    X = 1:length(dupeRows),
+    FUN = function(rw) {
+      rowGene <- stringr::str_split(dupeRows[rw], ";")[[1]]
+      if (rowGene == "") {rowGene = "NO.NAME"}
+      newRow <- paste(unique(rowGene), collapse = "/")
+      return(newRow)}))
+  return(dupeRows2)
+}
