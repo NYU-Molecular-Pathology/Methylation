@@ -97,17 +97,26 @@ saveClusters <- function(seg_clust_file,segFile){
     return(cnData)
 }
 
-
-savePlotPdf <- function(cnData, plotName, plotTitle){
+savePlotPdf <- function(cnData, plotName, plotTitle) {
     freqPlot <- suppressMessages(
-      GenVisR::cnFreq(cnData,genome = "hg19",plotType = "frequency", 
-                      plot_title=plotTitle, CN_Loss_colour = "#00B0EB", 
-                      CN_Gain_colour = "#00A36D"))
-    labelTitle <- paste("###", plotName,'\n\n')
+        GenVisR::cnFreq(
+            cnData,
+            genome = "hg19",
+            plotType = "frequency",
+            plot_title = plotTitle,
+            CN_Loss_colour = "#00B0EB",
+            CN_Gain_colour = "#00A36D"
+        )
+    )
+    labelTitle <- paste("###", plotName, '\n\n')
     cat(labelTitle)
     print(freqPlot)
     cat('\n\n')
-    pdf(file=paste0(plotName,"_cnv.pdf"),height = 5,width = 25)
+    pdf(
+        file = paste0(plotName, "_cnv.pdf"),
+        height = 5,
+        width = 25
+    )
     freqPlot
     dev.off()
 }
@@ -126,9 +135,7 @@ gb$savePlotPng<-
         library(ggplot2)
         library(GenVisR)
         library(grDevices)
-        freqPlot <-
-            suppressMessages(
-                GenVisR::cnFreq(
+        freqPlot <- GenVisR::cnFreq(
                     cnData,
                     plotType = "frequency",
                     plotChr = plotChr,
@@ -136,8 +143,8 @@ gb$savePlotPng<-
                     CN_Loss_colour = "#FF0000",
                     CN_Gain_colour = "#00A36D",
                     facet_lab_size= 9
-                )
-            )
+        )
+            
         freqPlot[["theme"]][["strip.text"]][["angle"]]<- -90
         freqPlot[["theme"]][["strip.text"]]$margin <-ggplot2::margin(t = 10, r = 10, b = 10, l = 10, unit = "pt")
         freqPlot[["theme"]][["strip.placement"]] <- 'outside'
@@ -176,7 +183,7 @@ gb$savePlotPng<-
                 width = 15,
                 units = "in",
                 res = 200
-  #          )
+            )
             freqPlot
             dev.off()
         }
