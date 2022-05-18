@@ -247,3 +247,68 @@ entrz2kegg <- function(gene_char_unique){
   kk_final <- DOSE::setReadable(kk, OrgDb = org.Hs.eg.db::org.Hs.eg.db, keyType = "ENTREZID")
   return(kk_final)
 }
+
+# Removes repeated gene names in Manifest annotations
+removeDupeGene <- function(newOvGene) {
+  if(!file.exists("newOvGene.rds")){
+  newOvGene2 <- unlist(mclapply(
+    X = 1:nrow(newOvGene),
+    FUN = function(rw) {
+      rowGene <- stringr::str_split(newOvGene[rw, 1], ";")
+      if (rowGene == "") {rowGene = "NO.GENE.NAME"}
+      newRow <- paste(unique(rowGene[[1]]), collapse = "/")
+      return(newRow)
+    }
+  ))
+  saveRDS(newOvGene2, "newOvGene.rds")
+  }else{ 
+    newOvGene2 <- readRDS("newOvGene.rds")
+    }
+  return(newOvGene2)
+}
+
+writeDetailTab<-function(segFile, targets) {
+  samNam <- as.character(targets$Sample_ID)
+  sentrix.ids <- as.character(targets$SentrixID_Pos)
+  samGroup <-as.character(targets$Type)
+  if (!file.exists(segFile)) {
+    addCols = NULL
+    for (i in 1:length(sentrix.ids)) {
+      sampleEpic <- sentrix.ids[i]
+        pathEpic <- file.path(getwd(), sampleEpic)
+        RGsetEpic <- read.metharray(pathEpic, verbose = T, force=T)
+        MsetEpic <- mnp.v11b6::MNPpreprocessIllumina(
+          RGsetEpic, bg.correct = TRUE, normalize = "controls")
+        if(i==1){addCols <-T}else(addCols <- F)
+        x <- gb$customCNV(MsetEpic)
+        #cnv_df<-getCnvPlot(x)
+        q <- CNV.write(x, what='detail')
+        q$sample <- paste(samNam[i])
+        zz <- CNV.write(x, what='probes')
+        #Chromosome  Start    End    Feature 204776850101_R02C01
+        #c("chromosome", "start", "end",  "sample","segmean")
+        colnames(zz) <- c("Chromosome", "Start", "End", "Probe", "Value")
+        q$ID <- paste(samNam[i])
+        q$group <- paste(samGroup[i])
+        zz$ID <- paste(samNam[i])
+        zz$group <- paste(samGroup[i])
+        probeFi <- paste(samNam[i],"probeFile.csv",sep = "_")
+        write.table(q, file = segFile, append = T, quote=F, sep=",",
+                    col.names=addCols, row.names=F)
+        write.table(zz, file = probeFi, append = F, quote=F, sep=",", col.names=T, row.names=F)
+    }
+  }
+}
+
+saveClusters<-function(seg_clust_file,segFile){
+  set1Nam<- c("chrom","loc.start","loc.end", "seg.mean","ID")
+  set2Nam<- c("chr","start","end", "value","ID"   )
+    detailVals <- as.data.frame(read.csv(segFile, row.names=NULL))
+    detailVals <- detailVals[,set1Nam]
+    #detailVals <- detailVals[,set2Nam]
+    colnames(detailVals) <- c("chromosome", "start", "end", "segmean", "sample")
+    detailVals$segmean <- (2**(detailVals$segmean))*2
+    write.table(detailVals,file=seg_clust_file,sep = "\t",row.names = F)
+    cnData <- read.delim(seg_clust_file,header = T,sep = "\t",row.names=NULL)
+    return(cnData)
+}
