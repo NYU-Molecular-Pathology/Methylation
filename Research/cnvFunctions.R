@@ -118,7 +118,7 @@ savePlotPdf <- function(cnData, plotName, plotTitle) {
         width = 25
     )
     freqPlot
-    dev.off()
+    invisible(dev.off())
 }
 
 filterGrp <- function(cnData, typeGroup){
@@ -185,7 +185,7 @@ gb$savePlotPng<-
                 res = 200
             )
             freqPlot
-            dev.off()
+           invisible(dev.off())
         
   }
 
