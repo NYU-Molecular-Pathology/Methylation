@@ -21,23 +21,16 @@ params:
 pactName <- params$pactName #<- "PACT-22-10"
 userName <- params$userName#<- "Jonathan"
 workDir  <- params$workDir# <- "/Volumes/CBioinformatics/jonathan/pact/consensus"
-    if (is.null(runID)){runID<-paste0(basename(getwd()))}
-# To Knit RMD, copy to same directory ----------------
-#"_MethylMatch.xlsx","-QC.tsv","-SampleSheet.csv", and all ".FACETS.cnv.plot.pdf" files
-
 ```
 
 ```{r, label='Input paths', echo=FALSE, message=TRUE, warning=FALSE, error=FALSE, include=FALSE}
 outDir <- file.path(workDir, paste0(pactName,"_consensus"))
 message("Now Knitting ", pactName, ".html")
-
 philipsFtp <- "/Volumes/molecular/Molecular/Philips_SFTP" # Philips datadump path
 methSheet <- paste0(pactName,"_MethylMatch.xlsx") # MethylMatch excel file in same directory
 qcTsv <- paste0(pactName,"-QC.tsv") # tsv file that is from QC
-#https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/
-#PACT_scripts/PACT_desc.csv
+#https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/PACT_desc.csv
 descrip <- paste0(pactName,"_desc.csv") # your concensus file from github
-
 pdfDir <- file.path(getwd(),"FACETpdfs") # input facet pdf directory
 pngOutDir <- file.path(outDir,"cnvpng") # output copy of cnvPNG files
 pngDir <- file.path(outDir,"methCNV") # output copy of methylation png files
@@ -135,39 +128,33 @@ div.tocify {
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
-# Librarian checks if package exists, if it cannot load, it tries to install package from CRAN, then BioConductor, & GitHub
+# Librarian checks if package exists, load or install package from CRAN, BioConductor, & GitHub
 if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 6, quiet=T)}
-pkgs <- c(
-  "animation","tidyverse","knitr","kableExtra","stringr","readr","ggplot2","data.table","plotly", "DT","pdftools", "htmltools", "forcats", "stringr", "dplyr", "purrr", "tidyr", "tibble", "stats", "graphics", "grDevices", "utils", "datasets","methods", "base","magrittr","crayon")
-librarian::shelf(pkgs, ask=F)
-animation::ani.options(autobrowse = FALSE); options(width=1400)
+pkgs <- c("animation","tidyverse","knitr","kableExtra","stringr","readr","ggplot2","data.table","plotly", "DT","pdftools", "htmltools", "forcats", "stringr", "dplyr", "purrr", "tidyr", "tibble", "stats", "graphics", "grDevices", "utils", "datasets","methods", "base","magrittr","crayon")
+librarian::shelf(pkgs, ask=F); animation::ani.options(autobrowse = FALSE); options(width=1400)
 ```
 
 <span style="background-color:lightgreen;">PASS</span>  
 
 ```{r, label='Check Pathways', echo=FALSE, warning=FALSE, error=FALSE, include=FALSE}
-critialMnts <- c("/Volumes/CBioinformatics/Methylation/", "/Volumes/molecular/MOLECULAR LAB ONLY")
-# Checks if the drives are mounted
-checkMounts <- function(critialMnts){
-    failMount <- lapply(critialMnts, function(driveMount){
-      ifelse(!dir.exists(driveMount),return(T),return(F))}
-      )
+critialMnts <- c("/Volumes/CBioinformatics/Methylation/", "/Volumes/molecular/")
+# Checks if network drives mounted, changes work directory and creates output directory
+checkMntDirs <- function(critialMnts, outDir){
+    failMount <- lapply(critialMnts, function(mnt){ifelse(!dir.exists(mnt),return(T),return(F))})
     if(any(failMount==T)){
         toFix <- paste(critialMnts[which(failMount==T)])
         cat("PATH does not exist, ensure drive is mounted:", toFix, sep="\n")
         message(paste("\nTry executing:\nsystem('diskutil mountdisk",toFix,"')"))
         stopifnot(!any(failMount==T))
-        }else{message("All network Drive paths are accessible")}
+    }else{message("All network Drive paths are accessible")}
+    if(!dir.exists(outDir)){dir.create(outDir)}
+    knitr::opts_knit$set(root.dir = outDir)
+    system(paste("cd", outDir))
+    setwd(outDir)
+    message("Working directory changed to:\n",outDir)
 }
 
-checkMounts(critialMnts)
-# Changes the working directory and creates output directory
-if(!dir.exists(outDir)){dir.create(outDir)}
-knitr::opts_knit$set(root.dir = outDir)
-sysCmd <- paste("cd", outDir)
-system(sysCmd)
-setwd(outDir)
-message("Working directory changed to:\n",outDir)
+checkMntDirs(critialMnts, outDir)
 ```
 
 ```{r, label='Check Data Files', echo=FALSE, warning=FALSE, error=FALSE, include=FALSE}
@@ -208,19 +195,17 @@ qcHeader <- c("Sample", "Mapped Reads QC", "Deduplicated Reads QC", "Targets wit
               "Avg and Median Coverage", "Overlapped HOMO SNP")
 # Options for Data.Table parameters
 dtOpts <- list(scrollX = T, scrollY=T, info = F, autoWidth = T, pageLength = 100, rownames=T, lengthChange = T, searchable = T)
+#kblOpt <- list()
 
 makePdfTab <- function(pdfFi){
   pdfFi <- file.path(outDir,"cnvpng",paste0(pdfFi,".png"))
-    cat("Note: CNV Amplifications are listed first,", 
-        "followed by ALL Philips CNV abberations in table below\n\n")
+    cat("Note: CNV Amplifications are listed first,", "followed by ALL Philips CNV abberations in table below\n\n")
     cat(paste0("![CNV Plot](", pdfFi, "){width=100%}"))
     cat("\n\n")
 }
 
 makeRdTab <- function(rdNumb, sam) {
-  cnvFi <- file.path(".",basename(pngDir), 
-                     paste0(rdNumb, "_cnv.png"))
-  #cnvFi <- file.path(pngDir, paste0(rdNumb, "_cnv.png"))
+  cnvFi <- file.path(".",basename(pngDir), paste0(rdNumb, "_cnv.png"))
   altTxt <- paste("![Methylation",rdNumb,sam,"CNV Plot](")
   cat(paste0(altTxt,cnvFi,"){width=120%}"))
   cat("\n\n")
@@ -228,8 +213,7 @@ makeRdTab <- function(rdNumb, sam) {
 
 makeSpecimenTab <- function(objDat){
   newTa <- knitr::kable(objDat, row.names=F, "html")
-  newTa <- kableExtra::kable_styling(newTa, bootstrap_options = c("condensed"), 
-                                     full_width = T, position="left") 
+  newTa <- kableExtra::kable_styling(newTa, bootstrap_options = c("condensed"), full_width = T, position="left") 
   newTa <- kableExtra::column_spec(newTa, 1:5, width = "2cm")
   print(newTa)
   cat("\n\n")
@@ -238,16 +222,14 @@ makeSpecimenTab <- function(objDat){
 makeQCTab <- function(objDat){
   colnames(objDat) <- qcHeader
       newTa <- knitr::kable(objDat, row.names=F, "html")
-      newTa <- kableExtra::kable_styling(newTa, bootstrap_options = c("striped","condensed"),
-                                         full_width = F, position="left")
+      newTa <- kableExtra::kable_styling(newTa, bootstrap_options = c("striped","condensed"), full_width = F, position="left")
       newTa <- kableExtra::column_spec(newTa, 1:5, width = "4cm")
       print(newTa)
       cat("\n\n")
 }
 
 makeDefaultDt <- function(objDat){
-  message("Note: INDEL/Frameshift calls have tumor freq >= 5%,",
-          "normal freq <2%, and tumor read depth >50")
+  message("Note: INDEL/Frameshift calls have tumor freq >= 5%,", "normal freq <2%, and tumor read depth >50")
   dtTab <- htmltools::tagList(
     DT::datatable(objDat, rownames = F, options=dtOpts, height = "120%", width="100%"))
   print(dtTab)
@@ -289,12 +271,8 @@ parsePhilipsCn <- function(cnvInfo, sam, cnvTab){
 
 parseCNV <- function(outPath, sam, cnvTab){
   cnvFi = file.path(outPath, sam, "aberration_cnv.csv")
-    cnvInfo <- as.data.frame(
-      readr::read_csv(cnvFi, col_types = readr::cols(.default = readr::col_character()))
-      )
-    if (nrow(cnvInfo) > 0) {
-      cnvTab <- parsePhilipsCn(cnvInfo, sam, cnvTab)
-    }
+    cnvInfo <- as.data.frame(readr::read_csv(cnvFi, col_types = readr::cols(.default = readr::col_character())))
+    if (nrow(cnvInfo) > 0) {cnvTab <- parsePhilipsCn(cnvInfo, sam, cnvTab)}
     return(cnvTab)
 }
 
@@ -307,15 +285,16 @@ getDumpFiles <- function(outPath, sam, cnvTab){
       try(fs::file_copy(path = dumpDir, new_path = destDir), silent = T)
       unzip(zipfile = destDir, exdir = outPath)
     }
-    cnvTab<-parseCNV(outPath, sam,cnvTab)
+    cnvTab<-parseCNV(outPath, sam, cnvTab)
   }
+  else{return(cnvTab)}
 }
 
 # Appends any additional cnv abberations from data dump
 checkDataDump <- function(sam, cnvTab) {
   outPath <- file.path(getwd(), "zipfiles")
   if (!dir.exists(outPath)) {dir.create(outPath)}
-  cnvTab<-getDumpFiles(outPath, sam , cnvTab)
+  cnvTab<- getDumpFiles(outPath, sam , cnvTab)
   drpCol <- which(stringr::str_detect(colnames(cnvTab), "In."))
   cnvTab <- cnvTab[,-drpCol]
   return(cnvTab)
@@ -332,8 +311,7 @@ checkTumorPdf <- function(samList, pngOutDir){
   tumors <- samList[toDrop, ] # drop controls/normals
   row.names(tumors)<- 1:nrow(tumors) # re-number rows
   if(length(pdfList)!=nrow(tumors)){
-    warning("Number of sample rows ", nrow(tumors), 
-            " does not equal length of pdf files: ",
+    warning("Number of sample rows ", nrow(tumors), " does not equal length of pdf files: ",
             length(pdfList), "\nCheck if any are missing:\n")
     print(pdfList)
   }
@@ -346,18 +324,11 @@ convert.plots <- function(tumors, pdfList) {
   invisible(lapply(X=1:length(ngsOrder), FUN=function(X){
     pngName <- paste0(tumors$Test_Number[X], ".png")
     pdfFile <- pdfList[ngsOrder[X]]
-    
     tryCatch(
-      expr = {suppressWarnings(
-        pdftools::pdf_convert(
-          pdfFile,
-          filenames = file.path("cnvpng", pngName),
-          dpi = 300
-          ))},
+      expr = {suppressWarnings(pdftools::pdf_convert(pdfFile,filenames = file.path("cnvpng", pngName),dpi = 300))},
       error = function(e) {
         message("There was an error:\n",e,"\nTry running:\nbrew install fontconfig --universal")}
-      )
-    }))
+      )}))
 }
 
 checkMethCnv <- function(methData){
@@ -368,10 +339,9 @@ checkMethCnv <- function(methData){
     methPath <- file.path(methDir,mSam)
     methOut <-file.path(pngDir,mSam)
     if(!file.exists(methOut)){
-    if(file.exists(methPath)){
-      fs::file_copy(path=methPath, new_path = file.path(pngDir,mSam))
-    }else{warning("Sample failed to copy:\n", methPath)}
-      }}
+    if(file.exists(methPath)){fs::file_copy(path=methPath, new_path = file.path(pngDir,mSam))
+    } else{warning("Sample failed to copy:\n", methPath)}}
+    }
 }
 ```
 
@@ -388,7 +358,6 @@ if(!dir.exists(pdfDir)){
 message("Checking if methcnv files copied locally...")
 checkMethCnv(methData)
 ```
-
 
 ```{r, label='New Tabs Maker', echo=FALSE, message=TRUE, warning=FALSE, error=FALSE, include=FALSE}
 # Generates a new Sample Tabbed row in html ------------------------------------
@@ -462,10 +431,11 @@ makeAbTab <- function(sam){
   dumpDir <- file.path(getwd(), "zipfiles", sam)
   snvCsv <- file.path(dumpDir, "aberration_snv.csv")
   samCsv <- file.path(dumpDir, "specimen.csv")
-  if(file.exists(snvCsv)){printSnvs(snvCsv)} else{
-      message("Data dump directory not found:\n", dumpDir)}
-  if(file.exists(samCsv)){printSpecInfo(samCsv)}else{
-    message("Data dump directory not found:\n", dumpDir)}
+  if(file.exists(snvCsv)){printSnvs(snvCsv)
+    if(file.exists(samCsv)){printSpecInfo(samCsv)}else{
+    message("Data dump directory not found: ", file.path(philipsFtp,paste0(sam,".zip")))}
+    } else{
+      message("Data dump directory not found: ", file.path(philipsFtp,paste0(sam,".zip")))}
 }
 
 ```
@@ -488,11 +458,12 @@ for (sam in samples) {
     snvTab <- snvDt[samRows & snvDt$Variant=="SNV",]
     makeDT("In-House SNV/INDEL", objDat=snvTab)
   }else{makeBlankRow(sam)}
-  cnvTab <- checkDataDump(sam,cnvTab=snvDt[samRows & snvDt$Variant=="CNV",])
+  cnvTab <- snvDt[samRows & snvDt$Variant=="CNV",]
+  cnvTab <- checkDataDump(sam,cnvTab)
   makeDT("CNV",cnvTab, pdfFi=sam)
   methCn <- snvDt[samRows & snvDt$Variant=="Methylation",]
   if(nrow(methCn)==0) {methCn = NULL}
   makeMethTab(sam, methCn)
   makeAbTab(sam)
-  }
+}
 ```
