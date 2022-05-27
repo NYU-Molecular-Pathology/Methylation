@@ -6,7 +6,9 @@ new.ggplotly <- function (xx, getTables = T, addCustom = F) {
     compiler::setCompilerOptions(suppressAll = TRUE, optimize = 3)
     ovDataPath <- paste(path.package("mnp.v11b6"), "/ext/ovgenes.RData", sep = "")
     load(ovDataPath)
-    newOvGenes <- readRDS("newOvGenes.rds")
+    urlLi <- "https://github.com/NYU-Molecular-Pathology/Methylation/blob/416a007b8a21f59a71493cea189bc424009e8d7d/Rdata/newOvGenes.rds"
+    newOvGenes <- readRDS(urlLi(urlLi, method="libcurl"))
+    #readRDS("newOvGenes.rds")
     ylim = c(-2, 2)
     bin.ratio <- xx@bin$ratio - xx@bin$shift
     bin.ratio[bin.ratio < ylim[1]] <- ylim[1]
