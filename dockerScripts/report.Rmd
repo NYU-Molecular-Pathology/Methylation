@@ -433,7 +433,16 @@ if (is450k==TRUE) {
     } else {
 	    xx <- supM(mnp.v11b6::MNPcnv(Mset,sex = sex,main = sampleID))
 	    }
-supM(mnp.v11b6::MNPcnvggplotly(xx, getTables = F))
+#supM(mnp.v11b6::MNPcnvggplotly(xx, getTables = F))
+devtools::source_url("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/cnvggplotly.R")
+gb <- globalenv(); assign("gb", gb)
+githubURL <- 
+  "https://github.com/NYU-Molecular-Pathology/Methylation/raw/416a007b8a21f59a71493cea189bc424009e8d7d/Rdata/newOvGenes.rds"
+if(!file.exists("newOvGenes.rds")){
+	utils::download.file(githubURL,"newOvGenes.rds", method="libcurl")
+	}
+newOvGenes <- readRDS("newOvGenes.rds")
+supM(gb$new.ggplotly(xx, getTables = F, newOvGenes=newOvGenes))
 ```
 <p style= "font-size:14px">
 Depiction of chromosomes 1 to 22 (and X/Y if automatic prediction was successful). Gains/amplifications represent positive, losses negative deviations from the baseline. 29 brain tumor relevant gene regions are highlighted for easier assessment.
