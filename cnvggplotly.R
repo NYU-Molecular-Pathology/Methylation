@@ -93,6 +93,7 @@ new.ggplotly <- function (xx, getTables = T, newOvGenes=NULL, sex='male', addCus
             "start: ", start(xx@anno@bins), "<br>",
             "end: ", end(xx@anno@bins), "<br>",
             "probes: ", (xx@anno@bins)$probes, "<br>",
+            "Chr: ", xx@anno@bins@ranges@NAMES,"<br>",
             "Genes: ", newOvGenes[1:length(xx@bin$ratio)])
     }
     else {
