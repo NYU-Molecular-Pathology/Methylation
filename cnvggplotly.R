@@ -84,7 +84,7 @@ new.ggplotly <- function (xx, getTables = T, addCustom = F, newOvGenes=NULL) {
               axis.title.x = element_text(size = 14))
     ggp <- suppressMessages(suppressWarnings(plotly::ggplotly(p)))
     ggpb <- suppressMessages(suppressWarnings(plotly::plotly_build(ggp)))
-    ggpb <- ggpb %>% layout(xaxis = list(showgrid = F), yaxis = list(showgrid = F))
+    ggpb <- ggpb %>% plotly::layout(xaxis = list(showgrid = F), yaxis = list(showgrid = F))
 
     # Annotate Hover Probes
     if (length(xx@bin$ratio) == 25666) {
