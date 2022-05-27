@@ -442,7 +442,7 @@ if(!file.exists("newOvGenes.rds")){
 	utils::download.file(githubURL,"newOvGenes.rds", method="libcurl")
 	}
 newOvGenes <- readRDS("newOvGenes.rds")
-supM(gb$new.ggplotly(xx, getTables = F, newOvGenes=newOvGenes))
+supM(gb$new.ggplotly(xx, getTables = F, sex=sex, newOvGenes=newOvGenes))
 ```
 <p style= "font-size:14px">
 Depiction of chromosomes 1 to 22 (and X/Y if automatic prediction was successful). Gains/amplifications represent positive, losses negative deviations from the baseline. 29 brain tumor relevant gene regions are highlighted for easier assessment.
