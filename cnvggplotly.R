@@ -1,5 +1,5 @@
 
-new.ggplotly <- function (xx, getTables = T, addCustom = F, newOvGenes=NULL, sex='male') {
+new.ggplotly <- function (xx, getTables = T, newOvGenes=NULL, sex='male', addCustom = F) {
     require(compiler)
     compiler::enableJIT(3)
     compiler::compilePKGS(enable = TRUE)
