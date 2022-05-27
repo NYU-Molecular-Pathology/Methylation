@@ -87,13 +87,13 @@ new.ggplotly <- function (xx, getTables = T, addCustom = F, newOvGenes=NULL, sex
     ggpb <- ggpb %>% plotly::layout(xaxis = list(showgrid = F), yaxis = list(showgrid = F))
 
     # Annotate Hover Probes
-    if (length(xx@bin$ratio) == 25666) {
+    if (length(xx@bin$ratio) >= 25666) {
         ggpb$x$data[[1]]$text <- paste0(
             seqnames(xx@anno@bins), "<br>",
             "start: ", start(xx@anno@bins), "<br>",
             "end: ", end(xx@anno@bins), "<br>",
             "probes: ", (xx@anno@bins)$probes, "<br>",
-            "Genes: ", newOvGenes)
+            "Genes: ", newOvGenes[1:length(xx@bin$ratio)])
     }
     else {
         ggpb$x$data[[1]]$text <- paste0(
