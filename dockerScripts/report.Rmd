@@ -451,7 +451,7 @@ Depiction of chromosomes 1 to 22 (and X/Y if automatic prediction was successful
 ### CNV Gains and Loss
 ```{r, label='CNV table'}
 require(mnp.v11b6)
-dra <- supM(mnp.v11b6::MNPcnvggplotly(xx,getTables = T))
+dra <- supM(gb$new.ggplotly(xx, getTables = T, sex=sex, newOvGenes=newOvGenes))
 gDF <- t(data.frame(Gains = c(rownames(dra[(dra$Gain == T),]))))
 lDF <- t(data.frame(Loss = c(rownames(dra[(dra$Loss == T),]))))
 
