@@ -1,5 +1,5 @@
 
-new.ggplotly <- function (xx, getTables = T, addCustom = F, newOvGenes=NULL) {
+new.ggplotly <- function (xx, getTables = T, addCustom = F, newOvGenes=NULL, sex='male') {
     require(compiler)
     compiler::enableJIT(3)
     compiler::compilePKGS(enable = TRUE)
@@ -20,7 +20,7 @@ new.ggplotly <- function (xx, getTables = T, addCustom = F, newOvGenes=NULL) {
         xx
     }
     chrX = TRUE
-    chrY = TRUE
+    chrY <- ifelse(sex=="male", T,F)
     chr <- xx@anno@genome$chr
     chr.cumsum0 <- .cumsum0(xx@anno@genome[chr, "size"], n = chr)
     if (!chrX & is.element("chrX", names(chr.cumsum0))) {chr.cumsum0["chrX"] <- NA}
