@@ -439,7 +439,7 @@ gb <- globalenv(); assign("gb", gb)
 githubURL <- 
   "https://github.com/NYU-Molecular-Pathology/Methylation/raw/416a007b8a21f59a71493cea189bc424009e8d7d/Rdata/newOvGenes.rds"
 if(!file.exists("newOvGenes.rds")){
-	utils::download.file(githubURL,"newOvGenes.rds", method="libcurl")
+	utils::download.file(githubURL, file.path(getwd(),"newOvGenes.rds"), method="libcurl")
 	}
 newOvGenes <- readRDS("newOvGenes.rds")
 supM(gb$new.ggplotly(xx, getTables = F, sex=sex, newOvGenes=newOvGenes))
