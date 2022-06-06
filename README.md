@@ -1,4 +1,8 @@
-# How To Setup Clinical Methylation Classifier 
+# How To Setup Clinical Methylation Classifier
+
+## Methylation Pipline Overview
+<img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/718895b8b6d219a77a24226514bd802050730e86/screenshots/methylation_overview.png" alt="drawing" width="650"/><br/>
+
 ## Essential Downloads
 The classifier runs on R version 3.6.3 and up.  It is not compatible with 3.3.3<br />
 Download **R 4.1** from CRAN: [https://cran.r-project.org/bin/macosx/](https://cran.r-project.org/bin/macosx/)<br />
