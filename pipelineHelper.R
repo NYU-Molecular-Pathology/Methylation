@@ -150,7 +150,8 @@ getRunData <- function(data) {
 # Helper function called by makeReports.v11b6 to generate the HTML report
 do_report <-function(data = NULL, genCn=F) {
     msgFunName(pipeLnk,"do_report")
-    msgParams("data\n", data)
+    msgParams("data")
+    msgParams(data)
     if(!is.null(data)){
         dat <- getRunData(data)
         RGsetEpic <- getRGset(getwd(), dat$senLi)
