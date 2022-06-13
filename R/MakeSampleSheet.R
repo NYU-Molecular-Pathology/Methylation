@@ -221,7 +221,7 @@ readSheetWrite <- function(sampleNumb= NULL, runID = NULL) {
     current.run.Folder <- file.path(gb$methDir,runID)
     if (!file.exists("samplesheet.csv")) {
         sampleNumb=as.integer(sampleNumb)
-        if(!is.integer(sampleNumb) | sampleNumb>=8 ){
+        if(!is.integer(sampleNumb) | sampleNumb<8 ){
         stop("Check samplesheet .xlsm cell B4 for valid integer total arrays")
         }
         worksheet=readSampleSheet(wks=T)
