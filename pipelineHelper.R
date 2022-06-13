@@ -75,7 +75,7 @@ generateQCreport <- function(runID=NULL) {
 }
 
 # Sends an email notification that the run is complete from redcap admin
-launchEmailNotify <-function(runID){
+launchEmailNotify <- function(runID){
     msgFunName(pipeLnk,"launchEmailNotify")
     isMC = sjmisc::str_contains(runID, "MGDM") | sjmisc::str_contains(runID, "MC")
     com <- ifelse(isMC==T, "sample_qc", "sample_research") # research or clinical notification
@@ -148,7 +148,7 @@ getRunData <- function(data) {
 }
 
 # Helper function called by makeReports.v11b6 to generate the HTML report
-do_report <-function(data = NULL, genCn=F) {
+do_report <- function(data = NULL, genCn=F) {
     msgFunName(pipeLnk,"do_report")
     msgParams("data")
     msgParams(data)
@@ -169,7 +169,6 @@ do_report <-function(data = NULL, genCn=F) {
     } else {message(bkRed("Data is NULL, check your SampleSheet.csv"))}
 }
 
-
 msgSamSheet <- function(samSh) {
     if (length(samSh) > 1) {
         message(crayon::black$bgRed$bold("Multiple samplesheets found:"))
@@ -184,7 +183,7 @@ msgSamSheet <- function(samSh) {
 # FUN: Parses the WetLab .xlsm sheet in the current directory
 checkSamSh <- function(samList){
     msgFunName(pipeLnk, "checkSamSh")
-    
+
     require(rmarkdown)
     samSh <- msgSamSheet(dir(path = getwd(), ".xlsm", full.names = T))
     xlSheets <- readxl::excel_sheets(samSh)
@@ -208,7 +207,6 @@ getRunList <- function(data, samList){
     }))
     return(toRun)
 }
-
 
 # FUN: Iterates over each sample in the csv file to generate a report
 loopRender <- function(samList = NULL, data, redcapUp = T){
@@ -237,8 +235,10 @@ loopRender <- function(samList = NULL, data, redcapUp = T){
 #' @param email default is true, set to false to avoid email notification
 #' @param cpReport default false, set TRUE to copy the reports to the Zdrive/research output Dir
 #' @param redcapUp default is true, flag will upload output html files and dataframe to redcap
-makeReports.v11b6<-function(runPath=NULL,sheetName="samplesheet.csv",selectSams=NULL,genCn=F,
-                            skipQC=F,email=T,cpReport=T,redcapUp=T){
+makeReports.v11b6 <- function(
+        runPath=NULL,sheetName="samplesheet.csv",
+        selectSams=NULL, genCn=F, skipQC=F, email=T,
+        cpReport=T, redcapUp=T){
     msgFunName(pipeLnk,"makeReports.v11b6")
 
     assign("genCn",genCn, envir = gb)
@@ -261,20 +261,6 @@ makeReports.v11b6<-function(runPath=NULL,sheetName="samplesheet.csv",selectSams=
         #beepr::beep(4)
     }
     tidyUpFiles(runID)
-}
-
-# Function to just run a default clinical run without changes, input selectRDs to prioritize samples running first
-startRun <- function(selectRDs=NULL, emailNotify=T){
-    msgFunName(pipeLnk,"startRun")
-    msgParams("selectRDs=NULL, emailNotify=T")
-    msgParams(selectRDs,emailNotify)
-
-    if(!is.null(selectRDs)){
-        sampleOrder <- reOrderRun(selectRDs) # Re-order sample report generation for priority
-        makeReports.v11b6(skipQC=F, email=T, cpReport=T, selectSams=sampleOrder, redcapUp=T)
-    } else {
-        makeReports.v11b6(skipQC=F, email=T, cpReport=T, selectSams=NULL, redcapUp=T)
-    }
 }
 
 # FUN: Checks if all the paths are accessible to the Rscript location
@@ -300,30 +286,4 @@ checkMounts <- function(){
     }
 }
 
-# Executes the functions in order to setup a run
-prepareRun <- function(token, baseFolder=NULL){
-    msgFunName(pipeLnk,"prepareRun")
-
-    runValid <- gb$checkValidRun(gb$runID)
-    message("Is the runID valid? ", runValid)
-    if(!runValid){
-        message(crayon::bgRed$white$bold("runID",gb$runID,"is not valid"))
-        message(crayon::bgBlue$white$bold(paste0(gb$runID,".xlsm"),"not found in worksheets folder"))
-        stopifnot(runValid)
-    }
-    if(is.null(baseFolder)){baseFolder <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"}
-    gb$methDir <- baseFolder
-    methylPath <- gb$setRunDir(gb$runID, baseFolder)
-    message("\n","Working directory set to:","\n")
-    cat(crayon::bgGreen(methylPath))
-    setwd(methylPath)
-    gb$setVar("ApiToken", token) # assign the ApiToken & print params
-    gb$copyWorksheetFile(runID = gb$runID) # copies the xlsm file
-    gb$readSheetWrite() # reads xlsm and generates input .csv samplesheet
-    gb$get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
-    gb$moveSampleSheet(gb$methDir) #copies outputs temp to desktop for QC.Rmd
-    #gb$classifierInstall(instNew = F, rmpkg = F) # Loads pipeline or installs new
-}
-
 checkMounts()
-#gb$defineParams()
