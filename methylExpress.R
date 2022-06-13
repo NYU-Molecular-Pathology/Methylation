@@ -80,10 +80,10 @@ gb$prepareRun <- function(token, baseFolder=NULL){
     }
 
     if(length(baseFolder)>0){
-        if(str_detect(baseFolder, pattern="Desktop")==T){
+        if(stringr::str_detect(baseFolder, pattern="Desktop")==T){
             warning("Trying to run methylation from Desktop working directory is not allowed")
             message("Try setting baseFolder to '~/Documents/' instead")
-            stopifnot(str_detect(baseFolder, pattern="Desktop")==F)
+            stopifnot(stringr::str_detect(baseFolder, pattern="Desktop")==F)
         }
     }
     runValid <- gb$checkValidRun(gb$runID)
@@ -114,19 +114,19 @@ gb$prepareRun(token, baseFolder)
 
 if(!is.null(selectRDs)){selectRDs <- stringr::str_split(selectRDs, ",")}
 
-gb$startRun <-
-    function(selectRDs=NULL, emailNotify=T, redcapUp=T){
-        msgFunName(pipeLnk,"startRun")
-        msgParams("selectRDs=NULL, emailNotify=T")
-        msgParams(selectRDs,emailNotify)
+gb$startRun <- function(selectRDs=NULL, emailNotify=T, redcapUp=T){
+    gb$msgFunName("https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/methylExpress.R","startRun")
+    message("Default Params: selectRDs=NULL, emailNotify=T")
+    nullVal = ifelse(is.null(selectRDs),"NULL", selectRDs)
+    gb$msgParams(nullVal, emailNotify)
 
-        if(!is.null(selectRDs)){
-            sampleOrder <- reOrderRun(selectRDs) # Re-order sample report generation for priority
-            makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=T, selectSams=sampleOrder, redcapUp=T)
-        } else {
-            makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=T, selectSams=NULL, redcapUp=T)
-        }
+    if(!is.null(selectRDs)){
+        sampleOrder <- gb$reOrderRun(selectRDs) # Re-order sample report generation for priority
+        gb$makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=T, selectSams=sampleOrder, redcapUp=T)
+    } else {
+        gb$makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=T, selectSams=NULL, redcapUp=T)
     }
+}
 
 assign("redcapUpload", redcapUpload)
 gb$startRun(selectRDs, emailNotify=T,redcapUp=T) # can change to default false
