@@ -52,8 +52,8 @@ if(!is.null(baseFolder) & !identical(baseFolder,NULL)){
 }else {baseFolder=NULL}
 
 # Paths to the GitHub Repo files
-mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
-script.list = c("LoadInstall_new.R","SetRunParams.R", "CopyInputs.R","CopyOutput.R", "pipelineHelper.R", "MakeSampleSheet.R")
+mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/"
+script.list = c("LoadInstall_new.R","SetRunParams.R","MakeSampleSheet.R", "CopyInputs.R","CopyOutput.R", "pipelineHelper.R")
 
 # Source GitHub Scripts
 scripts = paste0(mainHub, script.list)
