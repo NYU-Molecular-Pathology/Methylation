@@ -1,4 +1,6 @@
 #!/usr/bin/env Rscript
+
+# ONLY FOR USE WITH DOCKER INSTALL
 cbioLn = "/class_packs/"
 
 # Classifier Packages and Versions
