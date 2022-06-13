@@ -434,7 +434,7 @@ if (is450k==TRUE) {
 	    xx <- supM(mnp.v11b6::MNPcnv(Mset,sex = sex,main = sampleID))
 	    }
 #supM(mnp.v11b6::MNPcnvggplotly(xx, getTables = F))
-devtools::source_url("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/cnvggplotly.R")
+devtools::source_url("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/cnvggplotly.R")
 gb <- globalenv(); assign("gb", gb)
 githubURL <- 
   "https://github.com/NYU-Molecular-Pathology/Methylation/raw/416a007b8a21f59a71493cea189bc424009e8d7d/Rdata/newOvGenes.rds"
