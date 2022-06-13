@@ -5,7 +5,7 @@ cpInLnk2 = "https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/Mak
 rschDrv = "/Volumes/snudem01labspace/Methylation_Worksheets"
 
 msgFunName <- function(pthLnk, funNam){
-    message("\nExecuting function named: ", crayon::black$bgYellow(funNam), " from RScript in:\n", pthLnk,"\n")
+    message("\nExecuting function: ", crayon::black$bgYellow(funNam), " from RScript in:\n", pthLnk,"\n")
 }
 
 msgParams <- function(...){message("\nParams passed: ", crayon::bgGreen(paste(..., sep = ",")), "\n")}
