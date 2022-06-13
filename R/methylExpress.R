@@ -6,9 +6,9 @@ gb <- globalenv(); assign("gb", gb)
 if(!require("devtools")){install.packages("devtools")}
 
 # Main Parameters trailing commandline
-token<-args[1]
-runID<-args[2]
-selectRDs<-args[3]
+token <-      args[1]
+runID <-      args[2]
+selectRDs <-  args[3]
 baseFolder <- args[4] #NULL
 redcapUpload <- args[5]
 
