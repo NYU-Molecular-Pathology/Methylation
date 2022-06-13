@@ -53,7 +53,7 @@ if(!is.null(baseFolder) & !identical(baseFolder,NULL)){
 
 # Paths to the GitHub Repo files
 mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
-script.list = c("LoadInstall_new.R","SetRunParams.R", "CopyInputs.R","CopyOutput.R", "pipelineHelper.R")
+script.list = c("LoadInstall_new.R","SetRunParams.R", "CopyInputs.R","CopyOutput.R", "pipelineHelper.R", "MakeSampleSheet.R")
 
 # Source GitHub Scripts
 scripts = paste0(mainHub, script.list)
@@ -78,7 +78,7 @@ gb$prepareRun <- function(token, baseFolder=NULL){
         gb$methDir <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
         gb$baseDir <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
     }
-    
+
     if(length(baseFolder)>0){
         if(str_detect(baseFolder, pattern="Desktop")==T){
             warning("Trying to run methylation from Desktop working directory is not allowed")
@@ -119,7 +119,7 @@ gb$startRun <-
         msgFunName(pipeLnk,"startRun")
         msgParams("selectRDs=NULL, emailNotify=T")
         msgParams(selectRDs,emailNotify)
-        
+
         if(!is.null(selectRDs)){
             sampleOrder <- reOrderRun(selectRDs) # Re-order sample report generation for priority
             makeReports.v11b6(skipQC=F, email=emailNotify, cpReport=T, selectSams=sampleOrder, redcapUp=T)
