@@ -70,6 +70,8 @@ Alternatively, you can source then run the github script locally using [methylEx
 `curl -o pactParse.R -L https://git.io/J0kfR; Rscript --verbose pactParse.R 'TOKENAPI12345667891011' 'PACT-21-##'`
 
 ## Pipeline Functions Overview
+<img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/01d70d5ba1c9dd0e090cf02c225a5a909c78317e/screenshots/meth_pipeline_uml.png" width="100%"/><br/>
+
 ### First function is LoadInstall_new.R which lists all the dependencies and required packages 
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/421ecaf2793e8260d83fba35ce6d130e58fc3f0c/screenshots/loadinstall.png" alt="drawing" width="450"/><br />
 
