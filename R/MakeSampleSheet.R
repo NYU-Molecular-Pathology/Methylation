@@ -73,7 +73,7 @@ copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
         if (file.exists(fileLoc)) {
             message("\n\nCopying worksheet from Worksheets Folder:")
             if(!file.exists(file.path(getwd(),basename(fileLoc)))){
-                fs::file_copy(fileLoc, getwd(),overwrite=T)}
+                fs::file_copy(fileLoc, getwd(), overwrite = F)}
         } else {
             message("\nFile not found:\n",fileLoc)
             message("\nMake sure your path is correct, try print(gb$copyWorksheetFile)\n")
