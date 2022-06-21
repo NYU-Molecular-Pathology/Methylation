@@ -78,7 +78,7 @@ importDesktopCsv <- function(rcon,samsheet=NULL) {
                 overwriteBehavior = 'normal'
             )
         }
-    } else {message("no redcap file found")}
+    } else {message("no _Redcap.csv file found")}
 }
 
 # Copy Output cnv Files if generated
@@ -163,8 +163,9 @@ importRedcapStart <- function(nfldr){
 uploadToRedcap <- function(file.list, deskCSV = T) {
     msgFunName(cpOutLnk, "uploadToRedcap")
     rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
-    message("\nFiles to Import:\n")
+    message("\nFiles to Import:")
     print(file.list)
+    message("")
     if (deskCSV == T) {importDesktopCsv(rcon)} else{
       recordName <- stringr::str_replace_all(string = paste0(file.list), ".html", "")
       runIDs <- rep(gb$runID, length(recordName))
@@ -187,9 +188,10 @@ uploadToRedcap <- function(file.list, deskCSV = T) {
                     )
             },
             error = function(e) {
-                message(paste(recordName, " Failed to redcap Import"))
+                message(recordName, " Failed to Import to REDCap:\n", crayon::white$bgRed(e))
             }
         )
+        message(crayon::white$bgBlue("Importing Record File:"))
         tryCatch(
             expr = {
                 redcapAPI::importFiles(
@@ -202,7 +204,7 @@ uploadToRedcap <- function(file.list, deskCSV = T) {
                     )
             },
             error = function(e) {
-                message(paste(recordName, " Failed to redcap upload file:"),"\n",e)
+                message(pth, " failed to Import file to REDCap:\n", crayon::white$bgRed(e))
             }
         )
       }
