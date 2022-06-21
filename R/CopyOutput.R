@@ -183,7 +183,7 @@ uploadToRedcap <- function(file.list, deskCSV = T) {
                     data,
                     overwriteBehavior = "normal",
                     returnContent = "ids",
-                    returnData = F,
+                    returnData = T,
                     logfile="redcaperrors.txt"
                     )
             },
@@ -191,7 +191,7 @@ uploadToRedcap <- function(file.list, deskCSV = T) {
                 message(recordName, " Failed to Import to REDCap:\n", crayon::white$bgRed(e))
             }
         )
-        message(crayon::white$bgBlue("Importing Record File:"))
+        message(crayon::white$bgBlue("Importing Record File:")," ", pth)
         tryCatch(
             expr = {
                 redcapAPI::importFiles(
