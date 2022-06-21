@@ -261,18 +261,22 @@ loopRender <- function(samList = NULL, data, redcapUp = T){
 #' @param email default is true, set to false to avoid email notification
 #' @param cpReport default false, set TRUE to copy the reports to the Zdrive/research output Dir
 #' @param redcapUp default is true, flag will upload output html files and dataframe to redcap
-makeReports.v11b6 <- function(
-        runPath=NULL,sheetName="samplesheet.csv",
-        selectSams=NULL, genCn=F, skipQC=F, email=T,
-        cpReport=T, redcapUp=T){
+makeReports.v11b6 <- function(runPath = NULL,
+                              sheetName = "samplesheet.csv",
+                              selectSams = NULL,
+                              genCn = F,
+                              skipQC = F,
+                              email = T,
+                              cpReport = T,
+                              redcapUp = T) {
     msgFunName(pipeLnk,"makeReports.v11b6")
 
-    assign("genCn",genCn, envir = gb)
-
+    assign("genCn", genCn, envir = gb)
     data <- read.csv(sheetName, strip.white=T)
     runID <- paste0(data$RunID[1])
     message("Loading data...\n",predictionPath,"\n")
     load(predictionPath)
+    CreateControlRecord(runID)
     loopRender(selectSams, data, redcapUp)
     checkRunOutput(runID)
     if(skipQC == F){
