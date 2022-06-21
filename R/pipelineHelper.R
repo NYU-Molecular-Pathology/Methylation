@@ -234,16 +234,24 @@ getRunList <- function(data, samList){
     return(toRun)
 }
 
+NameControl <- function(data) {
+    library("data.table")
+    if (any(data[, 1] %like% 'control')) {
+        cntrl <- which(data[, 1] %like% 'control') #DNA_Number
+        data[cntrl, 1] <- paste0(data$RunID[1], "_control")
+    } else{
+        warning('No word "control" in RD-number found in samplesheet')
+    }
+    return(data)
+}
+
 # FUN: Iterates over each sample in the csv file to generate a report
 loopRender <- function(samList = NULL, data, redcapUp = T){
     msgFunName(pipeLnk, "loopRender")
     msgParams("samList = NULL, data, redcapUp = T")
-    library(data.table)
-    if(any(data[,1] %like% 'control')){
-        cntrl <- which(data[,1] %like% 'control') #DNA_Number
-        data[cntrl,1] <- paste0(data$RunID[1], "_control")
-    }else{warning('No word "control" in RD-number found in samplesheet')}
+
     stopifnot(!is.null(data))
+    data <- NameControl(data)
     if (is.null(samList)) {samList = 1:length(data$SentrixID_Pos)}
     wksh <- checkSamSh(samList)
     toRun <- getRunList(data, samList)
