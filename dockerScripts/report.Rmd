@@ -698,10 +698,10 @@ makePost <- function(datarecord){
     ur = "https://redcap.nyumc.org/apps/redcap/api/"
     tk <- params$token
     RCurl::postForm(ur, token = tk, content = 'record', format = 'csv', type = 'flat',
-                    data = datarecord, returnFormat = 'csv')
+                    data = datarecord, returnFormat = 'csv', overwriteBehavior='normal')
 }
 
-try(expr=makePost(datarecord),silent=T)
+expr=makePost(datarecord)
 
 writeRedcap <- function(redcsv, dfNewRed,dfRedcap){
 	redDF <- rbind(dfRedcap, dfNewRed)
@@ -714,7 +714,7 @@ redcsv <- list.files(path= deskRunPath, pattern="_Redcap.csv", full.names=T)[1]
 if(!is.na(redcsv)){
 dfRedcap = read.csv(redcsv, header = T, row.names = NULL)
 dfRedcap <- as.data.frame(dfRedcap, row.names = NULL)
-try(writeRedcap(redcsv, dfNewRed, dfRedcap), silent=T)
+writeRedcap(redcsv, dfNewRed, dfRedcap)
 }else{
     message("REDCap Upload failed for sample:", sampleID, "will attempt upload at run end.")
 }
