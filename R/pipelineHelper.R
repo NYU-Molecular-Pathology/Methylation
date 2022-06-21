@@ -238,7 +238,11 @@ getRunList <- function(data, samList){
 loopRender <- function(samList = NULL, data, redcapUp = T){
     msgFunName(pipeLnk, "loopRender")
     msgParams("samList = NULL, data, redcapUp = T")
-
+    library(data.table)
+    if(any(data[,1] %like% 'control')){
+        cntrl <- which(data[,1] %like% 'control') #DNA_Number
+        data[cntrl,1] <- paste0(data$RunID[1], "_control")
+    }else{warning('No word "control" in RD-number found in samplesheet')}
     stopifnot(!is.null(data))
     if (is.null(samList)) {samList = 1:length(data$SentrixID_Pos)}
     wksh <- checkSamSh(samList)
