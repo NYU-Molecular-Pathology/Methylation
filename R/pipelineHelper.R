@@ -206,6 +206,17 @@ msgSamSheet <- function(samSh) {
     return(samSh)
 }
 
+NameControl <- function(data, runId) {
+    library("data.table")
+    if (any(data[, 1] %like% 'control')) {
+        cntrl <- which(data[, 1] %like% 'control') #DNA_Number
+        data[cntrl, 1] <- paste0(runId, "_control")
+    } else{
+        warning('No word "control" in RD-number found in samplesheet')
+    }
+    return(data)
+}
+
 # FUN: Parses the WetLab .xlsm sheet in the current directory
 checkSamSh <- function(samList){
     msgFunName(pipeLnk, "checkSamSh")
@@ -217,7 +228,10 @@ checkSamSh <- function(samList){
     message("redsheet",redSheet)
     print(xlSheets)
     samSh <- readxl::read_excel(samSh, sheet=3, range = "A1:M97",col_types = c("text"))
+
     wksh <- as.data.frame(samSh)[1:length(samList), 1:13]
+    wksh <- NameControl(wksh, wksh$run_number[1])
+
     rownames(wksh)<- wksh[,1]
     stopifnot(!is.null(wksh))
     return(wksh)
@@ -234,24 +248,13 @@ getRunList <- function(data, samList){
     return(toRun)
 }
 
-NameControl <- function(data) {
-    library("data.table")
-    if (any(data[, 1] %like% 'control')) {
-        cntrl <- which(data[, 1] %like% 'control') #DNA_Number
-        data[cntrl, 1] <- paste0(data$RunID[1], "_control")
-    } else{
-        warning('No word "control" in RD-number found in samplesheet')
-    }
-    return(data)
-}
-
 # FUN: Iterates over each sample in the csv file to generate a report
 loopRender <- function(samList = NULL, data, redcapUp = T){
     msgFunName(pipeLnk, "loopRender")
     msgParams("samList = NULL, data, redcapUp = T")
 
     stopifnot(!is.null(data))
-    data <- NameControl(data)
+    data <- NameControl(data, data$RunID[1])
     if (is.null(samList)) {samList = 1:length(data$SentrixID_Pos)}
     wksh <- checkSamSh(samList)
     toRun <- getRunList(data, samList)
@@ -259,7 +262,9 @@ loopRender <- function(samList = NULL, data, redcapUp = T){
         msgProgress(1, i, samList)
         do_report(data = data[i, ], gb$genCn)
         msgProgress(2, i, samList)
-        if (redcapUp == T) {gb$importSingle(wksh[data[i, 1],])}
+        if (redcapUp == T) {
+            gb$importSingle(wksh[data[i, 1],])
+            }
     }
     message(crayon::black$bgGreen$bold(dsh, "RUN COMPLETE", dsh))
 }

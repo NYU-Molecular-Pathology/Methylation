@@ -62,7 +62,7 @@ importDesktopCsv <- function(rcon,samsheet=NULL) {
             message("Removing duplicates in redcap dataframe")
             data = data[!duplicated(data$record_id),]
         }
-        cat(redcapAPI::importRecords(rcon,data,"normal","ids",returnData = F))
+        cat(redcapAPI::importRecords(rcon,data,"normal","ids",returnData = F,logfile="redcaperrors.txt"))
         for (n in 1:nrow(data)) {
             datarecord = jsonlite::toJSON((as.list(data[n,])), auto_unbox=T)
             print(datarecord)
@@ -182,7 +182,8 @@ uploadToRedcap <- function(file.list, deskCSV = T) {
                     data,
                     overwriteBehavior = "normal",
                     returnContent = "ids",
-                    returnData = F
+                    returnData = F,
+                    logfile="redcaperrors.txt"
                     )
             },
             error = function(e) {
@@ -196,11 +197,12 @@ uploadToRedcap <- function(file.list, deskCSV = T) {
                     file = pth,
                     record = recordName,
                     field = "classifier_pdf",
-                    overwrite = FALSE
+                    overwrite = F,
+                    repeat_instance=1
                     )
             },
             error = function(e) {
-                message(paste(recordName, " Failed to redcap upload file"))
+                message(paste(recordName, " Failed to redcap upload file:"),"\n",e)
             }
         )
       }
