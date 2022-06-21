@@ -62,7 +62,7 @@ importDesktopCsv <- function(rcon,samsheet=NULL) {
             message("Removing duplicates in redcap dataframe")
             data = data[!duplicated(data$record_id),]
         }
-        cat(redcapAPI::importRecords(rcon,data,"normal","ids",returnData = F,logfile="redcaperrors.txt"))
+        redcapAPI::importRecords(rcon,data,"normal","ids",returnData = T,logfile="redcaperrors.txt")
         for (n in 1:nrow(data)) {
             datarecord = jsonlite::toJSON((as.list(data[n,])), auto_unbox=T)
             print(datarecord)
