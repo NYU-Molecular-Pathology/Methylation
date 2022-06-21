@@ -112,6 +112,7 @@ readSampleSheet <- function(runID=F, totalSam=F, wks=F) {
     file.list <- file.list[!temps]
     sampleSheet <- paste0(file.list[1])
     message(paste0("Reading worksheet named: ", sampleSheet))
+
     worksheet <- suppressMessages(readxl::read_excel(sampleSheet, sheet=2, col_names=T, col_types="text", trim_ws=T))
     wsDate <-  suppressMessages(as.data.frame(readxl::read_excel(sampleSheet, sheet=1, col_names=F, range="F4:F4", trim_ws=T))[1])
     names(wsDate)="Date"

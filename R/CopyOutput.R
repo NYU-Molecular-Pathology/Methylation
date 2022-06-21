@@ -26,7 +26,7 @@ save.prev.folder <- function(prevs,oldFi){
     cat("\n")
     cat(crayon::white$bgRed('Output folder already exists, moving existing reports to new folder named "Previous"'))
     cat("\n")
-    dir.create(prevs) 
+    dir.create(prevs)
     fs::file_copy(path=oldFi, new_path=prevs)
 }
 
@@ -67,7 +67,16 @@ importDesktopCsv <- function(rcon,samsheet=NULL) {
             datarecord = jsonlite::toJSON((as.list(data[n,])), auto_unbox=T)
             print(datarecord)
             message("~~",crayon::bgBlue("Record Uploaded:"))
-            RCurl::postForm(ur, token = tk, content = 'record', format = 'csv', type = 'flat', data = datarecord, returnFormat='csv')
+            RCurl::postForm(
+                ur,
+                token = tk,
+                content = 'record',
+                format = 'csv',
+                type = 'flat',
+                data = datarecord,
+                returnFormat = 'csv',
+                overwriteBehavior = 'normal'
+            )
         }
     } else {message("no redcap file found")}
 }
@@ -121,7 +130,7 @@ importRedcapStart <- function(nfldr){
     removeTemp <- stringr::str_detect(samSh,pattern = "\\$",negate = T)
     samSh <- samSh[removeTemp]
   }
-    sampleNumb <- getTotalSamples()
+    sampleNumb <- gb$getTotalSamples()
     sh_Dat <-as.data.frame(readxl::read_excel(samSh,sheet=3,range="A1:N97", col_types=c("text")))[,1:13]
     sampleNumb=as.integer(sampleNumb);sh_Dat = sh_Dat[1:sampleNumb,]
     runName <- gb$runID
@@ -134,7 +143,16 @@ importRedcapStart <- function(nfldr){
         for(n in 1:nrow(sh_Dat)){
             record=c(sh_Dat[n,])
             datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
-            res<-RCurl::postForm(uri,token=tk,content='record',format='json',type='flat',data=datarecord)
+            res <-
+                RCurl::postForm(
+                    uri,
+                    token = tk,
+                    content = 'record',
+                    format = 'json',
+                    type = 'flat',
+                    data = datarecord,
+                    overwriteBehavior = 'normal'
+                )
             message("Record Uploaded")
             print(res)
         }
@@ -157,7 +175,7 @@ uploadToRedcap <- function(file.list, deskCSV = T) {
         runID = paste0(runIDs[idx])
         message(crayon::white$bgBlue("Importing Record Report:"))
         data = data.frame(record_id = recordName, run_number = runID)
-        
+
         tryCatch(
           expr = {redcapAPI::importRecords(
             rcon,data,overwriteBehavior = "normal",returnContent = "ids",returnData = F)},
@@ -165,7 +183,7 @@ uploadToRedcap <- function(file.list, deskCSV = T) {
         )
         tryCatch(
           expr = {redcapAPI::importFiles(
-              rcon = rcon,file = pth,record = recordName,field = "classifier_pdf",repeat_instance = 1)},
+              rcon = rcon, file = pth, record = recordName, field = "classifier_pdf", overwrite = FALSE)},
           error = function(e){message(paste(recordName," Failed to redcap upload file"))}
         )
       }
@@ -195,7 +213,8 @@ importSingle <- function(sh_Dat) {
             content = 'record',
             format = 'json',
             type = 'flat',
-            data = datarecord
+            data = datarecord,
+            overwriteBehavior='normal'
         )
     message(crayon::white$bgBlue("Record Uploaded"))
     invisible(res)
@@ -208,21 +227,21 @@ copy2outFolder <-function(clinDrv = NULL, runID, runYear = NULL) {
     if (is.null(runYear)) {runYear = paste0(format(Sys.Date(), "%Y"))}
     if (is.null(clinDrv)) {clinDrv <- gb$clinDrv}
     isMC = sjmisc::str_contains(runID, "MGDM") | sjmisc::str_contains(runID, "MC")
-    
+
     researchOutDir = file.path("/Volumes/snudem01labspace/FINAL_PDF_Reports_Brain",runID)
     clinicalOutDir = file.path(clinDrv, "Results", runYear, runID)
     runYear = ifelse(isMC, paste0("20", stringr::str_split_fixed(runID, "-", 2)[1]), runYear)
     newFolder <- ifelse(isMC==T, clinicalOutDir, researchOutDir)
-    
+
     cat(crayon::white$bgCyan("Output Folder is:\n", newFolder))
     if (!dir.exists(newFolder)) {dir.create(newFolder)}
     oldFi = dir(path = newFolder, full.names = T)
     prevs = file.path(newFolder, "previous")
-    
+
     if (length(oldFi) > 0) {save.prev.folder(prevs, oldFi)} # saves any old files
     file.list = dir(path = getwd(), "*.html", full.names = T)
     #newFolder <- base::rep(newFolder,length(file.list))
-    
+
     message("\nCopying Existing Reports to Folder...\n")
     message(crayon::bgBlue(newFolder),"\n")
     message("Files to copy:\n")
@@ -243,9 +262,9 @@ copy2outFolder <-function(clinDrv = NULL, runID, runYear = NULL) {
                        if(!file.exists(foo)){print(paste(foo, "does not exist"))}else{
                            cmnd = paste("cp", foo, newFolder)
                            system(cmnd)}
-                   })  
+                   })
            })
-    
+
     if (isMC) {
         cnList <- dir(getwd(), "_cnv.png",recursive = F)
         hasCn <- length(cnList) > 2
