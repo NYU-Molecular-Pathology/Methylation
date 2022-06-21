@@ -86,6 +86,25 @@ launchEmailNotify <- function(runID){
     cat(res)
 }
 
+CreateControlRecord <- function(runID=NULL){
+    msgFunName(pipeLnk,"CreateControlRecord")
+
+    if(is.null(runID)){runID<-paste0(basename(gb$workDir))}
+    record = c(record_id=paste0(runID,"_control"), run_number=runID)
+    cntrl <- jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
+    RCurl::postForm(
+        gb$apiLink,
+        token = gb$ApiToken,
+        content = 'record',
+        format = 'json',
+        type = 'flat',
+        data = cntrl
+    )
+    message(dsh, "Created Run Control Record", dsh)
+    print(cntrl)
+}
+
+
 # FUN: Creates the QC record for the current run on redcap if it does not exist
 create.QC.record <- function(runID=NULL){
     msgFunName(pipeLnk,"create.QC.record")
@@ -93,8 +112,15 @@ create.QC.record <- function(runID=NULL){
     if(is.null(runID)){runID<-paste0(basename(gb$workDir))}
     record = c(record_id=paste0(runID,"_QC"), run_number=runID)
     qcdata <- jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
-    RCurl::postForm(gb$apiLink,token=gb$ApiToken,content='record',format='json', type='flat',data=qcdata)
-    message(dsh,"Created QC Record",dsh)
+    RCurl::postForm(
+        gb$apiLink,
+        token = gb$ApiToken,
+        content = 'record',
+        format = 'json',
+        type = 'flat',
+        data = qcdata
+    )
+    message(dsh, "Created QC Record", dsh)
     print(qcdata)
 }
 
