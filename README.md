@@ -57,7 +57,7 @@ ___
 `arg[3]` is the **selectRds** parameter which is to prioritize samples being run (NULL)<br />
 `arg[4]` is the **baseFolder** parameter which is optional if you want to run/save output to a different directory (NULL)<br />
 
-Alternatively, you can source then run the github script locally using [methylExpress.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/methylExpress.R)
+Alternatively, you can source then run the github script locally using [methylExpress.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/R/methylExpress.R)
 
 ## Run the Test Case after installation with the following command:<br />
 `/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST`<br />
