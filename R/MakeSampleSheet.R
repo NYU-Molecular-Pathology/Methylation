@@ -113,15 +113,31 @@ readSampleSheet <- function(runID=F, totalSam=F, wks=F) {
     sampleSheet <- paste0(file.list[1])
     message(paste0("Reading worksheet named: ", sampleSheet))
 
-    worksheet <- suppressMessages(readxl::read_excel(sampleSheet, sheet=2, col_names=T, col_types="text", trim_ws=T))
-    wsDate <-  suppressMessages(as.data.frame(readxl::read_excel(sampleSheet, sheet=1, col_names=F, range="F4:F4", trim_ws=T))[1])
+    worksheet <-
+        suppressMessages(readxl::read_excel(
+            sampleSheet,
+            sheet = 2,
+            col_names = T,
+            col_types = "text",
+            trim_ws = T
+        ))
+    wsDate <-
+        suppressMessages(as.data.frame(
+            readxl::read_excel(
+                sampleSheet,
+                sheet = 1,
+                col_names = F,
+                range = "F4:F4",
+                trim_ws = T
+            )
+        )[1])
     names(wsDate)="Date"
     message("DATE: ", wsDate$Date)
     colnames(worksheet)
     worksheet$Date <- paste0(wsDate$Date[1])
     if (runID == T) {return(worksheet$Project[1])}
     if (totalSam == T){
-        message("Reading cell B4 of ",sampleSheet,"...")
+        message("Reading cell B4 of ", sampleSheet, "...")
         runNum <- suppressMessages(readxl::read_excel(sampleSheet, sheet=1, col_names=F, range="B4"))
         runNum <- as.numeric(runNum)
         message("Total Samples: ", runNum)

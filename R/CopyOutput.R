@@ -175,16 +175,33 @@ uploadToRedcap <- function(file.list, deskCSV = T) {
         runID = paste0(runIDs[idx])
         message(crayon::white$bgBlue("Importing Record Report:"))
         data = data.frame(record_id = recordName, run_number = runID)
-
         tryCatch(
-          expr = {redcapAPI::importRecords(
-            rcon,data,overwriteBehavior = "normal",returnContent = "ids",returnData = F)},
-          error = function(e){message(paste(recordName," Failed to redcap Import"))}
+            expr = {
+                redcapAPI::importRecords(
+                    rcon,
+                    data,
+                    overwriteBehavior = "normal",
+                    returnContent = "ids",
+                    returnData = F
+                    )
+            },
+            error = function(e) {
+                message(paste(recordName, " Failed to redcap Import"))
+            }
         )
         tryCatch(
-          expr = {redcapAPI::importFiles(
-              rcon = rcon, file = pth, record = recordName, field = "classifier_pdf", overwrite = FALSE)},
-          error = function(e){message(paste(recordName," Failed to redcap upload file"))}
+            expr = {
+                redcapAPI::importFiles(
+                    rcon = rcon,
+                    file = pth,
+                    record = recordName,
+                    field = "classifier_pdf",
+                    overwrite = FALSE
+                    )
+            },
+            error = function(e) {
+                message(paste(recordName, " Failed to redcap upload file"))
+            }
         )
       }
     }
