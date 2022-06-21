@@ -12,7 +12,12 @@ pipeLnk <- "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/pip
 predictionPath <- "/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData"
 
 msgFunName <- function(pthLnk, funNam){message("\nExecuting function: ", bky(funNam), " from RScript in:\n", pthLnk)}
-msgParams <- function(...){cat("\nParams passed: ", crayon::bgGreen(paste(..., sep = " , ")))}
+msgParams <- function(...){
+    message("")
+    cat(crayon::bgGreen("Params passed:"))
+    message("\n",paste(..., collapse = ", "))
+    message("")
+    }
 
 # Helper function to return the index of priority selected samples first
 reOrderRun <- function(selectRDs, sh=NULL){
