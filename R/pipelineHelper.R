@@ -205,7 +205,8 @@ msgSamSheet <- function(samSh) {
         message(crayon::black$bgRed$bold("Multiple samplesheets found:"))
         cat(samSh, sep = "\n")
         samSh <- samSh[stringr::str_detect(samSh, pattern = "\\$", negate = T)]
-    } else{message("Reading the following .xlsm in current directory:")}
+        message(crayon::black$bgGreen("Reading the following .xlsm in current directory:"))
+    } else{message(crayon::black$bgGreen("Reading the following .xlsm in current directory:"))}
     cat(samSh, sep = "\n")
     stopifnot(!length(samSh) > 1)
     return(samSh)
@@ -233,7 +234,8 @@ checkSamSh <- function(samList){
     message("redsheet",redSheet)
     print(xlSheets)
     samSh <- readxl::read_excel(samSh, sheet=3, range = "A1:M97",col_types = c("text"))
-
+    message(crayon::black$bgGreen("SampleSheet:"))
+    print(samSh)
     wksh <- as.data.frame(samSh)[1:length(samList), 1:13]
     wksh <- NameControl(wksh, wksh$run_number[1])
 
