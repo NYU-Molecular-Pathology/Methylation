@@ -175,7 +175,7 @@ checkSampleSheet <- function(df){
         warning(ww3)
         print(df[, c(1, 3, 8:11)])
     }
-    if (any(!grepl("RD-", df$Sample_Name, fixed = T))) {
+    if (any(!grepl("RD-|control", df$Sample_Name, fixed = T))) {
         warning(ww4)
         print(df[, c(1, 3, 8:11)])
     }
