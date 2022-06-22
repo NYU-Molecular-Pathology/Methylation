@@ -1,7 +1,7 @@
 # How To Setup Clinical Methylation Classifier
 
 ## Methylation Pipline Overview
-<img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/00b39de349e39048da5df3920f9a6bb6579bec78/screenshots/methylation_overview.png" alt="drawing" width="100%"/><br/>
+<img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/1bcd4fcdb6fb8c1908cb2d38fcfc7cd2ffffe8a2/screenshots/meth_pipeline_uml.png" alt="drawing" width="100%"/><br/>
 
 ## Essential Downloads
 The classifier runs on R version 3.6.3 and up.  It is not compatible with 3.3.3<br />
