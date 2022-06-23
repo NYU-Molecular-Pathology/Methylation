@@ -128,18 +128,18 @@ new.ggplotly <- function (xx, getTables = T, newOvGenes=NULL, sex='male', addCus
     }
     if (getTables) {
         xyRatio <- xx@bin[["ratio"]]
-        newDataAnno <- data.frame(
-            newAnnotation =newOvGenes[1:length( xx@anno@bins$probes)],
-            start = start(xx@anno@bins),
-            end =  end(xx@anno@bins),
-            chromosome = xx@anno@bins@ranges@NAMES,
-            probes = xx@anno@bins$probes,
-            yvalues = xyRatio,
-            gains = ifelse(xyRatio>=0.25,"GAIN",""),
-            loss = ifelse(xyRatio<=-0.25,"LOSS","")
-        )
-        finame <- paste0(xx@name,"_newDataAnno.csv")
-        write.csv(newDataAnno,finame)
+#         newDataAnno <- data.frame(
+#             newAnnotation =newOvGenes[1:length( xx@anno@bins$probes)],
+#             start = start(xx@anno@bins),
+#             end =  end(xx@anno@bins),
+#             chromosome = xx@anno@bins@ranges@NAMES,
+#             probes = xx@anno@bins$probes,
+#             yvalues = xyRatio,
+#             gains = ifelse(xyRatio>=0.25,"GAIN",""),
+#             loss = ifelse(xyRatio<=-0.25,"LOSS","")
+#         )
+#         finame <- paste0(xx@name,"_newDataAnno.csv")
+#         write.csv(newDataAnno,finame)
         dra <- data.frame(
             Gain = c(detail.ratio > 0.15 & detail.ratio <1.5),
             Loss = c(detail.ratio < -0.15)
