@@ -85,10 +85,10 @@ copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
 }
 
 # Returns Total Sample Count in the run
-getTotalSamples <- function(){
+getTotalSamples <- function(thisSh=NULL){
     msgFunName(cpInLnk2, "getTotalSamples")
     templateDir = "Clinical_Methylation/methylation_run_TEMPLATE_new.xlsm"
-    thisSh <- dir(getwd(), "*.xlsm")
+    thisSh <-  ifelse(is.null(thisSh), dir(getwd(), "*.xlsm"), thisSh)
     temp <- stringi::stri_detect_fixed(thisSh, "~$")
     thisSh <- thisSh[!temp]
     if(length(thisSh)==0){print("No .xlsm sheet, defaulting to 16");return(16)}
