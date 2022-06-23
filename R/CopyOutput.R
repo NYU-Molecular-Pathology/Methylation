@@ -159,6 +159,64 @@ importRedcapStart <- function(nfldr){
     }
 }
 
+
+checkRedcapRecord <- function(recordName){
+    url = gb$apiLink
+    formData <- list("token"=gb$ApiToken,
+                     content='record',
+                     action='export',
+                     format='json',
+                     type='flat',
+                     csvDelimiter='',
+                     'records[0]'=recordName,
+                     'fields[0]'='classifier_pdf',
+                     rawOrLabel='raw',
+                     rawOrLabelHeaders='raw',
+                     exportCheckboxLabel='false',
+                     exportSurveyFields='false',
+                     exportDataAccessGroups='false',
+                     returnFormat='json'
+    )
+    response <- httr::POST(url, body = formData, encode = "form")
+    result <- httr::content(response)
+    return(length(result)>0)
+}
+
+callApiImport <- function(rcon, data){
+    tryCatch(
+        expr = {
+            redcapAPI::importRecords(
+                rcon,
+                data,
+                overwriteBehavior = "normal",
+                returnContent = "ids",
+                returnData = T,
+                logfile="redcaperrors.txt"
+            )
+        },
+        error = function(e) {message(crayon::white$bgRed(paste(data$record_id, " failed import data to REDCap:")), "\n", e)}
+        )
+}
+
+callApiFile <- function(rcon, recordName){
+    pth <- file.path(getwd(), paste0(recordName, ".html"))
+    tryCatch(
+        expr = {
+            redcapAPI::importFiles(
+                rcon = rcon,
+                file = pth,
+                record = recordName,
+                field = "classifier_pdf",
+                overwrite = T,
+                repeat_instance=1
+            )
+        },
+        error = function(e) {
+            message(crayon::white$bgRed("Failed to Import file to REDCap:"), "\n", pth, "\nError:\n", e)
+        }
+    )
+}
+
 # Creates QC record and uploads reports to redcap
 uploadToRedcap <- function(file.list, deskCSV = T) {
     msgFunName(cpOutLnk, "uploadToRedcap")
@@ -167,51 +225,30 @@ uploadToRedcap <- function(file.list, deskCSV = T) {
     print(file.list)
     message("")
     if (deskCSV == T) {importDesktopCsv(rcon)} else{
-      recordName <- stringr::str_replace_all(string = paste0(file.list), ".html", "")
-      runIDs <- rep(gb$runID, length(recordName))
-      records <- basename(recordName)
-      for (idx in 1:length(records)) {
-        pth = file.list[idx]
-        recordName = paste0(records[idx])
-        runID = paste0(runIDs[idx])
-        message(crayon::white$bgBlue("Importing Record Report:"))
-        data = data.frame(record_id = recordName, run_number = runID)
-        tryCatch(
-            expr = {
-                redcapAPI::importRecords(
-                    rcon,
-                    data,
-                    overwriteBehavior = "normal",
-                    returnContent = "ids",
-                    returnData = T,
-                    logfile="redcaperrors.txt"
-                    )
-            },
-            error = function(e) {
-                message(recordName, " Failed to Import to REDCap:\n", crayon::white$bgRed(e))
+        recordName <- stringr::str_replace_all(string = paste0(file.list), ".html", "")
+        runIDs <- rep(gb$runID, length(recordName))
+        records <- basename(recordName)
+        for (idx in 1:length(records)) {
+            recordName = paste0(records[idx])
+            runID = paste0(runIDs[idx])
+            message(crayon::white$bgBlue("Importing Record Report:"))
+            data = data.frame(record_id = recordName, run_number = runID)
+            print(data)
+            
+            callApiImport(rcon, data)
+            message(crayon::white$bgBlue("Importing Record File:")," ", paste0(recordName,".html"))
+            alreadyExists <- checkRedcapRecord(recordName)
+            if(alreadyExists==T){
+                logFile = file("upload_log.txt")
+                i = paste(recordName, "already has an html file in REDCap")
+                write(i, file=logFile, append=TRUE)
+            }else{
+                callApiFile(rcon, recordName)
             }
-        )
-        pth <- file.path(getwd(), pth)
-        message(crayon::white$bgBlue("Importing Record File:")," ", pth)
-
-        tryCatch(
-            expr = {
-                redcapAPI::importFiles(
-                    rcon = rcon,
-                    file = pth,
-                    record = recordName,
-                    field = "classifier_pdf",
-                    overwrite = F,
-                    repeat_instance=1
-                    )
-            },
-            error = function(e) {
-                message(pth, " failed to Import file to REDCap:\n", crayon::white$bgRed(e))
             }
-        )
-      }
+            
     }
-  }
+}
 
 # Imports the xlsm sheet 3 data
 importSingle <- function(sh_Dat) {
