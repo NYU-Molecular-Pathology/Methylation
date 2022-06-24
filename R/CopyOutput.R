@@ -343,7 +343,7 @@ CopyFilesOut <- function(file.list, newFolder){
 copy2outFolder <-function(clinDrv = NULL, runID, runYear = NULL) {
     msgFunName(cpOutLnk, "copy2outFolder")
 
-    runYear <- ifelse(is.null(runYear), paste0(format(Sys.Date(), "%Y")), runYear}
+    runYear <- ifelse(is.null(runYear), paste0(format(Sys.Date(), "%Y")), runYear)
     clinDrv <- ifelse(is.null(clinDrv), gb$clinDrv, clinDrv)
     isMC = sjmisc::str_contains(runID, "MGDM") | sjmisc::str_contains(runID, "MC")
 
