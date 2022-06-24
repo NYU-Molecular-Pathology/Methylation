@@ -120,36 +120,66 @@ uploadCnPng <- function() {
     }
 }
 
+# Returns Total Sample Count in the run
+getTotalSamples <- function(thisSh=NULL){
+    msgFunName(cpOutLnk, "getTotalSamples")
 
-# Imports the xlsm sheet 3 data
-importRedcapStart <- function(nfldr){
-    msgFunName(cpOutLnk, "importRedcapStart")
-    rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
-    uri=paste0(rcon$url); tk=rcon$token
+    templateDir = "Clinical_Methylation/methylation_run_TEMPLATE.xlsm"
+    thisSh <-  ifelse(is.null(thisSh), dir(getwd(), "*.xlsm"), thisSh)
+    thisSh <- thisSh[!stringi::stri_detect_fixed(thisSh, "~$")]
+    if(length(thisSh)==0){print("No .xlsm sheet, defaulting to 16");return(16)}
+    worksheet <- suppressMessages(readxl::read_excel(thisSh[1], col_names="Total", range="B4:B4"))
+    if (length(worksheet) == 0) {
+        message(
+            "Samplesheet ",
+            thisSh[1],
+            " is invalid format, manually edit\nTry copying the template:\n",
+            templateDir
+        )
+    } else {message("Total sample count found is: ", worksheet[1])}
+    totNumb <- paste0(worksheet[1])
+    return(as.integer(totNumb))
+}
+
+GrabSampleSheet <- function(){
     samSh <- dir(path=getwd(), full.names=T, ".xlsm")
     if(length(samSh)>1){
         warning("Multiple samplesheets found:\n")
         print(samSh)
-        removeTemp <- stringr::str_detect(samSh,pattern = "\\$",negate = T)
-        samSh <- samSh[removeTemp]
+        samSh <- samSh[stringr::str_detect(samSh,pattern = "\\$",negate = T)]
     }
-    sampleNumb <- gb$getTotalSamples()
-    sh_Dat <-as.data.frame(readxl::read_excel(samSh,sheet=3,range="A1:N97", col_types=c("text")))[,1:13]
-    sampleNumb=as.integer(sampleNumb);sh_Dat = sh_Dat[1:sampleNumb,]
-    runName <- gb$runID
-    pathNam = file.path(nfldr,paste0(runName,"_CNVs"), paste0(sh_Dat$record_id, "_cnv.png"))
+    message("Using following samplesheet:\n", samSh)
+    return(samSh)
+}
+
+
+AddPngFilePath <- function(nfldr,sh_Dat){
+    pathNam = file.path(nfldr,paste0(gb$runID,"_CNVs"), paste0(sh_Dat$record_id, "_cnv.png"))
     rms=paste(c("control_","low_"),collapse ='|')
     pathNam <- stringr::str_replace(pathNam, rms, "")
     pathNam <- stringr::str_replace(pathNam, "//", "/")
     sh_Dat$cnv_file_path <- pathNam
+    return(sh_Dat)
+}
+
+# Imports the xlsm sheet 3 data
+importRedcapStart <- function(nfldr){
+    msgFunName(cpOutLnk, "importRedcapStart")
+    samSh <- GrabSampleSheet()
+    sampleNumb <- getTotalSamples(samSh)
+    sh_Dat <-
+        suppressMessages(as.data.frame(readxl::read_excel(samSh,sheet=3,range="A1:N97", col_types=c("text")))[1:sampleNumb,1:13])
+
+    sh_Dat <- AddPngFilePath(nfldr,sh_Dat)
+
     if (!is.null(sh_Dat)){
         for(n in 1:nrow(sh_Dat)){
             record=c(sh_Dat[n,])
             datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
             res <-
                 RCurl::postForm(
-                    uri,
-                    token = tk,
+                    uri= apiLink,
+                    token = gb$ApiToken,
                     content = 'record',
                     format = 'json',
                     type = 'flat',
@@ -258,22 +288,14 @@ uploadToRedcap <- function(file.list, deskCSV = T, runNumb=NULL) {
 importSingle <- function(sh_Dat) {
     msgFunName(cpOutLnk, "importSingle")
     nfldr = file.path(stringr::str_split_fixed(gb$clinDrv, " ", 2)[1],"MethylationClassifier")
-    rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
-    uri = paste0(rcon$url)
-    tk = rcon$token
-    filnm = paste0(sh_Dat$record_id, "_cnv.png")
-    pathNam = file.path(nfldr, paste0(gb$runID, "_CNVs"), filnm)
-    rms = paste(c("control_", "low_"), collapse = '|')
-    pathNam <- stringr::str_replace(pathNam, rms, "")
-    pathNam <- stringr::str_replace(pathNam, "//", "/")
-    sh_Dat$cnv_file_path <- pathNam
+    sh_Dat <- AddPngFilePath(nfldr,sh_Dat)
     record = c(sh_Dat[1,])
     datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox = T)
     print(sh_Dat)
     res <-
         RCurl::postForm(
-            uri,
-            token = tk,
+            uri= apiLink,
+            token = gb$ApiToken,
             content = 'record',
             format = 'json',
             type = 'flat',
