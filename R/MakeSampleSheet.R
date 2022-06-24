@@ -66,7 +66,7 @@ copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
     isMC = sjmisc::str_contains(runID, "MGDM")|sjmisc::str_contains(runID, "MC")
     assign("isMC", isMC); message("\nIs methylation run Clinical? ",isMC)
 
-    mountLoc <- ifelse(isMC,file.path(gb$clinDrv,"WORKSHEETS"),gb$rschDrv)
+    mountLoc <- ifelse(isMC,file.path(gb$clinDrv,"WORKSHEETS"),gb$rschSheets)
     message("\nCopying file from: "); cat(mountLoc,"\n")
     if (dir.exists(mountLoc)) {
         fileLoc <- file.path(mountLoc,runYear,paste0(runID,".xlsm"))
