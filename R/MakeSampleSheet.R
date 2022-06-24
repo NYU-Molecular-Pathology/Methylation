@@ -2,7 +2,7 @@
 gb <- globalenv(); assign("gb", gb)
 apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
 cpInLnk2 = "https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/MakeSampleSheet.R"
-rschDrv = "/Volumes/snudem01labspace/Methylation_Worksheets"
+rschSheets = "/Volumes/snudem01labspace/Methylation_Worksheets"
 
 msgFunName <- function(pthLnk, funNam){
     message("\nExecuting function: ", crayon::black$bgYellow(funNam), " from RScript in:\n", pthLnk,"\n")
@@ -30,7 +30,7 @@ listMolecularSheets <- function(isMC=T, getAll=F,runID=gb$runID) {
         wsPath <- file.path(gb$clinDrv,"WORKSHEETS",runYear)
         prevMC <- dir(path=wsPath, pattern="MGDM", full.names=T)
     } else {
-        wsPath <- file.path(gb$rschDrv,runYear)
+        wsPath <- file.path(gb$rschSheets,runYear)
         prevMC <- dir(path=wsPath, pattern="MR", full.names=T)
     }
     if(getAll==T){
