@@ -84,18 +84,31 @@ copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
     }
 }
 
+GrabSampleSheet <- function(){
+    samSh <- dir(path=getwd(), full.names=T, ".xlsm")
+    if(length(samSh)>1){
+        message("Multiple samplesheets found:\n")
+        print(samSh)
+        samSh <- samSh[stringr::str_detect(samSh,pattern = "\\$",negate = T)]
+    }
+    message("Using following samplesheet:\n", samSh[1])
+    stopifnot(length(samSh)>0)
+    return(samSh[1])
+}
+
 # Returns Total Sample Count in the run
 getTotalSamples <- function(thisSh=NULL){
-    msgFunName(cpInLnk2, "getTotalSamples")
-    templateDir = "Clinical_Methylation/methylation_run_TEMPLATE_new.xlsm"
-    thisSh <-  ifelse(is.null(thisSh), dir(getwd(), "*.xlsm"), thisSh)
-    temp <- stringi::stri_detect_fixed(thisSh, "~$")
-    thisSh <- thisSh[!temp]
-    if(length(thisSh)==0){print("No .xlsm sheet, defaulting to 16");return(16)}
+    msgFunName(cpOutLnk, "getTotalSamples")
+
+    templateDir = "Clinical_Methylation/methylation_run_TEMPLATE.xlsm"
+    thisSh <-  ifelse(is.null(thisSh), GrabSampleSheet(), thisSh)
+    thisSh <- thisSh[!stringi::stri_detect_fixed(thisSh, "~$")]
+    if(length(thisSh)==0){print("No .xlsm sheet, defaulting to 16 total samples");return(16)}
     worksheet <- suppressMessages(readxl::read_excel(thisSh[1], col_names="Total", range="B4:B4"))
     if (length(worksheet) == 0) {
-        message("Samplesheet ", thisSh[1]," is invalid format, manually edit")
-        message("Try copying the template:\n", templateDir)
+        warning("Samplesheet ", thisSh[1]," is invalid format or no integer in Cell B4 found.")
+        message("Manually edit samplesheet to fix-Try copying data into the template file:\n", templateDir)
+        stopifnot(length(worksheet)>0)
     } else {message("Total sample count found is: ", worksheet[1])}
     totNumb <- paste0(worksheet[1])
     return(as.integer(totNumb))

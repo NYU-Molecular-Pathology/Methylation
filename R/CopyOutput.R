@@ -7,6 +7,7 @@ msgFunName <- function(pthLnk, funNam){
     message("\nExecuting function: ", funNam, " from RScript in:\n", pthLnk,"\n")
 }
 mkBlue <- function(strVar){return(crayon::white$bgBlue(strVar))}
+mkGrn <- function(strVar){return(crayon::white$bgGreen$bold(strVar))}
 
 # FUN: Generate CNV image
 saveCNVhtml <- function(data) {
@@ -29,24 +30,34 @@ save.prev.folder <- function(prevs, oldFi){
     fs::file_copy(path=oldFi, new_path=prevs)
 }
 
+
+
+CopyHtmlFiles <- function(newFolder) {
+    message(mkBlue("Copying Reports to output folder:"), "\n", newFolder)
+    message(mkGrn("Now copying html reports..."),"\n")
+
+    fi2copy <- dir(getwd(), pattern = "*.html", full.names = T)
+    for (fi in fi2copy) {
+        fs::file_copy(fi, file.path(newFolder, basename(fi)))
+    }
+}
+
+CheckDirMake <- function(newFolder){
+    if (!dir.exists(newFolder)) {dir.create(newFolder)}
+}
+
 # FUN: Copies Reports to Z drive
 copy.to.clinical <- function(clinOut, runID, runYear) {
     msgFunName(cpOutLnk, "copy.to.clinical")
 
     newFolder <- file.path(clinOut, runYear, runID)
 
-    if (!dir.exists(newFolder)) {dir.create(newFolder)}
+    CheckDirMake(newFolder)
     if (dir.exists(newFolder)) {
         oldFi=dir(path=newFolder, full.names=T)
         prevs=file.path(newFolder,"previous")
         if (length(oldFi) > 0) {save.prev.folder(prevs,oldFi)}
-        message(mkBlue("Copying Reports to output folder:"), "\n", newFolder)
-        fi2copy <- dir(getwd(), pattern="*.html", full.names = T)
-        message(crayon::white$bgGreen$bold("Now copying html reports..."),"\n")
-        for (fi in fi2copy) {
-            fs::file_copy(fi, file.path(newFolder,basename(fi)))
-        }
-
+        CopyHtmlFiles(newFolder)
     }
 }
 
@@ -92,32 +103,21 @@ copy.cnv.files <- function(newFolder, runID, runYear=NULL) {
     cnvNames <- dir(path=getwd(), full.names=T, "*_cnv.png")
     if(length(cnvNames)>2){
         message(paste0("Copying PNG to: ", cnv_folder));print(as.data.frame(cnvNames))
-        if (!dir.exists(cnv_folder)){dir.create(cnv_folder)}
+        CheckDirMake(cnv_folder)
         if (dir.exists(cnv_folder)){fs::file_copy(cnvNames,cnv_folder)}
     }
 }
 
-# Uploads any created cnv png files to redcap database
-uploadCnPng <- function() {
-    msgFunName(cpOutLnk, "uploadCnPng")
-    rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
+GrabSampleSheet <- function(){
     samSh <- dir(path=getwd(), full.names=T, ".xlsm")
-    sampleNumb <- gb$getTotalSamples()
-    sh_Dat <-as.data.frame(readxl::read_excel(samSh,sheet=3,range="A1:N97", col_types=c("text")))
-    sampleNumb=as.integer(sampleNumb)
-    sh_Dat = sh_Dat[1:sampleNumb,]
-    filnm =paste0(sh_Dat$tm_number,"_", sh_Dat$b_number, "_cnv.png")
-    pathNam=file.path(getwd(),filnm)
-    rms=paste(c("control_","low_"),collapse ='|')
-    pathNam <- stringr::str_replace(pathNam, rms, "")
-    pathNam <- stringr::str_replace(pathNam, "//", "/")
-    records <- sh_Dat$record_id
-    for (idx in 1:length(records)) {
-        pth = pathNam[idx]
-        recordName = paste0(records[idx])
-        message("Importing Record:");cat(recordName, sep = "\n");cat(pth, sep = "\n")
-        redcapAPI::importFiles(rcon, pth, recordName, field="methyl_cn", repeat_instance=1)
+    if(length(samSh)>1){
+        message("Multiple samplesheets found:\n")
+        print(samSh)
+        samSh <- samSh[stringr::str_detect(samSh,pattern = "\\$",negate = T)]
     }
+    message("Using following samplesheet:\n", samSh[1])
+    stopifnot(length(samSh)>0)
+    return(samSh[1])
 }
 
 # Returns Total Sample Count in the run
@@ -125,31 +125,17 @@ getTotalSamples <- function(thisSh=NULL){
     msgFunName(cpOutLnk, "getTotalSamples")
 
     templateDir = "Clinical_Methylation/methylation_run_TEMPLATE.xlsm"
-    thisSh <-  ifelse(is.null(thisSh), dir(getwd(), "*.xlsm"), thisSh)
+    thisSh <-  ifelse(is.null(thisSh), GrabSampleSheet(), thisSh)
     thisSh <- thisSh[!stringi::stri_detect_fixed(thisSh, "~$")]
-    if(length(thisSh)==0){print("No .xlsm sheet, defaulting to 16");return(16)}
+    if(length(thisSh)==0){print("No .xlsm sheet, defaulting to 16 total samples");return(16)}
     worksheet <- suppressMessages(readxl::read_excel(thisSh[1], col_names="Total", range="B4:B4"))
     if (length(worksheet) == 0) {
-        message(
-            "Samplesheet ",
-            thisSh[1],
-            " is invalid format, manually edit\nTry copying the template:\n",
-            templateDir
-        )
+        warning("Samplesheet ", thisSh[1]," is invalid format or no integer in Cell B4 found.")
+        message("Manually edit samplesheet to fix-Try copying data into the template file:\n", templateDir)
+        stopifnot(length(worksheet)>0)
     } else {message("Total sample count found is: ", worksheet[1])}
     totNumb <- paste0(worksheet[1])
     return(as.integer(totNumb))
-}
-
-GrabSampleSheet <- function(){
-    samSh <- dir(path=getwd(), full.names=T, ".xlsm")
-    if(length(samSh)>1){
-        warning("Multiple samplesheets found:\n")
-        print(samSh)
-        samSh <- samSh[stringr::str_detect(samSh,pattern = "\\$",negate = T)]
-    }
-    message("Using following samplesheet:\n", samSh)
-    return(samSh)
 }
 
 
@@ -161,6 +147,26 @@ AddPngFilePath <- function(nfldr,sh_Dat){
     sh_Dat$cnv_file_path <- pathNam
     return(sh_Dat)
 }
+
+# Uploads any created cnv png files to redcap database
+uploadCnPng <- function() {
+    msgFunName(cpOutLnk, "uploadCnPng")
+    rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
+    samSh <- GrabSampleSheet()
+    sampleNumb <- getTotalSamples()
+    nfldr = file.path(stringr::str_split_fixed(gb$clinDrv, " ", 2)[1],"MethylationClassifier")
+    sh_Dat <-suppressMessages(
+        as.data.frame(readxl::read_excel(samSh,sheet=3,range="A1:N97", col_types=c("text")))[1:sampleNumb,1:13])
+    sh_Dat <- AddPngFilePath(nfldr,sh_Dat)
+    records <- sh_Dat$record_id
+    for (idx in 1:length(records)) {
+        pth = sh_Dat$cnv_file_path[idx]
+        recordName = paste0(records[idx])
+        message(mkBlue("Importing CNV Record:"),"\n", recordName, " ", pth)
+        redcapAPI::importFiles(rcon, pth, recordName, field="methyl_cn", overwrite = T, repeat_instance=1)
+    }
+}
+
 
 # Imports the xlsm sheet 3 data
 importRedcapStart <- function(nfldr){
@@ -194,21 +200,22 @@ importRedcapStart <- function(nfldr){
 
 checkRedcapRecord <- function(recordName){
     url = gb$apiLink
-    formData <- list("token"=gb$ApiToken,
-                     content='record',
-                     action='export',
-                     format='json',
-                     type='flat',
-                     csvDelimiter='',
-                     'records[0]'=recordName,
-                     'fields[0]'='classifier_pdf',
-                     rawOrLabel='raw',
-                     rawOrLabelHeaders='raw',
-                     exportCheckboxLabel='false',
-                     exportSurveyFields='false',
-                     exportDataAccessGroups='false',
-                     returnFormat='json'
-    )
+    formData <- list(
+        "token"=gb$ApiToken,
+         content='record',
+         action='export',
+         format='json',
+         type='flat',
+         csvDelimiter='',
+         'records[0]'=recordName,
+         'fields[0]'='classifier_pdf',
+         rawOrLabel='raw',
+         rawOrLabelHeaders='raw',
+         exportCheckboxLabel='false',
+         exportSurveyFields='false',
+         exportDataAccessGroups='false',
+         returnFormat='json'
+        )
     response <- httr::POST(url, body = formData, encode = "form")
     result <- httr::content(response)
     return(length(result)>0)
@@ -242,8 +249,11 @@ writeLogFi <- function(recordName){
 
 
 callApiFile <- function(rcon, recordName, ovwr=T){
-    message(mkBlue("Importing Record File:"),paste0(" ", recordFi))
+
     recordFi <- paste0(recordName, ".html")
+
+    message(mkBlue("Importing Record File:"),paste0(" ", recordFi))
+
     if(ovwr==F){writeLogFi(recordName)}
     tryCatch(
         expr = {
@@ -265,8 +275,11 @@ callApiFile <- function(rcon, recordName, ovwr=T){
 
 
 # Creates QC record and uploads reports to redcap
-uploadToRedcap <- function(file.list, deskCSV = T, runNumb=NULL) {
+uploadToRedcap <- function(file.list,
+                           deskCSV = T,
+                           runNumb = NULL) {
     msgFunName(cpOutLnk, "uploadToRedcap")
+
     rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
     runID <- ifelse(is.null(runNumb), gb$runID, runNumb)
     if (deskCSV == F) {
@@ -280,8 +293,9 @@ uploadToRedcap <- function(file.list, deskCSV = T, runNumb=NULL) {
             )
         }
     }
-    if (deskCSV == T) {importDesktopCsv(rcon)}
-
+    if (deskCSV == T) {
+        importDesktopCsv(rcon)
+    }
 }
 
 # Imports the xlsm sheet 3 data
@@ -292,15 +306,14 @@ importSingle <- function(sh_Dat) {
     record = c(sh_Dat[1,])
     datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox = T)
     print(sh_Dat)
-    res <-
-        RCurl::postForm(
-            uri= apiLink,
-            token = gb$ApiToken,
-            content = 'record',
-            format = 'json',
-            type = 'flat',
-            data = datarecord,
-            overwriteBehavior='normal'
+    res <- RCurl::postForm(
+        uri= apiLink,
+        token = gb$ApiToken,
+        content = 'record',
+        format = 'json',
+        type = 'flat',
+        data = datarecord,
+        overwriteBehavior='normal'
         )
     message(crayon::white$bgBlue("Record Uploaded"))
     invisible(res)
@@ -313,7 +326,7 @@ MakeOutputDir <- function(runYear, clinDrv, runID){
     runYear = ifelse(isMC, paste0("20", stringr::str_split_fixed(runID, "-", 2)[1]), runYear)
     newFolder <- ifelse(isMC==T, clinicalOutDir, researchOutDir)
     cat(crayon::white$bgCyan("Output Folder is:\n", newFolder))
-    if (!dir.exists(newFolder)) {dir.create(newFolder)}
+    CheckDirMake(newFolder)
     return(newFolder)
 }
 
@@ -324,17 +337,12 @@ CopyFilesOut <- function(file.list, newFolder){
         destDir = file.path(newFolder, basename(foo))
         tryCatch(
             expr = {fs::file_copy(foo, destDir, overwrite = F)},
-            error = function(e) {
-                message(e,"\nTrying other file copy method:\n")
-                if(!file.exists(foo)) {
-                    message("File ", foo, " does not exist")
-                } else{
+            error = function(e) {message(e,"\nTrying other file copy method:\n")
+                if(!file.exists(foo)) {message("File ", foo, " does not exist")} else{
                     cmnd = paste("cp", foo, newFolder)
                     message(cmnd)
-                    system(cmnd)
-                }
-            }
-        )
+                    system(cmnd)}}
+            )
     })
 }
 
