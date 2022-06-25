@@ -320,7 +320,7 @@ importSingle <- function(sh_Dat) {
     uploadToRedcap(file.list = paste0(record[1], ".html"), deskCSV = F)
 }
 
-MakeOutputDir <- function(runYear, clinDrv, runID){
+MakeOutputDir <- function(runYear, clinDrv, runID, isMC){
     researchOutDir = file.path(rschDrv,runID)
     clinicalOutDir = file.path(clinDrv, "Results", runYear, runID)
     runYear = ifelse(isMC, paste0("20", stringr::str_split_fixed(runID, "-", 2)[1]), runYear)
@@ -355,7 +355,7 @@ copy2outFolder <-function(clinDrv = NULL, runID, runYear = NULL) {
     clinDrv <- ifelse(is.null(clinDrv), gb$clinDrv, clinDrv)
     isMC = sjmisc::str_contains(runID, "MGDM") | sjmisc::str_contains(runID, "MC")
 
-    newFolder <- MakeOutputDir(runYear, clinDrv, runID)
+    newFolder <- MakeOutputDir(runYear, clinDrv, runID, isMC)
     oldFi = dir(path = newFolder, full.names = T)
 
     if (length(oldFi) > 0) {
