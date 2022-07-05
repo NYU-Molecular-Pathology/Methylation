@@ -61,6 +61,65 @@ copy.to.clinical <- function(clinOut, runID, runYear) {
     }
 }
 
+# Checks if field is already filled in REDCap returns boolean
+checkRedcapRecord <- function(recordName, fieldName='classifier_pdf'){
+    url = gb$apiLink
+    formData <- list(
+        "token"=gb$ApiToken,
+        content='record',
+        action='export',
+        format='json',
+        type='flat',
+        csvDelimiter='',
+        'records[0]'=recordName,
+        #'fields[0]'='classifier_pdf',
+        rawOrLabel='raw',
+        rawOrLabelHeaders='raw',
+        exportCheckboxLabel='false',
+        exportSurveyFields='false',
+        exportDataAccessGroups='false',
+        returnFormat='json'
+    )
+    response <- httr::POST(url, body = formData, encode = "form")
+    result <- httr::content(response)[[1]]
+    return(result[[fieldName]]=="")
+}
+
+writeLogFi <- function(recordName, isHtml=T){
+    logFile = "upload_log.tsv"
+    message("Check ",logFile,"\n", crayon::white$bgRed(recordName[1]), " already has an data in REDCap:")
+
+    if(isHtml==T){
+    i = paste(recordName[1], "already has an html file in REDCap\n")
+    write.table(i, file = logFile, append = TRUE, quote = F, sep = '\t', row.names = F, col.names = F)
+    }else{
+        i = "\n\nThe following data fields already have classifier_value filled in REDCap:\n"
+        write.table(i, file = logFile, append = TRUE, quote = F, sep = '\t', row.names = F, col.names = F)
+        i = paste(names(recordName), recordName, sep=":", collapse=" ")
+        write.table(i, file = logFile, append = TRUE, quote = F, sep = ' ', row.names = F, col.names = F)
+    }
+
+
+}
+
+loopRedcapImport <-function(data){
+    for (n in 1:nrow(data)) {
+        datarecord = jsonlite::toJSON((as.list(data[n,])), auto_unbox=T)
+        message("~~",crayon::bgBlue("Record Uploaded:"))
+        print(datarecord)
+        RCurl::postForm(
+            apiLink,
+            token = gb$ApiToken,
+            content = 'record',
+            format = 'csv',
+            type = 'flat',
+            data = datarecord,
+            returnFormat = 'csv',
+            overwriteBehavior = 'normal'
+        )
+    }
+}
+
 # REDCap: API call & Upload
 # uploads the redcap classifier values must convert to JSON first
 importDesktopCsv <- function(rcon,samsheet=NULL) {
@@ -69,29 +128,26 @@ importDesktopCsv <- function(rcon,samsheet=NULL) {
     ur=paste0(rcon$url);tk=rcon$token
     if(is.null(samsheet)){
         samsheet=dir(path=getwd(),full.names=T,"_Redcap.csv",recursive=F)} else {samsheet=samsheet}
-    if (length(samsheet) < 1) {message("Redcap headers csv file not found")}
+    if (length(samsheet) < 1) {message("Redcap headers csv file not found in:\n", paste(samsheet))}
     if (length(samsheet) == 1) {
         data<-read.csv(samsheet, stringsAsFactors=F)
         if(any(duplicated(data$record_id))){
-            message("Removing duplicates in redcap dataframe")
+            warning("Remove duplicate rows in the REDCap csv dataframe:")
+            print(data$record_id[duplicated(data$record_id)])
             data = data[!duplicated(data$record_id),]
         }
-        redcapAPI::importRecords(rcon,data,"normal","ids",returnData = T,logfile="redcaperrors.txt")
-        for (n in 1:nrow(data)) {
-            datarecord = jsonlite::toJSON((as.list(data[n,])), auto_unbox=T)
-            print(datarecord)
-            message("~~",crayon::bgBlue("Record Uploaded:"))
-            RCurl::postForm(
-                ur,
-                token = tk,
-                content = 'record',
-                format = 'csv',
-                type = 'flat',
-                data = datarecord,
-                returnFormat = 'csv',
-                overwriteBehavior = 'normal'
-            )
+        message("Checking REDCap for existing data:")
+        toImport <- unlist(lapply(data$record_id, FUN=function(rd){checkRedcapRecord(rd, "classifier_value")}))
+        if(any(!toImport)){
+        message("The following records already have an existing classifier_value and will not be over-written in REDCap:")
+            toSkip <- data[!toImport,]
+            print(toSkip)
+            invisible(lapply(1:length(toSkip), function(x){writeLogFi(as.data.frame(toSkip[x,]), isHtml=F)}))
+            data <- data[toImport,]
         }
+        if (nrow(data > 0)) {
+            cat(redcapAPI::importRecords(rcon, data, "normal", "ids", logfile = "redcaperrors.txt"))
+        }else{message("No new data to import to REDCap")}
     } else {message("no _Redcap.csv file found")}
 }
 
@@ -198,29 +254,6 @@ importRedcapStart <- function(nfldr){
     }
 }
 
-checkRedcapRecord <- function(recordName){
-    url = gb$apiLink
-    formData <- list(
-        "token"=gb$ApiToken,
-         content='record',
-         action='export',
-         format='json',
-         type='flat',
-         csvDelimiter='',
-         'records[0]'=recordName,
-         'fields[0]'='classifier_pdf',
-         rawOrLabel='raw',
-         rawOrLabelHeaders='raw',
-         exportCheckboxLabel='false',
-         exportSurveyFields='false',
-         exportDataAccessGroups='false',
-         returnFormat='json'
-        )
-    response <- httr::POST(url, body = formData, encode = "form")
-    result <- httr::content(response)
-    return(length(result)>0)
-}
-
 callApiImport <- function(rcon, recordName, runID){
     message(mkBlue("Importing Record Data:"))
     data = data.frame(record_id = recordName, run_number = runID)
@@ -238,15 +271,6 @@ callApiImport <- function(rcon, recordName, runID){
         error = function(e) {message(crayon::white$bgRed(paste(data$record_id, "failed import data to REDCap:")), "\n", e$message)}
     )
 }
-
-writeLogFi <- function(recordName){
-    message("Check upload_log.txt ", crayon::white$bgRed(recordName), " already has an html file in REDCap:")
-    logFile = file("upload_log.txt")
-    i = paste(recordName, "already has an html file in REDCap\n")
-    write(i, file = logFile, append = TRUE)
-    close(logFile)
-}
-
 
 callApiFile <- function(rcon, recordName, ovwr=T){
 
