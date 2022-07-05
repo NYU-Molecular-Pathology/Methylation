@@ -8,50 +8,40 @@ msgFunName <- function(pthLnk, funNam){
 message("\nExecuting function: ", crayon::black$bgYellow(funNam), " from RScript in:\n", pthLnk,"\n")
 }
 
-msgParams <- function(...){message("\nParams passed: ", crayon::bgGreen(paste(..., sep = ",")), "\n")}
+msgParams <- function(...){
+    message("\nParam passed: ", crayon::bgGreen(paste(deparse(substitute(...)), "=", ...)), "\n")
+}
+
+
+CreateRunDir <- function(newRun){
+    message(crayon::bgGreen("New Run Path:"),"\n", newRun)
+    if(!dir.exists(newRun)) {dir.create(newRun, recursive=T)}
+    gb$setDirectory(newRun)
+}
 
 # Sets the methylation run directory named by the new run name
 setRunDir <- function(runID=NULL, workFolder=NULL){
     msgFunName(cpInLnk, "setRunDir")
-    msgParams("runID", "workFolder")
-    msgParams(runID, workFolder)
-
-    if(!is.null(workFolder)){gb$methDir <- workFolder}
-    if(is.null(gb$methDir)){gb$methDir<- gb$defaultDir}
-    workFolder <- gb$ckNull(workFolder, gb$methDir, deparse(substitute(workFolder,env=gb)))
-    if(is.null(workFolder)){
-        workFolder <- gb$defaultDir
-        assign("workFolder", gb$defaultDir)
+    msgParams(runID); msgParams(workFolder)
+    workFolder <- ifelse(is.null(workFolder),gb$defaultDir, workFolder)
+    if(is.null(runID)){
+        runID <- paste0(basename(getwd()))
     }
     newRun <- file.path(workFolder, runID)
-    if(stringr::str_detect(newRun, "NULL")==T){
-         newRun <- file.path(gb$methDir, runID)
-    }
 
-    assign("newRunPath", newRun)
     if(grepl("TEST",runID)){
         if(dir.exists(newRun)){unlink(newRun, T, T)}
         dir.create(newRun)
         try(unlink(file.path("~/Desktop",runID), T, T),silent = T)
     }
-
-    message(newRun,"\n", crayon::bgGreen("newRunPath: "),newRunPath)
-
-    if(!dir.exists(newRun)){
-        #base::dir.create(newRun, recursive=T)
-        cmdDir = paste('mkdir -p -m 777', newRun)
-        system(cmdDir)
-        cat("Creating folder: ",newRun)
-        gb$setDirectory(newRun)
-    } else {gb$setDirectory(newRun)}
+    CreateRunDir(newRun)
     return(newRun)
 }
 
 # FUN: Returns a list of idat files given an idat drive location -
 getAllFiles <- function(idatDir, csvNam=NULL) {
     msgFunName(cpInLnk, "getAllFiles")
-    msgParams("idatDir","csvNam")
-
+    msgParams(idatDir);msgParams(csvNam)
     if(!is.null(csvNam)){ssheet=read.csv(csvNam,strip.white=T)
     barcode=as.vector(ssheet$Sentrix_ID)} else {
         ssheet=read.csv(csvNam,strip.white=T)
@@ -113,15 +103,25 @@ get.idats <-function(csvNam = "samplesheet.csv"){
 }
 
 # FUN: Copies samplesheet to Desktop folder
-moveSampleSheet <- function(methDir, runID=NULL) {
+moveSampleSheet <- function(methDir, runID = NULL) {
     msgFunName(cpInLnk, "moveSampleSheet")
-    if (is.null(runID)){runID=paste0(basename(getwd()))}
-    baseFolder=paste0("~/Desktop/",runID,"/")
-    if(!dir.exists(baseFolder)){dir.create(baseFolder)}
-    currDir=paste0(methDir, "/",runID)
+    if (is.null(runID)) {
+        runID = paste0(basename(getwd()))
+        message("Setting runID=", runID)
+    }
+    baseFolder = file.path("~","Desktop", runID)
+    if (!dir.exists(baseFolder)) {
+        dir.create(baseFolder)
+    }
+    currDir = file.path(methDir, runID)
     endDir = paste0(baseFolder, runID, "_samplesheet.csv")
-    fs::file_copy(path=paste0(currDir,"/samplesheet.csv"),new_path=baseFolder,overwrite=T)
-    file.rename(from=paste0(baseFolder,"samplesheet.csv"), to=endDir)
+    fs::file_copy(
+        path = paste0(currDir, "/samplesheet.csv"),
+        new_path = baseFolder,
+        overwrite = T
+    )
+    file.rename(from = paste0(baseFolder, "samplesheet.csv"),
+                to = endDir)
 }
 
 #  Copy idats and Worksheets creation
@@ -164,7 +164,7 @@ search.redcap <- function(rd_numbers, token=NULL, flds=NULL) {
                  "barcode_and_row_column","accession_number","arrived")
         }
     result <- redcapAPI::exportRecords(
-        rcon,records = rd_numbers,fields = flds,dag = F,factors = F,
+        rcon, records = rd_numbers, fields = flds, dag = F, factors = F,
         labels = F,dates = F, form_complete_auto = F,format = 'csv')
     return(as.data.frame(result))
 }
