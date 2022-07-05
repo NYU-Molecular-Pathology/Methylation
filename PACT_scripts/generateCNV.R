@@ -110,6 +110,7 @@ getCnWebshot <- function(xx, fn, asPNG=T) {
     supM(htmlwidgets::saveWidget(plotly::as_widget(p), tempPathFi))
     if (asPNG == F) {getHtmlCN(fn)} else{getPngFile(fn, tempPathFi)}
     try(file.remove(tempPathFi), silent = T)
+    invisible(gc()) # garbage cleanup
 }
 
 calculateCnv <- function(RGsetEpic, sampleName) {
