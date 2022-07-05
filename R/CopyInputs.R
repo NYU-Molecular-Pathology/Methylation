@@ -14,9 +14,14 @@ msgParams <- function(...){
 
 
 CreateRunDir <- function(newRun){
+    if(endsWith(newRun,"/")){
+        newRun <- substr(newRun,1, nchar(newRun)-1)
+    }
     message(crayon::bgGreen("New Run Path:"),"\n", newRun)
     if(!dir.exists(newRun)) {dir.create(newRun, recursive=T)}
+
     gb$setDirectory(newRun)
+    return(newRun)
 }
 
 # Sets the methylation run directory named by the new run name
@@ -28,14 +33,12 @@ setRunDir <- function(runID=NULL, workFolder=NULL){
         runID <- paste0(basename(getwd()))
     }
     newRun <- file.path(workFolder, runID)
-
     if(grepl("TEST",runID)){
         if(dir.exists(newRun)){unlink(newRun, T, T)}
         dir.create(newRun)
         try(unlink(file.path("~/Desktop",runID), T, T),silent = T)
     }
-    CreateRunDir(newRun)
-    return(newRun)
+    return(CreateRunDir(newRun))
 }
 
 # FUN: Returns a list of idat files given an idat drive location -
@@ -73,14 +76,18 @@ copyBaseIdats <- function(allFi) {
 # Helper FUN called during copying idats to notify if a network mount is not found
 warnMount <- function(idat.dir){
     msgFunName(cpInLnk, "warnMount")
-    cat(crayon::bgRed("Directory not found, ensure the idat folder location is accessible:"),idat.dir,sep="\n")
+    message(crayon::bgRed("Directory not found, ensure the idat path is accessible:"),
+            "\n",idat.dir)
 }
 
 # FUN: Returns a list of idat files that exist on Molecular and Snuderl lab drives -
 get.idats <-function(csvNam = "samplesheet.csv"){
     msgFunName(cpInLnk, "get.idats")
-    rsch.idat <- gb$rsch.idat;clin.idat <- gb$clin.idat
-    if(!dir.exists(rsch.idat)){warnMount(rsch.idat)}; if(!dir.exists(clin.idat)){warnMount(clin.idat)}
+    rsch.idat <- gb$rsch.idat
+    clin.idat <- gb$clin.idat
+
+    if(!dir.exists(rsch.idat)){warnMount(rsch.idat)}
+    if(!dir.exists(clin.idat)){warnMount(clin.idat)}
     stopifnot(dir.exists(rsch.idat)|dir.exists(clin.idat))
     if (file.exists(csvNam)) {
         allFi <- getAllFiles(idatDir = c(rsch.idat, clin.idat), csvNam = csvNam)
@@ -89,17 +96,20 @@ get.idats <-function(csvNam = "samplesheet.csv"){
             message("Files found: "); print(allFi)
             cur.idat <- dir(pattern = "*.idat$")
             bcds <- paste0(basename(allFi))
-            if (all(bcds %in% cur.idat)) {message(".idat files already copied")}
-            if (!all(bcds %in% cur.idat)) {copyBaseIdats(allFi[!(bcds %in% cur.idat)])} #length(cur.idat) < length(allFi)
-        } else {cat(crayon::bgRed("No .idat files found! Check worksheet for barcode if found in the folder path:\n"))
-               cat(crayon::bgRed("/Volumes/molecular/Molecular/iScan/"))
-                filesFound = F
-                stopifnot(filesFound==T)
-               }
-    } else {message(paste("Cannot find your sheet named:", csvNam))
-           filesFound = F
-                stopifnot(filesFound==T)
-           }
+            if (all(bcds %in% cur.idat)) {
+                message(".idat files already copied")
+                }else{
+                    copyBaseIdats(allFi[!(bcds %in% cur.idat)])
+                    }
+        } else {
+            message(crayon::bgRed("No .idat files found! Check worksheet for barcode if found in the folder path:"))
+            message(rsch.idat, "\nor\n", clin.idat)
+            stopifnot(length(allFi) > 0)
+            }
+    } else {
+        message("Cannot find your sheet named:", csvNam)
+        stopifnot(file.exists(csvNam))
+        }
 }
 
 # FUN: Copies samplesheet to Desktop folder
@@ -109,19 +119,20 @@ moveSampleSheet <- function(methDir, runID = NULL) {
         runID = paste0(basename(getwd()))
         message("Setting runID=", runID)
     }
-    baseFolder = file.path("~","Desktop", runID)
-    if (!dir.exists(baseFolder)) {
-        dir.create(baseFolder)
+    deskDir = file.path("~","Desktop", runID)
+    if (!dir.exists(deskDir)) {
+        dir.create(deskDir)
     }
     currDir = file.path(methDir, runID)
-    endDir = paste0(baseFolder, runID, "_samplesheet.csv")
+    outFile = paste0(runID, "_samplesheet.csv")
+
     fs::file_copy(
-        path = paste0(currDir, "/samplesheet.csv"),
-        new_path = baseFolder,
+        path = file.path(currDir, "samplesheet.csv"),
+        new_path = deskDir,
         overwrite = T
     )
-    file.rename(from = paste0(baseFolder, "samplesheet.csv"),
-                to = endDir)
+    file.rename(from = file.path(deskDir, "samplesheet.csv"),
+                to = file.path(deskDir, outFile))
 }
 
 #  Copy idats and Worksheets creation
