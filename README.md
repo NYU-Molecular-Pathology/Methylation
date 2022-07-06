@@ -32,7 +32,9 @@ Open Finder and press **⌘(CMD) + K** then paste each of these directories, log
 
 # Install pipeline and start a Run in Terminal
 To run the pipeline from your terminal, simply execute the following command:<br />
-`/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST`<br />
+```
+/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST
+```
 ___
 ### Input Paths
 *Files are copied to the work directory by their RUNID name and YEAR, including the worksheet and idats for example:*
@@ -78,14 +80,14 @@ Alternatively, instead of passing the RunID to runmeth.sh, you can source and do
 `/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST`<br />
 
 ## Troubleshooting
-
-### Pipeline Installation Issues
+<details>
+<summary>Pipeline Installation Issues</summary>
 If you have issues with package installation or dependencies:<br />
 Make sure compilers are installed by opening Xcode.app or executing `sudo xcode-select --install`<br>
 Then, execute the all_installer.R script by copy and pasting the raw contents of the script below into Rstudio before running runmeth.sh again<br />
 https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/all_installer.R<br />
 To resolve any problems during automation, you can open methylExpress.R in RStudio which is downladed by runmeth.sh to your home directory.<br />
-
+</details>
 ### REDCap errors
 Once your run completes check in your run directory if there is any *upload_log.tsv* file or *redcaperrors.txt*.  If these files exist, they may note any files or data which would have been over-written in the database.  Check with the wet lab if any RD-numbers were duplicated or previously used for the samples listed in the upload_log.tsv file. <br>
 **NOTE** When running the test case run *21-MGDM_TEST* you may notice an error with the upload log as these reports would already exist in REDCap.  It is normal for the test case to fail uploading since the REDCap database already contains the data and files for the test run.
