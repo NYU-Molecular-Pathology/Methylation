@@ -50,12 +50,9 @@ ___
 ## **Executing Methylation CLI**
 To run the Clinical or Research Methylation pipeline, simply use the locally stored Shell Script in:<br>
 `/Volumes/CBioinformatics/Methylation/runMeth.sh`<br/>
-This shell script uses Curl to download the files from this repo and executes methylExpress.R in the terminal.
-<br>
-You can copy runMeth.sh and create an alias or symlink to execute more easily.  For example:<br>
-`alias runmeth='bash ~/script/runmeth.sh'`
-or
-`echo "alias runmeth='bash ~/script/runmeth.sh'" >> ~/.bashrc`
+- This shell script uses Curl to download the files from this repo and executes methylExpress.R in the terminal.
+- You can copy runMeth.sh and create an alias or symlink to execute more easily.  For example:<br>
+`alias runmeth='bash ~/script/runmeth.sh'` or `echo "alias runmeth='bash ~/script/runmeth.sh'" >> ~/.bashrc`
 
 ### The shell script takes the following argument parameters:<br>
 **`methAPI='XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'`** # RedCap API Token <br>
@@ -63,10 +60,10 @@ or
 `PRIORITY=${2-NULL}` # string of prioritized RD-numbers<br>
 `runPath=${3-NULL}` # any custom directory to copy/run the idat files<br>
 `redcapUp=${4-NULL}` # to upload to redcap or not if server down single char i.e. "T" or "F"<br>
-<br>
-**runmeth.sh downloads methylExpress.R and other files using curl:**<br>
+
+- **runmeth.sh downloads methylExpress.R and other files using curl:**<br>
 `curl -o methylExpress.R -L https://git.io/JWujj`<br>
-**Finally runmeth.sh passes your input parameters as args to methylExpress.R:**<br>
+- **Finally runmeth.sh passes your input parameters as args to methylExpress.R:**<br>
 `Rscript --verbose methylExpress.R` **`$methAPI` `$methRun` `$PRIORITY` `$runPath`**<br>
 
 ### The four positional arguments from *runmeth.sh* are passed to the Rscript *methylExpress.R*:<br />
