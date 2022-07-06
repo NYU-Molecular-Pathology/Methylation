@@ -1,5 +1,22 @@
 # Clinical Methylation Classifier Setup
 
+- Table of Contents
+  * [Methylation Pipline Overview](#methylation-pipline-overview)
+  * [Essential Downloads](#essential-downloads)
+  * [Network Drive Mount Paths](#network-drive-mount-paths)
+- [Install pipeline and start a Run in Terminal](#install-pipeline-and-start-a-run-in-terminal)
+    + [Input Paths](#input-paths)
+    + [Default Working Directory](#default-working-directory)
+    + [Output Paths](#output-paths)
+  * [**Executing Methylation CLI**](#--executing-methylation-cli--)
+    + [runmeth.sh parameters](#runmethsh-parameters)
+    + [Passing Arguments to R](#passing-arguments-to-r)
+  * [Run the Test Case:<br />](#run-the-test-case--br---)
+  * [Troubleshooting](#troubleshooting)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
+
 ## Methylation Pipline Overview
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/1bcd4fcdb6fb8c1908cb2d38fcfc7cd2ffffe8a2/screenshots/meth_pipeline_uml.png" alt="drawing" width="100%"/><br/>
 
