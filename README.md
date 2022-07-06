@@ -22,19 +22,15 @@ Download and install the following packages:<br>
 [System Preferences Privacy & Security Panel](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/Notes/SystemPermissions.md) before installing packages.
 ___
 ## Network Drive Mount Paths
-### To install & run the pipeline, it is critical to mount the following network smb shared drives:
-
-Open Finder and press **⌘(CMD) + K** then paste each of these directories, login name and password is your NYUMC\KerberosID
-<br>
+- To install & run the pipeline, it is critical to mount the following network smb shared drives:
+- Open Finder and press **⌘(CMD) + K** then paste each of the directories below, using NYUMC\KerberosID as the login name and password is your kerberos password. <br>
 `smb://research-cifs.nyumc.org/Research/CBioinformatics/`<br />
 `smb://research-cifs.nyumc.org/Research/snudem01lab/snudem01labspace`<br />
 `smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular`<br />
 
 # Install pipeline and start a Run in Terminal
 To run the pipeline from your terminal, simply execute the following command:<br />
-```
-/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST
-```
+```/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST```
 ___
 ### Input Paths
 *Files are copied to the work directory by their RUNID name and YEAR, including the worksheet and idats for example:*
@@ -56,7 +52,8 @@ To run the Clinical or Research Methylation pipeline, simply use the locally sto
 - You can copy runMeth.sh and create an alias or symlink to execute more easily.  For example:<br>
 `alias runmeth='bash ~/script/runmeth.sh'` or `echo "alias runmeth='bash ~/script/runmeth.sh'" >> ~/.bashrc`
 
-### The shell script takes the following argument parameters:<br>
+### runmeth.sh parameters
+The shell script takes the following argument parameters:<br>
 **`methAPI='XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'`** # RedCap API Token <br>
 **`methRun=${1-NULL}`** # methylation run id e.g. MDGM22-3<br>
 `PRIORITY=${2-NULL}` # string of prioritized RD-numbers<br>
@@ -68,7 +65,8 @@ To run the Clinical or Research Methylation pipeline, simply use the locally sto
 **Finally runmeth.sh passes your input parameters as args to methylExpress.R:**<br>
 `Rscript --verbose methylExpress.R` **`$methAPI` `$methRun` `$PRIORITY` `$runPath`**
 
-### The four positional arguments from *runmeth.sh* are passed to the Rscript *methylExpress.R*:<br />
+### Passing Arguments to R
+The four positional arguments from *runmeth.sh* are passed to the Rscript *methylExpress.R*:<br />
 `arg[1]` is the **token** for the API call ('#######################')<br />
 `arg[2]` is the **RunID** which if NULL runs the latest Clinical Worksheet ('MR21-099')<br />
 `arg[3]` is the **selectRds** parameter which is to prioritize samples being run (NULL)<br />
