@@ -1,10 +1,9 @@
 # Clinical Methylation Classifier Setup
 
 ## Table of Contents
-- [Clinical Methylation Classifier Setup](#clinical-methylation-classifier-setup)
-  * [📖 Methylation Pipline Overview](#---methylation-pipline-overview)
-  * [💻 Essential Downloads](#---essential-downloads)
-  * [🌐 Network Drive Mount Paths](#🌐 network-drive-mount-paths)
+- [📖 Methylation Pipline Overview](#-methylation-pipline-overview)
+  * [💻 Essential Downloads](#-essential-downloads)
+  * [🌐 Network Drive Mount Paths](#-network-drive-mount-paths)
 - [⚡️ Quickstart](#%EF%B8%8F-quickstart)
     + [Input Paths](#input-paths)
     + [Default Working Directory](#default-working-directory)
