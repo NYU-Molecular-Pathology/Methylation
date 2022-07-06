@@ -1,4 +1,4 @@
-# Clinical Methylation Classifier Setup
+<h1>Clinical Methylation Classifier Setup <img src="https://media.giphy.com/media/WUlplcMpOCEmTGBtBW/giphy.gif" width="80"> </h1>
 
 ### Table of Contents
 - [📖 Methylation Pipline Overview](#-methylation-pipline-overview)
