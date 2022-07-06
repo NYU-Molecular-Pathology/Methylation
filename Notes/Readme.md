@@ -1,7 +1,7 @@
 ## Generate a REDCap API token
 1. Login to REDCap and from the Projects homepage go to the "All Samples Database"
-2. Next, click on the sidebar where it says "API" highlighted in red below. **Note**: If you are missing this API access menu, access can be added for API  privilege under the "User Rights" menu in the same sidebar by someone who has access.  For new projects, access to the API module must be requested from the redcap admins.
-<img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/00be73964a9542938a89810f074bb3ec03e724ed/screenshots/redcap_sidebar.png" alt="redcapsidebar" width="450"/><br />
+2. Next, click on the sidebar where it says "API" highlighted in red below. **Note**: If you are missing this API access menu, access can be added for API  privilege under the "User Rights" menu in the same sidebar by someone who has access.  For new projects, access to the API module must be requested from the redcap admins.<br>
+<img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/00be73964a9542938a89810f074bb3ec03e724ed/screenshots/redcap_sidebar.png" alt="redcapsidebar" width="250"/><br />
 3. Click "Generate Token" and you can save this token locally only as it never expires and must be protected.
 <br>
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/00be73964a9542938a89810f074bb3ec03e724ed/screenshots/redcap_api.png" alt="apidraw" width="850"/><br />
