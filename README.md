@@ -88,18 +88,25 @@ Then, execute the all_installer.R script by copy and pasting the raw contents of
 https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/all_installer.R<br />
 To resolve any problems during automation, you can open methylExpress.R in RStudio which is downladed by runmeth.sh to your home directory.<br />
 </details>
-### REDCap errors
+
+<details>
+<summary>REDCap errors</summary>
 Once your run completes check in your run directory if there is any *upload_log.tsv* file or *redcaperrors.txt*.  If these files exist, they may note any files or data which would have been over-written in the database.  Check with the wet lab if any RD-numbers were duplicated or previously used for the samples listed in the upload_log.tsv file. <br>
 **NOTE** When running the test case run *21-MGDM_TEST* you may notice an error with the upload log as these reports would already exist in REDCap.  It is normal for the test case to fail uploading since the REDCap database already contains the data and files for the test run.
+</details>
 
-### How to upload manually to REDCap
+<details>
+<summary>How to upload manually to REDCap</summary>
 1. Login with your kerberos ID to https://redcap.nyumc.org/
 2. On the left-hand sidebar scroll all the way down the Reports Bookmarks until you see the folder: >>>>CURRENT Runs~~~~~ and 3) >>>>>CLINICAL Current Run
 3. Here, you can click on the RD-number of choice and then select "Upload html file" under the methylation menue
-4. Optionally, you can also select "  Add / Edit Records" menu in the left sidebar and find your RD-number in the "Search query" field
+4. Optionally, you can also select "Add / Edit Records" menu in the left sidebar and find your RD-number in the "Search query" field
+</details>
 
-### How to check worksheet
+<details>
+<summary>Fix wet lab worksheet</summary>
 1. In your current working directory or in the path /Volumes/CBioinformatics/Methylation/Clinical_Runs/22-MGDM##, open the RUNID.xlsm file
 2. On the Review ribbon, click unprotect worksheet and unprotect tab
 3. Right-click the "worksheet" tab at the bottom and unhide... raw_labels tab
 4. If any "#ref" errors either drag the formula down to correct or type "=" and select the cell in the first tab "worksheet" and press return.  For example "=worksheet!B25" references cell B25 in the tab named "worksheet"
+</details>
