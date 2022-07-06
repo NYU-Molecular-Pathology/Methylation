@@ -1,13 +1,13 @@
 # Clinical Methylation Classifier Setup
 
-## Table of Contents
+### Table of Contents
 - [📖 Methylation Pipline Overview](#-methylation-pipline-overview)
   * [💻 Essential Downloads](#-essential-downloads)
   * [🌐 Network Drive Mount Paths](#-network-drive-mount-paths)
-- [⚡️ Quickstart](#%EF%B8%8F-quickstart)
-     + [<sub><sup>Input Paths</sup></sub>](#input-paths) 
-     + [<sub><sup>Default Working Directory</sup></sub>](#default-working-directory)
-     + [<sub><sup>Output Paths</sup></sub>](#output-paths)
+- [⚡️ Quickstart](#%EF%B8%8F-quickstart)</br>
+     [<sup>-  Input Paths</sup>](#input-paths)</br>
+     [<sup>-  Default Working Directory</sup>](#default-working-directory)</br>
+     [<sup>-  Output Paths</sup>](#output-paths)</br>
 - [⚙️ Executing Methylation CLI](#%EF%B8%8F-executing-methylation-cli)
     + [runmeth.sh parameters](#runmethsh-parameters)
     + [Passing Arguments to R](#passing-arguments-to-r)
