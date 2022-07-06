@@ -4,7 +4,7 @@
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/1bcd4fcdb6fb8c1908cb2d38fcfc7cd2ffffe8a2/screenshots/meth_pipeline_uml.png" alt="drawing" width="100%"/><br/>
 
 ## Essential Downloads
-The classifier runs on R version 3.6.3 and up.  It is not compatible with 3.3.3<br />
+Download and install the following packages:<br>
 1. **R 4.1** from CRAN: https://cran.r-project.org/bin/macosx/<br />
 2. **RStudio 1.4 or later**: https://www.rstudio.com/products/rstudio/download/#download<br />
 3. **XQuartz**: https://www.xquartz.org/<br />
