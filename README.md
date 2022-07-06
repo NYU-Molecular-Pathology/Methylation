@@ -8,11 +8,12 @@
     + [Input Paths](#input-paths)
     + [Default Working Directory](#default-working-directory)
     + [Output Paths](#output-paths)
-  * [**Executing Methylation CLI**](#--executing-methylation-cli--)
+- [**Executing Methylation CLI**](#--executing-methylation-cli--)
     + [runmeth.sh parameters](#runmethsh-parameters)
     + [Passing Arguments to R](#passing-arguments-to-r)
   * [Run the Test Case](#run-the-test-case)
   * [Troubleshooting](#troubleshooting)
+
 
 ## Methylation Pipline Overview
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/1bcd4fcdb6fb8c1908cb2d38fcfc7cd2ffffe8a2/screenshots/meth_pipeline_uml.png" alt="drawing" width="100%"/><br/>
@@ -59,7 +60,8 @@ For example, run 22-MGDM17 report files would be output in the following directo
 `/Volumes/molecular/Molecular/MethylationClassifier/2022/22-MGDM17`<br>
 `/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/Results/2022/22-MGDM17`
 ___
-## **Executing Methylation CLI**
+
+# **Executing Methylation CLI**
 To run the Clinical or Research Methylation pipeline, simply use the locally stored Shell Script in:<br>
 `/Volumes/CBioinformatics/Methylation/runMeth.sh`<br/>
 - This shell script uses Curl to download the files from this repo and executes methylExpress.R in the terminal.
