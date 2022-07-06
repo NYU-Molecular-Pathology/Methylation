@@ -1,8 +1,8 @@
 # Clinical Methylation Classifier Setup
 
 ## Table of Contents
-- [Clinical Methylation Classifier Setup](#clinical-methylation-classifier-setup)
-  * [📖 Methylation Pipline Overview](#---methylation-pipline-overview)
+
+- [📖 Methylation Pipline Overview](#---methylation-pipline-overview)
   * [💻 Essential Downloads](#---essential-downloads)
   * [🌐 Network Drive Mount Paths](#---network-drive-mount-paths)
 - [⚡️ Quickstart](#---quickstart)
@@ -12,8 +12,8 @@
 - [⚙️ Executing Methylation CLI](#---executing-methylation-cli)
     + [runmeth.sh parameters](#runmethsh-parameters)
     + [Passing Arguments to R](#passing-arguments-to-r)
-  * [🧪 Run the Test Case](#---run-the-test-case)
-  * [⚠️ Troubleshooting](#---troubleshooting)
+- [🧪 Run the Test Case](#---run-the-test-case)
+- [⚠️ Troubleshooting](#---troubleshooting)
 
 ## 📖 Methylation Pipline Overview
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/1bcd4fcdb6fb8c1908cb2d38fcfc7cd2ffffe8a2/screenshots/meth_pipeline_uml.png" alt="drawing" width="100%"/><br/>
@@ -94,11 +94,11 @@ The four positional arguments from *runmeth.sh* are passed to the Rscript *methy
 
 Alternatively, instead of passing the RunID to runmeth.sh, you can source and download this repository and then locally edit args in [methylExpress.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/R/methylExpress.R) to run manually.
 
-## 🧪 Run the Test Case
+# 🧪 Run the Test Case
 After installation, you can use the following run command to test the pipeline.<br>
 `/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST`<br />
 
-## ⚠️ Troubleshooting
+# ⚠️ Troubleshooting
 <details>
 <summary>Pipeline Installation Issues</summary>
 If you have issues with package installation or dependencies:<br />
