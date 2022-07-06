@@ -38,14 +38,13 @@ ___
 
 If you have issues with the automation, you can open methylExpress.R which downloads to your home directory in RStudio<br />
 
-___
-## Input Paths
+### Input Paths
 Files are copied to the work directory by their RUNID name and YEAR, including the worksheet and idats for example:<br />
 **Worksheet**<br>
 /Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/WORKSHEETS/2022/22-MGDM17.xlsm<br />
 **.idat files input directory:**<br />
 /Volumes/molecular/Molecular/iScan/<br />
-## Output Paths
+### Output Paths
 **Files are saved to MethylationClassifier/YEAR/RUNID, for example:**<br/>
 /Volumes/molecular/Molecular/MethylationClassifier/2022/22-MGDM17<br>
 ___
@@ -60,16 +59,10 @@ Alternatively, you can source then run the github script locally using [methylEx
 ## Run the Test Case after installation with the following command:<br />
 `/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST`<br />
 
-# Email List of Methylation samples which are PACT run
-
-`curl -o PactMethMatch.R -L https://git.io/J41Wp; Rscript --verbose PactMethMatch.R 'TOKENAPI12345667891011' '/Users/PATH/TO/CSV/Desktop/210715_NB501073_9999_ABCDEFGHIJRLK-SampleSheet.csv'`
-
-# Email PACT csv file:
-`curl -o pactParse.R -L https://git.io/J0kfR; Rscript --verbose pactParse.R 'TOKENAPI12345667891011' 'PACT-21-##'`
-
-## **RUNNING METHYLATION CLI**
+## **Executing Methylation CLI**
 To run the Clinical or Research Methylation pipeline, simply use the locally stored Shell Script in:<br>
 `/Volumes/CBioinformatics/Methylation/runMeth.sh`
+<br>
 You can copy runMeth.sh and create an alias or symlink to execute more easily.  For example:<br>
 `alias runmeth='bash ~/script/runmeth.sh'`
 or
