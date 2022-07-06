@@ -57,25 +57,26 @@ You can copy runMeth.sh and create an alias or symlink to execute more easily.  
 or
 `echo "alias runmeth='bash ~/script/runmeth.sh'" >> ~/.bashrc`
 
-The shell script takes the following argument parameters:<br>
-`#!/bin/bash`<br>
-`methAPI='XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' # RedCap API Token`<br>
-`methRun=${1-NULL} # methylation run id e.g. MDGM22-3`<br>
-`PRIORITY=${2-NULL} # string of prioritized RD-numbers`<br>
-`runPath=${3-NULL} # any custom directory to copy/run the idat files`<br>
-`redcapUp=${4-NULL} # to upload to redcap or not if server down single char i.e. "T" or "F"`<br>
-
-`curl -o methylExpress.R -L https://git.io/JWujj; Rscript --verbose methylExpress.R $methAPI $methRun $PRIORITY $runPath`<br>
+### The shell script takes the following argument parameters:<br>
+`methAPI='XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'` # RedCap API Token <br>
+`methRun=${1-NULL}` # methylation run id e.g. MDGM22-3<br>
+`PRIORITY=${2-NULL}` # string of prioritized RD-numbers<br>
+`runPath=${3-NULL}` # any custom directory to copy/run the idat files<br>
+`redcapUp=${4-NULL}` # to upload to redcap or not if server down single char i.e. "T" or "F"<br>
+### runmeth.sh then downloads methylExpress.R:
+`curl -o methylExpress.R -L https://git.io/JWujj`<br>
+### Finally runmeth.sh then passes your parameters as args to methylExpress.R:<br>
+`Rscript --verbose methylExpress.R` `$methAPI` `$methRun` `$PRIORITY` `$runPath`<br>
 
 You can locally copy or symlink the runMeth.sh file to execute the pipeline more easily<br>
 
-### The four positional arguments are passed from *runmeth.sh* to the Rscript *methylExpress.R*:<br />
+### The four positional arguments from *runmeth.sh* are passed to the Rscript *methylExpress.R*:<br />
 `arg[1]` is the **token** for the API call ('#######################')<br />
 `arg[2]` is the **RunID** which if NULL runs the latest Clinical Worksheet ('MR21-099')<br />
 `arg[3]` is the **selectRds** parameter which is to prioritize samples being run (NULL)<br />
 `arg[4]` is the **baseFolder** parameter which is optional if you want to run/save output to a different directory (NULL)<br />
 
-Alternatively, instead of passing the RunID to runmeth.sh, you can source and download this repository and then run locally using [methylExpress.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/R/methylExpress.R)
+Alternatively, instead of passing the RunID to runmeth.sh, you can source and download this repository and then locally edit args in [methylExpress.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/R/methylExpress.R) to run manually.
 
 ## Run the Test Case after installation with the following command:<br />
 `/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST`<br />
