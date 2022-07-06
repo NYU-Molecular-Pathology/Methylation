@@ -35,11 +35,9 @@ To run the pipeline from your terminal, simply execute the following command:<br
 `/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST`<br />
 ___
 ### Input Paths
-- Files are copied to the work directory by their RUNID name and YEAR, including the worksheet and idats for example:<br />
-- **Worksheet**<br>
-`/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/WORKSHEETS/2022/22-MGDM17.xlsm`<br />
-- **.idat files input directory:**<br />
-`/Volumes/molecular/Molecular/iScan/`<br />
+*Files are copied to the work directory by their RUNID name and YEAR, including the worksheet and idats for example:*
+- **Worksheets** `/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/WORKSHEETS/2022/22-MGDM17.xlsm`<br />
+- **.idat files**`/Volumes/molecular/Molecular/iScan/`
 ### Default Working Directory
 - **Input files are copied and report files are generated on the Cbioinformatics drive:**<br />
 `/Volumes/CBioinformatics/Methylation/Clinical_Runs/22-MGDM17`<br />
