@@ -4,7 +4,7 @@
 - [Methylation Pipline Overview](#methylation-pipline-overview)
   * [Essential Downloads](#essential-downloads)
   * [Network Drive Mount Paths](#network-drive-mount-paths)
-- [Install pipeline and start a Run in Terminal](#install-pipeline-and-start-a-run-in-terminal)
+- [⚡️ Quickstart](#---quickstart)
     + [Input Paths](#input-paths)
     + [Default Working Directory](#default-working-directory)
     + [Output Paths](#output-paths)
@@ -12,7 +12,7 @@
     + [runmeth.sh parameters](#runmethsh-parameters)
     + [Passing Arguments to R](#passing-arguments-to-r)
   * [Run the Test Case](#run-the-test-case)
-- [Troubleshooting](#troubleshooting)
+- [⚠️ Troubleshooting](#---troubleshooting)
 
 ## Methylation Pipline Overview
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/1bcd4fcdb6fb8c1908cb2d38fcfc7cd2ffffe8a2/screenshots/meth_pipeline_uml.png" alt="drawing" width="100%"/><br/>
@@ -42,9 +42,11 @@ ___
 `smb://research-cifs.nyumc.org/Research/snudem01lab/snudem01labspace`<br />
 `smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular`<br />
 
-# Install pipeline and start a Run in Terminal
+# ⚡️ Quickstart
 To run the pipeline from your terminal, simply execute the following command:<br />
-```/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST```
+```
+/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST
+```
 ___
 ### Input Paths
 *Files are copied to the work directory by their RUNID name and YEAR, including the worksheet and idats for example:*
@@ -93,7 +95,7 @@ Alternatively, instead of passing the RunID to runmeth.sh, you can source and do
 After installation, you can use the following run command to test the pipeline.<br>
 `/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST`<br />
 
-## Troubleshooting
+## ⚠️ Troubleshooting
 <details>
 <summary>Pipeline Installation Issues</summary>
 If you have issues with package installation or dependencies:<br />
