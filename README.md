@@ -62,7 +62,7 @@ To run the Clinical or Research Methylation pipeline, simply use the locally sto
 `redcapUp=${4-NULL}` # to upload to redcap or not if server down single char i.e. "T" or "F"<br>
 
 - **runmeth.sh downloads methylExpress.R and other files using curl:**<br>
-`curl -o methylExpress.R -L https://git.io/JWujj`<br>
+`curl -o methylExpress.R -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/methylExpress.R`<br>
 - **Finally runmeth.sh passes your input parameters as args to methylExpress.R:**<br>
 `Rscript --verbose methylExpress.R` **`$methAPI` `$methRun` `$PRIORITY` `$runPath`**<br>
 
