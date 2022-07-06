@@ -58,15 +58,15 @@ or
 `echo "alias runmeth='bash ~/script/runmeth.sh'" >> ~/.bashrc`
 
 ### The shell script takes the following argument parameters:<br>
-`methAPI='XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'` # RedCap API Token <br>
-`methRun=${1-NULL}` # methylation run id e.g. MDGM22-3<br>
+**`methAPI='XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'`** # RedCap API Token <br>
+**`methRun=${1-NULL}`** # methylation run id e.g. MDGM22-3<br>
 `PRIORITY=${2-NULL}` # string of prioritized RD-numbers<br>
 `runPath=${3-NULL}` # any custom directory to copy/run the idat files<br>
 `redcapUp=${4-NULL}` # to upload to redcap or not if server down single char i.e. "T" or "F"<br>
-### runmeth.sh then downloads methylExpress.R:
+**runmeth.sh then downloads methylExpress.R:**
 `curl -o methylExpress.R -L https://git.io/JWujj`<br>
-### Finally runmeth.sh then passes your parameters as args to methylExpress.R:<br>
-`Rscript --verbose methylExpress.R` `$methAPI` `$methRun` `$PRIORITY` `$runPath`<br>
+**Finally runmeth.sh then passes your parameters as args to methylExpress.R:**<br>
+`Rscript --verbose methylExpress.R` **`$methAPI` `$methRun` `$PRIORITY` `$runPath`**<br>
 
 You can locally copy or symlink the runMeth.sh file to execute the pipeline more easily<br>
 
