@@ -11,7 +11,7 @@
   * [**Executing Methylation CLI**](#--executing-methylation-cli--)
     + [runmeth.sh parameters](#runmethsh-parameters)
     + [Passing Arguments to R](#passing-arguments-to-r)
-  * [Run the Test Case<br />](#run-the-test-case--br---)
+  * [Run the Test Case](#run-the-test-case)
   * [Troubleshooting](#troubleshooting)
 
 ## Methylation Pipline Overview
@@ -88,7 +88,7 @@ The four positional arguments from *runmeth.sh* are passed to the Rscript *methy
 
 Alternatively, instead of passing the RunID to runmeth.sh, you can source and download this repository and then locally edit args in [methylExpress.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/R/methylExpress.R) to run manually.
 
-## Run the Test Case<br />
+## Run the Test Case
 After installation, you can use the following run command to test the pipeline.<br>
 `/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST`<br />
 
