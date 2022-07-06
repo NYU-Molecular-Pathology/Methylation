@@ -2,26 +2,25 @@
 
 ## Methylation Pipline Overview
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/1bcd4fcdb6fb8c1908cb2d38fcfc7cd2ffffe8a2/screenshots/meth_pipeline_uml.png" alt="drawing" width="100%"/><br/>
-
+<span style="color:blue">
 ## Essential Downloads
 The classifier runs on R version 3.6.3 and up.  It is not compatible with 3.3.3<br />
-Download **R 4.1** from CRAN: [https://cran.r-project.org/bin/macosx/](https://cran.r-project.org/bin/macosx/)<br />
-Download **RStudio 1.4**: [https://download1.rstudio.org/desktop/macos/RStudio-1.4.1717.dmg](https://download1.rstudio.org/desktop/macos/RStudio-1.4.1717.dmg)<br />
-Download **XQuartz**: [https://github.com/XQuartz/XQuartz/releases/download/XQuartz-2.8.1/XQuartz-2.8.1.dmg](https://github.com/XQuartz/XQuartz/releases/download/XQuartz-2.8.1/XQuartz-2.8.1.dmg)<br />
-Download **LaTeX** for Mac: [https://www.tug.org/mactex/mactex-download.html](https://www.tug.org/mactex/mactex-download.html)<br />
-Download **Homebrew**: https://brew.sh/ you can install using the following line in terminal:<br />
+1. **R 4.1** from CRAN: [https://cran.r-project.org/bin/macosx/](https://cran.r-project.org/bin/macosx/)<br />
+2. **RStudio 1.4**: [https://download1.rstudio.org/desktop/macos/RStudio-1.4.1717.dmg](https://download1.rstudio.org/desktop/macos/RStudio-1.4.1717.dmg)<br />
+3. **XQuartz**: [https://github.com/XQuartz/XQuartz/releases/download/XQuartz-2.8.1/XQuartz-2.8.1.dmg](https://github.com/XQuartz/XQuartz/releases/download/XQuartz-2.8.1/XQuartz-2.8.1.dmg)<br />
+4. **LaTeX** for Mac: [https://www.tug.org/mactex/mactex-download.html](https://www.tug.org/mactex/mactex-download.html)<br />
+5. **Homebrew**: https://brew.sh/ you can install using the following line in terminal:<br />
 `/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh`<br />
-Download **Pandoc**: https://pandoc.org/installing.html<br />
-Download and Install XCode 12.0 or higher for Mac OS: [https://developer.apple.com/download/all/?q=xcode](https://developer.apple.com/download/all/?q=xcode)<br>
-Install Java 8 JDK:
+6. **Pandoc**: https://pandoc.org/installing.html<br />
+7. **XCode 12.0** or higher for Mac OS: [https://developer.apple.com/download/all/?q=xcode](https://developer.apple.com/download/all/?q=xcode)<br>
+8. **Java 8 JDK**:
 https://www.oracle.com/java/technologies/downloads/#java8-mac
-
+9. **[Rswitch](https://rud.is/rswitch/)**<br />
+</span>
+### NOTE
 - R v4.1 includes compile and Tckl dependencies. brew can install libomp and cairo if needed.
 - After downloading R & RStudio **do not install** until you have unlocked the
 [System Preferences Privacy & Security Panel](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/Notes/SystemPermissions.md).
-- Download the [Rswitch](https://rud.is/rswitch/) app, which allows you to switch between R version libraries, for example:
-`/Library/Frameworks/R.framework/Versions/3.6/Resources/library/minfi`
-`/Library/Frameworks/R.framework/Versions/4.1/Resources/library/minfi`
 ___
 ## Network Drive Mount Paths
 ### To install & run the pipeline, it is critical to mount the following network smb shared drives:
@@ -32,11 +31,13 @@ Open Finder and press **⌘(CMD) + K** then paste each of these directories, log
 `smb://research-cifs.nyumc.org/Research/snudem01lab/snudem01labspace`<br />
 `smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular`<br />
 ___
-## Install pipeline and start a Run in Terminal
+<span style="color:green">
+# Install pipeline and start a Run in Terminal
 ### To run the pipeline from your terminal, simply execute the following command:<br />
 `/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST`<br />
 
 If you have issues with the automation, you can open methylExpress.R which downloads to your home directory in RStudio<br />
+</span>
 ___
 ## Input Paths
 ### Files are copied to the work directory by their RUNID name and YEAR, including the worksheet and idats for example:<br />
