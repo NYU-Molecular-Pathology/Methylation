@@ -1,20 +1,23 @@
 # Clinical Methylation Classifier Setup
 
 ## Table of Contents
-- [Methylation Pipline Overview](#methylation-pipline-overview)
+- [📖 Methylation Pipline Overview](#---methylation-pipline-overview)
   * [💻 Essential Downloads](#---essential-downloads)
-  * [Network Drive Mount Paths](#network-drive-mount-paths)
+  * [🌐 Network Drive Mount Paths](#---network-drive-mount-paths)
 - [⚡️ Quickstart](#---quickstart)
     + [Input Paths](#input-paths)
     + [Default Working Directory](#default-working-directory)
     + [Output Paths](#output-paths)
-- [**Executing Methylation CLI**](#--executing-methylation-cli--)
+- [⚙️ Executing Methylation CLI](#---executing-methylation-cli)
     + [runmeth.sh parameters](#runmethsh-parameters)
     + [Passing Arguments to R](#passing-arguments-to-r)
-  * [Run the Test Case](#run-the-test-case)
+  * [🧪 Run the Test Case](#---run-the-test-case)
   * [⚠️ Troubleshooting](#---troubleshooting)
 
-## Methylation Pipline Overview
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
+
+## 📖 Methylation Pipline Overview
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/1bcd4fcdb6fb8c1908cb2d38fcfc7cd2ffffe8a2/screenshots/meth_pipeline_uml.png" alt="drawing" width="100%"/><br/>
 
 ## 💻 Essential Downloads
@@ -30,12 +33,14 @@ Download and install the following packages:<br>
 9. **Homebrew**: https://brew.sh/ you can install using the following line in terminal:<br />
 `/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh`<br />
 
-**NOTE**<br>
+<details>
+<summary>**NOTE**</summary>
 - R v4.1 includes compile and Tckl dependencies. brew can install libomp and cairo if needed.
 - After downloading R & RStudio unlocked the
 [System Preferences Privacy & Security Panel](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/Notes/SystemPermissions.md) before installing packages.
+</details>
 ___
-## Network Drive Mount Paths
+## 🌐 Network Drive Mount Paths
 - To install & run the pipeline, it is critical to mount the following network smb shared drives:
 - Open Finder and press **⌘(CMD) + K** then paste each of the directories below, using NYUMC\KerberosID as the login name and password is your kerberos password. <br>
 `smb://research-cifs.nyumc.org/Research/CBioinformatics/`<br />
@@ -62,7 +67,7 @@ For example, run 22-MGDM17 report files would be output in the following directo
 `/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/Results/2022/22-MGDM17`
 ___
 
-# **Executing Methylation CLI**
+# ⚙️ Executing Methylation CLI
 To run the Clinical or Research Methylation pipeline, simply use the locally stored Shell Script in:<br>
 `/Volumes/CBioinformatics/Methylation/runMeth.sh`<br/>
 - This shell script uses Curl to download the files from this repo and executes methylExpress.R in the terminal.
@@ -91,7 +96,7 @@ The four positional arguments from *runmeth.sh* are passed to the Rscript *methy
 
 Alternatively, instead of passing the RunID to runmeth.sh, you can source and download this repository and then locally edit args in [methylExpress.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/R/methylExpress.R) to run manually.
 
-## Run the Test Case
+## 🧪 Run the Test Case
 After installation, you can use the following run command to test the pipeline.<br>
 `/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST`<br />
 
