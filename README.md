@@ -12,14 +12,14 @@ The classifier runs on R version 3.6.3 and up.  It is not compatible with 3.3.3<
 5. **Pandoc**: https://pandoc.org/installing.html<br />
 6. **XCode 12.0** or higher for Mac OS: https://developer.apple.com/download/all/?q=xcode<br>
 7. **Java 8 JDK**: https://www.oracle.com/java/technologies/downloads/#java8-mac
-8. **Rswitch**https://rud.is/rswitch/<br />
+8. **Rswitch**: https://rud.is/rswitch/<br />
 9. **Homebrew**: https://brew.sh/ you can install using the following line in terminal:<br />
 `/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh`<br />
 
 **NOTE**<br>
 - R v4.1 includes compile and Tckl dependencies. brew can install libomp and cairo if needed.
-- After downloading R & RStudio **do not install** until you have unlocked the
-[System Preferences Privacy & Security Panel](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/Notes/SystemPermissions.md).
+- After downloading R & RStudio unlocked the
+[System Preferences Privacy & Security Panel](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/Notes/SystemPermissions.md) before installing packages.
 ___
 ## Network Drive Mount Paths
 ### To install & run the pipeline, it is critical to mount the following network smb shared drives:
