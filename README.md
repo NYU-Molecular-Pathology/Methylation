@@ -29,16 +29,16 @@ Open Finder and press **⌘(CMD) + K** then paste each of these directories, log
 `smb://research-cifs.nyumc.org/Research/CBioinformatics/`<br />
 `smb://research-cifs.nyumc.org/Research/snudem01lab/snudem01labspace`<br />
 `smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular`<br />
-___
 
 # Install pipeline and start a Run in Terminal
 To run the pipeline from your terminal, simply execute the following command:<br />
 `/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST`<br />
 
-If you have issues with package installation or dependencies: open Rstudio and execute the all_installer.R script before executing runmeth.sh:
+If you have issues with package installation or dependencies:<br />
+Copy and paste the raw contents of the all_installer.R script into Rstudio and execute it before running runmeth.sh<br />
 https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/all_installer.R<br />
 To resolve any problems during automation, you can open methylExpress.R in RStudio which is downladed by runmeth.sh to your home directory.<br />
-
+___
 ### Input Paths
 Files are copied to the work directory by their RUNID name and YEAR, including the worksheet and idats for example:<br />
 **Worksheet**<br>
