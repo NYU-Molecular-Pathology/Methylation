@@ -2,7 +2,7 @@
 
 ## Table of Contents
 - [Methylation Pipline Overview](#methylation-pipline-overview)
-  * [Essential Downloads](#essential-downloads)
+  * [💻 Essential Downloads](#---essential-downloads)
   * [Network Drive Mount Paths](#network-drive-mount-paths)
 - [⚡️ Quickstart](#---quickstart)
     + [Input Paths](#input-paths)
@@ -12,12 +12,12 @@
     + [runmeth.sh parameters](#runmethsh-parameters)
     + [Passing Arguments to R](#passing-arguments-to-r)
   * [Run the Test Case](#run-the-test-case)
-- [⚠️ Troubleshooting](#---troubleshooting)
+  * [⚠️ Troubleshooting](#---troubleshooting)
 
 ## Methylation Pipline Overview
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/1bcd4fcdb6fb8c1908cb2d38fcfc7cd2ffffe8a2/screenshots/meth_pipeline_uml.png" alt="drawing" width="100%"/><br/>
 
-## Essential Downloads
+## 💻 Essential Downloads
 Download and install the following packages:<br>
 1. **R 4.1** from CRAN: https://cran.r-project.org/bin/macosx/<br />
 2. **RStudio 1.4 or later**: https://www.rstudio.com/products/rstudio/download/#download<br />
