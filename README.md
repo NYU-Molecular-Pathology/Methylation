@@ -77,22 +77,13 @@ or
 `echo "alias runmeth='bash ~/script/runmeth.sh'" >> ~/.bashrc`
 
 The shell script takes the following argument parameters:<br>
-`#!/bin/bash`
+`#!/bin/bash`<br>
+`methAPI='XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' # RedCap API Token`<br>
+`methRun=${1-NULL} # methylation run id e.g. MDGM22-3`<br>
+`PRIORITY=${2-NULL} # string of prioritized RD-numbers`<br>
+`runPath=${3-NULL} # any custom directory to copy/run the idat files`<br>
+`redcapUp=${4-NULL} # to upload to redcap or not if server down single char i.e. "T" or "F"`<br>
 
-`methAPI='XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' # RedCap API Token`
-`methRun=${1-NULL} # methylation run id e.g. MDGM22-3`
-`PRIORITY=${2-NULL} # string of prioritized RD-numbers`
-`runPath=${3-NULL} # any custom directory to copy/run the idat files`
-`redcapUp=${4-NULL} # to upload to redcap or not if server down single char i.e. "T" or "F"`
-
-`# Print helpFunction in case methRun parameter is empty`
-`if [ -z "$methRun" ]`
-`then`
-`   echo "You did not provide a Methylation Run ID name. Ex. '21-MGDM30'";`
-`   exit 1`
-`fi`
-
-`# Begin script in case all parameters are entered`
 `curl -o methylExpress.R -L https://git.io/JWujj; Rscript --verbose methylExpress.R $methAPI $methRun $PRIORITY $runPath`<br>
 
 You can locally copy or symlink the runMeth.sh file to execute more easily<br>
