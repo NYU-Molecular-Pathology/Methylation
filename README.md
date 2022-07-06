@@ -1,9 +1,4 @@
-<style>
-H1{color:Blue !important;}
-H2{color:DarkOrange !important;}
-p{color:Black !important;}
-</style>
-# How To Setup Clinical Methylation Classifier
+# Clinical Methylation Classifier Setup
 
 ## Methylation Pipline Overview
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/1bcd4fcdb6fb8c1908cb2d38fcfc7cd2ffffe8a2/screenshots/meth_pipeline_uml.png" alt="drawing" width="100%"/><br/>
