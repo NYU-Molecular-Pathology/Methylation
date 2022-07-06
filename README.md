@@ -61,10 +61,10 @@ To run the Clinical or Research Methylation pipeline, simply use the locally sto
 `runPath=${3-NULL}` # any custom directory to copy/run the idat files<br>
 `redcapUp=${4-NULL}` # to upload to redcap or not if server down single char i.e. "T" or "F"<br>
 
-- **runmeth.sh downloads methylExpress.R and other files using curl:**<br>
+**runmeth.sh downloads methylExpress.R and other files using curl:**<br>
 `curl -o methylExpress.R -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/methylExpress.R`<br>
-- **Finally runmeth.sh passes your input parameters as args to methylExpress.R:**<br>
-`Rscript --verbose methylExpress.R` **`$methAPI` `$methRun` `$PRIORITY` `$runPath`**<br>
+**Finally runmeth.sh passes your input parameters as args to methylExpress.R:**<br>
+`Rscript --verbose methylExpress.R` **`$methAPI` `$methRun` `$PRIORITY` `$runPath`**
 
 ### The four positional arguments from *runmeth.sh* are passed to the Rscript *methylExpress.R*:<br />
 `arg[1]` is the **token** for the API call ('#######################')<br />
