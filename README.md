@@ -35,9 +35,9 @@ ___
 To run the pipeline from your terminal, simply execute the following command:<br />
 `/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST`<br />
 
-If you have issues with the automation, you can open methylExpress.R which downloads to your home directory in RStudio<br />
-To resolve any problems with package installation or dependencies: open Rstudio and execute the all_installer.R script before executing runMeth.sh:
-https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/all_installer.R
+If you have issues with package installation or dependencies: open Rstudio and execute the all_installer.R script before executing runmeth.sh:
+https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/all_installer.R<br />
+To resolve any problems during automation, you can open methylExpress.R in RStudio which is downladed by runmeth.sh to your home directory.<br />
 
 ### Input Paths
 Files are copied to the work directory by their RUNID name and YEAR, including the worksheet and idats for example:<br />
