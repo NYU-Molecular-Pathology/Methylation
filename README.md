@@ -4,6 +4,7 @@
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/1bcd4fcdb6fb8c1908cb2d38fcfc7cd2ffffe8a2/screenshots/meth_pipeline_uml.png" alt="drawing" width="100%"/><br/>
 <span style="color:blue">
 ## Essential Downloads
+  </span>
 The classifier runs on R version 3.6.3 and up.  It is not compatible with 3.3.3<br />
 1. **R 4.1** from CRAN: [https://cran.r-project.org/bin/macosx/](https://cran.r-project.org/bin/macosx/)<br />
 2. **RStudio 1.4**: [https://download1.rstudio.org/desktop/macos/RStudio-1.4.1717.dmg](https://download1.rstudio.org/desktop/macos/RStudio-1.4.1717.dmg)<br />
@@ -16,8 +17,9 @@ The classifier runs on R version 3.6.3 and up.  It is not compatible with 3.3.3<
 8. **Java 8 JDK**:
 https://www.oracle.com/java/technologies/downloads/#java8-mac
 9. **[Rswitch](https://rud.is/rswitch/)**<br />
-</span>
-### NOTE
+
+
+**NOTE**<br>
 - R v4.1 includes compile and Tckl dependencies. brew can install libomp and cairo if needed.
 - After downloading R & RStudio **do not install** until you have unlocked the
 [System Preferences Privacy & Security Panel](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/Notes/SystemPermissions.md).
