@@ -76,7 +76,8 @@ To run the Clinical or Research Methylation pipeline, simply use the locally sto
 
 Alternatively, instead of passing the RunID to runmeth.sh, you can source and download this repository and then locally edit args in [methylExpress.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/R/methylExpress.R) to run manually.
 
-## Run the Test Case after installation with the following command:<br />
+## Run the Test Case:<br />
+After installation, you can use the following run command to test the pipeline.<br>
 `/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST`<br />
 
 ## Troubleshooting
