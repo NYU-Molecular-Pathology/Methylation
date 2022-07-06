@@ -12,7 +12,7 @@
 - [⚙️ Executing Methylation CLI](#%EF%B8%8F-executing-methylation-cli)
     + [runmeth.sh parameters](#runmethsh-parameters)
     + [Passing Arguments to R](#passing-arguments-to-r)
-- [🧪 Run the Test Case](#---run-the-test-case)
+- [🧪 Run the Test Case](#-run-the-test-case)
 - [⚠️ Troubleshooting](#---troubleshooting)
 
 
