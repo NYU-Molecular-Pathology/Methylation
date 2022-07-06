@@ -50,20 +50,11 @@ For example, run 22-MGDM17 report files would be output in the following directo
 `/Volumes/molecular/Molecular/MethylationClassifier/2022/22-MGDM17`<br>
 `/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/Results/2022/22-MGDM17`
 ___
-### There are two system Rscript to run methylExpress.R with the arguments in order:<br />
-`arg[1]` is the **token** for the API call ('#######################')<br />
-`arg[2]` is the **RunID** which if NULL runs the latest Clinical Worksheet ('MR21-099')<br />
-`arg[3]` is the **selectRds** parameter which is to prioritize samples being run (NULL)<br />
-`arg[4]` is the **baseFolder** parameter which is optional if you want to run/save output to a different directory (NULL)<br />
-
-Alternatively, you can source then run the github script locally using [methylExpress.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/R/methylExpress.R)
-
-## Run the Test Case after installation with the following command:<br />
-`/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST`<br />
 
 ## **Executing Methylation CLI**
 To run the Clinical or Research Methylation pipeline, simply use the locally stored Shell Script in:<br>
-`/Volumes/CBioinformatics/Methylation/runMeth.sh`
+`/Volumes/CBioinformatics/Methylation/runMeth.sh`<br/>
+This shell script uses Curl to download the files from this repo and executes methylExpress.R in the terminal.
 <br>
 You can copy runMeth.sh and create an alias or symlink to execute more easily.  For example:<br>
 `alias runmeth='bash ~/script/runmeth.sh'`
@@ -80,9 +71,23 @@ The shell script takes the following argument parameters:<br>
 
 `curl -o methylExpress.R -L https://git.io/JWujj; Rscript --verbose methylExpress.R $methAPI $methRun $PRIORITY $runPath`<br>
 
-You can locally copy or symlink the runMeth.sh file to execute more easily<br>
+You can locally copy or symlink the runMeth.sh file to execute the pipeline more easily<br>
+
+### The four positional arguments are passed from *runmeth.sh* to the Rscript *methylExpress.R*:<br />
+`arg[1]` is the **token** for the API call ('#######################')<br />
+`arg[2]` is the **RunID** which if NULL runs the latest Clinical Worksheet ('MR21-099')<br />
+`arg[3]` is the **selectRds** parameter which is to prioritize samples being run (NULL)<br />
+`arg[4]` is the **baseFolder** parameter which is optional if you want to run/save output to a different directory (NULL)<br />
+
+Alternatively, instead of passing the RunID to runmeth.sh, you can source and download this repository and then run locally using [methylExpress.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/R/methylExpress.R)
+
+## Run the Test Case after installation with the following command:<br />
+`/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST`<br />
 
 ## Troubleshooting
+
+### REDCap errors
+Once your run completes check in your run directory if there is any *upload_log.tsv* file or *redcaperrors.txt*.  If these files exist, they may note any files or data which would have been over-written in the database.  Check with the wet lab if any RD-numbers were duplicated or previously used for the samples listed in the upload_log.tsv file. **NOTE** When running the test case run *21-MGDM_TEST* you may notice an error with the upload log as these reports would already exist in REDCap.  It is normal for the test case to fail uploading since the REDCap database already contains the data and files for the test run.
 
 ### How to upload manually to REDCap
 1. Login with your kerberos ID to https://redcap.nyumc.org/
