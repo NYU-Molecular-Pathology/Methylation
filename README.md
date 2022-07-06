@@ -6,16 +6,16 @@
 ## Essential Downloads
 The classifier runs on R version 3.6.3 and up.  It is not compatible with 3.3.3<br />
 1. **R 4.1** from CRAN: [https://cran.r-project.org/bin/macosx/](https://cran.r-project.org/bin/macosx/)<br />
-2. **RStudio 1.4**: [https://download1.rstudio.org/desktop/macos/RStudio-1.4.1717.dmg](https://download1.rstudio.org/desktop/macos/RStudio-1.4.1717.dmg)<br />
-3. **XQuartz**: [https://github.com/XQuartz/XQuartz/releases/download/XQuartz-2.8.1/XQuartz-2.8.1.dmg](https://github.com/XQuartz/XQuartz/releases/download/XQuartz-2.8.1/XQuartz-2.8.1.dmg)<br />
+2. **RStudio 1.4 or later**: [https://www.rstudio.com/products/rstudio/download/#download]<br />
+3. **XQuartz**: [https://www.xquartz.org/]<br />
 4. **LaTeX** for Mac: [https://www.tug.org/mactex/mactex-download.html](https://www.tug.org/mactex/mactex-download.html)<br />
-5. **Homebrew**: https://brew.sh/ you can install using the following line in terminal:<br />
-`/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh`<br />
-6. **Pandoc**: https://pandoc.org/installing.html<br />
-7. **XCode 12.0** or higher for Mac OS: [https://developer.apple.com/download/all/?q=xcode](https://developer.apple.com/download/all/?q=xcode)<br>
-8. **Java 8 JDK**:
+5. **Pandoc**: https://pandoc.org/installing.html<br />
+6. **XCode 12.0** or higher for Mac OS: [https://developer.apple.com/download/all/?q=xcode](https://developer.apple.com/download/all/?q=xcode)<br>
+7. **Java 8 JDK**:
 https://www.oracle.com/java/technologies/downloads/#java8-mac
-9. **[Rswitch](https://rud.is/rswitch/)**<br />
+8. **Rswitch**[https://rud.is/rswitch/]<br />
+9. **Homebrew**: https://brew.sh/ you can install using the following line in terminal:<br />
+`/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh`<br />
 
 **NOTE**<br>
 - R v4.1 includes compile and Tckl dependencies. brew can install libomp and cairo if needed.
