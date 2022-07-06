@@ -63,12 +63,11 @@ or
 `PRIORITY=${2-NULL}` # string of prioritized RD-numbers<br>
 `runPath=${3-NULL}` # any custom directory to copy/run the idat files<br>
 `redcapUp=${4-NULL}` # to upload to redcap or not if server down single char i.e. "T" or "F"<br>
-**runmeth.sh then downloads methylExpress.R:**
+<br>
+**runmeth.sh downloads methylExpress.R and other files using curl:**<br>
 `curl -o methylExpress.R -L https://git.io/JWujj`<br>
-**Finally runmeth.sh then passes your parameters as args to methylExpress.R:**<br>
+**Finally runmeth.sh passes your input parameters as args to methylExpress.R:**<br>
 `Rscript --verbose methylExpress.R` **`$methAPI` `$methRun` `$PRIORITY` `$runPath`**<br>
-
-You can locally copy or symlink the runMeth.sh file to execute the pipeline more easily<br>
 
 ### The four positional arguments from *runmeth.sh* are passed to the Rscript *methylExpress.R*:<br />
 `arg[1]` is the **token** for the API call ('#######################')<br />
