@@ -9,7 +9,7 @@
     + [Input Paths](#input-paths)
     + [Default Working Directory](#default-working-directory)
     + [Output Paths](#output-paths)
-- [⚙️ Executing Methylation CLI](#---executing-methylation-cli)
+- [⚙️ Executing Methylation CLI](#%EF%B8%8F-executing-methylation-cli)
     + [runmeth.sh parameters](#runmethsh-parameters)
     + [Passing Arguments to R](#passing-arguments-to-r)
 - [🧪 Run the Test Case](#---run-the-test-case)
