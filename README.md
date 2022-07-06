@@ -2,9 +2,8 @@
 
 ## Methylation Pipline Overview
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/1bcd4fcdb6fb8c1908cb2d38fcfc7cd2ffffe8a2/screenshots/meth_pipeline_uml.png" alt="drawing" width="100%"/><br/>
-<span style="color:blue">
+
 ## Essential Downloads
-  </span>
 The classifier runs on R version 3.6.3 and up.  It is not compatible with 3.3.3<br />
 1. **R 4.1** from CRAN: [https://cran.r-project.org/bin/macosx/](https://cran.r-project.org/bin/macosx/)<br />
 2. **RStudio 1.4**: [https://download1.rstudio.org/desktop/macos/RStudio-1.4.1717.dmg](https://download1.rstudio.org/desktop/macos/RStudio-1.4.1717.dmg)<br />
@@ -17,7 +16,6 @@ The classifier runs on R version 3.6.3 and up.  It is not compatible with 3.3.3<
 8. **Java 8 JDK**:
 https://www.oracle.com/java/technologies/downloads/#java8-mac
 9. **[Rswitch](https://rud.is/rswitch/)**<br />
-
 
 **NOTE**<br>
 - R v4.1 includes compile and Tckl dependencies. brew can install libomp and cairo if needed.
@@ -33,16 +31,16 @@ Open Finder and press **⌘(CMD) + K** then paste each of these directories, log
 `smb://research-cifs.nyumc.org/Research/snudem01lab/snudem01labspace`<br />
 `smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular`<br />
 ___
-<span style="color:green">
+
 # Install pipeline and start a Run in Terminal
-### To run the pipeline from your terminal, simply execute the following command:<br />
-`/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST`<br />
+<span style="color:green">To run the pipeline from your terminal, simply execute the following command:</span><br />
+**`/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST`**<br />
 
 If you have issues with the automation, you can open methylExpress.R which downloads to your home directory in RStudio<br />
-</span>
+
 ___
 ## Input Paths
-### Files are copied to the work directory by their RUNID name and YEAR, including the worksheet and idats for example:<br />
+Files are copied to the work directory by their RUNID name and YEAR, including the worksheet and idats for example:<br />
 **Worksheet**<br>
 /Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/WORKSHEETS/2022/22-MGDM17.xlsm<br />
 **.idat files input directory:**<br />
