@@ -41,12 +41,14 @@ If you have issues with the automation, you can open methylExpress.R which downl
 ### Input Paths
 Files are copied to the work directory by their RUNID name and YEAR, including the worksheet and idats for example:<br />
 **Worksheet**<br>
-/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/WORKSHEETS/2022/22-MGDM17.xlsm<br />
+`/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/WORKSHEETS/2022/22-MGDM17.xlsm`<br />
 **.idat files input directory:**<br />
-/Volumes/molecular/Molecular/iScan/<br />
+`/Volumes/molecular/Molecular/iScan/`<br />
 ### Output Paths
-**Files are saved to MethylationClassifier/YEAR/RUNID, for example:**<br/>
-/Volumes/molecular/Molecular/MethylationClassifier/2022/22-MGDM17<br>
+**Html report files are saved to the working directory and are then copied to the Z-drive**<br/>
+For example, run 22-MGDM17 report files would be output in the following directories:<br/>
+`/Volumes/molecular/Molecular/MethylationClassifier/2022/22-MGDM17`<br>
+`/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/Results/2022/22-MGDM17`
 ___
 ### There are two system Rscript to run methylExpress.R with the arguments in order:<br />
 `arg[1]` is the **token** for the API call ('#######################')<br />
