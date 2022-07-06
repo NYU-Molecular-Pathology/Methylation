@@ -4,7 +4,7 @@
 - [Clinical Methylation Classifier Setup](#clinical-methylation-classifier-setup)
   * [📖 Methylation Pipline Overview](#---methylation-pipline-overview)
   * [💻 Essential Downloads](#---essential-downloads)
-  * [🌐 Network Drive Mount Paths](#---network-drive-mount-paths)
+  * [🌐 Network Drive Mount Paths](#🌐 network-drive-mount-paths)
 - [⚡️ Quickstart](#%EF%B8%8F-quickstart)
     + [Input Paths](#input-paths)
     + [Default Working Directory](#default-working-directory)
@@ -13,7 +13,7 @@
     + [runmeth.sh parameters](#runmethsh-parameters)
     + [Passing Arguments to R](#passing-arguments-to-r)
 - [🧪 Run the Test Case](#-run-the-test-case)
-- [⚠️ Troubleshooting](#---troubleshooting)
+- [⚠️ Troubleshooting](#%EF%B8%8F-troubleshooting)
 
 
 ## 📖 Methylation Pipline Overview
