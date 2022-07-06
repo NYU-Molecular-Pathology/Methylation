@@ -32,10 +32,12 @@ Open Finder and press **⌘(CMD) + K** then paste each of these directories, log
 ___
 
 # Install pipeline and start a Run in Terminal
-<span style="color:green">To run the pipeline from your terminal, simply execute the following command:</span><br />
-**`/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST`**<br />
+To run the pipeline from your terminal, simply execute the following command:<br />
+`/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST`<br />
 
 If you have issues with the automation, you can open methylExpress.R which downloads to your home directory in RStudio<br />
+To resolve any problems with package installation or dependencies: open Rstudio and execute the all_installer.R script before executing runMeth.sh:
+https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/all_installer.R
 
 ### Input Paths
 Files are copied to the work directory by their RUNID name and YEAR, including the worksheet and idats for example:<br />
