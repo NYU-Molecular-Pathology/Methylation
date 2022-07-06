@@ -5,7 +5,7 @@
   * [📖 Methylation Pipline Overview](#---methylation-pipline-overview)
   * [💻 Essential Downloads](#---essential-downloads)
   * [🌐 Network Drive Mount Paths](#---network-drive-mount-paths)
-- [⚡️ Quickstart](#⚡️quickstart)
+- [⚡️ Quickstart](#%EF%B8%8F-quickstart)
     + [Input Paths](#input-paths)
     + [Default Working Directory](#default-working-directory)
     + [Output Paths](#output-paths)
