@@ -1,8 +1,8 @@
 # Clinical Methylation Classifier Setup
 
 ## Table of Contents
-
-- [📖 Methylation Pipline Overview](#---methylation-pipline-overview)
+- [Clinical Methylation Classifier Setup](#clinical-methylation-classifier-setup)
+  * [📖 Methylation Pipline Overview](#---methylation-pipline-overview)
   * [💻 Essential Downloads](#---essential-downloads)
   * [🌐 Network Drive Mount Paths](#---network-drive-mount-paths)
 - [⚡️ Quickstart](#---quickstart)
@@ -14,6 +14,7 @@
     + [Passing Arguments to R](#passing-arguments-to-r)
 - [🧪 Run the Test Case](#---run-the-test-case)
 - [⚠️ Troubleshooting](#---troubleshooting)
+
 
 ## 📖 Methylation Pipline Overview
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/1bcd4fcdb6fb8c1908cb2d38fcfc7cd2ffffe8a2/screenshots/meth_pipeline_uml.png" alt="drawing" width="100%"/><br/>
@@ -32,12 +33,13 @@ Download and install the following packages:<br>
 `/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh`<br />
 
 <details>
-<summary>**NOTE**</summary>
+<summary>NOTE</summary>
 - R v4.1 includes compile and Tckl dependencies. brew can install libomp and cairo if needed.
 - After downloading R & RStudio unlocked the
 [System Preferences Privacy & Security Panel](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/Notes/SystemPermissions.md) before installing packages.
 </details>
-___
+
+
 ## 🌐 Network Drive Mount Paths
 - To install & run the pipeline, it is critical to mount the following network smb shared drives:
 - Open Finder and press **⌘(CMD) + K** then paste each of the directories below, using NYUMC\KerberosID as the login name and password is your kerberos password. <br>
