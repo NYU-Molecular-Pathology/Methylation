@@ -1,4 +1,4 @@
-<h1>Clinical Methylation Classifier Setup <img src="https://media.giphy.com/media/WUlplcMpOCEmTGBtBW/giphy.gif" width="80"> </h1>
+<h1> <img src="https://media.giphy.com/media/WUlplcMpOCEmTGBtBW/giphy.gif" width="80"> Clinical Methylation Classifier Setup  </h1>
 
 ### Table of Contents
 - [📖 Methylation Pipline Overview](#-methylation-pipline-overview)
@@ -9,8 +9,8 @@
      [<sup>-  Default Working Directory</sup>](#default-working-directory)</br>
      [<sup>-  Output Paths</sup>](#output-paths)</br>
 - [⚙️ Executing Methylation CLI](#%EF%B8%8F-executing-methylation-cli)
-    + [runmeth.sh parameters](#runmethsh-parameters)
-    + [Passing Arguments to R](#passing-arguments-to-r)
+    + [🤖 runmeth.sh parameters](#-runmethsh-parameters)
+    + [🧮 Passing Arguments to R](#-passing-arguments-to-r)
 - [🧪 Run the Test Case](#-run-the-test-case)
 - [⚠️ Troubleshooting](#%EF%B8%8F-troubleshooting)
 
@@ -20,15 +20,15 @@
 
 ## 💻 Essential Downloads
 Download and install the following packages:<br>
-1. **R 4.1** from CRAN: https://cran.r-project.org/bin/macosx/<br />
-2. **RStudio 1.4 or later**: https://www.rstudio.com/products/rstudio/download/#download<br />
-3. **XQuartz**: https://www.xquartz.org/<br />
-4. **LaTeX** for Mac: https://www.tug.org/mactex/mactex-download.html<br />
-5. **Pandoc**: https://pandoc.org/installing.html<br />
-6. **XCode 12.0** or higher for Mac OS: https://developer.apple.com/download/all/?q=xcode<br>
-7. **Java 8 JDK**: https://www.oracle.com/java/technologies/downloads/#java8-mac
-8. **Rswitch**: https://rud.is/rswitch/<br />
-9. **Homebrew**: https://brew.sh/ you can install using the following line in terminal:<br />
+- [X] **R 4.1** from CRAN: https://cran.r-project.org/bin/macosx/<br />
+- [X] **RStudio 1.4 or later**: https://www.rstudio.com/products/rstudio/download/#download<br />
+- [X] **XQuartz**: https://www.xquartz.org/<br />
+- [X] **LaTeX** for Mac: https://www.tug.org/mactex/mactex-download.html<br />
+- [X] **Pandoc**: https://pandoc.org/installing.html<br />
+- [X] **XCode 12.0** or higher for Mac OS: https://developer.apple.com/download/all/?q=xcode<br>
+- [X] **Java 8 JDK**: https://www.oracle.com/java/technologies/downloads/#java8-mac
+- [X] **Rswitch**: https://rud.is/rswitch/<br />
+- [X] **Homebrew**: https://brew.sh/ you can install using the following line in terminal:<br />
 `/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh`<br />
 
 <details>
@@ -73,25 +73,28 @@ To run the Clinical or Research Methylation pipeline, simply use the locally sto
 - You can copy runMeth.sh and create an alias or symlink to execute more easily.  For example:<br>
 `alias runmeth='bash ~/script/runmeth.sh'` or `echo "alias runmeth='bash ~/script/runmeth.sh'" >> ~/.bashrc`
 
-### runmeth.sh parameters
+### 🤖 runmeth.sh parameters
 The shell script takes the following argument parameters:<br>
-**`methAPI='XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'`** # RedCap API Token <br>
-**`methRun=${1-NULL}`** # methylation run id e.g. MDGM22-3<br>
-`PRIORITY=${2-NULL}` # string of prioritized RD-numbers<br>
-`runPath=${3-NULL}` # any custom directory to copy/run the idat files<br>
-`redcapUp=${4-NULL}` # to upload to redcap or not if server down single char i.e. "T" or "F"<br>
-
-**runmeth.sh downloads methylExpress.R and other files using curl:**<br>
-`curl -o methylExpress.R -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/methylExpress.R`<br>
+```R
+methAPI='XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' # RedCap API Token
+methRun=${1-NULL} # methylation run id e.g. 22-MGDM17
+PRIORITY=${2-NULL} # string of prioritized RD-numbers
+runPath=${3-NULL} # any custom directory to copy/run the idat files
+redcapUp=${4-NULL} # to upload to redcap or not if server down single char i.e. "T" or "F"
+```
+**runmeth.sh downloads methylExpress.R and other files using curl:**
+```ruby
+curl -o methylExpress.R -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/methylExpress.R
+```
 **Finally runmeth.sh passes your input parameters as args to methylExpress.R:**<br>
 `Rscript --verbose methylExpress.R` **`$methAPI` `$methRun` `$PRIORITY` `$runPath`**
 
-### Passing Arguments to R
+### 🧮 Passing Arguments to R
 The four positional arguments from *runmeth.sh* are passed to the Rscript *methylExpress.R*:<br />
-`arg[1]` is the **token** for the API call ('#######################')<br />
-`arg[2]` is the **RunID** which if NULL runs the latest Clinical Worksheet ('MR21-099')<br />
-`arg[3]` is the **selectRds** parameter which is to prioritize samples being run (NULL)<br />
-`arg[4]` is the **baseFolder** parameter which is optional if you want to run/save output to a different directory (NULL)<br />
+`arg[1]` is the **`token`** for the API call ('#######################')<br />
+`arg[2]` is the **`RunID`** which if NULL runs the latest Clinical Worksheet *22-MGDM17*<br />
+`arg[3]` is the **`selectRds`** parameter which is to prioritize samples being run (NULL)<br />
+`arg[4]` is the **`baseFolder`** parameter which is optional if you want to run/save output to a different directory (NULL)<br />
 
 Alternatively, instead of passing the RunID to runmeth.sh, you can source and download this repository and then locally edit args in [methylExpress.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/R/methylExpress.R) to run manually.
 
