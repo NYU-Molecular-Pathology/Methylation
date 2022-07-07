@@ -11,8 +11,6 @@ message("\nExecuting function: ", crayon::black$bgYellow(funNam), " from RScript
 msgParams <- function(...){
     message("\nParam passed: ", crayon::bgGreen(paste(deparse(substitute(...)), "=", ...)), "\n")
 }
-
-
 CreateRunDir <- function(newRun){
     if(endsWith(newRun,"/")){
         newRun <- substr(newRun,1, nchar(newRun)-1)

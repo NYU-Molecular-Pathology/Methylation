@@ -219,7 +219,14 @@ uploadCnPng <- function() {
         pth = sh_Dat$cnv_file_path[idx]
         recordName = paste0(records[idx])
         message(mkBlue("Importing CNV Record:"),"\n", recordName, " ", pth)
-        redcapAPI::importFiles(rcon, pth, recordName, field="methyl_cn", overwrite = T, repeat_instance=1)
+        redcapAPI::importFiles(
+            rcon,
+            pth,
+            recordName,
+            field = "methyl_cn",
+            overwrite = T,
+            repeat_instance = 1
+        )
     }
 }
 

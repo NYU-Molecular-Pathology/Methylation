@@ -168,8 +168,9 @@ checkSampleSheet <- function(df){
     ww1=crayon::bgRed("No tech name found: check df$Tech in samplesheet.csv assinging NA")
     ww2=crayon::bgRed("No tech name found: check df$MP_number in samplesheet.csv assinging NA")
     ww3=crayon::bgRed("Duplicated sample name found: check df$Sample_Name in samplesheet.csv assigning as None")
-    ww4=crayon::bgRed("Some Samples are missing RD-numbers Check df$Sample_Name in samplesheet.csv")
-    ww5=crayon::bgRed("Some Samples are missing B-numbers Check df$b_number in samplesheet.csv")
+    ww4=crayon::bgRed("Some samples are missing RD-numbers Check df$Sample_Name in samplesheet.csv")
+    ww5=crayon::bgRed("Some samples are missing B-numbers Check df$b_number in samplesheet.csv")
+    ww6=crayon::bgRed("Some samples are missing RD-Numbers or are 0! Check samplesheet.csv")
     if (is.null(df$Tech)) {
         warning(ww1)
         df$Tech <- "NA"
@@ -184,9 +185,18 @@ checkSampleSheet <- function(df){
         df$b_number <- "blank"
         print(df$b_number)
     }
-    if (any(duplicated(df$Sample_Name))) {
-        warning(ww3)
+    isMissing <- df$Sample_Name=="0"|is.na(df$Sample_Name)
+    if (any(isMissing)) {
+        warning(ww6)
         print(df[, c(1, 3, 8:11)])
+        stopifnot(any(isMissing)==FALSE)
+    }
+    dupes <- duplicated(df$Sample_Name)
+    if (any(dupes)) {
+        warning(ww3)
+        message("Duplicated Sample_Name(s): ", paste(df$Sample_Name[dupes]))
+        print(df[, c(1, 3, 8:11)])
+        stopifnot(any(dupes)==FALSE)
     }
     if (any(stringr::str_count(df$Sample_Name, "control|RD-")==0)) {
         warning(ww4)
