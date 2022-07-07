@@ -72,7 +72,7 @@ To run the Clinical or Research Methylation pipeline, simply use the locally sto
 - This shell script uses Curl to download the files from this repo and executes methylExpress.R in the terminal.
 - You can copy runMeth.sh and create an alias or symlink to execute more easily.  For example:<br>
 `alias runmeth='bash ~/script/runmeth.sh'` or `echo "alias runmeth='bash ~/script/runmeth.sh'" >> ~/.bashrc`
-
+---
 ### 🤖 runmeth.sh parameters
 The shell script takes the following argument parameters:<br>
 ```R
@@ -88,6 +88,7 @@ curl -o methylExpress.R -L https://raw.githubusercontent.com/NYU-Molecular-Patho
 ```
 **Finally runmeth.sh passes your input parameters as args to methylExpress.R:**<br>
 `Rscript --verbose methylExpress.R` **`$methAPI` `$methRun` `$PRIORITY` `$runPath`**
+___
 
 ### 🧮 Passing Arguments to R
 The four positional arguments from *runmeth.sh* are passed to the Rscript *methylExpress.R*:<br />
