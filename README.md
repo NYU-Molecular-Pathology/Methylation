@@ -48,7 +48,7 @@ Download and install the following packages:<br>
 
 # ⚡️ Quickstart
 To run the pipeline from your terminal, simply execute the following command:<br />
-```
+```ruby
 /Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST
 ```
 ___
@@ -101,7 +101,9 @@ Alternatively, instead of passing the RunID to runmeth.sh, you can source and do
 
 # 🧪 Run the Test Case
 After installation, you can use the following run command to test the pipeline.<br>
-`/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST`<br />
+```ruby
+/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST
+```
 
 # ⚠️ Troubleshooting
 <details>
