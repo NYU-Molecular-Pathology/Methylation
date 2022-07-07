@@ -56,7 +56,7 @@ ___
 ### Input Paths
 *Files are copied to the work directory by their RUNID name and YEAR, including the worksheet and idats for example:*
 - **Worksheets** `/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/WORKSHEETS/2022/22-MGDM17.xlsm`<br />
-- **.idat files**`/Volumes/molecular/Molecular/iScan/`
+- **.idat files** `/Volumes/molecular/Molecular/iScan/`
 ### Default Working Directory
 - **Input files are copied and report files are generated on the Cbioinformatics drive:**<br />
 `/Volumes/CBioinformatics/Methylation/Clinical_Runs/22-MGDM17`<br />
