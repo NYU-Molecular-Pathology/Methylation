@@ -48,7 +48,7 @@ Download and install the following packages:<br>
 `smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular`<br />
 
 # ⚡️ Quickstart
-To run the pipeline from your terminal, simply execute the following command:<br />
+To install the pipeline from your terminal, simply execute the following command:<br />
 ```ruby
 /Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST
 ```
@@ -70,24 +70,25 @@ ___
 # ⚙️ Executing Methylation CLI
 To run the Clinical or Research Methylation pipeline, simply use the locally stored Shell Script in:<br>
 `/Volumes/CBioinformatics/Methylation/runMeth.sh`<br/>
-- This shell script uses Curl to download the files from this repo and executes methylExpress.R in the terminal.
+- This shell script uses Curl to download the files from this repo and takes four positional argument inputs to execute methylExpress.R in the terminal.
+- The bash script stores your REDCap API token locally and only requires the methylation run ID to be entered.
 - You can copy runMeth.sh and create an alias or symlink to execute more easily.  For example:<br>
 `alias runmeth='bash ~/script/runmeth.sh'` or `echo "alias runmeth='bash ~/script/runmeth.sh'" >> ~/.bashrc`
 ---
 ### 🤖 runmeth.sh parameters
-The shell script takes the following argument parameters:<br>
+The shell script takes the following positional arguments:<br>
 ```R
-methAPI='XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' # RedCap API Token
-methRun=${1-NULL} # methylation run id e.g. 22-MGDM17
-PRIORITY=${2-NULL} # string of prioritized RD-numbers
-runPath=${3-NULL} # any custom directory to copy/run the idat files
-redcapUp=${4-NULL} # to upload to redcap or not if server down single char i.e. "T" or "F"
+methAPI='XXXXXXXX' # (hardcoded) Your REDCap API Token
+methRun=${1-NULL}  # (required argument) methylation run id e.g. 22-MGDM17 @Default is NULL
+PRIORITY=${2-NULL} # (optional) string list of prioritized RD-numbers to run
+runPath=${3-NULL}  # (optional) any directory to copy/run the idat files if not Clinical_Runs
+redcapUp=${4-NULL} # (optional) character "T" or "F": Flag to upload REDCap data or not
 ```
-**runmeth.sh downloads methylExpress.R and other files using curl:**
+**First, runmeth.sh downloads methylExpress.R and other files using curl:**
 ```ruby
 curl -o methylExpress.R -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/methylExpress.R
 ```
-**Finally runmeth.sh passes your input parameters as args to methylExpress.R:**<br>
+**Next, runmeth.sh passes the values input as args to methylExpress.R:**<br>
 `Rscript --verbose methylExpress.R` **`$methAPI` `$methRun` `$PRIORITY` `$runPath`**
 ___
 
