@@ -86,7 +86,6 @@ checkRedcapRecord <- function(recordName, fieldName='classifier_pdf'){
 writeLogFi <- function(recordName, isHtml=T){
     logFile = "upload_log.tsv"
     message("Check ",logFile,"\n", crayon::white$bgRed(recordName[1]), " already has an data in REDCap:")
-
     if(isHtml==T){
     i = paste(recordName[1], "already has an html file in REDCap\n")
     write.table(i, file = logFile, append = TRUE, quote = F, sep = '\t', row.names = F, col.names = F)
@@ -96,8 +95,6 @@ writeLogFi <- function(recordName, isHtml=T){
         i = paste(names(recordName), recordName, sep=":", collapse=" ")
         write.table(i, file = logFile, append = TRUE, quote = F, sep = ' ', row.names = F, col.names = F)
     }
-
-
 }
 
 loopRedcapImport <-function(data){
@@ -118,35 +115,49 @@ loopRedcapImport <-function(data){
     }
 }
 
+GetRedcapCsv <- function(samsheet) {
+    if (is.null(samsheet)) {
+        samsheet <- dir(path = getwd(), full.names = T, "_Redcap.csv", recursive = F)
+    }
+    if (length(samsheet) == 1) {
+        data <- read.csv(samsheet, stringsAsFactors = F)
+        if (any(duplicated(data$record_id))) {
+            warning("Remove duplicate rows in the REDCap csv dataframe:")
+            print(data$record_id[duplicated(data$record_id)])
+            data = data[!duplicated(data$record_id), ]
+        }
+        return(data)
+    } else {
+        message("no _Redcap.csv file found or multiple files exist:/n")
+        print(samsheet)
+        stopifnot(length(samsheet) == 1)
+    }
+}
+
+CheckImportData <- function(rawCsv){
+    message("Checking REDCap for existing data:")
+    toImport <- unlist(lapply(rawCsv$record_id, FUN=function(rd){checkRedcapRecord(rd, "classifier_value")}))
+    if(any(!toImport)){
+        message("The following records already have an existing classifier_value and will not be over-written in REDCap:")
+        toSkip <- rawCsv[!toImport,]
+        print(toSkip)
+        invisible(lapply(1:length(toSkip), function(x){writeLogFi(as.data.frame(toSkip[x,]), isHtml=F)}))
+        rawCsv <- rawCsv[toImport,]
+    }
+    return(rawCsv)
+}
+
+
 # REDCap: API call & Upload
 # uploads the redcap classifier values must convert to JSON first
 importDesktopCsv <- function(rcon,samsheet=NULL) {
     msgFunName(cpOutLnk, "importDesktopCsv")
-    rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
-    ur=paste0(rcon$url);tk=rcon$token
-    if(is.null(samsheet)){
-        samsheet=dir(path=getwd(),full.names=T,"_Redcap.csv",recursive=F)} else {samsheet=samsheet}
-    if (length(samsheet) < 1) {message("Redcap headers csv file not found in:\n", paste(samsheet))}
-    if (length(samsheet) == 1) {
-        data<-read.csv(samsheet, stringsAsFactors=F)
-        if(any(duplicated(data$record_id))){
-            warning("Remove duplicate rows in the REDCap csv dataframe:")
-            print(data$record_id[duplicated(data$record_id)])
-            data = data[!duplicated(data$record_id),]
-        }
-        message("Checking REDCap for existing data:")
-        toImport <- unlist(lapply(data$record_id, FUN=function(rd){checkRedcapRecord(rd, "classifier_value")}))
-        if(any(!toImport)){
-        message("The following records already have an existing classifier_value and will not be over-written in REDCap:")
-            toSkip <- data[!toImport,]
-            print(toSkip)
-            invisible(lapply(1:length(toSkip), function(x){writeLogFi(as.data.frame(toSkip[x,]), isHtml=F)}))
-            data <- data[toImport,]
-        }
-        if (nrow(data > 0)) {
-            cat(redcapAPI::importRecords(rcon, data, "normal", "ids", logfile = "REDCapImportLog.txt"))
-        }else{message("No new data to import to REDCap")}
-    } else {message("no _Redcap.csv file found")}
+    rawCsv <- GetRedcapCsv(samsheet)
+    data <- CheckImportData(rawCsv)
+    if (nrow(data > 0)) {
+        cat(redcapAPI::importRecords(rcon, data, "normal", "ids", logfile = "REDCapImportLog.txt"))
+    }else{message("No new data to import to REDCap")}
+
 }
 
 # Copy Output cnv Files if generated
@@ -222,10 +233,10 @@ uploadCnPng <- function() {
             pth,
             recordName,
             field = "methyl_cn",
-            overwrite = T,
+            overwrite = F,
             repeat_instance = 1
         )
-    }
+        }
 }
 
 
@@ -275,7 +286,8 @@ callApiImport <- function(rcon,
                 logfile=logfi
             ),sep = "\n\n")
         },
-        error = function(e) {message(crayon::white$bgRed(paste(data$record_id, "failed import data to REDCap:")), "\n", e$message)}
+        error = function(e) {
+            message(crayon::white$bgRed(paste(data$record_id, "failed import data to REDCap:")), "\n", e$message)}
     )
 }
 

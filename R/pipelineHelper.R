@@ -164,6 +164,18 @@ msgRunUp <- function(sampleID,run_id,senLi){
         )
 }
 
+msgSamSheet <- function(samSh) {
+    if (length(samSh) > 1) {
+        message(crayon::black$bgRed$bold("Multiple samplesheets found:"))
+        cat(samSh, sep = "\n")
+        samSh <- samSh[stringr::str_detect(samSh, pattern = "\\$", negate = T)]
+        message(crayon::black$bgGreen("Reading the following .xlsm in current directory:"))
+    } else{message(crayon::black$bgGreen("Reading the following .xlsm in current directory:"))}
+    cat(samSh, sep = "\n")
+    stopifnot(!length(samSh) > 1)
+    return(samSh)
+}
+
 getRunData <- function(data) {
     runDt <- data.frame(
         sampleID = paste0(data[, 1]),
@@ -182,7 +194,7 @@ getRunData <- function(data) {
 do_report <- function(data = NULL, genCn=F) {
     msgFunName(pipeLnk,"do_report")
     msgParams("data")
-    msgParams(data)
+    print(data)
     if(!is.null(data)){
         dat <- getRunData(data)
         RGsetEpic <- getRGset(getwd(), dat$senLi)
@@ -200,17 +212,7 @@ do_report <- function(data = NULL, genCn=F) {
     } else {message(bkRed("Data is NULL, check your SampleSheet.csv"))}
 }
 
-msgSamSheet <- function(samSh) {
-    if (length(samSh) > 1) {
-        message(crayon::black$bgRed$bold("Multiple samplesheets found:"))
-        cat(samSh, sep = "\n")
-        samSh <- samSh[stringr::str_detect(samSh, pattern = "\\$", negate = T)]
-        message(crayon::black$bgGreen("Reading the following .xlsm in current directory:"))
-    } else{message(crayon::black$bgGreen("Reading the following .xlsm in current directory:"))}
-    cat(samSh, sep = "\n")
-    stopifnot(!length(samSh) > 1)
-    return(samSh)
-}
+
 
 NameControl <- function(data, runId) {
     library("data.table")
@@ -231,14 +233,17 @@ checkSamSh <- function(samList){
     samSh <- msgSamSheet(dir(path = getwd(), ".xlsm", full.names = T))
     xlSheets <- readxl::excel_sheets(samSh)
     redSheet <- paste0(which(grepl("REDCap_Import",xlSheets)==T))
-    message("redsheet",redSheet)
+    message("Excel sheet names:\n")
     print(xlSheets)
+    message("Sheet Index containing 'REDCap_Import': ", redSheet)
+
     samSh <- readxl::read_excel(samSh, sheet=3, range = "A1:M97",col_types = c("text"))
+
     message(crayon::black$bgGreen("SampleSheet:"))
     print(samSh)
+
     wksh <- as.data.frame(samSh)[1:length(samList), 1:13]
     wksh <- NameControl(wksh, wksh$run_number[1])
-
     rownames(wksh)<- wksh[,1]
     stopifnot(!is.null(wksh))
     return(wksh)
@@ -298,6 +303,7 @@ makeReports.v11b6 <- function(runPath = NULL,
     assign("genCn", genCn, envir = gb)
     data <- read.csv(sheetName, strip.white=T)
     runID <- paste0(data$RunID[1])
+
     message("Loading data...\n",predictionPath,"\n")
     load(predictionPath)
     CreateControlRecord(runID)
@@ -309,11 +315,12 @@ makeReports.v11b6 <- function(runPath = NULL,
     }
     if(grepl("TEST",runID)){cpReport=F;redcapUp=F;email=F}
     if(cpReport==T){file.list <- gb$copy2outFolder(gb$clinDrv, runID)}
-    if(redcapUp==T){file.list <- dir(pattern="*.html", full.names = T); gb$uploadToRedcap(file.list,T)}
-    if(email==T){
-        launchEmailNotify(runID)
-        #beepr::beep(4)
+    if (redcapUp == T) {
+        file.list <- dir(pattern = "*.html", full.names = T)
+        gb$uploadToRedcap(file.list, T)
     }
+    if(email==T){launchEmailNotify(runID)}
+    #beepr::beep(4)
     tidyUpFiles(runID)
 }
 
