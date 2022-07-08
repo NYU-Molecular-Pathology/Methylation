@@ -268,7 +268,7 @@ getRunList <- function(data, samList){
 loopRender <- function(samList = NULL, data, redcapUp = T){
     msgFunName(pipeLnk, "loopRender")
     msgParams("samList = NULL, data, redcapUp = T")
-
+# Debug: data <- read.csv("samplesheet.csv", strip.white=T)
     stopifnot(!is.null(data))
     data <- NameControl(data, data$RunID[1])
     if (is.null(samList)) {samList = 1:length(data$SentrixID_Pos)}
@@ -279,7 +279,8 @@ loopRender <- function(samList = NULL, data, redcapUp = T){
         do_report(data = data[i, ], gb$genCn)
         msgProgress(2, i, samList)
         if (redcapUp == T) {
-            gb$importSingle(wksh[data[i, 1],])
+            sh_Dat <- wksh[data[i, 1],]
+            gb$importSingle(sh_Dat)
             }
     }
     message(crayon::black$bgGreen$bold(dsh, "RUN COMPLETE", dsh))

@@ -85,7 +85,7 @@ checkRedcapRecord <- function(recordName, fieldName='classifier_pdf'){
 
 writeLogFi <- function(recordName, isHtml=T){
     logFile = "upload_log.tsv"
-    message("Check ",logFile,"\n", crayon::white$bgRed(recordName[1]), " already has an data in REDCap:")
+    message("Check ",logFile,"\n", crayon::white$bgRed(recordName[1]), " already has data in REDCap:")
     if(isHtml==T){
     i = paste(recordName[1], "already has an html file in REDCap\n")
     write.table(i, file = logFile, append = TRUE, quote = F, sep = '\t', row.names = F, col.names = F)
@@ -151,7 +151,7 @@ CheckImportData <- function(rawCsv){
 
 # REDCap: API call & Upload
 # uploads the redcap classifier values must convert to JSON first
-importDesktopCsv <- function(rcon,samsheet=NULL) {
+importDesktopCsv <- function(rcon, samsheet=NULL) {
     msgFunName(cpOutLnk, "importDesktopCsv")
     rawCsv <- GetRedcapCsv(samsheet)
     data <- CheckImportData(rawCsv)
@@ -256,7 +256,7 @@ importRedcapStart <- function(nfldr){
 callApiImport <- function(rcon,
                           recordName,
                           runID){
-    message(mkBlue("Importing Record Data:"))
+    message(mkBlue("Importing Record:"))
     data = data.frame(record_id = recordName, run_number = runID)
     logfi = paste0(recordName,"_redcapLog.txt")
     tryCatch(
@@ -308,35 +308,27 @@ uploadToRedcap <- function(file.list,
     msgFunName(cpOutLnk, "uploadToRedcap")
     rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
     runID <- ifelse(is.null(runNumb), gb$runID, runNumb)
-    if (deskCSV == F) {
-        htmlLi <- stringr::str_replace_all(basename(file.list), ".html", "")
-        for (recordName in htmlLi) {
-            callApiImport(rcon, recordName, runID)
-            isEmpty <- checkRedcapRecord(recordName)
-            callApiFile(rcon, recordName, isEmpty)
-        }
-    }else {importDesktopCsv(rcon)}
+
+    htmlLi <- stringr::str_replace_all(basename(file.list), ".html", "")
+    for (recordName in htmlLi) {
+        callApiImport(rcon, recordName, runID)
+        isEmpty <- checkRedcapRecord(recordName)
+        callApiFile(rcon, recordName, isEmpty)
+    }
+    if (deskCSV == T) {
+        importDesktopCsv(rcon)
+    }
 }
 
 # Imports the xlsm sheet 3 data
 importSingle <- function(sh_Dat) {
     msgFunName(cpOutLnk, "importSingle")
-
     sh_Dat <- AddPngFilePath(sh_Dat)
-    record = c(sh_Dat[1,])
-    datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox = T)
-    print(datarecord)
-    res <- RCurl::postForm(
-        uri= apiLink,
-        token = gb$ApiToken,
-        content = 'record',
-        format = 'json',
-        type = 'flat',
-        data = datarecord,
-        overwriteBehavior='normal'
-        )
-    message(crayon::white$bgBlue("Record Uploaded"))
-    invisible(res)
+    recordEmpty <- checkRedcapRecord(sh_Dat$record_id, fieldName = "well_number")
+    if(recordEmpty){loopRedcapImport(sh_Dat)
+    }else{
+        message(crayon::white$bgBlue("Record Data not Uploaded:"), "\n",record[1])
+        }
     uploadToRedcap(file.list = paste0(record[1], ".html"), deskCSV = F)
 }
 
