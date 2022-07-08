@@ -701,7 +701,7 @@ makePost <- function(datarecord){
                     data = datarecord, returnFormat = 'csv', overwriteBehavior='normal')
 }
 
-expr=makePost(datarecord)
+#expr=makePost(datarecord)
 
 writeRedcap <- function(redcsv, dfNewRed,dfRedcap){
 	redDF <- rbind(dfRedcap, dfNewRed)
