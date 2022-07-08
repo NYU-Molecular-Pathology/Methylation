@@ -10,6 +10,7 @@ reportMd <- "~/report.Rmd" # From curl github download
 QC_file <- "~/Methyl_QC.Rmd" # From curl github download
 pipeLnk <- "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/pipelineHelper.R"
 predictionPath <- "/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData"
+QC_file <- "~/Methyl_QC.Rmd"
 
 msgFunName <- function(pthLnk, funNam){message("\nExecuting function: ", bky(funNam), " from RScript in:\n", pthLnk)}
 msgParams <- function(...){
@@ -56,11 +57,10 @@ getRGset <- function(runPath, sentrix){
 # QC REPORT maker: knits the QC RMD file
 generateQCreport <- function(runID=NULL) {
     msgFunName(pipeLnk, "generateQCreport")
-
-    QC_file <- "~/Methyl_QC.Rmd"
     if (is.null(runID)){runID<-paste0(basename(getwd()))}
     if (!file.exists(QC_file)) {message(crayon::bgRed("QC_file.rmd not found:"), "\n", QC_file)}
-    fs::file_copy(QC_file, getwd(), overwrite = T)
+    #fs::file_copy(QC_file, getwd(), overwrite = T)
+    file.copy(from = QC_file, to=file.path(getwd(),basename(QC_file)), copy.mode = F)
     currQc = dir(getwd(), "*QC.Rmd", full.names = T)
     qcFile = paste0(runID, "_QC.html") # output file name
     if(file.exists(file.path(getwd(), qcFile))) {
@@ -70,7 +70,7 @@ generateQCreport <- function(runID=NULL) {
         rmarkdown::render(
             currQc,
             output_file = qcFile,
-            quiet = T,
+            quiet = F,
             params = list(runID = runID)
         )
         qcCache <- stringr::str_replace_all(string = currQc, ".Rmd", "_cache")
