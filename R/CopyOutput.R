@@ -259,7 +259,9 @@ importRedcapStart <- function(nfldr){
     }
 }
 
-callApiImport <- function(rcon, recordName, runID){
+callApiImport <- function(rcon,
+                          recordName,
+                          runID){
     message(mkBlue("Importing Record Data:"))
     data = data.frame(record_id = recordName, run_number = runID)
     logfi = paste0(recordName,"_redcapLog.txt")
@@ -271,17 +273,18 @@ callApiImport <- function(rcon, recordName, runID){
                 overwriteBehavior = "normal",
                 returnContent = "ids",
                 logfile=logfi
-            ))
+            ),sep = "\n\n")
         },
         error = function(e) {message(crayon::white$bgRed(paste(data$record_id, "failed import data to REDCap:")), "\n", e$message)}
     )
 }
 
-callApiFile <- function(rcon, recordName, ovwr=T){
-
+callApiFile <- function(rcon,
+                        recordName,
+                        ovwr=T)
+{
     recordFi <- paste0(recordName, ".html")
-
-    message(mkBlue("Importing Record File:"),paste0(" ", recordFi))
+    message("\n", mkBlue("Importing Record File:"),paste0(" ", recordFi))
 
     if(ovwr==F){writeLogFi(recordName)}
     tryCatch(
