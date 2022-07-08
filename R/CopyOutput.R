@@ -304,27 +304,21 @@ callApiFile <- function(rcon, recordName, ovwr=T){
 
 
 # Creates QC record and uploads reports to redcap
-uploadToRedcap <- function(file.list,
-                           deskCSV = T,
-                           runNumb = NULL) {
+uploadToRedcap <- function(
+        file.list, deskCSV = T, runNumb = NULL)
+{
     msgFunName(cpOutLnk, "uploadToRedcap")
-
     rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
     runID <- ifelse(is.null(runNumb), gb$runID, runNumb)
     if (deskCSV == F) {
         htmlLi <- stringr::str_replace_all(basename(file.list), ".html", "")
         for (recordName in htmlLi) {
             callApiImport(rcon, recordName, runID)
-            switch (
-                checkRedcapRecord(recordName),
-                T = callApiFile(rcon, recordName, F),
-                F = callApiFile(rcon, recordName)
-            )
+            isEmpty <- checkRedcapRecord(recordName)
+            callApiFile(rcon, recordName, isEmpty)
         }
     }
-    if (deskCSV == T) {
-        importDesktopCsv(rcon)
-    }
+    if (deskCSV == T) {importDesktopCsv(rcon)}
 }
 
 # Imports the xlsm sheet 3 data
