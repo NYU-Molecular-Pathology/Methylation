@@ -144,7 +144,7 @@ importDesktopCsv <- function(rcon,samsheet=NULL) {
             data <- data[toImport,]
         }
         if (nrow(data > 0)) {
-            cat(redcapAPI::importRecords(rcon, data, "normal", "ids", logfile = "redcaperrors.txt"))
+            cat(redcapAPI::importRecords(rcon, data, "normal", "ids", logfile = "REDCapImportLog.txt"))
         }else{message("No new data to import to REDCap")}
     } else {message("no _Redcap.csv file found")}
 }
@@ -262,7 +262,7 @@ importRedcapStart <- function(nfldr){
 callApiImport <- function(rcon, recordName, runID){
     message(mkBlue("Importing Record Data:"))
     data = data.frame(record_id = recordName, run_number = runID)
-    logfi = paste0(recordName,"_redcaperrors.txt")
+    logfi = paste0(recordName,"_redcapLog.txt")
     tryCatch(
         expr = {
             cat(redcapAPI::importRecords(
@@ -304,8 +304,9 @@ callApiFile <- function(rcon, recordName, ovwr=T){
 
 
 # Creates QC record and uploads reports to redcap
-uploadToRedcap <- function(
-        file.list, deskCSV = T, runNumb = NULL)
+uploadToRedcap <- function(file.list,
+                           deskCSV = T,
+                           runNumb = NULL)
 {
     msgFunName(cpOutLnk, "uploadToRedcap")
     rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
