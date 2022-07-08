@@ -2,6 +2,7 @@
 gb <- globalenv(); assign("gb", gb)
 dsh = "-----------"
 bky <- function(txtVar,...){crayon::black$bgYellow$bold(txtVar,...)}
+bkgrn <- function(txtVar,...){crayon::black$bgGreen$bold(txtVar,...)}
 bkRed <- function(txtVar,...){crayon::bgRed$bold$white(txtVar,...)}
 
 # Global Variables ----------------------------------
@@ -153,7 +154,11 @@ tidyUpFiles <- function(runID){
 msgProgress <- function(msg, i, samList) {
     nOfTotal <- paste(i, "of", length(samList), dsh)
     startEnd <- ifelse(msg == 1, "Now Running", "Completed Report")
-    cat("\n", bky(dsh, startEnd , nOfTotal), sep = "\n")
+    if(msg==1){
+        cat("\n", bky(dsh, startEnd , nOfTotal), sep = "\n")
+        }else{
+            cat("\n", bkgrn(dsh, startEnd , nOfTotal), sep = "\n")
+        }
 }
 
 msgRunUp <- function(sampleID,run_id,senLi){
@@ -225,24 +230,23 @@ NameControl <- function(data, runId) {
     return(data)
 }
 
-# FUN: Parses the WetLab .xlsm sheet in the current directory
-checkSamSh <- function(samList){
-    msgFunName(pipeLnk, "checkSamSh")
-
-    require(rmarkdown)
-    samSh <- msgSamSheet(dir(path = getwd(), ".xlsm", full.names = T))
+ReadSamSheet <- function(samList){
+    samSh <- gb$GrabSampleSheet()
     xlSheets <- readxl::excel_sheets(samSh)
-    redSheet <- paste0(which(grepl("REDCap_Import",xlSheets)==T))
+    redSheet <- as.integer(which(grepl("REDCap_Import",xlSheets)==T))
     message("Excel sheet names:\n")
     print(xlSheets)
     message("Sheet Index containing 'REDCap_Import': ", redSheet)
+    samSh <- readxl::read_excel(samSh, sheet=redSheet, range = "A1:M97", col_types = c("text"))
+    message(crayon::black$bgGreen("SampleSheet:"));print(samSh)
+    return(as.data.frame(samSh)[1:length(samList), 1:13])
+}
 
-    samSh <- readxl::read_excel(samSh, sheet=3, range = "A1:M97",col_types = c("text"))
-
-    message(crayon::black$bgGreen("SampleSheet:"))
-    print(samSh)
-
-    wksh <- as.data.frame(samSh)[1:length(samList), 1:13]
+# FUN: Parses the WetLab .xlsm sheet in the current directory
+checkSamSh <- function(samList){
+    msgFunName(pipeLnk, "checkSamSh")
+    require(rmarkdown)
+    wksh <- ReadSamSheet(samList)
     wksh <- NameControl(wksh, wksh$run_number[1])
     rownames(wksh)<- wksh[,1]
     stopifnot(!is.null(wksh))
@@ -252,7 +256,7 @@ checkSamSh <- function(samList){
 getRunList <- function(data, samList){
     msgFunName(pipeLnk, "getRunList")
     toRun <- unlist(lapply(samList, FUN=function(i){
-        nOutDir = file.path(gb$methDir, gb$runID, paste0(data[i, 1], ".html"))
+        nOutDir = file.path(getwd(), paste0(data[i, 1], ".html"))
         if (file.exists(nOutDir)) {
             message(bky(basename(nOutDir), "already exists! Skipping..."),"\n")
         }else{return(i)}

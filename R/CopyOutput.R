@@ -98,21 +98,22 @@ writeLogFi <- function(recordName, isHtml=T){
 }
 
 loopRedcapImport <-function(data){
+    if(!is.null(data)){
     for (n in 1:nrow(data)) {
-        datarecord = jsonlite::toJSON((as.list(data[n,])), auto_unbox=T)
-        message("~~",crayon::bgBlue("Record Uploaded:"))
-        print(datarecord)
+        record=c(data[n,])
+        datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
+        message(crayon::bgBlue("Record Uploaded:"), datarecord)
         RCurl::postForm(
             apiLink,
             token = gb$ApiToken,
             content = 'record',
-            format = 'csv',
+            format = 'json',
             type = 'flat',
             data = datarecord,
-            returnFormat = 'csv',
             overwriteBehavior = 'normal'
         )
     }
+    }else{message("Nothing imported to REDCap. Dataframe is null!")}
 }
 
 GetRedcapCsv <- function(samsheet) {
@@ -204,7 +205,8 @@ getTotalSamples <- function(thisSh=NULL){
 }
 
 
-AddPngFilePath <- function(nfldr,sh_Dat){
+AddPngFilePath <- function(sh_Dat){
+    nfldr = file.path(stringr::str_split_fixed(gb$clinDrv, " ", 2)[1],"MethylationClassifier")
     pathNam = file.path(nfldr,paste0(gb$runID,"_CNVs"), paste0(sh_Dat$record_id, "_cnv.png"))
     rms=paste(c("control_","low_"),collapse ='|')
     pathNam <- stringr::str_replace(pathNam, rms, "")
@@ -219,10 +221,10 @@ uploadCnPng <- function() {
     rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
     samSh <- GrabSampleSheet()
     sampleNumb <- getTotalSamples()
-    nfldr = file.path(stringr::str_split_fixed(gb$clinDrv, " ", 2)[1],"MethylationClassifier")
+
     sh_Dat <-suppressMessages(
         as.data.frame(readxl::read_excel(samSh,sheet=3,range="A1:N97", col_types=c("text")))[1:sampleNumb,1:13])
-    sh_Dat <- AddPngFilePath(nfldr,sh_Dat)
+    sh_Dat <- AddPngFilePath(sh_Dat=sh_Dat)
     records <- sh_Dat$record_id
     for (idx in 1:length(records)) {
         pth = sh_Dat$cnv_file_path[idx]
@@ -245,29 +247,10 @@ importRedcapStart <- function(nfldr){
     msgFunName(cpOutLnk, "importRedcapStart")
     samSh <- GrabSampleSheet()
     sampleNumb <- getTotalSamples(samSh)
-    sh_Dat <-
-        suppressMessages(as.data.frame(readxl::read_excel(samSh,sheet=3,range="A1:N97", col_types=c("text")))[1:sampleNumb,1:13])
-
-    sh_Dat <- AddPngFilePath(nfldr,sh_Dat)
-
-    if (!is.null(sh_Dat)){
-        for(n in 1:nrow(sh_Dat)){
-            record=c(sh_Dat[n,])
-            datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
-            res <-
-                RCurl::postForm(
-                    uri= apiLink,
-                    token = gb$ApiToken,
-                    content = 'record',
-                    format = 'json',
-                    type = 'flat',
-                    data = datarecord,
-                    overwriteBehavior = 'normal'
-                )
-            message("Record Uploaded")
-            print(res)
-        }
-    }
+    sh_Dat <- suppressMessages(as.data.frame(
+        readxl::read_excel(samSh,sheet=3,range="A1:N97", col_types=c("text")))[1:sampleNumb,1:13])
+    sh_Dat <- AddPngFilePath(sh_Dat)
+    loopRedcapImport(sh_data)
 }
 
 callApiImport <- function(rcon,
@@ -297,7 +280,6 @@ callApiFile <- function(rcon,
 {
     recordFi <- paste0(recordName, ".html")
     message("\n", mkBlue("Importing Record File:"),paste0(" ", recordFi))
-
     if(ovwr==F){writeLogFi(recordName)}
     tryCatch(
         expr = {
@@ -333,18 +315,17 @@ uploadToRedcap <- function(file.list,
             isEmpty <- checkRedcapRecord(recordName)
             callApiFile(rcon, recordName, isEmpty)
         }
-    }
-    if (deskCSV == T) {importDesktopCsv(rcon)}
+    }else {importDesktopCsv(rcon)}
 }
 
 # Imports the xlsm sheet 3 data
 importSingle <- function(sh_Dat) {
     msgFunName(cpOutLnk, "importSingle")
-    nfldr = file.path(stringr::str_split_fixed(gb$clinDrv, " ", 2)[1],"MethylationClassifier")
-    sh_Dat <- AddPngFilePath(nfldr,sh_Dat)
+
+    sh_Dat <- AddPngFilePath(sh_Dat)
     record = c(sh_Dat[1,])
     datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox = T)
-    print(sh_Dat)
+    print(datarecord)
     res <- RCurl::postForm(
         uri= apiLink,
         token = gb$ApiToken,
