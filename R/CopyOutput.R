@@ -30,16 +30,14 @@ save.prev.folder <- function(prevs, oldFi){
     fs::file_copy(path=oldFi, new_path=prevs)
 }
 
-
-
 CopyHtmlFiles <- function(newFolder) {
+    msgFunName(cpOutLnk, "CopyHtmlFiles")
     message(mkBlue("Copying Reports to output folder:"), "\n", newFolder)
     message(mkGrn("Now copying html reports..."),"\n")
-
     fi2copy <- dir(getwd(), pattern = "*.html", full.names = T)
-    for (fi in fi2copy) {
-        fs::file_copy(fi, file.path(newFolder, basename(fi)))
-    }
+    print(fi2copy)
+    file.copy(fi2copy, newFolder, overwrite=F, copy.mode = F, copy.date = T)
+    #fs::file_copy(fi2copy, newFolder, overwrite=F)
 }
 
 CheckDirMake <- function(newFolder){
@@ -364,17 +362,21 @@ MakeOutputDir <- function(runYear, clinDrv, runID, isMC){
 CopyFilesOut <- function(file.list, newFolder){
     message("\nCopying Existing Reports to Folder...\n", newFolder,"\n",mkBlue("Files to copy:"), "\n")
     print(file.list)
-    lapply(file.list, function(foo) {
-        destDir = file.path(newFolder, basename(foo))
+    #lapply(file.list, function(foo) {
+        #destDir = file.path(newFolder, basename(foo))
         tryCatch(
-            expr = {fs::file_copy(foo, destDir, overwrite = F)},
+            #expr = {fs::file_copy(foo, destDir, overwrite = F)},
+            expr = {file.copy(file.list, newFolder, overwrite = F, copy.mode = F)},
             error = function(e) {message(e,"\nTrying other file copy method:\n")
-                if(!file.exists(foo)) {message("File ", foo, " does not exist")} else{
-                    cmnd = paste("cp", foo, newFolder)
-                    message(cmnd)
-                    system(cmnd)}}
+                if(!file.exists(file.list)) {message("File ", foo, " does not exist")} else{
+                    cmnd = paste("cp -p", file.list, file.path(newFolder, basename(file.list)))
+                    print(cmnd)
+                    for (foo in cmnd) {
+                        system(foo)
+                    }
+                    }}
             )
-    })
+   # })
 }
 
 
