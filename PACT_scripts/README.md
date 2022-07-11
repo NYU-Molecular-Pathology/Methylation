@@ -33,16 +33,17 @@ The API tokens are saved within the shell files where $pactID is the experiment 
  ```ruby
  cp /Volumes/CBioinformatics/PACT/demuxQC.sh ~/
  ```
-2. Next, execute the shell script and save it as a text file.
+2. Next, execute the shell script to print the steps and commands.
   - demuxQC.sh will take two parameters: the PACT run name and the RUNID. For example:
   ```ruby
-  demuxQC.sh 220907_NB501073_012345678_ABCDEFG1234 PACT-22-99 > PACT-22-99.txt
+  demuxQC.sh 220907_NB501073_012345678_ABCDEFG1234 PACT-22-99
   ```
-3. Now that you have the output saved locally as a text file you can reference it to copy and paste the commands for each stage.
-  - For example, to view the first two stages, print the first 27 (n) lines:
-  ```ruby
-  head -n 27 PACT-22-99.txt
-  ```
+## Printing NGS Stage commands
+ - Execute the following shell script passing the PACT run ID and run name:
+ ```ruby
+ /Volumes/CBioinformatics/PACT/PrintNGS.sh 220707_NB501073_0123_ABCDEFG1234 PACT-22-XX
+ ```
+  
 # TroubleShooting Tips
 
 <details>
