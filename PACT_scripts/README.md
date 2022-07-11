@@ -71,9 +71,11 @@ If any of the cnv png output files on the desktop are not copied to the output f
 2. Next, execute the shell script and save it as a text file.
   - demuxQC.sh will take two parameters: the PACT run name and the RUNID
   - For example:
-  ```diff
+  ```bash
   demuxQC.sh 220907_NB501073_0#####_ABCDEFG1234 PACT-22-99 > PACT-22-99.txt
   ```
 3. Now that you have the output saved locally as a text file you can reference it to copy and paste the commands for each stage.
   - For example, to view the first two stages, print the first 27 (n) lines:
-  `head -n 27 PACT-22-99.txt`
+  ```R
+  head -n 27 PACT-22-99.txt
+  ```
