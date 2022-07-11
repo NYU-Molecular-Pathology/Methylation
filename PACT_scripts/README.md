@@ -63,3 +63,17 @@ After lines 96:
 ## File Copy or Mount Path issue
 The mounted drive paths are checked to idat folders in Molecular and Snuderlabspace shares so that they are accessible.  You may see in red if the path to idat folder in /Volumes/snudem01labspace is not mounted; however, if your idats are all in the molecular drive, the script will continue if not issues occured. <br>
 If any of the cnv png output files on the desktop are not copied to the output folder, check that the files do not already exist as copying will be skipped or if the network molecular drive is not accessible, the png files will remain on the desktop.
+
+# Printing PACT Demultiplexing instructions
+
+1. First copy the shell script to a local directory, for example:
+`cp /Volumes/CBioinformatics/PACT/demuxQC.sh ~/`
+2. Next, execute the shell script and save it as a text file.
+  - demuxQC.sh will take two parameters: the PACT run name and the RUNID
+  - For example:
+  ```diff
+  demuxQC.sh 220907_NB501073_0#####_ABCDEFG1234 PACT-22-99 > PACT-22-99.txt
+  ```
+3. Now that you have the output saved locally as a text file you can reference it to copy and paste the commands for each stage.
+  - For example, to view the first two stages, print the first 27 (n) lines:
+  `head -n 27 PACT-22-16.txt`
