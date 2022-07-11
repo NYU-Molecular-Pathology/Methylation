@@ -1,21 +1,24 @@
 # Shell Scripts
-### makePactSheet.sh (generates -samplesheet.csv only)
+### 📃 makePactSheet.sh (generates -samplesheet.csv only)
  - Executing the shell script command below generates -samplesheet.csv for the PACT run:
-`/Volumes/CBioinformatics/PACT/makePactSheet.sh PACT-YY-##`<br>
- - Here *YY* stands for the year, for example, 2022 will be 22, and *##* is an integer for the run from 01 to 99+
+   + `/Volumes/CBioinformatics/PACT/makePactSheet.sh PACT-YY-##`
+   + Here *YY* stands for the year, for example, 2022 will be 22, and *##* is an integer for the run from 01 to 99+
  - The csv file output is saved on the local Desktop and then copied to the BigPurple run folder
  - Once the script has created the sample sheet csv file, it is emailed using the REDCap API. 
+ - Alternatively, you can also pass the path a .xlsm or .xlsx worksheet emailed from the wetlab. For example:
+   + `makePactSheet.sh /Users/Jonathan/Desktop/PACT-22-15.xlsm`
 
-Alternatively, you can also pass the path to the .xlsm worksheet emailed from the wetlab.
-
-### methylMatch.sh (Generates matched .xlsx of RD-numbers matching NGS case)
+### 🖼️ methylMatch.sh (Generates matched .xlsx of RD-numbers matching NGS case)
  - To generate a list of Methylation cases matched to the current pact run execute the following shell commmand:<br>
-`/Volumes/CBioinformatics/PACT/methylMatch.sh PACT-YY-##`
- - methylMatch.sh will save the pact run PACT-YY-##_MethylMatch.xlsx email and save CNV png files execute:
+   + `/Volumes/CBioinformatics/PACT/methylMatch.sh PACT-YY-##`
+ - methylMatch.sh will save the pact sheet PACT-YY-##_MethylMatch.xlsx to the local Desktop, then email it using the REDCap API
+ - If any RD-numbers are found matching the MRNs on the PACT worksheet, the script will then generate the CNV png files for those RD-numbers, save them to the local Desktop and copy them to the Z: drive folder here:
+```ruby
+/molecular/Molecular/MethylationClassifier/CNV_PNG/
+```
+ - The Shell scripts should be saved locally or symlinked to make the script easier to execute without Network file path dependencies.
 
-makePactSheet.sh and methylMatch.sh can be saved locally or symlinked to make the script easier to execute.
-
-### parsePact.sh (Generates both csv and methylmatch .xslx)
+### ⚙️ parsePact.sh (Generates both csv and methylmatch .xslx)
  - **parsePact.sh** executes both makePactSheet.sh and methylMatch.sh
  - ***makePactSheet.sh*** and ***methylMatch.sh*** have one arg passed: The experiment name without quotes, for example `PACT-21-32`
  - Both curl calls can be run consecutively using parsePact.sh with the same argument parameter as makePactSheet.sh:
@@ -24,9 +27,9 @@ makePactSheet.sh and methylMatch.sh can be saved locally or symlinked to make th
 ```
 The API tokens are saved within the shell files where $pactID is the experiment name arg1 input by the user.
 
-# Printing PACT Demultiplexing instructions
+# 📑 Printing PACT Demultiplexing instructions
 
-1. First copy the shell script to a local directory, for example:
+1. Copy the shell script to a local directory, for example:
  ```ruby
  cp /Volumes/CBioinformatics/PACT/demuxQC.sh ~/
  ```
