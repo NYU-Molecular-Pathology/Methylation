@@ -34,8 +34,7 @@ The API tokens are saved within the shell files where $pactID is the experiment 
  cp /Volumes/CBioinformatics/PACT/demuxQC.sh ~/
  ```
 2. Next, execute the shell script and save it as a text file.
-  - demuxQC.sh will take two parameters: the PACT run name and the RUNID
-  - For example:
+  - demuxQC.sh will take two parameters: the PACT run name and the RUNID. For example:
   ```ruby
   demuxQC.sh 220907_NB501073_012345678_ABCDEFG1234 PACT-22-99 > PACT-22-99.txt
   ```
