@@ -38,7 +38,7 @@ The API tokens are saved within the shell files where $pactID is the experiment 
   ```ruby
   demuxQC.sh 220907_NB501073_012345678_ABCDEFG1234 PACT-22-99
   ```
-## Printing NGS Stage commands
+## ⚡ Printing NGS Stage commands
  - Execute the following shell script passing the PACT run ID and run name:
  ```ruby
  /Volumes/CBioinformatics/PACT/PrintNGS.sh 220707_NB501073_0123_ABCDEFG1234 PACT-22-XX
