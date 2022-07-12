@@ -29,21 +29,26 @@ The API tokens are saved within the shell files where $pactID is the experiment 
 
 # 📑 Printing PACT Demultiplexing instructions
 
-1. Copy the shell script to a local directory, for example:
+1. Save the shell script to a local directory with execute permissions, for example:
  ```ruby
- cp /Volumes/CBioinformatics/PACT/demuxQC.sh ~/
+curl -o ./PrintNGS.sh -L https://github.com/NYU-Molecular-Pathology/Methylation/PACT_scripts/PrintNGS.sh
+chmod g+rwx ./PrintNGS.sh
  ```
 2. Next, execute the shell script to print the steps and commands.
-  - demuxQC.sh will take two parameters: the PACT run name and the RUNID. For example:
+  - PrintNGS.sh will take two parameters: the PACT run name and the RUNID. For example:
   ```ruby
-  demuxQC.sh 220907_NB501073_012345678_ABCDEFG1234 PACT-22-99
+  PrintNGS.sh 220907_NB501073_012345678_ABCDEFG1234 PACT-22-99
   ```
+  - The script will download demuxQC.sh to your $HOME directory and generate a text file named PACT-YY-##_stages.txt in your $HOME folder.
 ## ⚡ Printing NGS Stage commands
  - Execute the following shell script passing the PACT run ID and run name:
  ```ruby
- /Volumes/CBioinformatics/PACT/PrintNGS.sh 220707_NB501073_0123_ABCDEFG1234 PACT-22-XX
+PrintNGS.sh 220101_NB501073_0123_ABCDEFG1234 PACT-22-XX
  ```
-  
+ - The Shell script is also availible on BigPurple here:
+ ```ruby
+ /gpfs/home/serraj10/molecpathlab/development/bash_scripts/PrintNGS.sh
+ ```
 # TroubleShooting Tips
 
 <details>
