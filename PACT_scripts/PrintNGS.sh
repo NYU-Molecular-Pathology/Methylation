@@ -13,6 +13,7 @@ if [ -f "$FILE" ]; then
    sh "$HOME/demuxQC.sh" $runID $pactRun > "$HOME/$pactRun_stages.txt"
 else
    curl -o "$HOME/demuxQC.sh" -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/demuxQC.sh
+   chmod gu+rwx "$HOME/demuxQC.sh"
    sh "$HOME/demuxQC.sh" $runID $pactRun > "$HOME/$pactRun_stages.txt"
 fi
 
