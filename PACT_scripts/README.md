@@ -39,7 +39,7 @@ chmod g+rwx ./PrintNGS.sh
   ```ruby
   PrintNGS.sh 220907_NB501073_012345678_ABCDEFG1234 PACT-22-99
   ```
-  - The script will download demuxQC.sh to your $HOME directory and generate a text file named PACT-YY-##_stages.txt in your $HOME folder.
+  - The script will download **demuxQC.sh** to your $HOME directory and will generate a text file named **"PACT-YY-##_stages.txt"** in your $HOME folder from the output of the parameters passed.  You can then cat PACT-YY-##_stages.txt to see all commands for each stage in the NGS pipeline.
 ## ⚡ Printing NGS Stage commands
  - Execute the following shell script passing the PACT run ID and run name:
  ```ruby
