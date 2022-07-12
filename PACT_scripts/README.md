@@ -43,7 +43,7 @@ chmod gu+rwx ./PrintNGS.sh
 ## ⚡ Printing NGS Stage commands
  - Execute the following shell script passing the PACT run ID and run name:
  ```ruby
-PrintNGS.sh 220101_NB501073_0123_ABCDEFG1234 PACT-22-XX
+./PrintNGS.sh 220101_NB501073_0123_ABCDEFG1234 PACT-22-XX
  ```
  - The Shell script is also availible on BigPurple here:
  ```ruby
