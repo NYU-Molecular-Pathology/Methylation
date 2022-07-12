@@ -47,7 +47,7 @@ PrintNGS.sh 220101_NB501073_0123_ABCDEFG1234 PACT-22-XX
  ```
  - The Shell script is also availible on BigPurple here:
  ```ruby
- /gpfs/home/serraj10/molecpathlab/development/bash_scripts/PrintNGS.sh
+ "$HOME/molecpathlab/development/bash_scripts/PrintNGS.sh"
  ```
 # TroubleShooting Tips
 
