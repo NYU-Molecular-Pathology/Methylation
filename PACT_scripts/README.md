@@ -31,12 +31,15 @@ The API tokens are saved within the shell files where $pactID is the experiment 
 
 1. Save the shell script to a local directory with execute permissions, for example:
  ```ruby
-curl -o ./PrintNGS.sh -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/PrintNGS.sh | chmod gu+rwx ./PrintNGS.sh
+curl -o "$HOME/PrintNGS.sh" -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/PrintNGS.sh | chmod gu+rwx ./PrintNGS.sh
  ```
-2. Next, execute the shell script to print the steps and commands.
+2. Next, add an alias to your bash or zsh to execute the script from anywhere:
+  ```ruby
+  echo -e "\nalias printngs='$HOME/PrintNGS.sh'" >> .zshrc
+  ```
   - PrintNGS.sh will take two parameters: the PACT run name and the RUNID. For example:
   ```ruby
-  PrintNGS.sh 220907_NB501073_012345678_ABCDEFG1234 PACT-22-99
+  printngs 220907_NB501073_012345678_ABCDEFG1234 PACT-22-99
   ```
   - The script will download **demuxQC.sh** to your $HOME directory and will generate a text file named **"PACT-YY-##_stages.txt"** in your $HOME folder from the output of the parameters passed.  You can then cat PACT-YY-##_stages.txt to see all commands for each stage in the NGS pipeline.
 ## ⚡ Printing NGS Stage commands
@@ -49,6 +52,11 @@ curl -o ./PrintNGS.sh -L https://raw.githubusercontent.com/NYU-Molecular-Patholo
  "$HOME/molecpathlab/development/bash_scripts/PrintNGS.sh"
  ```
 # TroubleShooting Tips
+
+<details>
+  <summary>PrintNGS.sh not found</summary>
+Ensure you have permissions to read, write, and execute the directory where you are using curl to download the script as well as add execute permissions to the aliased bash script.
+</details>
 
 <details>
   <summary>Unknown Font Error</summary>
