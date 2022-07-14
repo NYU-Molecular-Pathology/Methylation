@@ -325,6 +325,7 @@ importSingle <- function(sh_Dat) {
     msgFunName(cpOutLnk, "importSingle")
     sh_Dat <- AddPngFilePath(sh_Dat)
     recordEmpty <- checkRedcapRecord(sh_Dat$record_id, fieldName = "well_number")
+    record=sh_Dat$record_id
     if(recordEmpty){loopRedcapImport(sh_Dat)
     }else{
         message(crayon::white$bgBlue("Record Data not Uploaded:"), "\n",record[1])
