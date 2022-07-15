@@ -16,7 +16,12 @@ CreateRunDir <- function(newRun){
         newRun <- substr(newRun,1, nchar(newRun)-1)
     }
     message(crayon::bgGreen("New Run Path:"),"\n", newRun)
-    if(!dir.exists(newRun)) {dir.create(newRun, recursive=T)}
+    if(!dir.exists(newRun)) {
+        dir.create(newRun, recursive=T)
+        Sys.chmod(newRun, "0777", use_umask = FALSE)
+        cmd <- paste("chmod go+rwx", newRun)
+        system(cmd)
+        }
 
     gb$setDirectory(newRun)
     return(newRun)
