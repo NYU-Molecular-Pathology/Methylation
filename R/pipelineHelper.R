@@ -2,8 +2,9 @@
 gb <- globalenv(); assign("gb", gb)
 dsh = "-----------"
 bky <- function(txtVar,...){crayon::black$bgYellow$bold(txtVar,...)}
-bkgrn <- function(txtVar,...){crayon::black$bgGreen$bold(txtVar,...)}
 bkRed <- function(txtVar,...){crayon::bgRed$bold$white(txtVar,...)}
+bkgrn <- function(...){crayon::black$bgGreen$bold(paste0(...))}
+bkBlu <- function(...){crayon::bgBlue$bold$white(paste0(...))}
 
 # Global Variables ----------------------------------
 apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
@@ -13,17 +14,20 @@ pipeLnk <- "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/pip
 predictionPath <- "/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData"
 QC_file <- "~/Methyl_QC.Rmd"
 
+# Message Functions and Variables for Debugging ----------------------------------
 msgFunName <- function(pthLnk, funNam){
     message("\nExecuting function: ", bky(funNam), " from RScript in:\n", pthLnk)
-    }
+}
+
 msgParams <- function(...){
     message("\n", crayon::bgGreen("Params passed:"),
             "\n", paste(..., collapse = ", "), "\n")
-    }
+}
 
 # Helper function to return the index of priority selected samples first
 reOrderRun <- function(selectRDs, sh=NULL){
     msgFunName(pipeLnk,"reOrderRun"); msgParams(selectRDs, sh)
+
     if(is.null(selectRDs)){return(NULL)}
     if(is.null(sh)){sh<-"samplesheet.csv"}
     allRd <- as.data.frame(read.csv(sh))
@@ -95,19 +99,17 @@ launchEmailNotify <- function(runID){
     msgFunName(pipeLnk,"launchEmailNotify")
     isMC = sjmisc::str_contains(runID, "MGDM") | sjmisc::str_contains(runID, "MC")
     com <- ifelse(isMC==T, "sample_qc", "sample_research") # research or clinical notification
-    record = data.frame(record_id=paste0(runID,"_QC"),comments=com)
+    record = data.frame(record_id=paste0(runID,"_QC"), comments=com)
     datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
-    res <-
-        RCurl::postForm(
-            gb$apiLink,
-            token = gb$ApiToken,
-            content = 'record',
-            format = 'json',
-            type = 'flat',
-            data = datarecord
+    RCurl::postForm(
+        gb$apiLink,
+        token = gb$ApiToken,
+        content = 'record',
+        format = 'json',
+        type = 'flat',
+        data = datarecord
         )
     cat(crayon::white$bgBlue$bold("Check email to confirm Email Notification Created"), sep="\n")
-    cat(res)
 }
 
 # FUN: Creates the QC record for the current run on redcap if it does not exist
@@ -170,10 +172,11 @@ msgProgress <- function(msg, i, samList) {
 }
 
 msgRunUp <- function(sampleID,run_id,senLi){
-    message(
-        "Current Sample:\nsamplename_data=",
-        bky(sampleID),"\nrun_id=",bky(run_id),
-        "\npathEpic:\n", bky(file.path(getwd(), senLi)), "\n"
+    cat(
+        "\nCurrent Sample:\n",
+        "samplename_data=", bky(sampleID),
+        " run_id=", bky(run_id),
+        "\npathEpic:", bky(file.path(getwd(), senLi)), "\n"
         )
 }
 
@@ -356,19 +359,19 @@ checkMounts <- function(){
     critialMnts <- c("/Volumes/CBioinformatics/Methylation",
                      "/Volumes/molecular/",
                      "/Volumes/snudem01labspace/idats")
+    researchMount = "smb://research-cifs.nyumc.org/Research/"
+    molecularDrive = "smb://shares-cifs.nyumc.org/apps"
     failMount <-
         lapply(critialMnts, function(driveMount){ifelse(!dir.exists(driveMount), return(T), return(F))})
     if(any(failMount==T)){
         toFix <- paste(critialMnts[which(failMount==T)])
         cat("PATH does not exist, ensure network drive is mounted:", bkRed(toFix),"\n")
-        cat("You may need to re-mount one of the following paths:",
-            crayon::white$bgBlue$bold(
-                "smb://research-cifs.nyumc.org/Research/CBioinformatics/"),
-            crayon::white$bgCyan$bold(
-                "smb://research-cifs.nyumc.org/Research/snudem01lab/snudem01labspace"),
-            crayon::white$bgGreen$bold(
-                "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular"), sep="\n"
-        )
+        cat(
+            "You may need to re-mount one of the following paths:",
+            bkBlu(researchMount,"CBioinformatics/"),
+            bkgrn(researchMount,"snudem01lab/snudem01labspace"),
+            bkBlu(molecularDrive,"/acc_pathology/molecular"), sep="\n"
+            )
         stopifnot(!any(failMount==T))
     }
 }
