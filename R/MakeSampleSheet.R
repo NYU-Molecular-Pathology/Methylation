@@ -51,11 +51,13 @@ checkValidRun <- function(runID){
     isMC = sjmisc::str_contains(runID, "MGDM")|sjmisc::str_contains(runID, "MC")
     ws.list <- listMolecularSheets(isMC,getAll=T,runID)
     found <- paste0(runID,".xlsm") %in% basename(ws.list)
-    message("Is the runID valid? ", runValid)
+    message("Is the runID valid? ", found)
     if(!found){
         message(crayon::bgRed$white$bold("runID",gb$runID,"is not valid"))
-        message(crayon::bgBlue$white$bold(paste0(gb$runID,".xlsm"),"not found in worksheets folder"))
-        message("Stopping pipeline. Check worksheet folder if the file is present and saved as .xlsm and not .xlsx")
+        message(crayon::bgBlue$white$bold(paste0(gb$runID,".xlsm"),"not found in worksheets folders:"))
+        message("/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/WORKSHEETS/")
+        message("/Volumes/snudem01labspace/Methylation_Worksheets/")
+        message("Stopping pipeline. Check worksheet directory if the file is present and saved as .xlsm and not .xlsx")
     }
     stopifnot(found)
     return(found)
