@@ -312,9 +312,10 @@ makeReports.v11b6 <- function(runPath = NULL,
     assign("genCn", genCn, envir = gb)
     data <- read.csv(sheetName, strip.white=T)
     runID <- paste0(data$RunID[1])
-
-    message("Loading data...\n",predictionPath,"\n")
+    if(file.exists(predictionPath)){
+    message("\nLoading data...\n",predictionPath,"\n")
     load(predictionPath)
+    }
     CreateControlRecord(runID)
     loopRender(selectSams, data, redcapUp)
     checkRunOutput(runID)
