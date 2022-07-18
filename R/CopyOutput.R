@@ -345,23 +345,32 @@ MakeOutputDir <- function(runYear, clinDrv, runID, isMC){
 CopyFilesOut <- function(file.list, newFolder){
     message("\nCopying Existing Reports to Folder...\n", newFolder,"\n",mkBlue("Files to copy:"), "\n")
     print(file.list)
-    #lapply(file.list, function(foo) {
-        #destDir = file.path(newFolder, basename(foo))
-        tryCatch(
-            expr = {
-                #file.copy(file.list, newFolder, overwrite = F, copy.mode = F)
-                fs::file_copy(file.list, newFolder, overwrite = F)
-                },
-            error = function(e) {message(e,"\nTrying other file copy method:\n")
-                if(!file.exists(file.list)) {message("File ", foo, " does not exist")} else{
-                    cmnd = paste("cp -p", file.list, file.path(newFolder, basename(file.list)))
-                    print(cmnd)
-                    for (foo in cmnd) {
+    tryCatch(
+        expr = {
+            #file.copy(file.list, newFolder, overwrite = F, copy.mode = F)
+            fs::file_copy(file.list, newFolder, overwrite = F)
+        },
+        error = function(e) {
+            message(e, "\nTrying other file copy method:\n")
+            if (any(!file.exists(file.list))) {
+                message("File(s) do not exist:\n")
+                missed <- paste(file.list[!file.exists(file.list)], "\n")
+                message(missed)
+            } else{
+                missed <- !file.exists(file.path(newFolder, basename(file.list)))
+                if(any(missed)){
+                file.list <- file.list[missed]
+                cmnd = paste("cp -p", file.list, file.path(newFolder, basename(file.list)))
+                print(cmnd)
+                for (foo in cmnd) {
+                    thisFoo <- basename(foo)
+                    if(!file.exists(file.path(newFolder,thisFoo))){
                         system(foo)
                     }
-                    }}
-            )
-   # })
+                }
+            }}
+        }
+    )
 }
 
 
