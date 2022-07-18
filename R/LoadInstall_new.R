@@ -437,7 +437,7 @@ startmsg <- function(){
             "diskutil mountdisk ",cbio,"\n",
             "diskutil mountdisk ", zdriv
            )
-    stopifnot(dir.exists(cbio) | dir.exists(zdriv))
+#    stopifnot(dir.exists(cbio) | dir.exists(zdriv))
 }
 
 setEnviron <- function(){
