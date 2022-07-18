@@ -4,15 +4,20 @@ apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
 cpInLnk2 = "https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/MakeSampleSheet.R"
 rschSheets = "/Volumes/snudem01labspace/Methylation_Worksheets"
 
+bkBlue <- function(...){
+    return(crayon::bgBlue$white$bold(paste0(...)))
+}
+
 msgFunName <- function(pthLnk, funNam){
     message("\nExecuting function: ", crayon::black$bgYellow(funNam), " from RScript in:\n", pthLnk,"\n")
 }
 
 msgParams <- function(...){message("\nParams passed: ", crayon::bgGreen(paste(..., sep = ",")), "\n")}
 
-grabYear<- function(yr) {
+grabYear<- function(runID) {
     msgFunName(cpInLnk2, "grabYear")
-    msgParams("yr",yr)
+    msgParams("runID",runID)
+    yr <- stringr::str_split_fixed(runID,"-",2)[,1]
 
     rnum <- NULL
     if(nchar(yr)>2){rnum <- substring(yr, 3)}else{rnum <- yr}
@@ -20,12 +25,22 @@ grabYear<- function(yr) {
     return(rnum)
 }
 
+GetNewestFile <- function(prevMC){
+    newestFile <- which.max(file.info(prevMC)$mtime)
+    prevMC <- sub(".xlsm","",basename(prevMC))
+    newestRun = paste0(prevMC[newestFile])
+    message(crayon::bgCyan("List of Runs Found:\n"))
+    print(prevMC)
+    return(prevMC)
+}
+
+
 # Returns a text string of the latest modified Run name, if isMC=False then research directory is returned
 listMolecularSheets <- function(isMC=T, getAll=F,runID=gb$runID) {
     msgFunName(cpInLnk2, "listMolecularSheets")
     msgParams("isMC=",isMC,"getAll=",getAll,"runID=",gb$runID)
 
-    runYear=grabYear(stringr::str_split_fixed(runID,"-",2)[,1])
+    runYear=grabYear(runID)
     if(isMC){
         wsPath <- file.path(gb$clinDrv,"WORKSHEETS",runYear)
         prevMC <- dir(path=wsPath, pattern="MGDM", full.names=T)
@@ -33,15 +48,10 @@ listMolecularSheets <- function(isMC=T, getAll=F,runID=gb$runID) {
         wsPath <- file.path(gb$rschSheets,runYear)
         prevMC <- dir(path=wsPath, pattern="MR", full.names=T)
     }
-    if(getAll==T){
+    if(getAll==T) {
         return(prevMC)
-    }else{
-        newestFile <- which.max(file.info(prevMC)$mtime)
-        prevMC <- sub(".xlsm","",basename(prevMC))
-        newestRun = paste0(prevMC[newestFile])
-        cat(crayon::bgCyan("List of Runs Found:\n"));cat(prevMC,sep="\n")
-        cat(crayon::black$bgYellow("Newest Run Found:", crayon::red$bold(paste0(newestRun))))
-        return(newestRun)
+    } else{
+        return(GetNewestFile(prevMC))
     }
 }
 
@@ -54,14 +64,28 @@ checkValidRun <- function(runID){
     message("Is the runID valid? ", found)
     if(!found){
         message(crayon::bgRed$white$bold("runID",gb$runID,"is not valid"))
-        message(crayon::bgBlue$white$bold(paste0(gb$runID,".xlsm"),"not found in worksheets folders:"))
+        message(bkBlue(gb$runID,".xlsm"," not found in worksheets folders:"))
         message("/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/WORKSHEETS/")
         message("/Volumes/snudem01labspace/Methylation_Worksheets/")
-        message("Stopping pipeline. Check worksheet directory if the file is present and saved as .xlsm and not .xlsx")
+        message("Check worksheet directory if the file is exists as .xlsm and not .xlsx")
     }
     stopifnot(found)
     return(found)
 }
+
+
+FsCopyFile <- function(fileLoc) {
+    if (file.exists(fileLoc)) {
+        message("\n\nCopying worksheet from Worksheets Folder:")
+        if (!file.exists(file.path(getwd(), basename(fileLoc)))) {
+            fs::file_copy(fileLoc, getwd(), overwrite = F)
+        }
+    } else {
+        message("\nFile not found:\n", fileLoc)
+        message("\nMake sure your path is correct, try print(gb$copyWorksheetFile)\n")
+    }
+}
+
 
 # FUN: copies the molecular or research lab Worksheet xlsm to cwd
 copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
@@ -70,23 +94,15 @@ copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
 
     if (is.null(runID)){runID=paste0(basename(getwd()))} else {runID=runID}
     stopifnot(!is.null(runID))
-    yr <- stringr::str_split_fixed(runID,"-",2)[,1]
-    runYear=grabYear(yr)
+
+    runYear=grabYear(runID)
     isMC = sjmisc::str_contains(runID, "MGDM")|sjmisc::str_contains(runID, "MC")
     assign("isMC", isMC); message("\nIs methylation run Clinical? ",isMC)
 
     mountLoc <- ifelse(isMC,file.path(gb$clinDrv,"WORKSHEETS"),gb$rschSheets)
     message("\nCopying file from: "); cat(mountLoc,"\n")
     if (dir.exists(mountLoc)) {
-        fileLoc <- file.path(mountLoc,runYear,paste0(runID,".xlsm"))
-        if (file.exists(fileLoc)) {
-            message("\n\nCopying worksheet from Worksheets Folder:")
-            if(!file.exists(file.path(getwd(),basename(fileLoc)))){
-                fs::file_copy(fileLoc, getwd(), overwrite = F)}
-        } else {
-            message("\nFile not found:\n",fileLoc)
-            message("\nMake sure your path is correct, try print(gb$copyWorksheetFile)\n")
-        }
+        FsCopyFile(file.path(mountLoc,runYear,paste0(runID,".xlsm")))
     } else {
         message("\nFolder not found:\n",mountLoc)
         message("\nEnsure the path to this network Volume is correct\n")
@@ -105,22 +121,34 @@ GrabSampleSheet <- function(){
     return(samSh[1])
 }
 
+
+MsgSampleCount <- function(worksheet, thisSh) {
+    templateDir = "Clinical_Methylation/methylation_run_TEMPLATE.xlsm"
+    if(length(thisSh)==0){
+        warning("No .xlsm sheet found")
+    }
+    if (length(worksheet) == 0) {
+        warning("Samplesheet ",
+                thisSh[1],
+                " is invalid format or no integer in Cell B4 found.")
+        message("Manually edit samplesheet")
+        message("Try copying data into a template file:\n", templateDir)
+        stopifnot(length(worksheet) > 0)
+    } else {
+        message("Total sample count found is: ", worksheet[1])
+    }
+}
+
 # Returns Total Sample Count in the run
 getTotalSamples <- function(thisSh=NULL){
     msgFunName(cpOutLnk, "getTotalSamples")
-
-    templateDir = "Clinical_Methylation/methylation_run_TEMPLATE.xlsm"
     thisSh <-  ifelse(is.null(thisSh), GrabSampleSheet(), thisSh)
     thisSh <- thisSh[!stringi::stri_detect_fixed(thisSh, "~$")]
-    if(length(thisSh)==0){print("No .xlsm sheet, defaulting to 16 total samples");return(16)}
-    worksheet <- suppressMessages(readxl::read_excel(thisSh[1], col_names="Total", range="B4:B4"))
-    if (length(worksheet) == 0) {
-        warning("Samplesheet ", thisSh[1]," is invalid format or no integer in Cell B4 found.")
-        message("Manually edit samplesheet to fix-Try copying data into the template file:\n", templateDir)
-        stopifnot(length(worksheet)>0)
-    } else {message("Total sample count found is: ", worksheet[1])}
-    totNumb <- paste0(worksheet[1])
-    return(as.integer(totNumb))
+    worksheet <- suppressMessages(
+        readxl::read_excel(thisSh[1], col_names="Total", range="B4:B4")
+        )
+    MsgSampleCount(worksheet, thisSh)
+    return(as.integer(paste0(worksheet[1])))
 }
 
 # FUN: Reads the csv samplesheet for minfi input
@@ -263,20 +291,20 @@ checkHeaders <- function(Var.names){
 readSheetWrite <- function(sampleNumb= NULL, runID = NULL) {
     msgFunName(cpInLnk2, "readSheetWrite")
     msgParams("sampleNumb","runID")
-    msgParams(sampleNumb,runID)
+    msgParams(sampleNumb, runID)
 
     if(is.null(sampleNumb)){sampleNumb<-getTotalSamples()}
     if(is.null(runID)){runID<-paste0(basename(getwd()))}
     current.run.Folder <- file.path(gb$methDir,runID)
     if (!file.exists("samplesheet.csv")) {
         sampleNumb=as.integer(sampleNumb)
-        if(!is.integer(sampleNumb) | sampleNumb<8 ){
+        if(!is.integer(sampleNumb) | sampleNumb < 8 ){
         stop("Check samplesheet .xlsm cell B4 for valid integer total arrays")
         }
         worksheet=readSampleSheet(wks=T)
         hdrs = dimnames(worksheet)[[2]]
-
         print(data.frame(HEADERS=hdrs))
+
         sampleName=paste(hdrs[9]) # "Sample_Name"
         Sentrix=paste(hdrs[1]) # "Sentrix_ID"
         dnaNumber=paste(hdrs[10]) # "b_number"
@@ -291,9 +319,11 @@ readSheetWrite <- function(sampleNumb= NULL, runID = NULL) {
         message("Basename layout:\n",bn[1])
         df$Notes <- paste(df$Notes[1])
         df <- checkSampleSheet(df)
-        writeSampleSheet(df, samplesheet_ID=samplesheet_ID,bn=bn, sampleName, dnaNumber, Sentrix)
+        writeSampleSheet(df, samplesheet_ID=samplesheet_ID,
+                         bn=bn, sampleName, dnaNumber, Sentrix)
         } else {
-            msgCvs = "samplesheet.csv already exists! To Create a new csv file, Delete the existing samplesheet.csv"
-            message("\n", crayon::white$bgGreen(msgCvs),"\n")
+            msgCsv1 <- "samplesheet.csv already exists!"
+            message("\n", crayon::white$bgGreen(msgCsv1),"\n")
+            message("Create a new samplesheet.csv file by deleting the existing file")
             }
 }
