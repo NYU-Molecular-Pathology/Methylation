@@ -71,8 +71,7 @@ gb$defineParams(
 # Execute Methylation Run
 if(!is.null(runID)){gb$setVar("runID", runID)}
 
-# Executes the functions in order to setup a run
-gb$prepareRun <- function(token, baseFolder=NULL, runLocal=F){
+checkBaseFolder <- function(baseFolder){
     if(is.null(baseFolder)){
         gb$baseFolder <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
         gb$methDir <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
@@ -86,26 +85,30 @@ gb$prepareRun <- function(token, baseFolder=NULL, runLocal=F){
             stopifnot(stringr::str_detect(baseFolder, pattern="Desktop")==F)
         }
     }
+    return(baseFolder)
+}
 
+# Executes the functions in order to setup a run
+gb$prepareRun <- function(token, baseFolder=NULL, runLocal=F){
+    baseFolder <- checkBaseFolder(baseFolder)
     if(runLocal==F){
-    runValid <- gb$checkValidRun(gb$runID)
+        gb$checkMounts()
+        gb$checkValidRun(gb$runID)
     }
     methylPath <- gb$setRunDir(gb$runID, workFolder = baseFolder)
-    message("Working directory set to:")
-    cat(crayon::bgGreen(methylPath))
+    message("Working directory set to:\n", crayon::bgGreen(methylPath), "\n")
     gb$workFolder <- baseFolder
     gb$setVar("workFolder", baseFolder)
-    message(" ")
     setwd(methylPath)
     gb$setVar("ApiToken", token) # assign the ApiToken & print params
-    if(runLocal==F){
-    gb$copyWorksheetFile(runID = gb$runID) # copies the xlsm file
-    gb$readSheetWrite() # reads xlsm and generates input .csv samplesheet
-    gb$get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
-    gb$moveSampleSheet(gb$methDir) #copies outputs temp to desktop for QC.Rmd
-    }else{gb$readSheetWrite()}
-    message("workFolder:", gb$workFolder)
-    #gb$classifierInstall(instNew = F, rmpkg = F) # Loads pipeline or installs new
+    if(runLocal==F) {
+        gb$copyWorksheetFile(runID = gb$runID) # copies the xlsm file
+        gb$readSheetWrite() # reads xlsm and generates input .csv samplesheet
+        gb$get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
+        gb$moveSampleSheet(gb$methDir) #copies outputs temp to desktop for QC.Rmd
+    } else{
+        gb$readSheetWrite()
+    }
 }
 
 gb$prepareRun(token, baseFolder)

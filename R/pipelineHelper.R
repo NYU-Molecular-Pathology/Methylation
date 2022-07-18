@@ -357,4 +357,4 @@ checkMounts <- function(){
     }
 }
 
-checkMounts()
+#checkMounts()
