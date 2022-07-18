@@ -34,7 +34,7 @@ CopyHtmlFiles <- function(newFolder) {
     msgFunName(cpOutLnk, "CopyHtmlFiles")
     message(mkBlue("Copying Reports to output folder:"), "\n", newFolder)
     message(mkGrn("Now copying html reports..."),"\n")
-    fi2copy <- dir(getwd(), pattern = "*.html", full.names = T)
+    fi2copy <- dir(getwd(), pattern = ".html", full.names = T)
     print(fi2copy)
     file.copy(fi2copy, newFolder, overwrite=F, copy.mode = F, copy.date = T)
     #fs::file_copy(fi2copy, newFolder, overwrite=F)
@@ -158,7 +158,6 @@ importDesktopCsv <- function(rcon, samsheet=NULL) {
     if (nrow(data > 0)) {
         cat(redcapAPI::importRecords(rcon, data, "normal", "ids", logfile = "REDCapImportLog.txt"))
     }else{message("No new data to import to REDCap")}
-
 }
 
 # Copy Output cnv Files if generated
@@ -349,8 +348,10 @@ CopyFilesOut <- function(file.list, newFolder){
     #lapply(file.list, function(foo) {
         #destDir = file.path(newFolder, basename(foo))
         tryCatch(
-            #expr = {fs::file_copy(foo, destDir, overwrite = F)},
-            expr = {file.copy(file.list, newFolder, overwrite = F, copy.mode = F)},
+            expr = {
+                #file.copy(file.list, newFolder, overwrite = F, copy.mode = F)
+                fs::file_copy(file.list, newFolder, overwrite = F)
+                },
             error = function(e) {message(e,"\nTrying other file copy method:\n")
                 if(!file.exists(file.list)) {message("File ", foo, " does not exist")} else{
                     cmnd = paste("cp -p", file.list, file.path(newFolder, basename(file.list)))
@@ -379,7 +380,7 @@ copy2outFolder <-function(clinDrv = NULL, runID, runYear = NULL) {
         save.prev.folder(file.path(newFolder, "previous"), oldFi) # saves any old files
     }
 
-    file.list = dir(path = getwd(), "*.html", full.names = T)
+    file.list <- dir(path = getwd(), ".html", full.names = T)
     CopyFilesOut(file.list, newFolder)
 
     if (isMC) {

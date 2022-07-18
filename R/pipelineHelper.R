@@ -225,10 +225,14 @@ NameControl <- function(data, runId) {
         cntrl <- which(data[, 1] %like% 'control') #DNA_Number
         data[cntrl, 1] <- paste0(runId, "_control")
     } else{
-        warning('No word "control" in RD-number found in samplesheet')
+        if (any(data[, 2] %like% 'control')) {
+            cntrl <- which(data[, 2] %like% 'control') #DNA_Number
+            data[cntrl, 1] <- paste0(runId, "_control")
+        } else{
+            warning('No word "control" in RD-number found in samplesheet')
+        }
+        return(data)
     }
-    return(data)
-}
 
 ReadSamSheet <- function(samList){
     samSh <- gb$GrabSampleSheet()
@@ -251,9 +255,9 @@ checkSamSh <- function(samList){
     msgFunName(pipeLnk, "checkSamSh")
     require(rmarkdown)
     wksh <- ReadSamSheet(samList)
-    wksh <- NameControl(wksh, wksh$run_number[1])
-    rownames(wksh)<- wksh[,1]
+    #wksh <- NameControl(wksh, wksh$run_number[1])
     stopifnot(!is.null(wksh))
+    rownames(wksh)<- wksh[,1]
     return(wksh)
 }
 
@@ -274,7 +278,7 @@ loopRender <- function(samList = NULL, data, redcapUp = T){
     msgParams("samList = NULL, data, redcapUp = T")
 # Debug: data <- read.csv("samplesheet.csv", strip.white=T)
     stopifnot(!is.null(data))
-    data <- NameControl(data, data$RunID[1])
+    #data <- NameControl(data, data$RunID[1])
     if (is.null(samList)) {samList = 1:length(data$SentrixID_Pos)}
     wksh <- checkSamSh(samList)
     toRun <- getRunList(data, samList)
@@ -312,11 +316,13 @@ makeReports.v11b6 <- function(runPath = NULL,
     assign("genCn", genCn, envir = gb)
     data <- read.csv(sheetName, strip.white=T)
     runID <- paste0(data$RunID[1])
+
     if(file.exists(predictionPath)){
     message("\nLoading data...\n",predictionPath,"\n")
     load(predictionPath)
     }
-    CreateControlRecord(runID)
+
+    #CreateControlRecord(runID)
     loopRender(selectSams, data, redcapUp)
     checkRunOutput(runID)
     if(skipQC == F){
@@ -326,7 +332,7 @@ makeReports.v11b6 <- function(runPath = NULL,
     if(grepl("TEST",runID)){cpReport=F;redcapUp=F;email=F}
     if(cpReport==T){file.list <- gb$copy2outFolder(gb$clinDrv, runID)}
     if (redcapUp == T) {
-        file.list <- dir(pattern = "*.html", full.names = T)
+        file.list <- dir(pattern = ".html", full.names = T)
         gb$uploadToRedcap(file.list, T)
     }
     if(email==T){launchEmailNotify(runID)}

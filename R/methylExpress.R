@@ -71,6 +71,7 @@ gb$defineParams(
 # Execute Methylation Run
 if(!is.null(runID)){gb$setVar("runID", runID)}
 
+
 checkBaseFolder <- function(baseFolder){
     if(is.null(baseFolder)){
         gb$baseFolder <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
@@ -85,6 +86,7 @@ checkBaseFolder <- function(baseFolder){
             stopifnot(stringr::str_detect(baseFolder, pattern="Desktop")==F)
         }
     }
+
     return(baseFolder)
 }
 
@@ -94,13 +96,14 @@ gb$prepareRun <- function(token, baseFolder=NULL, runLocal=F){
     if(runLocal==F){
         gb$checkMounts()
         gb$checkValidRun(gb$runID)
-    }
+
     methylPath <- gb$setRunDir(gb$runID, workFolder = baseFolder)
     message("Working directory set to:\n", crayon::bgGreen(methylPath), "\n")
     gb$workFolder <- baseFolder
     gb$setVar("workFolder", baseFolder)
     setwd(methylPath)
     gb$setVar("ApiToken", token) # assign the ApiToken & print params
+
     if(runLocal==F) {
         gb$copyWorksheetFile(runID = gb$runID) # copies the xlsm file
         gb$readSheetWrite() # reads xlsm and generates input .csv samplesheet
