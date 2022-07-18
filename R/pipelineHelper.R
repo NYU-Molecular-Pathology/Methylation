@@ -362,5 +362,3 @@ checkMounts <- function(){
         stopifnot(!any(failMount==T))
     }
 }
-
-#checkMounts()
