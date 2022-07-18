@@ -87,13 +87,7 @@ gb$prepareRun <- function(token, baseFolder=NULL){
         }
     }
     runValid <- gb$checkValidRun(gb$runID)
-    message("Is the runID valid? ", runValid)
-    if(!runValid){
-        message(crayon::bgRed$white$bold("runID",gb$runID,"is not valid"))
-        message(crayon::bgBlue$white$bold(paste0(gb$runID,".xlsm"),"not found in worksheets folder"))
-        message("Stopping pipeline. Check worksheet folder if the file is present and saved as .xlsm and not .xlsx")
-        stopifnot(runValid)
-    }
+
     methylPath <- gb$setRunDir(gb$runID, workFolder = baseFolder)
     message("Working directory set to:")
     cat(crayon::bgGreen(methylPath))
