@@ -364,9 +364,9 @@ pkgs <- c(
 librarian::shelf(pkgs, ask=F)
 require('grid')
 require("ggplot2")
-require("pals") 
+require("pals")
 require("scales")
-require("stringr") 
+require("stringr")
 require("scales")
         },
         error = function(cond){
@@ -429,15 +429,17 @@ colorMsg <- function(){
 startmsg <- function(){
     cbio = "/Volumes/CBioinformatics/"; zdriv = "/Volumes/molecular/Molecular"
     wmm = "You do not have this path mounted:\n"
-    if (!dir.exists(cbio)) {warning(paste(wmm, cbio))}
-    if (!dir.exists(zdriv)) {warning(paste(wmm, zdriv))}
+    wmm2 = "If any are missing, try running:\ndiskutil mountdisk "
     message("You have the following drives mounted:")
     system("ls /Volumes")
-    message("Try running:\n",
-            "diskutil mountdisk ",cbio,"\n",
-            "diskutil mountdisk ", zdriv
-           )
-#    stopifnot(dir.exists(cbio) | dir.exists(zdriv))
+    if (!dir.exists(cbio)) {
+        warning(paste(wmm, cbio))
+        message(paste(wmm2, cbio))
+        }
+    if (!dir.exists(zdriv)) {
+        warning(paste(wmm, zdriv))
+        message(paste(wmm2, zdriv))
+        }
 }
 
 setEnviron <- function(){
@@ -473,7 +475,7 @@ checkClassifier <- function(mnpClass) {
         } else {
             cat(ms[1])
             classifierInstall(mnpClass[, 2], T, T)
-            
+
         }
     }
 }

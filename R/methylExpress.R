@@ -51,7 +51,10 @@ if(!is.null(baseFolder) & !identical(baseFolder,NULL)){
 mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/"
 script.list = c("LoadInstall_new.R","SetRunParams.R","MakeSampleSheet.R", "CopyInputs.R","CopyOutput.R", "pipelineHelper.R")
 scripts = paste0(mainHub, script.list)
-invisible(lapply(scripts, function(i) {devtools::source_url(i)}))
+lapply(scripts, function(i) {
+    message("Sourcing: ", i)
+    devtools::source_url(i)}
+    )
 
 # Define Parameters ----------------------------------------------------
 gb$defineParams(
