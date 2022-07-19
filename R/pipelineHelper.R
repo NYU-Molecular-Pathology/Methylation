@@ -69,7 +69,6 @@ CopyQCrmd <- function(runID){
         return(NULL)
     }
     file.copy(from = QC_file, to = file.path(getwd(),basename(QC_file)), copy.mode = F, overwrite = F)
-    currQc = dir(getwd(), "*QC.Rmd", full.names = T)
     return(qcFileName)
     }
 
@@ -82,8 +81,9 @@ generateQCreport <- function(runID=NULL) {
     qcFileName <- CopyQCrmd(runID)
     if(!is.null(qcFileName)){
         outQCpath <- file.path(getwd(), qcFileName)
+        rmdToKnit <- dir(getwd(), "*QC.Rmd", full.names = T)[1]
         rmarkdown::render(
-            currQc,
+            rmdToKnit,
             output_file = outQCpath,
             quiet = F,
             params = list(runID = runID)
