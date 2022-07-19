@@ -66,8 +66,8 @@ checkValidRun <- function(runID){
         message(crayon::bgRed$white$bold("runID",gb$runID,"is not valid"))
         message(bkBlue(gb$runID,".xlsm"," not found in worksheets folders:"))
         message("/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/WORKSHEETS/")
-        message("/Volumes/snudem01labspace/Methylation_Worksheets/")
-        message("Check worksheet directory if the file is exists as .xlsm and not .xlsx")
+        message("/Volumes/snudem01labspace/Methylation_Worksheets/\n")
+        message(bkBlue("Check worksheet directory if the file is exists as .xlsm and not .xlsx"))
     }
     stopifnot(found)
     return(found)
