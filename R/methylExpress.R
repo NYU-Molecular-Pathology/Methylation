@@ -98,17 +98,17 @@ SetBaseFolder <- function(token, baseFolder){
 }
 
 # Executes the functions in order to setup a run
-PrepareRun <- function(token, baseFolder=NULL, runLocal=F){
+PrepareRun <- function(token, baseFolder=NULL, runID, runLocal=F){
     if(runLocal==F){
         gb$checkMounts()
-        gb$checkValidRun(gb$runID)
+        gb$checkValidRun(runID)
     }
     baseFolder <- checkBaseFolder(baseFolder)
     SetBaseFolder(token, baseFolder)
-    newPath <- paste0(file.path(baseFolder, gb$runID))
+    newPath <- paste0(file.path(baseFolder, runID))
     setwd(newPath)
     if(runLocal==F) {
-        gb$copyWorksheetFile(runID = gb$runID) # copies the xlsm file
+        gb$copyWorksheetFile(runID = runID) # copies the xlsm file
         gb$readSheetWrite() # reads xlsm and generates input .csv samplesheet
         gb$get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
         gb$moveSampleSheet(baseFolder, runID) #copies outputs temp to desktop for QC.Rmd
@@ -139,5 +139,5 @@ if(!is.null(selectRDs)){selectRDs <- stringr::str_split(selectRDs, ",")}
 assign("redcapUpload", redcapUpload)
 
 # Execute Functions ----------------------------------------------------
-PrepareRun(token, baseFolder) # If running local and  runLocal = TRUE
+PrepareRun(token, baseFolder, runID) # If running local and  runLocal = TRUE
 StartRun(selectRDs, emailNotify=T,redcapUp=T) # can change to default false
