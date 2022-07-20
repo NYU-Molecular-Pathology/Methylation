@@ -11,19 +11,32 @@ message("\nExecuting function: ", crayon::black$bgYellow(funNam), " from RScript
 msgParams <- function(...){
     message("\nParam passed: ", crayon::bgGreen(paste(deparse(substitute(...)), "=", ...)), "\n")
 }
-CreateRunDir <- function(newRun){
-    if(endsWith(newRun,"/")){
-        newRun <- substr(newRun,1, nchar(newRun)-1)
+
+# Changes the working directory using the system CD command
+setDirectory <- function(foldr) {
+    msgFunName(cpInLnk,"setDirectory")
+    bsDir = paste("cd", foldr)
+    mm2 = crayon::white$bgRed("Location Not Found:", foldr)
+
+    if (dir.exists(foldr)) {
+        system(bsDir)
+        setwd(foldr)
+        assign("workDir", foldr)
+        }else{warning(mm2)}
+}
+
+CreateRunDir <- function(newRun) {
+    if (endsWith(newRun, "/")) {
+        newRun <- substr(newRun, 1, nchar(newRun) - 1)
     }
-    message(crayon::bgGreen("New Run Path:"),"\n", newRun)
-    if(!dir.exists(newRun)) {
-        dir.create(newRun, recursive=T)
+    message(crayon::bgGreen("New Run Path:"), "\n", newRun)
+    if (!dir.exists(newRun)) {
+        dir.create(newRun, recursive = T)
         Sys.chmod(newRun, "0777", use_umask = FALSE)
         cmd <- paste("chmod -R ugo+rwx", newRun)
         system(cmd)
-        }
-
-    gb$setDirectory(newRun)
+    }
+    setDirectory(newRun)
     return(newRun)
 }
 
@@ -41,7 +54,8 @@ setRunDir <- function(runID=NULL, workFolder=NULL){
         dir.create(newRun)
         try(unlink(file.path("~/Desktop",runID), T, T),silent = T)
     }
-    return(CreateRunDir(newRun))
+    methylPath <- CreateRunDir(newRun)
+    return(methylPath)
 }
 
 # FUN: Returns a list of idat files given an idat drive location -
