@@ -88,7 +88,7 @@ generateQCreport <- function(runID=NULL) {
             quiet = F,
             params = list(runID = runID)
         )
-        qcCache <- stringr::str_replace_all(string = currQc, ".Rmd", "_cache")
+        qcCache <- stringr::str_replace_all(string = rmdToKnit, ".Rmd", "_cache")
         unlink(qcCache, recursive = T) #clear cache
         gb$uploadToRedcap(outQCpath, F)
     }
@@ -225,7 +225,7 @@ NameControl <- function(data, runId) {
 ReadSamSheet <- function(samList){
     msgFunName(pipeLnk, "ReadSamSheet")
     msgParams("samList","=",samList)
-    
+
     samSh <- gb$GrabSampleSheet()
     xlSheets <- readxl::excel_sheets(samSh)
     redSheet <- as.integer(which(grepl("REDCap",xlSheets)==T))

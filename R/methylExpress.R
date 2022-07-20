@@ -49,7 +49,14 @@ if(!is.null(baseFolder) & !identical(baseFolder,NULL)){
 
 # Source GitHub Scripts ----------------------------------------------------
 mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/"
-script.list = c("LoadInstall_new.R","SetRunParams.R","MakeSampleSheet.R", "CopyInputs.R","CopyOutput.R", "pipelineHelper.R")
+script.list = c(
+    "LoadInstall_new.R",
+    "SetRunParams.R",
+    "MakeSampleSheet.R",
+    "CopyInputs.R",
+    "CopyOutput.R",
+    "pipelineHelper.R"
+)
 scripts = paste0(mainHub, script.list)
 lapply(scripts, function(i) {
     message("Sourcing: ", i)

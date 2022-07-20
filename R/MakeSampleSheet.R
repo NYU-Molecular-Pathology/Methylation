@@ -141,7 +141,7 @@ MsgSampleCount <- function(worksheet, thisSh) {
 
 # Returns Total Sample Count in the run
 getTotalSamples <- function(thisSh=NULL){
-    msgFunName(cpOutLnk, "getTotalSamples")
+    msgFunName(cpInLnk2, "getTotalSamples")
     thisSh <-  ifelse(is.null(thisSh), GrabSampleSheet(), thisSh)
     thisSh <- thisSh[!stringi::stri_detect_fixed(thisSh, "~$")]
     worksheet <- suppressMessages(
@@ -297,33 +297,37 @@ readSheetWrite <- function(sampleNumb= NULL, runID = NULL) {
     if(is.null(runID)){runID<-paste0(basename(getwd()))}
     current.run.Folder <- file.path(gb$methDir,runID)
     if (!file.exists("samplesheet.csv")) {
-        sampleNumb=as.integer(sampleNumb)
-        if(!is.integer(sampleNumb) | sampleNumb < 8 ){
-        stop("Check samplesheet .xlsm cell B4 for valid integer total arrays")
+        sampleNumb = as.integer(sampleNumb)
+        if (!is.integer(sampleNumb) | sampleNumb < 8) {
+            stop("Check samplesheet .xlsm cell B4 for valid integer total arrays")
         }
-        worksheet=readSampleSheet(wks=T)
+        worksheet = readSampleSheet(wks = T)
         hdrs = dimnames(worksheet)[[2]]
-        print(data.frame(HEADERS=hdrs))
+        print(data.frame(HEADERS = hdrs))
 
-        sampleName=paste(hdrs[9]) # "Sample_Name"
-        Sentrix=paste(hdrs[1]) # "Sentrix_ID"
-        dnaNumber=paste(hdrs[10]) # "b_number"
-        mpnum=paste(hdrs[8]) # "MP_number"
+        sampleName = paste(hdrs[9]) # "Sample_Name"
+        Sentrix = paste(hdrs[1]) # "Sentrix_ID"
+        dnaNumber = paste(hdrs[10]) # "b_number"
+        mpnum = paste(hdrs[8]) # "MP_number"
 
-        Var.names=c(sampleName,Sentrix, dnaNumber, mpnum)
-        checkHeaders(Var.names)
+        checkHeaders(Var.names = c(sampleName, Sentrix, dnaNumber, mpnum))
 
         df = as.data.frame(worksheet)[1:sampleNumb, ]
         samplesheet_ID=as.data.frame(stringr::str_split_fixed(df[, Sentrix], "_", 2))
         bn <- file.path(current.run.Folder, df[, Sentrix])
-        message("Basename layout:\n",bn[1])
+        message("Basename layout:\n", bn[1])
+
         df$Notes <- paste(df$Notes[1])
         df <- checkSampleSheet(df)
-        writeSampleSheet(df, samplesheet_ID=samplesheet_ID,
-                         bn=bn, sampleName, dnaNumber, Sentrix)
-        } else {
-            msgCsv1 <- "samplesheet.csv already exists!"
-            message("\n", crayon::white$bgGreen(msgCsv1),"\n")
-            message("Create a new samplesheet.csv file by deleting the existing file")
-            }
+        writeSampleSheet(df,
+                         samplesheet_ID = samplesheet_ID,
+                         bn = bn,
+                         sampleName,
+                         dnaNumber,
+                         Sentrix)
+    } else {
+        msgCsv1 <- "samplesheet.csv already exists!"
+        message("\n", crayon::white$bgGreen(msgCsv1), "\n")
+        message("Create a new samplesheet.csv file by deleting the existing file")
+    }
 }
