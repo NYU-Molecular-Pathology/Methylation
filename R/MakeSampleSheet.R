@@ -8,11 +8,21 @@ bkBlue <- function(...){
     return(crayon::bgBlue$white$bold(paste0(...)))
 }
 
-msgFunName <- function(pthLnk, funNam){
-    message("\nExecuting function: ", crayon::black$bgYellow(funNam), " from RScript in:\n", pthLnk,"\n")
+msgFunName <- function(pthLnk, funNam) {
+    message(
+        "\nExecuting function: ", crayon::black$bgYellow(funNam),
+        " from RScript in:\n", pthLnk, "\n"
+    )
 }
 
-msgParams <- function(...){message("\nParams passed: ", crayon::bgGreen(paste(..., sep = ",")), "\n")}
+msgParams <-
+    function(...) {
+        message("\n",
+                crayon::bgGreen("Params passed:"),
+                "\n",
+                paste(..., collapse = " "),
+                "\n")
+    }
 
 grabYear<- function(runID) {
     msgFunName(cpInLnk2, "grabYear")
@@ -201,7 +211,8 @@ readSampleSheet <- function(runID=F, totalSam=F, wks=F) {
 
 checkSampleSheet <- function(df){
     msgFunName(cpInLnk2, "checkSampleSheet")
-
+    msgParams("df")
+    print(df)
     ww1=crayon::bgRed("No tech name found: check df$Tech in samplesheet.csv assinging NA")
     ww2=crayon::bgRed("No tech name found: check df$MP_number in samplesheet.csv assinging NA")
     ww3=crayon::bgRed("Duplicated sample name found: check df$Sample_Name in samplesheet.csv assigning as None")
@@ -252,10 +263,8 @@ writeSampleSheet <- function(df, samplesheet_ID, bn = NULL, sampleName, dnaNumbe
     msgFunName(cpInLnk2, "writeSampleSheet")
     msgParams("df", "samplesheet_ID", samplesheet_ID)
     cat("")
-    msgParams("bn",bn)
-    msgParams('sampleName',sampleName)
-    msgParams('dnaNumber',dnaNumber)
-    msgParams("Sentrix", Sentrix)
+    msgParams("bn","sampleName","dnaNumber","Sentrix")
+    msgParams(bn, sampleName, dnaNumber, Sentrix)
     if (is.null(bn)) {
         #bn = file.path(getwd(), df$Sentrix)
         bn = file.path(gb$methDir, df$Batch, df$Sentrix)
@@ -316,6 +325,7 @@ readSheetWrite <- function(sampleNumb= NULL, runID = NULL) {
         samplesheet_ID=as.data.frame(stringr::str_split_fixed(df[, Sentrix], "_", 2))
         bn <- file.path(current.run.Folder, df[, Sentrix])
         message("Basename layout:\n", bn[1])
+        message("SampleSheet:")
 
         df$Notes <- paste(df$Notes[1])
         df <- checkSampleSheet(df)
