@@ -106,15 +106,15 @@ PrepareRun <- function(token, baseFolder=NULL, runID, runLocal=F){
     baseFolder <- checkBaseFolder(baseFolder)
     SetBaseFolder(token, baseFolder)
     newPath <- paste0(file.path(baseFolder, runID))
-    message("newPath=",newPath)
+    message("newPath=", newPath)
     setwd(newPath)
     if(runLocal==F) {
         gb$copyWorksheetFile(runID = runID) # copies the xlsm file
-        gb$readSheetWrite() # reads xlsm and generates input .csv samplesheet
+        gb$readSheetWrite(runID = runID) # reads xlsm and generates input .csv samplesheet
         gb$get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
         gb$moveSampleSheet(baseFolder, runID) #copies outputs temp to desktop for QC.Rmd
     } else{
-        gb$readSheetWrite()
+        gb$readSheetWrite(runID = runID)
         gb$moveSampleSheet(baseFolder, runID)
     }
 }
