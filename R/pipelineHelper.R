@@ -21,7 +21,7 @@ msgFunName <- function(pthLnk, funNam){
 
 msgParams <- function(...){
     message("\n", crayon::bgGreen("Params passed:"),
-            "\n", paste(..., collapse = " "), "\n")
+            "\n", paste(..., collapse = "_"), "\n")
 }
 
 # Helper function to return the index of priority selected samples first
