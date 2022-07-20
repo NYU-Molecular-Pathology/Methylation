@@ -105,6 +105,7 @@ PrepareRun <- function(token, baseFolder=NULL, runLocal=F){
     }
     baseFolder <- checkBaseFolder(baseFolder)
     SetBaseFolder(token, baseFolder)
+    setwd(file.path(baseFolder,gb$runID))
     if(runLocal==F) {
         gb$copyWorksheetFile(runID = gb$runID) # copies the xlsm file
         gb$readSheetWrite() # reads xlsm and generates input .csv samplesheet
