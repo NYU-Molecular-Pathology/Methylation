@@ -223,18 +223,21 @@ NameControl <- function(data, runId) {
 }
 
 ReadSamSheet <- function(samList){
+    msgFunName(pipeLnk, "ReadSamSheet")
+    msgParams("samList","=",samList)
+    
     samSh <- gb$GrabSampleSheet()
     xlSheets <- readxl::excel_sheets(samSh)
     redSheet <- as.integer(which(grepl("REDCap",xlSheets)==T))
-    message("Excel sheet names:\n")
+    message("Excel sheet names:")
     print(xlSheets)
     if(length(redSheet)==0){
         warning("REDCap sheet not found in Sheet names, setting sheet #3")
         redSheet <- 3
         }
-    message("Sheet Index containing 'REDCap_Import': ", redSheet)
+    message(bkgrn("Sheet Index containing 'REDCap_Import':"), redSheet)
     samSh <- readxl::read_excel(samSh, sheet=redSheet, range = "A1:M97", col_types = c("text"))
-    message(crayon::black$bgGreen("SampleSheet:"));print(samSh)
+    message(bkgrn("SampleSheet:"));print(samSh)
     return(as.data.frame(samSh)[1:length(samList), 1:13])
 }
 
