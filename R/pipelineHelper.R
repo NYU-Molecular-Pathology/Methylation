@@ -21,7 +21,7 @@ msgFunName <- function(pthLnk, funNam){
 
 msgParams <- function(...){
     message("\n", crayon::bgGreen("Params passed:"),
-            "\n", paste(..., collapse = ", "), "\n")
+            "\n", paste(..., collapse = " "), "\n")
 }
 
 # Helper function to return the index of priority selected samples first
@@ -241,6 +241,7 @@ ReadSamSheet <- function(samList){
 # FUN: Parses the WetLab .xlsm sheet in the current directory
 checkSamSh <- function(samList){
     msgFunName(pipeLnk, "checkSamSh")
+    msgParams("samList","=",samList)
     require(rmarkdown)
     wksh <- ReadSamSheet(samList)
     #wksh <- NameControl(wksh, wksh$run_number[1])
