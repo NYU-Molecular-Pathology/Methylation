@@ -50,7 +50,7 @@ Download and install the following packages:<br>
 # ⚡️ Quickstart
 To install the pipeline from your terminal, simply execute the following command:<br />
 ```ruby
-/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST
+/Volumes/CBioinformatics/Methylation/runmeth.sh 21-MGDM_TEST
 ```
 ___
 ### Input Paths
