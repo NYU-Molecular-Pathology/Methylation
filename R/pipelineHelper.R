@@ -21,7 +21,7 @@ msgFunName <- function(pthLnk, funNam){
 
 msgParams <- function(...){
     message("\n", crayon::bgGreen("Params passed:"),
-            "\n", paste(..., collapse = "_"), "\n")
+            "\n", paste(..., collapse = " "), "\n")
 }
 
 # Helper function to return the index of priority selected samples first
@@ -224,7 +224,8 @@ NameControl <- function(data, runId) {
 
 ReadSamSheet <- function(samList){
     msgFunName(pipeLnk, "ReadSamSheet")
-    msgParams("samList","=",samList)
+    msgParams("samList")
+    msgParams(samList)
 
     samSh <- gb$GrabSampleSheet()
     xlSheets <- readxl::excel_sheets(samSh)
@@ -236,8 +237,10 @@ ReadSamSheet <- function(samList){
         redSheet <- 3
         }
     message(bkgrn("Sheet Index containing 'REDCap_Import':"), " ", redSheet,"\n")
+
     samSh <- readxl::read_excel(samSh, sheet=redSheet, range = "A1:M97", col_types = c("text"))
     message(bkgrn("SampleSheet:"))
+
     samplesSheet <- as.data.frame(samSh)[samList, 1:13]
     print(samplesSheet)
     return(samplesSheet)
@@ -246,7 +249,9 @@ ReadSamSheet <- function(samList){
 # FUN: Parses the WetLab .xlsm sheet in the current directory
 checkSamSh <- function(samList){
     msgFunName(pipeLnk, "checkSamSh")
-    msgParams("samList","=",samList)
+    msgParams("samList")
+    msgParams(samList)
+
     require(rmarkdown)
     wksh <- ReadSamSheet(samList)
     #wksh <- NameControl(wksh, wksh$run_number[1])
@@ -294,6 +299,7 @@ do_report <- function(data = NULL, genCn=F) {
 loopRender <- function(samList = NULL, data, redcapUp = T){
     msgFunName(pipeLnk, "loopRender")
     msgParams("samList = NULL, data, redcapUp = T")
+    msgParams(samList)
 # Debug: data <- read.csv("samplesheet.csv", strip.white=T)
 
     stopifnot(!is.null(data))
@@ -308,9 +314,9 @@ loopRender <- function(samList = NULL, data, redcapUp = T){
         do_report(data = data[i, ], gb$genCn)
         msgProgress(2, i, samList)
         if (redcapUp == T) {
-            sh_Dat <- wksh[data[i, 1],]
+            sh_Dat <- wksh[data[i, 1], ]
             gb$importSingle(sh_Dat)
-            }
+        }
     }
     message(crayon::black$bgGreen$bold(dsh, "RUN COMPLETE", dsh))
 }
