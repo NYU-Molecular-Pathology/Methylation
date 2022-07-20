@@ -106,6 +106,7 @@ PrepareRun <- function(token, baseFolder=NULL, runID, runLocal=F){
     baseFolder <- checkBaseFolder(baseFolder)
     SetBaseFolder(token, baseFolder)
     newPath <- paste0(file.path(baseFolder, runID))
+    message("newPath=",newPath)
     setwd(newPath)
     if(runLocal==F) {
         gb$copyWorksheetFile(runID = runID) # copies the xlsm file
