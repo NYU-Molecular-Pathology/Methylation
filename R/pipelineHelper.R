@@ -290,7 +290,9 @@ loopRender <- function(samList = NULL, data, redcapUp = T){
 
     stopifnot(!is.null(data))
     #data <- NameControl(data, data$RunID[1])
-    if (is.null(samList)) {samList = 1:length(data$SentrixID_Pos)}
+    if (is.null(samList)) {
+        samList <- 1:length(data$Sample_Name!=0)
+    }
     wksh <- checkSamSh(samList)
     toRun <- getRunList(data, samList)
     for (i in toRun) {
