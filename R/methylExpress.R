@@ -77,6 +77,8 @@ checkBaseFolder <- function(baseFolder){
         gb$baseFolder <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
         gb$methDir <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
         gb$baseDir <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
+    }else{
+      gb$baseFolder <- baseFolder
     }
     if(length(baseFolder)>0){
         if(stringr::str_detect(baseFolder, pattern="Desktop")==T){
@@ -85,7 +87,7 @@ checkBaseFolder <- function(baseFolder){
             stopifnot(stringr::str_detect(baseFolder, pattern="Desktop")==F)
         }
     }
-    return(baseFolder)
+    return(gb$baseFolder)
 }
 
 # Sets the working folder directory
@@ -105,9 +107,7 @@ PrepareRun <- function(token, baseFolder=NULL, runID, runLocal=F){
     }
     baseFolder <- checkBaseFolder(baseFolder)
     SetBaseFolder(token, baseFolder)
-    newPath <- paste0(file.path(baseFolder, runID))
-    message("newPath=", newPath)
-    setwd(newPath)
+    setwd(file.path(baseFolder, runID))
     if(runLocal==F) {
         gb$copyWorksheetFile(runID = runID) # copies the xlsm file
         gb$readSheetWrite(runID = runID) # reads xlsm and generates input .csv samplesheet
