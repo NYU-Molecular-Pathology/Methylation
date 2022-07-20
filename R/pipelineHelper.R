@@ -235,10 +235,12 @@ ReadSamSheet <- function(samList){
         warning("REDCap sheet not found in Sheet names, setting sheet #3")
         redSheet <- 3
         }
-    message(bkgrn("Sheet Index containing 'REDCap_Import':"), redSheet)
+    message(bkgrn("Sheet Index containing 'REDCap_Import':"), " ", redSheet,"\n")
     samSh <- readxl::read_excel(samSh, sheet=redSheet, range = "A1:M97", col_types = c("text"))
-    message(bkgrn("SampleSheet:"));print(samSh)
-    return(as.data.frame(samSh)[1:length(samList), 1:13])
+    message(bkgrn("SampleSheet:"))
+    samplesSheet <- as.data.frame(samSh)[samList, 1:13]
+    print(samplesSheet)
+    return(samplesSheet)
 }
 
 # FUN: Parses the WetLab .xlsm sheet in the current directory
@@ -248,6 +250,8 @@ checkSamSh <- function(samList){
     require(rmarkdown)
     wksh <- ReadSamSheet(samList)
     #wksh <- NameControl(wksh, wksh$run_number[1])
+    message(bkgrn(wksh),":"," ")
+    print(wksh)
     stopifnot(!is.null(wksh))
     rownames(wksh)<- wksh[,1]
     return(wksh)
