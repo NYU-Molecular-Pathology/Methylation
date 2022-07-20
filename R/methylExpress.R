@@ -90,7 +90,7 @@ checkBaseFolder <- function(baseFolder){
 
 # Sets the working folder directory
 SetBaseFolder <- function(token, baseFolder){
-    methylPath <- gb$setRunDir(gb$runID, workFolder = baseFolder)
+    methylPath <- gb$setRunDir(runID=gb$runID, workFolder = baseFolder)
     message("Working directory set to:\n", crayon::bgGreen(methylPath), "\n")
     gb$methDir <- gb$workFolder <- baseFolder
     gb$setVar("workFolder", baseFolder)
@@ -109,10 +109,10 @@ PrepareRun <- function(token, baseFolder=NULL, runLocal=F){
         gb$copyWorksheetFile(runID = gb$runID) # copies the xlsm file
         gb$readSheetWrite() # reads xlsm and generates input .csv samplesheet
         gb$get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
-        gb$moveSampleSheet(baseFolder) #copies outputs temp to desktop for QC.Rmd
+        gb$moveSampleSheet(baseFolder, runID) #copies outputs temp to desktop for QC.Rmd
     } else{
         gb$readSheetWrite()
-        gb$moveSampleSheet()
+        gb$moveSampleSheet(baseFolder, runID)
     }
 }
 

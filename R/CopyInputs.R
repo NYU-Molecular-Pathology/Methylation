@@ -148,7 +148,7 @@ moveSampleSheet <- function(methDir, runID = NULL) {
         new_path = deskDir,
         overwrite = T
     )
-    file.rename(from = file.path(deskDir, "samplesheet.csv"),
+    file.rename(from = file.path(currDir, "samplesheet.csv"),
                 to = file.path(deskDir, outFile))
 }
 
