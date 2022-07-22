@@ -50,8 +50,11 @@ Download and install the following packages:<br>
 # ⚡️ Quickstart
 To install the pipeline from your terminal, simply execute the following command:<br />
 ```ruby
-/Volumes/CBioinformatics/Methylation/runmeth.sh 21-MGDM_TEST
+/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST
 ```
+ + You can download [runMeth.sh](https://github.com/NYU-Molecular-Pathology/Methylation/blob/32c3b043bd2fd27de4106bc56b8d4f13ac42d48d/Meth_Scripts/runMeth.sh) in this repo under Methylation/Meth_Scripts/
+ + Remember to add execute permissions to the shell script with `chmod +rwx runMeth.sh` and set the methAPI variable in the script equal to your REDCap API token
+ + If install of any packages fail, be sure to check the troubleshooting section at the bottom of this page
 ___
 ### Input Paths
 *Files are copied to the work directory by their RUNID name and YEAR, including the worksheet and idats for example:*
