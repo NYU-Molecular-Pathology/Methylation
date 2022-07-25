@@ -31,7 +31,7 @@ The API tokens are saved within the shell files where $pactID is the experiment 
 
 1. Save the shell script to a local directory with execute permissions, for example:
  ```ruby
-curl -# -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/PrintNGS.sh > $HOME/PrintNGS.sh | chmod gu+rwx ./PrintNGS.sh
+curl -# -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/PrintNGS.sh > $HOME/PrintNGS.sh | chmod +rwx $HOME/PrintNGS.sh
  ```
 2. Next, add an alias to your bash or zsh to execute the script from anywhere:
   ```ruby
