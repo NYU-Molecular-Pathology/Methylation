@@ -16,7 +16,7 @@ mnpV6 <-
 # Custom Classifier packages:
 classPacks <- c(
     sest = "https://github.com/jungch/sest/raw/master/sest.tar",
-    mgmtstp27 = "https://github.com/badozor/mgmtstp27/raw/master/mgmtstp27_0.6-3.tar.gz", #https://git.io/JWKTo
+    mgmtstp27 = "https://github.com/badozor/mgmtstp27/raw/master/mgmtstp27_0.6-3.tar.gz",
     mnpqc = paste0(file.path(cbioLn, "in_house/mnp.v116/mnpqc_0.1.0.tar.gz"))
 )
 
@@ -103,8 +103,15 @@ easyPkgs <- c('tidyverse','sjmisc','stringi','digest','RCurl','gridExtra','needs
 # Helper Functions ----
 sw <- function(pkgOb){try(return(suppressMessages(suppressWarnings(pkgOb))),silent=T)}
 ld <- function(libName) {
-    lib.opts <- list(package = libName, character.only = T, verbose = T, warn.conflicts = F, quietly =F)
-suppressPackageStartupMessages(do.call(library, c(lib.opts)))
+    lib.opts <-
+        list(
+            package = libName,
+            character.only = T,
+            verbose = T,
+            warn.conflicts = F,
+            quietly = F
+        )
+    suppressPackageStartupMessages(do.call(library, c(lib.opts)))
     message(libName, " ...load successful")
 }
 up <- function(){update.packages(repos='http://cran.rstudio.com/',
@@ -254,7 +261,7 @@ setOptions <- function(){
 cpMakeV <- function(editFile=F){
     #mkFi <- "/Volumes/CBioinformatics/jonathan/Rprojects/Methylation-scripts/Makevars"
     #message("Copying Makevars to local dotfiles: ", mkFi)
-    message("Copying Makevars to local dotfiles")
+    #message("Copying Makevars to local dotfiles")
     if(!dir.exists("~/.R/")){
         message("No Makevars file in ~/.R/")
         #dir.create("~/.R/")
@@ -454,6 +461,9 @@ setEnviron <- function(){
     system("export RSTUDIO_PANDOC=/Applications/RStudio.app/Contents/MacOS/pandoc")
     system("export RSTUDIO_WHICH_R=/usr/local/bin/R")
     Sys.setenv(RSTUDIO_WHICH_R = "/usr/local/bin/R")
+    options("install.packages.compile.from.source" = "never")
+    options("install.packages.check.source"="no")
+    if(!require("devtools")){install.packages("devtools", dependencies=T)}
 }
 
 # classifier mnpPath currVers
