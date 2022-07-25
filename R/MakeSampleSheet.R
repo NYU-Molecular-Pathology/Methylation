@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 gb <- globalenv(); assign("gb", gb)
 apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
-cpInLnk2 = "https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/MakeSampleSheet.R"
+cpInLnk2 = "https://github.com/NYU-Molecular-Pathology/Methylation/main/R/MakeSampleSheet.R"
 rschSheets = "/Volumes/snudem01labspace/Methylation_Worksheets"
 
 bkBlue <- function(...){
@@ -9,14 +9,12 @@ bkBlue <- function(...){
 }
 
 msgFunName <- function(pthLnk, funNam) {
-    message(
-        "\nExecuting function: ", crayon::black$bgYellow(funNam),
-        " from RScript in:\n", pthLnk, "\n"
-    )
+    message("\nExecuting function: ", crayon::black$bgYellow(funNam),
+            " from RScript in:\n", pthLnk, "\n")
 }
 
 msgParams <- function(...){
-    vars<-data.frame(...)
+    vars <- data.frame(...)
     message("\nParam passed:\n", paste0(crayon::bgGreen(names(vars)), "=", vars," "), "\n")
 }
 
@@ -97,7 +95,6 @@ FsCopyFile <- function(fileLoc) {
 copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
     msgFunName(cpInLnk2, "copyWorksheetFile")
 
-
     if (is.null(runID)){runID=paste0(basename(getwd()))} else {runID=runID}
     stopifnot(!is.null(runID))
     runYear=grabYear(runID)
@@ -116,11 +113,13 @@ copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
 }
 
 GrabSampleSheet <- function(){
+    msgFunName(cpInLnk2, "GrabSampleSheet")
     samSh <- dir(path=getwd(), full.names=T, ".xlsm")
     if(length(samSh)>1){
         message("Multiple samplesheets found:\n")
         print(samSh)
         samSh <- samSh[stringr::str_detect(samSh,pattern = "\\$",negate = T)]
+        samSh <- samSh[!stringi::stri_detect_fixed(samSh, "~$")]
     }
     message("Using following samplesheet:\n", samSh[1])
     stopifnot(length(samSh)>0)
@@ -129,15 +128,12 @@ GrabSampleSheet <- function(){
 
 
 MsgSampleCount <- function(worksheet, thisSh) {
+    msgFunName(cpInLnk2, "MsgSampleCount")
     templateDir = "Clinical_Methylation/methylation_run_TEMPLATE.xlsm"
-    if(length(thisSh)==0){
-        warning("No .xlsm sheet found")
-    }
+    if(length(thisSh)==0){warning("No .xlsm sheet found")}
     if (length(worksheet) == 0) {
-        warning("Samplesheet ",
-                thisSh[1],
-                " is invalid format or no integer in Cell B4 found.")
-        message("Manually edit samplesheet")
+        warning("Samplesheet ", thisSh[1]," has an invalid format or is missing an integer in Cell B4")
+        message("You may have to manually edit samplesheet")
         message("Try copying data into a template file:\n", templateDir)
         stopifnot(length(worksheet) > 0)
     } else {
@@ -157,55 +153,43 @@ getTotalSamples <- function(thisSh=NULL){
     return(as.integer(paste0(worksheet[1])))
 }
 
+ReadSheetDate <- function(sampleSheet){
+    msgFunName(cpInLnk2, "ReadSheetDate")
+    msgParams(sampleSheet)
+    wsDate <- suppressMessages(as.data.frame(
+        readxl::read_excel(
+            sampleSheet,
+            sheet = 1,
+            col_names = F,
+            range = "F4:F4",
+            trim_ws = T
+        ))[1])
+    names(wsDate)="Date"
+    message("DATE: ", wsDate$Date)
+    return(wsDate)
+}
+
+
 # FUN: Reads the csv samplesheet for minfi input
 readSampleSheet <- function(runID=F, totalSam=F, wks=F) {
     msgFunName(cpInLnk2, "readSampleSheet")
     msgParams(runID,totalSam,wks)
 
-    file.list <- dir(path=getwd(), "*.xlsm")
-    temps <- stringi::stri_detect_fixed(file.list, "~$")
-    file.list <- file.list[!temps]
-    sampleSheet <- paste0(file.list[1])
+    sampleSheet <- GrabSampleSheet()
     message(paste0("Reading worksheet named: ", sampleSheet))
 
-    worksheet <-
-        suppressMessages(readxl::read_excel(
-            sampleSheet,
-            sheet = 2,
-            col_names = T,
-            col_types = "text",
-            trim_ws = T
+    worksheet <- suppressMessages(readxl::read_excel(
+        sampleSheet,
+        sheet = 2,
+        col_names = T,
+        col_types = "text",
+        trim_ws = T
         ))
-    wsDate <-
-        suppressMessages(as.data.frame(
-            readxl::read_excel(
-                sampleSheet,
-                sheet = 1,
-                col_names = F,
-                range = "F4:F4",
-                trim_ws = T
-            )
-        )[1])
-    names(wsDate)="Date"
-    message("DATE: ", wsDate$Date)
-    colnames(worksheet)
+
+    wsDate <- ReadSheetDate(sampleSheet)
     worksheet$Date <- paste0(wsDate$Date[1])
     if (runID == T) {return(worksheet$Project[1])}
-    if (totalSam == T){
-        message("Reading cell B4 of ", sampleSheet, "...")
-        runNum <- suppressMessages(as.numeric(
-            readxl::read_excel(
-                sampleSheet,
-                sheet = 1,
-                col_names = F,
-                range = "B4")[1]
-            ))
-        message("Total Samples: ", runNum)
-        if(is.null(runNum)|runNum==0){
-            stop("Total Number of samples is 0 or Null in worksheet, check cell B4 of .xlsm")
-        }
-        return(runNum)
-    }
+    if (totalSam == T){return(getTotalSamples())}
     if (wks == T) {return(worksheet)}
 }
 
@@ -297,10 +281,9 @@ checkHeaders <- function(worksheet){
     print(data.frame(Var.names))
     var.default = c("Sample_Name", "Sentrix_ID", "b_number", "MP_number")
     if (any(Var.names != var.default)) {
-        stop("Headers in .xlsm 'raw_input' tab are missing or mis-matched:\n",
-             paste(var.default[1:4], collapse = " ")
-             )
-    }
+        rawInput <- paste(var.default[1:4], collapse = " ")
+        stop("Headers in .xlsm 'raw_input' tab are missing or mis-matched:\n", rawInput)
+        }
     return(Var.names)
 }
 
@@ -329,12 +312,10 @@ readSheetWrite <- function(sampleNumb = NULL, runID = NULL) {
         df <- FormatSampleData(worksheet, runID, sampleNumb)
 
         writeSampleSheet(
-            df,
-            bn = file.path(gb$methDir, runID, df[,"Sentrix_ID"]),
-            sampleName = "Sample_Name",
-            dnaNumber = "b_number",
-            Sentrix = "Sentrix_ID"
-        )
+            df, bn = file.path(gb$methDir, runID, df[,"Sentrix_ID"]),
+            sampleName = "Sample_Name", dnaNumber = "b_number", Sentrix = "Sentrix_ID"
+            )
+
     } else {
         message("\n", crayon::white$bgGreen("samplesheet.csv already exists!"), "\n")
         message("Create a new samplesheet.csv file by deleting the existing file")
