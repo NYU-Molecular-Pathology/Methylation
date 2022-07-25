@@ -7,6 +7,8 @@ msgFunName <- function(pthLnk, funNam){
     message("Executing function: ", crayon::black$bgYellow(funNam), " from RScript in:\n", pthLnk,"\n")
 }
 
+SpSm <- function(pkg){return(suppressPackageStartupMessages(pkg))}
+
 # FUN: Loads all the packages used in the RMD Methylation QC file
 checkQCpkg <- function(){
     msgFunName(setRunLnk,"checkQCpkg")
@@ -16,15 +18,15 @@ checkQCpkg <- function(){
         "IlluminaHumanMethylation450kmanifest",
         "IlluminaHumanMethylationEPICanno.ilm10b2.hg19",
         "IlluminaHumanMethylationEPICmanifest",
-        "IlluminaHumanMethylationEPICanno.ilm10b4.hg19","Biobase", "RColorBrewer","limma","ggfortify","Rtsne",
+        "IlluminaHumanMethylationEPICanno.ilm10b4.hg19","Biobase", "RColorBrewer",
+        "limma","ggfortify","Rtsne",
         "qdapTools","gplots","readxl","stringr","ggrepel","Polychrome",
         "tinytex","gridExtra","rmarkdown", "BiocParallel", "grid"
     )
-    message("Now Loading:\n", methylQCpacks,"\n")
-    suppressPackageStartupMessages(easypackages::packages(methylQCpacks,prompt=F))
+    message("Now Loading...\n", paste(methylQCpacks, collapse=" "),"\n")
+    SpSm(easypackages::packages(methylQCpacks,prompt=F))
     reqPkg <- list("ggplot2","pals","stringr","scales","grid")
-    invisible(lapply(reqPkg, FUN = function(X) {suppressPackageStartupMessages(do.call("require", list(X)))}))
-    message("Packages loading finished\n")
+    invisible(lapply(reqPkg, FUN = function(X) {SpSm(do.call("require", list(X)))}))
 }
 
 # Helper functions to get and set global variables
@@ -32,6 +34,7 @@ setVar <- function(valueName,val){
     msgFunName(setRunLnk,"setVar")
     return(assign(valueName, val, envir=.GlobalEnv))
 }
+
 assignVar <- function(varStr, assignedVal){
     msgFunName(setRunLnk,"assignVar")
     return(
@@ -67,7 +70,7 @@ loadClassifierPacks <- function(){
 # Sets default variable paths/names
 getDefaults <- function() {
     msgFunName(setRunLnk,"getDefaults")
-    
+
     cbVol = "/Volumes/CBioinformatics"
     moVol = "/Volumes/molecular"
     rsVol = "/Volumes/snudem01labspace"
@@ -75,16 +78,13 @@ getDefaults <- function() {
         mnp.pk.loc = paste0(file.path(cbVol, "Methylation/in_house/mnp.v116/mnp.v11b6")),
         ApiToken = "",
         methDir = paste0(file.path(cbVol, "Methylation/Clinical_Runs")),
-        #methDir = paste0(file.path(cbVol)),
         clinDrv = paste0(file.path(moVol, "MOLECULAR LAB ONLY/NYU-METHYLATION")),
         rschOut = paste0(file.path(rsVol, "FINAL_PDF_Reports_Brain")),
-        #rschOut = paste0(file.path(cbVol)),
         clinOut = paste0(file.path(moVol, "MOLECULAR/MethylationClassifier")),
         rsch.idat = paste0(file.path(rsVol,"idats")),
         clin.idat = paste0(file.path(moVol, "MOLECULAR/iScan")),
         QC_file = paste0(system.file('Methyl_QC.Rmd', package = "mnp.v11b6")),
         baseDir = paste0(file.path(cbVol, "Methylation/Clinical_Runs")),
-        #baseDir = paste0(file.path(cbVol)),
         stringsAsFactors=F
     )
     return(defaultParams)
@@ -93,7 +93,7 @@ getDefaults <- function() {
 # returns assigned global variable values
 getSetvars <- function() {
     msgFunName(setRunLnk,"getSetvars")
-    
+
     assignedVars <- data.frame(
         mnp.pk.loc = gb$mnp.pk.loc,
         ApiToken = gb$ApiToken,
@@ -111,17 +111,35 @@ getSetvars <- function() {
 }
 
 # Sets the default parameters for a methylation Run
-defineParams <- function(
-    mnp.pk.loc = NULL, ApiToken = NULL, methDir = NULL, clinDrv = NULL, rschOut = NULL, clinOut = NULL,
-    rsch.idat = NULL, clin.idat = NULL, QC_file = NULL, isMC = T, baseDir = NULL, runID = NULL, loadClassifier=T
-    ){
-    msgFunName(setRunLnk,"defineParams")
-    
+defineParams <- function(mnp.pk.loc = NULL,
+                         ApiToken = NULL,
+                         methDir = NULL,
+                         clinDrv = NULL,
+                         rschOut = NULL,
+                         clinOut = NULL,
+                         rsch.idat = NULL,
+                         clin.idat = NULL,
+                         QC_file = NULL,
+                         isMC = T,
+                         baseDir = NULL,
+                         runID = NULL,
+                         loadClassifier = T) {
+    msgFunName(setRunLnk, "defineParams")
     defVars <- getDefaults()
-    inVars <- list(mnp.pk.loc, ApiToken, methDir, clinDrv, rschOut, clinOut,rsch.idat, clin.idat, QC_file, baseDir)
+    inVars <- list(
+        mnp.pk.loc,
+        ApiToken,
+        methDir,
+        clinDrv,
+        rschOut,
+        clinOut,
+        rsch.idat,
+        clin.idat,
+        QC_file,
+        baseDir
+    )
     i=1:length(inVars)
     invisible(lapply(i,function(x){if(!is.null(inVars[[x]])){setVar(names(defVars[x]), inVars[[x]])}}))
-#    message("\nLoading Packages Silently...\n")
     if(loadClassifier==T){loadClassifierPacks()}
     i=1:length(defVars)
     invisible(sapply(i,FUN=function(i){assignVar(names((defVars[i])), paste0(defVars[,i]))}))
@@ -133,7 +151,6 @@ setDirectory <- function(foldr) {
     msgFunName(setRunLnk,"setDirectory")
     bsDir = paste("cd", foldr)
     mm2 = crayon::white$bgRed("Location Not Found:", foldr)
-    
     if (dir.exists(foldr)) {
         system(bsDir)
         setwd(foldr)

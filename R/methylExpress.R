@@ -16,17 +16,18 @@ redcapUpload <- args[5]
 if(length(selectRDs)==0 | identical(selectRDs,NULL) | identical(selectRDs,"NULL")
 ){selectRDs=NULL}else {if(is.na(selectRDs)){selectRDs=NULL}}
 
-if(length(baseFolder)==0 | identical(baseFolder,NULL) | identical(baseFolder,"NULL")
-  ){gb$baseFolder<-NULL}else {if(is.na(baseFolder)){gb$baseFolder<-NULL}}
-
+if(length(baseFolder)==0 | identical(baseFolder,NULL) | identical(baseFolder,"NULL")){
+    gb$baseFolder<-NULL
+}else {
+        if(is.na(baseFolder)){gb$baseFolder<-NULL}
+    }
 if(length(redcapUpload)==0 | identical(redcapUpload,NULL) | identical(redcapUpload,"NULL")){
     gb$redcapUpload<-T
 }else {
-  if(is.na(redcapUpload)){
-    redcapUpload<-T
-  }else{
-    redcapUpload <- as.logical(args[5])
-  }
+    if(is.na(redcapUpload)){redcapUpload<-T
+    }else{
+        redcapUpload <- as.logical(args[5])
+        }
 }
 
 # Message input on console
@@ -41,7 +42,8 @@ if(!is.null(baseFolder) & !identical(baseFolder,NULL)){
     isValid <- dir.exists(baseFolder)
     message("Checking if directory exists: ", isValid)
     if(isValid==F){
-        message("Directory provided does not exist, try creating it first:\n","mkdir ", baseFolder,"\n")
+        message("Directory provided does not exist, try creating it first:\n",
+                "mkdir ", baseFolder,"\n")
         stopifnot(isValid==TRUE)
     }
 }else {baseFolder=NULL}
@@ -122,9 +124,6 @@ PrepareRun <- function(token, baseFolder=NULL, runID, runLocal=F){
 # Starts run knitting html reports loop
 StartRun <- function(selectRDs = NULL, emailNotify = T, redcapUp = T) {
     gb$msgFunName(paste0(mainHub,"methylExpress.R"),"startRun")
-    message("Default Params: selectRDs=NULL, emailNotify=T, redcapUp=T")
-    gb$msgParams(selectRDs, emailNotify, redcapUp)
-
     # Re-order sample report generation for priority
     if (!is.null(selectRDs)) {runOrder <- gb$reOrderRun(selectRDs) }else{runOrder <- NULL}
     gb$makeReports.v11b6(
@@ -141,4 +140,4 @@ assign("redcapUpload", redcapUpload)
 
 # Execute Functions ----------------------------------------------------
 PrepareRun(token, baseFolder, runID) # If running local and  runLocal = TRUE
-StartRun(selectRDs, emailNotify=T,redcapUp=T) # can change to default false
+StartRun(selectRDs, emailNotify=T, redcapUp=T) # can change to default false
