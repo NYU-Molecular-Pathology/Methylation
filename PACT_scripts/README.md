@@ -35,6 +35,7 @@ curl -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/ma
  ```
 2. Next, add an alias to your bash or zsh to execute the script from anywhere:
   ```ruby
+  alias printngs=$HOME/PrintNGS.sh
   echo -e "\nalias printngs='$HOME/PrintNGS.sh'" >> .zshrc
   ```
   - PrintNGS.sh will take two parameters: the PACT run name and the RUNID. For example:
