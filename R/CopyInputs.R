@@ -33,9 +33,9 @@ CreateRunDir <- function(newRun) {
     if (!dir.exists(newRun)) {
         dir.create(newRun, recursive = T)
         Sys.chmod(newRun, "0777", use_umask = FALSE)
-        cmd <- paste("chmod -R ugo+rwx", newRun)
-        system(cmd)
     }
+    cmd <- paste("chmod -R a+rwx", newRun)
+    system(cmd)
     setDirectory(newRun)
     return(newRun)
 }
