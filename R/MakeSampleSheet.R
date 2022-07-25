@@ -15,18 +15,14 @@ msgFunName <- function(pthLnk, funNam) {
     )
 }
 
-msgParams <-
-    function(...) {
-        message("\n",
-                crayon::bgGreen("Params passed:"),
-                "\n",
-                paste(..., collapse = " "),
-                "\n")
-    }
+msgParams <- function(...){
+    vars<-data.frame(...)
+    message("\nParam passed:\n", paste0(crayon::bgGreen(names(vars)), "=", vars," "), "\n")
+}
 
 grabYear<- function(runID) {
     msgFunName(cpInLnk2, "grabYear")
-    msgParams("runID",runID)
+    msgParams(runID)
     yr <- stringr::str_split_fixed(runID,"-",2)[,1]
 
     rnum <- NULL
@@ -48,7 +44,7 @@ GetNewestFile <- function(prevMC){
 # Returns a text string of the latest modified Run name, if isMC=False then research directory is returned
 listMolecularSheets <- function(isMC=T, getAll=F,runID=gb$runID) {
     msgFunName(cpInLnk2, "listMolecularSheets")
-    msgParams("isMC=",isMC,"getAll=",getAll,"runID=",gb$runID)
+    msgParams(isMC,getAll,gb$runID)
 
     runYear=grabYear(runID)
     if(isMC){
@@ -100,12 +96,12 @@ FsCopyFile <- function(fileLoc) {
 # FUN: copies the molecular or research lab Worksheet xlsm to cwd
 copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
     msgFunName(cpInLnk2, "copyWorksheetFile")
-    msgParams(runID, runYear)
+
 
     if (is.null(runID)){runID=paste0(basename(getwd()))} else {runID=runID}
     stopifnot(!is.null(runID))
-
     runYear=grabYear(runID)
+    msgParams(runID, runYear)
     isMC = sjmisc::str_contains(runID, "MGDM")|sjmisc::str_contains(runID, "MC")
     assign("isMC", isMC); message("\nIs methylation run Clinical? ",isMC)
 
@@ -164,8 +160,7 @@ getTotalSamples <- function(thisSh=NULL){
 # FUN: Reads the csv samplesheet for minfi input
 readSampleSheet <- function(runID=F, totalSam=F, wks=F) {
     msgFunName(cpInLnk2, "readSampleSheet")
-    msgParams("runID","totalSam","wks")
-    msgParams(runID, totalSam, wks)
+    msgParams(runID,totalSam,wks)
 
     file.list <- dir(path=getwd(), "*.xlsm")
     temps <- stringi::stri_detect_fixed(file.list, "~$")
@@ -198,11 +193,16 @@ readSampleSheet <- function(runID=F, totalSam=F, wks=F) {
     if (runID == T) {return(worksheet$Project[1])}
     if (totalSam == T){
         message("Reading cell B4 of ", sampleSheet, "...")
-        runNum <- suppressMessages(readxl::read_excel(sampleSheet, sheet=1, col_names=F, range="B4"))
-        runNum <- as.numeric(runNum)
+        runNum <- suppressMessages(as.numeric(
+            readxl::read_excel(
+                sampleSheet,
+                sheet = 1,
+                col_names = F,
+                range = "B4")[1]
+            ))
         message("Total Samples: ", runNum)
         if(is.null(runNum)|runNum==0){
-            warning("Total Number of samples is 0 or Null in worksheet, check cell B4 of .xlsm")
+            stop("Total Number of samples is 0 or Null in worksheet, check cell B4 of .xlsm")
         }
         return(runNum)
     }
@@ -211,11 +211,11 @@ readSampleSheet <- function(runID=F, totalSam=F, wks=F) {
 
 checkSampleSheet <- function(df){
     msgFunName(cpInLnk2, "checkSampleSheet")
-    msgParams("df")
+    message("\nParams: df=")
     print(df)
     ww1=crayon::bgRed("No tech name found: check df$Tech in samplesheet.csv assinging NA")
     ww2=crayon::bgRed("No tech name found: check df$MP_number in samplesheet.csv assinging NA")
-    ww3=crayon::bgRed("Duplicated sample name found: check df$Sample_Name in samplesheet.csv assigning as None")
+    ww3=crayon::bgRed("Duplicated sample name found: check df$Sample_Name in samplesheet.csv")
     ww4=crayon::bgRed("Some samples are missing RD-numbers Check df$Sample_Name in samplesheet.csv")
     ww5=crayon::bgRed("Some samples are missing B-numbers Check df$b_number in samplesheet.csv")
     ww6=crayon::bgRed("Some samples are missing RD-Numbers or are 0! Check samplesheet.csv")
@@ -251,7 +251,8 @@ checkSampleSheet <- function(df){
         print(df[, c(1, 3, 8:11)])
     }
     if (nrow(df)<8){
-        warning("samplesheet.csv contains less that 8 samples!  Check .xslm sheet tab 'raw_labels' for any errors")
+        warning("samplesheet.csv contains less that 8 samples!")
+        message("Check .xslm sheet tab 'raw_labels' for any errors")
         print(df[,1:11])
     }
 
@@ -259,21 +260,17 @@ checkSampleSheet <- function(df){
 }
 
 # FUN: translates the xlsm excel file to the .csv samplesheet for redcap and minfi
-writeSampleSheet <- function(df, samplesheet_ID, bn = NULL, sampleName, dnaNumber, Sentrix) {
+writeSampleSheet <- function(df, bn = NULL, sampleName, dnaNumber, Sentrix) {
     msgFunName(cpInLnk2, "writeSampleSheet")
-    msgParams("df", "samplesheet_ID", samplesheet_ID)
-    cat("")
-    msgParams("bn","sampleName","dnaNumber","Sentrix")
-    msgParams(bn, sampleName, dnaNumber, Sentrix)
-    if (is.null(bn)) {
-        #bn = file.path(getwd(), df$Sentrix)
-        bn = file.path(gb$methDir, df$Batch, df$Sentrix)
-    }
+    if (is.null(bn)) {bn = file.path(gb$methDir, df$Batch, df$Sentrix)}
+    splitSentrix = as.data.frame(stringr::str_split_fixed(df[, "Sentrix_ID"], "_", 2))
+    msgParams(bn, splitSentrix, sampleName, dnaNumber)
+
     samplesheet_csv = data.frame(
         Sample_Name =  df[, sampleName],
         DNA_Number =df[, dnaNumber],
-        Sentrix_ID = samplesheet_ID[, 1],
-        Sentrix_Position = samplesheet_ID[, 2],
+        Sentrix_ID = splitSentrix[, 1],
+        Sentrix_Position = splitSentrix[, 2],
         SentrixID_Pos = df[, Sentrix],
         Basename = paste0(bn),
         RunID = df$Batch,
@@ -286,58 +283,61 @@ writeSampleSheet <- function(df, samplesheet_ID, bn = NULL, sampleName, dnaNumbe
 }
 
 # FUN: Checks header names of .xlsm sheet for mismatch
-checkHeaders <- function(Var.names){
-    cat("\n\n")
+checkHeaders <- function(worksheet){
+    msgFunName(cpInLnk2, "checkHeaders")
+    hdrs = dimnames(worksheet)[[2]]
+    print(data.frame(HEADERS = hdrs))
+    Var.names = c(
+        sampleName = paste(hdrs[9]), # "Sample_Name"
+        Sentrix = paste(hdrs[1]),    # "Sentrix_ID"
+        dnaNumber = paste(hdrs[10]),  # "b_number"
+        mpnum = paste(hdrs[8])       # "MP_number"
+        )
+    cat("\n")
     print(data.frame(Var.names))
-    var.default= c("Sample_Name","Sentrix_ID","b_number","MP_number")
-    if(any(Var.names!=var.default)){
+    var.default = c("Sample_Name", "Sentrix_ID", "b_number", "MP_number")
+    if (any(Var.names != var.default)) {
         stop("Headers in .xlsm 'raw_input' tab are missing or mis-matched:\n",
-             paste(var.default[1:4], collapse=" "))
+             paste(var.default[1:4], collapse = " ")
+             )
     }
+    return(Var.names)
+}
+
+FormatSampleData <- function(worksheet, runID, sampleNumb){
+    msgFunName(cpInLnk2, "FormatSampleData")
+    msgParams(runID, sampleNumb)
+    hdrs <- checkHeaders(worksheet)
+    df = as.data.frame(worksheet)[1:sampleNumb,]
+    df$Notes <- paste(df$Notes[1])
+    df <- checkSampleSheet(df)
+    return(df)
 }
 
 # FUN: reads the .xlsm worksheet and outputs the .csv methyl experiment for MINFI
-readSheetWrite <- function(sampleNumb= NULL, runID = NULL) {
+readSheetWrite <- function(sampleNumb = NULL, runID = NULL) {
     msgFunName(cpInLnk2, "readSheetWrite")
-    msgParams("sampleNumb","runID")
-    msgParams(sampleNumb, runID)
-
-    if(is.null(sampleNumb)){sampleNumb<-getTotalSamples()}
-    if(is.null(runID)){runID<-paste0(basename(getwd()))}
-    current.run.Folder <- file.path(gb$methDir,runID)
     if (!file.exists("samplesheet.csv")) {
-        sampleNumb = as.integer(sampleNumb)
+        if (is.null(sampleNumb)) {sampleNumb <- getTotalSamples()}
+        if (is.null(runID)) {runID <- paste0(basename(getwd()))}
         if (!is.integer(sampleNumb) | sampleNumb < 8) {
             stop("Check samplesheet .xlsm cell B4 for valid integer total arrays")
         }
+        msgParams(sampleNumb, runID)
+
         worksheet = readSampleSheet(wks = T)
-        hdrs = dimnames(worksheet)[[2]]
-        print(data.frame(HEADERS = hdrs))
+        df <- FormatSampleData(worksheet, runID, sampleNumb)
 
-        sampleName = paste(hdrs[9]) # "Sample_Name"
-        Sentrix = paste(hdrs[1]) # "Sentrix_ID"
-        dnaNumber = paste(hdrs[10]) # "b_number"
-        mpnum = paste(hdrs[8]) # "MP_number"
-
-        checkHeaders(Var.names = c(sampleName, Sentrix, dnaNumber, mpnum))
-
-        df = as.data.frame(worksheet)[1:sampleNumb, ]
-        samplesheet_ID=as.data.frame(stringr::str_split_fixed(df[, Sentrix], "_", 2))
-        bn <- file.path(current.run.Folder, df[, Sentrix])
-        message("Basename layout:\n", bn[1])
-        message("SampleSheet:")
-
-        df$Notes <- paste(df$Notes[1])
-        df <- checkSampleSheet(df)
-        writeSampleSheet(df,
-                         samplesheet_ID = samplesheet_ID,
-                         bn = bn,
-                         sampleName,
-                         dnaNumber,
-                         Sentrix)
+        writeSampleSheet(
+            df,
+            bn = file.path(gb$methDir, runID, df[,"Sentrix_ID"]),
+            sampleName = "Sample_Name",
+            dnaNumber = "b_number",
+            Sentrix = "Sentrix_ID"
+        )
     } else {
-        msgCsv1 <- "samplesheet.csv already exists!"
-        message("\n", crayon::white$bgGreen(msgCsv1), "\n")
+        message("\n", crayon::white$bgGreen("samplesheet.csv already exists!"), "\n")
         message("Create a new samplesheet.csv file by deleting the existing file")
     }
+
 }
