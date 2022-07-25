@@ -89,7 +89,7 @@ To run the Clinical or Research Methylation pipeline, simply use the locally sto
 - This shell script uses Curl to download the files from this repo and takes four positional argument inputs to execute methylExpress.R in the terminal.
 - The bash script stores your REDCap API token locally and only requires the methylation run ID to be entered.
 - You can copy runMeth.sh and create an alias or symlink to execute more easily.  For example:<br>
-`alias runmeth='bash ~/script/runmeth.sh'` or `echo "alias runmeth='bash ~/script/runmeth.sh'" >> ~/.bashrc`
+`alias runmeth='bash $HOME/runMeth.sh'` or `echo "alias runmeth='bash $HOME/runMeth.sh'" >> ~/.bashrc`
 ---
 ### 🤖 runmeth.sh parameters
 The shell script takes the following positional arguments:<br>
