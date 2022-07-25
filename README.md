@@ -48,9 +48,23 @@ Download and install the following packages:<br>
 `smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular`<br />
 
 # ⚡️ Quickstart
+ 1. Download the shell script to your home folder or another directory:
+ ```
+ curl -# -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Meth_Scripts/runMeth.sh >$HOME/runMeth.sh
+ ```
+ 2. Open the shell script, paste your REDCap API token in the **methAPI** field, and save it.  You can use `nano $HOME/runMeth.sh`
+ ```bash
+ #!/bin/bash
+ 
+ methAPI="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"  #Paste your API Token here
+ ```
+ 3. Add permissions to the script to be executable:
+ ```ruby
+ chmod +rwx $HOME/runMeth.sh
+ ```
 To install the pipeline from your terminal, simply execute the following command:<br />
 ```ruby
-/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST
+$HOME/runMeth.sh 21-MGDM_TEST
 ```
  + You can download [runMeth.sh](https://github.com/NYU-Molecular-Pathology/Methylation/blob/32c3b043bd2fd27de4106bc56b8d4f13ac42d48d/Meth_Scripts/runMeth.sh) in this repo under Methylation/Meth_Scripts/
  + Remember to add execute permissions to the shell script with `chmod +rwx runMeth.sh` and set the methAPI variable in the script equal to your REDCap API token
