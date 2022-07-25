@@ -49,6 +49,7 @@ Download and install the following packages:<br>
 
 # ⚡️ Quickstart
  1. Download the shell script to your home folder or another directory:
+  + You can download [runMeth.sh](https://github.com/NYU-Molecular-Pathology/Methylation/blob/32c3b043bd2fd27de4106bc56b8d4f13ac42d48d/Meth_Scripts/runMeth.sh) in this repo under Methylation/Meth_Scripts/ or use curl/wget:
  ```
  curl -# -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Meth_Scripts/runMeth.sh >$HOME/runMeth.sh
  ```
@@ -66,8 +67,6 @@ To install the pipeline from your terminal, simply execute the following command
 ```ruby
 $HOME/runMeth.sh 21-MGDM_TEST
 ```
- + You can download [runMeth.sh](https://github.com/NYU-Molecular-Pathology/Methylation/blob/32c3b043bd2fd27de4106bc56b8d4f13ac42d48d/Meth_Scripts/runMeth.sh) in this repo under Methylation/Meth_Scripts/
- + Remember to add execute permissions to the shell script with `chmod +rwx runMeth.sh` and set the methAPI variable in the script equal to your REDCap API token
  + If install of any packages fail, be sure to check the troubleshooting section at the bottom of this page
 ___
 ### Input Paths
