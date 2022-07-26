@@ -119,7 +119,8 @@ get.idats <-function(csvNam = "samplesheet.csv"){
                     copyBaseIdats(allFi[!(bcds %in% cur.idat)])
                     }
         } else {
-            message(crayon::bgRed("No .idat files found! Check worksheet for barcode if found in the folder path:"))
+            warning(crayon::bgRed("No .idat files found!"))
+            message("Check worksheet for barcode if found in the folder path:")
             message(rsch.idat, "\nor\n", clin.idat)
             stopifnot(length(allFi) > 0)
             }

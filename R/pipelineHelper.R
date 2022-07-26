@@ -1,10 +1,10 @@
 #!/usr/bin/env Rscript
 gb <- globalenv(); assign("gb", gb)
 dsh = "-----------"
-bky <- function(txtVar,...){crayon::black$bgYellow$bold(txtVar,...)}
-bkRed <- function(txtVar,...){crayon::bgRed$bold$white(txtVar,...)}
-bkgrn <- function(...){crayon::black$bgGreen$bold(paste0(...))}
-bkBlu <- function(...){crayon::bgBlue$bold$white(paste0(...))}
+bky <- function(...){crayon::black$bgYellow$bold(paste(...))}
+bkRed <- function(...){crayon::bgRed$bold$white(paste(...))}
+bkGrn <- function(...){crayon::black$bgGreen$bold(paste(...))}
+bkBlu <- function(...){crayon::bgBlue$bold$white(paste(...))}
 
 # Global Variables ----------------------------------
 apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
@@ -14,14 +14,25 @@ pipeLnk <- "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/pip
 predictionPath <- "/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData"
 QC_file <- "~/Methyl_QC.Rmd"
 
+# List of three mount paths needed to run the pipleine
+critialMnts <- c("/Volumes/CBioinformatics/Methylation",
+                 "/Volumes/molecular/",
+                 "/Volumes/snudem01labspace/idats")
+researchMount = "smb://research-cifs.nyumc.org/Research/"
+molecularDrive = "smb://shares-cifs.nyumc.org/apps"
+
 # Message Functions and Variables for Debugging ----------------------------------
 msgFunName <- function(pthLnk, funNam){
     message("\nExecuting function: ", bky(funNam), " from RScript in:\n", pthLnk)
 }
 
-msgParams <- function(...){
-    message("\n", crayon::bgGreen("Params passed:"),
-            "\n", paste(..., collapse = " "), "\n")
+msgParams <- function(...) {
+    vars = data.frame(...)
+    varLi = list(...)
+    message("\n", bkGrn("Params passed:"))
+    for (i in 1:ncol(vars)) {
+        message(bkBlu(colnames(vars)[i])," (",typeof(varLi[[i]]),")", " = ", varLi[[i]])
+    }
 }
 
 # Helper function to return the index of priority selected samples first
@@ -61,7 +72,7 @@ getRGset <- function(runPath, sentrix){
 
 CopyQCrmd <- function(runID){
     msgFunName(pipeLnk, "CopyQCrmd")
-    if (!file.exists(QC_file)) {message(crayon::bgRed("QC_file.rmd not found:"), "\n", QC_file)}
+    if (!file.exists(QC_file)) {message(bkRed("QC_file.rmd not found:"), "\n", QC_file)}
     #fs::file_copy(QC_file, getwd(), overwrite = T)
     qcFileName = paste0(runID, "_QC.html") # output file name
     if(file.exists(file.path(getwd(), qcFileName))) {
@@ -109,18 +120,15 @@ launchEmailNotify <- function(runID){
         type = 'flat',
         data = datarecord
         )
-    cat(crayon::white$bgBlue$bold("Check email to confirm Email Notification Created"), sep="\n")
+    cat(bkBlu("Check email to confirm Email Notification Created"), sep="\n")
 }
 
 # FUN: Creates the QC record for the current run on redcap if it does not exist
 CreateRedcapRecord <- function(runID=NULL, recordWord="QC"){
     msgFunName(pipeLnk,"CreateRedcapRecord")
-    if(is.null(runID)){runID<-paste0(basename(gb$workDir))}
 
-    record = c(
-        record_id = paste0(runID, "_", recordWord),
-        run_number = runID
-        )
+    if(is.null(runID)){runID<-paste0(basename(gb$workDir))}
+    record = c(record_id = paste0(runID, "_", recordWord), run_number = runID)
     cntrl <- jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
     RCurl::postForm(
         gb$apiLink,
@@ -130,23 +138,24 @@ CreateRedcapRecord <- function(runID=NULL, recordWord="QC"){
         type = 'flat',
         data = cntrl
     )
-    message(dsh, "Created Record: ", record[1], dsh, "\n")
+    message(dsh, "Created REDCap Record: ", record[1], dsh, "\n")
 }
 
 # Check if the QC File will be read
 checkRunOutput <- function(runID) {
     msgFunName(pipeLnk,"checkRunOutput")
     redcapFi <- paste0(runID,"_Redcap.csv")
-
     csvLocation <- file.path(fs::path_home(),"Desktop", runID, redcapFi)
+
     if (!file.exists(csvLocation)) {
-        message(bkRed("File not found:")," ", csvLocation,"\n",
-                bkRed("QC Summary Table will not Knit"),"\n")
+        message(bkRed("File not found:")," ", csvLocation)
+        message("QC Report may generate without the Summary Table which needs ", bkGrn(redcapFi))
     } else{
         outputPath <- getwd()
         if(file.exists(file.path(getwd(), redcapFi))){
-            outputPath <- paste0(Sys.Date(), "_", redcapFi)
+            outputPath <- file.path(getwd(), paste0(Sys.Date(), "_", redcapFi))
         }
+        message("Copying file: ", outputPath)
         fs::file_copy(path=csvLocation, new_path=outputPath, overwrite = T)
     }
 }
@@ -162,31 +171,30 @@ tidyUpFiles <- function(runID){
 }
 
 msgProgress <- function(msg, i, samList) {
-    nOfTotal <- paste(i, "of", length(samList), dsh)
     startEnd <- ifelse(msg == 1, "Now Running", "Completed Report")
-    if(msg==1){
-        cat("\n", bky(dsh, startEnd , nOfTotal), sep = "\n")
-        }else{
-            cat("\n", bkgrn(dsh, startEnd , nOfTotal), sep = "\n")
-        }
+    nOfTotal <- paste(i, "of", length(samList), dsh)
+    cat("\n", bky(dsh, startEnd , nOfTotal),"\n")
 }
 
-msgRunUp <- function(sampleID,run_id,senLi){
-    cat(
-        "\nCurrent Sample:\n",
-        "samplename_data=", bky(sampleID),
-        " run_id=", bky(run_id),
-        "\npathEpic:", bky(file.path(getwd(), senLi)), "\n"
-        )
+msgRunUp <- function(sampleID, run_id, senLi) {
+    message(
+        "\nsamplename_data = ",
+        bkBlu(sampleID),
+        "\nrun_id = ",
+        bkBlu(run_id),
+        "\npathEpic: ",
+        bkBlu(file.path(getwd(), senLi)),
+        "\n"
+    )
 }
 
 msgSamSheet <- function(samSh) {
     if (length(samSh) > 1) {
-        message(crayon::black$bgRed$bold("Multiple samplesheets found:"))
+        message(bkRed("Multiple samplesheets found:"))
         cat(samSh, sep = "\n")
         samSh <- samSh[stringr::str_detect(samSh, pattern = "\\$", negate = T)]
-        message(crayon::black$bgGreen("Reading the following .xlsm in current directory:"))
-    } else{message(crayon::black$bgGreen("Reading the following .xlsm in current directory:"))}
+        message(bkGrn("Reading the following .xlsm in current directory:"))
+    } else{message(bkGrn("Reading the following .xlsm in current directory:"))}
     cat(samSh, sep = "\n")
     stopifnot(!length(samSh) > 1)
     return(samSh)
@@ -236,10 +244,10 @@ ReadSamSheet <- function(samList){
         warning("REDCap sheet not found in Sheet names, setting sheet #3")
         redSheet <- 3
         }
-    message(bkgrn("Sheet Index containing 'REDCap_Import':"), " ", redSheet,"\n")
+    message(bkGrn("Sheet Index containing 'REDCap_Import':"), " ", redSheet,"\n")
 
     samSh <- readxl::read_excel(samSh, sheet=redSheet, range = "A1:M97", col_types = c("text"))
-    message(bkgrn("SampleSheet:"))
+    message(bkGrn("SampleSheet:"))
 
     samplesSheet <- as.data.frame(samSh)[samList, 1:13]
     print(samplesSheet)
@@ -254,8 +262,8 @@ checkSamSh <- function(samList){
 
     require(rmarkdown)
     wksh <- ReadSamSheet(samList)
-    #wksh <- NameControl(wksh, wksh$run_number[1])
-    message(bkgrn(wksh),":"," ")
+    wksh <- NameControl(wksh, wksh$run_number[1])
+    message(bkGrn(wksh),":"," ")
     print(wksh)
     stopifnot(!is.null(wksh))
     rownames(wksh)<- wksh[,1]
@@ -288,8 +296,9 @@ do_report <- function(data = NULL, genCn=F) {
                 reportMd, "html_document", dat$outFi, getwd(), quiet=FALSE,
                 params = list(token=gb$ApiToken, rundata=dat))},
             error=function(e){
-                message(bkRed("Report Generation Failed:"),"\n", dat$outFi,"\n")
-                message(bkRed("The following error returned:"),"\n", e)
+                beepr::beep(1)
+                message(bkRed("Report Generation Failed:"),"\n", dat$outFi)
+                message("The following error returned:\n", e)
             }, finally=message("\nRunning next sample\n")
         )
     } else {message(bkRed("Data is NULL, check your SampleSheet.csv"))}
@@ -298,12 +307,10 @@ do_report <- function(data = NULL, genCn=F) {
 # FUN: Iterates over each sample in the csv file to generate a report
 loopRender <- function(samList = NULL, data, redcapUp = T){
     msgFunName(pipeLnk, "loopRender")
-    msgParams("samList = NULL, data, redcapUp = T")
-    msgParams(samList)
+    msgParams(samList, data, redcapUp)
 # Debug: data <- read.csv("samplesheet.csv", strip.white=T)
-
     stopifnot(!is.null(data))
-    #data <- NameControl(data, data$RunID[1])
+    data <- NameControl(data, data$RunID[1])
     if (is.null(samList)) {
         samList <- 1:length(data$Sample_Name!=0)
     }
@@ -318,7 +325,7 @@ loopRender <- function(samList = NULL, data, redcapUp = T){
             gb$importSingle(sh_Dat)
         }
     }
-    message(crayon::black$bgGreen$bold(dsh, "RUN COMPLETE", dsh))
+    message(bkGrn(dsh, "RUN COMPLETE", dsh))
 }
 
 #' REPORT: Generates Html reports to cwd with samplesheet.csv
@@ -349,7 +356,7 @@ makeReports.v11b6 <- function(runPath = NULL,
     load(predictionPath)
     }
 
-    #CreateRedcapRecord(runID,"control")
+    CreateRedcapRecord(runID,"control")
     loopRender(selectSams, data, redcapUp)
     checkRunOutput(runID)
     if(skipQC == F){
@@ -363,29 +370,23 @@ makeReports.v11b6 <- function(runPath = NULL,
         gb$uploadToRedcap(file.list, T)
     }
     if(email==T){launchEmailNotify(runID)}
-    #beepr::beep(4)
+    beepr::beep(5)
     tidyUpFiles(runID)
 }
 
 # FUN: Checks if all the paths are accessible to the Rscript location
 checkMounts <- function(){
     msgFunName(pipeLnk,"checkMounts")
-
-    # List of three mount paths needed to run the pipleine
-    critialMnts <- c("/Volumes/CBioinformatics/Methylation",
-                     "/Volumes/molecular/",
-                     "/Volumes/snudem01labspace/idats")
-    researchMount = "smb://research-cifs.nyumc.org/Research/"
-    molecularDrive = "smb://shares-cifs.nyumc.org/apps"
     failMount <-
-        lapply(critialMnts, function(driveMount){ifelse(!dir.exists(driveMount), return(T), return(F))})
+        lapply(critialMnts, function(driveMount){
+            ifelse(!dir.exists(driveMount), return(T), return(F))}
+            )
     if(any(failMount==T)){
         toFix <- paste(critialMnts[which(failMount==T)])
         cat("PATH does not exist, ensure network drive is mounted:", bkRed(toFix),"\n")
-        cat(
-            "You may need to re-mount one of the following paths:",
+        cat("You may need to re-mount one of the following paths:",
             bkBlu(researchMount,"CBioinformatics/"),
-            bkgrn(researchMount,"snudem01lab/snudem01labspace"),
+            bkGrn(researchMount,"snudem01lab/snudem01labspace"),
             bkBlu(molecularDrive,"/acc_pathology/molecular"), sep="\n"
             )
         stopifnot(!any(failMount==T))
