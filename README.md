@@ -31,6 +31,7 @@ Download and install the following packages:<br>
 - [X] **Rswitch**: https://rud.is/rswitch/<br />
 - [X] **Homebrew**: https://brew.sh/ you can install using the following line in terminal:<br />
 `/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh`<br />
+- [X] **Library Magic**: `brew install libmagic`<br />
 
 <details>
 <summary>NOTE</summary>
