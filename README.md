@@ -132,7 +132,7 @@ Make sure compilers are installed by opening Xcode.app or executing `sudo xcode-
 Then, execute the all_installer.R script by copy and pasting the raw contents of the script below into Rstudio before running runmeth.sh again<br />
 https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/all_installer.R<br />
 To resolve any problems during automation, you can open methylExpress.R in RStudio which is downladed by runmeth.sh to your home directory.<br />
-Try to run `brew install gdal proj` then install the package **rgdal** in Rstudio.<br />
+Try to run `sudo xcode-select -s /Library/Developer/CommandLineTools` and `brew install gdal proj` then install the package **rgdal** in Rstudio.<br />
 Download the libraries below from their sources:<br />
  (a) sqlite-autoconf-3330000.tar.gz from "https://www.sqlite.org/download.html".<br />
  (b) tiff-4.1.0.tar.gz from "https://download.osgeo.org/libtiff/"<br />
