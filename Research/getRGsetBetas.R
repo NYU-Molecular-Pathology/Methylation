@@ -119,13 +119,20 @@ batchCorrectBs <- function(betas,RGSet,topVar=NULL, supervise = F) {
     return(topVarBetas)
 }
 
-getRgset <- function(rgOut, targets, batchCorrect=F){
+getRgset <- function(rgOut, targets, batchCorrect = F, arraySheet="samplesheet.csv") {
     require("minfi")
     if (!file.exists(rgOut)) {
-        if (batchCorrect==T & !is.null(targets$Batch)) {
+        if (batchCorrect == T & !is.null(targets$Batch)) {
             RGSet <- gb$combine.EPIC.450K(targets = targets)
         } else{
-            RGSet <- minfi::read.metharray.exp(base = getwd(), targets = targets, verbose = T, force = T)
+            sheet <- minfi::read.metharray.sheet(
+                base = getwd(),
+                pattern = arraySheet,
+                verbose = T
+            )
+            RGSet <- minfi::read.metharray.exp(
+                base = getwd(), targets = sheet, verbose = T, force = T)
+            
         }
         saveRDS(RGSet, file = rgOut)
     } else{
