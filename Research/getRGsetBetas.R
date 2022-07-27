@@ -58,7 +58,7 @@ cleanUpProbes <- function(RGSet, targets, getfunorm=F){
 # Returns topVar beta probes instead of all probes
 takeTopVariance <- function(betas, topVar){
     var_probes <- apply(betas, 1.0, var)
-    select_var <- names(sort(var_probes[topVar], decreasing = T))
+    select_var <- names(sort(var_probes, decreasing = T))[topVar]
     top_var_beta <- betas[select_var, ]
     return(top_var_beta)
 }
