@@ -33,7 +33,7 @@ colnames(betas) <- RGSet@colData@listData[["Sample_Name"]]
 
 takeTopVariance <- function(betas, topVar){
     var_probes <- apply(betas, 1, var)
-    select_var <- names(sort(var_probes[topVar], decreasing = T))
+    select_var <- names(sort(var_probes, decreasing = T))[topVar]
     top_var_beta <- betas[select_var, ]
     return(top_var_beta)
 }
