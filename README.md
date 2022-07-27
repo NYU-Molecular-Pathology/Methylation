@@ -133,6 +133,15 @@ Then, execute the all_installer.R script by copy and pasting the raw contents of
 https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/all_installer.R<br />
 To resolve any problems during automation, you can open methylExpress.R in RStudio which is downladed by runmeth.sh to your home directory.<br />
 Try to run `brew install gdal proj` then install the package **rgdal** in Rstudio.<br />
+Download the libraries below from their sources:<br />
+ (a) sqlite-autoconf-3330000.tar.gz from "https://www.sqlite.org/download.html".<br />
+ (b) tiff-4.1.0.tar.gz from "https://download.osgeo.org/libtiff/"<br />
+ (c) proj-7.2.0.tar.gz from "https://proj.org/download.html#current-release"<br />
+ (d) libgeotiff-1.6.0.tar.gz from "https://download.osgeo.org/geotiff/libgeotiff/"<br />
+ (e) geos-3.8.1.tar.bz2 from "https://trac.osgeo.org/geos"<br />
+ (f) gdal-3.2.0.tar.gz from "https://gdal.org/download.html"<br />
+
+
 </details>
 
 <details>
