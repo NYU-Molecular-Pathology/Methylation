@@ -308,7 +308,7 @@ do_report <- function(data = NULL, genCn=F) {
 # FUN: Iterates over each sample in the csv file to generate a report
 loopRender <- function(samList = NULL, data, redcapUp = T){
     msgFunName(pipeLnk, "loopRender")
-    msgParams(samList, data, redcapUp)
+#    msgParams(samList, data, redcapUp)
 # Debug: data <- read.csv("samplesheet.csv", strip.white=T)
     stopifnot(!is.null(data))
     data <- NameControl(data, data$RunID[1])
