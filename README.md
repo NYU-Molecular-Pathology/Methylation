@@ -54,10 +54,10 @@ Download and install the following packages:<br>
  ```
  curl -# -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Meth_Scripts/runMeth.sh >$HOME/runMeth.sh
  ```
- 2. Open the shell script, paste your REDCap API token in the **methAPI** field, and save it.  You can use `nano $HOME/runMeth.sh`
+ 2. Open the shell script, paste your REDCap API token in the **methAPI** field, and save it.</br>  
+ You can use `nano $HOME/runMeth.sh`
  ```bash
  #!/bin/bash
- 
  methAPI="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"  #Paste your API Token here
  ```
  3. Add permissions to the script to be executable:
