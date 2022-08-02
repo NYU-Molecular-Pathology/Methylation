@@ -70,6 +70,7 @@ makePlotly<-function(fig) {
 
 gb$selectPlots <- function(doPlotly = F, tplots, ty, tps, outDirs) {
   for (zz in 1:nrow(outDirs)) {
+    invisible(gc())
     tabStart <- paste('### Top', tps[ty, 1], outDirs[zz, 3])
     cat(paste(tabStart, '\n\n'))
     gc(verbose = F)
@@ -152,6 +153,7 @@ gb$subsetBetas <-
     targets$SamGroups <- targets[, colnames(targFilter)]
     ty = NULL
     for (ty in 1:nrow(tps)) {
+      invisible(gc())
       custom = tps[ty, 1]
       message("Current Sample Group TSNE: ", custom)
       targets1 <- targets[targFilter == custom, ]
