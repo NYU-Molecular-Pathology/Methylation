@@ -248,7 +248,7 @@ writeSampleSheet <- function(df, bn = NULL, sampleName, dnaNumber, Sentrix) {
     msgFunName(cpInLnk2, "writeSampleSheet")
     if (is.null(bn)) {bn = file.path(gb$methDir, df$Batch, df$Sentrix)}
     splitSentrix = as.data.frame(stringr::str_split_fixed(df[, "Sentrix_ID"], "_", 2))
-    msgParams(bn, splitSentrix, sampleName, dnaNumber)
+    #msgParams(bn, splitSentrix, sampleName, dnaNumber)
 
     samplesheet_csv = data.frame(
         Sample_Name =  df[, sampleName],
