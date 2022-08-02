@@ -326,7 +326,7 @@ loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bcPks=biocP
             readyPkgs(ezLibs)
             if(!require("BiocManager")){install.packages("BiocManager",dependencies=T,quiet=T)}
 if(!require("MethylAid")){BiocManager::install("MethylAid",update=F, ask=F)}
-if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 6, quiet=T)}
+if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 4, quiet=F)}
 pkgs <- c(
     "knitr",
     "kableExtra",
