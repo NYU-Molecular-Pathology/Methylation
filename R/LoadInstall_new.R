@@ -101,6 +101,7 @@ cpuPacks <- c("parallel","doSNOW","doParallel", "foreach","compiler")
 easyPkgs <- c('tidyverse','sjmisc','stringi','digest','RCurl','gridExtra','needs')
 
 # Helper Functions ----
+sup <- function(x){return(suppressWarnings(suppressPackageStartupMessages(x)))}
 sw <- function(pkgOb){try(return(suppressMessages(suppressWarnings(pkgOb))),silent=T)}
 ld <- function(libName) {
     lib.opts <-
@@ -285,7 +286,7 @@ classifierInstall <- function(pathtoFile=NULL, instNew=T, rmpkg=F) {
 
 checkBioC <- function(){
     if(sw(suppressPackageStartupMessages((!require("BiocManager"))))){
-        install.packages("BiocManager", Ncpus = 6)
+        install.packages("BiocManager", Ncpus = 4)
         BiocManager::install(version="3.10", update=T, ask=F, type="source")
     } else{ld("BiocManager")}
     if(rq("zip")){install.packages("zip", dependencies=T, type="binary")
@@ -298,7 +299,7 @@ loadMainPkgs <- function(){
     checkNeeds()
     gh.inst(data.frame(easypackages="jakesherman/easypackages"))
     pk.inst("tidyverse")
-suppressPackageStartupMessages(easypackages::packages(cpuPacks, prompt=F))
+    suppressPackageStartupMessages(easypackages::packages(cpuPacks, prompt=F))
     checkBioC()
 }
 
@@ -308,9 +309,7 @@ readyPkgs <- function(ezLibs){
 }
 
 installAll <- function(pkgList, instFun){
-    invisible(lapply(
-        X=1:length(pkgList),
-        function(X){instFun(pkgList[X])}))
+    invisible(lapply(X=1:length(pkgList), function(X){instFun(pkgList[X])}))
 }
 
 # Loads default packages or custom if input provided
@@ -320,61 +319,65 @@ loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bcPks=biocP
     tryCatch(
         expr = {
             loadMainPkgs()
-            installAll(pkgs, pk.inst)
-            installAll(ghPk, gh.inst)
-            installAll(bcPks, bc.inst)
+            sup(installAll(pkgs, pk.inst))
+            if(!require("BiocManager")){install.packages("BiocManager", dependencies=T, quiet=F)}
+            sup(installAll(ghPk, gh.inst))
+            sup(installAll(bcPks, bc.inst))
             readyPkgs(ezLibs)
-            if(!require("BiocManager")){install.packages("BiocManager",dependencies=T,quiet=T)}
-if(!require("MethylAid")){BiocManager::install("MethylAid",update=F, ask=F)}
-if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 4, quiet=F)}
-pkgs <- c(
-    "knitr",
-    "kableExtra",
-    "magick",
-    "webshot",
-    "plyr",
-    "ggplot2",
-    "knitr",
-    "reshape2",
-    "data.table",
-    "DT",
-    "plotly",
-    "MethylAid",
-    "minfi",
-    "scales",
-    "IlluminaHumanMethylation450kmanifest",
-    "IlluminaHumanMethylationEPICmanifest",
-    "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
-    "Biobase",
-    "RColorBrewer",
-    "limma",
-    "ggfortify",
-    "Rtsne",
-    "qdapTools",
-    "gplots",
-    "readxl",
-    "stringr",
-    "ggrepel",
-    "Polychrome",
-    "tinytex",
-    "gridExtra",
-    "rmarkdown",
-    "tinytex",
-    "BiocParallel",
-    'grid',
-    'grDevices',
-    "mdthemes",
-    "dplyr",
-    "sqldf",
-    "gridExtra", "reshape"
-)
-librarian::shelf(pkgs, ask=F)
-require('grid')
-require("ggplot2")
-require("pals")
-require("scales")
-require("stringr")
-require("scales")
+
+            if(!require("MethylAid")){BiocManager::install("MethylAid",update=F, ask=F)}
+            if(!require("librarian")){
+                install.packages("librarian", dependencies=T, verbose=T, Ncpus = 4, quiet=F)
+                }
+            pkgs <- c(
+                "knitr",
+                "kableExtra",
+                "magick",
+                "webshot",
+                "plyr",
+                "ggplot2",
+                "knitr",
+                "reshape2",
+                "data.table",
+                "DT",
+                "plotly",
+                "MethylAid",
+                "minfi",
+                "scales",
+                "IlluminaHumanMethylation450kmanifest",
+                "IlluminaHumanMethylationEPICmanifest",
+                "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
+                "Biobase",
+                "RColorBrewer",
+                "limma",
+                "ggfortify",
+                "Rtsne",
+                "qdapTools",
+                "gplots",
+                "readxl",
+                "stringr",
+                "ggrepel",
+                "Polychrome",
+                "tinytex",
+                "gridExtra",
+                "rmarkdown",
+                "tinytex",
+                "BiocParallel",
+                'grid',
+                'grDevices',
+                "mdthemes",
+                "dplyr",
+                "sqldf",
+                "gridExtra",
+                "reshape"
+            )
+            librarian::shelf(pkgs, ask=F, update_all = FALSE, quiet = FALSE)
+            require('grid')
+            require("ggplot2")
+            require("pals")
+            require("scales")
+            require("stringr")
+            require("scales")
         },
         error = function(cond){
             message("\n~~~You encountered the following error during install:\n", cond)
@@ -442,11 +445,11 @@ startmsg <- function(){
     if (!dir.exists(cbio)) {
         warning(paste(wmm, cbio))
         message(paste(wmm2, cbio))
-        }
+    }
     if (!dir.exists(zdriv)) {
         warning(paste(wmm, zdriv))
         message(paste(wmm2, zdriv))
-        }
+    }
 }
 
 setEnviron <- function(){
