@@ -215,19 +215,20 @@ getRunData <- function(data) {
 }
 
 NameControl <- function(data, runId) {
-    library("data.table")
-    if (any(data[, 1] %like% 'control')) {
-        cntrl <- which(data[, 1] %like% 'control') #DNA_Number
-        data[cntrl, 1] <- paste0(runId, "_control")
+  library("data.table")
+  if (any(data[, 1] %like% 'control')) {
+    cntrl <- which(data[, 1] %like% 'control') #DNA_Number
+    data[cntrl, 1] <- paste0(runId, "_control")
+  } else{
+    if (any(data[, 2] %like% 'control')) {
+      cntrl <- which(data[, 2] %like% 'control') #DNA_Number
+      data[cntrl, 1] <- paste0(runId, "_control")
     } else{
-        if (any(data[, 2] %like% 'control')) {
-            cntrl <- which(data[, 2] %like% 'control') #DNA_Number
-            data[cntrl, 1] <- paste0(runId, "_control")
-        } else{
-            warning('No word "control" in RD-number found in samplesheet')
-        }
-        return(data)
+      warning('No word "control" in RD-number found in samplesheet')
     }
+    #return(data)
+  }
+  return(data)
 }
 
 ReadSamSheet <- function(samList){
