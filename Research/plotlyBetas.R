@@ -170,20 +170,15 @@ gb$subsetBetas <-
     }
 }
 
-takeTopVariance <- function(betas, topVar){
-    var_probes <- apply(betas, 1.0, var)
-    select_var <- names(sort(var_probes[topVar], decreasing = T))
-    top_var_beta <- betas[select_var, ]
+takeTopVariance <- function(betas, topNumber = 1:10000){
+    var_probes <- apply(betas, 1, var) # vars <- apply(gset.funnorm.beta,1,var)
+    select_var <- names(sort(var_probes, decreasing = T)) # select_var <- names(sort(vars,decreasing = TRUE))
+    sorted_betas <- betas[select_var, ] # top_variable_beta <- gset.funnorm.beta[select_var,]
+    top_var_beta <- sorted_betas[topNumber, ] # top_variable_beta[1:10000,]
     return(top_var_beta)
 }
 
-gb$tierBetas <-
-  function(betas,
-           col_sentrix,
-           RGSet,
-           batchCorrect = F,
-           getSuper = F,
-           topVar = 1:10000) {
+gb$tierBetas <- function(betas, col_sentrix, RGSet, batchCorrect = F, getSuper = F, topVar = 1:10000) {
     rgLiDat <- RGSet@colData@listData
     selectSams <- rgLiDat[[col_sentrix]][rgLiDat[["Sample_ID"]] %in% colnames(betas)]
     rgColRows <- RGSet@colData@rownames
