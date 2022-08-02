@@ -27,12 +27,12 @@ msgFunName <- function(pthLnk, funNam){
 }
 
 msgParams <- function(...) {
-    vars = data.frame(...)
-    varLi = list(...)
+    #vars = data.frame(...)
+    #varLi = list(...)
     message("\n", bkGrn("Params passed:"))
-    for (i in 1:ncol(vars)) {
-        message(bkBlu(colnames(vars)[i])," (",typeof(varLi[[i]]),")", " = ", varLi[[i]])
-    }
+    #for (i in 1:ncol(vars)) {
+    #    message(bkBlu(colnames(vars)[i])," (",typeof(varLi[[i]]),")", " = ", varLi[[i]])
+    #}
 }
 
 # Helper function to return the index of priority selected samples first
