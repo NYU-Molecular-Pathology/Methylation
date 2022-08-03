@@ -268,8 +268,6 @@ checkSamSh <- function(samList){
     if(isMC==T){
         wksh <- NameControl(wksh, wksh$run_number[1])    
     }
-    message(bkGrn(wksh),":"," ")
-    print(wksh)
     stopifnot(!is.null(wksh))
     rownames(wksh)<- wksh[,1]
     return(wksh)
