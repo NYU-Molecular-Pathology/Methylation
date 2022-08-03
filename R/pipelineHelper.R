@@ -38,7 +38,7 @@ msgParams <- function(...) {
 # Helper function to return the index of priority selected samples first
 reOrderRun <- function(selectRDs, sh=NULL){
     msgFunName(pipeLnk,"reOrderRun"); msgParams(selectRDs, sh)
-
+    
     if(is.null(selectRDs)){return(NULL)}
     if(is.null(sh)){sh<-"samplesheet.csv"}
     allRd <- as.data.frame(read.csv(sh))
@@ -50,7 +50,7 @@ reOrderRun <- function(selectRDs, sh=NULL){
 # Saves the methyl CNV as a png file in the cwd
 generateCNVpng <- function(RGsetEpic, sampleName) {
     msgFunName(pipeLnk,"generateCNVpng")
-
+    
     imgName <- paste(sampleName, "cnv.png", sep="_")
     MsetEpic <- minfi::preprocessRaw(RGsetEpic)
     png(filename=imgName,width=1820, height=1040)
@@ -60,7 +60,7 @@ generateCNVpng <- function(RGsetEpic, sampleName) {
 
 getRGset <- function(runPath, sentrix){
     msgFunName(pipeLnk,"getRGset")
-
+    
     barcode = stringr::str_split_fixed(sentrix, "_",2)[1]
     RGsetEpic <- minfi::read.metharray(file.path(runPath, sentrix), verbose = T, force = T)
     aEpic=c(array="IlluminaHumanMethylationEPIC", annotation="ilm10b4.hg19")
@@ -73,7 +73,7 @@ getRGset <- function(runPath, sentrix){
 CopyQCrmd <- function(runID){
     msgFunName(pipeLnk, "CopyQCrmd")
     
-  if (!file.exists(QC_file)) {message(bkRed("QC_file.rmd not found:"), "\n", QC_file)}
+    if (!file.exists(QC_file)) {message(bkRed("QC_file.rmd not found:"), "\n", QC_file)}
     #fs::file_copy(QC_file, getwd(), overwrite = T)
     qcFileName = paste0(runID, "_QC.html") # output file name
     if(file.exists(file.path(getwd(), qcFileName))) {
@@ -82,13 +82,13 @@ CopyQCrmd <- function(runID){
     }
     file.copy(from = QC_file, to = file.path(getwd(),basename(QC_file)), copy.mode = F, overwrite = F)
     return(qcFileName)
-    }
+}
 
 
 # QC REPORT maker: knits the QC RMD file
 generateQCreport <- function(runID=NULL) {
     msgFunName(pipeLnk, "generateQCreport")
-
+    
     if (is.null(runID)){runID<-paste0(basename(getwd()))}
     qcFileName <- CopyQCrmd(runID)
     if(!is.null(qcFileName)){
@@ -120,14 +120,14 @@ launchEmailNotify <- function(runID){
         format = 'json',
         type = 'flat',
         data = datarecord
-        )
+    )
     cat(bkBlu("Check email to confirm Email Notification Created"), sep="\n")
 }
 
 # FUN: Creates the QC record for the current run on redcap if it does not exist
 CreateRedcapRecord <- function(runID=NULL, recordWord="QC"){
     msgFunName(pipeLnk,"CreateRedcapRecord")
-
+    
     if(is.null(runID)){runID<-paste0(basename(gb$workDir))}
     record = c(record_id = paste0(runID, "_", recordWord), run_number = runID)
     cntrl <- jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
@@ -147,7 +147,7 @@ checkRunOutput <- function(runID) {
     msgFunName(pipeLnk,"checkRunOutput")
     redcapFi <- paste0(runID,"_Redcap.csv")
     csvLocation <- file.path(fs::path_home(),"Desktop", runID, redcapFi)
-
+    
     if (!file.exists(csvLocation)) {
         message(bkRed("File not found:")," ", csvLocation)
         message("QC Report may generate without the Summary Table which needs ", bkGrn(redcapFi))
@@ -216,27 +216,27 @@ getRunData <- function(data) {
 }
 
 NameControl <- function(data, runId) {
-  library("data.table")
-  if (any(data[, 1] %like% 'control')) {
-    cntrl <- which(data[, 1] %like% 'control') #DNA_Number
-    data[cntrl, 1] <- paste0(runId, "_control")
-  } else{
-    if (any(data[, 2] %like% 'control')) {
-      cntrl <- which(data[, 2] %like% 'control') #DNA_Number
-      data[cntrl, 1] <- paste0(runId, "_control")
+    library("data.table")
+    if (any(data[, 1] %like% 'control')) {
+        cntrl <- which(data[, 1] %like% 'control') #DNA_Number
+        data[cntrl, 1] <- paste0(runId, "_control")
     } else{
-      warning('No word "control" in RD-number found in samplesheet')
+        if (any(data[, 2] %like% 'control')) {
+            cntrl <- which(data[, 2] %like% 'control') #DNA_Number
+            data[cntrl, 1] <- paste0(runId, "_control")
+        } else{
+            warning('No word "control" in RD-number found in samplesheet')
+        }
+        #return(data)
     }
-    #return(data)
-  }
-  return(data)
+    return(data)
 }
 
 ReadSamSheet <- function(samList){
     msgFunName(pipeLnk, "ReadSamSheet")
     msgParams("samList")
     msgParams(samList)
-
+    
     samSh <- gb$GrabSampleSheet()
     xlSheets <- readxl::excel_sheets(samSh)
     redSheet <- as.integer(which(grepl("REDCap",xlSheets)==T))
@@ -245,12 +245,12 @@ ReadSamSheet <- function(samList){
     if(length(redSheet)==0){
         warning("REDCap sheet not found in Sheet names, setting sheet #3")
         redSheet <- 3
-        }
+    }
     message(bkGrn("Sheet Index containing 'REDCap_Import':"), " ", redSheet,"\n")
-
+    
     samSh <- readxl::read_excel(samSh, sheet=redSheet, range = "A1:M97", col_types = c("text"))
     message(bkGrn("SampleSheet:"))
-
+    
     samplesSheet <- as.data.frame(samSh)[samList, 1:13]
     print(samplesSheet)
     return(samplesSheet)
@@ -261,10 +261,13 @@ checkSamSh <- function(samList){
     msgFunName(pipeLnk, "checkSamSh")
     msgParams("samList")
     msgParams(samList)
-
+    
     require(rmarkdown)
     wksh <- ReadSamSheet(samList)
-    wksh <- NameControl(wksh, wksh$run_number[1])
+    isMC = sjmisc::str_contains(gb$runID, "MGDM")|sjmisc::str_contains(gb$runID, "MC")
+    if(isMC==T){
+        wksh <- NameControl(wksh, wksh$run_number[1])    
+    }
     message(bkGrn(wksh),":"," ")
     print(wksh)
     stopifnot(!is.null(wksh))
@@ -309,10 +312,14 @@ do_report <- function(data = NULL, genCn=F) {
 # FUN: Iterates over each sample in the csv file to generate a report
 loopRender <- function(samList = NULL, data, redcapUp = T){
     msgFunName(pipeLnk, "loopRender")
-#    msgParams(samList, data, redcapUp)
-# Debug: data <- read.csv("samplesheet.csv", strip.white=T)
+    #    msgParams(samList, data, redcapUp)
+    # Debug: data <- read.csv("samplesheet.csv", strip.white=T)
     stopifnot(!is.null(data))
-    data <- NameControl(data, data$RunID[1])
+    
+    isMC = sjmisc::str_contains(gb$runID, "MGDM")|sjmisc::str_contains(gb$runID, "MC")
+    if(isMC==T){
+        data <- NameControl(data, data$RunID[1])
+    }
     if (is.null(samList)) {
         samList <- 1:length(data$Sample_Name!=0)
     }
@@ -348,17 +355,18 @@ makeReports.v11b6 <- function(runPath = NULL,
                               cpReport = T,
                               redcapUp = T) {
     msgFunName(pipeLnk,"makeReports.v11b6")
-
+    
     assign("genCn", genCn, envir = gb)
     data <- read.csv(sheetName, strip.white=T)
     runID <- paste0(data$RunID[1])
-
+    
     if(file.exists(predictionPath)){
-    message("\nLoading data...\n",predictionPath,"\n")
-    load(predictionPath)
+        message("\nLoading data...\n",predictionPath,"\n")
+        load(predictionPath)
     }
-
-    CreateRedcapRecord(runID,"control")
+    
+    isMC = sjmisc::str_contains(runID, "MGDM")|sjmisc::str_contains(runID, "MC")
+    if(isMC==T){CreateRedcapRecord(runID,"control")}
     loopRender(selectSams, data, redcapUp)
     checkRunOutput(runID)
     if(skipQC == F){
@@ -382,7 +390,7 @@ checkMounts <- function(){
     failMount <-
         lapply(critialMnts, function(driveMount){
             ifelse(!dir.exists(driveMount), return(T), return(F))}
-            )
+        )
     if(any(failMount==T)){
         toFix <- paste(critialMnts[which(failMount==T)])
         cat("PATH does not exist, ensure network drive is mounted:", bkRed(toFix),"\n")
@@ -390,8 +398,7 @@ checkMounts <- function(){
             bkBlu(researchMount,"CBioinformatics/"),
             bkGrn(researchMount,"snudem01lab/snudem01labspace"),
             bkBlu(molecularDrive,"/acc_pathology/molecular"), sep="\n"
-            )
+        )
         stopifnot(!any(failMount==T))
     }
 }
-
