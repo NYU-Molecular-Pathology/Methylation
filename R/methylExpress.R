@@ -101,6 +101,46 @@ SetBaseFolder <- function(token, baseFolder){
     gb$setVar("ApiToken", token) # assign the ApiToken & print params
 }
 
+GetLocalData <- function(rg){
+    dat <- data.frame(
+        sampleID = paste0(rg),
+        bnumber = "NONE",
+        senLi = paste0(rg),
+        run_id = paste0(gb$runID),
+        mp_number = "NONE",
+        tech = "NONE",
+        tech2 = "NONE",
+        outFi = paste0(rg, ".html")
+    )
+    return(dat)
+}
+
+loop_local <- function(RGSet){
+    for (rg in colnames(RGSet)) {
+        thisSam <- RGSet[, rg]
+        dat <- GetLocalData(rg)
+        sentrix=dat$senLi
+        RGsetEpic<-RGset<-thisSam
+        rmarkdown::render(
+            reportMd, "html_document", dat$outFi, getwd(), quiet = FALSE,
+            params = list(token = gb$ApiToken, rundata = dat)
+        )
+        }
+}
+
+RunLocalIdats <- function(runID){
+    if(!file.exists(file.path(getwd(), paste0(runID,".xlsm")))){
+        idatFiles <- dir(path = getwd(), pattern = ".idat", full.names = T)
+        idatBase <- unique(substring(idatFiles, 1, nchar(idatFiles) - 9))
+        RGSet<-minfi::read.metharray(basenames =idatBase, force=TRUE)
+        loop_local(RGSet)
+    }else{
+        gb$readSheetWrite(runID = runID)
+        gb$moveSampleSheet(baseFolder, runID)
+    }
+}
+
+
 # Executes the functions in order to setup a run
 PrepareRun <- function(token, baseFolder=NULL, runID, runLocal=F){
     if(runLocal==F){
@@ -116,8 +156,7 @@ PrepareRun <- function(token, baseFolder=NULL, runID, runLocal=F){
         gb$get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
         gb$moveSampleSheet(baseFolder, runID) #copies outputs temp to desktop for QC.Rmd
     } else{
-        gb$readSheetWrite(runID = runID)
-        gb$moveSampleSheet(baseFolder, runID)
+        RunLocalIdats(runID)
     }
 }
 
