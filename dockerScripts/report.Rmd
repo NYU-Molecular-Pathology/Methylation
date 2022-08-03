@@ -43,6 +43,7 @@ pkgs <- c(
     "magrittr",
     "compiler",
     "minfi",
+    "pander",
     "parallel",
     "progressr",
     "doParallel")
