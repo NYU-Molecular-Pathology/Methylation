@@ -72,7 +72,8 @@ getRGset <- function(runPath, sentrix){
 
 CopyQCrmd <- function(runID){
     msgFunName(pipeLnk, "CopyQCrmd")
-    if (!file.exists(QC_file)) {message(bkRed("QC_file.rmd not found:"), "\n", QC_file)}
+    
+  if (!file.exists(QC_file)) {message(bkRed("QC_file.rmd not found:"), "\n", QC_file)}
     #fs::file_copy(QC_file, getwd(), overwrite = T)
     qcFileName = paste0(runID, "_QC.html") # output file name
     if(file.exists(file.path(getwd(), qcFileName))) {
@@ -365,7 +366,7 @@ makeReports.v11b6 <- function(runPath = NULL,
         generateQCreport()
     }
     if(grepl("TEST",runID)){cpReport=F;redcapUp=F;email=F}
-    if(cpReport==T){file.list <- gb$copy2outFolder(gb$clinDrv, runID)}
+    if(cpReport==T){file.list <- try(gb$copy2outFolder(gb$clinDrv, runID), outFile = "copyLog.txt")}
     if (redcapUp == T) {
         file.list <- dir(pattern = ".html", full.names = T)
         gb$uploadToRedcap(file.list, T)
