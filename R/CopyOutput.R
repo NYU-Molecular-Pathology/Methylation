@@ -315,7 +315,7 @@ uploadToRedcap <- function(file.list,
         callApiFile(rcon, recordName, isEmpty)
     }
     if (deskCSV == T) {
-        importDesktopCsv(rcon)
+        try(importDesktopCsv(rcon), outFile = "copyLog.txt")
     }
 }
 
