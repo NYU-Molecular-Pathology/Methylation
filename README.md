@@ -1,7 +1,7 @@
 <h1>
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/fd470d3a25816e77789a0741dfa62d584bd93b7d/screenshots/clinical_pipeline.png" width="100%"/><br/> </h1>
 
-### Table of Contents <img src="https://media.giphy.com/media/WUlplcMpOCEmTGBtBW/giphy.gif" width="80">
+### Table of Contents 
 - [📖 Methylation Pipline Overview](#-methylation-pipline-overview)
   * [💻 Essential Downloads](#-essential-downloads)
   * [🌐 Network Drive Mount Paths](#-network-drive-mount-paths)
