@@ -6,7 +6,7 @@ setDirectory<-function(foldr) {
 
 #knitr::opts_chunk$set(fig.width=15, fig.height=10)
 
-if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 6, quiet=T)}
+if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 4, quiet=T)}
 
 # Load/install Packages
 pkgs <- c(
@@ -102,7 +102,7 @@ colorTargets <- function(targets, varColumns = c("Type","Origin"), col_vect = NU
     stopifnot(all(varColumns %in% dimnames(targets)[[2]]))
     dat <- targets[,varColumns] # varColumns
     anno_df <- data.frame(dat)
-    vars2Color <- as.list(lapply(dat, unique))
+    vars2Color <- sort(as.list(lapply(dat, unique)))
     colorValues <-lapply(vars2Color, function(x) {x = (col_vect)[1:(length(x))]})
     for (x in 1:length(vars2Color)) {
         for (varNum in 1:length(vars2Color[x])) {
