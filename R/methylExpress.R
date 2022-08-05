@@ -52,7 +52,7 @@ if(!is.null(baseFolder) & !identical(baseFolder,NULL)){
 # Source GitHub Scripts ----------------------------------------------------
 mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/"
 script.list = c(
-    "LoadInstall_new.R",
+    "LoadInstallPackages.R",
     "SetRunParams.R",
     "MakeSampleSheet.R",
     "CopyInputs.R",
