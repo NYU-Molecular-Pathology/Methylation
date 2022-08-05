@@ -505,7 +505,7 @@ startLoadingAll <- function() {
     installAll(classPacks, srcInst)
     checkClassifier(mnpV4)
     checkClassifier(mnpV6)
-    checkClassifier(mnpV12)
+#    checkClassifier(mnpV12)
 }
 
 startLoadingAll()
