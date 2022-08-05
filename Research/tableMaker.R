@@ -16,8 +16,6 @@ pkgs <- c(
   'ggplot2',
   'devtools',
   "BiocManager",
-  'BiocVersion',
-  'GenVisR',
   'parallel',
   'iterators',
   'doParallel',
@@ -50,13 +48,13 @@ pkgs <- c(
   "Cairo",
   "gridExtra"
 )
-librarian::shelf(pkgs, ask=F, warn.conflicts=F)
+librarian::shelf(pkgs, ask=F, warn.conflicts=F,update_all = F)
 
 require("gridExtra")
 require("Cairo")
 require("minfi")
 require("ComplexHeatmap")
-if(!require("GenVisR")){BiocManager::install("GenVisR")}
+#if(!require("GenVisR")){BiocManager::install("GenVisR")}
 
 makeDt <- 
   function(targets) {
