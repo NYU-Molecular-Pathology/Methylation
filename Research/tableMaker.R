@@ -102,7 +102,7 @@ colorTargets <- function(targets, varColumns = c("Type","Origin"), col_vect = NU
     stopifnot(all(varColumns %in% dimnames(targets)[[2]]))
     dat <- targets[,varColumns] # varColumns
     anno_df <- data.frame(dat)
-    vars2Color <- sort(as.list(lapply(dat, unique)))
+    vars2Color <- as.list(lapply(dat, unique))
     colorValues <-lapply(vars2Color, function(x) {x = (col_vect)[1:(length(x))]})
     for (x in 1:length(vars2Color)) {
         for (varNum in 1:length(vars2Color[x])) {
