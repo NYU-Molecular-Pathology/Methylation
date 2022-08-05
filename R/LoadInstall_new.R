@@ -12,6 +12,11 @@ mnpV6 <-
         mnpVers = "mnp.v11b6",
         mnpPath = "in_house/mnp.v116/mnp.v11b6",
         mnpNumb = "0.1.140")
+mnpV12 <-
+    data.frame(
+        mnpVers = "mnp.v12b6",
+        mnpPath = "mnp_v12_R-package/mnp.v12b6",
+        mnpNumb = "0.1.3.2")
 
 # Custom Classifier packages:
 classPacks <- c(
@@ -500,6 +505,7 @@ startLoadingAll <- function() {
     installAll(classPacks, srcInst)
     checkClassifier(mnpV4)
     checkClassifier(mnpV6)
+    checkClassifier(mnpV12)
 }
 
 startLoadingAll()
