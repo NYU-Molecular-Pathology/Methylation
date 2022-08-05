@@ -284,6 +284,7 @@ classifierInstall <- function(pathtoFile=NULL, instNew=T, rmpkg=F) {
     if(rmpkg){remove.packages(basename(mnp.pk.loc), lib=.libPaths()[[1]][1])}
     if(instNew){
         message("Installing package: ", basename(mnp.pk.loc))
+        message("Classifier install may take several minutes!  Note the stage '** inst' may take the longest.")
         install.packages(mnp.pk.loc, repos=NULL, type="source", force=T, Ncpus = 6)
         classifierInstall(pathtoFile,F,F)
     } else {ld(basename(mnp.pk.loc))}
