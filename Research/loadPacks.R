@@ -158,7 +158,7 @@ srcInst <- function(fn){
 bc.inst <- function(pknm){
     message("Checking ", pknm, "...")
     if(rq(pknm)) {
-        bio.opt <- list(pkgs=pknm, ask=F,update=T)
+        bio.opt <- list(pkgs=pknm, ask=F,update=F)
         tryCatch(
             expr = {sw(do.call(BiocManager::install, c(bio.opt)))},
             error = function(cond) {message("Package already loaded")},
@@ -209,8 +209,8 @@ setOptions <- function(){
     options(needs.promptUser=F); Sys.setenv(R_ENABLE_JIT=T)
     options("needs.promptUser"=F); options("promptUser"=F)
     options("device.ask.default" = FALSE)
-    options("install.packages.compile.from.source"="Yes")
-    options("install.packages.check.source"="yes")
+    options("install.packages.compile.from.source" = "No")
+    options("install.packages.check.source" = "no")
     compiler::enableJIT(3); compiler::compilePKGS(enable=T);
     compiler::setCompilerOptions(suppressAll=T, optimize=3)
     fixProf()
@@ -226,7 +226,7 @@ cpMakeV <- function(editFile=F){
 checkBioC <- function(){
     if(sw(suppressPackageStartupMessages((!require("BiocManager"))))){
         install.packages("BiocManager", Ncpus = 6)
-        BiocManager::install(version="3.10", update=T, ask=F, type="source")
+        BiocManager::install(version="3.10", update=F, ask=F, type="source")
     } else{ld("BiocManager")}
     if(rq("zip")){install.packages("zip", dependencies=T, type="binary")
     } else{ld("zip")}
@@ -271,7 +271,7 @@ loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bcPks=biocP
     knitr::opts_chunk$set(echo = T)
     Sys.setenv(R_ENABLE_JIT = T)
     compiler::enableJIT(3); compiler::compilePKGS(enable = T); compiler::setCompilerOptions(suppressAll = T, optimize = 3)
-
+    
 }
 
 setDirectory <- function(foldr) {
