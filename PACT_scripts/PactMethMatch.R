@@ -333,7 +333,7 @@ makeCNV <- function(myDt, asPNG = T) {
 
 startCNVmaker2 <- function(output, token) {
     rds <- output$record_id[output$report_complete == "YES"]
-    if (!is.null(rds) & !is.na(rds) & length(rds) > 0) {
+    if (all(!is.null(rds))==T & all(!is.na(rds))==T & length(rds) > 0) {
              sourceFuns2()
         msgRDs(rds, token)
         grabRDs1(rds, token)
@@ -347,7 +347,7 @@ startCNVmaker2 <- function(output, token) {
             },
             finally={gb$copyOutputPng()}
         )
-    } else{message(crayon::bgGreen("This PACT run has no cases with methylation complete.  No CNV png images to generate."))}
+    } else{message(crayon::bgGreen("This PACT run has no cases with methylation complete. No CNV png images to generate."))}
 }
 
 # Search REDCap Worksheets for MRN Match for output -------------------------------------
