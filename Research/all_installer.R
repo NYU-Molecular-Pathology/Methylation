@@ -1,14 +1,80 @@
-if(!require("devtools")){install.packages("devtools", dependencies=T, verbose=T, quiet=T, ask=F)}
-if(!require("librarian")){install.packages("librarian", dependencies=T,verbose=T,type="both",ask=F)}
+options("install.packages.compile.from.source" = "No")
+options("install.packages.check.source" = "no")
+
+if(.rs.checkBuildTools("foobar")==FALSE){
+    system("xcode-select --install")
+    system("xcode-select -s /Library/Developer/CommandLineTools")
+}
+
+if (identical(Sys.info()[["machine"]], "x86_64")) {
+    local({
+        path <- sub(":/opt/homebrew/bin", ":/usr/local/homebrew/bin", Sys.getenv("PATH"))
+        Sys.setenv(PATH = path)
+    })
+}
+
+if (!dir.exists(file.path("~", ".R"))) {
+    message("No Makevars file in ~/.R")
+    system("mkdir -p ~/.R")
+    system("touch ~/.R/MakeVars")
+    fileConn <- file("~/.R/MakeVars")
+    message("Creating MakeVars in ~/.R/MakeVars")
+    params <- c(
+        'FLIBS=-L/usr/local/gfortran/lib',
+        'CC = gcc',
+        'CXX = g++',
+        'CXX98 = g++',
+        'CXX11 = g++',
+        'CXX14 = g++',
+        'CXX17 = g++',
+        'CXX20 = g++',
+        'CXXCPP = g++',
+        'FC = gfortran',
+        'F77 = gfortran',
+        'OBJC = gcc',
+        'OBJCXX = g++',
+        'CXX1X=/usr/local/gfortran/bin/g++',
+        'CXX98=/usr/local/gfortran/bin/g++',
+        'CXX11=/usr/local/gfortran/bin/g++',
+        'CXX14=/usr/local/gfortran/bin/g++',
+        'CXX17=/usr/local/gfortran/bin/g++',
+        'LLVM_LOC = /usr/local/opt/llvm',
+        'CC=/usr/local/gfortran/bin/gcc -fopenmp',
+        'CXX=/usr/local/gfortran/bin/g++ -fopenmp',
+        'CFLAGS=-g -O3 -Wall -pedantic -std=gnu99 -mtune=native -pipe',
+        'CXXFLAGS=-g -O3 -Wall -pedantic -std=c++11 -mtune=native -pipe',
+        'LDFLAGS=-L/usr/local/opt/gettext/lib -L$(LLVM_LOC)/lib -Wl,-rpath,$(LLVM_LOC)/lib',
+        'LDFLAGS=-L/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib',
+        'CPPFLAGS=-I/usr/local/opt/gettext/include -I$(LLVM_LOC)/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include'
+    )
+    writeLines(params, fileConn)
+    close(fileConn)
+    .rs.restartR()
+}
+
+if (!file.exists(file.path("~", ".Renviron"))) {
+    system("touch ~/.Renviron")
+    fileConn <- file("~/.Renviron")
+    params <- c('PATH="/usr/local/gfortran/bin:${PATH}"')
+    writeLines(params, fileConn)
+    close(fileConn)
+    .rs.restartR()
+}
+
 # Setting US CRAN REPO
 rlis = getOption("repos")
 rlis["CRAN"] = "http://cran.us.r-project.org"
 options(repos = rlis)
+
+if(!require("devtools")){install.packages("devtools", dependencies=T, verbose=T, quiet=T, ask=F)}
+if(!require("librarian")){install.packages("librarian", dependencies=T,verbose=T,type="both",ask=F)}
+
+corePkgs <- c("randomForest","glmnet","ggplot2","gridExtra","knitr","pander")
+
 # List of all Packages
 pkgs <-
     c(
         "abind",
-        "ade4",
         "affy",
         "affyio",
         "animation",
@@ -21,7 +87,6 @@ pkgs <-
         "ape",
         "aplot",
         "arrow",
-        "AsioHeaders",
         "askpass",
         "assertr",
         "assertthat",
@@ -44,7 +109,6 @@ pkgs <-
         "Biobase",
         "BiocCheck",
         "BiocFileCache",
-        "BiocGenerics",
         "BiocIO",
         "BiocManager",
         "BiocParallel",
@@ -159,15 +223,12 @@ pkgs <-
         "extrafont",
         "extrafontdb",
         "fansi",
-        "farver",
         "fastICA",
         "fastmap",
         "fastmatch",
-        "GeneVisR",
         "fBasics",
         "FDb.InfiniumMethylation.hg19",
         "feather",
-        "FField",
         "fGarch",
         "fgsea",
         "filelock",
@@ -175,7 +236,6 @@ pkgs <-
         "FNN",
         "fontawesome",
         "forcats",
-        "foreach",
         "forecast",
         "foreign",
         "formatR",
@@ -203,7 +263,6 @@ pkgs <-
         "GenomicAlignments",
         "GenomicFeatures",
         "GenomicRanges",
-        "GenVisR",
         "GEOquery",
         "gert",
         "getopt",
@@ -247,7 +306,6 @@ pkgs <-
         "gss",
         "gsubfn",
         "gt",
-        "gtable",
         "gtools",
         "haven",
         "HDF5Array",
@@ -277,8 +335,6 @@ pkgs <-
         "ipred",
         "IRanges",
         "irlba",
-        "isoband",
-        "iterators",
         "jpeg",
         "jquerylib",
         "jsonlite",
@@ -292,7 +348,6 @@ pkgs <-
         "KFAS",
         "knitr",
         "ks",
-        "labeling",
         "labelVector",
         "lambda.r",
         "lars",
@@ -348,7 +403,6 @@ pkgs <-
         "multcompView",
         "multicool",
         "multtest",
-        "munsell",
         "mvtnorm",
         "narray",
         "needs",
@@ -379,7 +433,6 @@ pkgs <-
         "performance",
         "pillar",
         "pingr",
-        "pixmap",
         "pkgbuild",
         "pkgconfig",
         "pkgload",
@@ -427,10 +480,8 @@ pkgs <-
         "raster",
         "RBGL",
         "rcmdcheck",
-        "RColorBrewer",
         "Rcpp",
         "RcppArmadillo",
-        "RcppEigen",
         "RcppParallel",
         "RCurl",
         "readr",
@@ -483,9 +534,7 @@ pkgs <-
         "rversions",
         "rvest",
         "s2",
-        "sandwich",
         "sass",
-        "scales",
         "scatterpie",
         "scatterplot3d",
         "scrime",
@@ -493,19 +542,13 @@ pkgs <-
         "sesame",
         "sesameData",
         "sessioninfo",
-        "sest",
         "shadowtext",
-        "shape",
         "shiny",
-        "shinybusy",
-        "shinyjs",
-        "shinyWidgets",
         "siggenes",
         "sjlabelled",
         "sjmisc",
         "snow",
         "sourcetools",
-        "sp",
         "sparkline",
         "SparseM",
         "sparseMatrixStats",
@@ -552,11 +595,6 @@ pkgs <-
         "treeio",
         "truncnorm",
         "tseries",
-        "TTR",
-        "tufte",
-        "tvthemes",
-        "tweenr",
-        "TxDb.Dmelanogaster.UCSC.dm3.ensGene",
         "TxDb.Hsapiens.UCSC.hg19.knownGene",
         "tzdb",
         "units",
@@ -570,7 +608,6 @@ pkgs <-
         "vctrs",
         "vdiffr",
         "viridis",
-        "viridisLite",
         "visNetwork",
         "vroom",
         "waiter",
@@ -599,55 +636,116 @@ pkgs <-
         "zoo"
     )
 
-if (!dir.exists(file.path("~", ".R"))) {
-    message("No Makevars file in ~/.R")
-    system("mkdir -p ~/.R")
-    system("touch ~/.R/MakeVars")
-    fileConn <- file("~/.R/MakeVars")
-    params <- c(
-        'FLIBS=-L/usr/local/gfortran/lib',
-        'CC = gcc',
-        'CXX = g++',
-        'CXX98 = g++',
-        'CXX11 = g++',
-        'CXX14 = g++',
-        'CXX17 = g++',
-        'CXX20 = g++',
-        'CXXCPP = g++',
-        'FC = gfortran',
-        'F77 = gfortran',
-        'OBJC = gcc',
-        'OBJCXX = g++',
-        'CXX1X=/usr/local/gfortran/bin/g++',
-        'CXX98=/usr/local/gfortran/bin/g++',
-        'CXX11=/usr/local/gfortran/bin/g++',
-        'CXX14=/usr/local/gfortran/bin/g++',
-        'CXX17=/usr/local/gfortran/bin/g++',
-        'LLVM_LOC = /usr/local/opt/llvm',
-        'CC=/usr/local/gfortran/bin/gcc -fopenmp',
-        'CXX=/usr/local/gfortran/bin/g++ -fopenmp',
-        'CFLAGS=-g -O3 -Wall -pedantic -std=gnu99 -mtune=native -pipe',
-        'CXXFLAGS=-g -O3 -Wall -pedantic -std=c++11 -mtune=native -pipe',
-        'LDFLAGS=-L/usr/local/opt/gettext/lib -L$(LLVM_LOC)/lib -Wl,-rpath,$(LLVM_LOC)/lib',
-        'LDFLAGS=-L/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib',
-        'CPPFLAGS=-I/usr/local/opt/gettext/include -I$(LLVM_LOC)/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include'
+preReqPkgs <- c(
+    'MASS',
+    'ade4',
+    'dbplyr',
+    'filelock',
+    'formatR',
+    'bitops',
+    'progress',
+    'BiocFileCache',
+    'bit',
+    'png',
+    'Rhtslib',
+    'rjson',
+    'rngtools',
+    'hms',
+    'vroom',
+    'tzdb',
+    'generics',
+    'tidyselect',
+    'R.oo',
+    'R.methodsS3',
+    'lambda.r',
+    'futile.options',
+    'affyio',
+    'zlibbioc',
+    'RCurl',
+    'XVector',
+    'BiocIO',
+    'biomaRt',
+    'XML',
+    'bit64',
+    'blob',
+    'plogr',
+    'KEGGREST',
+    'plyr',
+    'TxDb.Hsapiens.UCSC.hg19.knownGene',
+    'org.Hs.eg.db',
+    'GenomeInfoDbData',
+    'MatrixGenerics',
+    'base64',
+    'Rsamtools',
+    'GenomicAlignments',
+    'restfulr',
+    'locfit',
+    'doRNG',
+    'multtest',
+    'scrime',
+    'sparseMatrixStats',
+    'readr',
+    'dplyr',
+    'tidyr',
+    'R.utils',
+    'rhdf5',
+    'rhdf5filters',
+    'Rhdf5lib',
+    'futile.logger',
+    'snow',
+    'BH',
+    'affy',
+    'GenomicFeatures',
+    'GenomicRanges',
+    'annotate',
+    'nleqslv',
+    'preprocessCore',
+    'RSQLite',
+    'DBI',
+    'AnnotationDbi',
+    'reshape2',
+    'matrixStats',
+    'FDb.InfiniumMethylation.hg19',
+    'S4Vectors',
+    'IRanges',
+    'GenomeInfoDb',
+    'SummarizedExperiment',
+    'genefilter',
+    'illuminaio',
+    'IlluminaHumanMethylationEPICanno.ilm10b2.hg19',
+    'IlluminaHumanMethylationEPICmanifest',
+    'DNAcopy',
+    'rtracklayer',
+    'Biostrings',
+    'bumphunter',
+    'beanplot',
+    'nor1mix',
+    'siggenes',
+    'limma',
+    'DelayedMatrixStats',
+    'mclust',
+    'reshape',
+    'quadprog',
+    'data.table',
+    'GEOquery',
+    'DelayedArray',
+    'HDF5Array',
+    'BiocParallel'
+)
+
+
+biocPkgs <-
+    c(
+        "lumi",
+        "methylumi",
+        "conumee",
+        "minfi",
+        "IlluminaHumanMethylation450kmanifest",
+        "IlluminaHumanMethylation450kanno.ilmn12.hg19",
+        "IlluminaHumanMethylationEPICanno.ilm10b4.hg19"
     )
-    writeLines(params, fileConn)
-    close(fileConn)
-}
 
-if (!file.exists(file.path("~", ".Renviron"))) {
-    system("touch ~/.Renviron")
-    fileConn <- file("~/.Renviron")
-    params <- c('PATH="/usr/local/gfortran/bin:${PATH}"')
-    writeLines(params, fileConn)
-    close(fileConn)
-}
-
-message("Version of Clang:")
-system("gcc --version")
-options("install.packages.compile.from.source" = "No")
-options("install.packages.check.source" = "no")
+message("Version of Clang:"); system("gcc --version")
 
 if (!require("BiocManager")) {
     install.packages(
@@ -657,19 +755,13 @@ if (!require("BiocManager")) {
         type = "both",
         ask = F
     )
-    #BiocManager::install(version="3.10", update=T, ask=F, type="source")
 }
-
-
-if (identical(Sys.info()[["machine"]], "x86_64")) {
-    local({
-        path <- sub(":/opt/homebrew/bin", ":/usr/local/homebrew/bin", Sys.getenv("PATH"))
-        Sys.setenv(PATH = path)
-    })
-}
+library("devtools")
 library("librarian")
 library("BiocManager")
-#system('export PATH="/usr/local/gfortran/bin:$PATH"')
+if (!require("Biobase")) {BiocManager::install("Biobase", update = F, ask = F)}
+library("Biobase")
+
 urlPaths <-
     c(
         'https://cran.r-project.org/bin/macosx/contrib/4.2/targets_0.12.1.tgz',
@@ -677,10 +769,100 @@ urlPaths <-
         'https://cran.r-project.org/bin/macosx/contrib/4.2/terra_1.5-21.tgz'
     )
 
-for(url in urlPaths){
-    install.packages(url, repos = NULL, type = .Platform$pkgType, dependencies=T)
-}
-if(!require("S4Vectors")){BiocManager::install("S4Vectors", update = F, ask = F)}
-if(!require("MASS")){install.packages("MASS",type = "binary", update = F, ask = F)}
+#for(url in urlPaths){install.packages(url, repos = NULL, type = .Platform$pkgType, dependencies=T)}
+#if(!require("S4Vectors")){BiocManager::install("S4Vectors", update = F, ask = F)}
+#if(!require("MASS")){install.packages("MASS",type = "binary", update = F, ask = F)}
 # Load/install missing pacakges without asking
+
+suppressWarnings(librarian::shelf(corePkgs, ask = F, update_all = F))
+suppressWarnings(librarian::shelf(preReqPkgs, ask = F, update_all = F))
+gc()
+suppressWarnings(librarian::shelf(biocPkgs, ask = F, update_all = F))
+if(!require("IlluminaHumanMethylationEPICmanifest")){
+    devtools::install_github(repo = "mwsill/IlluminaHumanMethylationEPICmanifest",
+                             dependencies = T,
+                             upgrade = "never")
+}
+
+if(suppressWarnings(!require("mgmtstp27"))){
+    gitLink <- "https://github.com/badozor/mgmtstp27/raw/master/archive/mgmtstp27_0.6-3.tar.gz"
+    install.packages(gitLink, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F)
+}
+gc()
+
+fixProf <- function() {
+    txt1 <- "^[:blank:]*autoload\\(\"needs\", \"needs\"\\)"
+    txt2 <- "\n\nautoload(\"needs\", \"needs\")\n\n"
+    siteProf <- if (is.na(Sys.getenv("R_PROFILE", unset = NA))) {
+        file.path(Sys.getenv("R_HOME"), "etc", "Rprofile.site")
+    } else {Sys.getenv("R_PROFILE")}
+    if (!file.exists(siteProf)) {file.create(siteProf)}
+    cxn <- file(siteProf)
+    lines <- base::readLines(cxn)
+    if (!any(grepl(txt1, lines))) {
+        write(txt2, file = siteProf, append = T)
+    }
+    close(cxn)
+}
+
+fixNeeds <- function (){
+    sysfile <- system.file("extdata", "promptUser", package="needs")
+    write(0, file=sysfile); options(needs.promptUser=FALSE); invisible(needs:::autoload(TRUE))
+}
+
+checkNeeds <- function(){
+    tryCatch(
+        expr={
+            if(!("needs" %in% rownames(installed.packages()))){
+                install.packages("needs",dependencies=T,verbose=T, Ncpus = 2)
+                fixNeeds();fixProf()
+            }else{
+                fixNeeds();fixProf()
+            }
+        },
+        error=function(cond){
+            devtools::install_github("joshkatz/needs", ref = "development",
+                                     dependencies=T,verbose=T,upgrade="always")
+            fixNeeds();fixProf()
+        },
+        warning=function(cond){
+            devtools::install_github("joshkatz/needs", ref = "development",
+                                     dependencies=T,verbose=T,upgrade="always")
+            fixNeeds();fixProf()
+        }
+    )
+}
+
+checkNeeds()
+
+spat_config <- '--with-proj-lib=/usr/local/lib/ --with-proj-include=/usr/local/include/'
+options(configure.args = c("sf" = spat_config, "rgdal" = spat_config))
+gc()
+if(!require("sf")){
+    install.packages(c("sf", "rgdal"), type = "source", dependencies=T, verbose=T, Ncpus = 4)
+}
+gc()
+system("export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib")
+#system("brew install proj")
+options("install.packages.compile.from.source" = "No")
+options("install.packages.check.source" = "no")
+library("BiocManager")
+library("Biobase")
+
+terraDep <- c('tinytest', 'ncdf4', 'leaflet')
+suppressWarnings(librarian::shelf(terraDep, ask = F, update_all = F))
+if(!require("terra")) {
+    install.packages(
+        'terra',
+        repos = 'https://rspatial.r-universe.dev',
+        dependencies = T,
+        verbose = T,
+        Ncpus = 4
+    )
+}
+
+if (!require("GenVisR")) {
+    devtools::install_github("griffithlab/GenVisR", dependencies = T, upgrade = "never")
+}
+gc()
 suppressWarnings(librarian::shelf(pkgs, ask = F, update_all = F))
