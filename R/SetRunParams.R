@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 options(stringsAsFactors = FALSE)
 gb <- globalenv(); assign("gb", gb)
+library("base")
 setRunLnk = "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/SetRunParams.R"
 
 msgFunName <- function(pthLnk, funNam){
@@ -39,7 +40,7 @@ assignVar <- function(varStr, assignedVal){
     msgFunName(setRunLnk,"assignVar")
     return(
         tryCatch(
-            expr = {if(!is.null(get(varStr))){cat("")}},
+            expr = {if(!is.null(base::get(varStr))){cat("")}},
             error = {setVar(varStr,assignedVal)},
             finally = message(varStr," = ",assignedVal)
             )
