@@ -1,11 +1,6 @@
 options("install.packages.compile.from.source" = "No")
 options("install.packages.check.source" = "no")
 
-if(.rs.checkBuildTools("foobar")==FALSE){
-    system("xcode-select --install")
-    system("xcode-select -s /Library/Developer/CommandLineTools")
-}
-
 if (identical(Sys.info()[["machine"]], "x86_64")) {
     local({
         path <- sub(":/opt/homebrew/bin", ":/usr/local/homebrew/bin", Sys.getenv("PATH"))
@@ -68,6 +63,15 @@ options(repos = rlis)
 
 if(!require("devtools")){install.packages("devtools", dependencies=T, verbose=T, quiet=T, ask=F)}
 if(!require("librarian")){install.packages("librarian", dependencies=T,verbose=T,type="both",ask=F)}
+library("devtools")
+
+if(!require("rstudioapi")){devtools::install_github("rstudio/rstudioapi", dependencies = T, upgrade = "never")}
+
+if(rstudioapi::buildToolsCheck()==FALSE){
+    system("xcode-select --install")
+    system("xcode-select -s /Library/Developer/CommandLineTools")
+}
+
 
 corePkgs <- c("randomForest","glmnet","ggplot2","gridExtra","knitr","pander")
 
