@@ -69,11 +69,10 @@ library("devtools")
 
 if(!require("rstudioapi")){devtools::install_github("rstudio/rstudioapi", dependencies = T, upgrade = "never")}
 
-if(rstudioapi::buildToolsCheck()==FALSE){
-    system("xcode-select --install")
-    system("xcode-select -s /Library/Developer/CommandLineTools")
-}
-
+# if(rstudioapi::buildToolsCheck()==FALSE){
+#     system("xcode-select --install")
+#     system("xcode-select -s /Library/Developer/CommandLineTools")
+# }
 
 corePkgs <- c("randomForest","glmnet","ggplot2","gridExtra","knitr","pander")
 
