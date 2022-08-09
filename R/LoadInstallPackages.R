@@ -462,7 +462,7 @@ setEnviron <- function(){
     options(Ncpus = 6)
     startmsg()
     library("base")
-    try(cpMakeV(),silent=T)
+    #try(cpMakeV(),silent=T)
     rlis = getOption("repos")
     rlis["CRAN"] = "http://cran.us.r-project.org"
     options(repos = rlis)
@@ -506,7 +506,7 @@ startLoadingAll <- function() {
     installAll(classPacks, srcInst)
     checkClassifier(mnpV4)
     checkClassifier(mnpV6)
-#    checkClassifier(mnpV12)
+    checkClassifier(mnpV12)
 }
 
 startLoadingAll()
