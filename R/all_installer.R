@@ -44,7 +44,8 @@ if (!dir.exists(file.path("~", ".R"))) {
     )
     writeLines(params, fileConn)
     close(fileConn)
-    .rs.restartR()
+    cmd = 'devtools::source_url("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/all_installer.R")'
+    rstudioapi::restartSession(cmd)
 }
 
 if (!file.exists(file.path("~", ".Renviron"))) {
@@ -53,7 +54,8 @@ if (!file.exists(file.path("~", ".Renviron"))) {
     params <- c('PATH="/usr/local/gfortran/bin:${PATH}"')
     writeLines(params, fileConn)
     close(fileConn)
-    .rs.restartR()
+    cmd = 'devtools::source_url("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/all_installer.R")'
+    rstudioapi::restartSession(cmd)
 }
 
 # Setting US CRAN REPO
