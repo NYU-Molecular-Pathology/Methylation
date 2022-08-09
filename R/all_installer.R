@@ -866,6 +866,11 @@ if(!require("terra")) {
     )
 }
 
+if(!require("FField")){
+    gitLink <- "https://cran.r-project.org/src/contrib/Archive/FField/FField_0.1.0.tar.gz"
+    install.packages(gitLink, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F)
+}
+
 if (!require("GenVisR")) {
     devtools::install_github("griffithlab/GenVisR", dependencies = T, upgrade = "never")
 }
