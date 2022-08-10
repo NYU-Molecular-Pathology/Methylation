@@ -221,7 +221,8 @@ checkDataDump <- function(sam, cnvTab) {
     return(cnvTab)
 }
 
-checkTumorPdf <- function(samList, pngOutDir){
+checkTumorPdf <- function(samList, outDir){
+    pngOutDir <- file.path(outDir,"cnvpng") # output copy of cnvPNG files
     if(!dir.exists(pngOutDir)){dir.create(pngOutDir)}
     pdfList <- list.files(pattern = "*.pdf", recursive = T)
     toDrop <- samList$Tumor_Content != 0 & samList$Specimen_ID != "SC"
@@ -232,7 +233,7 @@ checkTumorPdf <- function(samList, pngOutDir){
             "Number of sample rows ", nrow(tumors),
             " does not equal length of pdf files: ", length(pdfList),
             "\nCheck if any are missing:\n"
-            )
+        )
         print(pdfList)
     }
     return(tumors)
@@ -255,7 +256,8 @@ convert.plots <- function(tumors, pdfList) {
         )}))
 }
 
-GetMethCnv <- function(methData, methDir, pngDir){
+GetMethCnv <- function(methData, methDir, outDir){
+    pngDir <- file.path(outDir,"methCNV") # output copy of methylation png files
     methSamples <- paste(methData$record_id,"cnv.png",sep = "_")
     methSamples <- methSamples[methData$report_complete=="YES"]
     if(!dir.exists(pngDir)){dir.create(pngDir)}
@@ -269,7 +271,9 @@ GetMethCnv <- function(methData, methDir, pngDir){
     }
 }
 # Checks if the facets pdfs have been converted to png
-CopyPdfsPngs <- function(samList, pngOutDir, pdfDir) {
+CopyPdfsPngs <- function(samList, outDir) {
+    pdfDir <- file.path(outDir,"FACETpdfs") # input facet pdf directory
+    pngOutDir <- file.path(outDir,"cnvpng") # output copy of cnvPNG files
     tumors <- checkTumorPdf(samList, pngOutDir)
     pdfList <- list.files(pattern = "*.pdf", recursive = T)
     if (!dir.exists(pdfDir)) {
