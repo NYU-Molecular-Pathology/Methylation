@@ -1,4 +1,40 @@
 gb <- globalenv(); assign("gb", gb)
+
+# Librarian shelf loads or installs package from CRAN, BioConductor, & GitHub
+if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 4, quiet=T)}
+pkgs <-
+    c(
+        "animation",
+        "tidyverse",
+        "knitr",
+        "kableExtra",
+        "stringr",
+        "readr",
+        "ggplot2",
+        "data.table",
+        "plotly",
+        "DT",
+        "pdftools",
+        "htmltools",
+        "forcats",
+        "stringr",
+        "dplyr",
+        "purrr",
+        "tidyr",
+        "tibble",
+        "stats",
+        "graphics",
+        "grDevices",
+        "utils",
+        "datasets",
+        "methods",
+        "base",
+        "magrittr",
+        "crayon",
+        "devtools"
+    )
+librarian::shelf(pkgs, ask=F)
+
 library("kableExtra")
 
 CheckMntDirs <- function(critialMnts, outDir) {
@@ -354,7 +390,7 @@ makeBlankRow <- function(sam, snvDt) {
     makeDT("In-House FrameShifts/INDEL", objDat = nonMutant)
 }
 
-LoopSampleTabs <-function(samples, samList, qcData, snvDt){
+LoopSampleTabs <-function(samples, samList, qcData, snvDt, methData){
     for (sam in samples) {
         gb$makeNewTab(sam, samList, qcData)
         if (sam %in% snvDt$Test_Case) {
