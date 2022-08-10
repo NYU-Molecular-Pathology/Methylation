@@ -79,6 +79,6 @@ div.tocify {
 }
 
 .nav-tabs>li.active>a, .nav-tabs>li.active>a:hover, .nav-tabs>li.active>a:focus {
-    color: #ffffff;
-    background-color: #0087ff;
+    color: #dddddd;
+    background-color: #ADD8E6;
 }
