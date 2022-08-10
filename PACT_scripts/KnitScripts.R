@@ -353,3 +353,23 @@ makeBlankRow <- function(sam, snvDt) {
     nonMutant$Test_Case <- sam
     makeDT("In-House FrameShifts/INDEL", objDat = nonMutant)
 }
+
+LoopSampleTabs <-function(samples, samList, qcData, snvDt){
+    for (sam in samples) {
+        gb$makeNewTab(sam, samList, qcData)
+        if (sam %in% snvDt$Test_Case) {
+            samRows <- snvDt$Test_Case == sam
+            snvTab <- snvDt[samRows & snvDt$Variant == "SNV",]
+            makeDT("In-House FrameShifts/INDEL", objDat = snvTab)
+            cnvTab <- snvDt[samRows & snvDt$Variant == "CNV",]
+            cnvTab <- checkDataDump(sam, cnvTab)
+            makeDT("CNV", cnvTab, pdfFi = sam)
+            methCn <- snvDt[samRows & snvDt$Variant == "Methylation",]
+            makeMethTab(sam, methCn, methData)
+        } else{
+            message(sam, " is missing from ", descrip)
+            makeBlankRow(sam, snvDt)
+        }
+        makeAbTab(sam)
+    }
+}
