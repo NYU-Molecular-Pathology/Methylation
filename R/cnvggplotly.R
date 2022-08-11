@@ -1,3 +1,47 @@
+MNPcnv450kNew <- function(Mset, sex = NULL, ...){
+    library(verbose=F,warn.conflicts = F, quietly = T, package="mnp.v11b4")
+    path <- file.path(path.package('mnp.v11b4'), 'ext')
+    if (is.null(sex)) {
+        Rset <- minfi::ratioConvert(Mset, what = "both", keepCN = TRUE)
+        sex <- ifelse(MNPgetSex(Rset)$predictedSex == "M", "Male", "Female")
+    }
+    load(file.path(path, "CNanalysis4_conumee_ANNO.vh20150715.RData"))
+    cndata <- conumee::CNV.load(Mset)
+    if (sex == "Male") {
+        load(file.path(path, "CNanalysis4_conumee_REF-M.vh20150715.RData"))
+        x <- conumee::CNV.fit(cndata, refM.data, annoXY)
+    }
+    if (sex == "Female") {
+        load(file.path(path, "CNanalysis4_conumee_REF-F.vh20150715.RData"))
+        x <- conumee::CNV.fit(cndata, refF.data, annoXY)
+    }
+    x <- conumee::CNV.bin(x)
+    x <- conumee::CNV.detail(x)
+    x <- conumee::CNV.segment(x)
+    return(x)
+}
+
+GetCNxx <- function(Mset, sex, sampleID) {
+    if (is450k == TRUE) {
+        xx <- MNPcnv450kNew(Mset, sex = sex, main = sampleID)
+    } else {
+        xx <- supM(mnp.v11b6::MNPcnv(Mset, sex = sex, main = sampleID))
+    }
+    return(xx)
+}
+
+GetOvAnnot <- function() {
+    githubURL <- file.path(
+        "https://github.com/NYU-Molecular-Pathology/Methylation/raw",
+        "416a007b8a21f59a71493cea189bc424009e8d7d/Rdata/newOvGenes.rds"
+    )
+    if (!file.exists("newOvGenes.rds")) {
+        utils::download.file(githubURL, file.path(getwd(), "newOvGenes.rds"), method = "libcurl")
+    }
+    newOvGenes <- readRDS("newOvGenes.rds")
+    return(newOvGenes)
+}
+
 
 new.ggplotly <- function (xx, getTables = T, newOvGenes=NULL, sex='male', addCustom = F) {
     require(compiler)
