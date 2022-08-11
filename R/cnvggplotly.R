@@ -191,3 +191,19 @@ new.ggplotly <- function (xx, getTables = T, newOvGenes=NULL, sex='male', addCus
         return(dra)
     }
 }
+
+MNPciplot_mgmt<- function(Mset,sample=1){
+    pred <- MNPpredict_mgmt(Mset[, sample])
+    theBarPlot <- ggplot2::ggplot(pred, aes(x = Estimated, y = Status)) +
+        geom_point(size = 5) +
+        geom_errorbarh(aes(xmin = CI_Lower, xmax = CI_Upper), height = .1, size = 1) +
+        xlim(0, 1) +
+        geom_vline(xintercept = pred$Cutoff, size = 1, colour = 'darkred') +
+        theme(plot.title = element_text(lineheight = .8, face = "bold")) +
+        xlab("Score") + ylab("") + scale_y_discrete("", breaks = c(0))
+    theBarPlot <- plotly::ggplotly(theBarPlot)
+    theBarPlot <- 
+        htmltools::tagList(plotly::ggplotly(theBarPlot)) %>%
+        layout(autosize = T, width = 500, height = 200)
+    return(theBarPlot)
+}
