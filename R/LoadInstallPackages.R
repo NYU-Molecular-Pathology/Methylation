@@ -507,6 +507,15 @@ startLoadingAll <- function() {
     checkClassifier(mnpV4)
     checkClassifier(mnpV6)
     checkClassifier(mnpV12)
+    try(if (!requireNamespace("UniD", quietly = TRUE)) {
+    install.packages(
+        "/Volumes/CBioinformatics/Methylation/UniD",
+        type = "source",
+        dependencies = T,
+        repo = NULL
+    )
+}, silent = T
+)
 }
 
 startLoadingAll()
