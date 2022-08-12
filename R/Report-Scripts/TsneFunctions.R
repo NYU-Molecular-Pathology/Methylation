@@ -71,7 +71,7 @@ GetClusterPlot <- function(is450k, Mset_ba, sampleID){
             text = plTxt,
             xref = "x",
             yref = "y",
-            size = 0.7,
+            size = 0.6,
             bgcolor = 'rgba(255, 255, 255, 0.5)',
             font = list(size = 13, color = "dimgray"),
             showarrow = T,
