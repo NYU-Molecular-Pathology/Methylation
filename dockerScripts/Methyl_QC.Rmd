@@ -231,10 +231,10 @@ plotParams <- function(totNum, dParam, xincept, yincept) {
               label = dParam$Sample_Name,
               size = 3,
               fill = dParam$Sample_Name,
-              colour = alpha(c("black"), 1.0)
+              colour = scales::alpha(c("black"), 1.0)
           ),
           fontface = 'bold',
-          colour = alpha(c("black"), 1.0), alpha = 0.50,
+          colour = scales::alpha(c("black"), 1.0), alpha = 0.50,
           show.legend = F, segment.alpha = 0.30, segment.size = 0.75,
           direction = "both", max.overlaps = Inf, min.segment.length = 0.015,
           color = "black", label.size = 0.4, size = 3,
