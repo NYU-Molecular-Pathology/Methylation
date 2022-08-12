@@ -45,7 +45,7 @@ if (!dir.exists(file.path("~", ".R"))) {
     writeLines(params, fileConn)
     close(fileConn)
     cmd = 'devtools::source_url("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/all_installer.R")'
-    rstudioapi::restartSession(cmd)
+    #rstudioapi::restartSession(cmd)
 }
 
 if (!file.exists(file.path("~", ".Renviron"))) {
