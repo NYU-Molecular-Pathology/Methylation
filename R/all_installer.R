@@ -55,7 +55,7 @@ if (!file.exists(file.path("~", ".Renviron"))) {
     writeLines(params, fileConn)
     close(fileConn)
     cmd = 'devtools::source_url("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/all_installer.R")'
-    rstudioapi::restartSession(cmd)
+    #rstudioapi::restartSession(cmd)
 }
 
 # Setting US CRAN REPO
@@ -67,7 +67,7 @@ if(!require("devtools")){install.packages("devtools", dependencies=T, verbose=T,
 if(!require("librarian")){install.packages("librarian", dependencies=T,verbose=T,type="both",ask=F)}
 library("devtools")
 
-if(!require("rstudioapi")){devtools::install_github("rstudio/rstudioapi", dependencies = T, upgrade = "never")}
+#if(!require("rstudioapi")){devtools::install_github("rstudio/rstudioapi", dependencies = T, upgrade = "never")}
 
 # if(rstudioapi::buildToolsCheck()==FALSE){
 #     system("xcode-select --install")
