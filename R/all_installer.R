@@ -325,7 +325,7 @@ pkgs <-
         "htmlwidgets",
         "httpuv",
         "httr",
-        "ids",
+        #"ids",
         "igraph",
         "IlluminaHumanMethylation450kanno.ilmn12.hg19",
         "IlluminaHumanMethylation450kmanifest",
