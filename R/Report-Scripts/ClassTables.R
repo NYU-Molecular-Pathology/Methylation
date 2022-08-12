@@ -86,5 +86,6 @@ GetOutClass <- function(is450k, Mset_ba){
         subVal_int <- "Indeterminate"
     }
     out$Interpretation = c(subVal_int,"","","","")
+    #return list
     return(list("out"=out,"idx"=idx))
 }
