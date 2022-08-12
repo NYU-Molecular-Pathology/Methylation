@@ -17,7 +17,7 @@ UniD_load <- function (sampleID, sampleSh="samplesheet.csv") {
 }
 
 pipelineU <- function(sampleID, is450k=F) {
-    load(file.path(system.file(package = "UniD"), "R", "sysdata.rdb"))
+    load(file.path(system.file(package = "UniD"), "R", "sysdata.rda"))
     require(UniD)
     loading <- suppressWarnings(UniD_load(sampleID))
     outDir <- file.path(getwd(),"UniD")
