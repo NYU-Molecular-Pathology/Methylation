@@ -3,8 +3,9 @@ library(verbose=F, warn.conflicts = F, quietly = T, package= "minfi")
 library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylationEPICmanifest")
 data("IlluminaHumanMethylationEPICmanifest")
 
-UniD_load <- function (sampleID, sampleSh="samplesheet.csv") {
-    targets <- read.csv(file.path(getwd(),sampleSh), strip.white = T)
+UniD_load <- function (sampleID, run_id) {
+    samSh <- paste0(run_id,"_samplesheet.csv")
+    targets <- read.csv(file.path("~","Desktop",run_id,samSh), strip.white = T)
     targRow <- targets[,1]==sampleID
     rgSet <- read.metharray.exp(targets = targets[targRow,], extended = T, force=T)
     detP <- minfi::detectionP(rgSet)
@@ -16,10 +17,10 @@ UniD_load <- function (sampleID, sampleSh="samplesheet.csv") {
     return(loading)
 }
 
-pipelineU <- function(sampleID, is450k=F) {
+pipelineU <- function(sampleID, is450k=F, run_id) {
     require("UniD")
     load(file.path(system.file(package = "UniD"), "R", "sysdata.rda"))
-    loading <- suppressWarnings(UniD_load(sampleID))
+    loading <- suppressWarnings(gb$UniD_load(sampleID, run_id))
     outDir <- file.path(getwd(),"UniD")
     if(!dir.exists(outDir)){dir.create(outDir)}
     arrayType <- ifelse(is450k==F, "EPIC", "450k")
