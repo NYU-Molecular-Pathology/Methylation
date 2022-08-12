@@ -876,3 +876,7 @@ if (!require("GenVisR")) {
 }
 gc()
 suppressWarnings(librarian::shelf(pkgs, ask = F, update_all = F))
+gc()
+if (!require("UniD")) {
+try(install.packages("/Volumes/CBioinformatics/Methylation/UniD/", type="source", repos=NULL), silent=T)
+}
