@@ -805,8 +805,7 @@ fixProf <- function() {
     if (!file.exists(siteProf)) {
         try(file.create(siteProf), silent=T)
     }
-    
-    cxn <- file(siteProf)
+    cxn <- try(file(siteProf), silent=T)
     lines <- try(base::readLines(cxn),silent=T)
     if (!any(grepl(txt1, lines))) {
         write(txt2, file = siteProf, append = T)
