@@ -799,10 +799,15 @@ fixProf <- function() {
     txt2 <- "\n\nautoload(\"needs\", \"needs\")\n\n"
     siteProf <- if (is.na(Sys.getenv("R_PROFILE", unset = NA))) {
         file.path(Sys.getenv("R_HOME"), "etc", "Rprofile.site")
-    } else {Sys.getenv("R_PROFILE")}
-    if (!file.exists(siteProf)) {file.create(siteProf)}
+    } else {
+        Sys.getenv("R_PROFILE")
+    }
+    if (!file.exists(siteProf)) {
+        try(file.create(siteProf), silent=T)
+    }
+    
     cxn <- file(siteProf)
-    lines <- base::readLines(cxn)
+    lines <- try(base::readLines(cxn),silent=T)
     if (!any(grepl(txt1, lines))) {
         write(txt2, file = siteProf, append = T)
     }
