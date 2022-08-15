@@ -64,7 +64,7 @@ rlis["CRAN"] = "http://cran.us.r-project.org"
 options(repos = rlis)
 
 if(!require("devtools")){install.packages("devtools", dependencies=T, verbose=T, quiet=T, ask=F)}
-if(!require("librarian")){install.packages("librarian", dependencies=T,verbose=T,type="both",ask=F)}
+if(!require("librarian")){install.packages("librarian", dependencies=T,verbose=T,ask=F)}
 library("devtools")
 
 #if(!require("rstudioapi")){devtools::install_github("rstudio/rstudioapi", dependencies = T, upgrade = "never")}
@@ -757,12 +757,11 @@ if (!require("BiocManager")) {
         "BiocManager",
         dependencies = T,
         verbose = T,
-        type = "both",
         ask = F
     )
 }
 library("devtools")
-#library("librarian")
+library("librarian")
 library("BiocManager")
 if (!require("Biobase")) {BiocManager::install("Biobase", update = F, ask = F)}
 library("Biobase")
