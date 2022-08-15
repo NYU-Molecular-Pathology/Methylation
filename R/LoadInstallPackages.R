@@ -147,11 +147,11 @@ pk.inst <- function(pkg){
             },
             warning = function(cond) {
                 message("\nWarning on package:\n", pkg, "\n-----------\n",cond)
-                do.call(install.packages, c(pk.opt, list(type = "source")))
+                do.call(install.packages, c(pk.opt, list(type = "binary")))
             },
             error = function(cond) {
                 msgCheck(cond,T)
-                do.call(install.packages, c(pk.opt, list(type = "binary")))
+                do.call(install.packages, c(pk.opt, list(type = "source")))
             },
             custom_error = function(cond) {
                 msgCheck(cond,T)
