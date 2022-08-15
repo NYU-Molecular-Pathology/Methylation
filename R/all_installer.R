@@ -762,7 +762,7 @@ if (!require("BiocManager")) {
     )
 }
 library("devtools")
-library("librarian")
+#library("librarian")
 library("BiocManager")
 if (!require("Biobase")) {BiocManager::install("Biobase", update = F, ask = F)}
 library("Biobase")
