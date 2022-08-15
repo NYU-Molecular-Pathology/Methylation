@@ -12,12 +12,13 @@ reportMd <- "~/report.Rmd" # From curl github download
 QC_file <- "~/Methyl_QC.Rmd" # From curl github download
 pipeLnk <- "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/pipelineHelper.R"
 predictionPath <- "/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData"
-QC_file <- "~/Methyl_QC.Rmd"
 
 # List of three mount paths needed to run the pipleine
-critialMnts <- c("/Volumes/CBioinformatics/Methylation",
-                 "/Volumes/molecular/",
-                 "/Volumes/snudem01labspace/idats")
+critialMnts <- c(
+    "/Volumes/CBioinformatics/Methylation",
+    "/Volumes/molecular/",
+    "/Volumes/snudem01labspace/idats"
+    )
 researchMount = "smb://research-cifs.nyumc.org/Research/"
 molecularDrive = "smb://shares-cifs.nyumc.org/apps"
 
@@ -38,7 +39,7 @@ msgParams <- function(...) {
 # Helper function to return the index of priority selected samples first
 reOrderRun <- function(selectRDs, sh=NULL){
     msgFunName(pipeLnk,"reOrderRun"); msgParams(selectRDs, sh)
-    
+
     if(is.null(selectRDs)){return(NULL)}
     if(is.null(sh)){sh<-"samplesheet.csv"}
     allRd <- as.data.frame(read.csv(sh))
@@ -50,7 +51,7 @@ reOrderRun <- function(selectRDs, sh=NULL){
 # Saves the methyl CNV as a png file in the cwd
 generateCNVpng <- function(RGsetEpic, sampleName) {
     msgFunName(pipeLnk,"generateCNVpng")
-    
+
     imgName <- paste(sampleName, "cnv.png", sep="_")
     MsetEpic <- minfi::preprocessRaw(RGsetEpic)
     png(filename=imgName,width=1820, height=1040)
@@ -60,27 +61,39 @@ generateCNVpng <- function(RGsetEpic, sampleName) {
 
 getRGset <- function(runPath, sentrix){
     msgFunName(pipeLnk,"getRGset")
-    
+
     barcode = stringr::str_split_fixed(sentrix, "_",2)[1]
     RGsetEpic <- minfi::read.metharray(file.path(runPath, sentrix), verbose = T, force = T)
     aEpic=c(array="IlluminaHumanMethylationEPIC", annotation="ilm10b4.hg19")
     a450k=c(array="IlluminaHumanMethylation450k", annotation="ilmn12.hg19")
     if (barcode >= as.numeric("204220033000")) {RGsetEpic@annotation=aEpic}
-    if (RGsetEpic@annotation['array']=="IlluminaHumanMethylation450k") {RGsetEpic@annotation=a450k}
+    if (RGsetEpic@annotation['array']=="IlluminaHumanMethylation450k") {
+        RGsetEpic@annotation=a450k}
     return(RGsetEpic)
 }
 
-CopyQCrmd <- function(runID){
-    msgFunName(pipeLnk, "CopyQCrmd")
-    
-    if (!file.exists(QC_file)) {message(bkRed("QC_file.rmd not found:"), "\n", QC_file)}
-    #fs::file_copy(QC_file, getwd(), overwrite = T)
-    qcFileName = paste0(runID, "_QC.html") # output file name
-    if(file.exists(file.path(getwd(), qcFileName))) {
-        message(qcFileName, "Already Exists! Detete file to output new QC")
-        return(NULL)
+CopyRmdFile <- function(runID, rmdFile){
+    msgFunName(pipeLnk, "CopyRmdFile")
+
+    if (!file.exists(rmdFile)) {message(bkRed("rmdFile.rmd not found:"), "\n", rmdFile)}
+    if(stringr::str_detect(rmdFile, pattern = "QC")==T) {
+        qcFileName = paste0(runID, "_QC.html") # output file name
+        if (file.exists(file.path(getwd(), qcFileName))) {
+            warning(qcFileName, " Already Exists! Detete file to output new QC")
+            return(NULL)
+        }
+    }else{
+        if (file.exists(file.path(getwd(), rmdFile))) {
+            warning(rmdFile, " Already Exists! Detete file to output new rmd")
+            return(NULL)
+        }
     }
-    file.copy(from = QC_file, to = file.path(getwd(),basename(QC_file)), copy.mode = F, overwrite = F)
+    file.copy(
+        from = rmdFile,
+        to = file.path(getwd(), basename(rmdFile)),
+        copy.mode = F,
+        overwrite = F
+    )
     return(qcFileName)
 }
 
@@ -88,9 +101,9 @@ CopyQCrmd <- function(runID){
 # QC REPORT maker: knits the QC RMD file
 generateQCreport <- function(runID=NULL) {
     msgFunName(pipeLnk, "generateQCreport")
-    
+
     if (is.null(runID)){runID<-paste0(basename(getwd()))}
-    qcFileName <- CopyQCrmd(runID)
+    qcFileName <- CopyRmdFile(runID, gb$QC_file)
     if(!is.null(qcFileName)){
         outQCpath <- file.path(getwd(), qcFileName)
         rmdToKnit <- dir(getwd(), "*QC.Rmd", full.names = T)[1]
@@ -127,7 +140,7 @@ launchEmailNotify <- function(runID){
 # FUN: Creates the QC record for the current run on redcap if it does not exist
 CreateRedcapRecord <- function(runID=NULL, recordWord="QC"){
     msgFunName(pipeLnk,"CreateRedcapRecord")
-    
+
     if(is.null(runID)){runID<-paste0(basename(gb$workDir))}
     record = c(record_id = paste0(runID, "_", recordWord), run_number = runID)
     cntrl <- jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
@@ -147,7 +160,7 @@ checkRunOutput <- function(runID) {
     msgFunName(pipeLnk,"checkRunOutput")
     redcapFi <- paste0(runID,"_Redcap.csv")
     csvLocation <- file.path(fs::path_home(),"Desktop", runID, redcapFi)
-    
+
     if (!file.exists(csvLocation)) {
         message(bkRed("File not found:")," ", csvLocation)
         message("QC Report may generate without the Summary Table which needs ", bkGrn(redcapFi))
@@ -236,7 +249,7 @@ ReadSamSheet <- function(samList){
     msgFunName(pipeLnk, "ReadSamSheet")
     msgParams("samList")
     msgParams(samList)
-    
+
     samSh <- gb$GrabSampleSheet()
     xlSheets <- readxl::excel_sheets(samSh)
     redSheet <- as.integer(which(grepl("REDCap",xlSheets)==T))
@@ -247,10 +260,10 @@ ReadSamSheet <- function(samList){
         redSheet <- 3
     }
     message(bkGrn("Sheet Index containing 'REDCap_Import':"), " ", redSheet,"\n")
-    
+
     samSh <- readxl::read_excel(samSh, sheet=redSheet, range = "A1:M97", col_types = c("text"))
     message(bkGrn("SampleSheet:"))
-    
+
     samplesSheet <- as.data.frame(samSh)[samList, 1:13]
     print(samplesSheet)
     return(samplesSheet)
@@ -261,12 +274,12 @@ checkSamSh <- function(samList){
     msgFunName(pipeLnk, "checkSamSh")
     msgParams("samList")
     msgParams(samList)
-    
+
     require(rmarkdown)
     wksh <- ReadSamSheet(samList)
     isMC = sjmisc::str_contains(gb$runID, "MGDM")|sjmisc::str_contains(gb$runID, "MC")
     if(isMC==T){
-        wksh <- NameControl(wksh, wksh$run_number[1])    
+        wksh <- NameControl(wksh, wksh$run_number[1])
     }
     stopifnot(!is.null(wksh))
     rownames(wksh)<- wksh[,1]
@@ -293,11 +306,18 @@ do_report <- function(data = NULL, genCn=F) {
         dat <- getRunData(data)
         RGsetEpic <- getRGset(getwd(), dat$senLi)
         if(genCn==T){generateCNVpng(RGsetEpic,dat$sampleID)}
-        msgRunUp(dat$sampleID,dat$run_id,dat$senLi)
+        msgRunUp(dat$sampleID, dat$run_id, dat$senLi)
         tryCatch(
-            expr={rmarkdown::render(
-                reportMd, "html_document", dat$outFi, getwd(), quiet=FALSE,
-                params = list(token=gb$ApiToken, rundata=dat))},
+            expr = {
+                rmarkdown::render(
+                    reportMd,
+                    "html_document",
+                    dat$outFi,
+                    getwd(),
+                    quiet = FALSE,
+                    params = list(token = gb$ApiToken, rundata = dat)
+                )
+            },
             error=function(e){
                 beepr::beep(1)
                 message(bkRed("Report Generation Failed:"),"\n", dat$outFi)
@@ -313,7 +333,7 @@ loopRender <- function(samList = NULL, data, redcapUp = T){
     #    msgParams(samList, data, redcapUp)
     # Debug: data <- read.csv("samplesheet.csv", strip.white=T)
     stopifnot(!is.null(data))
-    
+
     isMC = sjmisc::str_contains(gb$runID, "MGDM")|sjmisc::str_contains(gb$runID, "MC")
     if(isMC==T){
         data <- NameControl(data, data$RunID[1])
@@ -323,6 +343,7 @@ loopRender <- function(samList = NULL, data, redcapUp = T){
     }
     wksh <- checkSamSh(samList)
     toRun <- getRunList(data, samList)
+    CopyRmdFile(gb$runID, reportMd)
     for (i in toRun) {
         msgProgress(1, i, samList)
         do_report(data = data[i, ], gb$genCn)
@@ -353,16 +374,16 @@ makeReports.v11b6 <- function(runPath = NULL,
                               cpReport = T,
                               redcapUp = T) {
     msgFunName(pipeLnk,"makeReports.v11b6")
-    
+
     assign("genCn", genCn, envir = gb)
     data <- read.csv(sheetName, strip.white=T)
     runID <- paste0(data$RunID[1])
-    
+
     if(file.exists(predictionPath)){
         message("\nLoading data...\n",predictionPath,"\n")
         load(predictionPath)
     }
-    
+
     isMC = sjmisc::str_contains(runID, "MGDM")|sjmisc::str_contains(runID, "MC")
     if(isMC==T){CreateRedcapRecord(runID,"control")}
     loopRender(selectSams, data, redcapUp)
