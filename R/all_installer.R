@@ -819,20 +819,25 @@ checkNeeds <- function(){
         expr={
             if(!("needs" %in% rownames(installed.packages()))){
                 install.packages("needs",dependencies=T,verbose=T, Ncpus = 2)
-                fixNeeds();fixProf()
+                fixNeeds()
+                try(fixProf(), silent=T)
             }else{
-                fixNeeds();fixProf()
+                fixNeeds()
+                try(fixProf(), silent=T)
             }
         },
         error=function(cond){
             devtools::install_github("joshkatz/needs", ref = "development",
                                      dependencies=T,verbose=T,upgrade="always")
-            fixNeeds();fixProf()
+            fixNeeds()
+            try(fixProf(), silent=T)
         },
         warning=function(cond){
-            devtools::install_github("joshkatz/needs", ref = "development",
+            devtools::install_github(
+                "joshkatz/needs", ref = "development",
                                      dependencies=T,verbose=T,upgrade="always")
-            fixNeeds();fixProf()
+            fixNeeds()
+            try(fixProf(), silent=T)
         }
     )
 }
