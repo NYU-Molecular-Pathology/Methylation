@@ -6,12 +6,12 @@ options("install.packages.check.source" = "no")
 #    system("xcode-select -s /Library/Developer/CommandLineTools")
 #}
 
-if (identical(Sys.info()[["machine"]], "x86_64")) {
-    local({
-        path <- sub(":/opt/homebrew/bin", ":/usr/local/homebrew/bin", Sys.getenv("PATH"))
-        Sys.setenv(PATH = path)
-    })
-}
+#if (identical(Sys.info()[["machine"]], "x86_64")) {
+#    local({
+#        path <- sub(":/opt/homebrew/bin", ":/usr/local/homebrew/bin", Sys.getenv("PATH"))
+#        Sys.setenv(PATH = path)
+#    })
+#}
 
 if (!dir.exists(file.path("~", ".R"))) {
     message("No Makevars file in ~/.R")
