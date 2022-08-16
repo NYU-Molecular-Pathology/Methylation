@@ -104,10 +104,10 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL,
         symShape <- shapeVals <- shapeLabels <- NULL
     }
     # Parameters for text & geom_label_repel
-    et <- ggplot2::element_text(size = 16)
+    et <- ggplot2::element_text(size = 12)
     # Creating Main ggplot Object
     groupTsne <- ggplot(tsne_plot, aes(x=tsne_plot$x,y=tsne_plot$y,group=tsne_plot$GROUPS)) +
-        geom_point(aes(x, y, color = tsne_plot$GROUPS, shape = symShape), size = 4, alpha = 0.85)
+        geom_point(aes(x, y, color = tsne_plot$GROUPS, shape = symShape), size = 3, alpha = 0.85)
     # Adding Symbols if provided
     if (symFlags == T) {
         groupTsne <- groupTsne + 
