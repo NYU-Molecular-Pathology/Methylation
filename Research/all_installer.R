@@ -1,10 +1,10 @@
 options("install.packages.compile.from.source" = "No")
 options("install.packages.check.source" = "no")
 
-if(.rs.checkBuildTools("foobar")==FALSE){
-    system("xcode-select --install")
-    system("xcode-select -s /Library/Developer/CommandLineTools")
-}
+#if(.rs.checkBuildTools("foobar")==FALSE){
+#    system("xcode-select --install")
+#    system("xcode-select -s /Library/Developer/CommandLineTools")
+#}
 
 if (identical(Sys.info()[["machine"]], "x86_64")) {
     local({
