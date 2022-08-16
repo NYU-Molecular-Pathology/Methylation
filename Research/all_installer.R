@@ -170,7 +170,7 @@ pkgs <-
         "covr",
         "cowplot",
         "cpp11",
-        "ggplotly",
+        "ggplot2",
         "crayon",
         "credentials",
         "cronR",
