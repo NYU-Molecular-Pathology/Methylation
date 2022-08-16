@@ -478,6 +478,7 @@ pkgs <-
         "rappdirs",
         "rARPACK",
         "raster",
+        "rsvd",
         "RBGL",
         "rcmdcheck",
         "Rcpp",
