@@ -191,10 +191,10 @@ MakeRegularTab <- function(tabNam, objDat) {
 }
 
 # Prints out the table tab headings and tab information based on object parameters provided
-makeDT <- function(tabNam, objDat, pdfFi = NULL, rdNumb = NULL, sam = NULL){
+makeDT <- function(tabNam, objDat, pdfFi = NULL, rdNumb = NULL, sam = NULL, outDir=NULL){
     MakeTabColor(tabNam)
     if (!is.null(pdfFi)) {
-        makePdfTab(pdfFi, gb$outDir)
+        makePdfTab(pdfFi, outDir)
     }
     if (!is.null(rdNumb)) {
         makeRdTab(rdNumb, sam)
@@ -444,6 +444,7 @@ LoopSampleTabs <-function(params){
     samList <- gb$GetSamList(pactName)
     samples <- gb$GrabSamples(samList)
     snvDt <- read.csv(paste0(pactName, "_desc.csv"))
+    outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus")) 
     for (sam in samples) {
         gb$makeNewTab(sam, samList, qcData)
         if (sam %in% snvDt$Test_Case) {
@@ -452,7 +453,7 @@ LoopSampleTabs <-function(params){
             makeDT("In-House FrameShifts/INDEL", objDat = snvTab)
             cnvTab <- snvDt[samRows & snvDt$Variant == "CNV",]
             cnvTab <- checkDataDump(sam, cnvTab)
-            makeDT("CNV", cnvTab, pdfFi = sam)
+            makeDT("CNV", cnvTab, pdfFi = sam, outDir=outDir)
             methCn <- snvDt[samRows & snvDt$Variant == "Methylation",]
             makeMethTab(sam, methCn, methData)
         } else{
