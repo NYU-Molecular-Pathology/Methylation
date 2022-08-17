@@ -62,6 +62,43 @@ CheckMntDirs <- function(critialMnts, outDir) {
     message("Working directory changed to:\n", outDir)
 }
 
+CheckFiExist <- function(pactName, philipsFtp) {
+    methSheet <- paste0(pactName, "_MethylMatch.xlsx")
+    qcTsv <- paste0(pactName, "-QC.tsv")
+    descrip <- paste0(pactName, "_desc.csv")
+    samsheet <- list.files('.', "-SampleSheet.csv", T)[1]
+    stopifnot(file.exists(samsheet) & file.exists(methSheet))
+    stopifnot(file.exists(qcTsv) &
+                  file.exists(descrip) & dir.exists(philipsFtp))
+}
+
+GetMethDf <- function(pactName) {
+    methSheet <- paste0(pactName, "_MethylMatch.xlsx")
+    methData <- as.data.frame(readxl::read_excel(methSheet))
+    methData <- methData[methData$report_complete == "YES", ]
+    return(methData)
+}
+
+GetSamList <- function(pactName) {
+    colFltr <- c("Test_Number","Specimen_ID","Tumor_Content")
+    samsheet <- list.files('.', "-SampleSheet.csv", T)[1]
+    samList <- read.csv(samsheet, skip=19)[, colFltr]
+    return(samList)
+}
+
+GrabSamples <- function(samList){
+    sam <- unique(samList$Test_Number)
+    samples <- sam[sam!=0 & !is.na(sam)]
+    return(samples)
+}
+
+ReadQcFile <- function(pactName){
+    qcTsv <- paste0(pactName, "-QC.tsv")
+    qcData <- read.delim(file=qcTsv)
+    row.names(qcData) <- qcData$Row
+    return(qcData)
+}
+
 makePdfTab <- function(pdfFi, outDir) {
     pdfFi <- file.path(outDir, "cnvpng", paste0(pdfFi, ".png"))
     cat("<span style='color: red;'>",
@@ -407,7 +444,7 @@ LoopSampleTabs <-function(samples, samList, qcData, snvDt, methData){
             methCn <- snvDt[samRows & snvDt$Variant == "Methylation",]
             makeMethTab(sam, methCn, methData)
         } else{
-            message(sam, " is missing from ", descrip)
+            message(sam, " is missing from your Description input File")
             makeBlankRow(sam, snvDt)
         }
         makeAbTab(sam)
