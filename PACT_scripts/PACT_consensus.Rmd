@@ -1,5 +1,4 @@
 ---
-date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
     html_document:
         theme: spacelab
@@ -11,52 +10,28 @@ toc_collapsed: true
 editor_options: 
   chunk_output_type: console
 params:
-  pactName: "PACT-YY-##"
+  pactName: "PACT-22-##"
   userName: "Jonathan Serrano"
   workDir: "/Volumes/CBioinformatics/jonathan/pact/consensus"
+title: "Consensus `r params$pactName`"
+author: "`r params$userName`"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
 ---
 
 ```{r setup, include=FALSE}
 gb <- globalenv(); assign("gb", gb)
 devtools::source_url("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/KnitScripts.R")
-animation::ani.options(autobrowse = FALSE); options(width = 1600)
-knitr::opts_chunk$set(echo = FALSE)
 ```
 
-```{css,echo=FALSE,code=readLines("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/consensus.css")}
+```{css, echo=FALSE,code=readLines("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/consensus.css")}
 ```
 
 ```{r, label='Input Parameters', echo=FALSE, message=TRUE, warning=FALSE, error=FALSE, include=FALSE}
-pactName <- params$pactName #<- "PACT-22-10"
-userName <- params$userName #<- "Jonathan"
-workDir  <- params$workDir # <- "/Volumes/CBioinformatics/jonathan/pact/consensus"
-outDir <- file.path(workDir, paste0(pactName,"_consensus")) # output/input directory
 philipsFtp <- "/Volumes/molecular/Molecular/Philips_SFTP" # Philips datadump path
 methDir <- "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
 critialMnts <- c("/Volumes/CBioinformatics/Methylation/", "/Volumes/molecular/")
-```
-
----
-title: "Consensus `r pactName`"
-author: "`r userName`"
----
-
-```{r, label='Check Data Files', echo=FALSE, warning=FALSE, error=FALSE, include=FALSE}
-gb$CheckMntDirs(critialMnts, outDir)
-methSheet <- paste0(pactName,"_MethylMatch.xlsx") # MethylMatch excel file
-qcTsv <- paste0(pactName,"-QC.tsv") # tsv file that is from QC
-descrip <- paste0(pactName,"_desc.csv") # your concensus file from github
-samsheet <- list.files(pattern = "-SampleSheet.csv", all.files = T)[1]
-stopifnot(file.exists(samsheet) & file.exists(methSheet))
-stopifnot(file.exists(qcTsv) & file.exists(descrip) & dir.exists(philipsFtp))
-methData <- as.data.frame(readxl::read_excel(methSheet))
-methData <- methData[methData$report_complete=="YES",]
-samList <- read.csv(samsheet,skip=19)[, c("Test_Number","Specimen_ID","Tumor_Content")] 
-samples <- unique(samList$Test_Number)
-samples <- samples[samples!=0 & !is.na(samples)]
-qcData <- read.delim(file=qcTsv)
-row.names(qcData) <- qcData$Row
-snvDt <- read.csv(descrip)
+gb$CheckMntDirs(critialMnts, params)
+gb$CheckFiExist(params$pactName, philipsFtp)
 ```
 
 ```{r, include=FALSE}
@@ -65,7 +40,7 @@ htmltools::tagList(plotly::ggplotly(ggplot2::ggplot()))
 ```
 
 ```{r, label='Table Output', echo=FALSE, warning=FALSE, error=FALSE, fig.keep='all', include=TRUE, fig.align="left", fig.show="asis", out.width = '100%', results='asis'}
-gb$CopyPdfsPngs(samList, outDir)
-gb$GetMethCnv(methData, methDir, outDir)
-gb$LoopSampleTabs(samples, samList, qcData, snvDt, methData)
+gb$CopyPdfsPngs(params)
+gb$GetMethCnv(params, methDir)
+gb$LoopSampleTabs(params)
 ```
