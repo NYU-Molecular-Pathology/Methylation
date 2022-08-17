@@ -464,5 +464,18 @@ LoopSampleTabs <-function(params){
     }
 }
 
+loadHtmlTag <- function(){
+    require("tidyverse")
+    library("plotly")
+    require("plotly")
+    require("ggplot2")
+    library("ggplot2")
+    library("DT")
+    htmltools::tagList(DT::datatable(cars, options=list(pageLength = 100, width="100%")))
+    par(ask=F); devAskNewPage(ask = F)
+    #doParallel::registerDoParallel(cores=2)
+    return(htmltools::tagList(plotly::ggplotly(ggplot2::ggplot())))
+}
+
 animation::ani.options(autobrowse = FALSE); options(width = 1600)
 knitr::opts_chunk$set(echo = FALSE)
