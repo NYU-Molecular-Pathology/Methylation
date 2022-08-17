@@ -14,6 +14,7 @@ pkgs <-
         "data.table",
         "plotly",
         "DT",
+        "datasets",
         "pdftools",
         "htmltools",
         "forcats",
@@ -37,7 +38,8 @@ librarian::shelf(pkgs, ask=F)
 
 library("kableExtra")
 
-CheckMntDirs <- function(critialMnts, outDir) {
+CheckMntDirs <- function(critialMnts, params) {
+    outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus")) 
     failMount <-
         lapply(critialMnts, function(mnt) {
             ifelse(!dir.exists(mnt), return(T), return(F))
@@ -293,7 +295,9 @@ convert.plots <- function(tumors, pdfList) {
         )}))
 }
 
-GetMethCnv <- function(methData, methDir, outDir){
+GetMethCnv <- function(params, methDir){
+    methData <- gb$GetMethDf(params$pactName)
+    outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus")) 
     pngDir <- file.path(outDir,"methCNV") # output copy of methylation png files
     methSamples <- paste(methData$record_id,"cnv.png",sep = "_")
     methSamples <- methSamples[methData$report_complete=="YES"]
@@ -308,7 +312,9 @@ GetMethCnv <- function(methData, methDir, outDir){
     }
 }
 # Checks if the facets pdfs have been converted to png
-CopyPdfsPngs <- function(samList, outDir) {
+CopyPdfsPngs <- function(params) {
+    outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus")) 
+    samList <- gb$GetSamList(params$pactName)
     pdfDir <- file.path(outDir,"FACETpdfs") # input facet pdf directory
     pngOutDir <- file.path(outDir,"cnvpng") # output copy of cnvPNG files
     tumors <- checkTumorPdf(samList, pngOutDir)
@@ -431,7 +437,13 @@ makeBlankRow <- function(sam, snvDt) {
     makeDT("In-House FrameShifts/INDEL", objDat = nonMutant)
 }
 
-LoopSampleTabs <-function(samples, samList, qcData, snvDt, methData){
+LoopSampleTabs <-function(params){
+    pactName <- params$pactName
+    methData <- gb$GetMethDf(params$pactName)
+    qcData <- gb$ReadQcFile(pactName)
+    samList <- gb$GetSamList(pactName)
+    samples <- gb$GrabSamples(samList)
+    snvDt <- read.csv(paste0(pactName, "_desc.csv"))
     for (sam in samples) {
         gb$makeNewTab(sam, samList, qcData)
         if (sam %in% snvDt$Test_Case) {
