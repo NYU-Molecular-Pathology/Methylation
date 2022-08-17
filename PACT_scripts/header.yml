@@ -8,3 +8,4 @@ output:
 toc_collapsed: true
 editor_options: 
   chunk_output_type: console
+date: "`r format(Sys.time(), '%d %B, %Y')`"
