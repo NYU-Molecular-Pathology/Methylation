@@ -134,7 +134,7 @@ sanitizeSheet <- function(inputFi, samsheet) {
     if(stringr::str_detect(inputFi,".xlsx")){
     samSh <- readxl::read_excel(inputFi)
     }else{
-        samSh <- as.data.frame(read.csv(inputFi))
+        samSh <- as.data.frame(read.csv(inputFi, strip.white = T))
         }
   samSh <- samSh %>% dplyr::mutate_all(stringr::str_replace, ",", "")
   write.csv(samSh, samsheet, quote = F, row.names = F)
