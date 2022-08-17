@@ -131,7 +131,11 @@ getColors <- function(samTypes) {
 sanitizeSheet <- function(inputFi, samsheet) {
     library("magrittr")
     library("dplyr")
-  samSh <- readxl::read_excel(inputFi)
+    if(stringr::str_detect(inputFi,".xlsx")){
+    samSh <- readxl::read_excel(inputFi)
+    }else{
+        samSh <- as.data.frame(read.csv(inputFi))
+        }
   samSh <- samSh %>% dplyr::mutate_all(stringr::str_replace, ",", "")
   write.csv(samSh, samsheet, quote = F, row.names = F)
   targets <- read.csv(samsheet, strip.white = T)
