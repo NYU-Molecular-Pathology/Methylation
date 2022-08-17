@@ -462,3 +462,6 @@ LoopSampleTabs <-function(params){
         makeAbTab(sam)
     }
 }
+
+animation::ani.options(autobrowse = FALSE); options(width = 1600)
+knitr::opts_chunk$set(echo = FALSE)
