@@ -131,16 +131,18 @@ getColors <- function(samTypes) {
 sanitizeSheet <- function(inputFi, samsheet) {
     library("magrittr")
     library("dplyr")
-    if(stringr::str_detect(inputFi,".xlsx")){
-    samSh <- readxl::read_excel(inputFi)
-    }else{
-        samSh <- as.data.frame(read.csv(inputFi, strip.white = T))
-        }
-  samSh <- samSh %>% dplyr::mutate_all(stringr::str_replace, ",", "")
-  write.csv(samSh, samsheet, quote = F, row.names = F)
-  targets <- read.csv(samsheet, strip.white = T)
-    if(class(targets)!="data.frame"){targets<- as.data.frame(targets)}
-  return(targets)
+    if (stringr::str_detect(inputFi, ".xlsx")) {
+        samSh <- readxl::read_excel(inputFi)
+        samSh <- samSh %>% dplyr::mutate_all(stringr::str_replace, ",", "")
+    } else{
+        samSh <- read.csv(inputFi, strip.white = T)
+    }
+    write.csv(samSh, samsheet, quote = F, row.names = F)
+    targets <- read.csv(samsheet, strip.white = T)
+    if (class(targets) != "data.frame") {
+        targets <- as.data.frame(targets)
+    }
+    return(targets)
 }
 
 animation::ani.options(autobrowse = FALSE); options(width=1200)
