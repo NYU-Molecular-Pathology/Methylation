@@ -86,12 +86,16 @@ search.redcap <- function(rd_numbers, token=NULL, flds=NULL) {
 
 # FUN: Sets your directory and sources the helper functions
 sourceFuns <- function(workingPath = NULL) {
-    mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/"
-    script.list <- c("SetRunParams.R","CopyInputs.R","PACT_scripts/generateCNV.R")
+    mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
+    script.list <-
+        c("R/SetRunParams.R",
+          "R/CopyInputs.R",
+          "PACT_scripts/generateCNV.R")
     if (is.null(workingPath)) {workingPath = getwd()}
     scripts <- paste0(mainHub, script.list)
-
-  invisible(lapply(scripts, function(i){devtools::source_url(i)}))
+    invisible(lapply(scripts, function(i){
+        message("sourcing: ", i)
+        devtools::source_url(i)}))
     gb$setDirectory(workingPath)
     return(gb$defineParams(loadClassifier=F))
 }
