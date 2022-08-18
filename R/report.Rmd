@@ -5,20 +5,22 @@ output:
  html_document: 
    toc: yes
    toc_collapsed: no
-   includes:
-     in_header: logos.html
 editor_options: 
   chunk_output_type: console
 params:
     token: "NONE"
     rundata: NULL
 ---
-<style type="text/css">
-h1.title{color: white; background-image: linear-gradient(to right, indigo, indigo, indigo, white, white); border-radius:18px; padding:5px; border-padding:5px;}
-</style>
+
+```{css,echo=FALSE,code=readLines("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/HeaderStyle.css")}
+```
+
+<div id="wrapper">
+<div id="second">
+<img src="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/dockerScripts/logos/logos.png" width="200px"></div></div>
+
 ```{r global_options, include=FALSE, warning=FALSE}
 stopifnot(!is.null(params$rundata))
-
 message("params$rundata")
 print(params$rundata)
 
@@ -48,9 +50,6 @@ pkgs <- c(
     "doParallel")
 
 librarian::shelf(pkgs, ask=F,verbose=F, warn.conflicts = F, quietly = T)
-#library(progressr)
-#progressr::handlers("txtprogressbar")
-#progressr::handlers(global = TRUE)
 
 require("needs")
 library("knitr")
@@ -90,7 +89,7 @@ getScores <- function(Mset=NULL){
   ex <- which(!names(mnp.v11b6::refset.center) %in% rownames(Mset))
   if (length(ex) > 0)
     refset.center <- mnp.v11b6::refset.center[-ex]
-  betas <- betas[fastmatch::fmatch(names(refset.center), rownames(betas)), ]
+  betas <- betas[match(names(refset.center), rownames(betas)), ]
   betas <- betas - refset.center
   betas <- t(as.matrix(betas, ncol = 1))
   if (length(ex) > 0)
@@ -109,29 +108,9 @@ tsne_cache = compiler::cmpfun(MNPtsne2)
 #tsne_cache <- local(MNPtsne.cmpfun())
 #bookdown::gitbook::html_document2()
 ```
-<style>
-body {font-family: Arial, Helvetica, sans-serif;padding: 10px}
-hr.dashed {border-top: 3px dashed #bbb;}
-hr.dotted {border-top: 3px dotted #bbb;}
-hr.solid {border-top: 3px solid #bbb;}
-hr.rounded {border-top: 8px solid #bbb; border-radius: 5px;}
-div.main-container {max-width: 96% !important; margin-left: 20px;padding: 10px;}
-htmlwidget-4f278c17b77c3d0e3cff {max-width: 50% !important; height: 200px !important;}
-htmlwidget-8fc54d1bca00894e9b67 {max-width: 50% !important; height: 200px !important;}
-</style>
 
-<style type="text/css">
-.main-container {max-width: 96% !important; margin-left:25px; padding: 10px;}
-div.main-container{max-width: 96% !important;margin-left: 20px;padding: 10px;}
-div.container-fluid{max-width: 96% !important; margin-left: 20px;padding: 10px;}
-ul.no-bullets {list-style-type: none;}
-</style>
-
-<hr class="solid">
-<h2 style="border: 4px solid burlywood; border-radius: 10px; padding: 10px;width:fit-content; width:-webkit-fit-content; width:-moz-fit-content;">
-Sample Information 
-</h2>
-<div style="background-image: linear-gradient(180deg, BlanchedAlmond, white); font-size: 16px">
+```{css,echo=FALSE,code=readLines("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/Report-Scripts/ReportStyle.css")}
+```
 
 ```{r 'Sample Info', class.source="bg-success", size="normalsize"}
 	dat <- params$rundata
