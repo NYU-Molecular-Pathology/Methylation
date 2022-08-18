@@ -77,6 +77,18 @@ sanitizeSheet <- function(sheetVals){
     mainSheet$Paired_Normal[mainSheet$Paired_Normal==0|is.na(mainSheet$Paired_Normal)] <-""
     mainSheet$Tumor_Type[mainSheet$Tumor_Type==0] <- "NA"
     mainSheet[,1:16] <- sapply(mainSheet[,1:16], function(x) { gsub("\\\\", "-", x) })
+    controlNames <- "NTC_H20|SC_SERACARE|NC_HAPMAP"
+    controlSamples <- grepl(pattern=controlNames, mainSheet$Sample_Name)
+    if(table(controlSamples)[['TRUE']]!=3){
+        warning("There are not 3 control samples, either NTC_H20, SC_SERACARE, or NC_HAPMAP is missing or added")
+    }else{
+        controlIndexes <- which(controlSamples==T)
+        mainSheet[controlIndexes,'Paired_Normal'] <- ""
+    }
+    if(any(duplicated(mainSheet$Sample_ID))){
+        warning("There are duplicated Sample_ID in the SampleSheet")
+        print(mainSheet$Sample_ID[duplicated(mainSheet$Sample_ID)])
+    }
     return(mainSheet)
 }
 
@@ -99,7 +111,8 @@ parseExcelFile <- function(inputFi){
     print(as.data.frame(shNames))
     sh <- which(grepl("SampleSheet", shNames, ignore.case = T))[1]
     sh2 <- which(grepl("Philips", shNames, ignore.case = T))[1]
-    sheetHead <- as.data.frame(readxl::read_excel(inputFi,sheet = shNames[sh], na="", range="A1:B17", col_types = "text", col_names=F))
+    sheetHead <- as.data.frame(readxl::read_excel(
+        inputFi,sheet = shNames[sh], na="", range="A1:B17", col_types = "text", col_names=F))
     sheetHead[is.na(sheetHead)] <- ""
     sheetHead <- rbind(sheetHead,c("",""),c("[Data]",""))
     sheetVals <- as.data.frame(readxl::read_excel(inputFi,sheet = shNames[sh],skip = 19,col_types = "text"))
@@ -114,8 +127,19 @@ parseExcelFile <- function(inputFi){
 # Generate Email notification and attach csv file
 emailNotify <- function(record,rcon){
     datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
-    res<-RCurl::postForm(rcon$url, token=rcon$token, content='record',format='json',type='flat', data = datarecord, returnContent = 'ids', returnFormat = 'csv')
-    cat(res);message("\n",dsh2,"Email Notification Created",dsh2)
+    res <-
+        RCurl::postForm(
+            rcon$url,
+            token = rcon$token,
+            content = 'record',
+            format = 'json',
+            type = 'flat',
+            data = datarecord,
+            returnContent = 'ids',
+            returnFormat = 'csv'
+        )
+    cat(res)
+    message("\n",dsh2,"Email Notification Created",dsh2)
 }
 
 # Connect to REDCap and send email attachments of csv file ----
