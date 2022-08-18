@@ -63,12 +63,28 @@ rlis = getOption("repos")
 rlis["CRAN"] = "http://cran.us.r-project.org"
 options(repos = rlis)
 
-if(!require("devtools")){install.packages("devtools", dependencies=T, verbose=T, quiet=T, ask=F)}
-if(!require("librarian")){install.packages("librarian", dependencies=T,verbose=T,ask=F, quiet = FALSE)}
-library("devtools")
 
-#if(!require("rstudioapi")){devtools::install_github("rstudio/rstudioapi", dependencies = T, upgrade = "never")}
+loadLibrary <- function(pkgName) {
+    suppressPackageStartupMessages(library(
+        pkgName,
+        quietly = TRUE,
+        logical.return = TRUE,
+        warn.conflicts = FALSE,
+        character.only = TRUE
+    ))
+}
 
+checkRequire <- function(pkgName){
+    return(
+        suppressWarnings(!require(pkgName,character.only = T,warn.conflicts = FALSE))
+    )
+}
+
+if(checkRequire("devtools")){install.packages("devtools", dependencies=T, verbose=T, quiet=T, ask=F)}
+if(checkRequire("librarian")){install.packages("librarian", dependencies=T,verbose=T,ask=F, quiet = FALSE)}
+loadLibrary("devtools")
+
+#if(checkRequire("rstudioapi")){devtools::install_github("rstudio/rstudioapi", dependencies = T, upgrade = "never")}
 # if(rstudioapi::buildToolsCheck()==FALSE){
 #     system("xcode-select --install")
 #     system("xcode-select -s /Library/Developer/CommandLineTools")
@@ -133,9 +149,7 @@ pkgs <-
         "broom",
         "bs4Dash",
         "BSgenome",
-        "BSgenome.Celegans.UCSC.ce2",
         "BSgenome.Hsapiens.NCBI.GRCh38",
-        "BSgenome.Scerevisiae.UCSC.sacCer2",
         "bslib",
         "bumphunter",
         "cachem",
@@ -325,13 +339,11 @@ pkgs <-
         "htmlwidgets",
         "httpuv",
         "httr",
-        #"ids",
         "igraph",
         "IlluminaHumanMethylation450kanno.ilmn12.hg19",
         "IlluminaHumanMethylation450kmanifest",
         "IlluminaHumanMethylationEPICanno.ilm10b2.hg19",
         "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
-        "IlluminaHumanMethylationEPICmanifest",
         "illuminaio",
         "impute",
         "ini",
@@ -554,8 +566,6 @@ pkgs <-
         "snow",
         "sourcetools",
         "sparkline",
-        "SparseM",
-        "sparseMatrixStats",
         "spatial",
         "splines",
         "sqldf",
@@ -603,17 +613,9 @@ pkgs <-
         "tzdb",
         "units",
         "urca",
-        "usethis",
         "utf8",
         "utils",
         "uuid",
-        "VariantAnnotation",
-        "vars",
-        "vctrs",
-        "vdiffr",
-        "viridis",
-        "visNetwork",
-        "vroom",
         "waiter",
         "waldo",
         "wateRmelon",
@@ -633,8 +635,6 @@ pkgs <-
         "xts",
         "XVector",
         "yaml",
-        "yulab.utils",
-        "zeallot",
         "zip",
         "zlibbioc",
         "zoo"
@@ -717,7 +717,6 @@ preReqPkgs <- c(
     'genefilter',
     'illuminaio',
     'IlluminaHumanMethylationEPICanno.ilm10b2.hg19',
-    'IlluminaHumanMethylationEPICmanifest',
     'DNAcopy',
     'rtracklayer',
     'Biostrings',
@@ -751,7 +750,7 @@ biocPkgs <-
 
 message("Version of Clang:"); system("gcc --version")
 
-if (!require("BiocManager")) {
+if (checkRequire("BiocManager")) {
     install.packages(
         "BiocManager",
         dependencies = T,
@@ -759,39 +758,32 @@ if (!require("BiocManager")) {
         ask = F
     )
 }
-library("devtools")
-library("librarian")
-library("BiocManager")
-if (!require("Biobase")) {BiocManager::install("Biobase", update = F, ask = F)}
-library("Biobase")
+loadLibrary("devtools")
+loadLibrary("librarian")
+loadLibrary("BiocManager")
+if (checkRequire("Biobase")) {BiocManager::install("Biobase", update = F, ask = F)}
+loadLibrary("Biobase")
 
-urlPaths <-
-    c(
-        'https://cran.r-project.org/bin/macosx/contrib/4.2/targets_0.12.1.tgz',
-        'https://cran.r-project.org/bin/macosx/contrib/4.2/sf_1.0-7.tgz',
-        'https://cran.r-project.org/bin/macosx/contrib/4.2/terra_1.5-21.tgz'
-    )
-
-#for(url in urlPaths){install.packages(url, repos = NULL, type = .Platform$pkgType, dependencies=T)}
-#if(!require("S4Vectors")){BiocManager::install("S4Vectors", update = F, ask = F)}
-#if(!require("MASS")){install.packages("MASS",type = "binary", update = F, ask = F)}
+#if(checkRequire("S4Vectors")){BiocManager::install("S4Vectors", update = F, ask = F)}
+#if(checkRequire("MASS")){install.packages("MASS",type = "binary", update = F, ask = F)}
 # Load/install missing pacakges without asking
 
 suppressWarnings(librarian::shelf(corePkgs, ask = F, update_all = F, quiet = FALSE))
 suppressWarnings(librarian::shelf(preReqPkgs, ask = F, update_all = F, quiet = FALSE))
-gc()
+invisible(gc())
+message("Loading BioConductor Packages and IlluminaHumanMethylation Manifest...")
 suppressWarnings(librarian::shelf(biocPkgs, ask = F, update_all = F, quiet = FALSE))
-if(!require("IlluminaHumanMethylationEPICmanifest")){
+if(checkRequire("IlluminaHumanMethylationEPICmanifest")){
     devtools::install_github(repo = "mwsill/IlluminaHumanMethylationEPICmanifest",
                              dependencies = T,
                              upgrade = "never")
 }
 
-if(suppressWarnings(!require("mgmtstp27"))){
+if(checkRequire("mgmtstp27")){
     gitLink <- "https://github.com/badozor/mgmtstp27/raw/master/archive/mgmtstp27_0.6-3.tar.gz"
     install.packages(gitLink, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F)
 }
-gc()
+invisible(gc())
 
 fixProf <- function() {
     txt1 <- "^[:blank:]*autoload\\(\"needs\", \"needs\"\\)"
@@ -851,21 +843,22 @@ checkNeeds()
 
 spat_config <- '--with-proj-lib=/usr/local/lib/ --with-proj-include=/usr/local/include/'
 options(configure.args = c("sf" = spat_config, "rgdal" = spat_config))
-gc()
-if(!require("sf")){
-    install.packages(c("sf", "rgdal"), type = "source", dependencies=T, verbose=T, Ncpus = 4)
+if(checkRequire("sf")){
+    install.packages(c("sf"), type = "source", dependencies=T, verbose=T, Ncpus = 4)
 }
-gc()
+if(checkRequire("rgdal")){
+    install.packages(c("rgdal"), type = "source", dependencies=T, verbose=T, Ncpus = 4)
+}
+invisible(gc())
 system("export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib")
-#system("brew install proj")
 options("install.packages.compile.from.source" = "No")
 options("install.packages.check.source" = "no")
-library("BiocManager")
-library("Biobase")
+loadLibrary("BiocManager")
+loadLibrary("Biobase")
 
 terraDep <- c('tinytest', 'ncdf4', 'leaflet')
 suppressWarnings(librarian::shelf(terraDep, ask = F, update_all = F, quiet = FALSE))
-if(!require("terra")) {
+if(checkRequire("terra")) {
     install.packages(
         'terra',
         repos = 'https://rspatial.r-universe.dev',
@@ -875,17 +868,17 @@ if(!require("terra")) {
     )
 }
 
-if(!require("FField")){
+if(checkRequire("FField")){
     gitLink <- "https://cran.r-project.org/src/contrib/Archive/FField/FField_0.1.0.tar.gz"
     install.packages(gitLink, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F)
 }
 
-if (!require("GenVisR")) {
+if (checkRequire("GenVisR")) {
     devtools::install_github("griffithlab/GenVisR", dependencies = T, upgrade = "never")
 }
-gc()
+invisible(gc())
 suppressWarnings(librarian::shelf(pkgs, ask = F, update_all = F, quiet = FALSE))
-gc()
-if (!require("UniD")) {
+invisible(gc())
+if (checkRequire("UniD")) {
 try(install.packages("/Volumes/CBioinformatics/Methylation/UniD/", type="source", repos=NULL), silent=T)
 }
