@@ -74,10 +74,10 @@ getRGset <- function(runPath, sentrix){
 
 CopyRmdFile <- function(runID, rmdFile){
     msgFunName(pipeLnk, "CopyRmdFile")
-
+    message("runID: ", runID, " rmdFile: ",rmdFile)
     if (!file.exists(rmdFile)) {message(bkRed("rmdFile.rmd not found:"), "\n", rmdFile)}
+    qcFileName = paste0(runID, "_QC.html") # output file name
     if(stringr::str_detect(rmdFile, pattern = "QC")==T) {
-        qcFileName = paste0(runID, "_QC.html") # output file name
         if (file.exists(file.path(getwd(), qcFileName))) {
             warning(qcFileName, " Already Exists! Detete file to output new QC")
             return(NULL)
