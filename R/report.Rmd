@@ -15,8 +15,7 @@ params:
 ```{css,echo=FALSE,code=readLines("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/HeaderStyle.css")}
 ```
 
-<div id="wrapper">
-<div id="second">
+<div id="wrapper"><div id="second">
 <img src="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/dockerScripts/logos/logos.png" width="200px"></div></div>
 
 ```{r global_options, include=FALSE, warning=FALSE}
@@ -81,7 +80,6 @@ if(getRversion() >= 4.0){ #Sys.getenv("RSTUDIO") == "1" && !nzchar(Sys.getenv("R
 
 # load ggplot2 silently
 supM(library(verbose=F,warn.conflicts = F, quietly = T, package=ggplot2))
-
 
 getScores <- function(Mset=NULL){
 	if(!is.null(Mset)){
@@ -350,7 +348,7 @@ Tsne_1 <- res$Y[,1]; Tsne_2 <- res$Y[,2]
 plTxt <- paste0("<b>",sampleID,"</b>")
 t1 = Tsne_1[2802]; t2 = Tsne_2[2802]
 # Arrow annotation for sample
-a <- list(x = t1, y = t2, text = plTxt, xref = "x", yref = "y", size = 0.7, 
+a <- list(x = t1, y = t2, text = plTxt, xref = "x", yref = "y", size = 0.6, 
           bgcolor = 'rgba(255, 255, 255, 0.5)',
           font = list(size = 13, color = "dimgray"), showarrow = T, 
           arrowhead = 0, ax = 50, ay = -50, arrowsize = 1, arrowcolor = "orange")
@@ -367,7 +365,7 @@ b2 <- c(list(title = "T-sne 2"), d1)
 m1 <- list(size = 12, line = list(width = 1.7, color = 'DarkSlateGrey'))
 
 theplot <- plotly::plot_ly(x = ~ Tsne_1, y = ~ Tsne_2, color = ~methclass, colors = me.col, opacity = 0.9, 
-                           marker = list(size = 5), font = f2)
+                           marker = list(size = 4), font = f2)
 theplot <- theplot %>%
 	plotly::layout(type = "scatter", shapes = list(vline(t1), hline(t2))) %>%
 	plotly::layout(legend = list(orientation = "h", xanchor = "center")) %>%
