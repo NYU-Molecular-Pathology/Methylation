@@ -84,7 +84,7 @@ getDefaults <- function() {
         clinOut = paste0(file.path(moVol, "MOLECULAR/MethylationClassifier")),
         rsch.idat = paste0(file.path(rsVol,"idats")),
         clin.idat = paste0(file.path(moVol, "MOLECULAR/iScan")),
-        QC_file = paste0(system.file('Methyl_QC.Rmd', package = "mnp.v11b6")),
+        QC_file = paste0("~/Methyl_QC.Rmd"),
         baseDir = paste0(file.path(cbVol, "Methylation/Clinical_Runs")),
         stringsAsFactors=F
     )

@@ -41,7 +41,7 @@ getExcelPath <- function(inputSheet, pathType=1){
     drive = file.path("", "Volumes", "molecular", "MOLECULAR LAB ONLY")
     folder = file.path("NYU PACT Patient Data", "Workbook")
     runyr <- stringr::str_split_fixed(inputSheet, "-", 3)[, 2]
-    ending <-ifelse(pathType==1,".xlsm","_FinalExportedList.xlsx")
+    ending <- ifelse(pathType==1,".xlsm","_FinalExportedList.xlsx")
     return(file.path(drive, folder, paste0("20", runyr),inputSheet,
                      paste0(inputSheet, ending)))
 }
@@ -57,7 +57,19 @@ sanitizeSheet <- function(sheetVals){
     }
     mainSheet$Paired_Normal[mainSheet$Paired_Normal==0|is.na(mainSheet$Paired_Normal)] <-""
     mainSheet$Tumor_Type[mainSheet$Tumor_Type==0] <- "NA"
-    mainSheet[,1:16] <- sapply(mainSheet[,1:16], function(x) { gsub("\\\\", "-", x) })
+    mainSheet[,1:16] <- sapply(mainSheet[,1:16], function(x){gsub("\\\\", "-", x) })
+    controlNames <- "NTC_H20|SC_SERACARE|NC_HAPMAP"
+    controlSamples <- grepl(pattern=controlNames, mainSheet$Sample_Name)
+    if(table(controlSamples)[['TRUE']]!=3){
+        warning("There are not 3 control samples, either NTC_H20, SC_SERACARE, or NC_HAPMAP is missing or added")
+    }else{
+        controlIndexes <- which(controlSamples==T)
+        mainSheet[controlIndexes,'Paired_Normal'] <- ""
+    }
+    if(any(duplicated(mainSheet$Sample_ID))){
+        warning("There are duplicated Sample_ID in the SampleSheet")
+        print(mainSheet$Sample_ID[duplicated(mainSheet$Sample_ID)])
+    }
     return(mainSheet)
 }
 
@@ -69,7 +81,6 @@ getPhilipsGender <- function(mainSheet,inputFi, sh2){
     cnvSheet$Gender <- philipVals$Gender[match(cnvSheet$Test_Number, philipVals$`Test Number`)]
     cnvPath <- "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
     write.table(cnvSheet,quote=F, sep='\t', file=file.path(cnvPath,paste0(runId,".tsv")),row.names=F)
-    
 }
 
 # Parses xlsx file and writes as csv file -----
@@ -77,16 +88,23 @@ parseExcelFile <- function(inputFi){
     shNames <- readxl::excel_sheets(inputFi)
     sh <- which(grepl("SampleSheet", shNames, ignore.case = T))[1]
     sh2 <- which(grepl("Philips", shNames, ignore.case = T))[1]
-    sheetHead <- as.data.frame(readxl::read_excel(inputFi,sheet = shNames[sh], na="", range="A1:B17", col_types = "text", col_names=F))
+    sheetHead <- as.data.frame(readxl::read_excel(
+        inputFi,sheet = shNames[sh], na="", range="A1:B17", col_types = "text", col_names=F))
     sheetHead[is.na(sheetHead)] <- ""
-    sheetHead <- rbind(sheetHead,c("",""),c("[Data]",""))
-    sheetVals <- as.data.frame(readxl::read_excel(inputFi,sheet = shNames[sh],skip = 19,col_types = "text"))
+    sheetHead <- rbind(sheetHead, c("",""), c("[Data]",""))
+    sheetVals <-
+        as.data.frame(readxl::read_excel(
+            inputFi,
+            sheet = shNames[sh],
+            skip = 19,
+            col_types = "text"
+        ))
     mainSheet <- sanitizeSheet(sheetVals)
     getPhilipsGender(mainSheet,inputFi, sh2)
     outFile <- file.path("~","Desktop",paste(mainSheet[1,"Run_Number"],"SampleSheet.csv",sep="-"))
-    write.table(sheetHead,sep=",", file=outFile, row.names=F, col.names=F,quote=F)
+    write.table(sheetHead, sep=",", file=outFile, row.names=F, col.names=F, quote=F)
     controls <- which(grepl(pattern="NTC_H20|NC_HAPMAP|SC_SERACARE", mainSheet$Sample_Name))
-    mainSheet$Paired_Normal[controls] <-""
+    mainSheet$Paired_Normal[controls] <- ""
     suppressWarnings(write.table(mainSheet,sep=",", file=outFile, row.names=F, col.names=T, append=T,quote=F))
     return(c(runId=mainSheet[1,"Sample_Project"], outFile=outFile))
 }
