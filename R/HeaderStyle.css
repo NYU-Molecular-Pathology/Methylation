@@ -7,3 +7,11 @@
     overflow: auto;
     padding: 1em;
 }
+
+h1.title {
+    color: white;
+    background-image: linear-gradient(to right, indigo, indigo, indigo, white, white);
+    border-radius: 18px;
+    padding: 5px;
+    border-spacing: 5px;
+}
