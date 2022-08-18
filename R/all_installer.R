@@ -64,7 +64,7 @@ rlis["CRAN"] = "http://cran.us.r-project.org"
 options(repos = rlis)
 
 if(!require("devtools")){install.packages("devtools", dependencies=T, verbose=T, quiet=T, ask=F)}
-if(!require("librarian")){install.packages("librarian", dependencies=T,verbose=T,ask=F)}
+if(!require("librarian")){install.packages("librarian", dependencies=T,verbose=T,ask=F, quiet = FALSE)}
 library("devtools")
 
 #if(!require("rstudioapi")){devtools::install_github("rstudio/rstudioapi", dependencies = T, upgrade = "never")}
@@ -363,7 +363,6 @@ pkgs <-
         "lazyeval",
         "leaps",
         "lfda",
-        "librarian",
         "lifecycle",
         "limma",
         "lintr",
@@ -778,10 +777,10 @@ urlPaths <-
 #if(!require("MASS")){install.packages("MASS",type = "binary", update = F, ask = F)}
 # Load/install missing pacakges without asking
 
-suppressWarnings(librarian::shelf(corePkgs, ask = F, update_all = F))
-suppressWarnings(librarian::shelf(preReqPkgs, ask = F, update_all = F))
+suppressWarnings(librarian::shelf(corePkgs, ask = F, update_all = F, quiet = FALSE))
+suppressWarnings(librarian::shelf(preReqPkgs, ask = F, update_all = F, quiet = FALSE))
 gc()
-suppressWarnings(librarian::shelf(biocPkgs, ask = F, update_all = F))
+suppressWarnings(librarian::shelf(biocPkgs, ask = F, update_all = F, quiet = FALSE))
 if(!require("IlluminaHumanMethylationEPICmanifest")){
     devtools::install_github(repo = "mwsill/IlluminaHumanMethylationEPICmanifest",
                              dependencies = T,
@@ -865,7 +864,7 @@ library("BiocManager")
 library("Biobase")
 
 terraDep <- c('tinytest', 'ncdf4', 'leaflet')
-suppressWarnings(librarian::shelf(terraDep, ask = F, update_all = F))
+suppressWarnings(librarian::shelf(terraDep, ask = F, update_all = F, quiet = FALSE))
 if(!require("terra")) {
     install.packages(
         'terra',
@@ -885,7 +884,7 @@ if (!require("GenVisR")) {
     devtools::install_github("griffithlab/GenVisR", dependencies = T, upgrade = "never")
 }
 gc()
-suppressWarnings(librarian::shelf(pkgs, ask = F, update_all = F))
+suppressWarnings(librarian::shelf(pkgs, ask = F, update_all = F, quiet = FALSE))
 gc()
 if (!require("UniD")) {
 try(install.packages("/Volumes/CBioinformatics/Methylation/UniD/", type="source", repos=NULL), silent=T)
