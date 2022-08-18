@@ -116,6 +116,8 @@ generateQCreport <- function(runID=NULL) {
         qcCache <- stringr::str_replace_all(string = rmdToKnit, ".Rmd", "_cache")
         unlink(qcCache, recursive = T) #clear cache
         gb$uploadToRedcap(outQCpath, F)
+    }else{
+        message("Skipping QC render: QC file already exists in the directory.  Delete QC rmd and QC.html to generate new output.")
     }
 }
 
