@@ -8,6 +8,7 @@ msgFunName <- function(pthLnk, funNam){
 }
 mkBlue <- function(strVar){return(crayon::white$bgBlue(strVar))}
 mkGrn <- function(strVar){return(crayon::white$bgGreen$bold(strVar))}
+mkRed <- function(strVar){return(crayon::white$bgRed$bold(strVar))}
 
 # FUN: Generate CNV image
 saveCNVhtml <- function(data) {
@@ -80,12 +81,11 @@ checkRedcapRecord <- function(recordName, fieldName='classifier_pdf'){
     )
     response <- httr::POST(url, body = formData, encode = "form")
     result <- httr::content(response)[[1]]
-    return(result[[fieldName]]=="")
+    return(result[[fieldName]])
 }
 
-writeLogFi <- function(recordName, isHtml=T){
-    logFile = "upload_log.tsv"
-    message("Check ",logFile,"\n", crayon::white$bgRed(recordName[1]), " already has data in REDCap:")
+writeLogFi <- function(recordName, isHtml=T, logFile = "upload_log.tsv"){
+    message("Check ",logFile,"\n", mkRed(recordName[1]), " already has data in REDCap")
     if(isHtml==T){
     i = paste(recordName[1], "already has an html file in REDCap\n")
     write.table(i, file = logFile, append = TRUE, quote = F, sep = '\t', row.names = F, col.names = F)
@@ -101,8 +101,10 @@ loopRedcapImport <-function(data){
     if(!is.null(data)){
     for (n in 1:nrow(data)) {
         record=c(data[n,])
+        isEmpty <- checkRedcapRecord(record$record_id, "barcode_and_row_column")
+        if(isEmpty==""){
         datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
-        message(crayon::bgBlue("Record Uploaded:"), datarecord)
+        message(crayon::bgBlue("Record Data Uploaded:"), datarecord)
         RCurl::postForm(
             apiLink,
             token = gb$ApiToken,
@@ -112,7 +114,18 @@ loopRedcapImport <-function(data){
             data = datarecord,
             overwriteBehavior = 'normal'
         )
-    }
+        } else{
+
+            if(record$barcode_and_row_column == isEmpty){
+                message(mkRed(record$record_id), " already has the same Sentrix ID on REDCap: ", isEmpty)
+            }else{
+                warning(mkRed("Sentrix ID is already on REDCap!"))
+                message("Samplesheet Sentrix ID is: ", record$barcode_and_row_column)
+                message("The Sentrix ID on REDCap is: ", isEmpty)
+                writeLogFi(record$record_id, isHtml=F, logFile = "import_log.tsv")
+            }
+        }
+        }
     }else{message("Nothing imported to REDCap. Dataframe is null!")}
 }
 
@@ -123,7 +136,7 @@ GetRedcapCsv <- function(samsheet) {
     if (length(samsheet) == 1) {
         data <- read.csv(samsheet, stringsAsFactors = F)
         if (any(duplicated(data$record_id))) {
-            warning("Remove duplicate rows in the REDCap csv dataframe:")
+            message(mkRed("Remove duplicate rows in the REDCap csv dataframe:"))
             print(data$record_id[duplicated(data$record_id)])
             data = data[!duplicated(data$record_id), ]
         }
@@ -136,13 +149,20 @@ GetRedcapCsv <- function(samsheet) {
 }
 
 CheckImportData <- function(rawCsv){
+    msgFunName(cpOutLnk, "CheckImportData")
     message("Checking REDCap for existing data:")
-    toImport <- unlist(lapply(rawCsv$record_id, FUN=function(rd){checkRedcapRecord(rd, "classifier_value")}))
+    toImport <-
+        unlist(lapply(
+            rawCsv$record_id,
+            FUN = function(rd) {
+                return(checkRedcapRecord(rd, "classifier_value")=="")
+            }
+        ))
     if(any(!toImport)){
-        message("The following records already have an existing classifier_value and will not be over-written in REDCap:")
+        message("The records already have existing classifier_value and will not be over-written in REDCap:")
         toSkip <- rawCsv[!toImport,]
         print(toSkip)
-        invisible(lapply(1:length(toSkip), function(x){writeLogFi(as.data.frame(toSkip[x,]), isHtml=F)}))
+        invisible(lapply(1:nrow(toSkip), function(x){writeLogFi(as.data.frame(toSkip[x,]), isHtml=F)}))
         rawCsv <- rawCsv[toImport,]
     }
     return(rawCsv)
@@ -246,16 +266,25 @@ importRedcapStart <- function(nfldr){
     msgFunName(cpOutLnk, "importRedcapStart")
     samSh <- GrabSampleSheet()
     sampleNumb <- getTotalSamples(samSh)
-    sh_Dat <- suppressMessages(as.data.frame(
-        readxl::read_excel(samSh,sheet=3,range="A1:N97", col_types=c("text")))[1:sampleNumb,1:13])
+    sh_Dat <- suppressMessages(as.data.frame(readxl::read_excel(
+        samSh,sheet=3,range="A1:N97", col_types=c("text")))[1:sampleNumb,1:13])
     sh_Dat <- AddPngFilePath(sh_Dat)
-    loopRedcapImport(sh_data)
+    runID <- paste0(sh_Dat$run_number[1])
+    sh_Dat <- gb$NameControl(sh_Dat, runId=runID)
+    sh_Dat <- CheckImportData(sh_Dat)
+    if(nrow(sh_Dat)>0) {
+        loopRedcapImport(sh_Dat)
+    }else{
+       message(mkGrn("No new data to import from SampleSheet Data:"),"\n", samSh)
+    }
 }
 
 callApiImport <- function(rcon,
                           recordName,
                           runID){
     message(mkBlue("Importing Record:"))
+    isEmpty <- checkRedcapRecord(recordName, "run_number")
+    if(isEmpty==''){
     data = data.frame(record_id = recordName, run_number = runID)
     logfi = paste0(recordName,"_redcapLog.txt")
     tryCatch(
@@ -270,16 +299,18 @@ callApiImport <- function(rcon,
         },
         error = function(e) {
             message(crayon::white$bgRed(paste(data$record_id, "failed import data to REDCap:")), "\n", e$message)}
-    )
+    )}else{
+        message(recordName, " already has an assigned run_number: ", isEmpty)
+        writeLogFi(recordName, isHtml=F, logFile = "import_log.tsv")
+    }
 }
 
-callApiFile <- function(rcon,
-                        recordName,
-                        ovwr=T)
-{
+callApiFile <- function(rcon, recordName, ovwr=T){
     recordFi <- paste0(recordName, ".html")
     message("\n", mkBlue("Importing Record File:"),paste0(" ", recordFi))
-    if(ovwr==F){writeLogFi(recordName)}
+    if(ovwr==F) {
+        writeLogFi(recordName)
+    }else{
     tryCatch(
         expr = {
             suppressWarnings(redcapAPI::importFiles(
@@ -296,6 +327,7 @@ callApiFile <- function(rcon,
             message(crayon::white$bgRed(e$message))
         }
     )
+    }
 }
 
 
@@ -311,11 +343,11 @@ uploadToRedcap <- function(file.list,
     htmlLi <- stringr::str_replace_all(basename(file.list), ".html", "")
     for (recordName in htmlLi) {
         callApiImport(rcon, recordName, runID)
-        isEmpty <- checkRedcapRecord(recordName)
+        isEmpty <- checkRedcapRecord(recordName)==''
         callApiFile(rcon, recordName, isEmpty)
     }
     if (deskCSV == T) {
-        try(importDesktopCsv(rcon), outFile = "copyLog.txt")
+        try(importDesktopCsv(rcon), outFile = "importDesktopRedcapLog.txt")
     }
 }
 
@@ -323,7 +355,7 @@ uploadToRedcap <- function(file.list,
 importSingle <- function(sh_Dat) {
     msgFunName(cpOutLnk, "importSingle")
     sh_Dat <- AddPngFilePath(sh_Dat)
-    recordEmpty <- checkRedcapRecord(sh_Dat$record_id, fieldName = "well_number")
+    recordEmpty <- checkRedcapRecord(sh_Dat$record_id, fieldName = "well_number")==''
     record=sh_Dat$record_id
     if(recordEmpty){loopRedcapImport(sh_Dat)
     }else{
