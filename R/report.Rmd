@@ -12,7 +12,26 @@ params:
     rundata: NULL
 ---
 
-```{css,echo=FALSE,code=readLines("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/HeaderStyle.css")}
+```{css,echo=FALSE}
+<style type="text/css">
+#wrapper {
+    width: 600px;
+    float:right;
+}
+#second {
+    float:right; /* add this */
+    overflow: auto;
+    padding: 1em;
+}
+
+h1.title {
+    color: white;
+    background-image: linear-gradient(to right, indigo, indigo, indigo, white, white);
+    border-radius: 18px;
+    padding: 5px;
+    border-spacing: 5px;
+}
+</style>
 ```
 
 <div id="wrapper"><div id="second">
