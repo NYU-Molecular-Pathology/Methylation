@@ -479,3 +479,4 @@ loadHtmlTag <- function(){
 
 animation::ani.options(autobrowse = FALSE); options(width = 1600)
 knitr::opts_chunk$set(echo = FALSE)
+if(!require("xfun")){install.packages("xfun", ask=F)}
