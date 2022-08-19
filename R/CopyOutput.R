@@ -282,26 +282,33 @@ importRedcapStart <- function(nfldr){
 callApiImport <- function(rcon,
                           recordName,
                           runID){
-    message(mkBlue("Importing Record:"))
+
     isEmpty <- checkRedcapRecord(recordName, "run_number")
-    if(isEmpty==''){
-    data = data.frame(record_id = recordName, run_number = runID)
-    logfi = paste0(recordName,"_redcapLog.txt")
-    tryCatch(
-        expr = {
-            cat(redcapAPI::importRecords(
-                rcon,
-                data,
-                overwriteBehavior = "normal",
-                returnContent = "ids",
-                logfile=logfi
-            ),sep = "\n\n")
-        },
-        error = function(e) {
-            message(crayon::white$bgRed(paste(data$record_id, "failed import data to REDCap:")), "\n", e$message)}
-    )}else{
+    if (isEmpty == '') {
+        message(mkBlue("Importing Record:"))
+        data = data.frame(record_id = recordName, run_number = runID)
+        logfi = paste0(recordName, "_redcapLog.txt")
+        tryCatch(
+            expr = {
+                cat(
+                    redcapAPI::importRecords(
+                        rcon,
+                        data,
+                        overwriteBehavior = "normal",
+                        returnContent = "ids",
+                        logfile = logfi
+                    ),
+                    sep = "\n\n"
+                )
+            },
+            error = function(e) {
+                message(mkRed(paste(
+                    data$record_id, "failed import data to REDCap:")), "\n", e$message)
+            }
+        )
+    } else{
         message(recordName, " already has an assigned run_number: ", isEmpty)
-        writeLogFi(recordName, isHtml=F, logFile = "import_log.tsv")
+        writeLogFi(recordName, isHtml = F, logFile = "import_log.tsv")
     }
 }
 
@@ -355,10 +362,11 @@ uploadToRedcap <- function(file.list,
 importSingle <- function(sh_Dat) {
     msgFunName(cpOutLnk, "importSingle")
     sh_Dat <- AddPngFilePath(sh_Dat)
-    recordEmpty <- checkRedcapRecord(sh_Dat$record_id, fieldName = "well_number")==''
+    recordEmpty <- checkRedcapRecord(sh_Dat$record_id, fieldName = "well_number")
     record=sh_Dat$record_id
-    if(recordEmpty){loopRedcapImport(sh_Dat)
-    }else{
+    if(recordEmpty=='') {
+        loopRedcapImport(sh_Dat)
+    } else{
         message(crayon::white$bgBlue("Record Data not Uploaded:"), "\n",record[1])
         }
     uploadToRedcap(file.list = paste0(record[1], ".html"), deskCSV = F)
