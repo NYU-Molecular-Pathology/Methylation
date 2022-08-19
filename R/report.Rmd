@@ -706,10 +706,7 @@ dfNewRed <- data.frame(
     tm_number = mp_number
 )
 
-datarecord = jsonlite::toJSON((as.list(dfNewRed[1,])), auto_unbox=T)
-message(datarecord)
-message("~~",crayon::bgBlue("Record Uploaded:"))
-
+#datarecord = jsonlite::toJSON((as.list(dfNewRed[1,])), auto_unbox=T)
 makePost <- function(datarecord){
     ur = "https://redcap.nyumc.org/apps/redcap/api/"
     tk <- params$token
