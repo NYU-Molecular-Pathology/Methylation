@@ -10,6 +10,16 @@ indelsList$nyu <- "Yes"
 indelsList$philips <- ""
 indelsList$Variant <- "SNV"
 indelsList <- indelsList %>% dplyr::distinct(IGV, .keep_all =T)
+
+for(ngs in unique(variantsData$Test_Number)){
+    if(!(ngs %in% unique(indelsList$Test_Number))){
+        newSNVRow <- c(ngs, "No Indels or FrameShifts called in-house", "", "", "", "", "SNV")
+        indelsList[nrow(indelsList) + 1,] = newSNVRow
+    }
+    newCnvRow <- c(ngs, "", "", "", "", "", "CNV")
+    indelsList[nrow(indelsList) + 1,] = newCnvRow
+}
+
 varsToCheck <- data.frame(
     "Test_Case" = indelsList$Test_Number,
     "Gene" = indelsList$Gene.refGene,
