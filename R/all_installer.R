@@ -764,6 +764,10 @@ loadLibrary("BiocManager")
 if (checkRequire("Biobase")) {BiocManager::install("Biobase", update = F, ask = F)}
 loadLibrary("Biobase")
 
+if (checkRequire("mapview")) {
+remotes::install_github("r-spatial/mapview")
+    }
+
 #if(checkRequire("S4Vectors")){BiocManager::install("S4Vectors", update = F, ask = F)}
 #if(checkRequire("MASS")){install.packages("MASS",type = "binary", update = F, ask = F)}
 # Load/install missing pacakges without asking
