@@ -16,7 +16,7 @@ for(ngs in unique(variantsData$Test_Number)){
         newSNVRow <- c(ngs, "No Indels or FrameShifts called in-house", "", "", "", "", "SNV")
         indelsList[nrow(indelsList) + 1,] = newSNVRow
     }
-    newCnvRow <- c(ngs, "", "", "", "", "", "CNV")
+    newCnvRow <- c(ngs, "", "", "", "NA", "", "CNV")
     indelsList[nrow(indelsList) + 1,] = newCnvRow
 }
 
