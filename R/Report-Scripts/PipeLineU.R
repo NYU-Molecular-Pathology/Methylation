@@ -19,7 +19,11 @@ UniD_load <- function (sampleID, run_id) {
 
 pipelineU <- function(sampleID, is450k=F, run_id) {
     require("UniD")
-    load(file.path(system.file(package = "UniD"), "R", "sysdata.rda"))
+    dataPath <- file.path(system.file(package = "UniD"), "R", "sysdata.rda")
+    if(!file.exists(dataPath)) {
+        fs::file_copy(path = "/Volumes/CBioinformatics/Methylation/UniD/R/sysdata.rda", new_path = dataPath)
+    }
+    load(dataPath)
     loading <- suppressWarnings(UniD_load(sampleID, run_id))
     outDir <- file.path(getwd(),"UniD")
     if(!dir.exists(outDir)){dir.create(outDir)}
