@@ -30,6 +30,7 @@ GetTargetData <- function(data) {
 
 loop_targets <- function(targets){
     reportMd <- "/Volumes/CBioinformatics/Methylation/report_v12.Rmd"
+    gb$moveSampleSheet(gb$baseFolder, gb$runID)
     for(i in 1:nrow(targets)){
         dat <- GetTargetData(data= targets[i,])
         RGsetEpic <- suppressWarnings(gb$getRGset(getwd(), dat$senLi))
