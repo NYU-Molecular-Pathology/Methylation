@@ -5,7 +5,13 @@ data("IlluminaHumanMethylationEPICmanifest")
 
 UniD_load <- function (sampleID, run_id) {
     samSh <- paste0(run_id,"_samplesheet.csv")
-    targets <- read.csv(file.path("~","Desktop",run_id,samSh), strip.white = T)
+    inFile <- file.path("~","Desktop",run_id,samSh)
+    if(file.exists(inFile)){
+    targets <- read.csv(inFile, strip.white = T)
+    }else{
+        inFile <- "samplesheet.csv"
+        targets <- read.csv(inFile, strip.white = T)
+    }
     targRow <- targets[,1]==sampleID
     rgSet <- read.metharray.exp(targets = targets[targRow,], extended = T, force=T)
     detP <- minfi::detectionP(rgSet)
