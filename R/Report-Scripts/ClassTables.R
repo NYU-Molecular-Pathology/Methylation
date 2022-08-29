@@ -107,3 +107,21 @@ GetOutClass <- function(is450k, Mset_ba, Mset){
     #return list
     return(list("out"=out,"idx"=idx))
 }
+
+GetV12score <- function(RGset, FFPE=NULL){
+    library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v12b6")
+    RGset <- RGset[,1]
+    Mset12 <- mnp.v12b6::MNPpreprocessIllumina(RGset)
+    if(is.null(FFPE)) FFPE <- mnp.v12b6::MNPgetFFPE(RGset)
+    Mset12_ba <- mnp.v12b6::MNPbatchadjust(Mset12,FFPE)
+    sex12 <- ifelse(mnp.v12b6::MNPgetSex(Mset12)$predictedSex=="M","Male","Female")
+    
+    super <- mnp.v12b6::MNPpredict(Mset12_ba,MCF_level="superfamily")[,1:2]
+    fam  <- mnp.v12b6::MNPpredict(Mset12_ba,MCF_level="family")[,1:2]
+    class <- mnp.v12b6::MNPpredict(Mset12_ba,MCF_level="class")[,1:2]
+    sclass <- mnp.v12b6::MNPpredict(Mset12_ba,abbreviation=FALSE)[,1:2]
+    
+    out <- rbind(super,fam,class,sclass)
+    rownames(out) <- c("Super Family","Family","Class","Subclass")
+    return(out)
+}
