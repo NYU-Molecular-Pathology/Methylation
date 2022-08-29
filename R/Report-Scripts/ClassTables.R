@@ -1,27 +1,36 @@
-GetOutFamily <- function(is450k, Mset_ba){
-    if (is450k==T) {
+GetOutFamily <- function(is450k, Mset_ba, Mset){
+   if (is450k==T) {
         library(verbose=F,warn.conflicts = F, quietly = T, package="mnp.v11b4")
-
-        probs_mcf <- mnp.v11b4::MNPpredict(Mset_ba[, 1], type='prob',MCF=TRUE)
+        tryCatch(
+            expr = {
+                probs_mcf <- mnp.v11b4::MNPpredict(Mset_ba[, 1], type='prob',MCF=TRUE)
+            },
+            error = function(e) {
+                message("Error occured at Brain Classifier v11 prediction:")
+                message("Using MNPpredict(Mset[, 1]) instead of Mset_ba\n")
+                library(verbose=F,warn.conflicts=F, quietly=T, package="mnp.v11b6")
+                probs_mcf <- mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob', MCF = TRUE)
+            }
+        )
+        
     } else {
         library(verbose=F,warn.conflicts=F, quietly=T, package="mnp.v11b6")
         tryCatch(
             expr = {
-
+                
                 probs_mcf <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob', MCF = TRUE)
             },
             error = function(e) {
                 message("Error occured at Brain Classifier v11 prediction:")
-                message("Value of Mset_ba is: ", paste0(Mset_ba[, 1]))
-                message("Using MNPpredict(Mset[, 1]) instead of Mset_ba:\n")
+                message("Using MNPpredict(Mset[, 1]) instead of Mset_ba\n")
                 probs_mcf <- mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob', MCF = TRUE)
             }
         )
     }
-
+    
     oo_mcf <- order(probs_mcf, decreasing = T)
     eps <- 1e-3
-
+    
     out_class_family <- probs_mcf[oo_mcf[1:5]]
     out_class_family <- cbind(
         round(pmax(pmin(out_class_family, 1 - eps), eps),3), colnames(probs_mcf)[oo_mcf][1:5])
@@ -36,7 +45,7 @@ GetOutFamily <- function(is450k, Mset_ba){
     if (fsco >= 0.900) {famVal <- "Positive"}
     if (fsco < 0.900 & fsco > 0.300) {famVal <- "Indeterminate"}
     if (fsco <= 0.300) {famVal <- "Negative"}
-
+    
     if (is.null(famVal)) {
         warning("family value (famVal) is NULL")
         famVal <- "Indeterminate"
