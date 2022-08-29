@@ -1,13 +1,11 @@
 library(verbose=F, warn.conflicts = F, quietly = T, package= "UniD")
 library(verbose=F, warn.conflicts = F, quietly = T, package= "minfi")
 
-UniD_dataqc <-
-    function (loading,
-              outDir,
-              detP.cut = 0.05,
-              bc.cut = 3,
-              arrayType)
-    {
+UniD_dataqc <- function (loading,
+                         outDir,
+                         detP.cut = 0.05,
+                         bc.cut = 3,
+                         arrayType) {
     detP <- loading$detP
     sampleSet <- UniD:::GetsampleSet(loading$rgSet)
     Beta.raw <- minfi::getBeta(loading$Mset)
@@ -16,8 +14,12 @@ UniD_dataqc <-
     bc[bc < bc.cut] <- NA
     Beta.raw[detP > detP.cut] <- NA
     Beta.raw[is.na(bc)] <- NA
-    p.fail <- data.frame(Fail.Frac.detP = apply(detP, 2, function(x) length(which(x > detP.cut)))/nrow(detP), Fail.Frac.beadcount = colSums(is.na(bc))/nrow(bc), 
-                         Fail.Frac.NA = colSums(is.na(Beta.raw))/nrow(Beta.raw))
+    p.fail <-
+        data.frame(
+            Fail.Frac.detP = apply(detP, 2, function(x) length(which(x > detP.cut))) / nrow(detP),
+            Fail.Frac.beadcount = colSums(is.na(bc)) / nrow(bc),
+            Fail.Frac.NA = colSums(is.na(Beta.raw)) / nrow(Beta.raw)
+        )
     print("The failed fraction per sample (failed detP and bc may overlap): ")
     print(p.fail)
     return(Beta.raw)
