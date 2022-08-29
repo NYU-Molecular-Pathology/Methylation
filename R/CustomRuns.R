@@ -42,7 +42,6 @@ loop_targets <- function(targets){
             params = list(token = gb$ApiToken, rundata = dat, RGset=RGsetEpic)
         )
     }
-
 }
 
 loop_local <- function(RGSet){
@@ -54,7 +53,7 @@ loop_local <- function(RGSet){
         RGsetEpic<-RGset<-thisSam
         rmarkdown::render(
             reportMd, "html_document", dat$outFi, getwd(), quiet = FALSE,
-            params = list(token = gb$ApiToken, rundata = dat, RGset=RGsetEpic)
+            params = list(token = gb$ApiToken, rundata = dat)
         )
     }
 }
