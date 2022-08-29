@@ -31,14 +31,19 @@ GetCNxx <- function(Mset, sex, sampleID) {
 }
 
 GetOvAnnot <- function() {
-    githubURL <- file.path(
-        "https://github.com/NYU-Molecular-Pathology/Methylation/raw",
-        "416a007b8a21f59a71493cea189bc424009e8d7d/Rdata/newOvGenes.rds"
-    )
-    if (!file.exists("newOvGenes.rds")) {
-        utils::download.file(githubURL, file.path(getwd(), "newOvGenes.rds"), method = "libcurl")
+    cnvUrl <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/cnvggplotly.R"
+    githubURL <- "https://github.com/NYU-Molecular-Pathology/Methylation/raw/main/Rdata/newOvGenes.rds"
+    devtools::source_url(cnvUrl)
+    gb <- globalenv(); assign("gb", gb)
+   tryCatch(
+    expr = {newOvGenes <- readRDS(url(githubURL, method = "libcurl"))},
+    error = function(e) {
+        if (!file.exists("newOvGenes.rds")) {
+            utils::download.file(githubURL, file.path(getwd(), "newOvGenes.rds"), method = "libcurl")
+        }
+        newOvGenes <- readRDS("newOvGenes.rds")
     }
-    newOvGenes <- readRDS("newOvGenes.rds")
+)
     return(newOvGenes)
 }
 
