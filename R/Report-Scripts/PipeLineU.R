@@ -31,8 +31,11 @@ UniD_load <- function (sampleID, run_id) {
     if(file.exists(inFile)){
     targets <- read.csv(inFile, strip.white = T)
     }else{
-        inFile <- "samplesheet.csv"
-        targets <- read.csv(inFile, strip.white = T)
+      samSh <- paste0(gb$runID,"_samplesheet.csv")
+      message(samSh)
+      inFile <- file.path("~","Desktop",gb$runID,samSh)
+      message(inFile)
+      targets <- read.csv(inFile, strip.white = T)
     }
     targRow <- targets[,1]==sampleID
     rgSet <- read.metharray.exp(targets = targets[targRow,], extended = T, force=T)
