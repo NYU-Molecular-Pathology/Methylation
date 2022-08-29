@@ -45,10 +45,20 @@ GetOutFamily <- function(is450k, Mset_ba){
     return(out_class_family)
 }
 
-GetOutClass <- function(is450k, Mset_ba){
+GetOutClass <- function(is450k, Mset_ba, Mset){
     if (is450k==T) {
         library(verbose=F,warn.conflicts = F, quietly = T, package="mnp.v11b4")
-        probs <- mnp.v11b4::MNPpredict(Mset_ba[, 1], type = 'prob')
+        tryCatch(
+            expr = {
+                probs <- mnp.v11b4::MNPpredict(Mset_ba[, 1], type = 'prob')
+            },
+            error = function(e) {
+                message("Error occured at Brain Classifier v11 prediction:")
+                message("Using MNPpredict(Mset[, 1]) instead of Mset_ba\n")
+                library(verbose=F,warn.conflicts = F, quietly = T, package="mnp.v11b6")
+                probs <- mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob')
+            }
+        )
     } else {
         library(verbose=F,warn.conflicts=F, quietly=T, package="mnp.v11b6")
         tryCatch(
@@ -57,19 +67,18 @@ GetOutClass <- function(is450k, Mset_ba){
             },
             error = function(e) {
                 message("Error occured at Brain Classifier v11 prediction:")
-                message("Value of Mset_ba is: ", paste0(Mset_ba[, 1]))
-                message("Using MNPpredict(Mset[, 1]) instead of Mset_ba:\n")
+                message("Using MNPpredict(Mset[, 1]) instead of Mset_ba\n")
                 probs <- mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob')
             }
         )
     }
-
+    
     oo <- order(probs, decreasing = T)
     eps <- 1e-3
     out <- probs[oo[1:5]]
     out <- cbind(round(pmax(pmin(out,1 - eps),eps),3),colnames(probs)[oo][1:5])
     colnames(out) <- c("Subgroup Score","Methylation Subgroup")
-
+    
     idx <- match(colnames(probs)[oo][1],mnp.v11b6::reflist[,2])
     out <- as.data.frame(out)
     out_score <- as.numeric(paste0(out$`Subgroup Score`[1]))
