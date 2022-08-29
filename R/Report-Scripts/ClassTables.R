@@ -1,3 +1,36 @@
+GetSexMsetBa <- function(is450k, RGset, FFPE=NULL){
+    if (is450k) {
+        
+        library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylation450kmanifest")
+        library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b4")
+        
+        Mset <- mnp.v11b4::MNPpreprocessIllumina(RGset)
+        if (is.null(FFPE)) {
+            FFPE <- mnp.v11b4::MNPgetFFPE(RGset)
+        }
+        Mset_ba <- mnp.v11b4::MNPbatchadjust(Mset, FFPE)
+        if (FFPE == "Frozen") {
+            Mset@preprocessMethod <- c(Mset_ba@preprocessMethod, FFPE_Frozen.mnp.adjustment = '0.11')
+        }
+        sex <- ifelse(mnp.v11b4::MNPgetSex(Mset)$predictedSex == "M", "Male", "Female")
+    } else {
+        library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b6")
+        Mset <- mnp.v11b6::MNPpreprocessIllumina(RGset)
+        Mset@annotation = c(array = "IlluminaHumanMethylationEPIC", annotation = "ilm10b4.hg19")
+        if (is.null(FFPE)) {
+            FFPE <- mnp.v11b6::MNPgetFFPE(RGset)
+        }
+        Mset_ba <- mnp.v11b6::MNPbatchadjust(Mset, FFPE)
+        detP <- minfi::detectionP(RGset)
+        bs <- minfi::getBeta(Mset)
+        sexEstimate <- as.data.frame(signif(sest::get.proportion_table(bs, detP), digits = 2))
+        yest <- as.double(sexEstimate$`p.Y:(-18,-5]`) >= 0.75
+        yest1 <- as.double(sexEstimate$`Y:(0,0.1]`) >= 0.12
+        sex <- ifelse((yest == TRUE && yest1 == TRUE), "male", "female")
+    }
+    return(list("sex"=sex, "Mset"= Mset, "Mset_ba"=Mset_ba))
+}
+
 GetOutFamily <- function(is450k, Mset_ba, Mset){
    if (is450k==T) {
         library(verbose=F,warn.conflicts = F, quietly = T, package="mnp.v11b4")
