@@ -61,12 +61,14 @@ generateCNVpng <- function(RGsetEpic, sampleName) {
 
 getRGset <- function(runPath, sentrix){
     msgFunName(pipeLnk,"getRGset")
-
+    
     barcode = stringr::str_split_fixed(sentrix, "_",2)[1]
     RGsetEpic <- minfi::read.metharray(file.path(runPath, sentrix), verbose = T, force = T)
     aEpic=c(array="IlluminaHumanMethylationEPIC", annotation="ilm10b4.hg19")
     a450k=c(array="IlluminaHumanMethylation450k", annotation="ilmn12.hg19")
-    if (barcode >= as.numeric("204220033000")) {RGsetEpic@annotation=aEpic}
+    if (as.numeric(barcode) >= as.numeric("204220033000")) {RGsetEpic@annotation=aEpic}else{
+        RGsetEpic@annotation=a450k
+    }
     if (RGsetEpic@annotation['array']=="IlluminaHumanMethylation450k") {
         RGsetEpic@annotation=a450k}
     return(RGsetEpic)
