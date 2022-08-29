@@ -122,6 +122,8 @@ GetV12score <- function(RGset, FFPE=NULL){
     sclass <- mnp.v12b6::MNPpredict(Mset12_ba,abbreviation=FALSE)[,1:2]
     
     out <- rbind(super,fam,class,sclass)
-    rownames(out) <- c("Super Family","Family","Class","Subclass")
+    
+   rownames(out) <- c("Super Family","Family","Class","Subclass")
+   out$maxscore <- sapply(out$maxscore,function(x)round(pmax(pmin(x,1-1e-4),1e-4),4))
     return(out)
 }
