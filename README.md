@@ -45,10 +45,15 @@ Download and install the following packages:<br>
 ## 🌐 Network Drive Mount Paths
 - To install & run the pipeline, it is critical to mount the following network smb shared drives:
 - Open Finder and press **⌘(CMD) + K** then paste each of the directories below, using NYUMC\KerberosID as the login name and password is your kerberos password. <br>
-`smb://research-cifs.nyumc.org/Research/CBioinformatics/`<br />
-`smb://research-cifs.nyumc.org/Research/snudem01lab/snudem01labspace`<br />
-`smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular`<br />
-
+```
+cifs://research-cifs.nyumc.org/Research/CBioinformatics/
+```
+```
+cifs://research-cifs.nyumc.org/Research/snudem01lab/snudem01labspace
+```
+```
+cifs://shares-cifs.nyumc.org/apps/acc_pathology/molecular
+```
 # ⚡️ Quickstart
  1. Download the shell script to your home folder or another directory:
   + You can download [runMeth.sh](https://github.com/NYU-Molecular-Pathology/Methylation/blob/32c3b043bd2fd27de4106bc56b8d4f13ac42d48d/Meth_Scripts/runMeth.sh) in this repo under Methylation/Meth_Scripts/ or use curl/wget:
