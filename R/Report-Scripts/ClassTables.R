@@ -28,7 +28,7 @@ GetSexMsetBa <- function(is450k, RGset, FFPE=NULL){
         yest1 <- as.double(sexEstimate$`Y:(0,0.1]`) >= 0.12
         sex <- ifelse((yest == TRUE && yest1 == TRUE), "male", "female")
     }
-    return(list("sex"=sex, "Mset"= Mset, "Mset_ba"=Mset_ba))
+    return(list("sex"=sex, "Mset"= Mset, "Mset_ba"=Mset_ba, "FFPE"=FFPE))
 }
 
 GetOutFamily <- function(is450k, Mset_ba, Mset){
