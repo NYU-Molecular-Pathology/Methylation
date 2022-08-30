@@ -128,8 +128,10 @@ CheckBaseDir <- function(baseFolder){
     if(is.null(baseFolder)){
         gb$baseDir <- gb$methDir <- gb$baseFolder <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
     }else{gb$baseDir <- gb$methDir <- gb$baseFolder <- baseFolder}
-    isDesktop <- stringr::str_detect(baseFolder, "Desktop")
-    if(is.null(baseFolder) & isDesktop==T) {
+    if(!is.null(baseFolder)){
+        isDesktop <- stringr::str_detect(baseFolder, "Desktop")
+    } else{isDesktop==F}
+    if(isDesktop==T) {
         warning("Trying to run methylation from Desktop working directory is not allowed")
         message("Try setting baseFolder to '~/Documents/' instead")
         stopifnot(isDesktop == F)
