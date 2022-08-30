@@ -70,3 +70,11 @@ FormatSuppInfo <- function(suppinfo){
     colnames(suppinfo) <- ""
     return(suppinfo)
 }
+
+LoadMnpData <- function(is450k){
+if(is450k==T){
+    load("/Volumes/CBioinformatics/Methylation/Methylation_classifier_v11b4/mnp.v11b4/data/rfpred.v11b4.RData")
+}else{
+    load("/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData")
+}    
+}
