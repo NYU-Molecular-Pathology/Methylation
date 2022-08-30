@@ -48,7 +48,6 @@ if(!is.null(baseFolder) & !identical(baseFolder,NULL)){
     }
 }else {baseFolder=NULL}
 
-
 # Source GitHub Scripts ----------------------------------------------------
 mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/"
 script.list = c(
@@ -58,13 +57,15 @@ script.list = c(
     "MakeSampleSheet.R",
     "CopyInputs.R",
     "CopyOutput.R",
-    "pipelineHelper.R"
+    "pipelineHelper.R",
+    "CustomRuns.R"
 )
 scripts = paste0(mainHub, script.list)
 lapply(scripts, function(i) {
     message("Sourcing: ", i)
-    devtools::source_url(i)}
-    )
+    devtools::source_url(i)
+    }
+)
 
 # Define Parameters ----------------------------------------------------
 gb$defineParams(
@@ -75,72 +76,29 @@ gb$defineParams(
 gb$setVar("runID", runID)
 
 # Functions ----------------------------------------------------
-checkBaseFolder <- function(baseFolder){
+CheckBaseDir <- function(baseFolder){
     if(is.null(baseFolder)){
-        gb$baseFolder <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
-        gb$methDir <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
-        gb$baseDir <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
-    }else{
-      gb$baseFolder <- baseFolder
-    }
-    if(length(baseFolder)>0){
-        if(stringr::str_detect(baseFolder, pattern="Desktop")==T){
-            warning("Trying to run methylation from Desktop working directory is not allowed")
-            message("Try setting baseFolder to '~/Documents/' instead")
-            stopifnot(stringr::str_detect(baseFolder, pattern="Desktop")==F)
-        }
+        gb$baseDir <- gb$methDir <- gb$baseFolder <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
+    }else{gb$baseDir <- gb$methDir <- gb$baseFolder <- baseFolder}
+    isDesktop <- stringr::str_detect(baseFolder, "Desktop")
+    if(is.null(baseFolder) & isDesktop==T) {
+        warning("Trying to run methylation from Desktop working directory is not allowed")
+        message("Try setting baseFolder to '~/Documents/' instead")
+        stopifnot(isDesktop == F)
     }
     return(gb$baseFolder)
 }
 
 # Sets the working folder directory
-SetBaseFolder <- function(token, baseFolder){
+SetBaseFolder <- function(token, baseFolder, runID){
+    baseFolder <- CheckBaseDir(baseFolder)
     methylPath <- gb$setRunDir(runID=gb$runID, workFolder = baseFolder)
     message("Working directory set to:\n", crayon::bgGreen(methylPath), "\n")
     gb$methDir <- gb$workFolder <- baseFolder
     gb$setVar("workFolder", baseFolder)
     gb$setVar("ApiToken", token) # assign the ApiToken & print params
+    setwd(file.path(baseFolder, runID))
 }
-
-GetLocalData <- function(rg){
-    dat <- data.frame(
-        sampleID = paste0(rg),
-        bnumber = "NONE",
-        senLi = paste0(rg),
-        run_id = paste0(gb$runID),
-        mp_number = "NONE",
-        tech = "NONE",
-        tech2 = "NONE",
-        outFi = paste0(rg, ".html")
-    )
-    return(dat)
-}
-
-loop_local <- function(RGSet){
-    for (rg in colnames(RGSet)) {
-        thisSam <- RGSet[, rg]
-        dat <- GetLocalData(rg)
-        sentrix=dat$senLi
-        RGsetEpic<-RGset<-thisSam
-        rmarkdown::render(
-            reportMd, "html_document", dat$outFi, getwd(), quiet = FALSE,
-            params = list(token = gb$ApiToken, rundata = dat)
-        )
-        }
-}
-
-RunLocalIdats <- function(runID){
-    if(!file.exists(file.path(getwd(), paste0(runID,".xlsm")))){
-        idatFiles <- dir(path = getwd(), pattern = ".idat", full.names = T)
-        idatBase <- unique(substring(idatFiles, 1, nchar(idatFiles) - 9))
-        RGSet<-minfi::read.metharray(basenames =idatBase, force=TRUE)
-        loop_local(RGSet)
-    }else{
-        gb$readSheetWrite(runID = runID)
-        gb$moveSampleSheet(baseFolder, runID)
-    }
-}
-
 
 # Executes the functions in order to setup a run
 PrepareRun <- function(token, baseFolder=NULL, runID, runLocal=F){
@@ -148,16 +106,14 @@ PrepareRun <- function(token, baseFolder=NULL, runID, runLocal=F){
         gb$checkMounts()
         gb$checkValidRun(runID)
     }
-    baseFolder <- checkBaseFolder(baseFolder)
-    SetBaseFolder(token, baseFolder)
-    setwd(file.path(baseFolder, runID))
+    SetBaseFolder(token, baseFolder, runID)
     if(runLocal==F) {
         gb$copyWorksheetFile(runID = runID) # copies the xlsm file
         gb$readSheetWrite(runID = runID) # reads xlsm and generates input .csv samplesheet
         gb$get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
         gb$moveSampleSheet(baseFolder, runID) #copies outputs temp to desktop for QC.Rmd
     } else{
-        RunLocalIdats(runID)
+        gb$RunLocalIdats(runID, token)
     }
 }
 
