@@ -55,8 +55,8 @@ loop_local <- function(RGSet){
         sentrix=dat$senLi
         RGsetEpic<-RGset<-thisSam
         rmarkdown::render(
-            reportMd, "html_document", dat$outFi, getwd(), quiet = FALSE,
-            params = list(token = gb$ApiToken, rundata = dat)
+            reportMd, "html_document", dat$outFi, getwd(), quiet = FALSE, output_options = c("self_contained = TRUE"),
+            params = list(token = gb$ApiToken, rundata = dat, RGsetEpic=RGsetEpic)
         )
     }
 }
