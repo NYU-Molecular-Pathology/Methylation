@@ -109,7 +109,7 @@ RunFromSamplesheet <- function(samSh="samplesheet.csv"){
 RunLocalIdats <- function(runID, token){
     if(!file.exists(file.path(getwd(), paste0(runID,".xlsm")))){
         idatFiles <- dir(path = getwd(), pattern = ".idat", full.names = T)
-        if(length(idatFiles)>0){
+        if(!file.exists("samplesheet.csv") & length(idatFiles)!=0){
             idatBase <- unique(substring(idatFiles, 1, nchar(idatFiles) - 9))
             RGSet<-minfi::read.metharray(basenames =idatBase, force=TRUE, verbose = T)
             loop_local(RGSet)
