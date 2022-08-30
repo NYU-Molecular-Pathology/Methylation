@@ -147,20 +147,3 @@ SetBaseFolder <- function(token, baseFolder, runID){
     gb$setVar("ApiToken", token) # assign the ApiToken & print params
     setwd(file.path(baseFolder, runID))
 }
-
-# Executes the functions in order to setup a run
-PrepareRun <- function(token, baseFolder=NULL, runID, runLocal=F){
-    if(runLocal==F){
-        gb$checkMounts()
-        gb$checkValidRun(runID)
-    }
-    SetBaseFolder(token, baseFolder, runID)
-    if(runLocal==F) {
-        gb$copyWorksheetFile(runID = runID) # copies the xlsm file
-        gb$readSheetWrite(runID = runID) # reads xlsm and generates input .csv samplesheet
-        gb$get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
-        gb$moveSampleSheet(baseFolder, runID) #copies outputs temp to desktop for QC.Rmd
-    } else{
-        gb$RunLocalIdats(runID, token)
-    }
-}
