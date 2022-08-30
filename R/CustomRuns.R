@@ -29,18 +29,20 @@ GetTargetData <- function(data) {
 }
 
 loop_targets <- function(targets){
-    reportMd <- "/Volumes/CBioinformatics/Methylation/report_v12.Rmd"
+    reportMd <- "/Users/serraj10/report_v12.Rmd"
     gb$moveSampleSheet(gb$baseFolder, gb$runID)
     for(i in 1:nrow(targets)){
         dat <- GetTargetData(data= targets[i,])
+        print(dat)
         RGsetEpic <- suppressWarnings(gb$getRGset(getwd(), dat$senLi))
         rmarkdown::render(
             reportMd,
             "html_document",
             dat$outFi,
             getwd(),
-            quiet = FALSE,
-            params = list(token = gb$ApiToken, rundata = dat, RGset=RGsetEpic)
+            quiet = T,
+            output_options = c("self_contained = TRUE"),
+            params = list(token = gb$ApiToken, rundata = dat, RGsetEpic=RGsetEpic)
         )
     }
 }
@@ -61,7 +63,7 @@ loop_local <- function(RGSet){
 
 PromptInputCsv <- function(runID) {
     message('No idat files in current directory and no .xlsm file was found with the runID named "', runID,'"')
-    message("Enter the full pathname to a local csv file without quotes that has a list of RD-numbers and press return")
+    message("Enter the full path name to a local csv file without quotes that has a list of RD-numbers and press return")
     message("The file should have no header and just list RD-numbers in Column A (Example: /Users/myName/Desktop/myFileList_rd_numbers.csv)")
     csvFilePath <- readline("Paste the full path to your csv file and hit return/Enter: ")
     csvFilePath <- as.character(csvFilePath)
@@ -78,7 +80,8 @@ PromptInputCsv <- function(runID) {
 }
 
 MakeLocalSampleSheet <- function(runID){
-    idatScript <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/pullRedcap_manual.R"
+    idatScript <-
+        "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/pullRedcap_manual.R"
     rd_numbers <- PromptInputCsv(runID)
     stopifnot(length(rd_numbers)>1 & stringr::str_detect(rd_numbers[1],"RD-"))
     message("Sourcing: ", idatScript)
