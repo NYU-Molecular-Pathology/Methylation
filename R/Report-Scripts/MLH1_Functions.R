@@ -23,7 +23,7 @@ get.clinical.data = function(ratioSet, RGset){
     m.reslt[pos.loci == 4] = "POSITIVE"
     m.reslt[pos.loci >= 0 & pos.loci < 3] = "NEGATIVE"
     m.reslt[pos.loci == 3] = "INDETERMINATE"
-
+    
     all.data = data.frame(
         Sample_Name = sample,
         cg23658326.MLH1 = mlh.b[1, ], cg11600697.MLH1 = mlh.b[2, ],
@@ -69,7 +69,7 @@ renderPlot <- function(beta.matrix, clin.res) {
         plotly::plot_ly(
             x = ~density$x, y = ~density$y,
             type = 'scatter', mode = 'lines',
-            name = "Beta Values", font = fl1, showlegend = F) %>%
+            name = "Beta Values", showlegend = F) %>%
         plotly::layout(
             xaxis = list(title = 'Beta Values'),
             yaxis = list(title = 'Density')
