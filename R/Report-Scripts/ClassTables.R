@@ -39,8 +39,10 @@ GetOutFamily <- function(is450k, Mset_ba, Mset){
                 probs_mcf <- mnp.v11b4::MNPpredict(Mset_ba[, 1], type='prob',MCF=TRUE)
             },
             error = function(e) {
-                message("Error occured at Brain Classifier v11 prediction:")
-                message("Using MNPpredict(Mset[, 1]) instead of Mset_ba\n")
+                #message("Error occured at Brain Classifier v11 prediction:")
+                #message("Using MNPpredict(Mset[, 1]) instead of Mset_ba\n")
+                message("Error caught at mnp.v11b4::MNPpredict(), trying mnp.v11b6::MNPpredict()...")
+                message(e)
                 library(verbose=F,warn.conflicts=F, quietly=T, package="mnp.v11b6")
                 probs_mcf <- mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob', MCF = TRUE)
             }
@@ -50,7 +52,6 @@ GetOutFamily <- function(is450k, Mset_ba, Mset){
         library(verbose=F,warn.conflicts=F, quietly=T, package="mnp.v11b6")
         tryCatch(
             expr = {
-                
                 probs_mcf <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob', MCF = TRUE)
             },
             error = function(e) {
@@ -63,7 +64,6 @@ GetOutFamily <- function(is450k, Mset_ba, Mset){
     
     oo_mcf <- order(probs_mcf, decreasing = T)
     eps <- 1e-3
-    
     out_class_family <- probs_mcf[oo_mcf[1:5]]
     out_class_family <- cbind(
         round(pmax(pmin(out_class_family, 1 - eps), eps),3), colnames(probs_mcf)[oo_mcf][1:5])
@@ -96,7 +96,7 @@ GetOutClass <- function(is450k, Mset_ba, Mset){
             },
             error = function(e) {
                 message("Error occured at Brain Classifier v11 prediction:")
-                message("Using MNPpredict(Mset[, 1]) instead of Mset_ba\n")
+                message(e)
                 library(verbose=F,warn.conflicts = F, quietly = T, package="mnp.v11b6")
                 probs <- mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob')
             }
@@ -108,8 +108,8 @@ GetOutClass <- function(is450k, Mset_ba, Mset){
                 probs <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob')
             },
             error = function(e) {
-                message("Error occured at Brain Classifier v11 prediction:")
-                message("Using MNPpredict(Mset[, 1]) instead of Mset_ba\n")
+                message("Error occured at Brain Classifier v11 prediction: using Mset instead of Mset_ba:")
+                message(e)
                 probs <- mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob')
             }
         )
@@ -120,7 +120,6 @@ GetOutClass <- function(is450k, Mset_ba, Mset){
     out <- probs[oo[1:5]]
     out <- cbind(round(pmax(pmin(out,1 - eps),eps),3),colnames(probs)[oo][1:5])
     colnames(out) <- c("Subgroup Score","Methylation Subgroup")
-    
     idx <- match(colnames(probs)[oo][1],mnp.v11b6::reflist[,2])
     out <- as.data.frame(out)
     out_score <- as.numeric(paste0(out$`Subgroup Score`[1]))
@@ -137,7 +136,6 @@ GetOutClass <- function(is450k, Mset_ba, Mset){
         subVal_int <- "Indeterminate"
     }
     out$Interpretation = c(subVal_int,"","","","")
-    #return list
     return(list("out"=out,"idx"=idx))
 }
 
@@ -148,15 +146,12 @@ GetV12score <- function(RGset, FFPE=NULL){
     if(is.null(FFPE)) FFPE <- mnp.v12b6::MNPgetFFPE(RGset)
     Mset12_ba <- mnp.v12b6::MNPbatchadjust(Mset12,FFPE)
     sex12 <- ifelse(mnp.v12b6::MNPgetSex(Mset12)$predictedSex=="M","Male","Female")
-    
     super <- mnp.v12b6::MNPpredict(Mset12_ba,MCF_level="superfamily")[,1:2]
     fam  <- mnp.v12b6::MNPpredict(Mset12_ba,MCF_level="family")[,1:2]
     class <- mnp.v12b6::MNPpredict(Mset12_ba,MCF_level="class")[,1:2]
     sclass <- mnp.v12b6::MNPpredict(Mset12_ba,abbreviation=FALSE)[,1:2]
-    
     out <- rbind(super,fam,class,sclass)
-    
-   rownames(out) <- c("Super Family","Family","Class","Subclass")
-   out$maxscore <- sapply(out$maxscore,function(x)round(pmax(pmin(x,1-1e-4),1e-4),4))
+    rownames(out) <- c("Super Family","Family","Class","Subclass")
+    out$maxscore <- sapply(out$maxscore,function(x)round(pmax(pmin(x,1-1e-4),1e-4),4))
     return(out)
 }
