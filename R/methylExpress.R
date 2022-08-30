@@ -11,23 +11,17 @@ runID <-      args[2]
 selectRDs <-  args[3]
 baseFolder <- args[4] #NULL
 redcapUpload <- args[5]
+runLocal <- args[6]
 
 # Check Input Parameters ----------------------------------------------------
-if(length(selectRDs)==0 | identical(selectRDs,NULL) | identical(selectRDs,"NULL")
-){selectRDs=NULL}else {if(is.na(selectRDs)){selectRDs=NULL}}
-
+if(length(selectRDs)==0 | identical(selectRDs,NULL) | identical(selectRDs,"NULL")){
+    gb$selectRDs=NULL}else {if(is.na(selectRDs)){selectRDs=NULL}}
 if(length(baseFolder)==0 | identical(baseFolder,NULL) | identical(baseFolder,"NULL")){
-    gb$baseFolder<-NULL
-}else {
-        if(is.na(baseFolder)){gb$baseFolder<-NULL}
-    }
+    gb$baseFolder<-NULL }else {if(is.na(baseFolder)){gb$baseFolder<-NULL}}
 if(length(redcapUpload)==0 | identical(redcapUpload,NULL) | identical(redcapUpload,"NULL")){
-    gb$redcapUpload<-T
-}else {
-    if(is.na(redcapUpload)){redcapUpload<-T
-    }else{
-        redcapUpload <- as.logical(args[5])
-        }
+    gb$redcapUpload<-T}else {if(is.na(redcapUpload)){redcapUpload<-T}else{redcapUpload <- as.logical(args[5])}}
+if(length(runLocal)==0 | identical(runLocal,NULL) | identical(runLocal,"NULL")){
+    gb$runLocal<-F}else {if(is.na(runLocal)){runLocal<-F}else{runLocal <- as.logical(args[6])}
 }
 
 # Message input on console
@@ -38,13 +32,10 @@ message("token: ", token,"\nrunID: ", runID,"\nselectRDs: ", selectRDs, "\nbaseF
 stopifnot(!is.null(token)); stopifnot(!is.null(runID))
 
 if(!is.null(baseFolder) & !identical(baseFolder,NULL)){
-    message("Trying custom run directory from input:","\n", baseFolder,"\n")
-    isValid <- dir.exists(baseFolder)
-    message("Checking if directory exists: ", isValid)
-    if(isValid==F){
-        message("Directory provided does not exist, try creating it first:\n",
-                "mkdir ", baseFolder,"\n")
-        stopifnot(isValid==TRUE)
+    message("Checking custom run directory from input:\n", baseFolder, "\n")
+    if(dir.exists(baseFolder)==F){
+        message("Directory does not exist, try creating it first:\n", "mkdir ", baseFolder,"\n")
+        stopifnot(dir.exists(baseFolder)==TRUE)
     }
 }else {baseFolder=NULL}
 
@@ -61,58 +52,25 @@ script.list = c(
     "CustomRuns.R"
 )
 scripts = paste0(mainHub, script.list)
-lapply(scripts, function(i) {
-    message("Sourcing: ", i)
-    devtools::source_url(i)
-    }
-)
+lapply(scripts, function(i){message("Sourcing: ", i); devtools::source_url(i)})
 
 # Define Parameters ----------------------------------------------------
-gb$defineParams(
-    methDir = baseFolder,
-    baseDir = baseFolder,
-    ApiToken = token
-)
+gb$defineParams(methDir = baseFolder, baseDir = baseFolder, ApiToken = token)
 gb$setVar("runID", runID)
-
-# Functions ----------------------------------------------------
-CheckBaseDir <- function(baseFolder){
-    if(is.null(baseFolder)){
-        gb$baseDir <- gb$methDir <- gb$baseFolder <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
-    }else{gb$baseDir <- gb$methDir <- gb$baseFolder <- baseFolder}
-    isDesktop <- stringr::str_detect(baseFolder, "Desktop")
-    if(is.null(baseFolder) & isDesktop==T) {
-        warning("Trying to run methylation from Desktop working directory is not allowed")
-        message("Try setting baseFolder to '~/Documents/' instead")
-        stopifnot(isDesktop == F)
-    }
-    return(gb$baseFolder)
-}
-
-# Sets the working folder directory
-SetBaseFolder <- function(token, baseFolder, runID){
-    baseFolder <- CheckBaseDir(baseFolder)
-    methylPath <- gb$setRunDir(runID=gb$runID, workFolder = baseFolder)
-    message("Working directory set to:\n", crayon::bgGreen(methylPath), "\n")
-    gb$methDir <- gb$workFolder <- baseFolder
-    gb$setVar("workFolder", baseFolder)
-    gb$setVar("ApiToken", token) # assign the ApiToken & print params
-    setwd(file.path(baseFolder, runID))
-}
 
 # Executes the functions in order to setup a run
 PrepareRun <- function(token, baseFolder=NULL, runID, runLocal=F){
+    gb$msgFunName(paste0(mainHub,"methylExpress.R"),"PrepareRun")
     if(runLocal==F){
         gb$checkMounts()
         gb$checkValidRun(runID)
-    }
-    SetBaseFolder(token, baseFolder, runID)
-    if(runLocal==F) {
+        gb$SetBaseFolder(token, baseFolder, runID)
         gb$copyWorksheetFile(runID = runID) # copies the xlsm file
         gb$readSheetWrite(runID = runID) # reads xlsm and generates input .csv samplesheet
         gb$get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
         gb$moveSampleSheet(baseFolder, runID) #copies outputs temp to desktop for QC.Rmd
     } else{
+        gb$SetBaseFolder(token, baseFolder, runID)
         gb$RunLocalIdats(runID, token)
     }
 }
@@ -135,5 +93,5 @@ if(!is.null(selectRDs)){selectRDs <- stringr::str_split(selectRDs, ",")}
 assign("redcapUpload", redcapUpload)
 
 # Execute Functions ----------------------------------------------------
-PrepareRun(token, baseFolder, runID) # If running local and  runLocal = TRUE
-StartRun(selectRDs, emailNotify=T, redcapUp=T) # can change to default false
+PrepareRun(token, baseFolder, runID, runLocal=runLocal) # If running local and  runLocal = TRUE
+StartRun(selectRDs, emailNotify=T, redcapUp=redcapUpload) # can change to default false
