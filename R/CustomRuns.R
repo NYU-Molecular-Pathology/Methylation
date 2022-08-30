@@ -96,7 +96,8 @@ RunFromSamplesheet <- function(samSh="samplesheet.csv"){
     targets<- minfi::read.metharray.sheet(base=getwd(), pattern = samSh)
     dupedSamples <- anyDuplicated(targets$Basename)
     if(dupedSamples!=0){
-        warning("Some basenames are duplicated and will be dropped:")
+        warning("Removing Samples with identical (duplicated) Sentrix IDs")
+        message("Some basenames are duplicated and will be dropped:")
         tgBn <- targets$Basename
         print(targets[tgBn==tgBn[anyDuplicated(tgBn)],])
         targets <- targets[-dupedSamples,]
