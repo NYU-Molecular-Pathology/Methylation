@@ -1,24 +1,19 @@
 GetSexMsetBa <- function(is450k, RGset, FFPE=NULL){
     if (is450k) {
-        library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylation450kmanifest")
+        library(verbose=F, warn.conflicts = F, quietly = T, package = "IlluminaHumanMethylation450kmanifest")
         library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b4")
         Mset <- mnp.v11b4::MNPpreprocessIllumina(RGset)
-        if (is.null(FFPE)) {
-            FFPE <- mnp.v11b4::MNPgetFFPE(RGset)
-        }
+        if (is.null(FFPE)) {FFPE <- mnp.v11b4::MNPgetFFPE(RGset)}
         Mset_ba <- mnp.v11b4::MNPbatchadjust(Mset, FFPE)
-        if (FFPE == "Frozen") {
-            Mset@preprocessMethod <- c(Mset_ba@preprocessMethod, FFPE_Frozen.mnp.adjustment = '0.11')
-        }
+        if (FFPE == "Frozen") {Mset@preprocessMethod <- 
+            c(Mset_ba@preprocessMethod, FFPE_Frozen.mnp.adjustment = '0.11')}
         sex <- ifelse(mnp.v11b4::MNPgetSex(Mset)$predictedSex == "M", "Male", "Female")
     } else {
         library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylationEPICmanifest")
         library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b6")
         Mset <- mnp.v11b6::MNPpreprocessIllumina(RGset)
         Mset@annotation = c(array = "IlluminaHumanMethylationEPIC", annotation = "ilm10b4.hg19")
-        if (is.null(FFPE)) {
-            FFPE <- mnp.v11b6::MNPgetFFPE(RGset)
-        }
+        if (is.null(FFPE)) {FFPE <- mnp.v11b6::MNPgetFFPE(RGset)}
         Mset_ba <- mnp.v11b6::MNPbatchadjust(Mset, FFPE)
         detP <- minfi::detectionP(RGset)
         bs <- minfi::getBeta(Mset)
@@ -31,9 +26,9 @@ GetSexMsetBa <- function(is450k, RGset, FFPE=NULL){
 }
 
 GetOutFamily <- function(is450k, Mset_ba, Mset){
-   if (is450k==T) {
-       library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylation450kmanifest")
-       library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b4")
+    if (is450k==T) {
+        library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylation450kmanifest")
+        library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b4")
         tryCatch(
             expr = {
                 probs_mcf <- mnp.v11b4::MNPpredict(Mset_ba[, 1], type='prob',MCF=TRUE)
@@ -47,8 +42,8 @@ GetOutFamily <- function(is450k, Mset_ba, Mset){
         )
         
     } else {
-       library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylationEPICmanifest")
-       library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b6")
+        library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylationEPICmanifest")
+        library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b6")
         tryCatch(
             expr = {
                 probs_mcf <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob', MCF = TRUE)
@@ -60,7 +55,6 @@ GetOutFamily <- function(is450k, Mset_ba, Mset){
             }
         )
     }
-    
     oo_mcf <- order(probs_mcf, decreasing = T)
     eps <- 1e-3
     out_class_family <- probs_mcf[oo_mcf[1:5]]
@@ -70,16 +64,14 @@ GetOutFamily <- function(is450k, Mset_ba, Mset){
     out_class_family <- as.data.frame(out_class_family)
     fsco <- as.numeric(paste0(out_class_family$`Class Score`[1]))
     famVal <- NULL
-    if (is.null(fsco)|is.na(fsco)) {
-        warning("fsco value (family score) is NULL. Assigning value of 0.00")
+    if (is.null(fsco)|is.na(fsco)) {warning("fsco value (family score) is NULL. Assigning value of 0.00")
         fsco <- 0.000
     }
     if (fsco >= 0.900) {famVal <- "Positive"}
     if (fsco < 0.900 & fsco > 0.300) {famVal <- "Indeterminate"}
     if (fsco <= 0.300) {famVal <- "Negative"}
     
-    if (is.null(famVal)) {
-        warning("family value (famVal) is NULL")
+    if (is.null(famVal)) {warning("family value (famVal) is NULL")
         famVal <- "Indeterminate"
     }
     out_class_family$Interpretation = c(famVal,"","","","")
@@ -95,9 +87,9 @@ GetOutClass <- function(is450k, Mset_ba, Mset){
                 probs <- mnp.v11b4::MNPpredict(Mset_ba[, 1], type = 'prob')
             },
             error = function(e) {
-                message("Error caught at mnp.v11b4::MNPpredict(Mset_ba[, 1], type = 'prob'):")
+                message("Error caught at mnp.v11b4::MNPpredict(Mset_ba[, 1], type = 'prob'):\n")
                 message(e)
-                message("Now trying mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob')...")
+                message("\nNow trying mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob')...")
                 library(verbose=F,warn.conflicts = F, quietly = T, package="mnp.v11b6")
                 probs <- mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob')
             }
@@ -110,7 +102,7 @@ GetOutClass <- function(is450k, Mset_ba, Mset){
                 probs <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob')
             },
             error = function(e) {
-                message("Error occured at Brain Classifier v11 prediction: using Mset instead of Mset_ba:")
+                message("Error occured at Brain Classifier v11 prediction: using Mset instead of Mset_ba:\n")
                 message(e)
                 probs <- mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob')
             }
@@ -144,6 +136,7 @@ GetOutClass <- function(is450k, Mset_ba, Mset){
 GetV12score <- function(RGset, FFPE=NULL){
     library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v12b6")
     library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylationEPICmanifest")
+    load("/Volumes/CBioinformatics/Methylation/mnp_v12_R-package/mnp.v12b6/R/sysdata.rda")
     RGset <- RGset[,1]
     Mset12 <- mnp.v12b6::MNPpreprocessIllumina(RGset)
     if(is.null(FFPE)) FFPE <- mnp.v12b6::MNPgetFFPE(RGset)
