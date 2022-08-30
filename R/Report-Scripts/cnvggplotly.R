@@ -33,7 +33,6 @@ GetCNxx <- function(Mset, sex, sampleID) {
 GetOvAnnot <- function() {
     cnvUrl <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/cnvggplotly.R"
     githubURL <- "https://github.com/NYU-Molecular-Pathology/Methylation/raw/main/Rdata/newOvGenes.rds"
-    suppressMessages(devtools::source_url(cnvUrl))
     gb <- globalenv(); assign("gb", gb)
     tryCatch(
         expr = {
