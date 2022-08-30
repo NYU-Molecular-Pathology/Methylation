@@ -136,7 +136,7 @@ GetOutClass <- function(is450k, Mset_ba, Mset){
 GetV12score <- function(RGset, FFPE=NULL){
     library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v12b6")
     library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylationEPICmanifest")
-    load("/Volumes/CBioinformatics/Methylation/mnp_v12_R-package/mnp.v12b6/R/sysdata.rda")
+#    load("/Volumes/CBioinformatics/Methylation/mnp_v12_R-package/mnp.v12b6/R/sysdata.rda")
     RGset <- RGset[,1]
     Mset12 <- mnp.v12b6::MNPpreprocessIllumina(RGset)
     if(is.null(FFPE)) FFPE <- mnp.v12b6::MNPgetFFPE(RGset)
