@@ -39,8 +39,6 @@ GetOutFamily <- function(is450k, Mset_ba, Mset){
                 probs_mcf <- mnp.v11b4::MNPpredict(Mset_ba[, 1], type='prob',MCF=TRUE)
             },
             error = function(e) {
-                #message("Error occured at Brain Classifier v11 prediction:")
-                #message("Using MNPpredict(Mset[, 1]) instead of Mset_ba\n")
                 message("Error caught at mnp.v11b4::MNPpredict(), trying mnp.v11b6::MNPpredict()...")
                 message(e)
                 library(verbose=F,warn.conflicts=F, quietly=T, package="mnp.v11b6")
@@ -95,8 +93,9 @@ GetOutClass <- function(is450k, Mset_ba, Mset){
                 probs <- mnp.v11b4::MNPpredict(Mset_ba[, 1], type = 'prob')
             },
             error = function(e) {
-                message("Error occured at Brain Classifier v11 prediction:")
+                message("Error caught at mnp.v11b4::MNPpredict(Mset_ba[, 1], type = 'prob'):")
                 message(e)
+                message("Now trying mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob')...")
                 library(verbose=F,warn.conflicts = F, quietly = T, package="mnp.v11b6")
                 probs <- mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob')
             }
