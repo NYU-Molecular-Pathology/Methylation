@@ -12,7 +12,8 @@ makePost <- function(dfNewRed, params){
     )
 }
 
-writeRedcapPred <- function(redfolder, dfNewRed) {
+writeRedcapPred <- function(run_id, dfNewRed) {
+    redfolder <- file.path("~","Desktop", run_id)
     redcsv <- list.files(path=redfolder, pattern="_Redcap.csv", full.names=T)[1]
     if (!is.na(redcsv)) {
         dfRedcap = read.csv(redcsv, header = T, row.names = NULL)
@@ -27,7 +28,9 @@ writeRedcapPred <- function(redfolder, dfNewRed) {
     }
 }
 
-SetDesktopOutput <- function(redfolder, redcsv){
+SetDesktopOutput <- function(run_id){
+    redfolder <- file.path("~","Desktop", run_id)
+    redcsv <- file.path(redfolder, paste0(run_id,"_Redcap.csv"))
     redcapDF <- data.frame(
         record_id = character(),
         b_number = character(),
