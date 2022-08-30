@@ -1,3 +1,9 @@
+gb <- globalenv(); assign("gb", gb)
+require("compiler")
+invisible(supM(compiler::enableJIT(3)))
+invisible(supM(compiler::compilePKGS(enable = TRUE)))
+supM(compiler::setCompilerOptions(suppressAll = TRUE, optimize = 3))
+
 GetSexMsetBa <- function(is450k, RGset, FFPE=NULL){
     if (is450k) {
         library(verbose=F, warn.conflicts = F, quietly = T, package = "IlluminaHumanMethylation450kmanifest")
