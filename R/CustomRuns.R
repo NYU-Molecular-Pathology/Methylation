@@ -29,19 +29,14 @@ GetTargetData <- function(data) {
 }
 
 loop_targets <- function(targets){
-    reportMd <- "/Users/serraj10/report_v12.Rmd"
+    reportMd <- "/Volumes/CBioinformatics/Methylation/report_v12.Rmd"
     gb$moveSampleSheet(gb$baseFolder, gb$runID)
     for(i in 1:nrow(targets)){
-        dat <- GetTargetData(data= targets[i,])
-        print(dat)
+        dat <- GetTargetData(data = targets[i,])
         RGsetEpic <- suppressWarnings(gb$getRGset(getwd(), dat$senLi))
         rmarkdown::render(
-            reportMd,
-            "html_document",
-            dat$outFi,
-            getwd(),
-            quiet = T,
-            output_options = c("self_contained = TRUE"),
+            reportMd,"html_document", dat$outFi, getwd(),
+            quiet = T, output_options = c("self_contained = TRUE"),
             params = list(token = gb$ApiToken, rundata = dat, RGsetEpic=RGsetEpic)
         )
     }
@@ -56,7 +51,7 @@ loop_local <- function(RGSet){
         RGsetEpic<-RGset<-thisSam
         rmarkdown::render(
             reportMd, "html_document", dat$outFi, getwd(), quiet = FALSE, output_options = c("self_contained = TRUE"),
-            params = list(token = gb$ApiToken, rundata = dat, RGsetEpic=RGsetEpic)
+            params = list(token = gb$ApiToken, rundata = dat, RGsetEpic = RGsetEpic)
         )
     }
 }
