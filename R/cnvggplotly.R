@@ -167,10 +167,10 @@ new.ggplotly <- function (xx, getTables = T, newOvGenes=NULL, sex='male', addCus
         color = "darkgrey", font = list(size = 15, color = "blue",face = "bold"),
         bgcolor = "white", opacity = 0.85)
     # Return Plot or Table
-    if (!getTables) {
+    if (getTables==F) {
         return(suppressMessages(suppressWarnings(ggpb %>% toWebGL())))
     }
-    if (getTables) {
+    if (getTables==T) {
         xyRatio <- xx@bin[["ratio"]]
 #         newDataAnno <- data.frame(
 #             newAnnotation =newOvGenes[1:length( xx@anno@bins$probes)],
