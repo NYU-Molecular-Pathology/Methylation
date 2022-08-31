@@ -84,7 +84,9 @@ GetMethDf <- function(pactName) {
 GetSamList <- function(pactName) {
     colFltr <- c("Test_Number","Specimen_ID","Tumor_Content")
     samsheet <- list.files('.', "-SampleSheet.csv", T)[1]
+    message("Reading file: ", samsheet)
     samList <- read.csv(samsheet, skip=19)[, colFltr]
+    stopifnot(length(samList)>0)
     return(samList)
 }
 
@@ -262,8 +264,20 @@ checkDataDump <- function(sam, cnvTab) {
 
 checkTumorPdf <- function(samList, outDir){
     pngOutDir <- file.path(outDir,"cnvpng") # output copy of cnvPNG files
-    if(!dir.exists(pngOutDir)){dir.create(pngOutDir)}
-    pdfList <- list.files(pattern = "*.pdf", recursive = T)
+    if(!dir.exists(pngOutDir)){
+        dir.create(pngOutDir)
+        pdfList <- list.files(pattern = "*.pdf", recursive = T)
+    }else{
+        pdfList <- list.files(pngOutDir, pattern = "*.pdf", recursive = T)
+    }
+    if(length(pdfList)==0){
+        message("No PDFs found in current directory:\n",getwd())
+        message(
+            "Make sure this Runs Facet PDFs are availible in the directory:\n",
+            "/Volumes/molecular/Molecular/REDCap/cnv_facets\n", 
+            "or copy facetpdf files to working directory")
+        stopifnot(length(pdfList)!=0)
+    }
     toDrop <- samList$Tumor_Content != 0 & samList$Specimen_ID != "SC"
     tumors <- samList[toDrop, ] # drop controls/normals
     row.names(tumors)<- 1:nrow(tumors) # re-number rows
@@ -319,7 +333,7 @@ CopyPdfsPngs <- function(params) {
     pngOutDir <- file.path(outDir,"cnvpng") # output copy of cnvPNG files
     tumors <- checkTumorPdf(samList, pngOutDir)
     pdfList <- list.files(pattern = "*.pdf", recursive = T)
-    if (!dir.exists(pdfDir)) {
+    if (length(pdfList)>0) {
         convert.plots(tumors, pdfList)
         dir.create(pdfDir)
         try(fs::file_move(pdfList, pdfDir), silent = T)
