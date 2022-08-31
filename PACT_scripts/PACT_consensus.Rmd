@@ -3,12 +3,9 @@ output:
     html_document:
         theme: spacelab
         toc: true
-        number_sections: false
         toc_float: true
         code_download: true
 toc_collapsed: true
-editor_options: 
-  chunk_output_type: console
 params:
   pactName: "PACT-22-##"
   userName: "Jonathan Serrano"
@@ -41,6 +38,6 @@ htmltools::tagList(DT::datatable(cars, options=list(pageLength = 100, width="100
 htmltools::tagList(plotly::ggplotly(ggplot2::ggplot()))
 ```
 
-```{r, label='Table Output', echo=FALSE, warning=FALSE, error=FALSE, fig.keep='all', include=TRUE, fig.align="left", fig.show="asis", out.width = '100%', results='asis'}
+```{r, label='Table Output', echo=FALSE, warning=FALSE, error=FALSE, fig.keep='all', include=TRUE, fig.align="left", fig.show="asis", out.width = '100%', results='asis', message=FALSE}
 gb$LoopSampleTabs(params)
 ```
