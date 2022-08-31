@@ -318,15 +318,28 @@ GetMethCnv <- function(params, methDir){
     methSamples <- paste(methData$record_id,"cnv.png",sep = "_")
     methSamples <- methSamples[methData$report_complete=="YES"]
     if(!dir.exists(pngDir)){dir.create(pngDir)}
-    for(mSam in methSamples){
-        methPath <- file.path(methDir,mSam)
-        methOut <-file.path(pngDir,mSam)
-        if(!file.exists(methOut)){
-            if(file.exists(methPath)){
-                fs::file_copy(path=methPath, new_path = file.path(pngDir,mSam))
-            } else{warning("Sample failed to copy:\n", methPath)}}
+    for (mSam in methSamples) {
+        methPath <- file.path(methDir, mSam)
+        methOut <- file.path(pngDir, mSam)
+        if (!file.exists(methOut)) {
+            message("Now trying to copy cnv file to...\n", methOut)
+            if (file.exists(methPath)) {
+                tryCatch(
+                fs::file_copy(path = methPath, new_path = file.path(pngDir, mSam)),
+                error= function(e){
+                    warning("Methylation png failed to copy:\n", "From: ", methPath, "\nTo: ", methOut)
+                    message(e)
+                }
+                )
+            } else{
+                warning("PNG file not found in Z-drive path:\n", methPath)
+            }
+        } else{
+            message("File already copied to working directory: ", mSam)
+        }
     }
 }
+
 # Checks if the facets pdfs have been converted to png
 CopyPdfsPngs <- function(params) {
     outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus")) 
