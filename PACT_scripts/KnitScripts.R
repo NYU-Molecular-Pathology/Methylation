@@ -90,7 +90,7 @@ GetSamList <- function(pactName) {
     toKeep <- samList$Test_Number!="0" & isNGS
     if(any(toKeep==F)){
         message(crayon::bgRed("The following cases have no NGS number and are being excluded:"),"\n")
-        print(samList[!toKeep,])
+        message(paste0(utils::capture.output(samList[!toKeep,]), collapse = "\n"))
         samList <- samList[toKeep,]
     }
     stopifnot(nrow(samList)>2)
