@@ -93,7 +93,7 @@ GetSamList <- function(pactName) {
         print(samList[!toKeep,])
         samList <- samList[toKeep,]
     }
-    stopifnot(length(samList)>0)
+    stopifnot(nrow(samList)>2)
     return(samList)
 }
 
