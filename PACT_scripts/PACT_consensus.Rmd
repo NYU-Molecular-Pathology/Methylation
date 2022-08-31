@@ -32,6 +32,8 @@ methDir <- "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
 critialMnts <- c("/Volumes/CBioinformatics/Methylation/", "/Volumes/molecular/")
 gb$CheckMntDirs(critialMnts, params)
 gb$CheckFiExist(params$pactName, philipsFtp)
+gb$CopyPdfsPngs(params)
+gb$GetMethCnv(params, methDir)
 ```
 
 ```{r, include=FALSE}
@@ -40,7 +42,5 @@ htmltools::tagList(plotly::ggplotly(ggplot2::ggplot()))
 ```
 
 ```{r, label='Table Output', echo=FALSE, warning=FALSE, error=FALSE, fig.keep='all', include=TRUE, fig.align="left", fig.show="asis", out.width = '100%', results='asis'}
-gb$CopyPdfsPngs(params)
-gb$GetMethCnv(params, methDir)
 gb$LoopSampleTabs(params)
 ```

@@ -39,7 +39,7 @@ librarian::shelf(pkgs, ask=F)
 library("kableExtra")
 
 CheckMntDirs <- function(critialMnts, params) {
-    outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus")) 
+    outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus"))
     failMount <-
         lapply(critialMnts, function(mnt) {
             ifelse(!dir.exists(mnt), return(T), return(F))
@@ -86,13 +86,20 @@ GetSamList <- function(pactName) {
     samsheet <- list.files('.', "-SampleSheet.csv", T)[1]
     message("Reading file: ", samsheet)
     samList <- read.csv(samsheet, skip=19)[, colFltr]
+    isNGS <- !is.na(stringr::str_extract(samList$Test_Number, 'NGS'))
+    toKeep <- samList$Test_Number!="0" & isNGS
+    if(any(toKeep==F)){
+        message(crayon::bgRed("The following cases have no NGS number and are being excluded:"),"\n")
+        print(samList[!toKeep,])
+        samList <- samList[toKeep,]
+    }
     stopifnot(length(samList)>0)
     return(samList)
 }
 
 GrabSamples <- function(samList){
     sam <- unique(samList$Test_Number)
-    samples <- sam[sam!=0 & !is.na(sam)]
+    samples <- sam[sam!=0 & !is.na(sam) & sam!="0"]
     return(samples)
 }
 
@@ -272,7 +279,7 @@ checkTumorPdf <- function(samList, outDir){
         message("No PDFs found in current directory:\n",getwd())
         message(
             "Make sure this Runs Facet PDFs are availible in the directory:\n",
-            "/Volumes/molecular/Molecular/REDCap/cnv_facets\n", 
+            "/Volumes/molecular/Molecular/REDCap/cnv_facets\n",
             "or copy facetpdf files to working directory")
         stopifnot(length(pdfList)!=0)
     }
@@ -313,7 +320,7 @@ convert.plots <- function(tumors, pdfList) {
 
 GetMethCnv <- function(params, methDir){
     methData <- gb$GetMethDf(params$pactName)
-    outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus")) 
+    outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus"))
     pngDir <- file.path(outDir,"methCNV") # output copy of methylation png files
     methSamples <- paste(methData$record_id,"cnv.png",sep = "_")
     methSamples <- methSamples[methData$report_complete=="YES"]
@@ -342,7 +349,7 @@ GetMethCnv <- function(params, methDir){
 
 # Checks if the facets pdfs have been converted to png
 CopyPdfsPngs <- function(params) {
-    outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus")) 
+    outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus"))
     samList <- gb$GetSamList(params$pactName)
     pdfDir <- file.path(outDir,"FACETpdfs") # input facet pdf directory
     tumors <- checkTumorPdf(samList, outDir)
@@ -472,7 +479,7 @@ LoopSampleTabs <-function(params){
     samList <- gb$GetSamList(pactName)
     samples <- gb$GrabSamples(samList)
     snvDt <- read.csv(paste0(pactName, "_desc.csv"))
-    outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus")) 
+    outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus"))
     for (sam in samples) {
         gb$makeNewTab(sam, samList, qcData)
         if (sam %in% snvDt$Test_Case) {
