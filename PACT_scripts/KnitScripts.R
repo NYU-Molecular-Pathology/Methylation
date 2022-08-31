@@ -282,11 +282,14 @@ checkTumorPdf <- function(samList, outDir){
     tumors <- samList[toDrop, ] # drop controls/normals
     row.names(tumors)<- 1:nrow(tumors) # re-number rows
     if(length(pdfList)!=nrow(tumors)){
-        warning(
+        message(
             "Number of sample rows ", nrow(tumors),
             " does not equal length of pdf files: ", length(pdfList),
             "\nCheck if any are missing:\n"
         )
+        message("Tumors:")
+        print(tumors$Specimen_ID)
+        message("Files:")
         print(pdfList)
     }
     return(tumors)
