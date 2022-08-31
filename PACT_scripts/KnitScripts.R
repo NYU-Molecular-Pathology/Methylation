@@ -297,7 +297,8 @@ checkTumorPdf <- function(samList, outDir){
 
 # Converts FACETS PDF cnv facets to PNG format renamed as NGS name----------------------------------
 convert.plots <- function(tumors, pdfList) {
-    ngsOrder = which(sapply(tumors$Specimen_ID, grepl, pdfList), arr.ind = T)[, "row"]
+    stopifnot(class(tumors)=="data.frame")
+    ngsOrder = base::which(sapply(tumors$Specimen_ID, grepl, pdfList), arr.ind = T)[, "row"]
     invisible(lapply(X=1:length(ngsOrder), FUN=function(X){
         pngName <- paste0(tumors$Test_Number[X], ".png")
         pdfFile <- pdfList[ngsOrder[X]]
@@ -333,8 +334,7 @@ CopyPdfsPngs <- function(params) {
     outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus")) 
     samList <- gb$GetSamList(params$pactName)
     pdfDir <- file.path(outDir,"FACETpdfs") # input facet pdf directory
-    pngOutDir <- file.path(outDir,"cnvpng") # output copy of cnvPNG files
-    tumors <- checkTumorPdf(samList, pngOutDir)
+    tumors <- checkTumorPdf(samList, outDir)
     pdfList <- list.files(pattern = "*.pdf", recursive = T)
     if (length(pdfList)>0) {
         convert.plots(tumors, pdfList)
