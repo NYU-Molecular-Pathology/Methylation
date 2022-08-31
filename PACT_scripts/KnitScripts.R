@@ -266,10 +266,8 @@ checkTumorPdf <- function(samList, outDir){
     pngOutDir <- file.path(outDir,"cnvpng") # output copy of cnvPNG files
     if(!dir.exists(pngOutDir)){
         dir.create(pngOutDir)
-        pdfList <- list.files(pattern = "*.pdf", recursive = T)
-    }else{
-        pdfList <- list.files(pngOutDir, pattern = "*.pdf", recursive = T)
     }
+    pdfList <- list.files(outDir, pattern = "*.pdf", recursive = T, full.names=T)
     if(length(pdfList)==0){
         message("No PDFs found in current directory:\n",getwd())
         message(
