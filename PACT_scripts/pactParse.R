@@ -6,12 +6,15 @@ dsh="\n================"
 dsh2="\n==========================\n"
 
 # Main arguments input in comandline
-token<-args[1]; inputSheet<-args[2]
+token <- args[1]
+inputSheet <- args[2]
+runID <- args[3]
 
 # Displays the Input args -----
 message(dsh,"\nParameters input",dsh)
 message("token: ",token)
 message("Worksheet: ", inputSheet,".xlsm\n")
+message("Run ID: ", runID,"\n")
 
 # Check Input Params -----
 stopifnot(exists("token")|!is.null(token))
@@ -104,19 +107,94 @@ getPhilipsGender <- function(mainSheet,inputFi, sh2){
     write.table(cnvSheet,quote=F, sep='\t', file=cnvPath,row.names=F)
 }
 
+GetExcelData <- function(inputFi, sheetname, shRange, toSkip=0, cm=F){
+    sheetData <- suppressMessages(as.data.frame(
+        readxl::read_excel(
+            inputFi,
+            sheet =  sheetname,
+            na = "",
+            range = shRange,
+            col_types = "text",
+            col_names = cm,
+            skip=toSkip
+        )
+    ))
+    sheetData[is.na(sheetData)] <- ""
+    return(sheetData)
+}
+
+WriteFileHeader <- function(inputFi){
+    pactName <- stringr::str_split_fixed(basename(inputFi), ".xl", 2)[1,1]
+    td <- as.character(paste0(format(Sys.time(), "%m/%d/%y")))
+    header1 <- c(
+        "[Header]",
+        "IEMFileVersion",
+        "Investigator",
+        "Project Name",
+        "Experiment Name",
+        "Date",
+        "Workflow",
+        "Application",
+        "Assay",
+        "Description",
+        "Chemistry",
+        "[Reads]",
+        "151",
+        "151",
+        "[Settings]",
+        "AdapterSequenceRead1",
+        "AdapterSequenceRead2",
+    )
+
+    header2 <- c(
+        "",
+        "4",
+        "Name",
+        pactName,
+        pactName,
+        td,
+        "GenerateFASTQ",
+        "FASTQ Only",
+        "KAPA-IDT",
+        "Description",
+        "Capture Enrichment",
+        "",
+        "",
+        "",
+        "",
+        "AGATCGGAAGAGCACACGTC",
+        "AGATCGGAAGAGCGTCGTGT"
+    )
+}
+
+AltParseFormat <- function(inputFi, shNames){
+    sh <- which(grepl("PACT-", shNames, ignore.case = T))[1]
+    message("Reading sheet named ",shNames[sh],"...")
+    sheetMain <- GetExcelData(inputFi, sh, "A6:F200")
+    toDrop <- which(sheetMain[,ncol(sheetMain)]=="")[1] - 1
+    sheetMain <- sheetMain[1:toDrop,]
+    sh2 <- which(grepl("Philips", shNames, ignore.case = T))[1]
+    philipsExport <- GetExcelData(inputFi, sh2, NULL, 3, cm=T)
+    sheetHead <- WriteFileHeader(inputFi)
+    sheetHead <- rbind(sheetHead,c("",""),c("[Data]",""))
+}
+
+
 # Parses xlsx file and writes as csv file -----
-parseExcelFile <- function(inputFi){
+parseExcelFile <- function(inputFi, runID = NULL){
     shNames <- readxl::excel_sheets(inputFi)
     message("Sheet names:")
-    print(as.data.frame(shNames))
+    message(paste0(capture.output(as.data.frame(shNames)), collapse = "\n"))
     sh <- which(grepl("SampleSheet", shNames, ignore.case = T))[1]
-    sh2 <- which(grepl("Philips", shNames, ignore.case = T))[1]
-    sheetHead <- as.data.frame(readxl::read_excel(
-        inputFi,sheet = shNames[sh], na="", range="A1:B17", col_types = "text", col_names=F))
-    sheetHead[is.na(sheetHead)] <- ""
+    if(!is.na(sh)){
+    sheetHead <- GetExcelData(inputFi, sheetname=shNames[sh], shRange="A1:B17")
     sheetHead <- rbind(sheetHead,c("",""),c("[Data]",""))
     sheetVals <- as.data.frame(readxl::read_excel(inputFi,sheet = shNames[sh],skip = 19,col_types = "text"))
     mainSheet <- sanitizeSheet(sheetVals)
+    } else{
+        mainSheet <- AltParseFormat(inputFi, shNames)
+    }
+    sh2 <- which(grepl("Philips", shNames, ignore.case = T))[1]
     getPhilipsGender(mainSheet,inputFi, sh2)
     outFile <- file.path("~","Desktop",paste(mainSheet[1,"Run_Number"],"SampleSheet.csv",sep="-"))
     write.table(sheetHead,sep=",", file=outFile, row.names=F, col.names=F,quote=F)
@@ -170,10 +248,10 @@ filterFiles <- function(potentialFi) {
 }
 
 # Gets dataframe and saves as CSV file -----
-writeSampleSheet <- function(inputSheet, token){
+writeSampleSheet <- function(inputSheet, token, runID = NULL){
     inputFi <- getExcelPath(inputSheet)
     if (file.exists(inputFi)) {
-        outVals <- suppressMessages(parseExcelFile(inputFi))
+        outVals <- suppressMessages(parseExcelFile(inputFi, runID))
         pushToRedcap(runId=outVals[[1]], outFile=outVals[[2]], token)
     } else {
         message(crayon::bgRed("The PACT run worksheet was not found:"),"\n", inputFi, "\n")
@@ -186,13 +264,13 @@ writeSampleSheet <- function(inputSheet, token){
         }
         if (file.exists(potentialFi[1])) {
             message(crayon::bgGreen("Now trying to read:"),"\n",potentialFi[1],"\n")
-            outVals <- suppressMessages(parseExcelFile(inputFi=potentialFi[1]))
+            outVals <- suppressMessages(parseExcelFile(inputFi=potentialFi[1], runID))
             pushToRedcap(runId=outVals[[1]], outFile=outVals[[2]], token)
         }else{
             message("\n",crayon::bgRed("The PACT run worksheet was not found:"),"\n", inputFi, potentialFi[1], "\n")
             message("Trying ", potentialFi[2], " instead","\n")
             stopifnot(file.exists(potentialFi[2]))
-            outVals <- suppressMessages(parseExcelFile(inputFi=potentialFi[2]))
+            outVals <- suppressMessages(parseExcelFile(inputFi=potentialFi[2], runID))
             pushToRedcap(runId=outVals[[1]], outFile=outVals[[2]], token)
         }
     }
@@ -200,4 +278,4 @@ writeSampleSheet <- function(inputSheet, token){
 
 loadPacks()
 checkMounts()
-writeSampleSheet(inputSheet, token)
+writeSampleSheet(inputSheet, token, runID)
