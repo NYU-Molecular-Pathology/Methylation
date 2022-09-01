@@ -35,15 +35,14 @@ GetOutFamily <- function(is450k, Mset_ba, Mset){
     if (is450k==T) {
         library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylation450kmanifest")
         library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b4")
+
         tryCatch(
             expr = {
                 probs_mcf <- mnp.v11b4::MNPpredict(Mset_ba[, 1], type='prob',MCF=TRUE)
             },
             error = function(e) {
-                message("Error caught at mnp.v11b4::MNPpredict(), trying mnp.v11b6::MNPpredict()...")
-                message(e)
-                library(verbose=F,warn.conflicts=F, quietly=T, package="mnp.v11b6")
-                probs_mcf <- mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob', MCF = TRUE)
+                message("Error caught at mnp.v11b4::MNPpredict(), trying uncalibrated...")
+                probs_mcf <- mnp.v11b4::MNPpredict(Mset_ba[, 1], type='prob',MCF=TRUE,calibrate = FALSE)
             }
         )
 
