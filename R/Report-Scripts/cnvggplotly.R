@@ -56,8 +56,6 @@ new.ggplotly <- function (xx, getTables = T, newOvGenes=NULL, sex='male', addCus
     compiler::setCompilerOptions(suppressAll = TRUE, optimize = 3)
     ovDataPath <- paste(path.package("mnp.v11b6"), "/ext/ovgenes.RData", sep = "")
     load(ovDataPath)
-    # permalink to annotations
-    #readRDS("newOvGenes.rds")
     ylim = c(-2, 2)
     bin.ratio <- xx@bin$ratio - xx@bin$shift
     bin.ratio[bin.ratio < ylim[1]] <- ylim[1]
@@ -79,8 +77,18 @@ new.ggplotly <- function (xx, getTables = T, newOvGenes=NULL, sex='male', addCus
     chrs <- .cumsum0(xx@anno@genome[chr, "size"], right = TRUE)
     chrspq <- .cumsum0(xx@anno@genome[chr, "size"]) + xx@anno@genome[chr, "pq"]
     tickl <- .cumsum0(xx@anno@genome[chr, "size"]) + xx@anno@genome[chr, "size"]/2
-    cols2 = c("firebrick4", "firebrick2", "red", "lightpink", "darkgrey", "darkgrey", "lightgreen", "green", "green3",
-              "darkgreen")
+    cols2 = c(
+        "firebrick4",
+        "firebrick2",
+        "red",
+        "lightpink",
+        "darkgrey",
+        "darkgrey",
+        "lightgreen",
+        "green",
+        "green3",
+        "darkgreen"
+    )
     bin.ratio.cols <- apply(colorRamp(cols2)(
         (bin.ratio + max(abs(ylim)))/(2 * max(abs(ylim)))), 1,
         function(x) rgb(x[1], x[2], x[3], maxColorValue = 255))
@@ -96,12 +104,6 @@ new.ggplotly <- function (xx, getTables = T, newOvGenes=NULL, sex='male', addCus
     detail.ratio.above <- (detail.ratio > 0.15 & detail.ratio < 1) | detail.ratio < -0.15
     detail.x <-
         start(xx@anno@detail) + (end(xx@anno@detail) - start(xx@anno@detail))/2 + chr.cumsum0[as.vector(seqnames(xx@anno@detail))]
-
-    chromocols <- c("#2D77E6", "#785C0B", "#6D26A5", "#4E4E4E",
-                    "#19774E", "#14E72D", "#2D77E6", "#C991E5", "#19AC47",
-                    "#B23E19", "#C991E5", "#E600E3", "#2D518C", "#E69F14",
-                    "#E19290", "#829D19", "#DF1E29", "#19E7BB", "#29C5E7",
-                    "#A00B92", "#AE6A96", "#E519AD", "#8A4694", "#E77300")
     df3 <- data.frame(detail.ratio, detail.x, names = (xx@anno@detail)$name)
     dra <- detail.ratio.above
     p <- ggplot(df, aes(x = x, y = bin.ratio)) +
@@ -132,9 +134,11 @@ new.ggplotly <- function (xx, getTables = T, newOvGenes=NULL, sex='male', addCus
               axis.text.y = element_text(size = 14),
               axis.title.y = element_text(size = 14),
               axis.title.x = element_text(size = 14))
-    ggp <- suppressMessages(suppressWarnings(plotly::ggplotly(p)))
-    ggpb <- suppressMessages(suppressWarnings(plotly::plotly_build(ggp)))
-    ggpb <- ggpb %>% plotly::layout(xaxis = list(showgrid = F), yaxis = list(showgrid = F))
+
+    ggpb <-suppressMessages(suppressWarnings(
+        plotly::plotly_build(plotly::ggplotly(p)) %>%
+            plotly::layout(xaxis = list(showgrid = F), yaxis = list(showgrid = F))
+    ))
 
     # Annotate Hover Probes
     if (length(xx@bin$ratio) >= 25666) {
@@ -145,8 +149,7 @@ new.ggplotly <- function (xx, getTables = T, newOvGenes=NULL, sex='male', addCus
             "probes: ", (xx@anno@bins)$probes, "<br>",
             "Chr: ", xx@anno@bins@ranges@NAMES,"<br>",
             "Genes: ", newOvGenes[1:length(xx@bin$ratio)])
-    }
-    else {
+    }else {
         ggpb$x$data[[1]]$text <- paste0(
             seqnames(xx@anno@bins),
             "<br>", "start: ", start(xx@anno@bins), "<br>",
@@ -183,32 +186,21 @@ new.ggplotly <- function (xx, getTables = T, newOvGenes=NULL, sex='male', addCus
         #font = list(size = 15, color = "blue", face = "bold"),
         bgcolor = "white",
         opacity = 0.85
-    )
+    ) %>% ggplotly(tooltip = "text") %>%
+        plotly::style(hoverlabel = list(bgcolor = "blue"))
     # Return Plot or Table
     if (getTables == F) {
-        return(suppressMessages(suppressWarnings(ggpb %>% toWebGL())))
+        return(ggpb %>% suppressWarnings(toWebGL()))
     }
     if (getTables == T) {
-        # xyRatio <- xx@bin[["ratio"]]
-        #         newDataAnno <- data.frame(
-        #             newAnnotation =newOvGenes[1:length( xx@anno@bins$probes)],
-        #             start = start(xx@anno@bins),
-        #             end =  end(xx@anno@bins),
-        #             chromosome = xx@anno@bins@ranges@NAMES,
-        #             probes = xx@anno@bins$probes,
-        #             yvalues = xyRatio,
-        #             gains = ifelse(xyRatio>=0.25,"GAIN",""),
-        #             loss = ifelse(xyRatio<=-0.25,"LOSS","")
-        #         )
-        #         finame <- paste0(xx@name,"_newDataAnno.csv")
-        #         write.csv(newDataAnno,finame)
         dra <- data.frame(
-            Gain = c(detail.ratio > 0.15 & detail.ratio <1.5),
+            Gain = c(detail.ratio > 0.15 & detail.ratio < 1.5),
             Loss = c(detail.ratio < -0.15)
         )
         return(dra)
     }
 }
+
 
 MNPciplot_mgmt<- function(Mset,sample=1){
     pred <- MNPpredict_mgmt(Mset[, sample])
