@@ -166,18 +166,30 @@ new.ggplotly <- function (xx, getTables = T, newOvGenes=NULL, sex='male', addCus
 
     # Custom Detail Annotations
     ggpb <- ggpb %>% add_annotations(
-        x = detail.x, y = detail.ratio,
-        text = names(detail.ratio), textangle = 60, showarrow = T,
-        arrowwidth = 0.75, xref = "x", yref = "y", size = 0.5,
-        arrowhead = 3, ax = -20, ay = -60, arrowsize = 0.5,
-        color = "darkgrey", font = list(size = 15, color = "blue",face = "bold"),
-        bgcolor = "white", opacity = 0.85)
+        x = detail.x,
+        y = detail.ratio,
+        text = names(detail.ratio),
+        textangle = 60,
+        showarrow = T,
+        arrowwidth = 0.75,
+        xref = "x",
+        yref = "y",
+        size = 0.5,
+        arrowhead = 3,
+        ax = -20,
+        ay = -60,
+        arrowsize = 0.5,
+        color = "darkgrey",
+        #font = list(size = 15, color = "blue", face = "bold"),
+        bgcolor = "white",
+        opacity = 0.85
+    )
     # Return Plot or Table
-    if (!getTables) {
+    if (getTables == F) {
         return(suppressMessages(suppressWarnings(ggpb %>% toWebGL())))
     }
-    if (getTables) {
-        xyRatio <- xx@bin[["ratio"]]
+    if (getTables == T) {
+        # xyRatio <- xx@bin[["ratio"]]
         #         newDataAnno <- data.frame(
         #             newAnnotation =newOvGenes[1:length( xx@anno@bins$probes)],
         #             start = start(xx@anno@bins),
@@ -208,7 +220,7 @@ MNPciplot_mgmt<- function(Mset,sample=1){
         theme(plot.title = element_text(lineheight = .8, face = "bold")) +
         xlab("Score") + ylab("") + scale_y_discrete("", breaks = c(0))
     theBarPlot <- plotly::ggplotly(theBarPlot)
-    theBarPlot <- 
+    theBarPlot <-
         htmltools::tagList(plotly::ggplotly(theBarPlot)) %>%
         layout(autosize = T, width = 500, height = 200)
     return(theBarPlot)
