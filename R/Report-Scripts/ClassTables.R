@@ -11,7 +11,7 @@ GetSexMsetBa <- function(is450k, RGset, FFPE=NULL){
         Mset <- mnp.v11b4::MNPpreprocessIllumina(RGset)
         if (is.null(FFPE)) {FFPE <- mnp.v11b4::MNPgetFFPE(RGset)}
         Mset_ba <- mnp.v11b4::MNPbatchadjust(Mset, FFPE)
-        if (FFPE == "Frozen") {Mset@preprocessMethod <- 
+        if (FFPE == "Frozen") {Mset@preprocessMethod <-
             c(Mset_ba@preprocessMethod, FFPE_Frozen.mnp.adjustment = '0.11')}
         sex <- ifelse(mnp.v11b4::MNPgetSex(Mset)$predictedSex == "M", "Male", "Female")
     } else {
@@ -46,7 +46,7 @@ GetOutFamily <- function(is450k, Mset_ba, Mset){
                 probs_mcf <- mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob', MCF = TRUE)
             }
         )
-        
+
     } else {
         library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylationEPICmanifest")
         library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b6")
@@ -76,7 +76,7 @@ GetOutFamily <- function(is450k, Mset_ba, Mset){
     if (fsco >= 0.900) {famVal <- "Positive"}
     if (fsco < 0.900 & fsco > 0.300) {famVal <- "Indeterminate"}
     if (fsco <= 0.300) {famVal <- "Negative"}
-    
+
     if (is.null(famVal)) {warning("family value (famVal) is NULL")
         famVal <- "Indeterminate"
     }
@@ -88,6 +88,7 @@ GetOutClass <- function(is450k, Mset_ba, Mset){
     if (is450k==T) {
         library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylation450kmanifest")
         library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b4")
+        library(verbose=F, warn.conflicts = F, quietly = T, package= "randomForest")
         tryCatch(
             expr = {
                 probs <- mnp.v11b4::MNPpredict(Mset_ba[, 1], type = 'prob')
@@ -114,7 +115,7 @@ GetOutClass <- function(is450k, Mset_ba, Mset){
             }
         )
     }
-    
+
     oo <- order(probs, decreasing = T)
     eps <- 1e-3
     out <- probs[oo[1:5]]
