@@ -31,13 +31,14 @@ GetSexMsetBa <- function(is450k, RGset, FFPE=NULL){
     return(list("sex"=sex, "Mset"= Mset, "Mset_ba"=Mset_ba, "FFPE"=FFPE))
 }
 
-GetOutFamily <- function(is450k, Mset_ba, Mset){
+GetFamilyProb <- function(is450k, Mset_ba, Mset){
     if (is450k==T) {
         library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylation450kmanifest")
         library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b4")
 
         tryCatch(
             expr = {
+                load("/Volumes/CBioinformatics/Methylation/Methylation_classifier_v11b4/mnp.v11b4/data/rfpred.v11b4.RData")
                 probs_mcf <- mnp.v11b4::MNPpredict(Mset_ba[, 1], type='prob',MCF=TRUE)
             },
             error = function(e) {
@@ -60,49 +61,63 @@ GetOutFamily <- function(is450k, Mset_ba, Mset){
             }
         )
     }
-    oo_mcf <- order(probs_mcf, decreasing = T)
-    eps <- 1e-3
-    out_class_family <- probs_mcf[oo_mcf[1:5]]
-    out_class_family <- cbind(
-        round(pmax(pmin(out_class_family, 1 - eps), eps),3), colnames(probs_mcf)[oo_mcf][1:5])
-    colnames(out_class_family) <- c("Class Score","Methylation Family")
-    out_class_family <- as.data.frame(out_class_family)
+    return(probs_mcf)
+}
+
+GetFamScore <- function(out_class_family){
     fsco <- as.numeric(paste0(out_class_family$`Class Score`[1]))
     famVal <- NULL
-    if (is.null(fsco)|is.na(fsco)) {warning("fsco value (family score) is NULL. Assigning value of 0.00")
+    if (is.null(fsco)|is.na(fsco)) {
+        warning("fsco value (family score) is NULL. Assigning value of 0.00")
         fsco <- 0.000
     }
     if (fsco >= 0.900) {famVal <- "Positive"}
     if (fsco < 0.900 & fsco > 0.300) {famVal <- "Indeterminate"}
     if (fsco <= 0.300) {famVal <- "Negative"}
-
-    if (is.null(famVal)) {warning("family value (famVal) is NULL")
+    if (is.null(famVal)) {
+        warning("family value (famVal) is NULL")
         famVal <- "Indeterminate"
     }
+    return(famVal)
+}
+
+GetOutFamily <- function(is450k, Mset_ba, Mset){
+    probs_mcf <- GetFamilyProb(is450k, Mset_ba, Mset)
+    oo_mcf <- order(probs_mcf, decreasing = T)
+    eps <- 1e-3
+    out_class_family <- probs_mcf[oo_mcf[1:5]]
+    out_class_family <- cbind(
+        round(pmax(pmin(out_class_family, 1 - eps), eps),3),
+        colnames(probs_mcf)[oo_mcf][1:5]
+        )
+    colnames(out_class_family) <- c("Class Score","Methylation Family")
+    out_class_family <- as.data.frame(out_class_family)
+    famVal <- GetFamScore(out_class_family)
     out_class_family$Interpretation = c(famVal,"","","","")
     return(out_class_family)
 }
 
-GetOutClass <- function(is450k, Mset_ba, Mset){
+GetProbability <- function(is450k, Mset_ba, Mset){
     if (is450k==T) {
         library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylation450kmanifest")
         library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b4")
-        library(verbose=F, warn.conflicts = F, quietly = T, package= "randomForest")
+
         tryCatch(
             expr = {
+                load("/Volumes/CBioinformatics/Methylation/Methylation_classifier_v11b4/mnp.v11b4/data/rfpred.v11b4.RData")
                 probs <- mnp.v11b4::MNPpredict(Mset_ba[, 1], type = 'prob')
             },
             error = function(e) {
                 message("Error caught at mnp.v11b4::MNPpredict(Mset_ba[, 1], type = 'prob'):\n")
                 message(e)
                 message("\nNow trying mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob')...")
-                library(verbose=F,warn.conflicts = F, quietly = T, package="mnp.v11b6")
-                probs <- mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob')
+                probs <- mnp.v11b4::MNPpredict(Mset[, 1], type = 'prob')
             }
         )
     } else {
         library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylationEPICmanifest")
         library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b6")
+        load("/Volumes/CBioinformatics/Methylation/Methylation_classifier_v11b6/mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData")
         tryCatch(
             expr = {
                 probs <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob')
@@ -114,18 +129,14 @@ GetOutClass <- function(is450k, Mset_ba, Mset){
             }
         )
     }
+    return(probs)
+}
 
-    oo <- order(probs, decreasing = T)
-    eps <- 1e-3
-    out <- probs[oo[1:5]]
-    out <- cbind(round(pmax(pmin(out,1 - eps),eps),3),colnames(probs)[oo][1:5])
-    colnames(out) <- c("Subgroup Score","Methylation Subgroup")
-    idx <- match(colnames(probs)[oo][1],mnp.v11b6::reflist[,2])
-    out <- as.data.frame(out)
+GetOutScore <- function(is450k, Mset_ba, Mset){
     out_score <- as.numeric(paste0(out$`Subgroup Score`[1]))
     subVal_int <- NULL
     if (is.null(out_score)|is.na(out_score)) {
-        warning("out_score value (sub score) is NULL.  Assigning value of 0.00")
+        warning("out_score value (sub score) is NULL. Assigning value of 0.00")
         out_score <- 0.000
     }
     if (out_score >= 0.500) {subVal_int <- "Positive"}
@@ -135,6 +146,24 @@ GetOutClass <- function(is450k, Mset_ba, Mset){
         warning("subscore value (subVal_int) is NULL")
         subVal_int <- "Indeterminate"
     }
+    return(subVal_int)
+}
+
+GetOutClass <- function(is450k, Mset_ba, Mset){
+    probs <- GetProbability(is450k, Mset_ba, Mset)
+    oo <- order(probs, decreasing = T)
+    eps <- 1e-3
+    out <- probs[oo[1:5]]
+    out <- cbind(round(pmax(pmin(out,1 - eps),eps),3),colnames(probs)[oo][1:5])
+    colnames(out) <- c("Subgroup Score","Methylation Subgroup")
+    if(is450k){
+        idx <- match(colnames(probs)[oo][1], mnp.v11b4::reflist[,2])
+    }else{
+        idx <- match(colnames(probs)[oo][1], mnp.v11b6::reflist[,2])
+    }
+    stopifnot(!is.na(idx))
+    out <- as.data.frame(out)
+    subVal_int <- GetOutScore(out)
     out$Interpretation = c(subVal_int,"","","","")
     return(list("out"=out,"idx"=idx))
 }
