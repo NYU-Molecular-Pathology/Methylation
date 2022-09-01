@@ -109,27 +109,19 @@ easyPkgs <- c('tidyverse','sjmisc','stringi','digest','RCurl','gridExtra','needs
 sup <- function(x){return(suppressWarnings(suppressPackageStartupMessages(x)))}
 sw <- function(pkgOb){try(return(suppressMessages(suppressWarnings(pkgOb))),silent=T)}
 ld <- function(libName) {
-    lib.opts <-
-        list(
-            package = libName,
-            character.only = T,
-            verbose = T,
-            warn.conflicts = F,
-            quietly = F
-        )
+    lib.opts <- list(
+        package = libName, character.only = T,verbose = T, warn.conflicts = F, quietly = F)
     suppressPackageStartupMessages(do.call(library, c(lib.opts)))
     message(libName, " ...load successful")
 }
-up <- function(){update.packages(repos='http://cran.rstudio.com/',
-                                 type = "source", ask=F, checkBuilt=T)}
-rq <- function(pkgName){
-    ifelse(pkgName %in% row.names(installed.packages()), F, T)
-}
+up <- function(){update.packages(repos='http://cran.rstudio.com/', type = "source", ask=F, checkBuilt=T)}
+rq <- function(pkgName){ifelse(pkgName %in% row.names(installed.packages()), F, T)}
+mkred <- function(strMsg) {return(crayon::white$bgRed$bold(strMsg))}
+mkblu <- function(strMsg) {return(crayon::white$bgBlue$bold(strMsg))}
+mkGrn <- function(strMsg) {return(crayon::white$bgGreen$bold(strMsg))}
 
 msgCheck <- function(pkg, warn = F) {
-    if (warn == F) {
-        message("Checking ", pkg, "...")
-    } else{
+    if (warn == F) {message("Checking ", pkg, "...")} else{
         message("\nError caught for package:\n", pkg, "\n-----------")
     }
 }
@@ -431,14 +423,11 @@ fixCompiles <- function(brewExtra=F){
 }
 
 colorMsg <- function(){
-    mkred <- function(strMsg) {return(crayon::white$bgRed$bold(strMsg))}
-    mkblu <- function(strMsg) {return(crayon::white$bgBlue$bold(strMsg))}
-    ms1 <- paste0(
-        crayon::white$bgGreen("Updating in-house classifier to current version:"),"\n",
-        mkblu("classifierInstall(pathtoFile=NULL, instNew=F, rmpkg=F)"),"\n"
-    )
+    ms1 <- paste0(mkGrn("Updating in-house classifier to current version:"),"\n",
+                  mkblu("classifierInstall(pathtoFile=NULL, instNew=F, rmpkg=F)"),"\n"
+                  )
     ms2 <- paste0(mkred("Classifier package is not installed installing classifier"),"\n")
-    ms3 <- paste0(crayon::white$bgGreen("Your classifier package is up-to-date and loading"),"\n")
+    ms3 <- paste0(mkGrn("Your classifier package is up-to-date and loading"),"\n")
     return(c(ms1,ms2,ms3))
 }
 
@@ -449,11 +438,11 @@ startmsg <- function(){
     message("You have the following drives mounted:")
     system("ls /Volumes")
     if (!dir.exists(cbio)) {
-        warning(paste(wmm, cbio))
+        message(paste(wmm, cbio))
         message(paste(wmm2, cbio))
     }
     if (!dir.exists(zdriv)) {
-        warning(paste(wmm, zdriv))
+        message(paste(wmm, zdriv))
         message(paste(wmm2, zdriv))
     }
 }
@@ -487,14 +476,12 @@ checkClassifier <- function(mnpClass) {
         currentVers <- as.character(utils::packageVersion(mnpClass[, 1]))
         latestVers <- as.character(mnpClass[, 3])
         message("Current Version Installed: ", currentVers, "\nNewest Package Version: ",latestVers,"\n")
-
         if (currentVers==latestVers) {
             cat(ms[3])
             classifierInstall(mnpClass[, 2], F, F)
         } else {
             cat(ms[1])
             classifierInstall(mnpClass[, 2], T, T)
-
         }
     }
 }
