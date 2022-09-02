@@ -1,15 +1,14 @@
 ---
 output: html_document
 classoption: landscape
-editor_options: 
-  chunk_output_type: console
 params:
   runID: NULL
   sheetNamePath: NULL
   baseDir: NULL
   author: "Jonathan Serrano"
 ---
-```{r,include=FALSE, cache=FALSE, cache.path="cache/",echo=FALSE}
+
+```{r setup, include=FALSE, cache=FALSE, cache.path="cache/",echo=FALSE}
 # Check if RunID provided else use basename of working directory
 if(is.null(params$runID)){
     runID = paste0(basename(getwd()))
@@ -20,22 +19,25 @@ message(paste("Using", runID, "as RunID"))
 # Check if baseDir provided else use Desktop
 if(is.null(params$baseDir)){
     baseDir = file.path("~","Desktop",runID)
-}else{baseDir=params$baseDir}
+}else{
+    baseDir <- paste0(params$baseDir)
+    }
 
 message("Using the following base Directory:\n",baseDir)
 
 # Check if sheetNamePath provided else use Desktop to look for samplesheet pattern
 if(is.null(params$sheetNamePath)){
-    sheetNamePath = list.files(baseDir,pattern = "_samplesheet.csv", full.names = T)[1]
+    sheetNamePath <- list.files(baseDir, pattern = "_samplesheet.csv", full.names = T)[1]
 }else{sheetNamePath = params$sheetNamePath}
 
 if (length(sheetNamePath) > 1){warning(">1 samplesheet in the folder")}
 
-if (length(sheetNamePath) == 0){warning("No samplesheet in the folder ", baseDir,"\nCopying from current directory...")
+if (length(sheetNamePath) == 0) {
+    warning("No samplesheet in the folder ", baseDir, "\nCopying from current directory...")
     samSheet <- dir(getwd(), pattern = "samplesheet.csv", full.names = T)
-    fs::file_copy(path= samSheet, 
-                  new_path = file.path(baseDir, paste0(runID,"_samplesheet.csv")))
-    }
+    fs::file_copy(path = samSheet, new_path = file.path(baseDir, paste0(runID, "_samplesheet.csv")))
+    sheetNamePath <- file.path(baseDir, paste0(runID, "_samplesheet.csv"))
+}
 message(paste0("Sample sheet name is: ", sheetNamePath))
 fixerrors <- read.csv(sheetNamePath, strip.white = T)
 targets <- minfi::read.metharray.sheet(baseDir, pattern = sheetNamePath)
@@ -67,11 +69,6 @@ title: "`r titleName`"
 subtitle: "`r pSubTitle`"
 author: "`r paste0(params$author)`"
 date: "`r paste0(wsDate)`"
-output:
-  html_notebook:
-    highlight: espresso
-    theme: sandstone
-    fig_caption: yes
 classoption: landscape
 always_allow_html: yes
 papersize: a5
@@ -82,8 +79,6 @@ geometry:
 - left=2mm
 - right=2mm
 - bottom=2mm
-editor_options:
-  chunk_output_type: console
 ---
 
 ```{r set-options, include=FALSE, cache=FALSE, cache.path="cache/", echo=FALSE}
