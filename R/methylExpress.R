@@ -26,7 +26,9 @@ if(length(runLocal)==0 | identical(runLocal,NULL) | identical(runLocal,"NULL")){
 
 # Message input on console
 message("\n~~~~~~~~~~~~~~~~~~~~~Parameters input~~~~~~~~~~~~~~~~~~~~~\n")
-message("token: ", token,"\nrunID: ", runID,"\nselectRDs: ", selectRDs, "\nbaseFolder: ", baseFolder, "\nredcapUpload: ", redcapUpload, "\n")
+message("token: ", token,"\nrunID: ", runID,"\nselectRDs: ", selectRDs, 
+        "\nbaseFolder: ", baseFolder, "\nredcapUpload: ", redcapUpload, 
+        "\nrunLocal: ", runLocal,"\n")
 
 # Cancel if no token or runID
 stopifnot(!is.null(token)); stopifnot(!is.null(runID))
