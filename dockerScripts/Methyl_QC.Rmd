@@ -7,7 +7,6 @@ params:
   baseDir: NULL
   author: "Jonathan Serrano"
 ---
-
 ```{r setup, include=FALSE, cache=FALSE, cache.path="cache/",echo=FALSE}
 # Check if RunID provided else use basename of working directory
 if(is.null(params$runID)){
@@ -40,7 +39,7 @@ if (length(sheetNamePath) == 0) {
 }
 message(paste0("Sample sheet name is: ", sheetNamePath))
 fixerrors <- read.csv(sheetNamePath, strip.white = T)
-targets <- minfi::read.metharray.sheet(baseDir, pattern = sheetNamePath)
+targets <- minfi::read.metharray.sheet(baseDir, pattern = "samplesheet.csv")
 
 if(nrow(fixerrors)<8){
     warning("Less than 8 samples are run, disabling biocparrallel")
@@ -52,7 +51,7 @@ totNum <- nrow(fixerrors)/8 # total number of arrays for biocParrallel workers
 targets$basenames <- fixerrors$Basename # path/to/idat/files
 runID <- paste0(targets$RunID[1])
 wsDate <- fixerrors$Date[1] #format(Sys.time(), '%d %B, %Y')
-location <- file.path(baseDir,paste0( runID,"_Redcap.csv")) # redcap brain classifier file
+location <- file.path(baseDir, paste0(runID,"_Redcap.csv")) # redcap brain classifier file
 
 if (!file.exists(location)) {
 	warning(paste0("File not found: ", location,"\nQC Summary Table will not generate"))
@@ -118,7 +117,7 @@ fixerrors$Basename <- file.path(getwd(),fixerrors$SentrixID_Pos)
 ```
 
 ```{r BioCParallel, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
-mcc = parallel::detectCores()/2
+mcc = parallel::detectCores()-2
 BiocParallel::register(BiocParallel::MulticoreParam(mcc))
 mcParam <- BiocParallel::MulticoreParam(workers = mcc, progressbar = T)
 
