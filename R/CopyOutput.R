@@ -283,7 +283,7 @@ callApiImport <- function(rcon,
                           recordName,
                           runID){
 
-    isEmpty <- checkRedcapRecord(recordName, "run_number")
+    isEmpty <- checkRedcapRecord(recordName, "subgroup")
     if (isEmpty == '') {
         message(mkBlue("Importing Record:"))
         data = data.frame(record_id = recordName, run_number = runID)
@@ -307,7 +307,7 @@ callApiImport <- function(rcon,
             }
         )
     } else{
-        message(recordName, " already has an assigned run_number: ", isEmpty)
+        message(crayon::white$bgRed(recordName), " already has an assigned run_number: ", isEmpty)
         writeLogFi(recordName, isHtml = F, logFile = "import_log.tsv")
     }
 }
