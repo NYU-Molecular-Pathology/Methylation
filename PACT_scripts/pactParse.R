@@ -1,14 +1,15 @@
 #!/usr/bin/env Rscript
 args <- commandArgs(TRUE)
 library("base")
-#token=NULL;inputSheet=NULL
-dsh="\n================"
-dsh2="\n==========================\n"
+
 
 # Main arguments input in comandline
 token <- args[1]
 inputSheet <- args[2]
 runID <- args[3]
+#token=NULL;inputSheet=NULL
+dsh="\n================"
+dsh2="\n==========================\n"
 
 # Displays the Input args -----
 message(dsh,"\nParameters input",dsh)
@@ -143,7 +144,7 @@ WriteFileHeader <- function(inputFi){
         "151",
         "[Settings]",
         "AdapterSequenceRead1",
-        "AdapterSequenceRead2",
+        "AdapterSequenceRead2"
     )
 
     header2 <- c(
@@ -165,18 +166,139 @@ WriteFileHeader <- function(inputFi){
         "AGATCGGAAGAGCACACGTC",
         "AGATCGGAAGAGCGTCGTGT"
     )
+    theHeader <- cbind(header1,header2)
+    return(theHeader)
+
 }
 
-AltParseFormat <- function(inputFi, shNames){
-    sh <- which(grepl("PACT-", shNames, ignore.case = T))[1]
-    message("Reading sheet named ",shNames[sh],"...")
-    sheetMain <- GetExcelData(inputFi, sh, "A6:F200")
-    toDrop <- which(sheetMain[,ncol(sheetMain)]=="")[1] - 1
-    sheetMain <- sheetMain[1:toDrop,]
+BuildMainSheet <- function (pairedList, sheetMain, philipsExport){
+    tumors <- which(sheetMain$`Type & Tissue`=="Tumor")
+    normals <- which(sheetMain$`Type & Tissue`=="Normal" & sheetMain$`Type & Tissue`!="Control")
+    specID <- c(philipsExport$`Tumor Specimen ID`, philipsExport$`Normal Specimen ID`)
+    normalID <- c(philipsExport$`Normal Specimen ID`)
+    tumorID <- c(philipsExport$`Tumor Specimen ID`)
+    matchedAccession <- match(specID, sheetMain$`Accession#`)
+   numberList1 <- unlist(lapply(sheetMain$`Accession#`, function(x){
+       nrowlist <- which(!is.na(stringr::str_match(x, tumorID))==T)
+       if(length(nrowlist)>0){return(nrowlist)}
+   }))
+   numberList2 <- unlist(lapply(sheetMain$`Accession#`, function(x){
+       nrowlist <- which(!is.na(stringr::str_match(x, normalID))==T)
+       if(length(nrowlist)>0){return(nrowlist)}
+   }))
+   numberList2 <- unique(numberList2)
+    mainSheet <- data.frame(matrix(NA, nrow = nrow(pairedList), ncol = 0))
+    mainSheet$Sample_ID <- paste(pairedList[,1])
+    mainSheet$Sample_Name <- paste(pairedList[,1])
+    mainSheet$Paired_Normal <- ""
+    mainSheet$Paired_Normal[tumors]<- paste(mainSheet$Sample_ID[normals])
+    mainSheet$I7_Index_ID <- paste(sheetMain$I7_Index_ID)
+    mainSheet$index <- paste(sheetMain$index)
+    mainSheet$Specimen_ID <- paste(sheetMain$`Accession#`)
+    mainSheet$EPIC_ID <- "0"
+    mainSheet$EPIC_ID[mainSheet$Specimen_ID %in% philipsExport$`Tumor Specimen ID`] <-
+        paste(philipsExport$MRN[numberList1])
+    matchedTumors <- sheetMain$`Accession#` %in% philipsExport$`Tumor Specimen ID`
+    matchedNormals <- mainSheet$Specimen_ID %in% philipsExport$`Normal Specimen ID`
+
+    mainSheet$EPIC_ID[matchedNormals] <- paste(philipsExport$MRN[numberList2])
+    mainSheet$Test_Number <- "0"
+    newlist1 <- unlist(lapply(sheetMain$`Accession#`[!controls], function(x){
+        which(x == philipsExport$`Tumor Specimen ID`)
+    }))
+    newlist2 <- unlist(lapply(sheetMain$`Accession#`[!controls], function(x){
+        which(x == philipsExport$`Normal Specimen ID`)
+    }))
+    mainSheet$Test_Number[matchedNormals] <- paste(philipsExport$`Test Number`[newlist2])
+    mainSheet$Test_Number[matchedTumors] <- paste(philipsExport$`Test Number`[newlist1])
+
+
+    mainSheet$Run_Number<- runID
+    splitRun <- stringr::str_split_fixed(runID,"_",4)
+
+    mainSheet$Sequencer_ID<- paste(splitRun[1,2])
+    mainSheet$Chip_ID<- paste(splitRun[1,4])
+    mainSheet$Sample_Project<- paste(inputSheet)
+    mainSheet$Tumor_Content<- "0"
+    mainSheet$Tumor_Content[matchedNormals]<- philipsExport$`Tumor Percentage`[newlist2]
+    mainSheet$Tumor_Content[matchedTumors]<- philipsExport$`Tumor Percentage`[newlist1]
+
+    mainSheet$Tumor_Type <-""
+    mainSheet$Tumor_Type[matchedTumors] <- paste(philipsExport$`Diagnosis for interpretation`[newlist1])
+
+    mainSheet$Description<- "Description"
+    mainSheet$GenomeFolder<- "PhiX\\Illumina\\RTA\\Sequence\\WholeGenomeFASTA"
+    return(mainSheet)
+}
+
+CreateMainSheet <- function(sheetMain, philipsExport, runID){
+
+    accessionNumbers <- sheetMain$`Accession#`
+    controls <- unlist(lapply(accessionNumbers, function(x){"NTC"==x|"SC"==x|"NC"==x}))
+    pairedList <-
+        unlist(lapply(X = 1:length(philipsExport$`Tumor Specimen ID`), function(acc) {
+            tumorSam <-
+                paste(
+                    philipsExport$MRN[acc],
+                    runID,
+                    philipsExport$`Tumor Specimen ID`[acc],
+                    philipsExport$`Tumor DNA/RNA Number`[acc],
+                    sep = "_"
+                )
+            normalSam <-
+                paste(
+                    philipsExport$MRN[acc],
+                    runID,
+                    philipsExport$`Normal Specimen ID`[acc],
+                    philipsExport$`Tumor DNA/RNA Number`[acc],
+                    sep = "_"
+                )
+            return(rbind(tumorSam, normalSam))
+
+        }))
+    pairedList <- paste(pairedList)
+    rowsToAdd <- unlist(lapply(accessionNumbers[!controls], function(x){any(grepl(x , pairedList))}))
+    accToBind <- accessionNumbers[!rowsToAdd]
+    newRows <- unlist(lapply(1:length(accToBind), function(x){
+        tumorSam <-
+            paste(0, runID, accToBind[acc], sheetMain$`DNA #`[acc], sep = "_")
+        return(tumorSam)
+    }))
+
+    controlRows <-
+        unlist(lapply(1:length(accessionNumbers[controls]), function(acc) {
+            dnaNum <- which(accessionNumbers == accessionNumbers[controls][acc])
+            tumorSam <-
+                paste(0, runID, accessionNumbers[controls][acc], sheetMain$`DNA #`[dnaNum], sep = "_")
+            return(tumorSam)
+        }))
+
+    pairedList <- as.data.frame(pairedList)
+    newRows <-  as.data.frame(newRows)
+    controlRows <-  as.data.frame(controlRows)
+    pairedList <- as.data.frame(unlist(c(pairedList, newRows, controlRows)))
+    rownames(pairedList) <- 1:nrow(pairedList)
+
+
+    mainSheet <-  BuildMainSheet(pairedList, sheetMain, philipsExport)
+    return(mainSheet)
+}
+
+GetSheetHeading <- function(inputFi, shNames){
     sh2 <- which(grepl("Philips", shNames, ignore.case = T))[1]
     philipsExport <- GetExcelData(inputFi, sh2, NULL, 3, cm=T)
     sheetHead <- WriteFileHeader(inputFi)
     sheetHead <- rbind(sheetHead,c("",""),c("[Data]",""))
+}
+
+AltParseFormat <- function(inputFi, shNames, runID){
+    sh <- which(grepl("PACT-", shNames, ignore.case = T))[1]
+    message("Reading sheet named ",shNames[sh],"...")
+    sheetMain <- GetExcelData(inputFi, sh, "A6:P200",cm=T)
+    toDrop <- which(sheetMain[,ncol(sheetMain)]=="")[1] - 1
+    sheetMain <- sheetMain[1:toDrop,]
+    mainSheet <- CreateMainSheet(sheetMain, philipsExport, runID)
+    return(mainSheet)
 }
 
 
@@ -192,12 +314,14 @@ parseExcelFile <- function(inputFi, runID = NULL){
     sheetVals <- as.data.frame(readxl::read_excel(inputFi,sheet = shNames[sh],skip = 19,col_types = "text"))
     mainSheet <- sanitizeSheet(sheetVals)
     } else{
-        mainSheet <- AltParseFormat(inputFi, shNames)
+        sheetHead <- GetSheetHeading(inputFi, shNames)
+        sheetVals <- AltParseFormat(inputFi, shNames, runID)
+        mainSheet <- sanitizeSheet(sheetVals)
     }
     sh2 <- which(grepl("Philips", shNames, ignore.case = T))[1]
     getPhilipsGender(mainSheet,inputFi, sh2)
     outFile <- file.path("~","Desktop",paste(mainSheet[1,"Run_Number"],"SampleSheet.csv",sep="-"))
-    write.table(sheetHead,sep=",", file=outFile, row.names=F, col.names=F,quote=F)
+    write.table(sheetHead, sep=",", file=outFile, row.names=F, col.names=F, quote=F)
     suppressWarnings(write.table(mainSheet,sep=",", file=outFile, row.names=F, col.names=T, append=T,quote=F))
     return(c(runId=mainSheet[1,"Sample_Project"], outFile=outFile))
 }
