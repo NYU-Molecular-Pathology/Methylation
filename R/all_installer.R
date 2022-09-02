@@ -90,6 +90,15 @@ loadLibrary("devtools")
 #     system("xcode-select -s /Library/Developer/CommandLineTools")
 # }
 
+isOpen <- system("which openssl", intern = TRUE)
+if(!exists("isOpen") | isOpen != "/usr/bin/openssl"){
+    system("brew update")
+    system("brew install openssl")
+    system("ln -sf /usr/local/opt/openssl/lib/libcrypto.3.dylib /usr/local/lib/")
+    system("ln -sf /usr/local/opt/openssl/lib/libssl.3.dylib /usr/local/lib/")
+    system("ln -sf /usr/local/Cellar/openssl@3/3.0.5/bin/openssl /usr/local/bin/openssl")
+}
+
 corePkgs <- c("randomForest","glmnet","ggplot2","gridExtra","knitr","pander")
 
 # List of all Packages
