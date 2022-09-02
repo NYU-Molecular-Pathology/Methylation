@@ -117,13 +117,14 @@ fixerrors$Basename <- file.path(getwd(),fixerrors$SentrixID_Pos)
 ```
 
 ```{r BioCParallel, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
-mcc = parallel::detectCores()-2
+mcc = parallel::detectCores()/2
 BiocParallel::register(BiocParallel::MulticoreParam(mcc))
 mcParam <- BiocParallel::MulticoreParam(workers = mcc, progressbar = T)
-
+fixerrors <- as.data.frame(fixerrors)
 # MethylAid Summarize
 sdata <- suppressWarnings(
-    MethylAid::summarize(fixerrors, verbose=T, batchSize=8, force=TRUE, BPPARAM = mcParam))
+    MethylAid::summarize(fixerrors, verbose=T, batchSize=8, force=TRUE, BPPARAM = mcParam)
+    )
 
 qcProbes = list(BSI = "^BISULFITE CONVERSION I$", 
                 BSII = "^BISULFITE CONVERSION II$",
