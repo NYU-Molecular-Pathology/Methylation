@@ -148,20 +148,15 @@ launchEmailNotify <- function(runID){
 }
 
 # FUN: Creates the QC record for the current run on redcap if it does not exist
-CreateRedcapRecord <- function(runID=NULL, recordWord="QC"){
-    msgFunName(pipeLnk,"CreateRedcapRecord")
-
-    if(is.null(runID)){runID<-paste0(basename(gb$workDir))}
+CreateRedcapRecord <- function(runID = NULL, recordWord = "QC") {
+    msgFunName(pipeLnk, "CreateRedcapRecord")
+    if (is.null(runID)) {
+        runID <- paste0(basename(gb$workDir))
+    }
     record = c(record_id = paste0(runID, "_", recordWord), run_number = runID)
-    cntrl <- jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
-    RCurl::postForm(
-        gb$apiLink,
-        token = gb$ApiToken,
-        content = 'record',
-        format = 'json',
-        type = 'flat',
-        data = cntrl
-    )
+    cntrl <- jsonlite::toJSON(list(as.list(record)), auto_unbox = T)
+    try(RCurl::postForm(
+        gb$apiLink, token = gb$ApiToken, content = 'record', format = 'json',type = 'flat',data = cntrl),T)
     message(dsh, "Created REDCap Record: ", record[1], dsh, "\n")
 }
 
