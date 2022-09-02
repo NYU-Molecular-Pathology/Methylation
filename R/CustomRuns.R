@@ -126,7 +126,9 @@ CheckBaseDir <- function(baseFolder){
     }else{gb$baseDir <- gb$methDir <- gb$baseFolder <- baseFolder}
     if(!is.null(baseFolder)){
         isDesktop <- stringr::str_detect(baseFolder, "Desktop")
-    } else{isDesktop==F}
+    } else{
+        isDesktop<-F
+    }
     if(isDesktop==T) {
         warning("Trying to run methylation from Desktop working directory is not allowed")
         message("Try setting baseFolder to '~/Documents/' instead")
