@@ -9,12 +9,13 @@ params:
 ---
 ```{r setup, include=FALSE, cache=FALSE, cache.path="cache/",echo=FALSE}
 # Check if RunID provided else use basename of working directory
+gb <- globalenv(); assign("gb", gb)
 if(is.null(params$runID)){
-    runID = paste0(basename(getwd()))
+    runID <- paste0(basename(getwd()))
 }else{runID=params$runID}
 stopifnot(!is.null(runID))
 message(paste("Using", runID, "as RunID"))
-
+assign("runID", runID, envir = gb)
 # Check if baseDir provided else use Desktop
 if(is.null(params$baseDir)){
     baseDir = file.path("~","Desktop",runID)
@@ -37,8 +38,16 @@ if (length(sheetNamePath) == 0) {
     fs::file_copy(path = samSheet, new_path = file.path(baseDir, paste0(runID, "_samplesheet.csv")))
     sheetNamePath <- file.path(baseDir, paste0(runID, "_samplesheet.csv"))
 }
+if(is.na(sheetNamePath)){
+    sheetNamePath <- dir(getwd(), pattern = "samplesheet.csv", full.names = T)
+}
+
 message(paste0("Sample sheet name is: ", sheetNamePath))
 fixerrors <- read.csv(sheetNamePath, strip.white = T)
+
+if(!dir.exists(baseDir)){
+    baseDir <- getwd()
+}
 targets <- minfi::read.metharray.sheet(baseDir, pattern = "samplesheet.csv")
 
 if(nrow(fixerrors)<8){
