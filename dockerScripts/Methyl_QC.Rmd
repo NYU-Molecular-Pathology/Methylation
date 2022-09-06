@@ -35,13 +35,13 @@ if (length(sheetNamePath) > 1){warning(">1 samplesheet in the folder")}
 if (length(sheetNamePath) == 0) {
     warning("No samplesheet in the folder ", baseDir, "\nCopying from current directory...")
     samSheet <- dir(getwd(), pattern = "samplesheet.csv", full.names = T)
-    fs::file_copy(path = samSheet, new_path = file.path(baseDir, paste0(runID, "_samplesheet.csv")))
+    fs::file_copy(path = samSheet,
+                  new_path = file.path("~", "Desktop", runID, paste0(runID, "_samplesheet.csv")))
     sheetNamePath <- file.path(baseDir, paste0(runID, "_samplesheet.csv"))
 }
 if(is.na(sheetNamePath)){
     sheetNamePath <- dir(getwd(), pattern = "samplesheet.csv", full.names = T)
 }
-
 message(paste0("Sample sheet name is: ", sheetNamePath))
 fixerrors <- read.csv(sheetNamePath, strip.white = T)
 
