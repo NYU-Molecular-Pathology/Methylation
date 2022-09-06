@@ -64,15 +64,31 @@ CheckMntDirs <- function(critialMnts, params) {
     message("Working directory changed to:\n", outDir)
 }
 
+StopMissingFile <- function(fiNam, isDir = F){
+    if(isDir==F){
+    if(!file.exists(fiNam)){
+        stop(fiNam, " does not exist in the working directory!")
+    }}else{
+        if(!dir.exists(fiNam)){
+            stop(fiNam, " does not exist as a directory! Check directory path name.")
+        }
+    }
+}
+
+
 CheckFiExist <- function(pactName, philipsFtp) {
     methSheet <- paste0(pactName, "_MethylMatch.xlsx")
     qcTsv <- paste0(pactName, "-QC.tsv")
     descrip <- paste0(pactName, "_desc.csv")
     samsheet <- list.files('.', "-SampleSheet.csv", T)[1]
     stopifnot(file.exists(samsheet) & file.exists(methSheet))
-    stopifnot(file.exists(qcTsv) &
-                  file.exists(descrip) & dir.exists(philipsFtp))
+    StopMissingFile(samsheet)
+    StopMissingFile(methSheet)
+    StopMissingFile(qcTsv)
+    StopMissingFile(descrip)
+    StopMissingFile(philipsFtp, T)
 }
+
 
 GetMethDf <- function(pactName) {
     methSheet <- paste0(pactName, "_MethylMatch.xlsx")
