@@ -240,12 +240,19 @@ if (checkRequire("mapview")) {remotes::install_github("r-spatial/mapview")}
 #if(checkRequire("S4Vectors")){BiocManager::install("S4Vectors", update = F, ask = F)}
 #if(checkRequire("MASS")){install.packages("MASS",type = "binary", update = F, ask = F)}
 # Load/install missing pacakges without asking
+supM <- function(pk){return(suppressPackageStartupMessages(suppressWarnings(pk)))}
 
-suppressWarnings(librarian::shelf(corePkgs, ask = F, update_all = F, quiet = FALSE))
+message("Loading packages:",paste0(capture.output(corePkgs), collapse = "\n"))
+message("...")
+supM(librarian::shelf(corePkgs, ask = F, update_all = F, quiet = FALSE))
+
 message("Loading packages:",paste0(capture.output(preReqPkgs), collapse = "\n"))
-suppressWarnings(librarian::shelf(preReqPkgs, ask = F, update_all = F, quiet = FALSE))
+message("...")
+supM(librarian::shelf(preReqPkgs, ask = F, update_all = F, quiet = FALSE))
+
 message("Loading BioConductor Packages and IlluminaHumanMethylation Manifest...")
-suppressPackageStartupMessages(suppressWarnings(librarian::shelf(biocPkgs, ask = F, update_all = F, quiet = FALSE)))
+supM(librarian::shelf(biocPkgs, ask = F, update_all = F, quiet = FALSE))
+
 if(checkRequire("IlluminaHumanMethylationEPICmanifest")){
     devtools::install_github(repo = "mwsill/IlluminaHumanMethylationEPICmanifest",
                              dependencies = T,

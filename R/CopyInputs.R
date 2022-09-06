@@ -143,13 +143,13 @@ moveSampleSheet <- function(methDir, runID = NULL) {
     }
     currDir = file.path(methDir, runID)
     outFile = paste0(runID, "_samplesheet.csv")
-
+    message("Copying from currDir:\n",currDir)
+    message("To:\n",file.path(deskDir, "samplesheet.csv") )
     fs::file_copy(
         path = file.path(currDir, "samplesheet.csv"),
-        new_path = deskDir,
+        new_path = file.path(deskDir, "samplesheet.csv"),
         overwrite = T
     )
-    message("currDir=",currDir)
     file.rename(from = file.path(deskDir, "samplesheet.csv"),
                 to = file.path(deskDir, outFile))
 }
