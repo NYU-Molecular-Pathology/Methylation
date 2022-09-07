@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
-args <- commandArgs(TRUE)
 library("base")
-
+args <- commandArgs(TRUE)
+gb <- globalenv(); assign("gb", gb)
 
 # Main arguments input in comandline
 token <- args[1]
@@ -65,8 +65,10 @@ getExcelPath <- function(inputSheet, pathType=1){
     folder = file.path("NYU PACT Patient Data", "Workbook")
     runyr <- stringr::str_split_fixed(inputSheet, "-", 3)[, 2]
     ending <-ifelse(pathType==1,".xlsm","_FinalExportedList.xlsx")
-    return(file.path(drive, folder, paste0("20", runyr),inputSheet,
-                     paste0(inputSheet, ending)))
+    inputFiPath <- file.path(drive, folder, paste0("20", runyr),
+                             inputSheet,
+                             paste0(inputSheet, ending))
+    return(inputFiPath)
 }
 
 # Removes and fixes newlines, commas, and blanks from samplesheet
@@ -97,10 +99,11 @@ sanitizeSheet <- function(sheetVals){
 }
 
 # Reads the genders and outputs a .tsv file on desktop
-getPhilipsGender <- function(mainSheet,inputFi, sh2){
+WritePhilipsGender <- function(mainSheet, inputFi, shNames){
+    sh2 <- which(grepl("Philips", shNames, ignore.case = T))[1]
     cnvSheet <- mainSheet[,1:15]
     runId <- cnvSheet[1,"Sample_Project"]
-    philipVals <- as.data.frame(readxl::read_excel(inputFi,sheet = sh2,skip = 3,col_types = "text"))
+    philipVals <- as.data.frame(readxl::read_excel(inputFi, sheet = sh2, skip = 3, col_types = "text"))
     cnvSheet$Gender <- philipVals$Gender[match(cnvSheet$Test_Number, philipVals$`Test Number`)]
     cnvPath <- "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
     cnvPath <- file.path(cnvPath,paste0(runId,".tsv"))
@@ -108,11 +111,11 @@ getPhilipsGender <- function(mainSheet,inputFi, sh2){
     write.table(cnvSheet,quote=F, sep='\t', file=cnvPath,row.names=F)
 }
 
-GetExcelData <- function(inputFi, sheetname, shRange, toSkip=0, cm=F){
+GetExcelData <- function(inputFi, sheetNum, shRange, toSkip=0, cm=F){
     sheetData <- suppressMessages(as.data.frame(
         readxl::read_excel(
             inputFi,
-            sheet =  sheetname,
+            sheet = sheetNum,
             na = "",
             range = shRange,
             col_types = "text",
@@ -171,192 +174,195 @@ WriteFileHeader <- function(inputFi){
 
 }
 
-BuildMainSheet <- function (pairedList, sheetMain, philipsExport){
-    tumors <- which(sheetMain$`Type & Tissue`=="Tumor")
-    normals <- which(sheetMain$`Type & Tissue`=="Normal" & sheetMain$`Type & Tissue`!="Control")
-    specID <- c(philipsExport$`Tumor Specimen ID`, philipsExport$`Normal Specimen ID`)
-    normalID <- c(philipsExport$`Normal Specimen ID`)
-    tumorID <- c(philipsExport$`Tumor Specimen ID`)
-    matchedAccession <- match(specID, sheetMain$`Accession#`)
-   numberList1 <- unlist(lapply(sheetMain$`Accession#`, function(x){
-       nrowlist <- which(!is.na(stringr::str_match(x, tumorID))==T)
-       if(length(nrowlist)>0){return(nrowlist)}
-   }))
-   numberList2 <- unlist(lapply(sheetMain$`Accession#`, function(x){
-       nrowlist <- which(!is.na(stringr::str_match(x, normalID))==T)
-       if(length(nrowlist)>0){return(nrowlist)}
-   }))
-   numberList2 <- unique(numberList2)
+
+AddSampleIndexes <- function(pairedList, rawSheetData){
+    accessions <- rawSheetData$`Accession#`
+    tissueType <- rawSheetData$`Type & Tissue`
+    sheetTumors <- which(tissueType == "Tumor")
+    sheetNormals <- which(tissueType == "Normal" & tissueType != "Control")
+
     mainSheet <- data.frame(matrix(NA, nrow = nrow(pairedList), ncol = 0))
-    mainSheet$Sample_ID <- paste(pairedList[,1])
-    mainSheet$Sample_Name <- paste(pairedList[,1])
+
+    mainSheet$Sample_ID <- paste(pairedList[, 1])
+    mainSheet$Sample_Name <- paste(pairedList[, 1])
     mainSheet$Paired_Normal <- ""
-    mainSheet$Paired_Normal[tumors]<- paste(mainSheet$Sample_ID[normals])
-    mainSheet$I7_Index_ID <- paste(sheetMain$I7_Index_ID)
-    mainSheet$index <- paste(sheetMain$index)
-    mainSheet$Specimen_ID <- paste(sheetMain$`Accession#`)
-    mainSheet$EPIC_ID <- "0"
-    mainSheet$EPIC_ID[mainSheet$Specimen_ID %in% philipsExport$`Tumor Specimen ID`] <-
-        paste(philipsExport$MRN[numberList1])
-    matchedTumors <- sheetMain$`Accession#` %in% philipsExport$`Tumor Specimen ID`
-    matchedNormals <- mainSheet$Specimen_ID %in% philipsExport$`Normal Specimen ID`
-
-    mainSheet$EPIC_ID[matchedNormals] <- paste(philipsExport$MRN[numberList2])
-    mainSheet$Test_Number <- "0"
-    newlist1 <- unlist(lapply(sheetMain$`Accession#`[!controls], function(x){
-        which(x == philipsExport$`Tumor Specimen ID`)
-    }))
-    newlist2 <- unlist(lapply(sheetMain$`Accession#`[!controls], function(x){
-        which(x == philipsExport$`Normal Specimen ID`)
-    }))
-    mainSheet$Test_Number[matchedNormals] <- paste(philipsExport$`Test Number`[newlist2])
-    mainSheet$Test_Number[matchedTumors] <- paste(philipsExport$`Test Number`[newlist1])
-
-
-    mainSheet$Run_Number<- runID
-    splitRun <- stringr::str_split_fixed(runID,"_",4)
-
-    mainSheet$Sequencer_ID<- paste(splitRun[1,2])
-    mainSheet$Chip_ID<- paste(splitRun[1,4])
-    mainSheet$Sample_Project<- paste(inputSheet)
-    mainSheet$Tumor_Content<- "0"
-    mainSheet$Tumor_Content[matchedNormals]<- philipsExport$`Tumor Percentage`[newlist2]
-    mainSheet$Tumor_Content[matchedTumors]<- philipsExport$`Tumor Percentage`[newlist1]
-
-    mainSheet$Tumor_Type <-""
-    mainSheet$Tumor_Type[matchedTumors] <- paste(philipsExport$`Diagnosis for interpretation`[newlist1])
-
-    mainSheet$Description<- "Description"
-    mainSheet$GenomeFolder<- "PhiX\\Illumina\\RTA\\Sequence\\WholeGenomeFASTA"
+    mainSheet$Paired_Normal[sheetTumors] <- paste(mainSheet$Sample_ID[sheetNormals])
+    mainSheet$I7_Index_ID <- paste(rawSheetData$I7_Index_ID)
+    mainSheet$index <- paste(rawSheetData$index)
+    mainSheet$Specimen_ID <- paste(accessions)
+    mainSheet$Tumor_Content <- mainSheet$Test_Number <- mainSheet$EPIC_ID <- "0"
+    mainSheet$Description <- mainSheet$Tumor_Type <- ""
     return(mainSheet)
+
 }
 
-CreateMainSheet <- function(sheetMain, philipsExport, runID){
 
-    accessionNumbers <- sheetMain$`Accession#`
-    controls <- unlist(lapply(accessionNumbers, function(x){"NTC"==x|"SC"==x|"NC"==x}))
-    pairedList <-
-        unlist(lapply(X = 1:length(philipsExport$`Tumor Specimen ID`), function(acc) {
-            tumorSam <-
-                paste(
-                    philipsExport$MRN[acc],
-                    runID,
-                    philipsExport$`Tumor Specimen ID`[acc],
-                    philipsExport$`Tumor DNA/RNA Number`[acc],
-                    sep = "_"
-                )
-            normalSam <-
-                paste(
-                    philipsExport$MRN[acc],
-                    runID,
-                    philipsExport$`Normal Specimen ID`[acc],
-                    philipsExport$`Tumor DNA/RNA Number`[acc],
-                    sep = "_"
-                )
-            return(rbind(tumorSam, normalSam))
-
+BindUnpairedRows <- function(rawSheetData, pairedList, runID){
+    accessions <- rawSheetData$`Accession#`
+    controls <- which(rawSheetData$`Type & Tissue` == "Control")
+    rowsMissing <- !unlist(lapply(accessions[-controls], function(x){any(grepl(x , pairedList))}))
+    accToBind <- accessions[rowsMissing]
+    if(length(accToBind)==0) {
+        warning("No additional paired samples found")
+        newRows <- NULL
+    } else{
+        message("Binding rows:\n", paste0(capture.output(accToBind), collapse = "\n"))
+        newRows <- unlist(lapply(1:length(accToBind), function(acc){
+            return(paste(0, runID, accToBind[acc], rawSheetData$`DNA #`[acc], sep = "_"))
         }))
-    pairedList <- paste(pairedList)
-    rowsToAdd <- unlist(lapply(accessionNumbers[!controls], function(x){any(grepl(x , pairedList))}))
-    accToBind <- accessionNumbers[!rowsToAdd]
-    newRows <- unlist(lapply(1:length(accToBind), function(x){
-        tumorSam <-
-            paste(0, runID, accToBind[acc], sheetMain$`DNA #`[acc], sep = "_")
-        return(tumorSam)
+    }
+
+    controlRows <- unlist(lapply(1:length(accessions[controls]), function(acc) {
+        dnaNum <- which(accessions == accessions[controls][acc])
+        return(paste(0, runID, accessions[controls][acc], rawSheetData$`DNA #`[dnaNum], sep = "_"))
     }))
+    message("Binding controls:\n", paste0(capture.output(controlRows), collapse = "\n"))
 
-    controlRows <-
-        unlist(lapply(1:length(accessionNumbers[controls]), function(acc) {
-            dnaNum <- which(accessionNumbers == accessionNumbers[controls][acc])
-            tumorSam <-
-                paste(0, runID, accessionNumbers[controls][acc], sheetMain$`DNA #`[dnaNum], sep = "_")
-            return(tumorSam)
-        }))
-
-    pairedList <- as.data.frame(pairedList)
-    newRows <-  as.data.frame(newRows)
-    controlRows <-  as.data.frame(controlRows)
-    pairedList <- as.data.frame(unlist(c(pairedList, newRows, controlRows)))
+    pairedList <- data.frame("Sample_ID"=unlist(c(pairedList, newRows, controlRows)))
     rownames(pairedList) <- 1:nrow(pairedList)
+    return(pairedList)
+}
+
+GetPairedList <- function(philipsExport, rawSheetData, runID){
+
+    pairedList <-
+        paste(unlist(lapply(X = 1:length(philipsExport$`Tumor Specimen ID`), function(acc) {
+            tumorSam <- paste(
+                philipsExport$MRN[acc], runID,
+                philipsExport$`Tumor Specimen ID`[acc], philipsExport$`Tumor DNA/RNA Number`[acc],
+                sep = "_"
+            )
+            normalSam <- paste(
+                philipsExport$MRN[acc], runID,
+                philipsExport$`Normal Specimen ID`[acc], philipsExport$`Normal DNA/RNA Number`[acc],
+                sep = "_"
+            )
+            return(rbind(tumorSam, normalSam))
+        })))
+
+    pairedList <- BindUnpairedRows(rawSheetData, pairedList, runID)
+
+    return(pairedList)
+}
 
 
-    mainSheet <-  BuildMainSheet(pairedList, sheetMain, philipsExport)
+MatchIndex <- function(list1, list2){
+    return(unlist(lapply(list1, function(x) {which(x==list2)})))
+}
+
+GetIndexMatch <- function(rawSheetData, philipsExport){
+    accessions <- rawSheetData$`Accession#`
+    philipsN <- c(philipsExport$`Normal Specimen ID`)
+    philipsT <- c(philipsExport$`Tumor Specimen ID`)
+
+    idx <- data.frame(
+        philipsT = MatchIndex(accessions, philipsT),
+        philipsN = MatchIndex(accessions, philipsN),
+        wetLabT = MatchIndex(philipsT, accessions),
+        wetLabN = MatchIndex(philipsN, accessions)
+    )
+    return(idx)
+}
+
+AddRunChipColumns <- function(mainSheet, runID){
+    mainSheet$Run_Number <- runID
+    splitRun <- stringr::str_split_fixed(runID, "_", 4)
+    mainSheet$Sequencer_ID <- splitRun[1, 2]
+    mainSheet$Chip_ID <- splitRun[1, 4]
+    mainSheet$Sample_Project <- paste0(gb$inputSheet)
     return(mainSheet)
 }
 
-GetSheetHeading <- function(inputFi, shNames){
-    sh2 <- which(grepl("Philips", shNames, ignore.case = T))[1]
-    philipsExport <- GetExcelData(inputFi, sh2, NULL, 3, cm=T)
+AddPairedColumn <- function(mainSheet, sheetColumn, philipsColumn, idx){
+    mainSheet[idx$wetLabN, sheetColumn] <- philipsColumn[idx$philipsN]
+    mainSheet[idx$wetLabT, sheetColumn] <- philipsColumn[idx$philipsT]
+    return(mainSheet)
+}
+
+BuildMainSheet <- function(philipsExport, rawSheetData, runID) {
+    pairedList <- GetPairedList(philipsExport, rawSheetData, runID)
+    mainSheet <- AddSampleIndexes(pairedList, rawSheetData)
+    idx <- GetIndexMatch(rawSheetData, philipsExport)
+    mainSheet <- AddPairedColumn(mainSheet, "EPIC_ID", philipsExport$MRN, idx)
+    mainSheet <- AddPairedColumn(mainSheet, "Test_Number", philipsExport$`Test Number`, idx)
+    mainSheet <- AddRunChipColumns(mainSheet, runID)
+    mainSheet <- AddPairedColumn(mainSheet, "Tumor_Content", philipsExport$`Tumor Percentage`, idx)
+    mainSheet$Tumor_Type[idx$wetLabT] <- philipsExport$`Diagnosis for interpretation`[idx$philipsT]
+    mainSheet$Description <- paste0(rawSheetData$Description)
+    mainSheet$GenomeFolder <- as.character("PhiX\\Illumina\\RTA\\Sequence\\WholeGenomeFASTA")
+    return(mainSheet)
+}
+
+GetSheetHeading <- function(inputFi){
+    shNames <- readxl::excel_sheets(inputFi)
     sheetHead <- WriteFileHeader(inputFi)
     sheetHead <- rbind(sheetHead,c("",""),c("[Data]",""))
+    return(sheetHead)
 }
 
-AltParseFormat <- function(inputFi, shNames, runID){
+GetPhilipsData <- function(inputFi){
+    shNames <- readxl::excel_sheets(inputFi)
+    sh2 <- which(grepl("Philips", shNames, ignore.case = T))[1]
+    philipsExport <- GetExcelData(inputFi, sh2, NULL, 0, cm=T)
+    filterColumns <-
+        c(
+            "MRN",
+            "Test Name",
+            "Tumor Specimen ID",
+            "Normal Specimen ID",
+            "Test Number",
+            "Epic Order Number",
+            "Diagnosis for interpretation",
+            "Tumor DNA/RNA Number",
+            "Normal DNA/RNA Number",
+            "Tumor Percentage"
+        )
+    return(philipsExport[,filterColumns])
+}
+
+GetRawSamplesheet <- function(inputFi){
+    shNames <- readxl::excel_sheets(inputFi)
     sh <- which(grepl("PACT-", shNames, ignore.case = T))[1]
-    message("Reading sheet named ",shNames[sh],"...")
-    sheetMain <- GetExcelData(inputFi, sh, "A6:P200",cm=T)
-    toDrop <- which(sheetMain[,ncol(sheetMain)]=="")[1] - 1
-    sheetMain <- sheetMain[1:toDrop,]
-    mainSheet <- CreateMainSheet(sheetMain, philipsExport, runID)
+    message('Reading Excel Sheet named \"', shNames[sh],'\" from file:\n',inputFi)
+    rawSheetData <- GetExcelData(inputFi, sh, shRange="A6:P200",cm=T)
+    toDrop <- which(rawSheetData[,ncol(rawSheetData)]=="")[1] - 1
+    rawSheetData <- rawSheetData[1:toDrop,]
+    return(rawSheetData)
+}
+
+AltParseFormat <- function(inputFi, runID){
+    rawSheetData <- GetRawSamplesheet(inputFi)
+    philipsExport <- GetPhilipsData(inputFi)
+    mainSheet <-  BuildMainSheet(philipsExport, rawSheetData, runID)
     return(mainSheet)
 }
 
+WriteMainSheet <- function(mainSheet, sheetHead){
+    outFile <- file.path("~","Desktop",paste(mainSheet[1,"Run_Number"],"SampleSheet.csv",sep="-"))
+    write.table(sheetHead, sep=",", file=outFile, row.names=F, col.names=F, quote=F)
+    message("Writing file output: ", outFile)
+    suppressWarnings(write.table(mainSheet,sep=",", file=outFile, row.names=F, col.names=T, append=T,quote=F))
+    return(outFile)
+}
 
 # Parses xlsx file and writes as csv file -----
 parseExcelFile <- function(inputFi, runID = NULL){
     shNames <- readxl::excel_sheets(inputFi)
-    message("Sheet names:")
-    message(paste0(capture.output(as.data.frame(shNames)), collapse = "\n"))
+    message("Sheet names:\n",paste0(capture.output(data.frame(SheetNames = shNames)), collapse = "\n"))
     sh <- which(grepl("SampleSheet", shNames, ignore.case = T))[1]
     if(!is.na(sh)){
-    sheetHead <- GetExcelData(inputFi, sheetname=shNames[sh], shRange="A1:B17")
+    sheetHead <- GetExcelData(inputFi, sheetNum=shNames[sh], shRange="A1:B17")
     sheetHead <- rbind(sheetHead,c("",""),c("[Data]",""))
-    sheetVals <- as.data.frame(readxl::read_excel(inputFi,sheet = shNames[sh],skip = 19,col_types = "text"))
+    sheetVals <- as.data.frame(readxl::read_excel(inputFi, sheet = shNames[sh], skip = 19, col_types = "text"))
     mainSheet <- sanitizeSheet(sheetVals)
     } else{
-        sheetHead <- GetSheetHeading(inputFi, shNames)
-        sheetVals <- AltParseFormat(inputFi, shNames, runID)
+        sheetHead <- GetSheetHeading(inputFi)
+        sheetVals <- AltParseFormat(inputFi, runID)
         mainSheet <- sanitizeSheet(sheetVals)
     }
-    sh2 <- which(grepl("Philips", shNames, ignore.case = T))[1]
-    getPhilipsGender(mainSheet,inputFi, sh2)
-    outFile <- file.path("~","Desktop",paste(mainSheet[1,"Run_Number"],"SampleSheet.csv",sep="-"))
-    write.table(sheetHead, sep=",", file=outFile, row.names=F, col.names=F, quote=F)
-    suppressWarnings(write.table(mainSheet,sep=",", file=outFile, row.names=F, col.names=T, append=T,quote=F))
-    return(c(runId=mainSheet[1,"Sample_Project"], outFile=outFile))
-}
-
-# Generate Email notification and attach csv file
-emailNotify <- function(record,rcon){
-    datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
-    res <-
-        RCurl::postForm(
-            rcon$url,
-            token = rcon$token,
-            content = 'record',
-            format = 'json',
-            type = 'flat',
-            data = datarecord,
-            returnContent = 'ids',
-            returnFormat = 'csv'
-        )
-    cat(res)
-    message("\n",dsh2,"Email Notification Created",dsh2)
-}
-
-# Connect to REDCap and send email attachments of csv file ----
-pushToRedcap <- function(runId,outFile,token){
-    rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", token)
-    record = data.frame(record_id = runId, pact_run_number = runId)
-    datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
-    res <- RCurl::postForm(rcon$url,token=rcon$token,content='record',format='json',
-                           type='flat',data=datarecord, returnContent = 'nothing', returnFormat = 'csv')
-    message(crayon::bgMagenta("REDCap Output:"))
-    cat(res)
-    redcapAPI::importFiles(rcon=rcon, file=outFile, record=runId, field="pact_csv_sheet", repeat_instance=1)
-    record$pact_csv_email<-"pact_csv_email"
-    emailNotify(record, rcon)
-    #unlink(outFile)
+    try(WritePhilipsGender(mainSheet,inputFi, shNames), silent=T)
+    outFile <- WriteMainSheet(mainSheet, sheetHead)
+    return(c(runId = mainSheet[1, "Sample_Project"], outFile = outFile))
 }
 
 # Filters list of possible files in the directory for worksheet
@@ -371,33 +377,80 @@ filterFiles <- function(potentialFi) {
     return(potentialFi)
 }
 
+CheckOtherFiles <- function(inputFi, runID){
+    message(crayon::bgRed("The PACT run worksheet was not found:"),"\n", inputFi, "\n")
+    inputFi <- gsub(paste0("/", basename(inputFi)), "", inputFi)
+    potentialFi <- list.files(path = inputFi, full.names = T)
+    if(length(potentialFi)>1){
+        message(crayon::bgRed("Checking other existing files:"), "\n")
+        print(potentialFi)
+        potentialFi <- filterFiles(potentialFi)
+    }
+    if (file.exists(potentialFi[1])) {
+        message(crayon::bgGreen("Now trying to read:"),"\n",potentialFi[1],"\n")
+        pfile <- potentialFi[1]
+    }else{
+        message("\n",crayon::bgRed("The PACT run worksheet was not found:"),"\n", potentialFi[1])
+        message("\nTrying:", potentialFi[2], "\n")
+        stopifnot(file.exists(potentialFi[2]))
+        pfile <- potentialFi[2]
+    }
+    return(suppressMessages(parseExcelFile(inputFi=pfile, runID)))
+}
+
+PostRedcapCurl <- function(rcon, datarecord, retcon='ids'){
+    message(crayon::bgMagenta("REDCap Output:"))
+    res <-
+        RCurl::postForm(
+            rcon$url,
+            token = rcon$token,
+            content = 'record',
+            format = 'json',
+            type = 'flat',
+            data = datarecord,
+            returnContent = retcon,
+            returnFormat = 'csv'
+        )
+    cat(res)
+}
+
+
+
+# Generate Email notification and attach csv file
+emailNotify <- function(record, rcon){
+    record$pact_csv_email <- "pact_csv_email"
+    datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
+    PostRedcapCurl(rcon, datarecord)
+    message("\n",dsh2,"Email Notification Created",dsh2)
+}
+
+# Connect to REDCap and send email attachments of csv file ----
+pushToRedcap <- function(runId, outFile, token) {
+    rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", token)
+    record = data.frame(record_id = runId, pact_run_number = runId)
+    datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox = T)
+    PostRedcapCurl(rcon, datarecord, retcon='nothing')
+
+    redcapAPI::importFiles(
+        rcon = rcon,
+        file = outFile,
+        record = runId,
+        field = "pact_csv_sheet",
+        repeat_instance = 1
+    )
+
+    emailNotify(record, rcon)
+}
+
 # Gets dataframe and saves as CSV file -----
-writeSampleSheet <- function(inputSheet, token, runID = NULL){
+writeSampleSheet <- function(inputSheet, token, runID = NULL) {
     inputFi <- getExcelPath(inputSheet)
     if (file.exists(inputFi)) {
         outVals <- suppressMessages(parseExcelFile(inputFi, runID))
-        pushToRedcap(runId=outVals[[1]], outFile=outVals[[2]], token)
     } else {
-        message(crayon::bgRed("The PACT run worksheet was not found:"),"\n", inputFi, "\n")
-        inputFi <- gsub(paste0("/",basename(inputFi)),"",inputFi)
-        potentialFi <- list.files(path=inputFi,full.names=T)
-        message(crayon::bgRed("Checking other existing files:"), "\n")
-        if(length(potentialFi)>=1){
-            print(potentialFi)
-            potentialFi <- filterFiles(potentialFi)
-        }
-        if (file.exists(potentialFi[1])) {
-            message(crayon::bgGreen("Now trying to read:"),"\n",potentialFi[1],"\n")
-            outVals <- suppressMessages(parseExcelFile(inputFi=potentialFi[1], runID))
-            pushToRedcap(runId=outVals[[1]], outFile=outVals[[2]], token)
-        }else{
-            message("\n",crayon::bgRed("The PACT run worksheet was not found:"),"\n", inputFi, potentialFi[1], "\n")
-            message("Trying ", potentialFi[2], " instead","\n")
-            stopifnot(file.exists(potentialFi[2]))
-            outVals <- suppressMessages(parseExcelFile(inputFi=potentialFi[2], runID))
-            pushToRedcap(runId=outVals[[1]], outFile=outVals[[2]], token)
-        }
+        outVals <-  CheckOtherFiles(inputFi, runID)
     }
+    pushToRedcap(runId = outVals[[1]], outFile = outVals[[2]], token)
 }
 
 loadPacks()
