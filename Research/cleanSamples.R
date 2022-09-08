@@ -45,3 +45,12 @@ setKnitDir <- function(runDir) {
   system(syscmd); setwd(runDir)
   knitr::opts_knit$set(root.dir = runDir)
 }
+
+MoveIdats <- function(pathName=NULL){
+    if(is.null(pathName)){pathName<- file.path(getwd(),"idats")}
+    if(!dir.exists(pathName)){dir.create(pathName)}
+    idatFiles <- dir(path=getwd(),pattern = ".idat", full.names = T)
+    if(length(idatFiles)>0){
+    gb$supM(lapply(idatFiles, function(x){file.rename(from = x, to = file.path(pathName, basename(x)))}))    
+    }
+}
