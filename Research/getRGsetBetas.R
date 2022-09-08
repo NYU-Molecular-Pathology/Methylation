@@ -221,3 +221,13 @@ checkMdsRds <- function(mbfile, runDir, RGSet, targets) {
   }
   return(mSetSq.beta)
 }
+
+GetMsetSq <- function(RGSet, targets) {
+    if (file.exists(file.path(gb$runDir, gb$mbfile))) {
+        mSetSq.beta <- readRDS(gb$mbfile)
+    } else{
+        mSetSq.beta <- gb$supM(gb$getMdsPlot(RGSet, targets$Sample_ID, targets$Type))
+        saveRDS(mSetSq.beta, file = file.path(gb$runDir, gb$mbfile))
+    }
+    return(mSetSq.beta)
+}
