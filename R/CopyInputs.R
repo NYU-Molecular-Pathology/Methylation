@@ -111,7 +111,8 @@ get.idats <- function(csvNam = "samplesheet.csv", runDir=NULL){
         allFi <- getAllFiles(idatDir = c(rsch.idat, clin.idat), csvNam = csvNam)
         allFi = allFi[file.exists(allFi)]
         if (length(allFi) > 0) {
-            message("Files found: "); print(allFi)
+            message("Files found: ")
+            print(as.data.frame(allFi))
             cur.idat <- basename(dir(path=runDir, pattern = "*.idat$", recursive = T))
             bcds <- paste0(basename(allFi))
             if (all(bcds %in% cur.idat)) {
