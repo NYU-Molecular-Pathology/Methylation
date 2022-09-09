@@ -149,3 +149,17 @@ rmDupeAnno2 <- function(geneBetas,out.fi) {
   rownames(geneBetas)<- geneRows
   return(geneBetas)
 }
+
+PrintPathways <- function(topPaths){
+    dtOpts <- list(scrollX = T, scrollY=T, info = F, autoWidth = F,
+                   pageLength = 10, rownames=F, lengthChange = T, searchable = T)
+    for(pthwy in topPaths$Description) {
+        pgenes <- gb$splitByPathway(pthwy, topPaths)
+        cat(paste0("### **", colnames(pgenes),"** \n\n"))
+        dtTab <- htmltools::tagList(DT::datatable(
+            pgenes, rownames = F, options=dtOpts, height = "120%", width="100%")
+            )
+        print(dtTab)
+        cat("\n\n")
+        }
+}
