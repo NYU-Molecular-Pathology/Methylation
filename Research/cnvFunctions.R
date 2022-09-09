@@ -130,15 +130,16 @@ filterGrp <- function(cnData, typeGroup){
     return(subCn[,1:(ncol(subCn)-1)])
 }
 
-gb$savePlotPng<-
-    function(cnData,
-             plotName,
-             plotTitle,
-             plotChr = c(paste0("chr", 1:22)),
-             saveImg = F) {
-        library(ggplot2)
-        library(GenVisR)
-        library(grDevices)
+gb$savePlotPng<- function(
+     cnData,
+     plotName,
+     plotTitle,
+     plotChr = c(paste0("chr", 1:22)),
+     saveImg = F
+) {
+suppressPackageStartupMessages(library(verbose=F, warn.conflicts = F, quietly = T, package = "ggplot2"))
+suppressPackageStartupMessages(library(verbose=F, warn.conflicts = F, quietly = T, package = "GenVisR"))
+suppressPackageStartupMessages(library(verbose=F, warn.conflicts = F, quietly = T, package = "grDevices"))
         freqPlot <- GenVisR::cnFreq(
                     cnData,
                     plotType = "frequency",
