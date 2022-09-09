@@ -102,7 +102,7 @@ get.idats <- function(csvNam = "samplesheet.csv", runDir=NULL){
     msgFunName(cpInLnk, "get.idats")
     rsch.idat <- gb$rsch.idat
     clin.idat <- gb$clin.idat
-    
+
     if(!dir.exists(rsch.idat)){warnMount(rsch.idat)}
     if(!dir.exists(clin.idat)){warnMount(clin.idat)}
     stopifnot(dir.exists(rsch.idat)|dir.exists(clin.idat))
@@ -144,6 +144,7 @@ moveSampleSheet <- function(methDir, runID = NULL) {
     if (!dir.exists(deskDir)) {
         dir.create(deskDir)
     }
+    if(is.null(methDir)){methDir <- getwd()}
     currDir = file.path(methDir, runID)
     outFile = paste0(runID, "_samplesheet.csv")
     message("Copying from currDir:\n",currDir)

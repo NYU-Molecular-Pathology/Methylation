@@ -146,4 +146,5 @@ SetBaseFolder <- function(token, baseFolder, runID){
     gb$setVar("workFolder", baseFolder)
     gb$setVar("ApiToken", token) # assign the ApiToken & print params
     setwd(file.path(baseFolder, runID))
+    return(baseFolder)
 }
