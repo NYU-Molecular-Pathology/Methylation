@@ -38,7 +38,8 @@ customCNV <- function (Mset, sex = NULL) {
     }
 }
 
-writeSegTab <- function(segFile, targets) {
+writeSegTab <- function(segFile, targets, idatPath= NULL) {
+    if(is.null(idatPath)){idatPath <- getwd()}
   if (!file.exists(segFile)) {
       samplename_data <- as.character(targets$Sample_ID)
       sentrix.ids <- as.character(targets$SentrixID_Pos)
@@ -46,7 +47,7 @@ writeSegTab <- function(segFile, targets) {
       addCols = NULL
       for (i in 1:length(sentrix.ids)) {
         sampleEpic <- sentrix.ids[i]
-        pathEpic <- file.path(getwd(), sampleEpic)
+        pathEpic <- file.path(idatPath, sampleEpic)
         RGsetEpic <- read.metharray(pathEpic, verbose = T, force=T)
         MsetEpic <- mnp.v11b6::MNPpreprocessIllumina(RGsetEpic, bg.correct = TRUE, normalize = "controls")
         if(i==1){addCols <-T}else(addCols <- F)
