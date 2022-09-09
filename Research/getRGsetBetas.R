@@ -166,7 +166,10 @@ plot.mds<- function(mSetSq.beta, targets, topN) {
     myColors <- c(targets$color)
     names(myColors) <- targets$Sample_Name
     plotNam <- paste0("top_", topN, "_msetBeta", ".png")
-    png(filename = plotNam, width = 12, height = 8, res = 200, units = "in")
+    outPlotNam <- file.path(getwd(),"figures","mds")
+    if(!dir.exists(outPlotNam)){dir.create(outPlotNam)}
+    outPlotFi <- file.path(outPlotNam, plotNam)
+    png(filename = outPlotFi, width = 12, height = 8, res = 200, units = "in")
     limma::plotMDS(
       mSetSq.beta, top = topN, gene.selection = "common",
       plot = T, col = myColors, pch=19, labels=colnames(mSetSq.beta),
@@ -176,7 +179,7 @@ plot.mds<- function(mSetSq.beta, targets, topN) {
     legend("topright", legend = c(unique(names(myColors))), 
            col = paste(as.list(unique(myColors))), pch = 15, cex = 0.8)
     invisible(dev.off())
-    thepng <- paste0('./', plotNam)
+    thepng <- outPlotFi #paste0('./', plotNam)
     return(knitr::include_graphics(thepng))
 }
 
