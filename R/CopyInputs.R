@@ -36,6 +36,48 @@ CreateRunDir <- function(newRun) {
     }
     cmd <- paste("chmod -R 770", newRun)
     system(cmd)
+    cmd1 <-
+        paste0(
+            'chmod -R +ai ',
+            "'group:NYUMC\\Shared-RSC-CBioinformatics-user01",
+            " allow list,add_file,search,delete,add_subdirectory,readattr,writeattr,readextattr,writeextattr,readsecurity,file_inherit,directory_inherit'",
+            " '",
+            newRun,
+            "'","/*"
+        )
+
+    system(cmd1)
+    setDirectory(newRun)
+    cmd2 <-
+        paste0(
+            'chgrp ',
+            file.path(
+                "'NYUMC",
+                "shared-rsc-CBioinfo-Meth-Clinicalruns'",
+                fsep = "\\"
+            ),
+            " '",
+            newRun,
+            "'"
+        )
+    system(cmd2)
+
+    cmd3 <-
+        paste0(
+            'chmod -R +a ',
+            file.path(
+                "'group:NYUMC",
+                "shared-rsc-CBioinfo-Meth-Clinicalruns",
+                fsep = "\\"
+            ),
+            " allow list,add_file,search,delete,add_subdirectory,readattr,writeattr,readextattr,writeextattr,readsecurity,file_inherit,directory_inherit'",
+            " '",
+            newRun,
+            "'","/*"
+        )
+    system(cmd3)
+
+
     setDirectory(newRun)
     return(newRun)
 }
