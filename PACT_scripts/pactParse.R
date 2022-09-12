@@ -224,21 +224,23 @@ BindUnpairedRows <- function(rawSheetData, pairedList, runID){
 }
 
 GetPairedList <- function(philipsExport, rawSheetData, runID){
-
-    pairedList <-
-        paste(unlist(lapply(X = 1:length(philipsExport$`Tumor Specimen ID`), function(acc) {
-            tumorSam <- paste(
-                philipsExport$MRN[acc], runID,
-                philipsExport$`Tumor Specimen ID`[acc], philipsExport$`Tumor DNA/RNA Number`[acc],
-                sep = "_"
-            )
-            normalSam <- paste(
-                philipsExport$MRN[acc], runID,
-                philipsExport$`Normal Specimen ID`[acc], philipsExport$`Normal DNA/RNA Number`[acc],
-                sep = "_"
-            )
-            return(rbind(tumorSam, normalSam))
-        })))
+    pairedList <- paste(unlist(lapply(X = 1:length(philipsExport$`Tumor Specimen ID`), function(acc) {
+        tumorSam <- paste(
+            philipsExport$MRN[acc],
+            runID,
+            philipsExport$`Tumor Specimen ID`[acc],
+            philipsExport$`Tumor DNA/RNA Number`[acc],
+            sep = "_"
+        )
+        normalSam <- paste(
+            philipsExport$MRN[acc],
+            runID,
+            philipsExport$`Normal Specimen ID`[acc],
+            philipsExport$`Normal DNA/RNA Number`[acc],
+            sep = "_"
+        )
+        return(rbind(tumorSam, normalSam))
+    })))
 
     pairedList <- BindUnpairedRows(rawSheetData, pairedList, runID)
 
@@ -413,8 +415,6 @@ PostRedcapCurl <- function(rcon, datarecord, retcon='ids'){
         )
     cat(res)
 }
-
-
 
 # Generate Email notification and attach csv file
 emailNotify <- function(record, rcon){

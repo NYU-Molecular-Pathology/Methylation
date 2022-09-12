@@ -307,7 +307,7 @@ callApiImport <- function(rcon,
             }
         )
     } else{
-        message(crayon::white$bgRed(recordName), " already has an assigned run_number: ", isEmpty)
+        message(crayon::white$bgRed(recordName), " already has an assigned subgroup in REDCap: ", isEmpty)
         writeLogFi(recordName, isHtml = F, logFile = "import_log.tsv")
     }
 }

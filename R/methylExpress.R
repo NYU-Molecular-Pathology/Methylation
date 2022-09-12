@@ -9,49 +9,46 @@ if(!require("devtools")){install.packages("devtools", quiet=T)}
 token <-      args[1]
 runID <-      args[2]
 selectRDs <-  args[3]
-baseFolder <- args[4] #NULL
-redcapUpload <- args[5]
-runLocal <- args[6]
+baseFolder <- args[4]
+redcapUp <-   args[5]
+runLocal <-   args[6]
 
 # Check Input Parameters ----------------------------------------------------
-if(length(selectRDs)==0 | identical(selectRDs,NULL) | identical(selectRDs,"NULL")){
-    gb$selectRDs=NULL}else {if(is.na(selectRDs)){selectRDs=NULL}}
-if(length(baseFolder)==0 | identical(baseFolder,NULL) | identical(baseFolder,"NULL")){
-    gb$baseFolder<-NULL }else {if(is.na(baseFolder)){gb$baseFolder<-NULL}}
-if(length(redcapUpload)==0 | identical(redcapUpload,NULL) | identical(redcapUpload,"NULL")){
-    gb$redcapUpload<-T}else {if(is.na(redcapUpload)){redcapUpload<-T}else{redcapUpload <- as.logical(args[5])}}
-if(length(runLocal)==0 | identical(runLocal,NULL) | identical(runLocal,"NULL")){
-    gb$runLocal<-F}else {if(is.na(runLocal)){runLocal<-F}else{runLocal <- as.logical(args[6])}
+message("\n~~~~~~~~~~~~~~~~~~~~~Parameters input~~~~~~~~~~~~~~~~~~~~~\n")
+CheckInputArg <- function(varValue, gb, defVal = NULL) {
+    varStr <- deparse(substitute(varValue))
+    if (length(varValue) == 0 | identical(varValue, NULL) | identical(varValue, "NULL")) {
+        gb[[varStr]] <- defVal
+    } else{ varValue <- ifelse(is.na(varValue), NULL, varValue)}
+    message(varStr, ": " , ifelse(is.null(varValue), "NULL", varValue))
+    return(assign(varStr, varValue, envir = gb))
 }
 
-# Message input on console
-message("\n~~~~~~~~~~~~~~~~~~~~~Parameters input~~~~~~~~~~~~~~~~~~~~~\n")
-message("token: ", token,"\nrunID: ", runID,"\nselectRDs: ", selectRDs,
-        "\nbaseFolder: ", baseFolder, "\nredcapUpload: ", redcapUpload,
-        "\nrunLocal: ", runLocal,"\n")
+CheckInputArg(token, gb)
+CheckInputArg(runID, gb)
+CheckInputArg(selectRDs, gb)
+CheckInputArg(baseFolder, gb)
+CheckInputArg(redcapUp, gb)
+CheckInputArg(runLocal, gb)
 
 # Cancel if no token or runID
 stopifnot(!is.null(token)); stopifnot(!is.null(runID))
 
-if(!is.null(baseFolder) & !identical(baseFolder,NULL)){
-    message("Checking custom run directory from input:\n", baseFolder, "\n")
-    if(dir.exists(baseFolder)==F){
-        message("Directory does not exist, try creating it first:\n", "mkdir ", baseFolder,"\n")
-        stopifnot(dir.exists(baseFolder)==TRUE)
+if(!is.null(baseFolder)) {
+    message("Checking if custom run directory is valid:\n", baseFolder, "\n")
+    if (dir.exists(baseFolder) == F) {
+        message("Directory does not exist, try creating it first:\n mkdir ", baseFolder,"\n")
+        stopifnot(dir.exists(baseFolder) == TRUE)
     }
-}else {baseFolder=NULL}
+}
 
 # Source GitHub Scripts ----------------------------------------------------
 mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/"
 script.list = c(
-    "all_installer.R",
-    "LoadInstallPackages.R",
-    "SetRunParams.R",
-    "MakeSampleSheet.R",
-    "CopyInputs.R",
-    "CopyOutput.R",
-    "pipelineHelper.R",
-    "CustomRuns.R"
+    "all_installer.R", "LoadInstallPackages.R",
+    "SetRunParams.R", "MakeSampleSheet.R",
+    "CopyInputs.R", "CopyOutput.R",
+    "pipelineHelper.R", "CustomRuns.R"
 )
 scripts = paste0(mainHub, script.list)
 lapply(scripts, function(i){message("Sourcing: ", i); devtools::source_url(i)})
@@ -94,8 +91,7 @@ StartRun <- function(selectRDs = NULL, emailNotify = T, redcapUp = T) {
 }
 
 if(!is.null(selectRDs)){selectRDs <- stringr::str_split(selectRDs, ",")}
-assign("redcapUpload", redcapUpload)
-
+assign("redcapUp", redcapUp); assign("redcapUpload", redcapUp)
 # Execute Functions ----------------------------------------------------
 PrepareRun(token, baseFolder, runID, runLocal=runLocal) # If running local and  runLocal = TRUE
-StartRun(selectRDs, emailNotify=T, redcapUp=redcapUpload) # can change to default false
+StartRun(selectRDs, emailNotify=T, redcapUp=redcapUp) # can change to default false
