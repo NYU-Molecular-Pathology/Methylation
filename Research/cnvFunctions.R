@@ -38,7 +38,8 @@ customCNV <- function (Mset, sex = NULL) {
     }
 }
 
-writeSegTab <- function(segFile, targets) {
+writeSegTab <- function(segFile, targets, idatPath= NULL) {
+    if(is.null(idatPath)){idatPath <- getwd()}
   if (!file.exists(segFile)) {
       samplename_data <- as.character(targets$Sample_ID)
       sentrix.ids <- as.character(targets$SentrixID_Pos)
@@ -46,7 +47,7 @@ writeSegTab <- function(segFile, targets) {
       addCols = NULL
       for (i in 1:length(sentrix.ids)) {
         sampleEpic <- sentrix.ids[i]
-        pathEpic <- file.path(getwd(), sampleEpic)
+        pathEpic <- file.path(idatPath, sampleEpic)
         RGsetEpic <- read.metharray(pathEpic, verbose = T, force=T)
         MsetEpic <- mnp.v11b6::MNPpreprocessIllumina(RGsetEpic, bg.correct = TRUE, normalize = "controls")
         if(i==1){addCols <-T}else(addCols <- F)
@@ -129,68 +130,100 @@ filterGrp <- function(cnData, typeGroup){
     return(subCn[,1:(ncol(subCn)-1)])
 }
 
-gb$savePlotPng<-
-    function(cnData,
-             plotName,
-             plotTitle,
-             plotChr = c(paste0("chr", 1:22)),
-             saveImg = F) {
-        library(ggplot2)
-        library(GenVisR)
-        library(grDevices)
-        freqPlot <- GenVisR::cnFreq(
-                    cnData,
-                    plotType = "frequency",
-                    plotChr = plotChr,
-                    plot_title = paste(plotTitle, "Samples Copy Number Frequency"),
-                    CN_Loss_colour = "#FF0000",
-                    CN_Gain_colour = "#00A36D",
-                    facet_lab_size= 9
-        )
-            
-        freqPlot[["theme"]][["strip.text"]][["angle"]]<- -90
-        freqPlot[["theme"]][["strip.text"]]$margin <-ggplot2::margin(t = 10, r = 10, b = 10, l = 10, unit = "pt")
-        freqPlot[["theme"]][["strip.placement"]] <- 'outside'
-        freqPlot[["theme"]][["panel.spacing"]]<- unit(0, "points")
-        freqPlot[["theme"]][["strip.placement"]]="outside"
-        freqPlot[["facet"]][["shrink"]]<-FALSE
-        freqPlot[["coordinates"]][["clip"]]<-"off"
-        freqDat <-
-            suppressMessages(
-                GenVisR::cnFreq(
-                    cnData,
-                    plotType = "frequency",
-                    plotChr = plotChr,
-                    out = "data",
-                    plot_title = paste(plotTitle, "Samples Copy Number Frequency"),
-                    CN_Loss_colour = "#FF0000",
-                    CN_Gain_colour = "#00A36D",
-                    facet_lab_size= 5
-                )
+SilentLoadLib <- function(pkg){
+    suppressPackageStartupMessages(library(
+        verbose = F,
+        warn.conflicts = F,
+        quietly = T,
+        character.only = T,
+        package = pkg
+    ))
+}
+
+gb$GetFreqPlot <- function(cnData, plotChr, plotTitle){
+    freqPlot <- GenVisR::cnFreq(
+        cnData,
+        plotType = "frequency",
+        plotChr = plotChr,
+        plot_title = paste(plotTitle, "Samples Copy Number Frequency"),
+        CN_Loss_colour = "#FF0000",
+        CN_Gain_colour = "#00A36D",
+        facet_lab_size = 9
+    )
+    freqPlot[["theme"]][["strip.text"]][["angle"]] <- -90
+    freqPlot[["theme"]][["strip.text"]]$margin <- ggplot2::margin(t=10,r=10,b=10,l=10,unit="pt")
+    freqPlot[["theme"]][["strip.placement"]] <- 'outside'
+    freqPlot[["theme"]][["panel.spacing"]] <- unit(0, "points")
+    freqPlot[["theme"]][["strip.placement"]] = "outside"
+    freqPlot[["facet"]][["shrink"]] <- FALSE
+    freqPlot[["coordinates"]][["clip"]] <- "off"
+    return(freqPlot)
+}
+
+gb$GetFreqData <- function(cnData,plotChr,plotTitle){
+    freqDat <-
+        suppressMessages(
+            GenVisR::cnFreq(
+                cnData,
+                plotType = "frequency",
+                plotChr = plotChr,
+                out = "data",
+                plot_title = paste(plotTitle, "Samples Copy Number Frequency"),
+                CN_Loss_colour = "#FF0000",
+                CN_Gain_colour = "#00A36D",
+                facet_lab_size = 5
             )
-        write.csv(
-            freqDat,
-            file = file.path(getwd(), paste(plotName, "cnv.csv", sep = "_")),
-            row.names = F,
-            col.names = T
         )
-#        if (saveImg == F) {
-            labelTitle <- paste("###", plotName, "Samples" , '\n\n')
-            cat(labelTitle)
-            print(freqPlot)
-            cat('\n\n')
- #       } else{
-            png(
-                file = file.path(getwd(), paste(plotName, "cnv.png", sep = "_")),
-                height = 8,
-                width = 15,
-                units = "in",
-                res = 200
-            )
-            freqPlot
-           invisible(dev.off())
-        
-  }
+    return(freqDat)
+}
+
+gb$SaveCnvData <- function(freqDat, plotName){
+    cnvDir <- file.path(getwd(), "cnv")
+    if (!dir.exists(cnvDir)) {dir.create(cnvDir)}
+    suppressWarnings(write.csv(
+        freqDat,
+        file = file.path(cnvDir, paste(plotName, "cnv.csv", sep = "_")),
+        row.names = F,
+        col.names = T
+    ))
+    return(cnvDir)
+}
+
+
+SavePlotPng <- function(cnvDir, plotName, freqPlot, fileEnd="cnv.png"){
+    freqFi <- file.path(cnvDir, paste(plotName, fileEnd, sep = "_"))
+    png(
+        file = freqFi,
+        height = 8,
+        width = 15,
+        units = "in",
+        res = 200
+    )
+    freqPlot
+    invisible(dev.off())
+}
+
+
+SaveLoadCnvs <- function(cnData,
+                           plotName,
+                           plotTitle,
+                           plotChr = c(paste0("chr", 1:22)),
+                           saveImg = T) {
+    SilentLoadLib("ggplot2")
+    SilentLoadLib("GenVisR")
+    SilentLoadLib("grDevices")
+
+    freqPlot <- gb$GetFreqPlot(cnData, plotChr, plotTitle)
+    freqDat <- gb$GetFreqData(cnData, plotChr, plotTitle)
+    cnvDir <- gb$SaveCnvData(freqDat, plotName)
+    labelTitle <- paste("###", plotName, "Samples" , '\n\n')
+    cat(labelTitle)
+    print(freqPlot)
+    cat('\n\n')
+    if (saveImg == T) {
+        gb$SavePlotPng(cnvDir, plotName, freqPlot)
+    }    
+}
 
 grabClusterDat <- function(seg_clust_file,segFile){
 cnData <- if(!file.exists(seg_clust_file)){

@@ -63,9 +63,9 @@ takeTopVariance <- function(betas, topVar){
     return(top_var_beta)
 }
 
-getSupervise <- function(the_beta, RGSet, topVar=1:10000, cutOff=0.05){
+getSupervise <- function(the_beta, RGSet, topVar=1:10000, cutOff=0.05, dmpTyp = "categorical" ){
     condition <- pData(RGSet)$Type
-    dmp <- dmpFinder(the_beta, pheno = condition, type = "categorical")
+    dmp <- dmpFinder(the_beta, pheno = condition, type = dmpTyp)
     dmp <- cbind(dmp, ID = rownames(dmp))
     betas_df <- as.data.frame(the_beta)
     qVals <- dmp$qval < cutOff
@@ -79,7 +79,7 @@ getSupervise <- function(the_beta, RGSet, topVar=1:10000, cutOff=0.05){
 }
 
 # Checks if supervised rds data exists to load, else calculates it 
-loadSupervise <- function(RGSet, betas, supbetaOut, varProbes, col_sentrix="SentrixID_Pos") {
+loadSupervise <- function(RGSet, betas, supbetaOut, varProbes, col_sentrix="SentrixID_Pos", dmpTyp = "categorical") {
   if (!file.exists(supbetaOut)) {
     rgRows <- RGSet@colData@rownames # ensure poor samples are dropped
     rgLiDat <- RGSet@colData@listData
@@ -88,7 +88,7 @@ loadSupervise <- function(RGSet, betas, supbetaOut, varProbes, col_sentrix="Sent
     newRg <- RGSet[, rgRows %in% samFltr]
     topVar = 1:max(varProbes)
     # supervised dmp top Variance with getSupervise
-    superbetas <- gb$getSupervise(betas, newRg, topVar) 
+    superbetas <- gb$getSupervise(betas, newRg, topVar, dmpTyp = dmpTyp) 
     saveRDS(superbetas, file = supbetaOut)
   } else{
     superbetas <- readRDS(supbetaOut)
@@ -119,8 +119,9 @@ batchCorrectBs <- function(betas,RGSet,topVar=NULL, supervise = F) {
     return(topVarBetas)
 }
 
-getRgset <- function(rgOut, targets, batchCorrect = F, arraySheet="samplesheet.csv") {
+getRgset <- function(rgOut, targets, batchCorrect = F, arraySheet="samplesheet.csv", idatPath=NULL) {
     require("minfi")
+    if(is.null(idatPath)){idatPath <- getwd()}
     if (!file.exists(rgOut)) {
         if (batchCorrect == T & !is.null(targets$Batch)) {
             RGSet <- gb$combine.EPIC.450K(targets = targets)
@@ -131,13 +132,12 @@ getRgset <- function(rgOut, targets, batchCorrect = F, arraySheet="samplesheet.c
                 verbose = T
             )
             RGSet <- minfi::read.metharray.exp(
-                base = getwd(), targets = sheet, verbose = T, force = T)
-            
+                base = idatPath, 
+                targets = sheet, 
+                verbose = T, force = T)
         }
         saveRDS(RGSet, file = rgOut)
-    } else{
-        RGSet <- readRDS(rgOut)
-    }
+    } else{RGSet <- readRDS(rgOut)}
     return(RGSet)
 }
 
@@ -166,7 +166,10 @@ plot.mds<- function(mSetSq.beta, targets, topN) {
     myColors <- c(targets$color)
     names(myColors) <- targets$Sample_Name
     plotNam <- paste0("top_", topN, "_msetBeta", ".png")
-    png(filename = plotNam, width = 12, height = 8, res = 200, units = "in")
+    outPlotNam <- file.path(getwd(),"figures","mds")
+    if(!dir.exists(outPlotNam)){dir.create(outPlotNam)}
+    outPlotFi <- file.path(outPlotNam, plotNam)
+    png(filename = outPlotFi, width = 12, height = 8, res = 200, units = "in")
     limma::plotMDS(
       mSetSq.beta, top = topN, gene.selection = "common",
       plot = T, col = myColors, pch=19, labels=colnames(mSetSq.beta),
@@ -176,7 +179,7 @@ plot.mds<- function(mSetSq.beta, targets, topN) {
     legend("topright", legend = c(unique(names(myColors))), 
            col = paste(as.list(unique(myColors))), pch = 15, cex = 0.8)
     invisible(dev.off())
-    thepng <- paste0('./', plotNam)
+    thepng <- outPlotFi #paste0('./', plotNam)
     return(knitr::include_graphics(thepng))
 }
 
@@ -220,4 +223,14 @@ checkMdsRds <- function(mbfile, runDir, RGSet, targets) {
     saveRDS(mSetSq.beta, file = file.path(gb$runDir, gb$mbfile))
   }
   return(mSetSq.beta)
+}
+
+GetMsetSq <- function(RGSet, targets) {
+    if (file.exists(file.path(gb$runDir, gb$mbfile))) {
+        mSetSq.beta <- readRDS(gb$mbfile)
+    } else{
+        mSetSq.beta <- gb$supM(gb$getMdsPlot(RGSet, targets$Sample_ID, targets$Type))
+        saveRDS(mSetSq.beta, file = file.path(gb$runDir, gb$mbfile))
+    }
+    return(mSetSq.beta)
 }

@@ -98,7 +98,7 @@ warnMount <- function(idat.dir){
 }
 
 # FUN: Returns a list of idat files that exist on Molecular and Snuderl lab drives -
-get.idats <-function(csvNam = "samplesheet.csv"){
+get.idats <- function(csvNam = "samplesheet.csv", runDir=NULL){
     msgFunName(cpInLnk, "get.idats")
     rsch.idat <- gb$rsch.idat
     clin.idat <- gb$clin.idat
@@ -106,29 +106,32 @@ get.idats <-function(csvNam = "samplesheet.csv"){
     if(!dir.exists(rsch.idat)){warnMount(rsch.idat)}
     if(!dir.exists(clin.idat)){warnMount(clin.idat)}
     stopifnot(dir.exists(rsch.idat)|dir.exists(clin.idat))
+    if (is.null(runDir)){ runDir <- getwd()}
     if (file.exists(csvNam)) {
         allFi <- getAllFiles(idatDir = c(rsch.idat, clin.idat), csvNam = csvNam)
         allFi = allFi[file.exists(allFi)]
         if (length(allFi) > 0) {
-            message("Files found: "); print(allFi)
-            cur.idat <- dir(pattern = "*.idat$")
+            message("Files found: ")
+            print(as.data.frame(allFi))
+            cur.idat <- basename(dir(path=runDir, pattern = "*.idat$", recursive = T))
             bcds <- paste0(basename(allFi))
             if (all(bcds %in% cur.idat)) {
                 message(".idat files already copied")
-                }else{
-                    copyBaseIdats(allFi[!(bcds %in% cur.idat)])
-                    }
+            }else{
+                copyBaseIdats(allFi[!(bcds %in% cur.idat)])
+            }
         } else {
             warning(crayon::bgRed("No .idat files found!"))
             message("Check worksheet for barcode if found in the folder path:")
             message(rsch.idat, "\nor\n", clin.idat)
             stopifnot(length(allFi) > 0)
-            }
+        }
     } else {
         message("Cannot find your sheet named:", csvNam)
         stopifnot(file.exists(csvNam))
-        }
+    }
 }
+
 
 # FUN: Copies samplesheet to Desktop folder
 moveSampleSheet <- function(methDir, runID = NULL) {
@@ -141,6 +144,7 @@ moveSampleSheet <- function(methDir, runID = NULL) {
     if (!dir.exists(deskDir)) {
         dir.create(deskDir)
     }
+    if(is.null(methDir)){methDir <- getwd()}
     currDir = file.path(methDir, runID)
     outFile = paste0(runID, "_samplesheet.csv")
     message("Copying from currDir:\n",currDir)

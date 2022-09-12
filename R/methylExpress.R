@@ -26,8 +26,8 @@ if(length(runLocal)==0 | identical(runLocal,NULL) | identical(runLocal,"NULL")){
 
 # Message input on console
 message("\n~~~~~~~~~~~~~~~~~~~~~Parameters input~~~~~~~~~~~~~~~~~~~~~\n")
-message("token: ", token,"\nrunID: ", runID,"\nselectRDs: ", selectRDs, 
-        "\nbaseFolder: ", baseFolder, "\nredcapUpload: ", redcapUpload, 
+message("token: ", token,"\nrunID: ", runID,"\nselectRDs: ", selectRDs,
+        "\nbaseFolder: ", baseFolder, "\nredcapUpload: ", redcapUpload,
         "\nrunLocal: ", runLocal,"\n")
 
 # Cancel if no token or runID
@@ -66,13 +66,15 @@ PrepareRun <- function(token, baseFolder=NULL, runID, runLocal=F){
     if(runLocal==F){
         gb$checkMounts()
         gb$checkValidRun(runID)
-        gb$SetBaseFolder(token, baseFolder, runID)
+        baseFolder <- gb$SetBaseFolder(token, baseFolder, runID)
+        setwd(file.path(baseFolder, runID))
         gb$copyWorksheetFile(runID = runID) # copies the xlsm file
         gb$readSheetWrite(runID = runID) # reads xlsm and generates input .csv samplesheet
         gb$get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
         gb$moveSampleSheet(baseFolder, runID) #copies outputs temp to desktop for QC.Rmd
     } else{
-        gb$SetBaseFolder(token, baseFolder, runID)
+        baseFolder <- gb$SetBaseFolder(token, baseFolder, runID)
+        setwd(file.path(baseFolder, runID))
         gb$RunLocalIdats(runID, token)
     }
 }

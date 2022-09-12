@@ -44,6 +44,7 @@ if (!dir.exists(file.path("~", ".R"))) {
     )
     writeLines(params, fileConn)
     close(fileConn)
+closeAllConnections()
     cmd = 'devtools::source_url("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/all_installer.R")'
     #rstudioapi::restartSession(cmd)
 }
@@ -54,6 +55,7 @@ if (!file.exists(file.path("~", ".Renviron"))) {
     params <- c('PATH="/usr/local/gfortran/bin:${PATH}"')
     writeLines(params, fileConn)
     close(fileConn)
+closeAllConnections()
 }
 
 # Setting US CRAN REPO
@@ -282,6 +284,7 @@ fixProf <- function() {
         write(txt2, file = siteProf, append = T)
     }
     close(cxn)
+    closeAllConnections()
 }
 
 fixNeeds <- function (){
@@ -289,6 +292,7 @@ fixNeeds <- function (){
     try(write(0, file=sysfile),silent=T)
     options(needs.promptUser=FALSE)
     invisible(needs:::autoload(TRUE))
+    closeAllConnections()
 }
 
 checkNeeds <- function(){
@@ -320,6 +324,7 @@ checkNeeds <- function(){
 }
 
 checkNeeds()
+closeAllConnections()
 
 
 isGdal <- paste(system("echo `gdalinfo --version`", intern = T))
@@ -384,3 +389,5 @@ invisible(gc())
 if (checkRequire("UniD")) {
 try(install.packages("/Volumes/CBioinformatics/Methylation/UniD/", type="source", repos=NULL), silent=T)
 }
+
+closeAllConnections()
