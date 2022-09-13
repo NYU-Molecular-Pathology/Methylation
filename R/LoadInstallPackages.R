@@ -1,28 +1,34 @@
 #!/usr/bin/env Rscript
-cbioLn = "/Volumes/CBioinformatics/Methylation"
+
+cbioLn <- switch (Sys.info()[['sysname']],
+                  "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
+                  "Linux" = "~/molecpathlab/production/Methylation/classifiers"
+)
+
+uniDpath <- file.path(cbioLn, "UniD")
 
 # Classifier Packages and Versions
 mnpV4 <-
     data.frame(
         mnpVers = "mnp.v11b4",
-        mnpPath = "Methylation_classifier_v11b4/mnp.v11b4",
+        mnpPath = "mnp.v11b4",
         mnpNumb = "0.1.126")
 mnpV6 <-
     data.frame(
         mnpVers = "mnp.v11b6",
-        mnpPath = "in_house/mnp.v116/mnp.v11b6",
+        mnpPath = "mnp.v11b6",
         mnpNumb = "0.1.140")
 mnpV12 <-
     data.frame(
         mnpVers = "mnp.v12b6",
-        mnpPath = "mnp_v12_R-package/mnp.v12b6",
+        mnpPath = "mnp.v12b6",
         mnpNumb = "0.1.132")
 
 # Custom Classifier packages:
 classPacks <- c(
     sest = "https://github.com/jungch/sest/raw/master/sest.tar",
     mgmtstp27 = "https://github.com/badozor/mgmtstp27/raw/master/archive/mgmtstp27_0.6-3.tar.gz",
-    mnpqc = paste0(file.path(cbioLn, "in_house/mnp.v116/mnpqc_0.1.0.tar.gz"))
+    mnpqc = paste0(file.path(cbioLn, "mnpqc_0.1.0.tar.gz"))
 )
 
 # Cran Packages ----
@@ -404,7 +410,7 @@ runAllBrew <- function(){
 
 fixCompiles <- function(brewExtra=F){
     #system("/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)")
-    cpMakeV()
+    #cpMakeV()
     system("brew install llvm gcc")
     system("defaults write org.R-project.R NSAppSleepDisabled -bool YES")
     system('echo "export PATH="/usr/local/sbin:$PATH"" >> ~/.zshrc >')
@@ -455,10 +461,12 @@ setEnviron <- function(){
     rlis = getOption("repos")
     rlis["CRAN"] = "http://cran.us.r-project.org"
     options(repos = rlis)
-    Sys.setenv(RSTUDIO_PANDOC = "/Applications/RStudio.app/Contents/MacOS/pandoc")
-    system("export RSTUDIO_PANDOC=/Applications/RStudio.app/Contents/MacOS/pandoc")
-    system("export RSTUDIO_WHICH_R=/usr/local/bin/R")
-    Sys.setenv(RSTUDIO_WHICH_R = "/usr/local/bin/R")
+    if(Sys.info()[['sysname']]=="Darwin"){
+        Sys.setenv(RSTUDIO_PANDOC = "/Applications/RStudio.app/Contents/MacOS/pandoc")
+        system("export RSTUDIO_PANDOC=/Applications/RStudio.app/Contents/MacOS/pandoc")        
+        system("export RSTUDIO_WHICH_R=/usr/local/bin/R")
+        Sys.setenv(RSTUDIO_WHICH_R = "/usr/local/bin/R")
+        }
     options("install.packages.compile.from.source" = "never")
     options("install.packages.check.source"="no")
     if(!require("devtools")){install.packages("devtools", dependencies=T)}
@@ -495,14 +503,9 @@ startLoadingAll <- function() {
     checkClassifier(mnpV6)
     checkClassifier(mnpV12)
     try(if (!requireNamespace("UniD", quietly = TRUE)) {
-    install.packages(
-        "/Volumes/CBioinformatics/Methylation/UniD",
-        type = "source",
-        dependencies = T,
-        repo = NULL
-    )
-}, silent = T
-)
+        install.packages(uniDpath, type = "source", dependencies = T, repo = NULL)
+    }, silent = T)
+    closeAllConnections()
 }
 
 startLoadingAll()
