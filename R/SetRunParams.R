@@ -71,21 +71,23 @@ loadClassifierPacks <- function(){
 # Sets default variable paths/names
 getDefaults <- function() {
     msgFunName(setRunLnk,"getDefaults")
-
-    cbVol = "/Volumes/CBioinformatics"
+    cbVol <- switch (Sys.info()[['sysname']],
+                  "Darwin" = "/Volumes/CBioinformatics/Methylation",
+                  "Linux" = "~/molecpathlab/production/Methylation"
+    )
     moVol = "/Volumes/molecular"
     rsVol = "/Volumes/snudem01labspace"
     defaultParams <- data.frame(
-        mnp.pk.loc = paste0(file.path(cbVol, "Methylation/in_house/mnp.v116/mnp.v11b6")),
+        mnp.pk.loc = paste0(file.path(cbVol, "classifiers/mnp.v11b6")),
         ApiToken = "",
-        methDir = paste0(file.path(cbVol, "Methylation/Clinical_Runs")),
+        methDir = paste0(file.path(cbVol, "Clinical_Runs")),
         clinDrv = paste0(file.path(moVol, "MOLECULAR LAB ONLY/NYU-METHYLATION")),
         rschOut = paste0(file.path(rsVol, "FINAL_PDF_Reports_Brain")),
         clinOut = paste0(file.path(moVol, "MOLECULAR/MethylationClassifier")),
         rsch.idat = paste0(file.path(rsVol,"idats")),
         clin.idat = paste0(file.path(moVol, "MOLECULAR/iScan")),
         QC_file = paste0("~/Methyl_QC.Rmd"),
-        baseDir = paste0(file.path(cbVol, "Methylation/Clinical_Runs")),
+        baseDir = paste0(file.path(cbVol, "Clinical_Runs")),
         stringsAsFactors=F
     )
     return(defaultParams)
@@ -144,7 +146,11 @@ defineParams <- function(mnp.pk.loc = NULL,
     if(loadClassifier==T){loadClassifierPacks()}
     i=1:length(defVars)
     invisible(sapply(i,FUN=function(i){assignVar(names((defVars[i])), paste0(defVars[,i]))}))
-    if(!isMC) {methDir=rschOut;assign("workDir","/Volumes/CBioinformatics/")}
+    cbVol <- switch (Sys.info()[['sysname']],
+                  "Darwin" = "/Volumes/CBioinformatics/",
+                  "Linux" = "~/molecpathlab/production/"
+    )
+    if(!isMC) {methDir=rschOut;assign("workDir", cbVol)}
 }
 
 # Changes the working directory using the system CD command
