@@ -34,6 +34,7 @@ CreateRunDir <- function(newRun) {
         dir.create(newRun, recursive = T)
         #Sys.chmod(newRun, "0777", use_umask = FALSE)
     }
+    if(Sys.info()[['sysname']]=="Darwin"){
     cmd <- paste("chmod -R 770", newRun)
     system(cmd)
     cmd1 <-
@@ -76,7 +77,7 @@ CreateRunDir <- function(newRun) {
             "'","/*"
         )
     system(cmd3)
-
+    }
 
     setDirectory(newRun)
     return(newRun)
