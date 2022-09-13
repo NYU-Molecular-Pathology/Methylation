@@ -1,14 +1,14 @@
 options("install.packages.compile.from.source" = "No")
 options("install.packages.check.source" = "no")
 
-if (identical(Sys.info()[["machine"]], "x86_64")) {
+if(Sys.info()[['sysname']]=="Darwin"){
     local({
         path <- sub(":/opt/homebrew/bin", ":/usr/local/homebrew/bin", Sys.getenv("PATH"))
         Sys.setenv(PATH = path)
     })
 }
 
-if (!dir.exists(file.path("~", ".R"))) {
+if (Sys.info()[['sysname']]=="Darwin" & !dir.exists(file.path("~", ".R"))) {
     message("No Makevars file in ~/.R")
     system("mkdir -p ~/.R")
     system("touch ~/.R/MakeVars")
@@ -49,7 +49,7 @@ closeAllConnections()
     #rstudioapi::restartSession(cmd)
 }
 
-if (!file.exists(file.path("~", ".Renviron"))) {
+if (Sys.info()[['sysname']]=="Darwin" & !file.exists(file.path("~", ".Renviron"))) {
     system("touch ~/.Renviron")
     fileConn <- file("~/.Renviron")
     params <- c('PATH="/usr/local/gfortran/bin:${PATH}"')
@@ -89,20 +89,21 @@ loadLibrary("devtools")
 #     system("xcode-select --install")
 #     system("xcode-select -s /Library/Developer/CommandLineTools")
 # }
-
-isOpen <- system("which openssl", intern = TRUE)
-if(!exists("isOpen")){
-    system("brew update")
-    system("brew install openssl")
-    system("ln -sf /usr/local/opt/openssl/lib/libcrypto.3.dylib /usr/local/lib/")
-    system("ln -sf /usr/local/opt/openssl/lib/libssl.3.dylib /usr/local/lib/")
-    system("ln -sf /usr/local/Cellar/openssl@3/3.0.5/bin/openssl /usr/local/bin/openssl")
-}else{
-    if(isOpen != "/usr/bin/openssl"){
+if (Sys.info()[['sysname']]=="Darwin"){
+    isOpen <- system("which openssl", intern = TRUE)
+    if(!exists("isOpen")){
+        system("brew update")
+        system("brew install openssl")
         system("ln -sf /usr/local/opt/openssl/lib/libcrypto.3.dylib /usr/local/lib/")
         system("ln -sf /usr/local/opt/openssl/lib/libssl.3.dylib /usr/local/lib/")
         system("ln -sf /usr/local/Cellar/openssl@3/3.0.5/bin/openssl /usr/local/bin/openssl")
+    }else{
+        if(isOpen != "/usr/bin/openssl"){
+            system("ln -sf /usr/local/opt/openssl/lib/libcrypto.3.dylib /usr/local/lib/")
+            system("ln -sf /usr/local/opt/openssl/lib/libssl.3.dylib /usr/local/lib/")
+            system("ln -sf /usr/local/Cellar/openssl@3/3.0.5/bin/openssl /usr/local/bin/openssl")
 
+        }
     }
 }
 
@@ -209,7 +210,6 @@ pkgs <- c(
 "abind", "animation", "AnnotationFilter", "AnnotationHub", "AnnotationHubData", "ape", "aplot", "arrow", "askpass", "assertr", "assertthat", "batchtools", "beepr", "bezier", "Biobase", "BiocCheck", "BiocManager", "BiocStyle", "BiocVersion", "biocViews", "bookdown", "boot", "brio", "broom", "bs4Dash", "BSgenome", "bslib", "cachem", "Cairo", "callr", "car", "carData", "caret", "cellranger", "changepoint", "checkmate", "chromote", "chron", "circlize", "class", "classInt", "cli", "clipr", "clustermq", "clusterProfiler", "cmprsk", "cn.mops", "codetools", "colorspace", "commonmark", "compiler", "ComplexHeatmap", "config", "conquer", "conumee", "CopyNumberPlots", "cpp11", "crayon", "credentials", "cronR", "curl", "datasets", "debugme", "DEoptimR", "desc", "devtools", "dichromat", "diffobj", "digest", "dlm", "docstring", "doParallel", "DOSE", "doSNOW", "downloader", "DT", "dtplyr", "easypackages", "enrichplot", "ensembldb", "evaluate", "exomeCopy", "ExperimentHub", "ExperimentHubData", "extrafont", "extrafontdb", "fansi", "fastmap", "fastmatch", "fBasics", "feather", "fontawesome", "forcats", "forecast", "foreign", "formattable", "Formula", "fracdiff", "fresh", "fs", "future", "future.apply", "future.callr", "gamm4", "gdata", "gdtools", "gert", "getopt", "GetoptLong", "ggeffects", "ggforce", "ggfortify", "ggfun", "ggnewscale", "ggplotify", "ggraph", "ggrepel", "ggtext", "ggthemes", "ggtree", "ggupset", "gh", "gitcreds", "GlobalOptions", "globals", "glue", "gmodels", "gmp", "GO.db", "gplots", "graph", "graphics", "graphlayouts", "grDevices", "grid", "gridBase", "gridGraphics", "gridtext", "gss", "gsubfn", "gt", "gtools", "haven", "here", "hexbin", "highr", "Hmisc", "hrbrthemes", "htmlTable", "htmltools", "htmlwidgets", "httpuv", "httr", "igraph", "impute", "ini", "insight", "interactiveDisplayBase", "ipred", "irlba", "jpeg", "jquerylib", "jsonlite", "kableExtra", "KEGGgraph", "keras", "kernlab", "KernSmooth", "KFAS", "ks", "labelVector", "lars", "later", "lattice", "latticeExtra", "lazyeval", "lintr", "listenv", "lme4", "lmodel2", "lmtest", "lubridate", "magick", "magrittr", "mapdata", "mapproj", "maps", "maptools", "markdown", "Matrix", "MatrixModels", "mdthemes", "memoise", "methods", "MethylAid", "mlr", "modelr", "modeltools", "narray", "needs", "nlme", "nloptr", "nnet", "numDeriv", "openssl", "openxlsx", "optparse", "OrganismDbi", "packrat", "pals", "parallel", "parallelMap", "parameters", "ParamHelpers", "patchwork", "pathview", "pbkrtest", "pdftools", "performance", "pillar", "pingr", "pkgbuild", "pkgconfig", "pkgload", "plot3D", "plotly", "plotrix", "Polychrome", "polyclip", "polynom", "pracma", "praise", "prettyunits", "pROC", "processx", "prodlim", "progressr", "promises", "ProtGenerics", "proto", "proxy", "ps", "purrr", "qdapTools", "qpdf", "qs", "quantreg", "qvalue", "R.cache", "raster", "RBGL", "Rcpp", "RcppArmadillo", "RcppParallel", "readxl", "recipes", "redcapAPI", "rematch", "rematch2", "remotes", "reprex", "reticulate", "rex", "Rgraphviz", "rio", "rJava", "rlang", "rmarkdown", "Rmpfr", "RMySQL", "robustbase", "ROC", "ROCR", "roxygen2", "rpart", "RPMM", "rprojroot", "RSpectra", "rstudioapi", "Rtsne", "rversions", "rvest", "s2", "sass", "scatterplot3d", "selectr", "sessioninfo", "shadowtext", "shiny", "sjmisc", "sourcetools", "spatial", "sqldf", "stats", "stats4", "stringdist", "stringi", "stringr", "strucchange", "svglite", "sys", "systemfonts", "targets", "tcltk", "tensorflow", "terra", "testit", "testthat", "TH.data", "tibble", "tidygraph", "tidytree", "tidyverse", "tiff", "timeDate", "timeSeries", "tinytex", "tools", "torch", "treeio", "tseries", "units", "utf8", "utils", "uuid", "webshot", "webshot2", "websocket", "withr", "xfun", "xml2", "xmlparsedata", "xopen", "xtable", "yaml", "zip", "zoo"
 )
 
-
 biocPkgs <-
     c(
         "lumi",
@@ -221,15 +221,10 @@ biocPkgs <-
         "IlluminaHumanMethylationEPICanno.ilm10b4.hg19"
     )
 
-message("Version of Clang:"); system("gcc --version")
+#message("Version of Clang:"); system("gcc --version")
 
 if (checkRequire("BiocManager")) {
-    install.packages(
-        "BiocManager",
-        dependencies = T,
-        verbose = T,
-        ask = F
-    )
+    install.packages("BiocManager", dependencies = T, verbose = T, ask = F)
 }
 loadLibrary("devtools")
 loadLibrary("librarian")
@@ -244,21 +239,22 @@ if (checkRequire("mapview")) {remotes::install_github("r-spatial/mapview")}
 # Load/install missing pacakges without asking
 supM <- function(pk){return(suppressPackageStartupMessages(suppressWarnings(pk)))}
 
-message("Loading packages:",paste0(capture.output(corePkgs), collapse = "\n"))
-message("...")
+message("Loading packages:", paste0(capture.output(corePkgs), collapse = "\n"))
+message("...loading")
 supM(librarian::shelf(corePkgs, ask = F, update_all = F, quiet = FALSE))
 
 message("Loading packages:",paste0(capture.output(preReqPkgs), collapse = "\n"))
-message("...")
+message("...loading")
 supM(librarian::shelf(preReqPkgs, ask = F, update_all = F, quiet = FALSE))
 
 message("Loading BioConductor Packages and IlluminaHumanMethylation Manifest...")
 supM(librarian::shelf(biocPkgs, ask = F, update_all = F, quiet = FALSE))
 
 if(checkRequire("IlluminaHumanMethylationEPICmanifest")){
-    devtools::install_github(repo = "mwsill/IlluminaHumanMethylationEPICmanifest",
-                             dependencies = T,
-                             upgrade = "never")
+    devtools::install_github(
+        repo = "mwsill/IlluminaHumanMethylationEPICmanifest",
+        dependencies = T, upgrade = "never"
+    )
 }
 
 if(checkRequire("mgmtstp27")){
@@ -325,20 +321,20 @@ checkNeeds <- function(){
 
 checkNeeds()
 closeAllConnections()
+if(Sys.info()[['sysname']]=="Darwin"){
+    isGdal <- paste(system("echo `gdalinfo --version`", intern = T))
 
+    if(!exists("isGdal")){
+        system("brew install pkg-config")
+        system("brew install gdal")
+    }
 
-isGdal <- paste(system("echo `gdalinfo --version`", intern = T))
+    isProj <- system("which proj", intern=T)
 
-if(!exists("isGdal")){
-    system("brew install pkg-config")
-    system("brew install gdal")
-}
-
-isProj <- system("which proj", intern=T)
-
-if(!exists("isProj")){
-    system("brew install pkg-config")
-    system("brew install proj")
+    if(!exists("isProj")){
+        system("brew install pkg-config")
+        system("brew install proj")
+    }
 }
 
 spat_config <- '--with-proj-lib=/usr/local/lib/ --with-proj-include=/usr/local/include/'
@@ -357,7 +353,10 @@ if(checkRequire("rgdal")){
 
 }
 invisible(gc())
-system("export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib")
+if(Sys.info()[['sysname']]=="Darwin"){
+    system("export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib")
+}
+
 options("install.packages.compile.from.source" = "No")
 options("install.packages.check.source" = "no")
 loadLibrary("BiocManager")
@@ -366,13 +365,7 @@ loadLibrary("Biobase")
 terraDep <- c('tinytest', 'ncdf4', 'leaflet')
 suppressWarnings(librarian::shelf(terraDep, ask = F, update_all = F, quiet = FALSE))
 if(checkRequire("terra")) {
-    install.packages(
-        'terra',
-        repos = 'https://rspatial.r-universe.dev',
-        dependencies = T,
-        verbose = T,
-        Ncpus = 4
-    )
+    install.packages('terra', repos = 'https://rspatial.r-universe.dev', dependencies = T, verbose = T, Ncpus = 4)
 }
 
 if(checkRequire("FField")){
@@ -386,8 +379,14 @@ if (checkRequire("GenVisR")) {
 suppressWarnings(librarian::shelf(pkgs, ask = F, update_all = F, quiet = FALSE))
 invisible(gc())
 
+
+cbioLn <- switch (Sys.info()[['sysname']],
+                  "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
+                  "Linux" = "~/molecpathlab/production/Methylation/classifiers"
+)
+
 if (checkRequire("UniD")) {
-try(install.packages("/Volumes/CBioinformatics/Methylation/UniD/", type="source", repos=NULL), silent=T)
+    try(install.packages(file.path(cbioLn, "UniD"), type="source", repos=NULL), silent=T)
 }
 
 closeAllConnections()
