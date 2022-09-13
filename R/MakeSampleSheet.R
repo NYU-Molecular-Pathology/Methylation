@@ -3,6 +3,8 @@ gb <- globalenv(); assign("gb", gb)
 apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
 cpInLnk2 = "https://github.com/NYU-Molecular-Pathology/Methylation/main/R/MakeSampleSheet.R"
 rschSheets = "/Volumes/snudem01labspace/Methylation_Worksheets"
+worksheetDirPath = "/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/WORKSHEETS/"
+researchWsPath = "/Volumes/snudem01labspace/Methylation_Worksheets/"
 
 bkBlue <- function(...){
     return(crayon::bgBlue$white$bold(paste0(...)))
@@ -18,11 +20,10 @@ msgParams <- function(...){
     message("\nParam passed:\n", paste0(crayon::bgGreen(names(vars)), "=", vars," "), "\n")
 }
 
-grabYear<- function(runID) {
+grabYear <- function(runID) {
     msgFunName(cpInLnk2, "grabYear")
     msgParams(runID)
     yr <- stringr::str_split_fixed(runID,"-",2)[,1]
-
     rnum <- NULL
     if(nchar(yr)>2){rnum <- substring(yr, 3)}else{rnum <- yr}
     if(nchar(yr)>0){rnum <- paste0("20",rnum)}else{rnum}
@@ -69,8 +70,8 @@ checkValidRun <- function(runID){
     if(!found){
         message(crayon::bgRed$white$bold("runID",gb$runID,"is not valid"))
         message(bkBlue(gb$runID,".xlsm"," not found in worksheets folders:"))
-        message("/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/WORKSHEETS/")
-        message("/Volumes/snudem01labspace/Methylation_Worksheets/\n")
+        message(worksheetDirPath)
+        message(researchWsPath,"\n")
         message(bkBlue("Check worksheet directory if the file is exists as .xlsm and not .xlsx"))
     }
     stopifnot(found)
@@ -249,7 +250,6 @@ writeSampleSheet <- function(df, bn = NULL, sampleName, dnaNumber, Sentrix) {
     if (is.null(bn)) {bn = file.path(gb$methDir, df$Batch, df$Sentrix)}
     splitSentrix = as.data.frame(stringr::str_split_fixed(df[, "Sentrix_ID"], "_", 2))
     #msgParams(bn, splitSentrix, sampleName, dnaNumber)
-
     samplesheet_csv = data.frame(
         Sample_Name =  df[, sampleName],
         DNA_Number =df[, dnaNumber],
