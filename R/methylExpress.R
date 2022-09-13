@@ -36,8 +36,8 @@ CheckInputArg(token, gb)
 CheckInputArg(runID, gb)
 CheckInputArg(selectRDs, gb)
 CheckInputArg(baseFolder, gb)
-CheckInputArg(redcapUp, gb)
-CheckInputArg(runLocal, gb)
+CheckInputArg(redcapUp, gb, T)
+CheckInputArg(runLocal, gb, F)
 message("\n^^^^^^^^^^^^^^^^^^^^^Parameters input^^^^^^^^^^^^^^^^^^^^^\n")
 
 # Cancel if no token or runID ----------------------------------------------------
