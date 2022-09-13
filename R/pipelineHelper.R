@@ -11,7 +11,13 @@ apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
 reportMd <- "~/report.Rmd" # From curl github download
 QC_file <- "~/Methyl_QC.Rmd" # From curl github download
 pipeLnk <- "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/pipelineHelper.R"
-predictionPath <- "/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData"
+
+cbioLn <- switch (Sys.info()[['sysname']],
+                  "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
+                  "Linux" = "~/molecpathlab/production/Methylation/classifiers"
+)
+
+predictionPath <- file.path(cbioLn, "mnp.v11b6/data/rfpred.v11b6.RData")
 
 # List of three mount paths needed to run the pipleine
 critialMnts <- c(
