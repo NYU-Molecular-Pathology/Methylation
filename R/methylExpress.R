@@ -12,6 +12,13 @@ selectRDs <-  args[3]
 baseFolder <- args[4]
 redcapUp <-   args[5]
 runLocal <-   args[6]
+osType <- Sys.info()[['sysname']]
+
+if(osType=="Linux"){
+  .libPaths("~/molecpathlab/production/Methylation/common_libs")
+  if(!require("devtools")){install.packages("devtools", quiet=T)}
+  baseFolder <- "~/molecpathlab/production/Methylation"
+}
 
 # Check Input Parameters ----------------------------------------------------
 message("\n~~~~~~~~~~~~~~~~~~~~~Parameters input~~~~~~~~~~~~~~~~~~~~~\n")
