@@ -107,7 +107,7 @@ if (Sys.info()[['sysname']]=="Darwin"){
     }
 }
 
-corePkgs <- c("randomForest","glmnet","ggplot2","gridExtra","knitr","pander")
+corePkgs <- c("randomForest","glmnet","ggplot2","gridExtra","knitr","pander", "gmp")
 
 # List of all Packages
 preReqPkgs <- c(
