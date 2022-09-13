@@ -336,11 +336,11 @@ if(Sys.info()[['sysname']]=="Darwin"){
         system("brew install proj")
     }
 } else{
-    if(!("needs" %in% rownames(installed.packages()))){
-        install.packages("needs", dependencies = T, verbose = T, ask = F)
-    }
-    try(fixNeeds(), silent=T)
-    }
+  if(!("needs" %in% rownames(installed.packages()))){
+    install.packages("needs", dependencies = T, verbose = T, ask = F)
+  }
+  options(needs.promptUser=FALSE)
+}
 
 spat_config <- '--with-proj-lib=/usr/local/lib/ --with-proj-include=/usr/local/include/'
 options(configure.args = c("sf" = spat_config, "rgdal" = spat_config))
