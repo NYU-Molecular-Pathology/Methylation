@@ -319,9 +319,9 @@ checkNeeds <- function(){
     )
 }
 
-checkNeeds()
-closeAllConnections()
 if(Sys.info()[['sysname']]=="Darwin"){
+    checkNeeds()
+    closeAllConnections()
     isGdal <- paste(system("echo `gdalinfo --version`", intern = T))
 
     if(!exists("isGdal")){
@@ -335,7 +335,12 @@ if(Sys.info()[['sysname']]=="Darwin"){
         system("brew install pkg-config")
         system("brew install proj")
     }
-}
+} else{
+    if(!("needs" %in% rownames(installed.packages()))){
+        install.packages("needs", dependencies = T, verbose = T, ask = F)
+    }
+    try(fixNeeds(), silent=T)
+    }
 
 spat_config <- '--with-proj-lib=/usr/local/lib/ --with-proj-include=/usr/local/include/'
 options(configure.args = c("sf" = spat_config, "rgdal" = spat_config))
