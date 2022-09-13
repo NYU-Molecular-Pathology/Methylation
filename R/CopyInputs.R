@@ -259,3 +259,16 @@ get.rd.info <- function(rd_numbers=NULL, token=NULL, sh_name=NULL){
 
     return(result)
 }
+
+CopyFromDmn <- function(runID, runYear){
+    kerberos <- Sys.info()[["user"]]
+    cmdStart <- "rsync --protect-args --size-only -avzPe ssh"
+    sshUser <- paste0(kerberos, "@dmn-0002:")
+    runSheet <- paste0(runID,".xlsm")
+    startPath <- file.path(
+        "/mnt", kerberos, "molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/WORKSHEETS", runYear, runSheet)
+    destPath <- file.path(
+        "/gpfs/home", kerberos, "molecpathlab/production/Methylation/Clinical_Runs", runID)
+    cmdSync <- paste0(cmdStart, " '", sshUser, startPath, "' ", destPath)
+    system(cmdSync)
+}
