@@ -21,34 +21,31 @@ if(osType=="Linux"){
 }
 
 # Check Input Parameters ----------------------------------------------------
-message("\n~~~~~~~~~~~~~~~~~~~~~Parameters input~~~~~~~~~~~~~~~~~~~~~\n")
 CheckInputArg <- function(varValue, gb, defVal = NULL) {
     varStr <- deparse(substitute(varValue))
     if (length(varValue) == 0 | identical(varValue, NULL) | identical(varValue, "NULL")) {
-        gb[[varStr]] <- defVal
-        varValue <- defVal
+        gb[[varStr]] <- varValue <- defVal
     } else{ varValue <- ifelse(is.na(varValue), NULL, varValue)}
     message(varStr, ": " , ifelse(is.null(varValue), "NULL", varValue))
     return(assign(varStr, varValue, envir = gb))
 }
 
+
+message("\n~~~~~~~~~~~~~~~~~~~~~Parameters input~~~~~~~~~~~~~~~~~~~~~")
 CheckInputArg(token, gb)
 CheckInputArg(runID, gb)
 CheckInputArg(selectRDs, gb)
 CheckInputArg(baseFolder, gb)
 CheckInputArg(redcapUp, gb)
 CheckInputArg(runLocal, gb)
+message("\n^^^^^^^^^^^^^^^^^^^^^Parameters input^^^^^^^^^^^^^^^^^^^^^\n")
 
-# Cancel if no token or runID
+# Cancel if no token or runID ----------------------------------------------------
 stopifnot(!is.null(token)); stopifnot(!is.null(runID))
-
-if(!is.null(baseFolder)& !identical(baseFolder, "NULL")) {
-    message("Checking if custom run directory is valid:\n", baseFolder, "\n")
-    if (dir.exists(baseFolder) == F) {
-        message("Directory does not exist, try creating it first:\n mkdir ", baseFolder,"\n")
-        stopifnot(dir.exists(baseFolder) == TRUE)
-    }
-}else{baseFolder<- NULL}
+if(!is.null(baseFolder) & !identical(baseFolder, "NULL")) {
+    message("Checking if custom run directory is valid: ", baseFolder, "\n")
+    stopifnot("Directory input does not exist! Try creating it first with mkdir" = dir.exists(baseFolder) == T)
+} else{baseFolder <- NULL}
 
 # Source GitHub Scripts ----------------------------------------------------
 mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/"
