@@ -232,7 +232,7 @@ loadLibrary("BiocManager")
 if (checkRequire("Biobase")) {BiocManager::install("Biobase", update = F, ask = F)}
 loadLibrary("Biobase")
 
-if (checkRequire("mapview")) {remotes::install_github("r-spatial/mapview")}
+if (checkRequire("mapview")) {remotes::install_github("r-spatial/mapview", dependencies = T, upgrade="never")}
 
 #if(checkRequire("S4Vectors")){BiocManager::install("S4Vectors", update = F, ask = F)}
 #if(checkRequire("MASS")){install.packages("MASS",type = "binary", update = F, ask = F)}
@@ -305,14 +305,14 @@ checkNeeds <- function(){
         },
         error=function(cond){
             devtools::install_github("joshkatz/needs", ref = "development",
-                                     dependencies=T,verbose=T,upgrade="always")
+                                     dependencies=T,verbose=T,upgrade="never")
             fixNeeds()
             try(fixProf(), silent=T)
         },
         warning=function(cond){
             devtools::install_github(
                 "joshkatz/needs", ref = "development",
-                                     dependencies=T,verbose=T,upgrade="always")
+                                     dependencies=T,verbose=T,upgrade="never")
             fixNeeds()
             try(fixProf(), silent=T)
         }
@@ -343,7 +343,7 @@ if(checkRequire("sf")){
     tryCatch(
         install.packages(c("sf"), type = "source", dependencies=T, verbose=T, Ncpus = 4),
         error=function(e){
-            remotes::install_github("r-spatial/sf", configure.args = "--with-proj-lib=/usr/local/lib/")
+            remotes::install_github("r-spatial/sf", configure.args = "--with-proj-lib=/usr/local/lib/", dependencies=T, upgrade="never")
         }
     )
 }
