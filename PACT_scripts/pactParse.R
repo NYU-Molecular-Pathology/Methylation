@@ -326,7 +326,17 @@ GetPhilipsData <- function(inputFi){
             "Normal DNA/RNA Number",
             "Tumor Percentage"
         )
-    return(philipsExport[,filterColumns])
+    philipsExport <- philipsExport[,filterColumns]
+    if(any(philipsExport$MRN == "")) {
+        warning("Some Philips Samples are missing MRNs, defaulting to 0")
+        philipsExport$MRN[philipsExport$MRN == ""] <- 0
+    }
+    if(any(philipsExport$`Normal Specimen ID` == "")) {
+        missingSam <- philipsExport$`Tumor Specimen ID`[philipsExport$`Normal Specimen ID` == ""]
+        message(crayon::bgRed("The following Philips Samples are missing a Normal Specimen ID:\n"), 
+                paste0(capture.output(missingSam), collapse = "\n"))
+    }
+    return(philipsExport)
 }
 
 GetRawSamplesheet <- function(inputFi){
