@@ -334,7 +334,7 @@ GetRawSamplesheet <- function(inputFi){
     sh <- which(grepl("PACT-", shNames, ignore.case = T))[1]
     message('Reading Excel Sheet named \"', shNames[sh],'\" from file:\n',inputFi)
     rawSheetData <- GetExcelData(inputFi, sh, shRange="A6:P200",cm=T)
-    toDrop <- which(rawSheetData[,ncol(rawSheetData)]=="")[1] - 1
+    toDrop <- which(rawSheetData[,"I7_Index_ID" ]=="")[1] - 1
     rawSheetData <- rawSheetData[1:toDrop,]
     return(rawSheetData)
 }
