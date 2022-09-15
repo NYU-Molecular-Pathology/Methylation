@@ -175,14 +175,21 @@ WriteFileHeader <- function(inputFi){
 }
 
 
+FixPairedList <- function(tissueType){
+    tissueType[grep("Tumor", tissueType)] <- "Tumor"
+    tissueType[grep("Normal", tissueType)] <- "Normal"
+    tissueType[grep("Control", tissueType)] <- "Control"
+    return(tissueType)
+}
+
 AddSampleIndexes <- function(pairedList, rawSheetData){
     accessions <- rawSheetData$`Accession#`
-    tissueType <- rawSheetData$`Type & Tissue`
+    tissueType <- FixPairedList(rawSheetData$`Type & Tissue`)
     sheetTumors <- which(tissueType == "Tumor")
     sheetNormals <- which(tissueType == "Normal" & tissueType != "Control")
-
+    
     mainSheet <- data.frame(matrix(NA, nrow = nrow(pairedList), ncol = 0))
-
+    
     mainSheet$Sample_ID <- paste(pairedList[, 1])
     mainSheet$Sample_Name <- paste(pairedList[, 1])
     mainSheet$Paired_Normal <- ""
@@ -193,7 +200,7 @@ AddSampleIndexes <- function(pairedList, rawSheetData){
     mainSheet$Tumor_Content <- mainSheet$Test_Number <- mainSheet$EPIC_ID <- "0"
     mainSheet$Description <- mainSheet$Tumor_Type <- ""
     return(mainSheet)
-
+    
 }
 
 
