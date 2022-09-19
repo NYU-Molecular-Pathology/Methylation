@@ -291,11 +291,12 @@ AddPairedColumn <- function(mainSheet, sheetColumn, philipsColumn, idx){
     return(mainSheet)
 }
 
+
 BuildMainSheet <- function(philipsExport, rawSheetData, runID) {
-    epicOrder <- philipsExport$`Epic Order Number`
-    testNumber <-  philipsExport$`Test Number`
-    tumorPercent <- philipsExport$`Tumor Percentage`
-    diagColumn <- philipsExport$`Diagnosis for interpretation`
+    epicOrder <- philipsExport[,'Epic Order Number']
+    testNumber <-  philipsExport[,'Test Number']
+    tumorPercent <- philipsExport[,'Tumor Percentage']
+    diagColumn <- philipsExport[,'Diagnosis for interpretation']
 
     pairedList <- GetPairedList(philipsExport, runID)
     pairedList <- BindUnpairedRows(rawSheetData, pairedList, runID)
@@ -306,7 +307,7 @@ BuildMainSheet <- function(philipsExport, rawSheetData, runID) {
     mainSheet <- AddRunChipColumns(mainSheet, runID)
     mainSheet <- AddPairedColumn(mainSheet, "Tumor_Content", tumorPercent, idx)
     mainSheet$Tumor_Type[idx$wetLabT] <- diagColumn[idx$philipsT]
-    mainSheet$Description <- paste0(rawSheetData$Description)
+    mainSheet$Description <- paste0(rawSheetData[,'Description'])
     mainSheet$GenomeFolder <- as.character("PhiX\\Illumina\\RTA\\Sequence\\WholeGenomeFASTA")
     dupes <- base::anyDuplicated(mainSheet$I7_Index_ID)
     if(length(dupes)>0){
