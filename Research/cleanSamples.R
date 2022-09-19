@@ -54,3 +54,13 @@ MoveIdats <- function(pathName=NULL){
     gb$supM(lapply(idatFiles, function(x){file.rename(from = x, to = file.path(pathName, basename(x)))}))    
     }
 }
+
+CheckOriginal <- function(ogSheet) {
+    if (!file.exists(ogSheet)) {
+        rds <- gb$readInfo(inputSheet = gb$samsheet)
+        result <- gb$search.redcap(rds, token)
+        result <- result[!is.na(result$barcode_and_row_column),]
+        samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[, "barcode_and_row_column"], "_", 2))
+        gb$makeSampleSheet(result, samplesheet_ID, bn = NULL, outputFi = ogSheet)
+    }
+}
