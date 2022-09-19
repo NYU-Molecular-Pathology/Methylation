@@ -35,6 +35,22 @@ checkMounts <- function(){
     } else {message("Z-drive path is accessible")}
 }
 
+GetPhilipsColumns <- function() {
+    filterColumns <- c(
+        "MRN",
+        "Test Name",
+        "Tumor Specimen ID",
+        "Normal Specimen ID",
+        "Test Number",
+        "Epic Order Number",
+        "Diagnosis for interpretation",
+        "Tumor DNA/RNA Number",
+        "Normal DNA/RNA Number",
+        "Tumor Percentage"
+    )
+    return(filterColumns)
+}
+
 # Function to silently load library without conflict warnings
 libLoad <- function(libName) {
     lib.opts <- list(package = libName, character.only = T, verbose = F, warn.conflicts = F)
@@ -236,24 +252,21 @@ BindUnpairedRows <- function(rawSheetData, pairedList, runID){
 GetPairedList <- function(philipsExport, runID){
     pairedList <- paste(unlist(lapply(X = 1:length(philipsExport$`Tumor Specimen ID`), function(acc) {
         tumorSam <- paste(
-            philipsExport$`Epic Order Number`[acc],
+            philipsExport[,"Epic Order Number"][acc],
             runID,
             philipsExport$`Tumor Specimen ID`[acc],
             philipsExport$`Tumor DNA/RNA Number`[acc],
             sep = "_"
         )
         normalSam <- paste(
-            philipsExport$`Epic Order Number`[acc],
+            philipsExport[,"Epic Order Number"][acc],
             runID,
-            philipsExport$`Normal Specimen ID`[acc],
+            philipsExport[,"Normal Specimen ID"][acc],
             philipsExport$`Normal DNA/RNA Number`[acc],
             sep = "_"
         )
         return(rbind(tumorSam, normalSam))
     })))
-
-
-
     return(pairedList)
 }
 
@@ -292,6 +305,22 @@ AddPairedColumn <- function(mainSheet, sheetColumn, philipsColumn, idx){
 }
 
 
+FixLastColumns <- function(mainSheet, rawSheetData, idx){
+    mainSheet$Tumor_Type[idx$wetLabN] <- ""
+    mainSheet$Description <- paste0(rawSheetData[,'Description'])
+    mainSheet$GenomeFolder <- as.character("PhiX\\Illumina\\RTA\\Sequence\\WholeGenomeFASTA")
+    dupes <- base::anyDuplicated(mainSheet$I7_Index_ID)
+    if(length(dupes)>0){
+        message(crayon::bgRed("The following rows are duplicated and will be removed:"), "\n",
+                paste0(capture.output(mainSheet[dupes,]), collapse = "\n"))
+        mainSheet <- mainSheet[-dupes,]
+        row.names(mainSheet) <- 1:nrow(mainSheet)
+    }
+    mainSheet$Tumor_Content[mainSheet$Paired_Normal==""] <- 0
+    return(mainSheet)
+}
+
+
 BuildMainSheet <- function(philipsExport, rawSheetData, runID) {
     epicOrder <- philipsExport[,'Epic Order Number']
     testNumber <-  philipsExport[,'Test Number']
@@ -306,17 +335,8 @@ BuildMainSheet <- function(philipsExport, rawSheetData, runID) {
     mainSheet <- AddPairedColumn(mainSheet, "Test_Number", testNumber, idx)
     mainSheet <- AddRunChipColumns(mainSheet, runID)
     mainSheet <- AddPairedColumn(mainSheet, "Tumor_Content", tumorPercent, idx)
-    mainSheet$Tumor_Type[idx$wetLabT] <- diagColumn[idx$philipsT]
-    mainSheet$Description <- paste0(rawSheetData[,'Description'])
-    mainSheet$GenomeFolder <- as.character("PhiX\\Illumina\\RTA\\Sequence\\WholeGenomeFASTA")
-    dupes <- base::anyDuplicated(mainSheet$I7_Index_ID)
-    if(length(dupes)>0){
-        message(crayon::bgRed("The following rows are duplicated and will be removed:"), "\n",
-                paste0(capture.output(mainSheet[dupes,]), collapse = "\n"))
-        mainSheet <- mainSheet[-dupes,]
-        row.names(mainSheet) <- 1:nrow(mainSheet)
-    }
-    mainSheet$Tumor_Content[mainSheet$Paired_Normal==""] <- 0
+    mainSheet <- AddPairedColumn(mainSheet, "Tumor_Type", diagColumn, idx)
+    mainSheet <- FixLastColumns(mainSheet, rawSheetData, idx)
     return(mainSheet)
 }
 
@@ -331,26 +351,16 @@ GetPhilipsData <- function(inputFi){
     shNames <- readxl::excel_sheets(inputFi)
     sh2 <- which(grepl("Philips", shNames, ignore.case = T))[1]
     philipsExport <- GetExcelData(inputFi, sh2, NULL, 0, cm=T)
-    filterColumns <-
-        c(
-            "MRN",
-            "Test Name",
-            "Tumor Specimen ID",
-            "Normal Specimen ID",
-            "Test Number",
-            "Epic Order Number",
-            "Diagnosis for interpretation",
-            "Tumor DNA/RNA Number",
-            "Normal DNA/RNA Number",
-            "Tumor Percentage"
-        )
+    filterColumns <- GetPhilipsColumns()
     philipsExport <- philipsExport[,filterColumns]
-    if(any(philipsExport$`Epic Order Number` == "")) {
+    blankOrder <- philipsExport[,"Epic Order Number"] == ""
+    if(any(blankOrder)) {
         warning("Some Philips Samples are missing MRNs, defaulting to 0")
-        philipsExport$`Epic Order Number`[philipsExport$`Epic Order Number` == ""] <- 0
+        philipsExport[,"Epic Order Number"][blankOrder] <- 0
     }
-    if(any(philipsExport$`Normal Specimen ID` == "")) {
-        missingSam <- philipsExport$`Tumor Specimen ID`[philipsExport$`Normal Specimen ID` == ""]
+    blankSpecimen <- philipsExport[,"Normal Specimen ID"] == ""
+    if(any(blankSpecimen)) {
+        missingSam <- philipsExport$`Tumor Specimen ID`[blankSpecimen]
         message(crayon::bgRed("The following Philips Samples are missing a Normal Specimen ID:\n"),
                 paste0(capture.output(missingSam), collapse = "\n"))
     }
