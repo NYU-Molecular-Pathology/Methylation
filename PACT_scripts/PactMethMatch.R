@@ -271,10 +271,11 @@ msgRDs <- function(rds,token){
     message("\nRD-numbers with idats:\n")
     message(paste(rds, collapse="\n"))
     assign("rds", rds)
-    message(dsh, crayon::bgMagenta("Starting CNV PNG Creation"),dsh2)
+    message(dsh, crayon::bgMagenta("Starting CNV PNG Creation"), dsh2)
     ApiToken <- token
     assign("ApiToken", ApiToken)
 }
+
 
 grabRDs1 <- function(rd_numbers, token){
     result <- gb$search.redcap(rd_numbers, token)
@@ -331,23 +332,71 @@ makeCNV <- function(myDt, asPNG = T) {
     while (!is.null(dev.list())) {dev.off()}
 }
 
-startCNVmaker2 <- function(output, token) {
-    rds <- output$record_id[output$report_complete == "YES"]
-    if (all(!is.null(rds))==T & all(!is.na(rds))==T & length(rds) > 0) {
-             sourceFuns2()
-        msgRDs(rds, token)
-        grabRDs1(rds, token)
-        myDt <- read.csv("samplesheet.csv")
-        tryCatch(
-            expr = {gb$makeCNV(myDt)},
-            error = function(e) {
-                message("The following error occured:\n", e)
-                message("\n\nTry checking the troubleshooting section on GitHub:\n")
-                message("https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/PACT_scripts/README.md\n")
-            },
-            finally={gb$copyOutputPng()}
+
+CheckIfPngExists <- function(rds,
+                             outFolder = "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG") {
+    outpng <- paste0(rds, "_cnv.png")
+    outFiles <- file.path(outFolder, outpng)
+    finished <- file.exists(outFiles)
+    if (any(finished)) {
+        message(
+            crayon::bgGreen("The following samples are completed and will be skipped:"),
+            "\n",
+            paste(capture.output(outFiles[finished]), sep = '\n')
         )
-    } else{message(crayon::bgGreen("This PACT run has no cases with methylation complete. No CNV png images to generate."))}
+        rds <- rds[!finished]
+    }
+    return(rds)
+}
+
+
+TryCnvMaker <- function(myDt) {
+    tryCatch(
+        expr = {
+            gb$makeCNV(myDt)
+        },
+        error = function(e) {
+            message("The following error occured:\n", e)
+            message("\n\nTry checking the troubleshooting section on GitHub:\n")
+            message(
+                "https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/PACT_scripts/README.md\n"
+            )
+        },
+        finally = {
+            gb$copyOutputPng()
+        }
+    )
+}
+
+GetSampleList <- function(rds, sampleSheet="samplesheet.csv"){
+    myDt <- read.csv(sampleSheet)
+    toDrop <- myDt$Sample_Name %in% rds
+    myDt <- myDt[toDrop,]
+    rownames(myDt) <- 1:length(rds)
+    return(myDt)
+}
+
+GreenMsg <- function(strMsg){
+    message(crayon::bgGreen(strMsg))
+}
+
+QueCnvMaker <- function(output, token) {
+    rds <- output$record_id[output$report_complete == "YES"]
+    if (all(!is.null(rds)) == T & all(!is.na(rds)) == T & length(rds) > 0) {
+        sourceFuns2()
+        msgRDs(rds, token)
+        rds <- CheckIfPngExists(rds)
+        if (length(rds) > 0) {
+            grabRDs1(rds, token)
+            myDt <- GetSampleList(rds)
+            TryCnvMaker(myDt)
+        } else{
+            GreenMsg("No CNV png images to generate.  Check the output directory.")
+        }
+    } else{
+        GreenMsg("The PACT run has no cases with methylation completed.")
+        GreenMsg("No CNV png images will generate.")
+    }
 }
 
 # Search REDCap Worksheets for MRN Match for output -------------------------------------
@@ -356,4 +405,4 @@ checkMounts()
 output <- getOuputData(token, flds, inputSheet, readFlag)
 
 # CNV PNG Creation -------------------------------------
-startCNVmaker2(output, token)
+QueCnvMaker(output, token)
