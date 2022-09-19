@@ -102,11 +102,11 @@ sanitizeSheet <- function(sheetVals){
 WritePhilipsGender <- function(mainSheet, inputFi, shNames){
     sh2 <- which(grepl("Philips", shNames, ignore.case = T))[1]
     cnvSheet <- mainSheet[,1:15]
-    runId <- cnvSheet[1,"Sample_Project"]
+    runID <- cnvSheet[1,"Sample_Project"]
     philipVals <- as.data.frame(readxl::read_excel(inputFi, sheet = sh2, skip = 3, col_types = "text"))
     cnvSheet$Gender <- philipVals$Gender[match(cnvSheet$Test_Number, philipVals$`Test Number`)]
     cnvPath <- "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
-    cnvPath <- file.path(cnvPath,paste0(runId,".tsv"))
+    cnvPath <- file.path(cnvPath,paste0(runID,".tsv"))
     message("Writing table to: ", cnvPath)
     write.table(cnvSheet,quote=F, sep='\t', file=cnvPath,row.names=F)
 }
@@ -187,9 +187,9 @@ AddSampleIndexes <- function(pairedList, rawSheetData){
     tissueType <- FixPairedList(rawSheetData$`Type & Tissue`)
     sheetTumors <- which(tissueType == "Tumor")
     sheetNormals <- which(tissueType == "Normal" & tissueType != "Control")
-    
+
     mainSheet <- data.frame(matrix(NA, nrow = nrow(pairedList), ncol = 0))
-    
+
     mainSheet$Sample_ID <- paste(pairedList[, 1])
     mainSheet$Sample_Name <- paste(pairedList[, 1])
     mainSheet$Paired_Normal <- ""
@@ -200,7 +200,7 @@ AddSampleIndexes <- function(pairedList, rawSheetData){
     mainSheet$Tumor_Content <- mainSheet$Test_Number <- mainSheet$EPIC_ID <- "0"
     mainSheet$Description <- mainSheet$Tumor_Type <- ""
     return(mainSheet)
-    
+
 }
 
 
@@ -208,39 +208,42 @@ BindUnpairedRows <- function(rawSheetData, pairedList, runID){
     accessions <- rawSheetData$`Accession#`
     controls <- which(rawSheetData$`Type & Tissue` == "Control")
     rowsMissing <- !unlist(lapply(accessions[-controls], function(x){any(grepl(x , pairedList))}))
+    doubleBars <- unlist(lapply(pairedList, function(X){stringr::str_detect(X, pattern = "__")}))
+    if(any(doubleBars)){
+        message(crayon::bgRed("The following rows are missing data:"),"\n",
+                paste0(capture.output(pairedList[doubleBars]), collapse = "\n"))
+    }
     accToBind <- accessions[rowsMissing]
     if(length(accToBind)==0) {
-        warning("No additional paired samples found")
+        message(crayon::bgGreen("No additional paired sample rows to bind to sample sheet"))
         newRows <- NULL
     } else{
-        message("Binding rows:\n", paste0(capture.output(accToBind), collapse = "\n"))
+        message("Binding rows:","\n", paste0(capture.output(accToBind), collapse = "\n"))
         newRows <- unlist(lapply(1:length(accToBind), function(acc){
             return(paste(0, runID, accToBind[acc], rawSheetData$`DNA #`[acc], sep = "_"))
         }))
     }
-
     controlRows <- unlist(lapply(1:length(accessions[controls]), function(acc) {
         dnaNum <- which(accessions == accessions[controls][acc])
         return(paste(0, runID, accessions[controls][acc], rawSheetData$`DNA #`[dnaNum], sep = "_"))
     }))
-    message("Binding controls:\n", paste0(capture.output(controlRows), collapse = "\n"))
-
+    message(crayon::bgBlue("Binding controls:"),"\n", paste0(capture.output(controlRows), collapse = "\n"))
     pairedList <- data.frame("Sample_ID"=unlist(c(pairedList, newRows, controlRows)))
     rownames(pairedList) <- 1:nrow(pairedList)
     return(pairedList)
 }
 
-GetPairedList <- function(philipsExport, rawSheetData, runID){
+GetPairedList <- function(philipsExport, runID){
     pairedList <- paste(unlist(lapply(X = 1:length(philipsExport$`Tumor Specimen ID`), function(acc) {
         tumorSam <- paste(
-            philipsExport$MRN[acc],
+            philipsExport$`Epic Order Number`[acc],
             runID,
             philipsExport$`Tumor Specimen ID`[acc],
             philipsExport$`Tumor DNA/RNA Number`[acc],
             sep = "_"
         )
         normalSam <- paste(
-            philipsExport$MRN[acc],
+            philipsExport$`Epic Order Number`[acc],
             runID,
             philipsExport$`Normal Specimen ID`[acc],
             philipsExport$`Normal DNA/RNA Number`[acc],
@@ -249,7 +252,7 @@ GetPairedList <- function(philipsExport, rawSheetData, runID){
         return(rbind(tumorSam, normalSam))
     })))
 
-    pairedList <- BindUnpairedRows(rawSheetData, pairedList, runID)
+
 
     return(pairedList)
 }
@@ -289,16 +292,30 @@ AddPairedColumn <- function(mainSheet, sheetColumn, philipsColumn, idx){
 }
 
 BuildMainSheet <- function(philipsExport, rawSheetData, runID) {
-    pairedList <- GetPairedList(philipsExport, rawSheetData, runID)
+    epicOrder <- philipsExport$`Epic Order Number`
+    testNumber <-  philipsExport$`Test Number`
+    tumorPercent <- philipsExport$`Tumor Percentage`
+    diagColumn <- philipsExport$`Diagnosis for interpretation`
+
+    pairedList <- GetPairedList(philipsExport, runID)
+    pairedList <- BindUnpairedRows(rawSheetData, pairedList, runID)
     mainSheet <- AddSampleIndexes(pairedList, rawSheetData)
     idx <- GetIndexMatch(rawSheetData, philipsExport)
-    mainSheet <- AddPairedColumn(mainSheet, "EPIC_ID", philipsExport$MRN, idx)
-    mainSheet <- AddPairedColumn(mainSheet, "Test_Number", philipsExport$`Test Number`, idx)
+    mainSheet <- AddPairedColumn(mainSheet, "EPIC_ID", epicOrder, idx)
+    mainSheet <- AddPairedColumn(mainSheet, "Test_Number", testNumber, idx)
     mainSheet <- AddRunChipColumns(mainSheet, runID)
-    mainSheet <- AddPairedColumn(mainSheet, "Tumor_Content", philipsExport$`Tumor Percentage`, idx)
-    mainSheet$Tumor_Type[idx$wetLabT] <- philipsExport$`Diagnosis for interpretation`[idx$philipsT]
+    mainSheet <- AddPairedColumn(mainSheet, "Tumor_Content", tumorPercent, idx)
+    mainSheet$Tumor_Type[idx$wetLabT] <- diagColumn[idx$philipsT]
     mainSheet$Description <- paste0(rawSheetData$Description)
     mainSheet$GenomeFolder <- as.character("PhiX\\Illumina\\RTA\\Sequence\\WholeGenomeFASTA")
+    dupes <- base::anyDuplicated(mainSheet$I7_Index_ID)
+    if(length(dupes)>0){
+        message(crayon::bgRed("The following rows are duplicated and will be removed:"), "\n",
+                paste0(capture.output(mainSheet[dupes,]), collapse = "\n"))
+        mainSheet <- mainSheet[-dupes,]
+        row.names(mainSheet) <- 1:nrow(mainSheet)
+    }
+    mainSheet$Tumor_Content[mainSheet$Paired_Normal==""] <- 0
     return(mainSheet)
 }
 
@@ -327,15 +344,16 @@ GetPhilipsData <- function(inputFi){
             "Tumor Percentage"
         )
     philipsExport <- philipsExport[,filterColumns]
-    if(any(philipsExport$MRN == "")) {
+    if(any(philipsExport$`Epic Order Number` == "")) {
         warning("Some Philips Samples are missing MRNs, defaulting to 0")
-        philipsExport$MRN[philipsExport$MRN == ""] <- 0
+        philipsExport$`Epic Order Number`[philipsExport$`Epic Order Number` == ""] <- 0
     }
     if(any(philipsExport$`Normal Specimen ID` == "")) {
         missingSam <- philipsExport$`Tumor Specimen ID`[philipsExport$`Normal Specimen ID` == ""]
-        message(crayon::bgRed("The following Philips Samples are missing a Normal Specimen ID:\n"), 
+        message(crayon::bgRed("The following Philips Samples are missing a Normal Specimen ID:\n"),
                 paste0(capture.output(missingSam), collapse = "\n"))
     }
+    philipsExport[philipsExport==""] <- 0
     return(philipsExport)
 }
 
@@ -364,15 +382,31 @@ WriteMainSheet <- function(mainSheet, sheetHead){
     return(outFile)
 }
 
+GetExcelData <- function(inputFi, sheetNum, shRange, toSkip=0, cm=F){
+    sheetData <- suppressMessages(as.data.frame(
+        readxl::read_excel(
+            inputFi,
+            sheet = sheetNum,
+            na = "",
+            range = shRange,
+            col_types = "text",
+            col_names = cm,
+            skip=toSkip
+        )
+    ))
+    sheetData[is.na(sheetData)] <- ""
+    return(sheetData)
+}
+
 # Parses xlsx file and writes as csv file -----
 parseExcelFile <- function(inputFi, runID = NULL){
     shNames <- readxl::excel_sheets(inputFi)
-    message("Sheet names:\n",paste0(capture.output(data.frame(SheetNames = shNames)), collapse = "\n"))
+    message(paste0(capture.output(data.frame(`Sheet names in Workbook` = shNames)), collapse = "\n"))
     sh <- which(grepl("SampleSheet", shNames, ignore.case = T))[1]
     if(!is.na(sh)){
     sheetHead <- GetExcelData(inputFi, sheetNum=shNames[sh], shRange="A1:B17")
     sheetHead <- rbind(sheetHead,c("",""),c("[Data]",""))
-    sheetVals <- as.data.frame(readxl::read_excel(inputFi, sheet = shNames[sh], skip = 19, col_types = "text"))
+    sheetVals <- GetExcelData(inputFi, shNames[sh], NULL, 19, T)
     mainSheet <- sanitizeSheet(sheetVals)
     } else{
         sheetHead <- GetSheetHeading(inputFi)
@@ -381,7 +415,7 @@ parseExcelFile <- function(inputFi, runID = NULL){
     }
     try(WritePhilipsGender(mainSheet,inputFi, shNames), silent=T)
     outFile <- WriteMainSheet(mainSheet, sheetHead)
-    return(c(runId = mainSheet[1, "Sample_Project"], outFile = outFile))
+    return(c(runID = mainSheet[1, "Sample_Project"], outFile = outFile))
 }
 
 # Filters list of possible files in the directory for worksheet
@@ -417,20 +451,15 @@ CheckOtherFiles <- function(inputFi, runID){
     return(suppressMessages(parseExcelFile(inputFi=pfile, runID)))
 }
 
-PostRedcapCurl <- function(rcon, datarecord, retcon='ids'){
+PostRedcapCurl <- function(rcon, datarecord, retcon = 'ids') {
     message(crayon::bgMagenta("REDCap Output:"))
-    res <-
-        RCurl::postForm(
-            rcon$url,
-            token = rcon$token,
-            content = 'record',
-            format = 'json',
-            type = 'flat',
-            data = datarecord,
-            returnContent = retcon,
-            returnFormat = 'csv'
-        )
-    cat(res)
+    tryCatch(
+        expr = {RCurl::postForm(
+            rcon$url, token = rcon$token, content = 'record', format = 'json',
+            type = 'flat', data = datarecord, returnContent = retcon, returnFormat = 'csv')
+            },
+        error = function(e) {message("REDCap push failed!\n", e)}
+    )
 }
 
 # Generate Email notification and attach csv file
@@ -442,20 +471,18 @@ emailNotify <- function(record, rcon){
 }
 
 # Connect to REDCap and send email attachments of csv file ----
-pushToRedcap <- function(runId, outFile, token) {
+pushToRedcap <- function(runID, outFile, token, inputSheet) {
     rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", token)
-    record = data.frame(record_id = runId, pact_run_number = runId)
+    record = data.frame(record_id = inputSheet, pact_run_number = runID)
     datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox = T)
     PostRedcapCurl(rcon, datarecord, retcon='nothing')
-
     redcapAPI::importFiles(
         rcon = rcon,
         file = outFile,
-        record = runId,
+        record = runID,
         field = "pact_csv_sheet",
         repeat_instance = 1
     )
-
     emailNotify(record, rcon)
 }
 
@@ -467,7 +494,7 @@ writeSampleSheet <- function(inputSheet, token, runID = NULL) {
     } else {
         outVals <-  CheckOtherFiles(inputFi, runID)
     }
-    pushToRedcap(runId = outVals[[1]], outFile = outVals[[2]], token)
+    pushToRedcap(runID = outVals[[1]], outFile = outVals[[2]], token, inputSheet)
 }
 
 loadPacks()
