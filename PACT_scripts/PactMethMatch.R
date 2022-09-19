@@ -390,6 +390,7 @@ QueCnvMaker <- function(output, token) {
             grabRDs1(rds, token)
             myDt <- GetSampleList(rds)
             TryCnvMaker(myDt)
+            try(gb$copyOutputPng(), silent=T)
         } else{
             GreenMsg("No CNV png images to generate.  Check the output directory.")
         }
