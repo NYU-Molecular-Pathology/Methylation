@@ -201,3 +201,19 @@ PrintScoreTable <- function(outV12) {
         )
     return(print(outTable12))
 }
+                           
+GetSuppInfo <- function(dat, RGset, msetDat) {
+    suppinfo <-
+        c(
+            paste(dat$sampleID),
+            paste(dat$run_id),
+            paste(dat$tech),
+            paste(dat$bnumber),
+            paste(dat$mp_number),
+            colnames(RGset),
+            minfi::annotation(RGset)[[1]],
+            msetDat$FFPE,
+            msetDat$sex
+        )
+    return(suppinfo)
+}
