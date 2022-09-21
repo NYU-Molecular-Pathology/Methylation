@@ -78,7 +78,7 @@ MakeLocalSampleSheet <- function(runID){
     idatScript <-
         "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/pullRedcap_manual.R"
     rd_numbers <- PromptInputCsv(runID)
-    stopifnot(length(rd_numbers)>1 & stringr::str_detect(rd_numbers[1],"RD-"))
+    stopifnot(length(rd_numbers)>=1 & stringr::str_detect(rd_numbers[1],"RD-"))
     message("Sourcing: ", idatScript)
     devtools::source_url(idatScript)
     gb$grabRDCopyIdat(rd_numbers, gb$token, copyIdats=T, outputFi="samplesheet.csv")
