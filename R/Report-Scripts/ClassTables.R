@@ -199,7 +199,7 @@ PrintScoreTable <- function(outV12) {
             bold = T,
             extra_css = txtc
         )
-    return(print(outTable12))
+    return(outTable12)
 }
                            
 GetSuppInfo <- function(dat, RGset, msetDat) {
