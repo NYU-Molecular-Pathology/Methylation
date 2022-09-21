@@ -187,3 +187,17 @@ GetV12score <- function(RGset, FFPE=NULL){
     out$maxscore <- sapply(out$maxscore,function(x)round(pmax(pmin(x,1-1e-4),1e-4),4))
     return(out)
 }
+
+PrintScoreTable <- function(outV12) {
+    txtc = "text-align:center;"
+    be = c(booktabs = T, escape = F, linesep = "")
+    outTable12 <- outV12 %>% mutate_all(as.character) %>% knitr::kable("html", be, align = 'clc') %>%
+        kableExtra::kable_styling(kgb, full_width = F, position = "left") %>%
+        kableExtra::column_spec(
+            column = 1,
+            background = "palegreen",
+            bold = T,
+            extra_css = txtc
+        )
+    return(print(outTable12))
+}
