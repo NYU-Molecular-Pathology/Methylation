@@ -239,3 +239,17 @@ GetCNVTables <- function(dra){
         kableExtra::column_spec(column = 1, background = "#CD5C5C", extra_css = txtc)
     return(list("gainDf"=gainDf, "lossDf"=lossDf, "gainTab"=gainTab, "lossTab"=lossTab))
 }
+
+GetUniDTables <- function(predU){
+    be = c(booktabs = T, escape = F, linesep = "")
+    btso = c("bordered")
+    kgb <- c("striped",font_size = 14, bootstrap_options = btso, position = "left")
+    uniTable1 <- predU[,2:9]
+    uniTable2 <- predU[,10:14]
+    colnames(uniTable2) <- c("Predicted Subtype", "C_prob", "M_prob", "P_prob", "missing.probe.subtype")
+    unitab1 <- uniTable1 %>% mutate_all(as.character) %>% knitr::kable("html", be, align = 'clc') %>%
+        kableExtra::kable_styling(kgb, full_width = F, position="left")
+    unitab2 <- uniTable2 %>% mutate_all(as.character) %>% knitr::kable("html", be, align = 'clc') %>%
+        kableExtra::kable_styling(kgb, full_width = F, position="left")
+    return(list("tab1"=unitab1,"tab2"=unitab2))
+}
