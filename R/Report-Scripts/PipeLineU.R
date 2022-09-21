@@ -1,5 +1,6 @@
 library(verbose=F, warn.conflicts = F, quietly = T, package= "UniD")
 library(verbose=F, warn.conflicts = F, quietly = T, package= "minfi")
+library(verbose=F, warn.conflicts = F, quietly = T, package= "wateRmelon")
 
 UniD_dataqc <- function (loading,
                          outDir,
@@ -7,10 +8,11 @@ UniD_dataqc <- function (loading,
                          bc.cut = 3,
                          arrayType) {
     detP <- loading$detP
+    
     sampleSet <- UniD:::GetsampleSet(loading$rgSet)
     Beta.raw <- minfi::getBeta(loading$Mset)
     Beta.raw <- as.data.frame(Beta.raw)
-    bc <- beadcount(loading$rgSet)
+    bc <- wateRmelon::beadcount(loading$rgSet)
     bc[bc < bc.cut] <- NA
     Beta.raw[detP > detP.cut] <- NA
     Beta.raw[is.na(bc)] <- NA
