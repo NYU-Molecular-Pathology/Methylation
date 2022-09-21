@@ -163,6 +163,7 @@ GetOutClass <- function(is450k, Mset_ba, Mset){
     }
     stopifnot(!is.na(idx))
     out <- as.data.frame(out)
+    message(out)
     subVal_int <- GetOutScore(out)
     out$Interpretation = c(subVal_int,"","","","")
     return(list("out"=out,"idx"=idx))
