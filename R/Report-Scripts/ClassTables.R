@@ -221,7 +221,9 @@ GetSuppInfo <- function(dat, RGset, msetDat) {
 GetCNVTables <- function(dra){
     gainDf <- t(data.frame(Gains = c(rownames(dra[(dra$Gain == T),]))))
     lossDf <- t(data.frame(Loss = c(rownames(dra[(dra$Loss == T),]))))
-    
+    btso = c("bordered")
+    kgb <- c("striped",font_size = 14, bootstrap_options = btso, position = "left")
+    kgh <- c(booktabs = T, escape = F, linesep = "")
     extra_css1 = "border-radius:0px;border-width:1px;border-style:solid;border-color:rgb(192,192,192);"
     txtc = "text-align:center;"
     gainTab <- 
