@@ -266,3 +266,31 @@ GetMgmtPlot <- function(Mset_raw){
         kableExtra::kable_styling(kgb, full_width = F, position="left")
     return(mgmtPlot)
 }
+
+GetClassProbTables <- function(out_class_family, out){
+    xtraCss1="border-radius:0px;border-width:1px;border-style:solid;border-color:rgb(192,192,192);"
+    xtraCss2="border-radius:0px;border-width:3px;border-style:solid;border-color:rgb(26,105,16);"
+    xtraCss3="border-radius:0px;border-width:3px;border-style:solid;border-color:rgb(16,28,105);"
+    txtc = "text-align:center;"
+    btso = c("bordered")
+    kgb <- c("striped",font_size = 14, bootstrap_options = btso, position = "left")
+    kgh <- c(booktabs = T, escape = F, linesep = "")
+    
+    famTable <- out_class_family %>% 
+    	knitr::kable("html",kgh,align='clc') %>%
+    	kableExtra::kable_styling(kgb, full_width = F, position="float_left") %>%
+    	kableExtra::column_spec(column=c(1,2),extra_css=xtraCss1) %>%
+        kableExtra::column_spec(column = 2, background = "rgb(204,255,204)", extra_css = txtc) %>%
+        kableExtra::row_spec(row = 0, font_size = 16, background = "rgb(127,217,126)", color = "black") %>%
+    	kableExtra::row_spec(row=1,extra_css=xtraCss2)
+    			
+    grpTable <- out %>% 
+    	knitr::kable("html",kgh,align='clc') %>%
+        kableExtra::kable_styling(kgb, full_width = F) %>%
+    	kableExtra::column_spec(column=c(1,2), extra_css=xtraCss1) %>%
+    	kableExtra::column_spec(column=2,background="rgb(204,230,255)", extra_css=txtc) %>%
+    	kableExtra::row_spec(row=0,font_size=16,background="rgb(135,174,237)", color="black") %>%
+    	kableExtra::row_spec(row=1,extra_css=xtraCss3)
+    
+    return(list("famTable"=famTable,"grpTable"=grpTable))
+}
