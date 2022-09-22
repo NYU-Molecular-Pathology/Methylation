@@ -177,6 +177,7 @@ fixProf <- function(){
     cxn <- file(siteProf); lines <- base::readLines(cxn)
     if (!any(grepl(txt1,lines))) {write(txt2, file=siteProf, append=T)}
     close(cxn)
+    closeAllConnections()
 }
 
 fixNeeds <- function (){
@@ -280,4 +281,4 @@ setDirectory <- function(foldr) {
 }
 
 loadPacks()
-closeAllConnections()
+
