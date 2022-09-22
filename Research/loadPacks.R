@@ -174,7 +174,7 @@ fixProf <- function(){
         file.path(Sys.getenv("R_HOME"),"etc","Rprofile.site")
     } else {Sys.getenv("R_PROFILE")}
     if (!file.exists(siteProf)) {file.create(siteProf)}
-    cxn <- file(siteProf); lines <- readLines(cxn)
+    cxn <- file(siteProf); lines <- base::readLines(cxn)
     if (!any(grepl(txt1,lines))) {write(txt2, file=siteProf, append=T)}
     close(cxn)
 }
@@ -280,3 +280,4 @@ setDirectory <- function(foldr) {
 }
 
 loadPacks()
+closeAllConnections()
