@@ -93,39 +93,59 @@ smallTab <- function(dtObj) {
 }
 
 # Adds colors to csv targets file to maintain same color scheme between plots
-colorTargets <-
-function(targets, varColumns = c("Type","Origin"), col_vect = NULL) {
-    if (is.null(col_vect)) {col_vect <- pals::glasbey()}
+colorTargets <- function(
+        targets, varColumns = c("Type","Origin"), col_vect = NULL) 
+{
+    if (is.null(col_vect)) {
+        col_vect <- pals::glasbey()
+    }
     col_vect[6] = "#eb7d34" #changing dark forest to orange color
     col_vect[4] = "#ADD8E6"
     col_vect <- unique(col_vect)
     for (variable in varColumns) {
-        if(any(is.null(targets[,variable]))){
-            targets[is.null(targets[,variable]),variable] <- "NONE"
+        if (any(is.null(targets[, variable]))) {
+            targets[is.null(targets[, variable]), variable] <- "NONE"
         }
-        if(any(is.na(targets[,variable]))){
-            targets[is.na(targets[,variable]),variable] <- "NONE"
+        if (any(is.na(targets[, variable]))) {
+            targets[is.na(targets[, variable]), variable] <- "NONE"
         }
     }
-    message("Dimnames:\n",paste(dimnames(targets)[[2]], collapse = " | "))
+    message("Dimnames:\n", paste(dimnames(targets)[[2]], collapse = " | "))
     stopifnot(all(varColumns %in% dimnames(targets)[[2]]))
-    dat <- targets[,varColumns] # varColumns
+    if ("Type" %in% varColumns == F) {
+        targets$Type <- targets[, varColumns[1]]
+        varColumns <- c(varColumns, "Type")
+    }
+    
+    if (length(unique(varColumns)) == 1) {
+        targets$NewCol <- targets[, varColumns[1]]
+        varColumns <- c(varColumns, "NewCol")
+    }
+    
+    dat <- targets[, varColumns] # varColumns
     anno_df <- data.frame(dat)
     vars2Color <- as.list(lapply(dat, unique))
-    colorValues <-lapply(vars2Color, function(x) {x = (col_vect)[1:(length(x))]})
+    colorValues <-
+        lapply(vars2Color, function(x) {
+            x = (col_vect)[1:(length(x))]
+        })
     for (x in 1:length(vars2Color)) {
         for (varNum in 1:length(vars2Color[x])) {
-            names(colorValues[x][[1]]) = c(vars2Color[x][[1]])}
+            names(colorValues[x][[1]]) = c(vars2Color[x][[1]])
+        }
     }
     targets$color <- NULL
     for (colNam in varColumns) {
         for (samNam in names(colorValues[colNam][[1]])) {
             currColor <- targets$Type == samNam
-            targets$color[currColor] <- paste0(colorValues$Type[samNam])
+            targets$color[currColor] <-
+                paste0(colorValues$Type[samNam])
         }
     }
+    
     return(targets)
 }
+
 
 getColors <- function(samTypes) {
   library('RColorBrewer')
