@@ -261,7 +261,7 @@ GetMgmtPlot <- function(Mset_raw){
     mgmtPlot <- plotmgmt %>%
         mutate_all(as.character) %>% knitr::kable("html", be, align = 'clc') %>%
         kableExtra::kable_styling(kgb, full_width = F, position="left")
-    return(mgmtPlot)
+    return(list("mgmtVal" = plotmgmt, "mgmtPlot" = mgmtPlot))
 }
 
 GetClassProbTables <- function(out_class_family, out){
