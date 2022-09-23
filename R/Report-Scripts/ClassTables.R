@@ -132,7 +132,7 @@ GetProbability <- function(is450k, Mset_ba, Mset){
     return(probs)
 }
 
-GetOutScore <- function(is450k, Mset_ba, Mset){
+GetOutScore <- function(out){
     out_score <- as.numeric(paste0(out$`Subgroup Score`[1]))
     subVal_int <- NULL
     if (is.null(out_score)|is.na(out_score)) {
