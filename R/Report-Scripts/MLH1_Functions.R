@@ -91,6 +91,8 @@ renderPlot <- function(beta.matrix, clin.res) {
 }
 
 drawPlotTab <- function(mlhP){
+    btso = c("bordered")
+    kgb <- c("striped",font_size = 14, bootstrap_options = btso, position = "left")
     be = c(booktabs = T, escape = F, linesep = "")
     return(
         mlhP %>% knitr::kable("html", be, align = 'clc') %>%
