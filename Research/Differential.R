@@ -94,51 +94,102 @@ PlotQCPdf <- function(targPairs, detP){
              pdf="qcReport.pdf")
 }
                         
-PlotDensityMds <- function(targPairs,mSetSq){
-    pal <- brewer.pal(8,"Dark2")
+PlotDensityMds <- 
+function(targPairs,mSetSq){
+    cat("\n\n")
+    cat("### MDS")
     plotMDS(getM(mSetSq), top=1000, gene.selection="common",
             col=pal[factor(targPairs$Sample_Group)])
     legend("top", legend=levels(factor(targPairs$Sample_Group)), text.col=pal,
            bg="white", cex=0.7)
-    
+    cat("\n\n")
+    cat("### MDS PCA 1 & 3")
     plotMDS(getM(mSetSq), top=1000, gene.selection="common",
             col=pal[factor(targPairs$Sample_Group)], dim=c(1,3))
     legend("top", legend=levels(factor(targPairs$Sample_Group)), text.col=pal,
            cex=0.7, bg="white")
-    
+    cat("\n\n")
+    cat("### MDS PCA 2 & 3")
     plotMDS(getM(mSetSq), top=1000, gene.selection="common",
             col=pal[factor(targPairs$Sample_Group)], dim=c(2,3))
     legend("topleft", legend=levels(factor(targPairs$Sample_Group)), text.col=pal,
            cex=0.7, bg="white")
+    cat("\n\n")
 }
                         
-PlotDimensions <- function(mSetSqFlt,targPairs){
-    par(mfrow=c(1,2))
+PlotDimensions<-
+function(mSetSqFlt,targPairs){
+    par(mfrow=c(1,1))
+      cat("### Common Genes Group")
     plotMDS(getM(mSetSqFlt), top=1000, gene.selection="common",
             col=pal[factor(targPairs$Sample_Group)], cex=0.8)
     legend("right", legend=levels(factor(targPairs$Sample_Group)), text.col=pal,
            cex=0.65, bg="white")
+    cat("\n\n")
     
+     cat("### Common Genes Source")
     plotMDS(getM(mSetSqFlt), top=1000, gene.selection="common",
             col=pal[factor(targPairs$Sample_Source)])
     legend("right", legend=levels(factor(targPairs$Sample_Source)), text.col=pal,
            cex=0.7, bg="white")
-    
-    par(mfrow=c(1,3))
+    cat("\n\n")
+    par(mfrow=c(1,1))
+    cat("### Dimensions PCA 1 & 3")
     # Examine higher dimensions to look at other sources of variation
     plotMDS(getM(mSetSqFlt), top=1000, gene.selection="common",
             col=pal[factor(targPairs$Sample_Source)], dim=c(1,3))
     legend("right", legend=levels(factor(targPairs$Sample_Source)), text.col=pal,
            cex=0.7, bg="white")
-    
+    cat("\n\n")
+    cat("### Dimensions PCA 2 & 3")
     plotMDS(getM(mSetSqFlt), top=1000, gene.selection="common",
             col=pal[factor(targPairs$Sample_Source)], dim=c(2,3))
     legend("topright", legend=levels(factor(targPairs$Sample_Source)), text.col=pal,
            cex=0.7, bg="white")
-    
+    cat("\n\n")
+    cat("### Dimensions PCA 3 & 4")
     plotMDS(getM(mSetSqFlt), top=1000, gene.selection="common",
             col=pal[factor(targPairs$Sample_Source)], dim=c(3,4))
     legend("right", legend=levels(factor(targPairs$Sample_Source)), text.col=pal,
            cex=0.7, bg="white")
+    cat("\n\n")
+}
+                        
+GetSamPairs <- function(targets, RGSet, samplePairNum = NULL) {
+    pal <- brewer.pal(8, "Dark2")
+    targPairs <- targets
+    targPairs$Sample_Source <- targPairs[,samplePairNum]
+    toKeep <- !is.na(targPairs$Sample_Source)
+    targPairs <- targPairs[toKeep, ]
+    targPairs$ID <-
+        paste(targPairs$Sample_Group, targPairs$Sample_Name, sep = ".")
+    toDrop <- RGSet@colData@listData[["Sample_Name"]] %in% targPairs$Sample_Name
+    rgSet <- RGSet[,toDrop]
+    sampleNames(rgSet) <- targPairs$ID
+    detP <- detectionP(rgSet)
+    
+    #PlotQCPdf(targPairs, detP)
+    
+    keep <- colMeans(detP) < 0.05
+    rgSet <- rgSet[, keep]
+    targPairs <- targPairs[keep, ]
+    detP <- detP[, keep]
+    mSetSq <- preprocessQuantile(rgSet)
+    mSetRaw <- preprocessRaw(rgSet)
+    cat("## Pairwise Analysis Pheochromocytoma {.tabset} ")
+    gb$PlotDensityMds(targPairs, mSetSq)
+    cat("\n\n")
+    
+    detP <- detP[match(featureNames(mSetSq), rownames(detP)), ]
+    keep <- rowSums(detP < 0.01) == ncol(mSetSq)
+    mSetSqFlt <- mSetSq[keep, ]
+    annEPIC <- getAnnotation(rgSet)
+    keep <-
+        !(featureNames(mSetSqFlt) %in% annEPIC$Name[annEPIC$chr %in% c("chrX", "chrY")])
+    mSetSqFlt <- mSetSqFlt[keep, ]
+    mSetSqFlt <- dropLociWithSnps(mSetSqFlt)
+    
+    return(list("targPairs" = targPairs,
+                "mSetSqFlt" = mSetSqFlt))
 }
                         
