@@ -200,7 +200,7 @@ SubSetGroup <- function(strPatt, samPairs){
     return(samPairs[idx])
 }
                         
-GetTracksPlot <- function(annEPICSub, bVals){
+GetTracksPlot <- function(annEPICSub, bVals, results.ranges){
     gen <- "hg19"
     pal <- brewer.pal(8,"Dark2")
     # the index of the DMR that we will plot
