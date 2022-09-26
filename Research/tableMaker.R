@@ -166,7 +166,7 @@ sanitizeSheet <- function(inputFi, samsheet) {
     } else{
         samSh <- read.csv(inputFi, strip.white = T)
     }
-    colnames(samSh) <- gsub(pattern = " ", replacement = "-", colnames(samSh))
+    colnames(samSh) <- gsub(pattern = " ", replacement = "_", colnames(samSh))
     samSh <- samSh %>% dplyr::mutate_all(stringr::str_replace, " ", "-")
     write.csv(samSh, samsheet, quote = F, row.names = F)
     targets <- read.csv(samsheet, strip.white = T)
