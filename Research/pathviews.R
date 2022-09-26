@@ -93,6 +93,7 @@ pathview_promoter <- function(file, pathwayid) {
   pathview::pathview(
     gene.data  = geneList_promoter,
     pathway.id = pathwayid,
+    kegg.dir = "./figures/pathway",
     species    = "hsa",
     limit      = list(gene = c(0, 1), cpd = 0.1),
     out.suffix = "promotor"
@@ -113,6 +114,7 @@ pathview_body <- function(file, pathwayid) {
   pathwayid_body <- pathview::pathview(
     gene.data  = geneList_body,
     pathway.id = pathwayid,
+    kegg.dir = "./figures/pathway",
     species    = "hsa",
     limit      = list(gene = c(0, 1), cpd = 0.1),
     out.suffix = "body"
