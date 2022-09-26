@@ -177,3 +177,23 @@ PrintDotBarUpset <- function(kk_final){
     enrichplot::upsetplot(kk_final)
     cat("\n\n")
 }
+
+GetHsaPath <- function(topPaths, pathCsvOut){
+    endFile <- paste0(topPaths$ID,"_", basename(pathCsvOut))
+    hsaOutDir <- file.path(getwd(), "figures", "pathway")
+    if (!dir.exists(hsaOutDir)) {dir.create(hsaOutDir)}
+    hsaOutFi <- file.path(hsaOutDir, endFile)
+}
+
+LoopHSAfiles <- function(hsaOutFi){
+    for (pathFi in hsaOutFi) {
+    hsaPath <- stringr::str_split_fixed(basename(pathFi), "_", 2)[[1]]
+    hsaPath <- file.path(getwd(), "figures", "pathway", hsaPath)
+    if (file.exists(pathFi)) {
+        suppressMessages(gb$pathview_promoter(pathFi, hsaPath))
+        suppressMessages(gb$pathview_body(pathFi, hsaPath))
+    } else{
+        message(pathFi, " does not exist.")
+    }
+}
+}
