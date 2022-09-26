@@ -102,6 +102,7 @@ grabAllBeta <- function(targets1, betas) {
     unBets <- gb$takeTopVariance(betas1, topVar = 1:10000)
     saveRDS(unBets, file=file.path(gb$runDir,gb$unbetaVariance))
     }
+    unBets <- unBets[,targets1$SampleFilter]
     allBetas1 <-list(unBets[1:100,], unBets[1:1000,], unBets)
     return(allBetas1)
 }
