@@ -11,6 +11,8 @@ SilentLoadLib <- function(pkg){
 }
 mealPkgs <- c("MEAL", "MultiDataSet",  "minfi", "ggplot2")
 invisible(lapply(mealPkgs, SilentLoadLib))
+outFigPath <- file.path(getwd(),"figures","diffmean")
+if(!dir.exists(outFigPath)){dir.create(outFigPath, recursive = T)}
 
 GetMethSet <- function(RGSet){
     Mset <- minfi::preprocessIllumina(RGSet)
