@@ -168,7 +168,7 @@ GetSamPairs <- function(targets, RGSet, samplePairNum = NULL) {
     sampleNames(rgSet) <- targPairs$ID
     detP <- detectionP(rgSet)
     
-    #PlotQCPdf(targPairs, detP)
+    gb$PlotQCPdf(targPairs, detP)
     
     keep <- colMeans(detP) < 0.05
     rgSet <- rgSet[, keep]
