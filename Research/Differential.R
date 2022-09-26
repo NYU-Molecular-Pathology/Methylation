@@ -97,7 +97,7 @@ GetNewGeneVals <- function(geneDataLi, resAdj) {
                         
 # DMRcate -------------------
                         
-PlotQCPdf <- function(targPairs, detP){
+PlotQCPdf <- function(targPairs, detP, rgSet){
     pal <- brewer.pal(8,"Dark2")
     par(mfrow=c(1,2))
     barplot(colMeans(detP), col=pal[factor(targPairs$Sample_Group)], las=2,
@@ -189,7 +189,7 @@ GetSamPairs <- function(targets, RGSet, samplePairNum = NULL) {
     sampleNames(rgSet) <- targPairs$ID
     detP <- detectionP(rgSet)
     
-    gb$PlotQCPdf(targPairs, detP)
+    gb$PlotQCPdf(targPairs, detP, rgSet)
     
     keep <- colMeans(detP) < 0.05
     rgSet <- rgSet[, keep]
@@ -205,8 +205,7 @@ GetSamPairs <- function(targets, RGSet, samplePairNum = NULL) {
     keep <- rowSums(detP < 0.01) == ncol(mSetSq)
     mSetSqFlt <- mSetSq[keep, ]
     annEPIC <- getAnnotation(rgSet)
-    keep <-
-        !(featureNames(mSetSqFlt) %in% annEPIC$Name[annEPIC$chr %in% c("chrX", "chrY")])
+    keep <- !(featureNames(mSetSqFlt) %in% annEPIC$Name[annEPIC$chr %in% c("chrX", "chrY")])
     mSetSqFlt <- mSetSqFlt[keep, ]
     mSetSqFlt <- dropLociWithSnps(mSetSqFlt)
     
