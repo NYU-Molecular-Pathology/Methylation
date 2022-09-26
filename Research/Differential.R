@@ -10,7 +10,26 @@ SilentLoadLib <- function(pkg){
     )))
 }
 mealPkgs <- c("MEAL", "MultiDataSet",  "minfi", "ggplot2")
+otherPkg <- c(
+    "RnBeads",
+"knitr", 
+"limma", 
+"minfi", 
+"IlluminaHumanMethylation450kanno.ilmn12.hg19", 
+"IlluminaHumanMethylation450kmanifest", 
+"RColorBrewer", 
+"missMethyl", 
+"minfiData", 
+"Gviz", 
+"DMRcate", 
+"stringr", 
+"methylationArrayAnalysis", 
+"GenomicRanges"
+    )
+
 invisible(lapply(mealPkgs, SilentLoadLib))
+
+librarian::shelf(otherPkg, ask=F)
 outFigPath <- file.path(getwd(),"figures","diffmean")
 if(!dir.exists(outFigPath)){dir.create(outFigPath, recursive = T)}
 
