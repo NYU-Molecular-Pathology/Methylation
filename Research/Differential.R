@@ -73,3 +73,72 @@ GetNewGeneVals <- function(geneDataLi, resAdj) {
     }
     return(newValues)
 }
+                        
+# DMRcate -------------------
+                        
+PlotQCPdf <- function(targPairs, detP){
+    pal <- brewer.pal(8,"Dark2")
+    par(mfrow=c(1,2))
+    barplot(colMeans(detP), col=pal[factor(targPairs$Sample_Group)], las=2,
+            cex.names=0.8, ylab="Mean detection p-values")
+    abline(h=0.05,col="red")
+    legend("topleft", legend=levels(factor(targPairs$Sample_Group)), fill=pal,
+           bg="white")
+    
+    barplot(colMeans(detP), col=pal[factor(targPairs$Sample_Group)], las=2,
+            cex.names=0.8, ylim=c(0,0.002), ylab="Mean detection p-values")
+    abline(h=0.05,col="red")
+    legend("topleft", legend=levels(factor(targPairs$Sample_Group)), fill=pal,
+           bg="white")
+    qcReport(rgSet, sampNames=targPairs$ID, sampGroups=targPairs$Sample_Group,
+             pdf="qcReport.pdf")
+}
+                        
+PlotDensityMds <- function(targPairs,mSetSq){
+    pal <- brewer.pal(8,"Dark2")
+    plotMDS(getM(mSetSq), top=1000, gene.selection="common",
+            col=pal[factor(targPairs$Sample_Group)])
+    legend("top", legend=levels(factor(targPairs$Sample_Group)), text.col=pal,
+           bg="white", cex=0.7)
+    
+    plotMDS(getM(mSetSq), top=1000, gene.selection="common",
+            col=pal[factor(targPairs$Sample_Group)], dim=c(1,3))
+    legend("top", legend=levels(factor(targPairs$Sample_Group)), text.col=pal,
+           cex=0.7, bg="white")
+    
+    plotMDS(getM(mSetSq), top=1000, gene.selection="common",
+            col=pal[factor(targPairs$Sample_Group)], dim=c(2,3))
+    legend("topleft", legend=levels(factor(targPairs$Sample_Group)), text.col=pal,
+           cex=0.7, bg="white")
+}
+                        
+PlotDimensions <- function(mSetSqFlt,targPairs){
+    par(mfrow=c(1,2))
+    plotMDS(getM(mSetSqFlt), top=1000, gene.selection="common",
+            col=pal[factor(targPairs$Sample_Group)], cex=0.8)
+    legend("right", legend=levels(factor(targPairs$Sample_Group)), text.col=pal,
+           cex=0.65, bg="white")
+    
+    plotMDS(getM(mSetSqFlt), top=1000, gene.selection="common",
+            col=pal[factor(targPairs$Sample_Source)])
+    legend("right", legend=levels(factor(targPairs$Sample_Source)), text.col=pal,
+           cex=0.7, bg="white")
+    
+    par(mfrow=c(1,3))
+    # Examine higher dimensions to look at other sources of variation
+    plotMDS(getM(mSetSqFlt), top=1000, gene.selection="common",
+            col=pal[factor(targPairs$Sample_Source)], dim=c(1,3))
+    legend("right", legend=levels(factor(targPairs$Sample_Source)), text.col=pal,
+           cex=0.7, bg="white")
+    
+    plotMDS(getM(mSetSqFlt), top=1000, gene.selection="common",
+            col=pal[factor(targPairs$Sample_Source)], dim=c(2,3))
+    legend("topright", legend=levels(factor(targPairs$Sample_Source)), text.col=pal,
+           cex=0.7, bg="white")
+    
+    plotMDS(getM(mSetSqFlt), top=1000, gene.selection="common",
+            col=pal[factor(targPairs$Sample_Source)], dim=c(3,4))
+    legend("right", legend=levels(factor(targPairs$Sample_Source)), text.col=pal,
+           cex=0.7, bg="white")
+}
+                        
