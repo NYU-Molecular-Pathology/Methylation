@@ -165,3 +165,15 @@ PrintPathways <- function(topPaths){
         cat("\n\n")
         }
 }
+
+PrintDotBarUpset <- function(kk_final){
+    cat("### DotPlot \n\n")
+    enrichplot::dotplot(kk_final, showCategory=10)
+    cat("\n\n")
+    cat("### BarPlot \n\n")
+    barplot(kk_final, showCategory=10, beside = T) 
+    cat("\n\n")
+    cat("### Upset Plot \n\n")
+    enrichplot::upsetplot(kk_final)
+    cat("\n\n")
+}
