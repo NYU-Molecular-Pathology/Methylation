@@ -193,3 +193,8 @@ GetSamPairs <- function(targets, RGSet, samplePairNum = NULL) {
                 "mSetSqFlt" = mSetSqFlt))
 }
                         
+SubSetGroup <- function(strPatt, samPairs){
+    idx <- which(grepl(samPairs, pattern = strPatt, ignore.case=T))
+    return(samPairs[idx])
+}
+                        
