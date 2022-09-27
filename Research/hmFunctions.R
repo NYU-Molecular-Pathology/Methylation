@@ -337,3 +337,22 @@ GetProbeAverage <- function(csvColumns, betas){
     write.csv(avgBetas, file = file.path(getwd(), "avgBetas_per_gene.csv"), row.names=F, na="")
     return(avgBetas)
 }
+
+#' grabProbes function that lists probes annotated by matching gene name and gene region
+#' @param your_genes  a character list of genes i.e. from a file c("ALK","ETMR","HDAC")
+#' @param RGSet  the name or path to your minfi RGset data
+#' @param region string vector of gene selections like c("TSS200", "Body") can one gene region "TSS200"
+GetProbesGenes <- function(your_genes, RGSet, region){
+  stopifnot(is.character(your_genes)); listRows=10000
+  bp <- ifelse((length(region)>1), paste(region, collapse="|"), region); annot <- minfi::getAnnotation(RGSet); g=NULL
+  geneAnno <- paste(annot$UCSC_RefGene_Name, annot$UCSC_RefGene_Group, sep = "_")
+  pick <- function(x, fltr){return(do.call(grepl,c(list(pattern=x), fltr)))}
+  z <- foreach::foreach(g = your_genes, .combine = "cbind") %dopar% {
+    fltr <- list(x = geneAnno, ignore.case = T); y <- cbind(rownames(annot)[pick(g, fltr) & pick(bp, fltr)])
+    naFill <- rbind(y, cbind(rep(NA, (listRows - nrow(y)))));colnames(naFill) <- g
+    return(naFill)
+  }
+  naDrops <- lapply(1:ncol(z), function(i){which(!is.na(z[,i]))})
+  cutt <- length(naDrops[[which.max(lapply(naDrops, function(x) sum(lengths(x))))]])
+  return(z[1:cutt,])
+}
