@@ -321,8 +321,8 @@ GetEmptyDf <- function(csvColumns,betas){
     rownames(avgBetas) <- colnames(csvColumns)
     return(avgBetas)
 }
-
-GetProbeAverage <- function(csvColumns, betas){
+                                           
+GetProbeAverage <- function(csvColumns, betas, pathwayName){
     avgBetas <- GetEmptyDf(csvColumns,betas)
     for (geneCol in 1:ncol(csvColumns)) {
         probeList <- csvColumns[,geneCol]
@@ -334,8 +334,10 @@ GetProbeAverage <- function(csvColumns, betas){
             avgBetas[geneNam,sampleNam] <- probeAvg
         }
     }
-    write.csv(avgBetas, file = file.path(getwd(), "avgBetas_per_gene.csv"), row.names=F, na="")
     return(avgBetas)
+    write.csv(avgBetas, file = file.path(
+        getwd(), paste0(pathwayName, "_avgBetas_per_gene.csv")), 
+        row.names=F, na="")
 }
 
 #' grabProbes function that lists probes annotated by matching gene name and gene region
@@ -355,4 +357,61 @@ GetProbesGenes <- function(your_genes, RGSet, region){
   naDrops <- lapply(1:ncol(z), function(i){which(!is.na(z[,i]))})
   cutt <- length(naDrops[[which.max(lapply(naDrops, function(x) sum(lengths(x))))]])
   return(z[1:cutt,])
+}
+                                           
+GetCsvGeneColumns <- function(pathwayName, z){
+    outFile1 <- paste(pathwayName,"genes_columns_withMissing.csv", sep = "_")
+    outDir <- file.path(getwd(),"data")
+    if(!dir.exists(outDir)){dir.create(outDir, recursive = T)}
+    write.csv(z, file = file.path(outDir, outFile1), row.names=F, na="")
+    z <- as.data.frame(z)
+    toDrop <- c(is.na(z[1,]))
+    z <- z[,!toDrop]
+    outFile2 <- paste(pathwayName,"genes_columns.csv", sep = "_")
+    write.csv(z, file = file.path(outDir, outFile2), row.names=F, na="")
+    csvColumns <- as.data.frame(read.csv(file.path(outDir, outFile2)))
+    return(csvColumns)
+}
+
+GetHeatMapGenes <-function(betaRanges, titleValue, ha, geneNamesHeatMap=F, colSplt = NULL, rwsplt=NULL){
+    titleOfPlot <- paste("Heatmap of",titleValue,sep = " ")
+    hmTopNumbers <- ComplexHeatmap::Heatmap(
+        betaRanges,
+        col = gb$col_fun2,  ## Define the color scale
+        cluster_columns = T,  ## Cluster the columns
+        #cluster_rows = rowcluster,
+        #raster_resize_mat = TRUE,
+        show_column_names = T,  ## Show the Column Names (which is sample #)
+        column_names_gp = gpar(fontsize = 12),  ## Column Name Size
+        show_row_names = geneNamesHeatMap,  ## Show Row names (which is probes)
+        row_names_side = "left",
+        row_title_side = "left",
+        row_names_gp = gpar(fontsize = 10),
+        row_title_gp = gpar(fontsize = 12, fontface = "bold"),
+        show_row_dend = F,
+        show_column_dend = T,
+        use_raster=T,
+        show_heatmap_legend = T,
+        top_annotation = ha,
+        column_title = titleOfPlot,
+        column_title_gp = gpar(fontsize = 14,fontface = "bold"),
+        raster_device = "CairoPNG",
+        raster_quality = 3,
+        heatmap_legend_param = list(
+            title = "Beta Value",
+            #legend_height = unit(5, "in"),
+            labels_gp = gpar( fontsize = 12),
+            title_gp = gpar(fontsize = 12, fontface = "bold"),
+            legend_direction = "vertical",
+            heatmap_legend_side = "right", annotation_legend_side = "right",
+            legend_height =  unit(2.5, "in")
+        ),
+        column_split = colSplt,
+        row_split= rwsplt,
+        heatmap_width = unit(10, "in"),
+        heatmap_height = unit(25, "in")
+    )
+    #size = gb$calc_ht_size(hmTopNumbers)
+    #size
+    return(gb$drawHeatMap(hmTopNumbers))
 }
