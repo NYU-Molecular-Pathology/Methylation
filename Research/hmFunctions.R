@@ -313,3 +313,27 @@ gb$getHeatMap2 <-
     )
     return(gb$drawHeatMap(hmTopNumbers))
 }
+
+GetEmptyDf <- function(csvColumns,betas){
+    temp <- matrix(nrow= ncol(csvColumns), ncol=dim(betas)[2])
+    avgBetas <- data.frame(temp)
+    colnames(avgBetas) <- colnames(betas)
+    rownames(avgBetas) <- colnames(csvColumns)
+    return(avgBetas)
+}
+
+GetProbeAverage <- function(csvColumns, betas){
+    avgBetas <- GetEmptyDf(csvColumns,betas)
+    for (geneCol in 1:ncol(csvColumns)) {
+        probeList <- csvColumns[,geneCol]
+        for (sam in 1:dim(betas)[2]) {
+            probeBetas <- betas[rownames(betas) %in% probeList, sam]
+            sampleNam <- colnames(betas)[sam]
+            geneNam <- colnames(csvColumns)[geneCol]
+            probeAvg <-mean(probeBetas)
+            avgBetas[geneNam,sampleNam] <- probeAvg
+        }
+    }
+    write.csv(avgBetas, file = file.path(getwd(), "avgBetas_per_gene.csv"), row.names=F, na="")
+    return(avgBetas)
+}
