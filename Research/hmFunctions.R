@@ -389,14 +389,14 @@ GetHeatMapGenes <-function(betaRanges, titleValue, ha, geneNamesHeatMap=F, colSp
         row_names_side = "left",
         row_title_side = "left",
         row_names_gp = gpar(fontsize = 10),
-        row_title_gp = gpar(fontsize = 12, fontface = "bold"),
+        row_title_gp = gpar(fontsize = 10, fontface = "bold"),
         show_row_dend = F,
         show_column_dend = T,
         use_raster=T,
         show_heatmap_legend = T,
         top_annotation = ha,
         column_title = titleOfPlot,
-        column_title_gp = gpar(fontsize = 14,fontface = "bold"),
+        column_title_gp = gpar(fontsize = 12,fontface = "bold"),
         raster_device = "CairoPNG",
         raster_quality = 3,
         heatmap_legend_param = list(
@@ -411,7 +411,7 @@ GetHeatMapGenes <-function(betaRanges, titleValue, ha, geneNamesHeatMap=F, colSp
         column_split = colSplt,
         row_split= rwsplt,
         heatmap_width = unit(10, "in"),
-        heatmap_height = unit(25, "in")
+        heatmap_height = unit(30, "in")
     )
     #size = gb$calc_ht_size(hmTopNumbers)
     #size
