@@ -452,11 +452,14 @@ LoopPathwayHeatMap <- function(pathWayGenes){
         avgBetas <- as.matrix(avgBetas)
         avgBetas <- na.omit(avgBetas)
         hm <- gb$GetHeatMapGenes(avgBetas, titleValue, ha, geneNamesHeatMap=T, colSplt=3)
-        msgTitle <- paste("##", currPathway$Description)
+
+      msgTitle <- paste("##", currPathway$Description)
+       cat("\n\n")  
         cat(msgTitle)
-        cat("\n\n")
+       cat("\n\n")
         knitr::asis_output(hm) 
         cat("\n\n")
+         cat("\n\n")
         #gb$saveHmPng(fi_prefix= "hm_genes_", fi_suffix=".png", hm, topvar = paste0(currPathway$Description), outDir = hmOutPath)
     }
 }
