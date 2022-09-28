@@ -237,3 +237,8 @@ GetCsvSheet <- function(needFi, samsheet, token, outputFi="samplesheet_og.csv"){
         gb$makeSampleSheet(result, samplesheet_ID, bn = NULL, outputFi=outputFi)
     }
 }
+
+SubSetGroup <- function(strPatt, samPairs){
+    idx <- which(grepl(samPairs, pattern = strPatt, ignore.case=T))
+    return(samPairs[idx])
+}
