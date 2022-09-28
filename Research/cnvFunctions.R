@@ -141,6 +141,7 @@ SilentLoadLib <- function(pkg){
 }
 
 gb$GetFreqPlot <- function(cnData, plotChr, plotTitle){
+    plotChr <- unique(cnData$chromosome)
     freqPlot <- GenVisR::cnFreq(
         cnData,
         plotType = "frequency",
