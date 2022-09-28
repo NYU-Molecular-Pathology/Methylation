@@ -188,7 +188,7 @@ PlotDimensions<- function(mSetSqFlt,targPairs){
 }
 
                         
-GetSamPairs <- function(targets, RGSet, samplePairNum = NULL) {	GetSamPairs <- function(targets, RGSet, samplePairNum = NULL) {
+GetSamPairs <- function(targets, RGSet, samplePairNum = NULL) {
     pal <- brewer.pal(8, "Dark2")	    pal <- brewer.pal(8, "Dark2")
     targPairs <- targets	    targPairs <- targets
     targPairs$Sample_Source <- targPairs[,samplePairNum]	    targPairs$Sample_Source <- targPairs$Sample_Pairs1
