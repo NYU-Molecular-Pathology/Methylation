@@ -334,10 +334,12 @@ GetProbeAverage <- function(csvColumns, betas, pathwayName){
             avgBetas[geneNam,sampleNam] <- probeAvg
         }
     }
+    
+    outDir <- file.path(getwd(), "data")
+    outFile <- paste(pathwayName, "avgBetas_per_gene.csv" , sep = "_")
+    outPath <- file.path(outDir, outFile)
+    write.csv(avgBetas, file = outPath, row.names=F, na="")
     return(avgBetas)
-    write.csv(avgBetas, file = file.path(
-        getwd(), paste0(pathwayName, "_avgBetas_per_gene.csv")), 
-        row.names=F, na="")
 }
 
 #' grabProbes function that lists probes annotated by matching gene name and gene region
