@@ -432,6 +432,7 @@ CheckGeneOutput <- function(pathwayName) {
 LoopPathwayHeatMap <- function(pathWayGenes){
     doParallel::registerDoParallel(cores=6)
     cat("# Pathway Gene HeatMaps {.tabset}")
+    cat("\n\n")
     hmOutPath <- file.path(getwd(), "figures", "data")
     if(!dir.exists(hmOutPath)){dir.create(hmOutPath, recursive = T)}
     for(pathRow in 1:nrow(pathWayGenes)){
