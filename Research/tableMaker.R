@@ -222,3 +222,18 @@ sourceParams <- function(X = c("Params_input.R", "Params_output.R")) {
     stopifnot(file.exists(paramFiles[1])|file.exists(paramFiles[2]))
     invisible(lapply(paramFiles, source))
 }
+
+GetCsvSheet <- function(needFi, samsheet, token, outputFi="samplesheet_og.csv"){
+    # Using "pullRedcap_manual.R"
+    rds <- gb$readInfo(inputSheet = samsheet) # inputSheet can be xlsx or csv
+    stopifnot(length(rds)>1 & stringr::str_detect(rds[1],"RD-"))
+    if(gb$needFi==T) { 
+      gb$grabRDCopyIdat(rd_numbers=rds, token, copyIdats=T, outputFi=outputFi)
+      gb$MoveIdats()
+    }else{
+        result <- gb$search.redcap(rd_numbers=rds, token)
+        result <- result[!is.na(result$barcode_and_row_column),]
+        samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[,"barcode_and_row_column"],"_",2))
+        gb$makeSampleSheet(result, samplesheet_ID, bn = NULL, outputFi=outputFi)
+    }
+}
