@@ -142,7 +142,7 @@ colorTargets <- function(
                 paste0(colorValues$Type[samNam])
         }
     }
-    
+    stopifnot(!is.null(targets$color))
     return(targets)
 }
 
