@@ -226,11 +226,13 @@ SaveLoadCnvs <- function(cnData,
 }
 
 grabClusterDat <- function(seg_clust_file,segFile){
-cnData <- if(!file.exists(seg_clust_file)){
-  gb$saveClusters(seg_clust_file,segFile)} else{
-    read.delim(seg_clust_file,header = T,sep = "\t",row.names=NULL)
-    }
-return(cnData)
+     if(!file.exists(seg_clust_file)){
+        cnData <- gb$saveClusters(seg_clust_file,segFile)} else{
+        cnData <- read.delim(seg_clust_file,header = T,sep = "\t",row.names=NULL)
+        }
+    cnData$start <- as.numeric(cnData$start)
+    cnData$end <- as.numeric(cnData$end)
+    return(cnData)
 }
 
 grabGsetFun <- function(gsetFile, RGSet, targets) {
