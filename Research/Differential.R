@@ -186,16 +186,19 @@ PlotDimensions<- function(mSetSqFlt,targPairs){
            cex=0.7, bg="white")
       cat("\n\n")
 }
+
                         
-GetSamPairs <- function(targets, RGSet, samplePairNum = NULL) {
-    pal <- brewer.pal(8, "Dark2")
-    targPairs <- targets
-    targPairs$Sample_Source <- targPairs$Sample_Pairs1
-    toKeep <- !is.na(targPairs$Sample_Source)
-    targPairs <- targPairs[toKeep, ]
-    targPairs$ID <- paste(targPairs$Sample_Group, targPairs$Sample_Name, sep = ".")
-    rgSet <- RGSet[, toKeep]
-    sampleNames(rgSet) <- targPairs$ID
+GetSamPairs <- function(targets, RGSet, samplePairNum = NULL) {	GetSamPairs <- function(targets, RGSet, samplePairNum = NULL) {
+    pal <- brewer.pal(8, "Dark2")	    pal <- brewer.pal(8, "Dark2")
+    targPairs <- targets	    targPairs <- targets
+    targPairs$Sample_Source <- targPairs[,samplePairNum]	    targPairs$Sample_Source <- targPairs$Sample_Pairs1
+    toKeep <- !is.na(targPairs$Sample_Source)	    toKeep <- !is.na(targPairs$Sample_Source)
+    targPairs <- targPairs[toKeep, ]	    targPairs <- targPairs[toKeep, ]
+    targPairs$ID <-	    targPairs$ID <- paste(targPairs$Sample_Group, targPairs$Sample_Name, sep = ".")
+        paste(targPairs$Sample_Group, targPairs$Sample_Name, sep = ".")	    rgSet <- RGSet[, toKeep]
+    toDrop <- RGSet@colData@listData[["Sample_Name"]] %in% targPairs$Sample_Name	
+    rgSet <- RGSet[,toDrop]	
+    sampleNames(rgSet) <- targPairs$ID	    sampleNames(rgSet) <- targPairs$ID
     detP <- detectionP(rgSet)
     PlotQCPdf(targPairs, detP, rgSet)
     keep <- colMeans(detP) < 0.05
