@@ -310,7 +310,7 @@ FixLastColumns <- function(mainSheet, rawSheetData, idx){
     mainSheet$Description <- paste0(rawSheetData[,'Description'])
     mainSheet$GenomeFolder <- as.character("PhiX\\Illumina\\RTA\\Sequence\\WholeGenomeFASTA")
     dupes <- base::anyDuplicated(mainSheet$I7_Index_ID)
-    if(length(dupes)>0){
+    if(length(dupes)>0 & dupes!=0){
         message(crayon::bgRed("The following rows are duplicated and will be removed:"), "\n",
                 paste0(capture.output(mainSheet[dupes,]), collapse = "\n"))
         mainSheet <- mainSheet[-dupes,]
