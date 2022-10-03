@@ -81,17 +81,23 @@ if(is450k==T){
 }
 
 GetRedcapDF <- function(gb){
+    familia <- gb$out_class_family$`Methylation Family`[1]
+    fscore <- gb$out_class_family$`Class Score`[1]
+    subfam <- gb$out$`Methylation Subgroup`[1]
+    subScore <- gb$out$`Subgroup Score`[1]
+    mgmtStat <- gb$mgmtValues$mgmtVal
+    
     dfNewRed <- data.frame(
         record_id = gb$sampleID,
         b_number = paste(gb$dat$bnumber),
         barcode_and_row_column = colnames(gb$RGset),
         array_type = ifelse(gb$is450k, yes = "450k", no = "EPIC"),
         classifier_sex = tolower(gb$msetDat$sex),
-        classifier_score = gb$familia,
-        classifier_value = gb$fscore,
-        subgroup = gb$subfam,
-        subgroup_score = gb$subScore,
-        mgmt_status = gb$mgmtStat$Status,
+        classifier_score = familia,
+        classifier_value = fscore,
+        subgroup = subfam,
+        subgroup_score = subScore,
+        mgmt_status = mgmtStat$Status,
         mlh1_status = paste0(gb$mlhP[[1]][1]),
         mlh1_pos_loci = paste0(gb$mlhP[[1]][2]),
         second_tech = paste(gb$dat$tech2),
