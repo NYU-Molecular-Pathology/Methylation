@@ -209,6 +209,8 @@ GetOutScore <- function(out){
 }
 
 GetOutClass <- function(is450k, Mset_ba, Mset){
+    library(verbose=F, warn.conflicts = F, quietly = T, package= "knitr")
+    library(verbose=F, warn.conflicts = F, quietly = T, package= "kableExtra")
     library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b6", mask.ok = T)
     requireNamespace("mnp.v11b6", quietly = T)
     probs <- gb$GetProbData(is450k, Mset_ba, Mset)
