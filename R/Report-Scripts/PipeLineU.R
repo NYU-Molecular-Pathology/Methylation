@@ -1,9 +1,9 @@
-library(verbose=F, warn.conflicts = F, quietly = T, package= "UniD")
-library(verbose=F, warn.conflicts = F, quietly = T, package= "minfi")
-library(verbose=F, warn.conflicts = F, quietly = T, package= "wateRmelon")
 
 TryLoadUniD <- function(){
     library(verbose=F, warn.conflicts = F, quietly = T, package= "dplyr")
+    library(verbose=F, warn.conflicts = F, quietly = T, package= "UniD")
+    library(verbose=F, warn.conflicts = F, quietly = T, package= "minfi")
+    library(verbose=F, warn.conflicts = F, quietly = T, package= "wateRmelon")
     try(library(verbose=F, warn.conflicts = F, quietly = T, package= "UniD"), silent = T)
     try(require("UniD"), silent = T)
 }
@@ -56,14 +56,17 @@ UniD_load <- function (sampleID, run_id) {
     return(loading)
 }
 
-pipelineU <- function(sampleID, is450k=F, run_id) {
-  require("UniD")
-      dataPath <-
-          file.path(system.file(package = "UniD"), "R", "sysdata.rda")
+LoadUniRdata <- function(rdsPath="/Volumes/CBioinformatics/Methylation/UniD/R/sysdata.rda"){
+    require("UniD")
+      dataPath <- file.path(system.file(package = "UniD"), "R", "sysdata.rda")
       if (!file.exists(dataPath)) {
-          fs::file_copy(path = "/Volumes/CBioinformatics/Methylation/UniD/R/sysdata.rda", new_path = dataPath)
+          fs::file_copy(path = rdsPath, new_path = dataPath)
       }
       load(dataPath)
+}
+
+pipelineU <- function(sampleID, is450k=F, run_id) {
+      
       loading <- suppressWarnings(UniD_load(sampleID, run_id))
       outDir <- file.path(getwd(), "UniD")
       if (!dir.exists(outDir)) {
