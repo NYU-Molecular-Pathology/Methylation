@@ -32,35 +32,19 @@ GetSexMsetBa <- function(is450k, RGset, FFPE=NULL){
 }
 
 GetFamilyProb <- function(is450k, Mset_ba, Mset){
-    if (is450k==T) {
-        library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylation450kmanifest")
-        library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b4")
-
-        tryCatch(
-            expr = {
-                load("/Volumes/CBioinformatics/Methylation/Methylation_classifier_v11b4/mnp.v11b4/data/rfpred.v11b4.RData")
-                probs_mcf <- mnp.v11b4::MNPpredict(Mset_ba[, 1], type='prob',MCF=TRUE)
-            },
-            error = function(e) {
-                message("Error caught at mnp.v11b4::MNPpredict(), trying uncalibrated...")
-                probs_mcf <- mnp.v11b4::MNPpredict(Mset_ba[, 1], type='prob',MCF=TRUE,calibrate = FALSE)
-            }
-        )
-
-    } else {
-        library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylationEPICmanifest")
-        library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b6")
-        tryCatch(
-            expr = {
-                probs_mcf <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob', MCF = TRUE)
-            },
-            error = function(e) {
-                message("Error occured at Brain Classifier v11 prediction:")
-                message("Using MNPpredict(Mset[, 1]) instead of Mset_ba\n")
-                probs_mcf <- mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob', MCF = TRUE)
-            }
-        )
-    }
+    library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylationEPICmanifest")
+    library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b6")
+    tryCatch(
+        expr = {
+            probs_mcf <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob', MCF = TRUE)
+        },
+        error = function(e) {
+            message("Error occured at Brain Classifier v11 prediction:")
+            message("Using MNPpredict(Mset[, 1]) instead of Mset_ba\n")
+            probs_mcf <- mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob', MCF = TRUE)
+        }
+    )
+    
     return(probs_mcf)
 }
 
@@ -97,37 +81,38 @@ GetOutFamily <- function(is450k, Mset_ba, Mset){
     return(out_class_family)
 }
 
-GetProbData <- function(is450k, Mset_ba, Mset){
-    if (is450k==T) {
-        library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylation450kmanifest")
-        library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b4")
-        load("/Volumes/CBioinformatics/Methylation/Methylation_classifier_v11b4/mnp.v11b4/data/rfpred.v11b4.RData")
-        tryCatch(
-            expr = {
-                probs <- mnp.v11b4::MNPpredict(Mset_ba[, 1], type = 'prob')
-            },
-            error = function(e) {
-                message("Error caught at mnp.v11b4::MNPpredict(Mset_ba[, 1], type = 'prob'):\n")
-                message(e)
-                message("\nNow trying mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob')")
-                probs <- mnp.v11b4::MNPpredict(Mset[, 1], type = 'prob')
-            }
-        )
-    } else {
-        library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylationEPICmanifest")
-        library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b6")
-        load("/Volumes/CBioinformatics/Methylation/Methylation_classifier_v11b6/mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData")
-        tryCatch(
-            expr = {
-                probs <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob')
-            },
-            error = function(e) {
-                message("Error occured at Brain Classifier v11 prediction: using Mset instead of Mset_ba:\n")
-                message(e)
-                probs <- mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob')
-            }
-        )
+detach_package <- function(pkg, character.only = FALSE) {
+    if (!character.only) {
+        pkg <- deparse(substitute(pkg))
     }
+    search_item <- paste("package", pkg, sep = ":")
+    while (search_item %in% search()){
+        base::detach(search_item, unload = TRUE, character.only = TRUE)
+        }
+}
+
+GetProbData <- function(is450k, Mset_ba, Mset) {
+    library(verbose = F, warn.conflicts = F, quietly = T, package = "IlluminaHumanMethylationEPICmanifest")
+    library(verbose = F, warn.conflicts = F, quietly = T, package = "mnp.v11b6")
+    try(unloadNamespace("mnp.v11b4"), silent = T)
+    try(detach_package("mnp.v11b4"), silent = T)
+    invisible(loadNamespace("mnp.v11b6"))
+    invisible(requireNamespace("mnp.v11b6"))
+    if(!exists('calfit')){
+        load(file.path(
+            "/Volumes/CBioinformatics/Methylation/Methylation_classifier_v11b6/",
+            "mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData"))    
+        }
+    tryCatch(
+        expr = {
+            probs <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob')
+        },
+        error = function(e) {
+            message("Error occured at Brain Classifier v11 prediction:")
+            message("Using Mset instead of Mset_ba:\n", e)
+            probs <- mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob')
+        }
+    )
     return(probs)
 }
 
@@ -149,20 +134,17 @@ GetOutScore <- function(out){
 }
 
 GetOutClass <- function(is450k, Mset_ba, Mset){
-    probs <- GetProbData(is450k, Mset_ba, Mset)
-    oo <- order(probs, decreasing = T)
+    library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b6", mask.ok = T)
+    requireNamespace("mnp.v11b6", quietly = T)
+    probs <- gb$GetProbData(is450k, Mset_ba, Mset)
+    oo <- base::order(probs, decreasing = T)
     eps <- 1e-3
     out <- probs[oo[1:5]]
     out <- cbind(round(pmax(pmin(out,1 - eps),eps),3),colnames(probs)[oo][1:5])
     colnames(out) <- c("Subgroup Score","Methylation Subgroup")
-    if(is450k){
-        idx <- match(colnames(probs)[oo][1], mnp.v11b4::reflist[,2])
-    }else{
-        idx <- match(colnames(probs)[oo][1], mnp.v11b6::reflist[,2])
-    }
+    idx <- match(colnames(probs)[oo][1], mnp.v11b6::reflist[,2])
     stopifnot(!is.na(idx))
     out <- as.data.frame(out)
-    message(out)
     subVal_int <- GetOutScore(out)
     out$Interpretation = c(subVal_int,"","","","")
     return(list("out"=out,"idx"=idx))
