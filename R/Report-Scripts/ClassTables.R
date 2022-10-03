@@ -97,20 +97,19 @@ GetOutFamily <- function(is450k, Mset_ba, Mset){
     return(out_class_family)
 }
 
-GetProbability <- function(is450k, Mset_ba, Mset){
+GetProbData <- function(is450k, Mset_ba, Mset){
     if (is450k==T) {
         library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylation450kmanifest")
         library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b4")
-
+        load("/Volumes/CBioinformatics/Methylation/Methylation_classifier_v11b4/mnp.v11b4/data/rfpred.v11b4.RData")
         tryCatch(
             expr = {
-                load("/Volumes/CBioinformatics/Methylation/Methylation_classifier_v11b4/mnp.v11b4/data/rfpred.v11b4.RData")
                 probs <- mnp.v11b4::MNPpredict(Mset_ba[, 1], type = 'prob')
             },
             error = function(e) {
                 message("Error caught at mnp.v11b4::MNPpredict(Mset_ba[, 1], type = 'prob'):\n")
                 message(e)
-                message("\nNow trying mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob')...")
+                message("\nNow trying mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob')")
                 probs <- mnp.v11b4::MNPpredict(Mset[, 1], type = 'prob')
             }
         )
@@ -150,7 +149,7 @@ GetOutScore <- function(out){
 }
 
 GetOutClass <- function(is450k, Mset_ba, Mset){
-    probs <- GetProbability(is450k, Mset_ba, Mset)
+    probs <- GetProbData(is450k, Mset_ba, Mset)
     oo <- order(probs, decreasing = T)
     eps <- 1e-3
     out <- probs[oo[1:5]]
