@@ -74,10 +74,9 @@ PromptInputCsv <- function(runID) {
 }
 
 MakeLocalSampleSheet <- function(runID){
-    idatScript <-
-        "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/pullRedcap_manual.R"
+    idatScript <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/pullRedcap_manual.R"
     rd_numbers <- PromptInputCsv(runID)
-    stopifnot(length(rd_numbers)>=1 & stringr::str_detect(rd_numbers[1],"RD-"))
+    stopifnot(length(rd_numbers)>=1 & length(rd_numbers)!=0 & stringr::str_detect(rd_numbers[1],"RD-"))
     message("Sourcing: ", idatScript)
     devtools::source_url(idatScript)
     gb$grabRDCopyIdat(rd_numbers, gb$token, copyIdats=T, outputFi="samplesheet.csv")
@@ -103,12 +102,14 @@ RunFromSamplesheet <- function(samSh="samplesheet.csv"){
 RunLocalIdats <- function(runID, token){
     if(!file.exists(file.path(getwd(), paste0(runID,".xlsm")))){
         idatFiles <- dir(path = getwd(), pattern = ".idat", full.names = T)
-        if(!file.exists("samplesheet.csv") & length(idatFiles)!=0){
+        if(!file.exists(file.path(getwd(), "samplesheet.csv")) & length(idatFiles)!=0){
             idatBase <- unique(substring(idatFiles, 1, nchar(idatFiles) - 9))
-            RGSet<-minfi::read.metharray(basenames =idatBase, force=TRUE, verbose = T)
+            RGSet <- minfi::read.metharray(basenames =idatBase, force=TRUE, verbose = T)
             loop_local(RGSet)
         }else{
-            MakeLocalSampleSheet(runID)
+            if(!file.exists(file.path(getwd(), "samplesheet.csv"))){
+                MakeLocalSampleSheet(runID)
+            }
             targets <- RunFromSamplesheet("samplesheet.csv")
             loop_targets(targets)
         }
