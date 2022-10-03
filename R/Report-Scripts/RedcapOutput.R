@@ -81,6 +81,7 @@ if(is450k==T){
 }
 
 GetRedcapDF <- function(gb){
+    out <- gb$outList$out
     familia <- gb$out_class_family$`Methylation Family`[1]
     fscore <- gb$out_class_family$`Class Score`[1]
     subfam <- gb$out$`Methylation Subgroup`[1]
