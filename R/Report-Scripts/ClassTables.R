@@ -180,6 +180,23 @@ PrintScoreTable <- function(outV12) {
     return(outTable12)
 }
                            
+FormatSuppInfo <- function(suppinfo){
+    names(suppinfo) <- c(
+        "ID",
+        "Batch ID",
+        "Tech",
+        "B-number",
+        "MP-TN#",
+        "Sentrix ID",
+        "Array type",
+        "Material type",
+        "Gender"
+    )
+    suppinfo <- as.data.frame(suppinfo)
+    colnames(suppinfo) <- ""
+    return(suppinfo)
+}
+                           
 GetSuppInfo <- function(dat, RGset, msetDat) {
     suppinfo <-
         c(
@@ -193,6 +210,7 @@ GetSuppInfo <- function(dat, RGset, msetDat) {
             msetDat$FFPE,
             msetDat$sex
         )
+    suppinfo <- FormatSuppInfo(suppinfo)
     return(suppinfo)
 }
 
