@@ -2,6 +2,12 @@ library(verbose=F, warn.conflicts = F, quietly = T, package= "UniD")
 library(verbose=F, warn.conflicts = F, quietly = T, package= "minfi")
 library(verbose=F, warn.conflicts = F, quietly = T, package= "wateRmelon")
 
+TryLoadUniD <- function(){
+    library(verbose=F, warn.conflicts = F, quietly = T, package= "dplyr")
+    try(library(verbose=F, warn.conflicts = F, quietly = T, package= "UniD"), silent = T)
+    try(require("UniD"), silent = T)
+}
+
 UniD_dataqc <- function (loading,
                          outDir,
                          detP.cut = 0.05,
