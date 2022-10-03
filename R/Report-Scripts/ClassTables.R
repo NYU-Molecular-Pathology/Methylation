@@ -1,8 +1,78 @@
 gb <- globalenv(); assign("gb", gb)
-require("compiler")
-invisible(supM(compiler::enableJIT(3)))
-invisible(supM(compiler::compilePKGS(enable = TRUE)))
-supM(compiler::setCompilerOptions(suppressAll = TRUE, optimize = 3))
+supM <- function(objTing){return(suppressMessages(suppressWarnings(objTing)))}
+assign(x = "supM", value = supM, envir = .GlobalEnv)
+
+pkgs <- c(
+        "needs",
+        "knitr",
+        "jsonlite",
+        "crayon",
+        "RCurl",
+        "ggplot2",
+        "kableExtra",
+        "tidyverse",
+        "plotly",
+        "pkgdown",
+        "magrittr",
+        "compiler",
+        "minfi",
+        "pander",
+        "parallel",
+        "doParallel",
+        "randomForest",
+        "glmnet",
+        "gridExtra",
+        "Rtsne",
+        "dplyr"
+        )
+
+optsLi <- list(
+        error = FALSE,
+        echo = FALSE,
+        message = FALSE,
+        warning = FALSE,
+        fig.align = "left",
+        self.contained = TRUE,
+        comment = '',
+        label_list = FALSE,
+        highlight = FALSE,
+        quiet = TRUE,
+        verbose = FALSE,
+        progress = TRUE
+    )
+
+LoadReportPkgs <- function(pkgs, optsLi){
+    rlis = getOption("repos")
+    rlis["CRAN"] = "http://cran.us.r-project.org"
+    try(options(repos = rlis), silent=T)
+    options("install.packages.compile.from.source" = "never")
+    options("install.packages.check.source"="no")
+    if(!require("librarian")){install.packages("librarian", dependencies=T, quiet=T)}
+    if(!require("devtools")){install.packages("devtools", dependencies=T)}
+    if (!requireNamespace("BiocManager", quietly = TRUE)) {install.packages("BiocManager", dependencies = T)}
+    if(!requireNamespace("UniD", quietly = TRUE)) {
+        install.packages(
+            "/Volumes/CBioinformatics/Methylation/UniD", type = "source", dependencies = T, repo = NULL
+            )
+    }
+    librarian::shelf(pkgs, ask=F, verbose=F, warn.conflicts = F, quietly = T)
+    require("needs", quietly = T, warn.conflicts=F)
+    library(verbose=F, warn.conflicts = F, quietly = T, package = "knitr")
+    knitr::opts_chunk$set(optsLi)
+    knitr::opts_knit$set(optsLi)
+    knitr::opts_current$set(optsLi)
+    knitr::opts_knit$set(root.dir = params$knitDir)
+    options(width = 300, scipen = 5)
+    library(verbose=F, warn.conflicts = F, quietly = T, package = "pander")
+    panderOptions('table.alignment.default', "right")
+    require("compiler")
+    invisible(supM(compiler::enableJIT(3)))
+    invisible(supM(compiler::compilePKGS(enable = TRUE)))
+    supM(compiler::setCompilerOptions(suppressAll = TRUE, optimize = 3))
+}
+
+
+LoadReportPkgs(pkgs, optsLi)
 
 GetSexMsetBa <- function(is450k, RGset, FFPE=NULL){
     if (is450k) {
