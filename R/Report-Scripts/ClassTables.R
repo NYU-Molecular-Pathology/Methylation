@@ -253,12 +253,13 @@ GetUniDTables <- function(predU){
 GetMgmtPlot <- function(Mset_raw){
     be = c(booktabs = T, escape = F, linesep = "")
     btso = c("bordered")
+    txtc = "text-align:center;"
     kgb <- c("striped",font_size = 14, bootstrap_options = btso, position = "left")
     plotmgmt <- as.data.frame(mnp.v12b6::MNPpredict_mgmt(Mset_raw), row.names = NULL)
     newVals <- sapply(plotmgmt[1,2:5],function(x)plyr::round_any(x,.0001))
     plotmgmt[1,2:5] <- newVals
-    mgmtPlot <- plotmgmt %>%
-        mutate_all(as.character) %>% knitr::kable("html", be, align = 'clc') %>%
+    mgmtPlot <- plotmgmt %>% mutate_all(as.character) %>% 
+        knitr::kable("html", be, align = 'clc') %>%
         kableExtra::kable_styling(kgb, full_width = F, position="left")
     return(list("mgmtVal" = plotmgmt, "mgmtPlot" = mgmtPlot))
 }
