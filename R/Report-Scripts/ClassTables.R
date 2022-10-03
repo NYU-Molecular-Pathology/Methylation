@@ -41,7 +41,9 @@ optsLi <- list(
         progress = TRUE
     )
 
-LoadReportPkgs <- function(pkgs, optsLi){
+chunkOpts <- list(error = FALSE, echo = FALSE, message = FALSE, warning = FALSE, self.contained = TRUE, comment = '')
+
+LoadReportPkgs <- function(pkgs, optsLi, chunkOpts){
     rlis = getOption("repos")
     rlis["CRAN"] = "http://cran.us.r-project.org"
     try(options(repos = rlis), silent=T)
@@ -69,10 +71,13 @@ LoadReportPkgs <- function(pkgs, optsLi){
     invisible(supM(compiler::enableJIT(3)))
     invisible(supM(compiler::compilePKGS(enable = TRUE)))
     supM(compiler::setCompilerOptions(suppressAll = TRUE, optimize = 3))
+    
+knitr::opts_chunk$set(chunkOpts)
+supM(library(verbose=F, warn.conflicts = F, quietly = T, package="ggplot2"))
 }
 
 
-LoadReportPkgs(pkgs, optsLi)
+LoadReportPkgs(pkgs, optsLi, chunkOpts)
 
 GetSexMsetBa <- function(is450k, RGset, FFPE=NULL){
     if (is450k) {
