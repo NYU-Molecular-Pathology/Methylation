@@ -50,6 +50,7 @@ GetOvAnnot <- function() {
 
 
 gb$new.ggplotly <- function (xx, getTables = T, newOvGenes=NULL, sex='male', addCustom = F) {
+    require("mnp.v11b6")
     require(compiler)
     compiler::enableJIT(3)
     compiler::compilePKGS(enable = TRUE)
