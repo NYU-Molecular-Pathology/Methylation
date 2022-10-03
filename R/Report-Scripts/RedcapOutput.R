@@ -79,3 +79,25 @@ if(is450k==T){
     load("/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData")
 }
 }
+
+GetRedcapDF <- function(gb){
+    dfNewRed <- data.frame(
+        record_id = gb$sampleID,
+        b_number = paste(gb$dat$bnumber),
+        barcode_and_row_column = colnames(gb$RGset),
+        array_type = ifelse(gb$is450k, yes = "450k", no = "EPIC"),
+        classifier_sex = tolower(gb$msetDat$sex),
+        classifier_score = gb$familia,
+        classifier_value = gb$fscore,
+        subgroup = gb$subfam,
+        subgroup_score = gb$subScore,
+        mgmt_status = gb$mgmtStat$Status,
+        mlh1_status = paste0(gb$mlhP[[1]][1]),
+        mlh1_pos_loci = paste0(gb$mlhP[[1]][2]),
+        second_tech = paste(gb$dat$tech2),
+        primary_tech = paste(gb$dat$tech),
+        run_number = gb$run_id,
+        tm_number = paste(gb$dat$mp_number)
+    )
+    return(dfNewRed)
+}
