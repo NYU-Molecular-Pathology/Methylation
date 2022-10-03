@@ -339,7 +339,8 @@ GetMgmtPlot <- function(Mset_raw){
     return(list("mgmtVal" = plotmgmt, "mgmtPlot" = mgmtPlot))
 }
 
-GetClassProbTables <- function(out_class_family, out){
+GetClassProbTables <- function(out_class_family, outList){
+        out <- outList$out
     xtraCss1="border-radius:0px;border-width:1px;border-style:solid;border-color:rgb(192,192,192);"
     xtraCss2="border-radius:0px;border-width:3px;border-style:solid;border-color:rgb(26,105,16);"
     xtraCss3="border-radius:0px;border-width:3px;border-style:solid;border-color:rgb(16,28,105);"
