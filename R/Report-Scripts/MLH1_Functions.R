@@ -91,21 +91,16 @@ renderPlot <- function(beta.matrix, clin.res) {
 }
 
 drawPlotTab <- function(mlhP){
+    btso = c("bordered")
+    kgb <- c("striped",font_size = 14, bootstrap_options = btso, position = "left")
+    txtc = "text-align:center;"
     be = c(booktabs = T, escape = F, linesep = "")
-    return(
+    theMlhTab <- 
         mlhP %>% knitr::kable("html", be, align = 'clc') %>%
-            kableExtra::kable_styling(kgb, full_width = F, position = "left") %>%
-            kableExtra::column_spec(
-                column = 2,
-                background = "rgb(204, 255, 204)",
-                extra_css = txtc
-            ) %>%
-            kableExtra::column_spec(
-                column = 2,
-                bold = T,
-                border_right = T
-            )
-    )
+        kableExtra::kable_styling(kgb, full_width = F, position = "left") %>%
+        kableExtra::column_spec(column = 2, background = "rgb(204, 255, 204)", extra_css = txtc) %>%
+        kableExtra::column_spec(column = 2, bold = T, border_right = T)
+    return(theMlhTab)
 }
 
 pipeline = function(RGset,

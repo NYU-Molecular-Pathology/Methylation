@@ -167,7 +167,7 @@ plot.mds<- function(mSetSq.beta, targets, topN) {
     names(myColors) <- targets$Sample_Name
     plotNam <- paste0("top_", topN, "_msetBeta", ".png")
     outPlotNam <- file.path(getwd(),"figures","mds")
-    if(!dir.exists(outPlotNam)){dir.create(outPlotNam)}
+    if(!dir.exists(outPlotNam)){dir.create(outPlotNam, recursive = T)}
     outPlotFi <- file.path(outPlotNam, plotNam)
     png(filename = outPlotFi, width = 12, height = 8, res = 200, units = "in")
     limma::plotMDS(

@@ -49,7 +49,8 @@ GetOvAnnot <- function() {
 }
 
 
-new.ggplotly <- function (xx, getTables = T, newOvGenes=NULL, sex='male', addCustom = F) {
+gb$new.ggplotly <- function (xx, getTables = T, newOvGenes=NULL, sex='male', addCustom = F) {
+    require("mnp.v11b6")
     require(compiler)
     compiler::enableJIT(3)
     compiler::compilePKGS(enable = TRUE)
@@ -104,9 +105,17 @@ new.ggplotly <- function (xx, getTables = T, newOvGenes=NULL, sex='male', addCus
     detail.ratio.above <- (detail.ratio > 0.15 & detail.ratio < 1) | detail.ratio < -0.15
     detail.x <-
         start(xx@anno@detail) + (end(xx@anno@detail) - start(xx@anno@detail))/2 + chr.cumsum0[as.vector(seqnames(xx@anno@detail))]
-    df3 <- data.frame(detail.ratio, detail.x, names = (xx@anno@detail)$name)
+    df3 <-
+        data.frame(detail.ratio, detail.x, names = (xx@anno@detail)$name)
     dra <- detail.ratio.above
-    p <- ggplot(df, aes(x = x, y = bin.ratio)) +
+    if (getTables == T) {
+        dra <- data.frame(
+            Gain = c(detail.ratio > 0.15 & detail.ratio < 1.5),
+            Loss = c(detail.ratio < -0.15)
+        )
+        return(dra)
+    } else{
+        p <- ggplot(df, aes(x = x, y = bin.ratio)) +
         geom_point(colour = bin.ratio.cols, size = 1) +
         geom_vline(xintercept = chrs, color = "grey44",
                    size = 1, alpha = 0.5) +
@@ -115,8 +124,7 @@ new.ggplotly <- function (xx, getTables = T, newOvGenes=NULL, sex='male', addCus
         ylim(ylim[1], ylim[2]) +
         geom_segment(aes(x = xs, y = ys, xend = xe, yend = ye),
                      size = 0.5, data = df2, color = "blue") +
-        xlab("Chromosomes") +
-        ylab("Bin Ratios") +
+        xlab("Chromosomes") + ylab("Bin Ratios") +
         geom_point(aes(x = detail.x, y = detail.ratio),
                    size = ifelse(test = dra, yes = 2, no = 1.5),
                    alpha = 0.9, data = df3,
@@ -134,12 +142,12 @@ new.ggplotly <- function (xx, getTables = T, newOvGenes=NULL, sex='male', addCus
               axis.text.y = element_text(size = 14),
               axis.title.y = element_text(size = 14),
               axis.title.x = element_text(size = 14))
-
+    
     ggpb <-suppressMessages(suppressWarnings(
         plotly::plotly_build(plotly::ggplotly(p)) %>%
             plotly::layout(xaxis = list(showgrid = F), yaxis = list(showgrid = F))
     ))
-
+    
     # Annotate Hover Probes
     if (length(xx@bin$ratio) >= 25666) {
         ggpb$x$data[[1]]$text <- paste0(
@@ -164,9 +172,9 @@ new.ggplotly <- function (xx, getTables = T, newOvGenes=NULL, sex='male', addCus
         "start: ", xx@seg$summary$loc.start, "<br>",
         "end: ", xx@seg$summary$loc.end, "<br>",
         "median: ", xx@seg$summary$seg.median)
-
+    
     ggpb$x$data[[5]]$text <- (xx@anno@detail)$name
-
+    
     # Custom Detail Annotations
     ggpb <- ggpb %>% add_annotations(
         x = detail.x,
@@ -186,18 +194,10 @@ new.ggplotly <- function (xx, getTables = T, newOvGenes=NULL, sex='male', addCus
         #font = list(size = 15, color = "blue", face = "bold"),
         bgcolor = "white",
         opacity = 0.85
-    ) %>% ggplotly(tooltip = "text") %>%
+    ) %>% 
+        ggplotly(tooltip = "text") %>%
         plotly::style(hoverlabel = list(bgcolor = "blue"))
-    # Return Plot or Table
-    if (getTables == F) {
-        return(ggpb %>% suppressWarnings(toWebGL()))
-    }
-    if (getTables == T) {
-        dra <- data.frame(
-            Gain = c(detail.ratio > 0.15 & detail.ratio < 1.5),
-            Loss = c(detail.ratio < -0.15)
-        )
-        return(dra)
+    return(ggpb %>% suppressWarnings(toWebGL()))
     }
 }
 

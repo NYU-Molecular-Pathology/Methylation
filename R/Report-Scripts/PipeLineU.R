@@ -1,5 +1,12 @@
-library(verbose=F, warn.conflicts = F, quietly = T, package= "UniD")
-library(verbose=F, warn.conflicts = F, quietly = T, package= "minfi")
+
+TryLoadUniD <- function(){
+    library(verbose=F, warn.conflicts = F, quietly = T, package= "dplyr")
+    library(verbose=F, warn.conflicts = F, quietly = T, package= "UniD")
+    library(verbose=F, warn.conflicts = F, quietly = T, package= "minfi")
+    library(verbose=F, warn.conflicts = F, quietly = T, package= "wateRmelon")
+    try(library(verbose=F, warn.conflicts = F, quietly = T, package= "UniD"), silent = T)
+    try(require("UniD"), silent = T)
+}
 
 UniD_dataqc <- function (loading,
                          outDir,
@@ -7,10 +14,11 @@ UniD_dataqc <- function (loading,
                          bc.cut = 3,
                          arrayType) {
     detP <- loading$detP
+    
     sampleSet <- UniD:::GetsampleSet(loading$rgSet)
     Beta.raw <- minfi::getBeta(loading$Mset)
     Beta.raw <- as.data.frame(Beta.raw)
-    bc <- beadcount(loading$rgSet)
+    bc <- wateRmelon::beadcount(loading$rgSet)
     bc[bc < bc.cut] <- NA
     Beta.raw[detP > detP.cut] <- NA
     Beta.raw[is.na(bc)] <- NA
@@ -48,14 +56,17 @@ UniD_load <- function (sampleID, run_id) {
     return(loading)
 }
 
-pipelineU <- function(sampleID, is450k=F, run_id) {
-  require("UniD")
-      dataPath <-
-          file.path(system.file(package = "UniD"), "R", "sysdata.rda")
+LoadUniRdata <- function(rdsPath="/Volumes/CBioinformatics/Methylation/UniD/R/sysdata.rda"){
+    require("UniD")
+      dataPath <- file.path(system.file(package = "UniD"), "R", "sysdata.rda")
       if (!file.exists(dataPath)) {
-          fs::file_copy(path = "/Volumes/CBioinformatics/Methylation/UniD/R/sysdata.rda", new_path = dataPath)
+          fs::file_copy(path = rdsPath, new_path = dataPath)
       }
       load(dataPath)
+}
+
+pipelineU <- function(sampleID, is450k=F, run_id) {
+      
       loading <- suppressWarnings(UniD_load(sampleID, run_id))
       outDir <- file.path(getwd(), "UniD")
       if (!dir.exists(outDir)) {

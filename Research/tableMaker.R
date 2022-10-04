@@ -93,30 +93,59 @@ smallTab <- function(dtObj) {
 }
 
 # Adds colors to csv targets file to maintain same color scheme between plots
-colorTargets <- function(targets, varColumns = c("Type","Origin"), col_vect = NULL) {
-    if (is.null(col_vect)) {col_vect <- pals::glasbey()}
+colorTargets <- function(
+        targets, varColumns = c("Type","Origin"), col_vect = NULL) 
+{
+    if (is.null(col_vect)) {
+        col_vect <- pals::glasbey()
+    }
     col_vect[6] = "#eb7d34" #changing dark forest to orange color
     col_vect[4] = "#ADD8E6"
     col_vect <- unique(col_vect)
-    message("Dimnames:\n",paste(dimnames(targets)[[2]], collapse = " | "))
+    for (variable in varColumns) {
+        if (any(is.null(targets[, variable]))) {
+            targets[is.null(targets[, variable]), variable] <- "NONE"
+        }
+        if (any(is.na(targets[, variable]))) {
+            targets[is.na(targets[, variable]), variable] <- "NONE"
+        }
+    }
+    message("Dimnames:\n", paste(dimnames(targets)[[2]], collapse = " | "))
     stopifnot(all(varColumns %in% dimnames(targets)[[2]]))
-    dat <- targets[,varColumns] # varColumns
+    if ("Type" %in% varColumns == F) {
+        targets$Type <- targets[, varColumns[1]]
+        varColumns <- c(varColumns, "Type")
+    }
+    
+    if (length(unique(varColumns)) == 1) {
+        targets$NewCol <- targets[, varColumns[1]]
+        varColumns <- c(varColumns, "NewCol")
+    }
+    
+    dat <- targets[, varColumns] # varColumns
     anno_df <- data.frame(dat)
     vars2Color <- as.list(lapply(dat, unique))
-    colorValues <-lapply(vars2Color, function(x) {x = (col_vect)[1:(length(x))]})
+    colorValues <-
+        lapply(vars2Color, function(x) {
+            x = (col_vect)[1:(length(x))]
+        })
     for (x in 1:length(vars2Color)) {
         for (varNum in 1:length(vars2Color[x])) {
-          names(colorValues[x][[1]]) = c(vars2Color[x][[1]])}
-      }
-      targets$color <- NULL
-      for (colNam in varColumns) {
-        for (samNam in names(colorValues[colNam][[1]])) {
-          currColor <- targets$Type == samNam
-          targets$color[currColor] <- paste0(colorValues$Type[samNam])
+            names(colorValues[x][[1]]) = c(vars2Color[x][[1]])
         }
-      }
-      return(targets)
+    }
+    targets$color <- NULL
+    for (colNam in varColumns) {
+        for (samNam in names(colorValues[colNam][[1]])) {
+            currColor <- targets$Type == samNam
+            targets$color[currColor] <-
+                paste0(colorValues$Type[samNam])
+        }
+    }
+    stopifnot(!is.null(targets$color))
+    return(targets)
 }
+
 
 getColors <- function(samTypes) {
   library('RColorBrewer')
@@ -128,15 +157,18 @@ getColors <- function(samTypes) {
   return(myColors)
 }
 
-sanitizeSheet <- function(inputFi, samsheet) {
+sanitizeSheet<- function(inputFi, samsheet) {
     library("magrittr")
     library("dplyr")
     if (stringr::str_detect(inputFi, ".xlsx")) {
         samSh <- readxl::read_excel(inputFi)
-        samSh <- samSh %>% dplyr::mutate_all(stringr::str_replace, ",", "")
+        samSh <- samSh %>% dplyr::mutate_all(stringr::str_replace_all, ",", "")
     } else{
         samSh <- read.csv(inputFi, strip.white = T)
     }
+    colnames(samSh) <- gsub(pattern = " ", replacement = "_", colnames(samSh))
+    samSh <- samSh %>% dplyr::mutate_all(stringr::str_replace_all, " ", "-")
+    
     write.csv(samSh, samsheet, quote = F, row.names = F)
     targets <- read.csv(samsheet, strip.white = T)
     if (class(targets) != "data.frame") {
@@ -183,4 +215,30 @@ loadHtmlTag <- function(){
     par(ask=F); devAskNewPage(ask = F)
     doParallel::registerDoParallel(cores=2)
     return(htmltools::tagList(plotly::ggplotly(ggplot2::ggplot())))
+}
+
+sourceParams <- function(X = c("Params_input.R", "Params_output.R")) {
+    paramFiles <- unlist(lapply(X, function(X) {file.path(".", "parameters", X)}))
+    stopifnot(file.exists(paramFiles[1])|file.exists(paramFiles[2]))
+    invisible(lapply(paramFiles, source))
+}
+
+GetCsvSheet <- function(needFi, samsheet, token, outputFi="samplesheet_og.csv"){
+    # Using "pullRedcap_manual.R"
+    rds <- gb$readInfo(inputSheet = samsheet) # inputSheet can be xlsx or csv
+    stopifnot(length(rds)>1 & stringr::str_detect(rds[1],"RD-"))
+    if(gb$needFi==T) { 
+      gb$grabRDCopyIdat(rd_numbers=rds, token, copyIdats=T, outputFi=outputFi)
+      gb$MoveIdats()
+    }else{
+        result <- gb$search.redcap(rd_numbers=rds, token)
+        result <- result[!is.na(result$barcode_and_row_column),]
+        samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[,"barcode_and_row_column"],"_",2))
+        gb$makeSampleSheet(result, samplesheet_ID, bn = NULL, outputFi=outputFi)
+    }
+}
+
+SubSetGroup <- function(strPatt, samPairs){
+    idx <- which(grepl(samPairs, pattern = strPatt, ignore.case=T))
+    return(samPairs[idx])
 }

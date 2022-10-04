@@ -93,6 +93,7 @@ pathview_promoter <- function(file, pathwayid) {
   pathview::pathview(
     gene.data  = geneList_promoter,
     pathway.id = pathwayid,
+    kegg.dir = "./figures/pathway",
     species    = "hsa",
     limit      = list(gene = c(0, 1), cpd = 0.1),
     out.suffix = "promotor"
@@ -113,6 +114,7 @@ pathview_body <- function(file, pathwayid) {
   pathwayid_body <- pathview::pathview(
     gene.data  = geneList_body,
     pathway.id = pathwayid,
+    kegg.dir = "./figures/pathway",
     species    = "hsa",
     limit      = list(gene = c(0, 1), cpd = 0.1),
     out.suffix = "body"
@@ -126,10 +128,17 @@ splitByPathway <- function(pathDesc, geneVals) {
   return(pathWayGenes)
 }
 
-renameDots <- function(png1, txtIn){
+renameDots_og <- function(png1, txtIn){
   newName <-stringr::str_remove(png1,"\\.")
   file.rename(from=png1, to=newName)
   newName <- file.path(getwd(),newName)
+  imageCap<- paste0("![",txtIn,"](",newName,"){width=90%}")
+  return(imageCap)
+}
+
+renameDots <- function(png1, txtIn){
+  newName <-stringr::str_remove(png1,"\\.")
+  newName <- file.path(getwd(),"figures","pathway",newName)
   imageCap<- paste0("![",txtIn,"](",newName,"){width=90%}")
   return(imageCap)
 }
@@ -162,4 +171,46 @@ PrintPathways <- function(topPaths){
         print(dtTab)
         cat("\n\n")
         }
+}
+
+PrintDotBarUpset <- function(kk_final){
+    cat("### DotPlot \n\n")
+    enrichplot::dotplot(kk_final, showCategory=10)
+    cat("\n\n")
+    cat("### BarPlot \n\n")
+    barplot(kk_final, showCategory=10, beside = T) 
+    cat("\n\n")
+    cat("### Upset Plot \n\n")
+    enrichplot::upsetplot(kk_final)
+    cat("\n\n")
+}
+
+GetHsaPath <- function(topPaths, pathCsvOut){
+    endFile <- paste0(topPaths$ID,"_", basename(pathCsvOut))
+    hsaOutDir <- file.path(getwd(), "figures", "pathway")
+    if (!dir.exists(hsaOutDir)) {dir.create(hsaOutDir)}
+    hsaOutFi <- file.path(hsaOutDir, endFile)
+}
+
+LoopHSAfiles <- function(hsaOutFi){
+    for (pathFi in hsaOutFi) {
+    hsaPath <- stringr::str_split_fixed(basename(pathFi), "_", 2)[[1]]
+    hsaPath <- file.path(getwd(), "figures", "pathway", hsaPath)
+    if (file.exists(pathFi)) {
+        suppressMessages(gb$pathview_promoter(pathFi, hsaPath))
+        suppressMessages(gb$pathview_body(pathFi, hsaPath))
+    } else{
+        message(pathFi, " does not exist.")
+    }
+}
+}
+
+WritePathVals <- function(geneVals, geneListIn){
+    # Sort lowest Pvalues and lowest qvalue
+    message("Min p-value: ",min(geneVals$pvalue))
+    topPaths <- topPaths[order(topPaths$qvalue),]
+    topPaths <- topPaths[1:5,] # take top 5 pathways
+    pathWayGenes <- as.data.frame(topPaths)
+    write.csv(pathWayGenes, file = file.path(getwd(),geneListIn), row.names = F, quote = F)
+    return(pathWayGenes)
 }

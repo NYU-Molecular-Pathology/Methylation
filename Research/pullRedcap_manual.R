@@ -98,38 +98,46 @@ readInfo <- function(inputSheet) {
     return(rds)
 }
 
-makeSampleSheet <- 
-    function(df, samplesheet_ID, bn = NULL, outputFi="samplesheet_og.csv") {
-        if (is.null(bn)) {bn = file.path(getwd(), df$barcode_and_row_column)}
-        message(crayon::bgCyan("~~~Writing from redcap samplesheet.csv using dataframe:"))
-        # Drop Null/Missing sentrix IDs
-        df<- df[!is.na(df[, "barcode_and_row_column"]),]
-        df<- df[!is.null(df[, "barcode_and_row_column"]),]
-        # Make Data Frame
-        samplesheet_csv = data.frame(
-            Sample_Name = df[, "record_id"],
-            DNA_Number = df[,"b_number"],
-            Sentrix_ID = samplesheet_ID[, 1],
-            Sentrix_Position = samplesheet_ID[, 2],
-            SentrixID_Pos = df[, "barcode_and_row_column"],
-            Basename = paste0(bn),
-            RunID = df$run_number,
-            MP_num = df$accession_number,
-            Date = df$arrived
-        )
-        samplesheet_csv <- samplesheet_csv[!is.na(samplesheet_csv$SentrixID_Pos),]
-        write.csv(samplesheet_csv, file = outputFi, quote = F,row.names = F)
-    }
+makeSampleSheet <- function(df, samplesheet_ID, bn = NULL, outputFi="samplesheet_og.csv") {
+    if (is.null(bn)) {bn = file.path(getwd(), df$barcode_and_row_column)}
+    message(crayon::bgCyan("~~~Writing from redcap samplesheet.csv using dataframe:"))
+    # Drop Null/Missing sentrix IDs
+    df<- df[!is.na(df[, "barcode_and_row_column"]),]
+    df<- df[!is.null(df[, "barcode_and_row_column"]),]
+    # Make Data Frame
+    samplesheet_csv = data.frame(
+        Sample_Name = df[, "record_id"],
+        DNA_Number = df[,"b_number"],
+        Sentrix_ID = samplesheet_ID[, 1],
+        Sentrix_Position = samplesheet_ID[, 2],
+        SentrixID_Pos = df[, "barcode_and_row_column"],
+        Basename = paste0(bn),
+        RunID = df$run_number,
+        MP_num = df$accession_number,
+        Date = df$arrived
+    )
+    samplesheet_csv <- samplesheet_csv[!is.na(samplesheet_csv$SentrixID_Pos),]
+    write.csv(samplesheet_csv, file = outputFi, quote = F,row.names = F)
+}
 
-grabRDCopyIdat <- function(rd_numbers, token, copyIdats=T, outputFi="samplesheet_og.csv"){
+grabRDCopyIdat <-
+function(rd_numbers, token, copyIdats=T, outputFi="samplesheet_og.csv"){
     ApiToken <- token
-    result <- gb$search.redcap(rd_numbers, token)
-    result <- result[!is.na(result$barcode_and_row_column),]
+    result_raw <- gb$search.redcap(rd_numbers, token)
+
+    result <- result_raw[!is.na(result_raw$barcode_and_row_column),]
     samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[,"barcode_and_row_column"],"_",2))
+    if(nrow(samplesheet_ID)>0) {
+        message(
+            "The RD-numbers you entered have not been run yet or do not have idat files in REDCap:\n\n",
+            paste(capture.output(result_raw), collapse = "\n")
+        )
+        stopifnot(nrow(samplesheet_ID)>0)
+    }
     gb$makeSampleSheet(result, samplesheet_ID, bn = NULL, outputFi=outputFi) # writes API export as minfi dataframe sheet
     # copies idat files from return to current directory
     if(copyIdats==T){
-             supM(gb$get.idats(csvNam = outputFi))
+        supM(gb$get.idats(csvNam = outputFi))
     }
 }
 

@@ -167,24 +167,32 @@ modifyHaColors <- function(varColumns,targets, ha){
     return(ha)
 }
 
-assignColors3<- function(targets, varColumns = c("Type","Origin"), col_vect = NULL, manualNames=NULL) {
+assignColors3 <- function(targets, varColumns = c("Type","Origin"), col_vect = NULL, manualNames=NULL) {
     dimnames(targets)[[2]]
+    if ("Type" %in% varColumns == F) {
+        targets$Type <- targets[, varColumns[1]]
+        varColumns <- c(varColumns, "Type")
+    }
+    if (length(unique(varColumns)) == 1) {
+        targets$NewCol <- targets[, varColumns[1]]
+        varColumns <- c(varColumns, "NewCol")
+    }  
     dat <- targets[,varColumns] # varColumns
     anno_df <- data.frame(dat)
     col_vect <-unique(targets$color)
     vars2Color <- as.list(lapply(dat, function(x){return(sort(unique(x)))}))
     colorValues <-lapply(vars2Color, function(x) {x = (col_vect)[1:(length(x))]})
     colorValues <-lapply(X=names(colorValues), function(X) {
-      currCol <- colorValues[X][[1]]
-      curNam <- vars2Color[[X]]
-      names(currCol)<-curNam
-      colorValues[X][[1]] <- currCol
-      names(colorValues[X])<-X
-      return(colorValues[X][[1]])}
-      )
+        currCol <- colorValues[X][[1]]
+        curNam <- vars2Color[[X]]
+        names(currCol)<-curNam
+        colorValues[X][[1]] <- currCol
+        names(colorValues[X])<-X
+        return(colorValues[X][[1]])}
+    )
     names(colorValues)<- varColumns
     stopifnot(all(names(colorValues)==names(anno_df)))
-    ha <- gb$getHeatAnno(colorValues,anno_df)
+    ha <- suppressWarnings(gb$getHeatAnno(colorValues,anno_df))
     return(ha)
 }
 
@@ -304,4 +312,154 @@ gb$getHeatMap2 <-
         heatmap_height = unit(20, "in")
     )
     return(gb$drawHeatMap(hmTopNumbers))
+}
+
+GetEmptyDf <- function(csvColumns,betas){
+    temp <- matrix(nrow= ncol(csvColumns), ncol=dim(betas)[2])
+    avgBetas <- data.frame(temp)
+    colnames(avgBetas) <- colnames(betas)
+    rownames(avgBetas) <- colnames(csvColumns)
+    return(avgBetas)
+}
+                                           
+GetProbeAverage <- function(csvColumns, betas, pathwayName){
+    avgBetas <- GetEmptyDf(csvColumns,betas)
+    for (geneCol in 1:ncol(csvColumns)) {
+        probeList <- csvColumns[,geneCol]
+        for (sam in 1:dim(betas)[2]) {
+            probeBetas <- betas[rownames(betas) %in% probeList, sam]
+            sampleNam <- colnames(betas)[sam]
+            geneNam <- colnames(csvColumns)[geneCol]
+            probeAvg <-mean(probeBetas)
+            avgBetas[geneNam,sampleNam] <- probeAvg
+        }
+    }
+    
+    outDir <- file.path(getwd(), "data")
+    outFile <- paste(pathwayName, "avgBetas_per_gene.csv" , sep = "_")
+    outPath <- file.path(outDir, outFile)
+    write.csv(avgBetas, file = outPath, row.names=F, na="")
+    return(avgBetas)
+}
+
+#' grabProbes function that lists probes annotated by matching gene name and gene region
+#' @param your_genes  a character list of genes i.e. from a file c("ALK","ETMR","HDAC")
+#' @param RGSet  the name or path to your minfi RGset data
+#' @param region string vector of gene selections like c("TSS200", "Body") can one gene region "TSS200"
+GetProbesGenes <- function(your_genes, RGSet, region){
+  stopifnot(is.character(your_genes)); listRows=10000
+  bp <- ifelse((length(region)>1), paste(region, collapse="|"), region); annot <- minfi::getAnnotation(RGSet); g=NULL
+  geneAnno <- paste(annot$UCSC_RefGene_Name, annot$UCSC_RefGene_Group, sep = "_")
+  pick <- function(x, fltr){return(do.call(grepl,c(list(pattern=x), fltr)))}
+  z <- foreach::foreach(g = your_genes, .combine = "cbind") %dopar% {
+    fltr <- list(x = geneAnno, ignore.case = T); y <- cbind(rownames(annot)[pick(g, fltr) & pick(bp, fltr)])
+    naFill <- rbind(y, cbind(rep(NA, (listRows - nrow(y)))));colnames(naFill) <- g
+    return(naFill)
+  }
+  naDrops <- lapply(1:ncol(z), function(i){which(!is.na(z[,i]))})
+  cutt <- length(naDrops[[which.max(lapply(naDrops, function(x) sum(lengths(x))))]])
+  return(z[1:cutt,])
+}
+                                           
+GetCsvGeneColumns <- function(pathwayName, z){
+    outFile1 <- paste(pathwayName,"genes_columns_withMissing.csv", sep = "_")
+    outDir <- file.path(getwd(),"data")
+    if(!dir.exists(outDir)){dir.create(outDir, recursive = T)}
+    write.csv(z, file = file.path(outDir, outFile1), row.names=F, na="")
+    z <- as.data.frame(z)
+    toDrop <- c(is.na(z[1,]))
+    z <- z[,!toDrop]
+    outFile2 <- paste(pathwayName,"genes_columns.csv", sep = "_")
+    write.csv(z, file = file.path(outDir, outFile2), row.names=F, na="")
+    csvColumns <- as.data.frame(read.csv(file.path(outDir, outFile2)))
+    return(csvColumns)
+}
+
+GetHeatMapGenes <-function(betaRanges, titleValue, ha, geneNamesHeatMap=F, colSplt = NULL, rwsplt=NULL){
+    titleOfPlot <- paste("Heatmap of",titleValue,sep = " ")
+    hmTopNumbers <- ComplexHeatmap::Heatmap(
+        betaRanges,
+        col = gb$col_fun2,  ## Define the color scale
+        cluster_columns = T,  ## Cluster the columns
+        #cluster_rows = rowcluster,
+        #raster_resize_mat = TRUE,
+        show_column_names = T,  ## Show the Column Names (which is sample #)
+        column_names_gp = gpar(fontsize = 12),  ## Column Name Size
+        show_row_names = geneNamesHeatMap,  ## Show Row names (which is probes)
+        row_names_side = "left",
+        row_title_side = "left",
+        row_names_gp = gpar(fontsize = 10),
+        row_title_gp = gpar(fontsize = 10, fontface = "bold"),
+        show_row_dend = F,
+        show_column_dend = T,
+        use_raster=T,
+        show_heatmap_legend = T,
+        top_annotation = ha,
+        column_title = titleOfPlot,
+        column_title_gp = gpar(fontsize = 12,fontface = "bold"),
+        raster_device = "CairoPNG",
+        raster_quality = 3,
+        heatmap_legend_param = list(
+            title = "Beta Value",
+            #legend_height = unit(5, "in"),
+            labels_gp = gpar( fontsize = 12),
+            title_gp = gpar(fontsize = 12, fontface = "bold"),
+            legend_direction = "vertical",
+            heatmap_legend_side = "right", annotation_legend_side = "right",
+            legend_height =  unit(2.5, "in")
+        ),
+        column_split = colSplt,
+        row_split= rwsplt,
+        heatmap_width = unit(10, "in"),
+        heatmap_height = unit(30, "in")
+    )
+    #size = gb$calc_ht_size(hmTopNumbers)
+    #size
+    return(gb$drawHeatMap(hmTopNumbers))
+}
+
+CheckGeneOutput <- function(pathwayName) {
+    outDir <- file.path(getwd(), "data")
+    outFile <- paste(pathwayName, "avgBetas_per_gene.csv" , sep = "_")
+    outPath <- file.path(outDir, outFile)
+    if(file.exists(outPath)){
+        return(outPath)
+    }else{
+        return(FALSE)    
+    }
+}
+
+LoopPathwayHeatMap <- function(pathWayGenes){
+    doParallel::registerDoParallel(cores=6)
+    cat("# Pathway Gene HeatMaps {.tabset}")
+    cat("\n\n")
+    hmOutPath <- file.path(getwd(), "figures", "data")
+    if(!dir.exists(hmOutPath)){dir.create(hmOutPath, recursive = T)}
+    for(pathRow in 1:nrow(pathWayGenes)){
+        currPathway <- pathWayGenes[pathRow,]
+        pathwayName <- paste0(gsub(" ", "_", currPathway$Description))
+        
+        avgExist <- CheckGeneOutput(pathwayName)
+        if(avgExist==F){
+            your_genes <- stringr::str_split(currPathway$geneID, pattern = "/")[[1]]
+            z <- gb$GetProbesGenes(your_genes, RGSet, region = c('TSS200'))
+            csvColumns <- gb$GetCsvGeneColumns(pathwayName, z)
+            avgBetas <- gb$GetProbeAverage(csvColumns, betas,pathwayName)
+        }else{
+            avgBetas <- read.csv(avgExist)
+        }
+        titleValue <- paste("Average Probe Beta Values for", currPathway$Description, "Genes")
+        avgBetas <- as.matrix(avgBetas)
+        avgBetas <- na.omit(avgBetas)
+        hm <- gb$GetHeatMapGenes(avgBetas, titleValue, ha, geneNamesHeatMap=T, colSplt=3)
+
+      msgTitle <- paste("##", currPathway$Description)
+       cat("\n\n")  
+        cat(msgTitle)
+       cat("\n\n")
+        knitr::asis_output(hm) 
+        cat("\n\n")
+         cat("\n\n")
+        #gb$saveHmPng(fi_prefix= "hm_genes_", fi_suffix=".png", hm, topvar = paste0(currPathway$Description), outDir = hmOutPath)
+    }
 }
