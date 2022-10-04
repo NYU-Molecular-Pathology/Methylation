@@ -191,23 +191,40 @@ WriteFileHeader <- function(inputFi){
 }
 
 
-FixPairedList <- function(tissueType){
-    tissueType[grep("Tumor", tissueType)] <- "Tumor"
-    tissueType[grep("Normal", tissueType)] <- "Normal"
-    tissueType[grep("Control", tissueType)] <- "Control"
-    return(tissueType)
+GetTypeIndex <- function(samNumber, rawSheetData){
+    return(
+        unlist(lapply(samNumber, function(samName){return(which(samName == rawSheetData$`DNA #`))}))
+        )
 }
 
-AddSampleIndexes <- function(pairedList, rawSheetData){
+
+FixPairedList <- function(philipsExport, rawSheetData){
+    tumorIndex <- GetTypeIndex(philipsExport$`Tumor DNA/RNA Number`, rawSheetData)
+    normalIndex <- GetTypeIndex(philipsExport$`Normal DNA/RNA Number`, rawSheetData)
+    rawSheetData$`Type & Tissue`[tumorIndex] <- "Tumor"
+    rawSheetData$`Type & Tissue`[normalIndex] <- "Normal"
+    allBnumber <- c(philipsExport$`Tumor DNA/RNA Number`, philipsExport$`Normal DNA/RNA Number`)
+    if(!all(allBnumber %in% rawSheetData$`DNA #`)==T){
+        warning("Not all B-numbers from PhilipsExport are found in the SampleSheet!")
+    }
+    controlIndex <- which(rawSheetData$`DNA #` %in% allBnumber == F)
+    message("The following samples are controls: ", paste(rawSheetData$`DNA #`[controlIndex], collapse=" "))
+    rawSheetData$`Type & Tissue`[controlIndex] <- "Control"
+    #tissueType[grep("Tumor", tissueType)] <- "Tumor"
+    #tissueType[grep("Normal", tissueType)] <- "Normal"
+    #tissueType[grep("Control", tissueType)] <- "Control"
+    return(rawSheetData$`Type & Tissue`)
+}
+
+AddSampleIndexes <- function(pairedList, rawSheetData, philipsExport){
     accessions <- rawSheetData$`Accession#`
-    tissueType <- FixPairedList(rawSheetData$`Type & Tissue`)
+    tissueType <- FixPairedList(philipsExport, rawSheetData)
     sheetTumors <- which(tissueType == "Tumor")
     sheetNormals <- which(tissueType == "Normal" & tissueType != "Control")
 
     mainSheet <- data.frame(matrix(NA, nrow = nrow(pairedList), ncol = 0))
 
-    mainSheet$Sample_ID <- paste(pairedList[, 1])
-    mainSheet$Sample_Name <- paste(pairedList[, 1])
+    mainSheet$Sample_Name <- mainSheet$Sample_ID <- paste(pairedList[, 1])
     mainSheet$Paired_Normal <- ""
     mainSheet$Paired_Normal[sheetTumors] <- paste(mainSheet$Sample_ID[sheetNormals])
     mainSheet$I7_Index_ID <- paste(rawSheetData$I7_Index_ID)
@@ -305,8 +322,8 @@ AddPairedColumn <- function(mainSheet, sheetColumn, philipsColumn, idx){
 }
 
 
-FixLastColumns <- function(mainSheet, rawSheetData, idx){
-    mainSheet$Tumor_Type[idx$wetLabN] <- ""
+FixLastColumns <- function(mainSheet, rawSheetData){
+    mainSheet$Tumor_Type[rawSheetData$`Type & Tissue`=="Normal"] <- ""
     mainSheet$Description <- paste0(rawSheetData[,'Description'])
     mainSheet$GenomeFolder <- as.character("PhiX\\Illumina\\RTA\\Sequence\\WholeGenomeFASTA")
     dupes <- base::anyDuplicated(mainSheet$I7_Index_ID)
@@ -329,14 +346,14 @@ BuildMainSheet <- function(philipsExport, rawSheetData, runID) {
 
     pairedList <- GetPairedList(philipsExport, runID)
     pairedList <- BindUnpairedRows(rawSheetData, pairedList, runID)
-    mainSheet <- AddSampleIndexes(pairedList, rawSheetData)
+    mainSheet <- AddSampleIndexes(pairedList, rawSheetData, philipsExport)
     idx <- GetIndexMatch(rawSheetData, philipsExport)
     mainSheet <- AddPairedColumn(mainSheet, "EPIC_ID", epicOrder, idx)
     mainSheet <- AddPairedColumn(mainSheet, "Test_Number", testNumber, idx)
     mainSheet <- AddRunChipColumns(mainSheet, runID)
     mainSheet <- AddPairedColumn(mainSheet, "Tumor_Content", tumorPercent, idx)
     mainSheet <- AddPairedColumn(mainSheet, "Tumor_Type", diagColumn, idx)
-    mainSheet <- FixLastColumns(mainSheet, rawSheetData, idx)
+    mainSheet <- FixLastColumns(mainSheet, rawSheetData)
     return(mainSheet)
 }
 
@@ -501,7 +518,7 @@ pushToRedcap <- function(runID, outFile, token, inputSheet) {
 writeSampleSheet <- function(inputSheet, token, runID = NULL) {
     inputFi <- getExcelPath(inputSheet)
     if (file.exists(inputFi)) {
-        outVals <- suppressMessages(parseExcelFile(inputFi, runID))
+        outVals <- parseExcelFile(inputFi, runID)
     } else {
         outVals <-  CheckOtherFiles(inputFi, runID)
     }
