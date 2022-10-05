@@ -32,3 +32,4 @@ varsToCheck <- data.frame(
     "Variant" = indelsList$Variant
 )
 write.csv(varsToCheck, file="~/Desktop/Pact_desc.csv", quote=F, row.names=F)
+message("Output file saved: '~/Desktop/Pact_desc.csv'\n", "You can copy the contents of this file into your local PACT-22-##_desc.csv file as a template for consensus")
