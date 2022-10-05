@@ -7,7 +7,7 @@ GetLocalData <- function(rg){
         senLi = paste0(rg),
         run_id = paste0(gb$runID),
         mp_number = "NONE",
-        tech = "NONE",loop_targets
+        tech = "NONE",
         tech2 = "NONE",
         outFi = paste0(rg, ".html")
     )
