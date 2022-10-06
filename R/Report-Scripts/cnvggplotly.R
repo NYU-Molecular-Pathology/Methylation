@@ -65,7 +65,7 @@ GetOvAnnot <- function() {
 }
 
 
-gb$new.ggplotly <-
+new.ggplotly <-
     function (xx,
               getTables = T,
               newOvGenes = NULL,
