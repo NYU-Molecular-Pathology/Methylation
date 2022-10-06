@@ -17,8 +17,7 @@ LoadUniRdata <- function(rdsPath="/Volumes/CBioinformatics/Methylation/UniD/R/sy
       load(dataPath)
 }
 
-UniD_dataqc <- function (
-        loading, detP.cut = 0.05, bc.cut = 3, arrayType) {
+UniD_dataqc <- function (loading, detP.cut = 0.05, bc.cut = 3, arrayType) {
     detP <- loading$detP
     sampleSet <- UniD:::GetsampleSet(loading$rgSet)
     Beta.raw <- minfi::getBeta(loading$Mset)
@@ -58,41 +57,42 @@ UniD_load <- UniD_load <- function (sampleID, run_id) {
     return(loading)
 }
 
-PipelineU <- function(sampleID, is450k=F, run_id) {
-      loading <- suppressWarnings(UniD_load(sampleID, run_id))
-      outDir <- "."
-      arrayType <- ifelse(is450k == F, "EPIC", "450k")
-      Beta.raw <- UniD_dataqc(loading, arrayType = arrayType)
-      Beta.BMIQ <- UniD::UniD.BMIQ(Beta.raw, arrayType, ".", write = F)
-      Beta.clean <- UniD::UniD.probefilter(
-          Beta.raw,
-          outDir,
-          filterXY = F,
-          filterSNPHit = F,
-          filterMultiHit = F,
-          filterNonCG = F,
-          filterNonEpic = F,
-          arrayType = arrayType,
-          filterSample = F ,
-          0.1,
-          F,
-          write = F
-      )
-      Pred <- UniD::UniD.pred(
-          inputdata = Beta.clean,
-          inputdata.BMIQ = Beta.BMIQ,
-          Pred.IDH = T,
-          Pred.1p19q = T,
-          Pred.ATRX = T,
-          Pred.TERTp = T,
-          Pred.ExpressSubtype = T,
-          outDir = outDir,
-          write = F
-      )
-      pred <- as.data.frame(Pred, row.names = NULL)
-      pred$sample <- sampleID
-      rownames(pred) <- NULL
-      #outfi <- paste0(sampleID, "_prediction_uniD.csv")
-      #write.csv(pred, file.path(outDir, outfi))
-      return(pred)
- }
+PipelineU <- function(sampleID, is450k = F, run_id = NULL) {
+    TryLoadUniD()
+    LoadUniRdata()
+    if(is.null(run_id)){run_id <- "NONE"}
+    loading <- suppressWarnings(UniD_load(sampleID, run_id))
+    outDir <- "."
+    arrayType <- ifelse(is450k == F, "EPIC", "450k")
+    Beta.raw <- UniD_dataqc(loading, arrayType = arrayType)
+    Beta.BMIQ <- UniD::UniD.BMIQ(Beta.raw, arrayType, ".", write = F)
+    Beta.clean <- UniD::UniD.probefilter(
+        Beta.raw,
+        outDir,
+        filterXY = F,
+        filterSNPHit = F,
+        filterMultiHit = F,
+        filterNonCG = F,
+        filterNonEpic = F,
+        arrayType = arrayType,
+        filterSample = F ,
+        0.1,
+        F,
+        write = F
+    )
+    Pred <- UniD::UniD.pred(
+        inputdata = Beta.clean,
+        inputdata.BMIQ = Beta.BMIQ,
+        Pred.IDH = T,
+        Pred.1p19q = T,
+        Pred.ATRX = T,
+        Pred.TERTp = T,
+        Pred.ExpressSubtype = T,
+        outDir = outDir,
+        write = F
+    )
+    pred <- as.data.frame(Pred, row.names = NULL)
+    pred$sample <- sampleID
+    rownames(pred) <- NULL
+    return(pred)
+}
