@@ -28,6 +28,7 @@ MNPcnv450kNew <- function(Mset, sex = NULL, ...) {
 }
 
 GetCNxx <- function(Mset, sex, sampleID) {
+    is450k <-  Mset@annotation[["array"]] != "IlluminaHumanMethylationEPIC"
     if (is450k == TRUE) {
         xx <- MNPcnv450kNew(Mset, sex = sex, main = sampleID)
     } else {
