@@ -8,54 +8,6 @@ TryLoadUniD <- function(){
     try(require("UniD"), silent = T)
 }
 
-UniD_dataqc <- function (loading,
-                         outDir,
-                         detP.cut = 0.05,
-                         bc.cut = 3,
-                         arrayType) {
-    detP <- loading$detP
-    
-    sampleSet <- UniD:::GetsampleSet(loading$rgSet)
-    Beta.raw <- minfi::getBeta(loading$Mset)
-    Beta.raw <- as.data.frame(Beta.raw)
-    bc <- wateRmelon::beadcount(loading$rgSet)
-    bc[bc < bc.cut] <- NA
-    Beta.raw[detP > detP.cut] <- NA
-    Beta.raw[is.na(bc)] <- NA
-    p.fail <-
-        data.frame(
-            Fail.Frac.detP = apply(detP, 2, function(x) length(which(x > detP.cut))) / nrow(detP),
-            Fail.Frac.beadcount = colSums(is.na(bc)) / nrow(bc),
-            Fail.Frac.NA = colSums(is.na(Beta.raw)) / nrow(Beta.raw)
-        )
-    print("The failed fraction per sample (failed detP and bc may overlap): ")
-    print(p.fail)
-    return(Beta.raw)
-}
-
-UniD_load <- function (sampleID, run_id) {
-    samSh <- paste0(run_id,"_samplesheet.csv")
-    inFile <- file.path("~","Desktop",run_id,samSh)
-    if(file.exists(inFile)){
-        targets <- read.csv(inFile, strip.white = T)
-    }else{
-        samSh <- paste0("samplesheet.csv")
-        message(samSh)
-        inFile <- file.path(getwd(),samSh)
-        message(inFile)
-        targets <- read.csv(inFile, strip.white = T)
-    }
-    targRow <- targets[,1]==sampleID
-    rgSet <- read.metharray.exp(targets = targets[targRow,], extended = T, force=T)
-    detP <- minfi::detectionP(rgSet)
-    Mset <- minfi::preprocessRaw(rgSet)
-    loading <- list()
-    loading[["rgSet"]] <- rgSet
-    loading[["Mset"]] <- Mset
-    loading[["detP"]] <- detP
-    return(loading)
-}
-
 LoadUniRdata <- function(rdsPath="/Volumes/CBioinformatics/Methylation/UniD/R/sysdata.rda"){
     require("UniD")
       dataPath <- file.path(system.file(package = "UniD"), "R", "sysdata.rda")
@@ -65,17 +17,53 @@ LoadUniRdata <- function(rdsPath="/Volumes/CBioinformatics/Methylation/UniD/R/sy
       load(dataPath)
 }
 
+UniD_dataqc <- function (
+        loading, detP.cut = 0.05, bc.cut = 3, arrayType) {
+    detP <- loading$detP
+    sampleSet <- UniD:::GetsampleSet(loading$rgSet)
+    Beta.raw <- minfi::getBeta(loading$Mset)
+    Beta.raw <- as.data.frame(Beta.raw)
+    bc <- wateRmelon::beadcount(loading$rgSet)
+    bc[bc < bc.cut] <- NA
+    Beta.raw[detP > detP.cut] <- NA
+    Beta.raw[is.na(bc)] <- NA
+    theFrac <- apply(detP, 2, function(x) length(which(x > detP.cut)))
+    p.fail <- data.frame(
+        Fail.Frac.detP = theFrac / nrow(detP),
+        Fail.Frac.beadcount = colSums(is.na(bc)) / nrow(bc),
+        Fail.Frac.NA = colSums(is.na(Beta.raw)) / nrow(Beta.raw)
+        )
+    cat(paste0(utils::capture.output(p.fail),collapse = "\n"))
+    return(Beta.raw)
+}
+
+UniD_load <- UniD_load <- function (sampleID, run_id) {
+    samSh <- paste0(run_id,"_samplesheet.csv")
+    inFile <- file.path("~","Desktop", run_id, samSh)
+    if(file.exists(inFile)){
+        targets <- read.csv(inFile, strip.white = T)
+    }else{
+        samSh <- paste0("samplesheet.csv")
+        inFile <- file.path(getwd(), samSh)
+        targets <- read.csv(inFile, strip.white = T)
+    }
+    targRow <- targets[,1]==sampleID
+    rgSet <- minfi::read.metharray.exp(targets = targets[targRow,], extended = T, force=T)
+    detP <- minfi::detectionP(rgSet)
+    Mset <- minfi::preprocessRaw(rgSet)
+    loading <- list()
+    loading[["rgSet"]] <- rgSet
+    loading[["Mset"]] <- Mset
+    loading[["detP"]] <- detP
+    return(loading)
+}
+
 PipelineU <- function(sampleID, is450k=F, run_id) {
       loading <- suppressWarnings(UniD_load(sampleID, run_id))
-      outDir <- file.path(getwd(), "UniD")
-      if (!dir.exists(outDir)) {
-          dir.create(outDir)
-      }
+      outDir <- "."
       arrayType <- ifelse(is450k == F, "EPIC", "450k")
-      Beta.raw <-
-          UniD_dataqc(loading, outDir, arrayType = arrayType)
-      Beta.BMIQ <-
-          UniD::UniD.BMIQ(Beta.raw, arrayType, outDir, write = F)
+      Beta.raw <- UniD_dataqc(loading, arrayType = arrayType)
+      Beta.BMIQ <- UniD::UniD.BMIQ(Beta.raw, arrayType, ".", write = F)
       Beta.clean <- UniD::UniD.probefilter(
           Beta.raw,
           outDir,
@@ -104,7 +92,7 @@ PipelineU <- function(sampleID, is450k=F, run_id) {
       pred <- as.data.frame(Pred, row.names = NULL)
       pred$sample <- sampleID
       rownames(pred) <- NULL
-      outfi <- paste0(sampleID, "_prediction_uniD.csv")
-      write.csv(pred, file.path(outDir, outfi))
+      #outfi <- paste0(sampleID, "_prediction_uniD.csv")
+      #write.csv(pred, file.path(outDir, outfi))
       return(pred)
  }
