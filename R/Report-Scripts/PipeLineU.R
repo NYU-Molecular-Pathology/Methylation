@@ -36,7 +36,7 @@ UniD_dataqc <- function (loading, detP.cut = 0.05, bc.cut = 3, arrayType) {
     return(Beta.raw)
 }
 
-UniD_load <- UniD_load <- function (sampleID, run_id) {
+UniD_loadData <- UniD_load <- function (sampleID, run_id=NULL) {
     samSh <- paste0(run_id,"_samplesheet.csv")
     inFile <- file.path("~","Desktop", run_id, samSh)
     if(file.exists(inFile)){
@@ -57,11 +57,11 @@ UniD_load <- UniD_load <- function (sampleID, run_id) {
     return(loading)
 }
 
-PipelineU <- function(sampleID, is450k = F, run_id = NULL) {
+PipelineU <- function(sampleID = "NONE", is450k = F, run_id = NULL) {
     TryLoadUniD()
     LoadUniRdata()
     if(is.null(run_id)){run_id <- "NONE"}
-    loading <- suppressWarnings(UniD_load(sampleID, run_id))
+    loading <- suppressWarnings(UniD_loadData(sampleID, run_id))
     outDir <- "."
     arrayType <- ifelse(is450k == F, "EPIC", "450k")
     Beta.raw <- UniD_dataqc(loading, arrayType = arrayType)
