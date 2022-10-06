@@ -80,7 +80,38 @@ if(is450k==T){
 }
 }
 
-GetRedcapDF <- function(gb){
+DebugDataFrame <-function(e, gb){
+    eMsg <- crayon::bgRed("Potentially missing variable(s) in REDCap dataframe:")
+    message(e,"\n",eMsg,"\n")
+    fixNull <- function(obj) {if (is.null(obj)|length(obj)==0) {return("NONE or Missing")} else{return(obj)}}
+    out <- fixNull(gb$outList$out)
+    familia <- fixNull(gb$out_class_family$`Methylation Family`[1])
+    fscore <- fixNull(gb$out_class_family$`Class Score`[1])
+    subfam <- fixNull(gb$out$`Methylation Subgroup`[1])
+    subScore <- fixNull(gb$out$`Subgroup Score`[1])
+    mgmtStat <- fixNull(gb$mgmtValues$mgmtVal)
+    mlh1_status <- fixNull(paste0(gb$mlhP[[1]][1]))
+    mlh1_pos_loci <- fixNull(paste0(gb$mlhP[[1]][2]))
+    
+    message("sampleID: ", gb$sampleID)
+    message("paste(dat$bnumber): ", paste(gb$dat$bnumber))
+    message("colnames(RGset): ", colnames(gb$RGset))
+    message("is450k: ", paste0(ifelse(gb$is450k, yes = "450k", no = "EPIC")))
+    message("sex: ", tolower(gb$msetDat$sex))
+    message("familia: ", familia)
+    message("fscore: ", fscore)
+    message("subfam: ", subfam)
+    message("subScore: ", subScore)
+    message("mgmtStat$Status: ", mgmtStat$Status)
+    message("mlh1_status: ", mlh1_status)
+    message("mlh1_pos_loci: ", mlh1_pos_loci)
+    message("second_tech: ", paste(gb$dat$tech2))
+    message("primary_tech: ", paste(gb$dat$tech))
+    message("run_id: ", gb$run_id)
+    message("mlh1_pos_loci: ", paste(gb$dat$mp_number))
+}
+
+GetRedcapDF <- function(gb) {
     out <- gb$outList$out
     familia <- gb$out_class_family$`Methylation Family`[1]
     fscore <- gb$out_class_family$`Class Score`[1]
@@ -106,5 +137,6 @@ GetRedcapDF <- function(gb){
         run_number = gb$run_id,
         tm_number = paste(gb$dat$mp_number)
     )
+    
     return(dfNewRed)
 }
