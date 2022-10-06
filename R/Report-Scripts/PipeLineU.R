@@ -65,8 +65,7 @@ LoadUniRdata <- function(rdsPath="/Volumes/CBioinformatics/Methylation/UniD/R/sy
       load(dataPath)
 }
 
-pipelineU <- function(sampleID, is450k=F, run_id) {
-      
+PipelineU <- function(sampleID, is450k=F, run_id) {
       loading <- suppressWarnings(UniD_load(sampleID, run_id))
       outDir <- file.path(getwd(), "UniD")
       if (!dir.exists(outDir)) {
