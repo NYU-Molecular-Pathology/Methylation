@@ -63,7 +63,7 @@ LoadReportPkgs <- function(pkgs, optsLi, chunkOpts){
     knitr::opts_chunk$set(optsLi)
     knitr::opts_knit$set(optsLi)
     knitr::opts_current$set(optsLi)
-    knitr::opts_knit$set(root.dir = params$knitDir)
+    knitr::opts_knit$set(root.dir = getwd())
     options(width = 300, scipen = 5)
     library(verbose=F, warn.conflicts = F, quietly = T, package = "pander")
     panderOptions('table.alignment.default', "right")
