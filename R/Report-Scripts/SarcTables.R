@@ -3,7 +3,8 @@ library("base")
 gb <- globalenv(); assign("gb", gb)
 options(width = 320, scipen = 5, knitr.kable.NA = '')
 library(verbose=F, warn.conflicts = F, quietly = T, package= "dplyr")
-
+library(verbose=F, warn.conflicts = F, quietly = T, package= "sarc.v12b6")
+library(verbose=F, warn.conflicts = F, quietly = T, package= "htmltools")
 
 PlotSuppInfo <- function(suppInfo){
     names(suppinfo)<- c("ID","Sentrix ID","Array type","Material type","Gender")
