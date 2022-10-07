@@ -19,7 +19,7 @@ PlotSuppInfo <- function(suppInfo){
         column_spec(column = c(1:5), width = "200px") %>%
         column_spec(1, border_left = "3px solid white") %>%
         column_spec(5, border_right = "3px solid white") %>%
-        kableExtra::row_spec(row = 0, font_size = 12,  color = "black") %>%
+        kableExtra::row_spec(row = 0, font_size = 12, background="rgb(255, 235, 205)", color = "black") %>%
         kableExtra::row_spec(row = 1, font_size = 11)
     return(suppTab)
 }
