@@ -1,20 +1,14 @@
 
-TryLoadUniD <- function(){
+TryLoadUniD <- function(rdsPath="/Volumes/CBioinformatics/Methylation/UniD/R/sysdata.rda"){
     library(verbose=F, warn.conflicts = F, quietly = T, package= "dplyr")
     library(verbose=F, warn.conflicts = F, quietly = T, package= "UniD")
     library(verbose=F, warn.conflicts = F, quietly = T, package= "minfi")
     library(verbose=F, warn.conflicts = F, quietly = T, package= "wateRmelon")
     try(library(verbose=F, warn.conflicts = F, quietly = T, package= "UniD"), silent = T)
     try(require("UniD"), silent = T)
-}
-
-LoadUniRdata <- function(rdsPath="/Volumes/CBioinformatics/Methylation/UniD/R/sysdata.rda"){
-    require("UniD")
-      dataPath <- file.path(system.file(package = "UniD"), "R", "sysdata.rda")
-      if (!file.exists(dataPath)) {
-          fs::file_copy(path = rdsPath, new_path = dataPath)
-      }
-      load(dataPath)
+    dataPath <- file.path(system.file(package = "UniD"), "R", "sysdata.rda")
+    if (!file.exists(dataPath)) {fs::file_copy(path = rdsPath, new_path = dataPath)}
+    load(dataPath)
 }
 
 UniD_dataqc <- function (loading, detP.cut = 0.05, bc.cut = 3, arrayType) {
