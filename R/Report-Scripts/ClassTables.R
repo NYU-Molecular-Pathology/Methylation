@@ -371,22 +371,3 @@ GetClassProbTables <- function(out_class_family=NULL, outList=NULL){
     
     return(list("famTable"=famTable,"grpTable"=grpTable))
 }
-                      
-DebugDataFrame <- function(sampleID, gb, RGset, is450k, familia, fscore, subfam, subScore, mgmtStat){
-    message("sampleID", sampleID)
-    message("paste(dat$bnumber)", paste(gb$dat$bnumber))
-    message("colnames(RGset)", colnames(RGset))
-    message("is450k", paste0(ifelse(is450k, yes = "450k", no = "EPIC")))
-    message("tolower(msetgb$dat$sex)", tolower(gb$msetDat$sex))
-    message("familia", familia)
-    message("fscore", fscore)
-    message("subfam", subfam)
-    message("subScore", subScore)
-    message("mgmtStat$Status", mgmtStat$Status)
-    message("paste0(gb$mlhP[[1]][1])", paste0(gb$mlhP[[1]][1]))
-    message("paste0(gb$mlhP[[1]][2])", paste0(gb$mlhP[[1]][2]))
-    message("paste(dat$tech2)", paste(gb$dat$tech2))
-    message("paste(gb$dat$tech)", paste(gb$dat$tech))
-    message("run_id", gb$run_id)
-    message("paste(gb$dat$mp_number)", paste(gb$dat$mp_number))
-}
