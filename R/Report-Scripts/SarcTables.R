@@ -23,3 +23,27 @@ PlotSuppInfo <- function(suppInfo){
         kableExtra::row_spec(row = 1, font_size = 11)
     return(suppTab)
 }
+
+GetSarcPred <- function(predRaw){
+    pred <-predRaw[,1:2]
+    pred$abbrevation <- sarc.v12b6::reflist[match(pred$predicted, sarc.v12b6::reflist$internal_identifier),"abbreviation"]
+    pred$maxscore <- round(pmax(pmin(pred$maxscore,1-1e-4),1e-4),4)
+    pred$name <- sarc.v12b6::reflist[match(pred$predicted, sarc.v12b6::reflist$internal_identifier),"name"]
+    pred <- as.data.frame(pred)
+    pred$maxscore <- as.character(pred$maxscore)
+    rownames(pred) <- NULL
+    colnames(pred) <- c("Predicted", "Max Score", "Abbrevation", "Class Name")
+    
+    predNex <- predRaw[1,3:ncol(predRaw)]
+    predTop <- as.data.frame(t(predNex))
+    predTop$Class <- rownames(predTop)
+    oo <- order(predTop[,1], decreasing = T)
+    predTop <- predTop[oo,1:2]
+    predTop <- predTop[2:6,1:2]
+    predTop[1:5,1] <- as.character(round(pmax(pmin(predTop[1:5,1],1-1e-4),1e-4),4))
+    colnames(predTop) <- c("Other Top Scores", "Class")
+    predTop$Name <- sarc.v12b6::reflist[match(predTop$Class, sarc.v12b6::reflist$internal_identifier),"name"]
+    rownames(predTop) <- NULL
+    des <- sarc.v12b6::reflist[match(pred$Predicted, sarc.v12b6::reflist$internal_identifier),"description"]
+    return(list("des"=des, "pred"=pred, "predTop"=predTop))
+}
