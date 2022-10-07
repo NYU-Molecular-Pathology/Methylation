@@ -6,7 +6,7 @@ library(verbose=F, warn.conflicts = F, quietly = T, package= "dplyr")
 library(verbose=F, warn.conflicts = F, quietly = T, package= "sarc.v12b6")
 library(verbose=F, warn.conflicts = F, quietly = T, package= "htmltools")
 
-PlotSuppInfo <- function(suppInfo){
+PlotSuppInfo <- function(suppinfo){
     names(suppinfo)<- c("ID","Sentrix ID","Array type","Material type","Gender")
     suppinfo <- as.data.frame(suppinfo)
     colnames(suppinfo) <- " "
@@ -21,7 +21,7 @@ PlotSuppInfo <- function(suppInfo){
         column_spec(1, border_left = "3px solid white") %>%
         column_spec(5, border_right = "3px solid white") %>%
         kableExtra::row_spec(row = 0, font_size = 12, background="rgb(255, 235, 205)", color = "black") %>%
-      kableExtra::row_spec(row = 0, background="rgb(255, 235, 205)") %>%
+        kableExtra::row_spec(row = 0, background="rgb(255, 235, 205)") %>%
         kableExtra::row_spec(row = 1, font_size = 11)
     return(suppTab)
 }
