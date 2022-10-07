@@ -62,7 +62,7 @@ GetOvAnnot <- function() {
 
 gb$new.ggplotly <- function (xx, getTables = T, newOvGenes=NULL, sex='male', addCustom = F) {
     require(compiler)
-    compiler::enableJIT(3)
+    #compiler::enableJIT(3)
     compiler::compilePKGS(enable = TRUE)
     compiler::setCompilerOptions(suppressAll = TRUE, optimize = 3)
     ovDataPath <- paste(path.package("mnp.v11b6"), "/ext/ovgenes.RData", sep = "")
