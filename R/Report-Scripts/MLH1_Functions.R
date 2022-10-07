@@ -103,19 +103,14 @@ drawPlotTab <- function(mlhP){
     return(theMlhTab)
 }
 
-pipeline = function(RGset,
-                    getFig = F,
-                    getTable = F) {
-    Mset = preprocessIllumina(RGset, bg.correct = TRUE, normalize = "controls")
-    ratioSet = ratioConvert(Mset, what = "both", keepCN = FALSE)
-    beta.matrix = getBeta(ratioSet)
+pipeline = function(ratioSet, RGset, getFig = F) {
     clin.res <- get.clinical.data(ratioSet, RGset)
     par(mar = c(5, 6, 4, 1) + .1)
     if (getFig == T) {
+        beta.matrix = getBeta(ratioSet)
         theMlhplot <- renderPlot(beta.matrix, clin.res)
         return(theMlhplot)
-    }
-    if (getTable == T) {
+    } else{
         mlhP <- getPlotTable(clin.data = clin.res)
         return(mlhP)
     }
