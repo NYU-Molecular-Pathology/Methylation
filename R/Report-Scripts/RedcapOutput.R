@@ -85,8 +85,8 @@ DebugDataFrame <-function(e, gb){
     message(e,"\n",eMsg,"\n")
     fixNull <- function(obj) {if (is.null(obj)|length(obj)==0) {return("NONE or Missing")} else{return(obj)}}
     out <- fixNull(gb$outList$out)
-    familia <- fixNull(gb$out_class_family$`Methylation Family`[1])
-    fscore <- fixNull(gb$out_class_family$`Class Score`[1])
+    familia <- fixNull(gb$outList$out_class_family$`Methylation Family`[1])
+    fscore <- fixNull(gb$outList$out_class_family$`Class Score`[1])
     subfam <- fixNull(gb$out$`Methylation Subgroup`[1])
     subScore <- fixNull(gb$out$`Subgroup Score`[1])
     mgmtStat <- fixNull(gb$mgmtValues$mgmtVal)
@@ -113,8 +113,8 @@ DebugDataFrame <-function(e, gb){
 
 GetRedcapDF <- function(gb) {
     out <- gb$outList$out
-    familia <- gb$out_class_family$`Methylation Family`[1]
-    fscore <- gb$out_class_family$`Class Score`[1]
+    familia <- gb$outList$out_class_family$`Methylation Family`[1]
+    fscore <- gb$outList$out_class_family$`Class Score`[1]
     subfam <- gb$out$`Methylation Subgroup`[1]
     subScore <- gb$out$`Subgroup Score`[1]
     mgmtStat <- gb$mgmtValues$mgmtVal
