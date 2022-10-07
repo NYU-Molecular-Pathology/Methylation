@@ -2,8 +2,7 @@
 
 cbioLn <- switch (Sys.info()[['sysname']],
                   "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
-                  "Linux" = "~/molecpathlab/production/Methylation/classifiers"
-)
+                  "Linux" = "~/molecpathlab/production/Methylation/classifiers")
 
 uniDpath <- file.path(cbioLn, "UniD")
 
@@ -354,9 +353,9 @@ loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bcPks=biocP
                 "MethylAid",
                 "minfi",
                 "scales",
-                "IlluminaHumanMethylation450kmanifest",
-                "IlluminaHumanMethylationEPICmanifest",
-                "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
+                #"IlluminaHumanMethylation450kmanifest",
+                #"IlluminaHumanMethylationEPICmanifest",
+                #"IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
                 "Biobase",
                 "RColorBrewer",
                 "limma",
