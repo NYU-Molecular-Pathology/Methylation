@@ -24,6 +24,12 @@ mnpV12 <-
         mnpPath = "mnp.v12b6",
         mnpNumb = "0.1.132")
 
+srcV12 <-
+    data.frame(
+        mnpVers = "sarc.v12b6",
+        mnpPath = "sarc.v12b6",
+        mnpNumb = "0.1.129")
+
 # Custom Classifier packages:
 classPacks <- c(
     sest = "https://github.com/jungch/sest/raw/master/sest.tar",
@@ -502,6 +508,7 @@ startLoadingAll <- function() {
     checkClassifier(mnpV4)
     checkClassifier(mnpV6)
     checkClassifier(mnpV12)
+    checkClassifier(srcV12)
     try(if (!requireNamespace("UniD", quietly = TRUE)) {
         install.packages(uniDpath, type = "source", dependencies = T, repo = NULL)
     }, silent = T)
