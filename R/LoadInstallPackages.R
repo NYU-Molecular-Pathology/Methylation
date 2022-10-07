@@ -257,12 +257,14 @@ checkNeeds <- function(){
 }
 
 setOptions <- function(){
-    options(needs.promptUser=F); Sys.setenv(R_ENABLE_JIT=T)
+    options(needs.promptUser=F)
+    #Sys.setenv(R_ENABLE_JIT=T)
     options("needs.promptUser"=F); options("promptUser"=F)
     options("device.ask.default" = FALSE)
     options("install.packages.compile.from.source"="Yes")
     options("install.packages.check.source"="yes")
-    compiler::enableJIT(3); compiler::compilePKGS(enable=T);
+    #compiler::enableJIT(3); 
+    compiler::compilePKGS(enable=T);
     compiler::setCompilerOptions(suppressAll=T, optimize=3)
     fixProf()
 }
