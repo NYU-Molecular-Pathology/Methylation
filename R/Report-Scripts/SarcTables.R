@@ -41,7 +41,7 @@ GetSarcPred <- function(predRaw){
     predTop$Class <- rownames(predTop)
     oo <- order(predTop[,1], decreasing = T)
     predTop <- predTop[oo,1:2]
-    predTop <- predTop[2:6,1:2]
+    predTop <- predTop[2:4,1:2]
     predTop[1:3,1] <- as.character(round(pmax(pmin(predTop[1:3,1],1-1e-4),1e-4),4))
     colnames(predTop) <- c("Other Top Scores", "Class")
     predTop$Name <- sarc.v12b6::reflist[match(predTop$Class, sarc.v12b6::reflist$internal_identifier),"name"]
