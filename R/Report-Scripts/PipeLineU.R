@@ -52,8 +52,6 @@ UniD_loadData <- UniD_load <- function (sampleID, run_id=NULL) {
 }
 
 PipelineU <- function(sampleID = "NONE", is450k = F, run_id = NULL) {
-    TryLoadUniD()
-    LoadUniRdata()
     if(is.null(run_id)){run_id <- "NONE"}
     loading <- suppressWarnings(UniD_loadData(sampleID, run_id))
     outDir <- "."
