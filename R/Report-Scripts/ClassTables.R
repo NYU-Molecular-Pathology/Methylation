@@ -224,7 +224,8 @@ GetOutClass <- function(is450k, Mset_ba, Mset){
     out <- as.data.frame(out)
     subVal_int <- GetOutScore(out)
     out$Interpretation = c(subVal_int,"","","","")
-    return(list("out"=out,"idx"=idx))
+    out_class_family <- GetOutFamily(is450k, Mset_ba, Mset)
+    return(list("out"=out,"idx"=idx, "out_class_family"=out_class_family))
 }
 
 GetV12score <- function(RGset, FFPE=NULL){
