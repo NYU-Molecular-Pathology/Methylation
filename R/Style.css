@@ -1,13 +1,26 @@
-#wrapper {
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    padding: 15px
+}
+
+h1.title {
+    color: white;
+    background-image: linear-gradient(to right, indigo, indigo, indigo, white, white);
+    border-radius: 18px;
+    padding: 5px;
+    border-spacing: 5px
+}
+
+.wrapper {
     width: 600px;
     float: right;
     position: absolute;
     top: 0;
     right: 0;
-    padding: 10px;
+    padding: 10px
 }
 
-#second {
+.second {
     float: right;
     overflow: auto;
     position: absolute;
@@ -16,22 +29,8 @@
     padding: 10px;
 }
 
-h1.title {
-    color: white;
-    background-image: linear-gradient(to right, indigo, indigo, indigo, white, white);
-    border-radius: 18px;
-    padding: 5px;
-    border-spacing: 5px;
-}
-
-
 h3 {
     color: indigo;
-}
-
-body {
-    font-family: Arial, Helvetica, sans-serif;
-    padding: 15px
 }
 
 hr.dashed {
