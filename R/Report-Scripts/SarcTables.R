@@ -42,7 +42,7 @@ GetSarcPred <- function(predRaw){
     oo <- order(predTop[,1], decreasing = T)
     predTop <- predTop[oo,1:2]
     predTop <- predTop[2:6,1:2]
-    predTop[1:5,1] <- as.character(round(pmax(pmin(predTop[1:5,1],1-1e-4),1e-4),4))
+    predTop[1:3,1] <- as.character(round(pmax(pmin(predTop[1:3,1],1-1e-4),1e-4),4))
     colnames(predTop) <- c("Other Top Scores", "Class")
     predTop$Name <- sarc.v12b6::reflist[match(predTop$Class, sarc.v12b6::reflist$internal_identifier),"name"]
     rownames(predTop) <- NULL
@@ -66,7 +66,7 @@ PredTopTable <- function(predLi){
         knitr::kable("html",c(booktabs = T, escape = F, linesep = ""),align='clc') %>%
         kableExtra::kable_styling(kgb, full_width = F, position="left") %>%
         kableExtra::row_spec(row = 0, font_size = 12, background = "rgb(211, 211, 211)", color = "black") %>%
-        kableExtra::row_spec(row = c(1:5), font_size = 11)
+        kableExtra::row_spec(row = c(1:3), font_size = 11)
     return(pt)
 }
 
