@@ -88,9 +88,9 @@ options(scipen = 5)
 require("compiler")
 supM <- function(objTing){return(suppressMessages(suppressWarnings(objTing)))}
 assign(x = "supM", value = supM, envir = .GlobalEnv)
-supM(compiler::enableJIT(3))
+#supM(compiler::enableJIT(3))
 supM(compiler::compilePKGS(enable = TRUE))
-supM(compiler::setCompilerOptions(suppressAll = TRUE, optimize = 3))
+#supM(compiler::setCompilerOptions(suppressAll = TRUE, optimize = 3))
 
 if(getRversion() >= 4.0){ #Sys.getenv("RSTUDIO") == "1" && !nzchar(Sys.getenv("RSTUDIO_TERM")) &&
     doParallel::registerDoParallel(parallel::detectCores() - 2)
