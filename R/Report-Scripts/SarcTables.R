@@ -48,3 +48,23 @@ GetSarcPred <- function(predRaw){
     des <- sarc.v12b6::reflist[match(pred$Predicted, sarc.v12b6::reflist$internal_identifier),"description"]
     return(list("des"=des, "pred"=pred, "predTop"=predTop))
 }
+
+PredTable <- function(predLi){
+    kgb <- c("striped", font_size = 9, bootstrap_options = c("bordered"))
+    pt <- predLi$pred %>% 
+        knitr::kable("html",c(booktabs = T, escape = F, linesep = ""),align='clc') %>%
+        kableExtra::kable_styling(kgb, full_width = F, position="float_left") %>%
+        kableExtra::row_spec(row = 0, font_size = 12, background = "rgb(220, 208, 255)", color = "black") %>%
+        kableExtra::row_spec(row = 1, font_size = 11)
+    return(pt)
+}
+
+PredTopTable <- function(predLi){
+    kgb <- c("striped", font_size = 9, bootstrap_options = c("bordered"))
+    pt <- predLi$predTop %>% 
+        knitr::kable("html",c(booktabs = T, escape = F, linesep = ""),align='clc') %>%
+        kableExtra::kable_styling(kgb, full_width = F, position="left") %>%
+        kableExtra::row_spec(row = 0, font_size = 12, background = "rgb(211, 211, 211)", color = "black") %>%
+        kableExtra::row_spec(row = c(1:5), font_size = 11)
+    return(pt)
+}
