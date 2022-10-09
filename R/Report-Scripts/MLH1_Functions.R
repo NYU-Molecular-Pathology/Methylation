@@ -89,5 +89,5 @@ Mlh1Pipeline <- function(RGset) {
     beta.matrix = getBeta(ratioSet)
     theMlhplot <- renderPlot(beta.matrix, clin.res)
     mlhP <- getPlotTable(clin.data = clin.res)
-    return(list("theMlhplot"=theMlhplot, "mlhP"=mlhP))
+    return(list("theMlhplot"=theMlhplot, "mlhP"=drawPlotTab(mlhP)))
 }
