@@ -81,14 +81,13 @@ drawPlotTab <- function(mlhP){
     return(theMlhTab)
 }
 
-Mlh1Pipeline <- function(ratioSet=NULL, clin.res=NULL, getFig = F) {
-    if (getFig == T) {
-        par(mar = c(5, 6, 4, 1) + .1)
-        beta.matrix = getBeta(ratioSet)
-        theMlhplot <- renderPlot(beta.matrix, clin.res)
-        return(theMlhplot)
-    } else{
-        mlhP <- getPlotTable(clin.data = clin.res)
-        return(mlhP)
-    }
+Mlh1Pipeline <- function(RGset) {
+    Mset = minfi::preprocessIllumina(RGset, bg.correct = TRUE, normalize = "controls")
+    ratioSet = ratioConvert(Mset, what = "both", keepCN = FALSE)
+    clin.res <- GetMLH1Data(ratioSet, RGset)
+    par(mar = c(5, 6, 4, 1) + .1)
+    beta.matrix = getBeta(ratioSet)
+    theMlhplot <- renderPlot(beta.matrix, clin.res)
+    mlhP <- getPlotTable(clin.data = clin.res)
+    return(list("theMlhplot"=theMlhplot, "mlhP"=mlhP))
 }
