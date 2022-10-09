@@ -31,8 +31,12 @@ h1.title {
 }
 
 h3 {
-    color: indigo;
-    font-size: 13pt
+    color: #fff;
+    background-image: linear-gradient(to right,indigo,indigo,indigo,#fff,#fff);
+    border-radius: 18px;
+    padding: 5px;
+    font-size: 13pt;
+    border-spacing: 5px
 }
 
 hr.dashed {
@@ -87,16 +91,16 @@ div.blanched {
     font-size: 16px
 }
     
-caption.unidcap {
+caption.unidcap::after {
     font-size:12px;
     content:"UniD is used to predict other genomic information, including:"
 }
-p.unidtxt {
+p.unidtxt::after {
     font-size:11px;
     content: "Chromosome 1p/19q co-deletion status; (2) IDH mutation status; (3) ATRX mutation status; (4) TERT promoter mutation status; (5) TCGA gene expression subtype; (6) MGMT expression level by tumor. When applying the prediction models, missing values may exist in the input data. The number of missing values are checked. If high proportion of input data are missing values, the predicted results may have quality issues."
 }
 
-p.implements {
+p.implements::after {
     color:red;
     font-weight: bold;
     font-size:10px;
