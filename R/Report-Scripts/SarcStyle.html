@@ -96,7 +96,7 @@ div.blanched {
     content: "Chromosome 1p/19q co-deletion status; (2) IDH mutation status; (3) ATRX mutation status; (4) TERT promoter mutation status; (5) TCGA gene expression subtype; (6) MGMT expression level by tumor. When applying the prediction models, missing values may exist in the input data. The number of missing values are checked. If high proportion of input data are missing values, the predicted results may have quality issues."
 }
 
-p.implements::before {
+p.implements {
     color:red;
     font-weight: bold;
     font-size:10px;
@@ -114,7 +114,7 @@ p.seemgmt::after {
     content: "see: Pierre Bady et al. *MGMT methylation analysis of glioblastoma on the Infinium methylation BeadChip identifies two distinct CpG regions associated with gene silencing and outcome, yielding a prediction model for comparisons across datasets, tumor grades, and CIMP-status.* Acta Neuropathologica, p.547-560, Number 4, 2012."
 }
     
-.unidtypes {
+p.unidtypes::after {
     font-size:11px;
     content: '"C_prob", "M_prob", and "P_prob" indicate TCGA gene expression subtype prediction, including: Classical/C, Mesenchymal/M, and Proneural/P.'
 }
