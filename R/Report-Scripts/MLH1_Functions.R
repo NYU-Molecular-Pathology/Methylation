@@ -1,4 +1,4 @@
-get.clinical.data = function(ratioSet, RGset){
+GetMLH1Data = function(ratioSet, RGset){
     #Output is DF with sample information, betas for relevant MLH1 loci
     MLH1_CGIDS = c("cg23658326","cg11600697","cg21490561","cg00893636")
     mlh.b = minfi::getBeta(ratioSet)[MLH1_CGIDS,]
@@ -59,34 +59,12 @@ sanitizeDense <- function(beta.matrix){
 
 ## Print out the Plotly for Mlh1 ----------------------------------------------------------
 renderPlot <- function(beta.matrix, clin.res) {
-    clin.res <- clin.res[2:5]
+    clinVals <- as.data.frame(t(clin.res[2:5]))
+    df <- data.frame(x=clinVals[,1], y=c(1, 0.9, 0.8, 0.7), Probe.Names=rownames(clinVals))
     density <- sanitizeDense(beta.matrix)
-    yTall = 1
-    colNames <- c("cg23658326.MLH1", "cg11600697.MLH1", "cg21490561.MLH1", "cg00893636.MLH1")
-    fl1 <- list(size = 16, face = "bold")
-    fl2 <- list(family = "Arial, sans-serif", size = 20, color = "black")
-    fig <-
-        plotly::plot_ly(
-            x = ~density$x, y = ~density$y,
-            type = 'scatter', mode = 'lines',
-            name = "Beta Values", showlegend = F) %>%
-        plotly::layout(
-            xaxis = list(title = 'Beta Values'),
-            yaxis = list(title = 'Density')
-        )
-    for (prd in colNames) {
-        clr = clin.res[1, prd]
-        txtL <- paste0(names(clin.res[prd]), round(clr, digits = 3))
-        fig <- fig %>%
-            plotly::add_segments(
-                x = clr, y = 0, line = list(width = 15), yend = yTall,
-                xend = clr, name = txtL, hoverinfo = txtL, showlegend = T
-            )
-        yTall <- yTall - 0.1
-    }
-    a <- list(titlefont = fl2, showticklabels = TRUE, tickfont = list(size = 16))
-    lal <- list(orientation = "v", x = 0.08, y = 1)
-    fig <- fig %>% plotly::layout(xaxis = a, yaxis = a, showlegend = T, legend = lal)
+    fig <- ggplot(df) + geom_bar(aes(x, y, fill = Probe.Names), width = 0.05, stat = 'identity') +
+        geom_line(density, mapping= aes(x=x, y=y)) + ggtitle("Probe Distribution") +
+        xlab('Beta Values') + ylab('Density') + theme(panel.background = element_blank())
     return(suppressWarnings(fig))
 }
 
@@ -103,10 +81,9 @@ drawPlotTab <- function(mlhP){
     return(theMlhTab)
 }
 
-pipeline = function(ratioSet, RGset, getFig = F) {
-    clin.res <- get.clinical.data(ratioSet, RGset)
-    par(mar = c(5, 6, 4, 1) + .1)
+Mlh1Pipeline <- function(ratioSet=NULL, clin.res=NULL, getFig = F) {
     if (getFig == T) {
+        par(mar = c(5, 6, 4, 1) + .1)
         beta.matrix = getBeta(ratioSet)
         theMlhplot <- renderPlot(beta.matrix, clin.res)
         return(theMlhplot)
