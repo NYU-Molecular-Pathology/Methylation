@@ -63,19 +63,19 @@ renderPlot <- function(beta.matrix, clin.res) {
     df <- data.frame(x=clinVals[,1], y=c(1, 0.9, 0.8, 0.7), Probe.Names=rownames(clinVals))
     density <- sanitizeDense(beta.matrix)
     fig <- ggplot(df) + geom_bar(aes(x, y, fill = Probe.Names), width = 0.05, stat = 'identity') +
-        geom_line(density, mapping= aes(x=x, y=y)) + ggtitle("Probe Distribution") +
+        geom_line(density, mapping= aes(x=x, y=y)) +
         xlab('Beta Values') + ylab('Density') + theme(panel.background = element_blank())
     return(suppressWarnings(fig))
 }
 
 drawPlotTab <- function(mlhP){
     btso = c("bordered")
-    kgb <- c("striped",font_size = 14, bootstrap_options = btso, position = "float_left")
+    kgb <- c("striped",font_size = 12, bootstrap_options = btso, position = "left")
     txtc = "text-align:center;"
     be = c(booktabs = T, escape = F, linesep = "")
     theMlhTab <- 
         mlhP %>% knitr::kable("html", be, align = 'clc') %>%
-        kableExtra::kable_styling(kgb, full_width = F, position = "float_left") %>%
+        kableExtra::kable_styling(kgb, full_width = F, position = "left") %>%
         kableExtra::column_spec(column = 2, background = "rgb(204, 255, 204)", extra_css = txtc) %>%
         kableExtra::column_spec(column = 2, bold = T, border_right = T)
     return(theMlhTab)
