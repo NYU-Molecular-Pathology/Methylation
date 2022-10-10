@@ -65,6 +65,8 @@ loop_targets <- function(targets, reportMd="/Volumes/CBioinformatics/Methylation
         message("Sample ", i, " of ", nrow(targets))
         sample = 1
         dat <- GetTargetData(data = targets[i,])
+        message("dat:")
+        message(paste(capture.output(dat), collapse="\n"))
         KnitReportRmd(dat, token = gb$ApiToken, reportMd)
     }
 }
