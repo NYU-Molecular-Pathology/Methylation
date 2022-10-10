@@ -311,6 +311,248 @@ new.ggplotly <-
         }
     }
 
+NewGgplotly <- function (Mset, sex, sampleID) {
+        require("mnp.v11b6")
+        require(compiler)
+        #        compiler::enableJIT(3)
+        compiler::compilePKGS(enable = TRUE)
+        #       compiler::setCompilerOptions(suppressAll = TRUE, optimize = 3)
+        #ovDataPath <- paste(path.package("mnp.v11b6"), "/ext/ovgenes.RData", sep = "")
+        #load(ovDataPath)
+        newOvGenes <- gb$GetOvAnnot()
+        xx <- gb$GetCNxx(Mset, sex, sampleID)
+        ylim = c(-2, 2)
+        bin.ratio <- xx@bin$ratio - xx@bin$shift
+        bin.ratio[bin.ratio < ylim[1]] <- ylim[1]
+        bin.ratio[bin.ratio > ylim[2]] <- ylim[2]
+        .cumsum0 <- function(x,
+                             left = TRUE,
+                             right = FALSE,
+                             n = NULL) {
+            xx <- c(0, cumsum(as.numeric(x)))
+            if (!left) {
+                xx <- xx[-1]
+            }
+            if (!right) {
+                xx <- head(xx, -1)
+            }
+            names(xx) <- n
+            xx
+        }
+        chrX = TRUE
+        chrY <- ifelse(sex == "male", T, F)
+        chr <- xx@anno@genome$chr
+        chr.cumsum0 <- .cumsum0(xx@anno@genome[chr, "size"], n = chr)
+        if (!chrX &
+            is.element("chrX", names(chr.cumsum0))) {
+            chr.cumsum0["chrX"] <- NA
+        }
+        if (!chrY &
+            is.element("chrY", names(chr.cumsum0))) {
+            chr.cumsum0["chrY"] <- NA
+        }
+        x <-
+            chr.cumsum0[as.vector(seqnames(xx@anno@bins))] + (xx@anno@bins)$midpoint
+        chrs <- .cumsum0(xx@anno@genome[chr, "size"], right = TRUE)
+        chrspq <-
+            .cumsum0(xx@anno@genome[chr, "size"]) + xx@anno@genome[chr, "pq"]
+        tickl <-
+            .cumsum0(xx@anno@genome[chr, "size"]) + xx@anno@genome[chr, "size"] / 2
+        cols2 = c(
+            "firebrick4",
+            "firebrick2",
+            "red",
+            "lightpink",
+            "darkgrey",
+            "darkgrey",
+            "lightgreen",
+            "green",
+            "green3",
+            "darkgreen"
+        )
+        bin.ratio.cols <- apply(colorRamp(cols2)((bin.ratio + max(abs(
+            ylim
+        ))) / (2 * max(abs(
+            ylim
+        )))), 1,
+        function(x)
+            rgb(x[1], x[2], x[3], maxColorValue = 255))
+        df <- data.frame(x, bin.ratio, bin.ratio.cols)
+        xs <-
+            xx@seg$summary$loc.start + chr.cumsum0[xx@seg$summary$chrom]
+        xe <- xx@seg$summary$loc.end + chr.cumsum0[xx@seg$summary$chrom]
+        ys <- xx@seg$summary$seg.median - xx@bin$shift
+        ye <- xx@seg$summary$seg.median - xx@bin$shift
+        df2 <- data.frame(xs, xe, ys, ye)
+        detail.ratio <- xx@detail$ratio - xx@bin$shift
+        detail.ratio[detail.ratio < ylim[1]] <- ylim[1]
+        detail.ratio[detail.ratio > ylim[2]] <- ylim[2]
+        detail.ratio.above <-
+            (detail.ratio > 0.15 & detail.ratio < 1) | detail.ratio < -0.15
+        detail.x <-
+            start(xx@anno@detail) + (end(xx@anno@detail) - start(xx@anno@detail)) /
+            2 + chr.cumsum0[as.vector(seqnames(xx@anno@detail))]
+        df3 <-
+            data.frame(detail.ratio, detail.x, names = (xx@anno@detail)$name)
+        dra <- detail.ratio.above
+        
+        dra <- data.frame(
+            Gain = c(detail.ratio > 0.15 & detail.ratio < 1.5),
+            Loss = c(detail.ratio < -0.15)
+        )
+        gainLossValues <- GetCNVTables(dra)
+    
+        p <- ggplot(df, aes(x = x, y = bin.ratio)) +
+            geom_point(colour = bin.ratio.cols, size = 1) +
+            geom_vline(
+                xintercept = chrs,
+                color = "grey44",
+                size = 1,
+                alpha = 0.5
+            ) +
+            geom_vline(
+                xintercept = chrspq,
+                color = "black",
+                size = 0.5,
+                linetype = "dashed",
+                alpha = 0.8
+            ) +
+            ylim(ylim[1], ylim[2]) +
+            geom_segment(
+                aes(
+                    x = xs,
+                    y = ys,
+                    xend = xe,
+                    yend = ye
+                ),
+                size = 0.5,
+                data = df2,
+                color = "blue"
+            ) +
+            xlab("Chromosomes") + ylab("Bin Ratios") +
+            geom_point(
+                aes(x = detail.x, y = detail.ratio),
+                size = ifelse(
+                    test = dra,
+                    yes = 2,
+                    no = 1.5
+                ),
+                alpha = 0.9,
+                data = df3,
+                color = ifelse(
+                    test = dra,
+                    yes = "blue",
+                    no = "black"
+                )
+            ) +
+            scale_x_continuous(breaks = tickl, labels = c(chr)) +
+            scale_y_continuous(breaks = seq(ylim[1], ylim[2], by = 0.25)) +
+            theme(
+                axis.text.x = element_text(size = 12, angle = 90),
+                axis.text.y = element_text(size = 14)
+            ) +
+            theme_light() +
+            theme(
+                panel.border = element_blank(),
+                panel.grid.major = element_blank(),
+                panel.grid.minor = element_blank()
+            ) +
+            theme_bw() +
+            theme(
+                axis.text.x = element_text(size = 12, angle = 90),
+                axis.text.y = element_text(size = 14),
+                axis.title.y = element_text(size = 14),
+                axis.title.x = element_text(size = 14)
+            )
+        
+        ggpb <- suppressMessages(suppressWarnings(
+            plotly::plotly_build(plotly::ggplotly(p)) %>%
+                plotly::layout(
+                    xaxis = list(showgrid = F),
+                    yaxis = list(showgrid = F)
+                )
+        ))
+        
+        # Annotate Hover Probes
+        if (length(xx@bin$ratio) >= 25666) {
+            ggpb$x$data[[1]]$text <- paste0(
+                seqnames(xx@anno@bins),
+                "<br>",
+                "start: ",
+                start(xx@anno@bins),
+                "<br>",
+                "end: ",
+                end(xx@anno@bins),
+                "<br>",
+                "probes: ",
+                (xx@anno@bins)$probes,
+                "<br>",
+                "Chr: ",
+                xx@anno@bins@ranges@NAMES,
+                "<br>",
+                "Genes: ",
+                newOvGenes[1:length(xx@bin$ratio)]
+            )
+        } else {
+            ggpb$x$data[[1]]$text <- paste0(
+                seqnames(xx@anno@bins),
+                "<br>",
+                "start: ",
+                start(xx@anno@bins),
+                "<br>",
+                "end: ",
+                end(xx@anno@bins),
+                "<br>",
+                "probes: ",
+                (xx@anno@bins)$probes,
+                "<br>",
+                "Genes: ",
+                ovgenes450k
+            )
+        }
+        ggpb$x$data[[2]]$text <- ""
+        ggpb$x$data[[3]]$text <- ""
+        ggpb$x$data[[4]]$text <- paste0(
+            xx@seg$summary$chrom,
+            "<br>",
+            "start: ",
+            xx@seg$summary$loc.start,
+            "<br>",
+            "end: ",
+            xx@seg$summary$loc.end,
+            "<br>",
+            "median: ",
+            xx@seg$summary$seg.median
+        )
+        
+        ggpb$x$data[[5]]$text <- (xx@anno@detail)$name
+        
+        # Custom Detail Annotations
+        ggpb <- ggpb %>% add_annotations(
+            x = detail.x,
+            y = detail.ratio,
+            text = names(detail.ratio),
+            textangle = 60,
+            showarrow = T,
+            arrowwidth = 0.75,
+            xref = "x",
+            yref = "y",
+            size = 0.5,
+            arrowhead = 3,
+            ax = -20,
+            ay = -60,
+            arrowsize = 0.5,
+            color = "darkgrey",
+            #font = list(size = 15, color = "blue", face = "bold"),
+            bgcolor = "white",
+            opacity = 0.85
+        ) %>%
+            ggplotly(tooltip = "text") %>%
+            plotly::style(hoverlabel = list(bgcolor = "blue"))
+        thePlot <- ggpb %>% suppressWarnings(toWebGL())
+        return(list("thePlot"=thePlot,"gainLossValues"=gainLossValues))
+    
+}
 
 MNPciplot_mgmt <- function(Mset, sample = 1) {
     pred <- MNPpredict_mgmt(Mset[, sample])
