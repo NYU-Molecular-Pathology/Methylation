@@ -33,6 +33,8 @@ KnitReportRmd <- function(dat, token, reportMd){
     message(paste0(capture.output(dat), collapse = "\n"))
     RGsetEpic <- suppressWarnings(gb$getRGset(getwd(), dat$senLi))
     RGset <- RGsetEpic[,1]
+    assign("RGset", RGset)
+    sample = 1
     rmarkdown::render(
         input = reportMd,
         output_format = "html_document",
@@ -63,10 +65,7 @@ loop_targets <- function(targets, reportMd="/Volumes/CBioinformatics/Methylation
     gb$LoadMnpData(F)
     for(i in 1:nrow(targets)){
         message("Sample ", i, " of ", nrow(targets))
-        sample = 1
         dat <- GetTargetData(data = targets[i,])
-        message("dat:")
-        message(paste(capture.output(dat), collapse="\n"))
         KnitReportRmd(dat, token = gb$ApiToken, reportMd)
     }
 }
