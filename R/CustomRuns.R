@@ -1,6 +1,6 @@
 gb <- globalenv(); assign("gb", gb)
 reportMd <- "/Volumes/CBioinformatics/Methylation/report_v12.Rmd"
-sarcRmdFile = "~/Desktop/SarcReport.Rmd"
+sarcRmdFile = "/Volumes/CBioinformatics/Methylation/SarcReport.Rmd"
 GetLocalData <- function(rg){
     dat <- data.frame(
         sampleID = paste0(rg),
