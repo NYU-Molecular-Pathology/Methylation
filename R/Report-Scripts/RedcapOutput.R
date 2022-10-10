@@ -11,6 +11,8 @@ makePost <- function(dfNewRed, params){
         data = datarecord, returnFormat = 'csv', overwriteBehavior='normal'
     )
 }
+supM <- function(objTing){return(suppressMessages(suppressWarnings(objTing)))}
+gb <- globalenv(); assign("gb", gb)
 
 writeRedcapPred <- function(run_id, dfNewRed) {
     redfolder <- file.path("~","Desktop", run_id)
@@ -140,3 +142,12 @@ GetRedcapDF <- function(gb) {
     
     return(dfNewRed)
 }
+
+TryREDCap <- function(gb){
+    gb$supM(tryCatch(
+    gb$writeRedcapPred(gb$dat$run_id, dfNewRed = gb$GetRedcapDF(gb)),
+    error = function(e) {
+        gb$DebugDataFrame(e, gb)
+    }
+))
+    }
