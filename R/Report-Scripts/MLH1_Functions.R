@@ -25,7 +25,7 @@ GetMLH1Data = function(ratioSet, RGset){
     m.reslt[pos.loci == 3] = "INDETERMINATE"
     
     all.data = data.frame(
-        Sample_Name = sample,
+        Sample_Name = 1,
         cg23658326.MLH1 = mlh.b[1, ], cg11600697.MLH1 = mlh.b[2, ],
         cg21490561.MLH1 = mlh.b[3, ], cg00893636.MLH1 = mlh.b[4, ],
         MLH1.pos.loci = pos.loci, m.reslt = m.reslt,
