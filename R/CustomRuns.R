@@ -190,6 +190,8 @@ PrepareRun <- function(token, baseFolder=NULL, runID, runLocal=F, rdInput=F){
     }
 }
 
+
+
 SarcomaReport <- function(RGset, sampleID, output_dir = getwd()) {
     output_file <- paste0(sampleID, "_sarc.html")
     RGset <- RGset[,1]
@@ -224,3 +226,17 @@ MakeSarcomaReport <- function(worksheet = "samplesheet.csv", targets = NULL) {
         SarcomaReport(RGset, sampleID = targets[samIdx, 1])
     }
 }
+
+StartRun <- function(selectRDs = NULL, emailNotify = T, redcapUp = T) {
+    gb$msgFunName(paste0(mainHub,"methylExpress.R"),"startRun")
+    # Re-order sample report generation for priority
+    if (!is.null(selectRDs)) {runOrder <- gb$reOrderRun(selectRDs) }else{runOrder <- NULL}
+    gb$makeReports.v11b6(
+        skipQC = F,            # Don't skip QC generation
+        email = emailNotify,   # to email after Run complete
+        cpReport = F,          # Flag to copy files to network drive
+        selectSams = runOrder, # Prioritize specific RD-numbers
+        redcapUp = redcapUp    # Flag to import files to REDCap
+    )
+}
+
