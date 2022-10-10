@@ -49,6 +49,8 @@ KnitReportRmd <- function(dat, token, reportMd){
 }
 
 loop_targets <- function(targets, reportMd="/Volumes/CBioinformatics/Methylation/report_v12.Rmd"){
+    require(compiler)
+    enableJIT(3)
     mainPage = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/Report-Scripts/"
     scripts <- c("ClassTables.R", "MLH1_Functions.R", "PipeLineU.R",
                  "RedcapOutput.R", "TsneFunctions.R", "cnvggplotly.R")
