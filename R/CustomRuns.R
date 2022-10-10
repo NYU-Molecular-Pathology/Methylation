@@ -1,5 +1,6 @@
 gb <- globalenv(); assign("gb", gb)
-
+reportMd <- "/Volumes/CBioinformatics/Methylation/report_v12.Rmd"
+sarcRmdFile = "~/Desktop/SarcReport.Rmd"
 GetLocalData <- function(rg){
     dat <- data.frame(
         sampleID = paste0(rg),
@@ -209,6 +210,17 @@ PromptRDnumbers <- function(){
         message("No valid RD-numbers entered! Try again.")
         PromptRDnumbers()
     }else(return(rd_numbers))
+}
+
+MakeBlankRun <- function(rd_numbers, token, outputFi="samplesheet.csv"){
+    stopifnot(length(rd_numbers)>=1 & length(rd_numbers)!=0 & stringr::str_detect(rd_numbers[1],"RD-"))
+    if(!exists("grabRDCopyIdat")){
+        idatScript <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/pullRedcap_manual.R"
+        message("Sourcing: ", idatScript)
+        devtools::source_url(idatScript)
+    }
+    gb$grabRDCopyIdat(rd_numbers, token, outputFi=outputFi)
+    return(as.data.frame(read.csv(outputFi)))
 }
 
 MakeSarcomaReport <- function(worksheet = "samplesheet.csv", targets = NULL) {
