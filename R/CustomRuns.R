@@ -28,17 +28,41 @@ GetTargetData <- function(data) {
     return(runDt)
 }
 
-loop_targets <- function(targets, reportMd="/Volumes/CBioinformatics/Methylation/report_v12.Rmd"){
-    gb$moveSampleSheet(gb$baseFolder, gb$runID)
-    for(i in 1:nrow(targets)){
-        dat <- GetTargetData(data = targets[i,])
-        message(paste0(capture.output(dat), collapse = "\n"))
-        RGsetEpic <- suppressWarnings(gb$getRGset(getwd(), dat$senLi))
-        rmarkdown::render(
-            reportMd,"html_document", dat$outFi, getwd(), quiet = T,
-            output_options = c("self_contained = TRUE"),
-            params = list(token = gb$ApiToken, rundata = dat, RGsetEpic=RGsetEpic, knitDir=getwd())
+KnitReportRmd <- function(dat, token, reportMd){
+    message(paste0(capture.output(dat), collapse = "\n"))
+    RGsetEpic <- suppressWarnings(gb$getRGset(getwd(), dat$senLi))
+    RGset <- RGsetEpic[,1]
+    rmarkdown::render(
+        input = reportMd,
+        output_format = "html_document",
+        output_file = dat$outFi,
+        output_dir = getwd(),
+        quiet = F,
+        output_options = c("self_contained = TRUE"),
+        params = list(
+            token = token,
+            rundata = dat,
+            RGsetEpic = RGsetEpic,
+            knitDir = getwd()
         )
+    )
+}
+
+loop_targets <- function(targets, reportMd="/Volumes/CBioinformatics/Methylation/report_v12.Rmd"){
+    mainPage = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/Report-Scripts/"
+    scripts <- c("ClassTables.R", "MLH1_Functions.R", "PipeLineU.R",
+                 "RedcapOutput.R", "TsneFunctions.R", "cnvggplotly.R")
+    scripts <- paste0(mainPage, scripts)
+    lapply(scripts, function(i) {message("Sourcing: ", i);devtools::source_url(i)})
+    gb$moveSampleSheet(gb$baseFolder, gb$runID)
+    gb$TryLoadUniD()
+    try(silent=T, unloadNamespace("sarc.v12b6"))
+    gb$LoadMnpData(F)
+    for(i in 1:nrow(targets)){
+        message("Sample ", i, " of ", nrow(targets))
+        sample = 1
+        dat <- GetTargetData(data = targets[i,])
+        KnitReportRmd(dat, token = gb$ApiToken, reportMd)
     }
 }
 
@@ -125,12 +149,9 @@ CheckBaseDir <- function(baseFolder){
     if(is.null(baseFolder)){
         gb$baseDir <- gb$methDir <- gb$baseFolder <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
     }else{gb$baseDir <- gb$methDir <- gb$baseFolder <- baseFolder}
-    if(!is.null(baseFolder)){
-        isDesktop <- stringr::str_detect(baseFolder, "Desktop")
-    } else{
-        isDesktop<-F
-    }
-    if(isDesktop==T) {
+    isDesktop <- stringr::str_detect(baseFolder, "Desktop")
+    if(length(isDesktop)!=0)
+    if(is.null(baseFolder) & isDesktop==T) {
         warning("Trying to run methylation from Desktop working directory is not allowed")
         message("Try setting baseFolder to '~/Documents/' instead")
         stopifnot(isDesktop == F)
@@ -148,4 +169,56 @@ SetBaseFolder <- function(token, baseFolder, runID){
     gb$setVar("ApiToken", token) # assign the ApiToken & print params
     setwd(file.path(baseFolder, runID))
     return(baseFolder)
+}
+
+PrepareRun <- function(token, baseFolder=NULL, runID, runLocal=F, rdInput=F){
+    if(runLocal==F){
+        gb$checkMounts()
+        gb$checkValidRun(runID)
+        gb$SetBaseFolder(token, baseFolder, runID)
+        gb$copyWorksheetFile(runID = runID) # copies the xlsm file
+        gb$readSheetWrite(runID = runID) # reads xlsm and generates input .csv samplesheet
+        gb$get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
+        gb$moveSampleSheet(baseFolder, runID) #copies outputs temp to desktop for QC.Rmd
+    } else{
+        gb$SetBaseFolder(token, baseFolder, runID)
+        if(rdInput==F){
+            gb$RunLocalIdats(runID, token)
+        }
+    }
+}
+
+SarcomaReport <- function(RGset, sampleID, output_dir = getwd()) {
+    output_file <- paste0(sampleID, "_sarc.html")
+    RGset <- RGset[,1]
+    rmarkdown::render(input= gb$sarcRmdFile, output_dir = output_dir, output_file = output_file)
+}
+
+PromptRDnumbers <- function(){
+    message("Type your RD-numbers without quotes below")
+    message("Separate with spaces & press Enter twice to exit")
+    rd_numbers <- scan(what = " ")
+    message("Values entered:\n", rd_numbers)
+    rd_numbers <- rd_numbers[which(grepl(rd_numbers, pattern="^RD-"))]
+    message("Valid RD-numbers entered:\n", paste0(capture.output(rd_numbers), collapse = '\n' ))
+    if(length(rd_numbers)==0) {
+        message("No valid RD-numbers entered! Try again.")
+        PromptRDnumbers()
+    }else(return(rd_numbers))
+}
+
+MakeSarcomaReport <- function(worksheet = "samplesheet.csv", targets = NULL) {
+    if (is.null(targets)) {
+        if (file.exists(worksheet)) {
+            targets <- as.data.frame(read.csv(worksheet))
+        } else{
+            rd_numbers <- PromptRDnumbers()
+            targets <- MakeBlankRun(rd_numbers, gb$token, worksheet)
+            }
+    }
+    for (samIdx in 1:nrow(targets)) {
+        message("Running ", samIdx, " of ", nrow(targets))
+        RGset <- suppressWarnings(minfi::read.metharray(targets$Basename[samIdx]))
+        SarcomaReport(RGset, sampleID = targets[samIdx, 1])
+    }
 }
