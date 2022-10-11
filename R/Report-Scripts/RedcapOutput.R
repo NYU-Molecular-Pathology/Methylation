@@ -94,7 +94,7 @@ DebugDataFrame <-function(e, gb){
     mgmtStat <- fixNull(gb$mgmtValues$mgmtVal)
     mlh1_status <- fixNull(paste0(gb$mlhP[[1]][1]))
     mlh1_pos_loci <- fixNull(paste0(gb$mlhP[[1]][2]))
-    
+    run_id <- fixNull(paste(gb$dat$run_id))
     message("sampleID: ", gb$sampleID)
     message("paste(dat$bnumber): ", paste(gb$dat$bnumber))
     message("colnames(RGset): ", colnames(gb$RGset))
@@ -109,7 +109,7 @@ DebugDataFrame <-function(e, gb){
     message("mlh1_pos_loci: ", mlh1_pos_loci)
     message("second_tech: ", paste(gb$dat$tech2))
     message("primary_tech: ", paste(gb$dat$tech))
-    message("run_id: ",  gb$dat$run_id)
+    message("run_id: ", run_id)
     message("mlh1_pos_loci: ", paste(gb$dat$mp_number))
 }
 
