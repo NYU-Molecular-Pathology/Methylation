@@ -1,5 +1,3 @@
-#!/usr/bin/env Rscript
-
 gb <- globalenv(); assign("gb", gb)
 
 MNPcnv450kNew <- function(Mset, sex = NULL, ...) {
@@ -42,10 +40,8 @@ GetCNxx <- function(Mset, sex, sampleID) {
 }
 
 GetOvAnnot <- function() {
-    cnvUrl <-
-        "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/cnvggplotly.R"
-    githubURL <-
-        "https://github.com/NYU-Molecular-Pathology/Methylation/raw/main/Rdata/newOvGenes.rds"
+    cnvUrl <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/cnvggplotly.R"
+    githubURL <- "https://github.com/NYU-Molecular-Pathology/Methylation/raw/main/Rdata/newOvGenes.rds"
     gb <- globalenv()
     assign("gb", gb)
     tryCatch(
@@ -54,9 +50,7 @@ GetOvAnnot <- function() {
         },
         error = function(e) {
             if (!file.exists("newOvGenes.rds")) {
-                utils::download.file(githubURL,
-                                     file.path(getwd(), "newOvGenes.rds"),
-                                     method = "libcurl")
+                utils::download.file(githubURL, file.path(getwd(), "newOvGenes.rds"), method = "libcurl")
             }
             newOvGenes <- readRDS("newOvGenes.rds")
         }
@@ -86,7 +80,7 @@ NewGgplotly <- function (Mset, sex, sampleID) {
     if (!chrX & is.element("chrX", names(chr.cumsum0))) {chr.cumsum0["chrX"] <- NA}
     if (!chrY & is.element("chrY", names(chr.cumsum0))) {chr.cumsum0["chrY"] <- NA}
     x <- chr.cumsum0[as.vector(seqnames(xx@anno@bins))] + (xx@anno@bins)$midpoint
-
+    
     chrs <- .cumsum0(xx@anno@genome[chr, "size"], right = TRUE)
     chrspq <- .cumsum0(xx@anno@genome[chr, "size"]) + xx@anno@genome[chr, "pq"]
     tickl <- .cumsum0(xx@anno@genome[chr, "size"]) + xx@anno@genome[chr, "size"] / 2
@@ -109,7 +103,7 @@ NewGgplotly <- function (Mset, sex, sampleID) {
     df3 <- data.frame(detail.ratio, detail.x, names = (xAnno)$name)
     dra <- detail.ratio.above
     et14 <- element_text(size = 14)
-
+    
     p <- 
         ggplot(df, aes(x = x, y = bin.ratio)) + geom_point(colour = bin.ratio.cols, size = 1) +
         geom_vline(xintercept = chrs, color = "grey44", size = 1, alpha = 0.5) +
@@ -123,9 +117,9 @@ NewGgplotly <- function (Mset, sex, sampleID) {
         theme_bw() +
         theme(axis.text.x = element_text(size = 12, angle = 90), axis.text.y = et14,
               axis.title.y = et14, axis.title.x = et14)
-
+    
     ggpb <- plotly::plotly_build(plotly::ggplotly(p)) 
-
+    
     # Annotate Hover Probes
     if (length(xx@bin$ratio) >= 25666) {
         ggpb$x$data[[1]]$text <- paste0(
@@ -152,9 +146,9 @@ NewGgplotly <- function (Mset, sex, sampleID) {
         "<br>", "start: ",xx@seg$summary$loc.start,
         "<br>", "end: ", xx@seg$summary$loc.end, "<br>",
         "median: ", xx@seg$summary$seg.median
-        )
+    )
     ggpb$x$data[[5]]$text <- (xx@anno@detail)$name
-
+    
     # Custom Detail Annotations
     ggpb <- ggpb %>% 
         add_annotations(
@@ -163,7 +157,7 @@ NewGgplotly <- function (Mset, sex, sampleID) {
             size = 0.5, arrowhead = 3, ax = -20, ay = -60, arrowsize = 0.5,
             color = "darkgrey", bgcolor = "white", opacity = 0.85) %>%
         ggplotly(tooltip = "text") %>% plotly::style(hoverlabel = list(bgcolor = "blue"))
-
+    
     # Generate Gain/Loss Table
     dra <- data.frame(Gain = c(detail.ratio > 0.15 & detail.ratio < 1.5), Loss = c(detail.ratio < -0.15))
     gainLossValues <- GetCNVTables(dra)
