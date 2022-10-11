@@ -388,7 +388,7 @@ SuppInfoTable <- function(dat, RGset, msetDat){
     suppinfo <- GetSuppInfo(dat, RGset, msetDat)
     suppinfo <- as.data.frame(t(suppinfo))
     rownames(suppinfo) <- NULL
-    kgb <- c("striped",font_size = 9, bootstrap_options = c("bordered"), position = "float_left")
+    kgb <- c("striped", font_size = 9, bootstrap_options = c("bordered"), position = "float_left")
     totCol <- ncol(suppinfo)
     suppTab <- suppinfo %>% 
     	knitr::kable("html",c(booktabs = T, escape = F, linesep = ""), align='clc') %>%
