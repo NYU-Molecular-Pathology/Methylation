@@ -58,7 +58,10 @@ GetOvAnnot <- function() {
     return(newOvGenes)
 }
 
-NewGgplotly <- function (Mset, sex, sampleID) {
+NewGgplotly <- function (msetDat, dat) {
+    Mset<-msetDat$Mset
+    sex <- msetDat$sex
+    sampleID <- dat$sampleID  
     options(warn = -1)
     newOvGenes <- gb$GetOvAnnot()
     xx <- gb$GetCNxx(Mset, sex, sampleID)
@@ -160,8 +163,8 @@ NewGgplotly <- function (Mset, sex, sampleID) {
     
     # Generate Gain/Loss Table
     dra <- data.frame(Gain = c(detail.ratio > 0.15 & detail.ratio < 1.5), Loss = c(detail.ratio < -0.15))
-    gainLossValues <- GetCNVTables(dra)
-    return(list("thePlot"=ggpb %>% toWebGL(),"gainLossValues"=gainLossValues))
+    gainLoss <- gb$GetCNVTables(dra)
+    return(list("thePlot"=ggpb %>% toWebGL(),"gainLoss"=gainLoss))
 }
 
 MNPciplot_mgmt <- function(Mset, sample = 1) {
