@@ -33,7 +33,8 @@ getScore_cache = compiler::cmpfun(getScores)
 tsne_cache = compiler::cmpfun(MNPtsne2) #tsne_cache <- local(MNPtsne.cmpfun())
 
 
-GetClusterPlot <- function(is450k, Mset_ba, sampleID){
+GetClusterPlot <- function(Mset_ba, sampleID){
+    is450k <- Mset_ba@annotation[["array"]]=="IlluminaHumanMethylationEPIC"
     me.col <- c(
         "#1F78B4","#2980BA","#3388C1","#3D91C8","#4799CF","hotpink","hotpink","hotpink","hotpink",
         "hotpink","hotpink","#58D68D","#8FCDC0","#96D1B3","#9ED5A7","#A6D99B","#AEDD8F","#A9DB82",
