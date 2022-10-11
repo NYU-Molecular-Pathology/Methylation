@@ -79,7 +79,8 @@ supM(library(verbose=F, warn.conflicts = F, quietly = T, package="ggplot2"))
 
 LoadReportPkgs(pkgs, optsLi, chunkOpts)
 
-GetSexMsetBa <- function(is450k, RGset, FFPE=NULL){
+GetSexMsetBa <- function(RGset, FFPE=NULL){
+        is450k <- RGset@annotation[[1]] == "IlluminaHumanMethylation450k"
     if (is450k) {
         library(verbose=F, warn.conflicts = F, quietly = T, package = "IlluminaHumanMethylation450kmanifest")
         library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b4")
