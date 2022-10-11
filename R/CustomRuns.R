@@ -176,8 +176,8 @@ SetBaseFolder <- function(token, baseFolder, runID){
 }
 
 PrepareRun <- function(token, baseFolder=NULL, runID, runLocal=F, rdInput=F){
+    gb$checkMounts()
     if(runLocal==F){
-        gb$checkMounts()
         gb$checkValidRun(runID)
         gb$SetBaseFolder(token, baseFolder, runID)
         gb$copyWorksheetFile(runID = runID) # copies the xlsm file
