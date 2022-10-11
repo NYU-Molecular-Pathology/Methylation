@@ -323,15 +323,13 @@ convert.plots <- function(tumors, pdfList) {
     invisible(lapply(X=1:length(ngsOrder), FUN=function(X){
         pngName <- paste0(tumors$Test_Number[X], ".png")
         pdfFile <- pdfList[ngsOrder[X]]
-        tryCatch(
-            expr = {suppressWarnings(pdftools::pdf_convert(
-                pdfFile, filenames = file.path("cnvpng", pngName),dpi = 300))
-            },
-            error = function(e) {
-                message("There was an error:\n", e,
-                        "\nTry running:\nbrew install fontconfig --universal")
-            }
-        )}))
+        outputFile <- file.path("cnvpng", pngName)
+        if(!file.exists(outputFile)){
+            tryCatch(
+                expr = {suppressWarnings(pdftools::pdf_convert(pdfFile, filenames = outputFile, dpi = 300))},
+                error = function(e) {message(e,"\nTry running:\nbrew install fontconfig --universal")})
+            }}
+        ))
 }
 
 GetMethCnv <- function(params, methDir){
@@ -372,7 +370,7 @@ CopyPdfsPngs <- function(params) {
     pdfList <- list.files(pattern = "*.pdf", recursive = T)
     if (length(pdfList)>0) {
         convert.plots(tumors, pdfList)
-        dir.create(pdfDir)
+        if(!dir.exists(pdfDir)){dir.create(pdfDir)}
         try(fs::file_move(pdfList, pdfDir), silent = T)
     }
 }
