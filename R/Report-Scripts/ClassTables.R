@@ -209,7 +209,8 @@ GetOutScore <- function(out){
     return(subVal_int)
 }
 
-GetOutClass <- function(is450k, Mset_ba, Mset){
+GetOutClass <- function(Mset_ba, Mset){
+        is450k <- Mset_ba@annotation[["array"]] == "IlluminaHumanMethylationEPIC"
     library(verbose=F, warn.conflicts = F, quietly = T, package= "knitr")
     library(verbose=F, warn.conflicts = F, quietly = T, package= "kableExtra")
     library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b6", mask.ok = T)
