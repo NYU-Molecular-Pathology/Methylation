@@ -51,7 +51,8 @@ UniD_loadData <- UniD_load <- function (sampleID, run_id=NULL) {
     return(loading)
 }
 
-PipelineU <- function(sampleID = "NONE", is450k = F, run_id = NULL) {
+PipelineU <- function(sampleID = "NONE", RGset, run_id = NULL) {
+    is450k<-RGset@annotation[[1]] == "IlluminaHumanMethylation450k"
     if(is.null(run_id)){run_id <- "NONE"}
     loading <- suppressWarnings(UniD_loadData(sampleID, run_id))
     outDir <- "."
