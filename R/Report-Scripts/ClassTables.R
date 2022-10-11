@@ -209,7 +209,9 @@ GetOutScore <- function(out){
     return(subVal_int)
 }
 
-GetOutClass <- function(Mset_ba, Mset){
+GetOutClass <- function(msetDat){
+        Mset_ba <- msetDat$Mset_ba
+        Mset <- msetDat$Mset
         is450k <- Mset_ba@annotation[["array"]] == "IlluminaHumanMethylationEPIC"
     library(verbose=F, warn.conflicts = F, quietly = T, package= "knitr")
     library(verbose=F, warn.conflicts = F, quietly = T, package= "kableExtra")
@@ -249,7 +251,7 @@ GetV12score <- function(RGset, FFPE=NULL){
     return(out)
 }
 
-PrintScoreTable <- function(outV12) {
+PrintScoreTable <- function(outV12, dat) {
     btso = c("bordered")
     kgb <- c("striped",font_size = 14, bootstrap_options = btso, position = "left")
     txtc = "text-align:center;"
@@ -257,6 +259,13 @@ PrintScoreTable <- function(outV12) {
     outTable12 <- outV12 %>% mutate_all(as.character) %>% knitr::kable("html", be, align = 'clc') %>%
         kableExtra::kable_styling(kgb, full_width = F, position = "left") %>%
         kableExtra::column_spec(column = 1, background = "palegreen", bold = T, extra_css = txtc)
+    v12Data <- as.data.frame(t(outV12[3:4,]))
+    v12Data$Class_score <- v12Data[2,1]
+    v12Data$Subgroup_score <- v12Data[2,2]
+    v12Data <- v12Data[1,]
+    rownames(v12Data) <- NULL
+    scoreFile <- file.path("~", "Desktop", paste0(dat$run_id,"_v12.csv"))
+    write.table(v12Data, file= scoreFile, row.names=F, col.names=T, append=T, quotes=F)
     return(outTable12)
 }
                            
@@ -344,7 +353,8 @@ GetMgmtPlot <- function(Mset_raw){
     return(list("mgmtVal" = plotmgmt, "mgmtPlot" = mgmtPlot))
 }
 
-GetClassProbTables <- function(out_class_family=NULL, outList=NULL){
+GetClassProbTables <- function(outList){
+        out_class_family=outList$out_class_family
     stopifnot(!is.null(outList) & !is.null(out_class_family))
     out <- outList$out
     xtraCss1="border-radius:0px;border-width:1px;border-style:solid;border-color:rgb(192,192,192);"
@@ -374,7 +384,8 @@ GetClassProbTables <- function(out_class_family=NULL, outList=NULL){
     return(list("famTable"=famTable,"grpTable"=grpTable))
 }
                       
-SuppInfoTable <- function(suppinfo){
+SuppInfoTable <- function(dat, RGset, msetDat){
+    suppinfo <- GetSuppInfo(dat, RGset, msetDat)
     suppinfo <- as.data.frame(t(suppinfo))
     rownames(suppinfo) <- NULL
     kgb <- c("striped",font_size = 9, bootstrap_options = c("bordered"), position = "float_left")
