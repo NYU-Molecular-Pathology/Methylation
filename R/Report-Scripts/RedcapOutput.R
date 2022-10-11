@@ -154,12 +154,8 @@ TryREDCap <- function(gb){
 }
 
 CheckScoreCsv <- function(targets){
-    v12df <- as.data.frame(matrix(ncol=4))
-    colnames(v12df) <- c("Class", "Subclass", "Class_score", "Subgroup_score")
     deskDir <- file.path("~", "Desktop", targets$RunID[1])
     if(!dir.exists(deskDir)){dir.create(deskDir)}
-    scoreFile <- file.path(deskDir, paste0(targets$RunID[1], "_v12.csv"))
-    if(!file.exists(scoreFile)){
-        write.csv(v12df, file = scoreFile, row.names=F)
-    }
+    #scoreFile <- file.path(deskDir, paste0(targets$RunID[1], "_v12.csv"))
+    #if(!file.exists(scoreFile)){write.csv(v12df, file = scoreFile, row.names=F)}
 }
