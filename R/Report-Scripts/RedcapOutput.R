@@ -109,7 +109,7 @@ DebugDataFrame <-function(e, gb){
     message("mlh1_pos_loci: ", mlh1_pos_loci)
     message("second_tech: ", paste(gb$dat$tech2))
     message("primary_tech: ", paste(gb$dat$tech))
-    message("run_id: ", gb$run_id)
+    message("run_id: ",  gb$dat$run_id)
     message("mlh1_pos_loci: ", paste(gb$dat$mp_number))
 }
 
@@ -136,7 +136,7 @@ GetRedcapDF <- function(gb) {
         mlh1_pos_loci = paste0(gb$mlhP[[1]][2]),
         second_tech = paste(gb$dat$tech2),
         primary_tech = paste(gb$dat$tech),
-        run_number = gb$run_id,
+        run_number =  paste(gb$dat$run_id),
         tm_number = paste(gb$dat$mp_number)
     )
     
