@@ -265,7 +265,7 @@ PrintScoreTable <- function(outV12, dat) {
     v12Data <- v12Data[1,]
     rownames(v12Data) <- NULL
     scoreFile <- file.path("~", "Desktop", dat$run_id, paste0(dat$run_id,"_v12.csv"))
-    write.table(v12Data, file= scoreFile, row.names=F, col.names=T, append=T, quotes=F)
+    write.table(v12Data, file = scoreFile, row.names=F, col.names=T, append=T, quote=F)
     return(outTable12)
 }
                            
