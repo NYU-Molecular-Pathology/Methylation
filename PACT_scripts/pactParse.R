@@ -197,22 +197,29 @@ GetTypeIndex <- function(samNumber, rawSheetData){
         )
 }
 
+CheckControlRows <- function(rawSheetData, allBnumber){
+    controlIndex <- which(rawSheetData$`DNA #` %in% allBnumber == F)
+    message("The following samples are Controls or not in Philips:\n",
+            paste(rawSheetData$`DNA #`[controlIndex], collapse="\n"))
+    rawSheetData$`Type & Tissue`[controlIndex] <- "Tumor"
+    isControl <- unlist(lapply(rawSheetData$`Accession#`, function(sam){ sam=="NTC" | sam=="SC" | sam=="NC"}))
+    rawSheetData$`Type & Tissue`[isControl] <- "Control"
+    message(crayon::bgGreen("Assigned Values:"),"\n")
+    message(paste(rawSheetData$`DNA #`[controlIndex], rawSheetData$`Type & Tissue`[controlIndex], sep = " = ", collapse="\n"))
+    return(rawSheetData)
+}
 
 FixPairedList <- function(philipsExport, rawSheetData){
     tumorIndex <- GetTypeIndex(philipsExport$`Tumor DNA/RNA Number`, rawSheetData)
     normalIndex <- GetTypeIndex(philipsExport$`Normal DNA/RNA Number`, rawSheetData)
-    rawSheetData$`Type & Tissue` <- NULL
+    rawSheetData$`Type & Tissue` <- ""
     rawSheetData$`Type & Tissue`[tumorIndex] <- "Tumor"
     rawSheetData$`Type & Tissue`[normalIndex] <- "Normal"
     allBnumber <- c(philipsExport$`Tumor DNA/RNA Number`, philipsExport$`Normal DNA/RNA Number`)
     if(!all(allBnumber %in% rawSheetData$`DNA #`)==T){
         warning("Not all B-numbers from PhilipsExport are found in the SampleSheet!")
     }
-    controlIndex <- which(rawSheetData$`DNA #` %in% allBnumber == F)
-    message("The following samples are controls or not in Philips: ",
-            paste(rawSheetData$`DNA #`[controlIndex], collapse=" "))
-    rawSheetData$`Type & Tissue`[controlIndex] <- "Control"
-
+    rawSheetData <- CheckControlRows(rawSheetData, allBnumber)
     return(rawSheetData$`Type & Tissue`)
 }
 
@@ -221,9 +228,7 @@ AddSampleIndexes <- function(pairedList, rawSheetData, philipsExport){
     tissueType <- FixPairedList(philipsExport, rawSheetData)
     sheetTumors <- which(tissueType == "Tumor")
     sheetNormals <- which(tissueType == "Normal" & tissueType != "Control")
-
     mainSheet <- data.frame(matrix(NA, nrow = nrow(pairedList), ncol = 0))
-
     mainSheet$Sample_Name <- mainSheet$Sample_ID <- paste(pairedList[, 1])
     mainSheet$Paired_Normal <- ""
     mainSheet$Paired_Normal[sheetTumors] <- paste(mainSheet$Sample_ID[sheetNormals])
@@ -233,7 +238,6 @@ AddSampleIndexes <- function(pairedList, rawSheetData, philipsExport){
     mainSheet$Tumor_Content <- mainSheet$Test_Number <- mainSheet$EPIC_ID <- "0"
     mainSheet$Description <- mainSheet$Tumor_Type <- ""
     return(mainSheet)
-
 }
 
 
