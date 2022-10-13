@@ -224,17 +224,16 @@ FixPairedList <- function(philipsExport, rawSheetData){
 }
 
 AddSampleIndexes <- function(pairedList, rawSheetData, philipsExport){
-    accessions <- rawSheetData$`Accession#`
     tissueType <- FixPairedList(philipsExport, rawSheetData)
     sheetTumors <- which(tissueType == "Tumor")
     sheetNormals <- which(tissueType == "Normal" & tissueType != "Control")
-    mainSheet <- data.frame(matrix(NA, nrow = nrow(pairedList), ncol = 0))
+    mainSheet <- data.frame(matrix("", nrow = nrow(pairedList), ncol = 0))
     mainSheet$Sample_Name <- mainSheet$Sample_ID <- paste(pairedList[, 1])
     mainSheet$Paired_Normal <- ""
     mainSheet$Paired_Normal[sheetTumors] <- paste(mainSheet$Sample_ID[sheetNormals])
     mainSheet$I7_Index_ID <- paste(rawSheetData$I7_Index_ID)
     mainSheet$index <- paste(rawSheetData$index)
-    mainSheet$Specimen_ID <- paste(accessions)
+    mainSheet$Specimen_ID <- paste(rawSheetData$`Accession#`)
     mainSheet$Tumor_Content <- mainSheet$Test_Number <- mainSheet$EPIC_ID <- "0"
     mainSheet$Description <- mainSheet$Tumor_Type <- ""
     return(mainSheet)
@@ -389,21 +388,22 @@ GetPhilipsData <- function(inputFi){
     return(philipsExport)
 }
 
+GrabRunNumber <- function(inputFi){
+    shNames <- readxl::excel_sheets(inputFi)
+    sh <- which(grepl("PACT-", shNames, ignore.case = T))[1]
+    rawSheetData <- GetExcelData(inputFi, sh, shRange="A6:P200", cm=T)
+    run_number <- try(rawSheetData[which(rawSheetData$`DNA #`=="Run ID:"), 8], silent=T)
+    return(run_number)
+}
+
 GetRawSamplesheet <- function(inputFi){
     shNames <- readxl::excel_sheets(inputFi)
     sh <- which(grepl("PACT-", shNames, ignore.case = T))[1]
     message('Reading Excel Sheet named \"', shNames[sh],'\" from file:\n',inputFi)
-    rawSheetData <- GetExcelData(inputFi, sh, shRange="A6:P200",cm=T)
-    toDrop <- which(rawSheetData[,"I7_Index_ID" ]=="")[2] - 1
+    rawSheetData <- GetExcelData(inputFi, sh, shRange="A6:P200", cm=T)
+    toDrop <- which(rawSheetData[, "DNA #"]=="HAPMAP")[1]
     rawSheetData <- rawSheetData[1:toDrop,]
     return(rawSheetData)
-}
-
-AltParseFormat <- function(inputFi, runID){
-    rawSheetData <- GetRawSamplesheet(inputFi)
-    philipsExport <- GetPhilipsData(inputFi)
-    mainSheet <-  BuildMainSheet(philipsExport, rawSheetData, runID)
-    return(mainSheet)
 }
 
 WriteMainSheet <- function(mainSheet, sheetHead){
@@ -428,6 +428,13 @@ GetExcelData <- function(inputFi, sheetNum, shRange, toSkip=0, cm=F){
     ))
     sheetData[is.na(sheetData)] <- ""
     return(sheetData)
+}
+
+AltParseFormat <- function(inputFi, runID){
+    rawSheetData <- GetRawSamplesheet(inputFi)
+    philipsExport <- GetPhilipsData(inputFi)
+    mainSheet <-  BuildMainSheet(philipsExport, rawSheetData, runID)
+    return(mainSheet)
 }
 
 # Parses xlsx file and writes as csv file -----
@@ -502,18 +509,18 @@ emailNotify <- function(record, rcon){
 }
 
 # Connect to REDCap and send email attachments of csv file ----
-pushToRedcap <- function(runID, outFile, token, inputSheet) {
+pushToRedcap <- function(outVals, token=NULL) {
+    stopifnot(!is.null(token) & !is.null(outVals))
+    runID <- outVals[[1]]
+    outFile <- outVals[[2]]
     rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", token)
-    record = data.frame(record_id = inputSheet, pact_run_number = runID)
+    record = data.frame(record_id = runID, pact_run_number = runID)
     datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox = T)
     PostRedcapCurl(rcon, datarecord, retcon='nothing')
-    redcapAPI::importFiles(
-        rcon = rcon,
-        file = outFile,
-        record = runID,
-        field = "pact_csv_sheet",
-        repeat_instance = 1
-    )
+    tryCatch(
+        redcapAPI::importFiles(rcon = rcon, file = outFile, record = runID, field = "pact_csv_sheet", repeat_instance = 1),
+        error=function(e){message("REDCap file upload error failed:\n", e)}
+        )
     emailNotify(record, rcon)
 }
 
@@ -525,7 +532,7 @@ writeSampleSheet <- function(inputSheet, token, runID = NULL) {
     } else {
         outVals <-  CheckOtherFiles(inputFi, runID)
     }
-    pushToRedcap(runID = outVals[[1]], outFile = outVals[[2]], token, inputSheet)
+    if(exists("outVals")){pushToRedcap(outVals, token)}
 }
 
 loadPacks()
