@@ -201,6 +201,7 @@ GetTypeIndex <- function(samNumber, rawSheetData){
 FixPairedList <- function(philipsExport, rawSheetData){
     tumorIndex <- GetTypeIndex(philipsExport$`Tumor DNA/RNA Number`, rawSheetData)
     normalIndex <- GetTypeIndex(philipsExport$`Normal DNA/RNA Number`, rawSheetData)
+    rawSheetData$`Type & Tissue` <- NULL
     rawSheetData$`Type & Tissue`[tumorIndex] <- "Tumor"
     rawSheetData$`Type & Tissue`[normalIndex] <- "Normal"
     allBnumber <- c(philipsExport$`Tumor DNA/RNA Number`, philipsExport$`Normal DNA/RNA Number`)
@@ -208,11 +209,10 @@ FixPairedList <- function(philipsExport, rawSheetData){
         warning("Not all B-numbers from PhilipsExport are found in the SampleSheet!")
     }
     controlIndex <- which(rawSheetData$`DNA #` %in% allBnumber == F)
-    message("The following samples are controls: ", paste(rawSheetData$`DNA #`[controlIndex], collapse=" "))
+    message("The following samples are controls or not in Philips: ",
+            paste(rawSheetData$`DNA #`[controlIndex], collapse=" "))
     rawSheetData$`Type & Tissue`[controlIndex] <- "Control"
-    #tissueType[grep("Tumor", tissueType)] <- "Tumor"
-    #tissueType[grep("Normal", tissueType)] <- "Normal"
-    #tissueType[grep("Control", tissueType)] <- "Control"
+
     return(rawSheetData$`Type & Tissue`)
 }
 
@@ -311,7 +311,7 @@ AddRunChipColumns <- function(mainSheet, runID){
     splitRun <- stringr::str_split_fixed(runID, "_", 4)
     mainSheet$Sequencer_ID <- splitRun[1, 2]
     mainSheet$Chip_ID <- splitRun[1, 4]
-    mainSheet$Sample_Project <- paste0(gb$inputSheet)
+    mainSheet$Sample_Project <- paste0(runID)
     return(mainSheet)
 }
 
@@ -390,7 +390,7 @@ GetRawSamplesheet <- function(inputFi){
     sh <- which(grepl("PACT-", shNames, ignore.case = T))[1]
     message('Reading Excel Sheet named \"', shNames[sh],'\" from file:\n',inputFi)
     rawSheetData <- GetExcelData(inputFi, sh, shRange="A6:P200",cm=T)
-    toDrop <- which(rawSheetData[,"I7_Index_ID" ]=="")[1] - 1
+    toDrop <- which(rawSheetData[,"I7_Index_ID" ]=="")[2] - 1
     rawSheetData <- rawSheetData[1:toDrop,]
     return(rawSheetData)
 }
@@ -432,15 +432,14 @@ parseExcelFile <- function(inputFi, runID = NULL){
     message(paste0(capture.output(data.frame(`Sheet names in Workbook` = shNames)), collapse = "\n"))
     sh <- which(grepl("SampleSheet", shNames, ignore.case = T))[1]
     if(!is.na(sh)){
-    sheetHead <- GetExcelData(inputFi, sheetNum=shNames[sh], shRange="A1:B17")
-    sheetHead <- rbind(sheetHead,c("",""),c("[Data]",""))
-    sheetVals <- GetExcelData(inputFi, shNames[sh], NULL, 19, T)
-    mainSheet <- sanitizeSheet(sheetVals)
-    } else{
+        sheetHead <- GetExcelData(inputFi, sheetNum=shNames[sh], shRange="A1:B17")
+        sheetHead <- rbind(sheetHead,c("",""),c("[Data]",""))
+        sheetVals <- GetExcelData(inputFi, shNames[sh], NULL, 19, T)
+        } else{
         sheetHead <- GetSheetHeading(inputFi)
         sheetVals <- AltParseFormat(inputFi, runID)
-        mainSheet <- sanitizeSheet(sheetVals)
-    }
+        }
+    mainSheet <- sanitizeSheet(sheetVals)
     try(WritePhilipsGender(mainSheet,inputFi, shNames), silent=T)
     outFile <- WriteMainSheet(mainSheet, sheetHead)
     return(c(runID = mainSheet[1, "Sample_Project"], outFile = outFile))

@@ -315,6 +315,7 @@ do_report <- function(data = NULL, genCn=F) {
     print(data)
     if(!is.null(data)){
         dat <- getRunData(data)
+        message(paste0(capture.output(dat), collapse="\n"))
         RGsetEpic <- getRGset(getwd(), dat$senLi)
         if(genCn==T){generateCNVpng(RGsetEpic,dat$sampleID)}
         msgRunUp(dat$sampleID, dat$run_id, dat$senLi)
@@ -431,4 +432,73 @@ checkMounts <- function(){
         )
         stopifnot(!any(failMount==T))
     }
+}
+
+# Work Directory Functions ----------------------------------------------------
+CheckBaseDir <- function(baseFolder){
+    if(is.null(baseFolder)){
+        gb$baseDir <- gb$methDir <- gb$baseFolder <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
+    }else{gb$baseDir <- gb$methDir <- gb$baseFolder <- baseFolder}
+    isDesktop <- stringr::str_detect(baseFolder, "Desktop")
+    if(length(isDesktop)!=0)
+        if(is.null(baseFolder) & isDesktop==T) {
+            warning("Trying to run methylation from Desktop working directory is not allowed")
+            message("Try setting baseFolder to '~/Documents/' instead")
+            stopifnot(isDesktop == F)
+        }
+    return(gb$baseFolder)
+}
+
+# Sets the working folder directory
+SetBaseFolder <- function(token, baseFolder, runID){
+    baseFolder <- CheckBaseDir(baseFolder)
+    methylPath <- gb$setRunDir(runID=gb$runID, workFolder = baseFolder)
+    message("Working directory set to:\n", crayon::bgGreen(methylPath), "\n")
+    gb$methDir <- gb$workFolder <- baseFolder
+    gb$setVar("workFolder", baseFolder)
+    gb$setVar("ApiToken", token) # assign the ApiToken & print params
+    setwd(file.path(baseFolder, runID))
+    return(baseFolder)
+}
+
+# Executes the functions in order to setup a run
+PrepareRun <- function(token, baseFolder=NULL, runID, runLocal=F){
+    gb$msgFunName(paste0(mainHub,"methylExpress.R"),"PrepareRun")
+    if(runLocal==F){
+        gb$checkMounts()
+        gb$checkValidRun(runID)
+        baseFolder <- gb$SetBaseFolder(token, baseFolder, runID)
+        setwd(file.path(baseFolder, runID))
+        gb$copyWorksheetFile(runID = runID) # copies the xlsm file
+        gb$readSheetWrite(runID = runID) # reads xlsm and generates input .csv samplesheet
+        gb$get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
+        gb$moveSampleSheet(baseFolder, runID) #copies outputs temp to desktop for QC.Rmd
+    } else{
+        baseFolder <- gb$SetBaseFolder(token, baseFolder, runID)
+        setwd(file.path(baseFolder, runID))
+        gb$RunLocalIdats(runID, token)
+    }
+}
+
+# Starts run knitting html reports loop
+StartRun <- function(selectRDs = NULL, emailNotify = T, redcapUp = T) {
+    gb$msgFunName(paste0(mainHub,"methylExpress.R"),"startRun")
+    # Re-order sample report generation for priority
+    if (!is.null(selectRDs)) {runOrder <- gb$reOrderRun(selectRDs) }else{runOrder <- NULL}
+    gb$makeReports.v11b6(
+        skipQC = F,            # Don't skip QC generation
+        email = emailNotify,   # to email after Run complete
+        cpReport = T,          # Flag to copy files to network drive
+        selectSams = runOrder, # Prioritize specific RD-numbers
+        redcapUp = redcapUp    # Flag to import files to REDCap
+    )
+}
+
+AssignArgs <- function(runID, baseFolder, token, selectRDs, redcapUp, gb){
+    gb$defineParams(methDir = baseFolder, baseDir = baseFolder, ApiToken = token)
+    gb$setVar("runID", runID)
+    if(!is.null(selectRDs)){selectRDs <- stringr::str_split(selectRDs, ",")}
+    assign("redcapUp", redcapUp, envir = gb)
+    assign("redcapUpload", redcapUp,  envir = gb)
+    return(selectRDs)
 }
