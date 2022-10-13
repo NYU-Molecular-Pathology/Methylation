@@ -342,7 +342,7 @@ CheckIfPngExists <- function(rds,
         message(
             crayon::bgGreen("The following samples are completed and will be skipped:"),
             "\n",
-            paste(capture.output(outFiles[finished]), sep = '\n')
+            paste(capture.output(outFiles[finished]), collapse = '\n')
         )
         rds <- rds[!finished]
     }
