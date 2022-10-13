@@ -399,7 +399,8 @@ GrabRunNumber <- function(inputFi){
 GetRawSamplesheet <- function(inputFi){
     shNames <- readxl::excel_sheets(inputFi)
     sh <- which(grepl("PACT-", shNames, ignore.case = T))[1]
-    message('Reading Excel Sheet named \"', shNames[sh],'\" from file:\n',inputFi)
+    msgRd <- paste0('Reading Excel Sheet named \"', shNames[sh],'\" from file:')
+    message(crayon::bgGreen(msgRd),'\n',inputFi)
     rawSheetData <- GetExcelData(inputFi, sh, shRange="A6:P200", cm=T)
     toDrop <- which(rawSheetData[, "DNA #"]=="HAPMAP")[1]
     rawSheetData <- rawSheetData[1:toDrop,]
