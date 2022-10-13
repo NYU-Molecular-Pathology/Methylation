@@ -14,7 +14,7 @@ dsh2="\n==========================\n"
 # Displays the Input args -----
 message(dsh,"\nParameters input",dsh)
 message("token: ",token)
-message("Worksheet: ", inputSheet,".xlsm\n")
+message("PACT Run: ", inputSheet,"\n")
 message("Run ID: ", runID,"\n")
 
 # Check Input Params -----
@@ -199,12 +199,12 @@ GetTypeIndex <- function(samNumber, rawSheetData){
 
 CheckControlRows <- function(rawSheetData, allBnumber){
     controlIndex <- which(rawSheetData$`DNA #` %in% allBnumber == F)
-    message("The following samples are Controls or not in Philips:\n",
-            paste(rawSheetData$`DNA #`[controlIndex], collapse="\n"))
-    rawSheetData$`Type & Tissue`[controlIndex] <- "Tumor"
+    message(crayon::bgRed("The following samples are Controls or not in Philips:"),"\n",
+            paste(rawSheetData$`DNA #`[controlIndex], collapse="\n"),"\n")
+    rawSheetData$`Type & Tissue`[controlIndex] <- "Filler"
     isControl <- unlist(lapply(rawSheetData$`Accession#`, function(sam){ sam=="NTC" | sam=="SC" | sam=="NC"}))
     rawSheetData$`Type & Tissue`[isControl] <- "Control"
-    message(crayon::bgGreen("Assigned Values:"),"\n")
+    message(crayon::bgGreen("Assigned Values:"))
     message(paste(rawSheetData$`DNA #`[controlIndex], rawSheetData$`Type & Tissue`[controlIndex], sep = " = ", collapse="\n"))
     return(rawSheetData)
 }
@@ -433,6 +433,7 @@ GetExcelData <- function(inputFi, sheetNum, shRange, toSkip=0, cm=F){
 AltParseFormat <- function(inputFi, runID){
     rawSheetData <- GetRawSamplesheet(inputFi)
     philipsExport <- GetPhilipsData(inputFi)
+    pact_run <- stringr::str_split_fixed(base::basename(inputFi), ".xls", 2)[1,1]
     mainSheet <-  BuildMainSheet(philipsExport, rawSheetData, runID)
     return(mainSheet)
 }
