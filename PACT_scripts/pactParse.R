@@ -309,12 +309,12 @@ GetIndexMatch <- function(rawSheetData, philipsExport){
     return(idx)
 }
 
-AddRunChipColumns <- function(mainSheet, runID){
+AddRunChipColumns <- function(mainSheet, runID, pact_run){
     mainSheet$Run_Number <- runID
     splitRun <- stringr::str_split_fixed(runID, "_", 4)
     mainSheet$Sequencer_ID <- splitRun[1, 2]
     mainSheet$Chip_ID <- splitRun[1, 4]
-    mainSheet$Sample_Project <- paste0(runID)
+    mainSheet$Sample_Project <- paste0(pact_run)
     return(mainSheet)
 }
 
@@ -341,7 +341,7 @@ FixLastColumns <- function(mainSheet, rawSheetData){
 }
 
 
-BuildMainSheet <- function(philipsExport, rawSheetData, runID) {
+BuildMainSheet <- function(philipsExport, rawSheetData, runID, pact_run) {
     epicOrder <- philipsExport[,'Epic Order Number']
     testNumber <-  philipsExport[,'Test Number']
     tumorPercent <- philipsExport[,'Tumor Percentage']
@@ -353,7 +353,7 @@ BuildMainSheet <- function(philipsExport, rawSheetData, runID) {
     idx <- GetIndexMatch(rawSheetData, philipsExport)
     mainSheet <- AddPairedColumn(mainSheet, "EPIC_ID", epicOrder, idx)
     mainSheet <- AddPairedColumn(mainSheet, "Test_Number", testNumber, idx)
-    mainSheet <- AddRunChipColumns(mainSheet, runID)
+    mainSheet <- AddRunChipColumns(mainSheet, runID, pact_run)
     mainSheet <- AddPairedColumn(mainSheet, "Tumor_Content", tumorPercent, idx)
     mainSheet <- AddPairedColumn(mainSheet, "Tumor_Type", diagColumn, idx)
     mainSheet <- FixLastColumns(mainSheet, rawSheetData)
@@ -434,7 +434,7 @@ AltParseFormat <- function(inputFi, runID){
     rawSheetData <- GetRawSamplesheet(inputFi)
     philipsExport <- GetPhilipsData(inputFi)
     pact_run <- stringr::str_split_fixed(base::basename(inputFi), ".xls", 2)[1,1]
-    mainSheet <-  BuildMainSheet(philipsExport, rawSheetData, runID)
+    mainSheet <-  BuildMainSheet(philipsExport, rawSheetData, runID, pact_run)
     return(mainSheet)
 }
 
@@ -497,7 +497,8 @@ PostRedcapCurl <- function(rcon, datarecord, retcon = 'ids') {
             rcon$url, token = rcon$token, content = 'record', format = 'json',
             type = 'flat', data = datarecord, returnContent = retcon, returnFormat = 'csv')
             },
-        error = function(e) {message("REDCap push failed!\n", e)}
+        error = function(e) {message("REDCap push failed!\n", e)},
+        finally = message(datarecord)
     )
 }
 
