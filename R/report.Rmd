@@ -147,6 +147,7 @@ htmlwidget-8fc54d1bca00894e9b67 {max-width: 50% !important; height: 200px !impor
 div.main-container{max-width: 96% !important;margin-left: 20px;padding: 10px;}
 div.container-fluid{max-width: 96% !important; margin-left: 20px;padding: 10px;}
 ul.no-bullets {list-style-type: none;}
+body{margin-left: 30px!important;}
 </style>
 
 <hr class="solid">
@@ -693,9 +694,9 @@ supM(theMlhplot)
 #### MLH1 Status
 
 ```{r, label='MLH1 plot'}
-mlhP <- pipeline(RGset2,getFig = F, getTable = T)
-theMlhTab <- drawPlotTab(mlhP)
-theMlhTab
+gb$mlhP <- gb$pipeline(RGset2,getFig = F, getTable = T)
+gb$theMlhTab <- drawPlotTab(gb$mlhP)
+gb$theMlhTab
 ```
 
 ```{r, label='REDCapWrite', include=FALSE, message=TRUE, error=FALSE}
@@ -704,28 +705,30 @@ library("crayon")
 library("RCurl")
 gb <- globalenv(); assign("gb", gb)
 
-message(gb$sampleID)
-message(gb$sentrix)
-message(ifelse(gb$is450k, yes = "450k", no = "EPIC"))
-message(tolower(gb$sex))
-message(gb$familia)
-message(gb$fscore)
-message(gb$subfam)
-message(gb$subScore)
-message(gb$mgmtData$Status)
-message(gb$mlhP[[1]][1])
-message(gb$mlhP[[1]][2])
-message(gb$tech2)
-message(gb$tech)
-message(gb$run_id)
-message(gb$mp_number)
+stopifnot(!is.null(gb$sampleID))
+stopifnot(!is.null(gb$sentrix))
+stopifnot(!is.null(ifelse(gb$is450k, yes = "450k", no = "EPIC")))
+stopifnot(!is.null(tolower(gb$sex)))
+stopifnot(!is.null(gb$familia))
+stopifnot(!is.null(gb$fscore))
+stopifnot(!is.null(gb$subfam))
+stopifnot(!is.null(gb$subScore))
+stopifnot(!is.null(gb$mgmtData$Status))
+stopifnot(!is.null(gb$mlhP[[1]][1]))
+stopifnot(!is.null(gb$mlhP[[1]][2]))
+stopifnot(!is.null(gb$tech2))
+stopifnot(!is.null(gb$tech))
+stopifnot(!is.null(gb$run_id))
+stopifnot(!is.null(gb$mp_number))
+arrayType <- ifelse(gb$is450k, yes = "450k", no = "EPIC")
+thesex<- paste0(tolower(gb$sex))
 
 dfNewRed <- data.frame(
     record_id = gb$sampleID,
     b_number = gb$bnumber,
     barcode_and_row_column = gb$sentrix,
-    array_type = ifelse(gb$is450k, yes = "450k", no = "EPIC"),
-    classifier_sex = tolower(gb$sex),
+    array_type = arrayType,
+    classifier_sex = thesex,
     classifier_score = gb$familia,
     classifier_value = gb$fscore,
     subgroup = gb$subfam,
