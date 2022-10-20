@@ -41,7 +41,7 @@ h1.title {
 stopifnot(!is.null(params$rundata))
 message("params$rundata")
 print(params$rundata)
-
+gb <- globalenv(); assign("gb", gb)
 if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, quiet=T)}
 # Setting US CRAN REPO
 rlis = getOption("repos")
@@ -239,6 +239,8 @@ supM(pander::pander(t(suppinfo), split.table = Inf))
 ```{r 'Brain Classifier Family', size="normalsize"}
 library(verbose=F, warn.conflicts = F, quietly = T, package= "knitr")
 library(verbose=F, warn.conflicts = F, quietly = T, package= "kableExtra")
+gb <- globalenv(); assign("gb", gb)
+
 if (is450k==T) {
     library(verbose=F,warn.conflicts = F, quietly = T, package="mnp.v11b4")
     probs <- mnp.v11b4::MNPpredict(Mset_ba[, 1], type = 'prob')
@@ -334,10 +336,10 @@ out %>%
 	kableExtra::row_spec(row=0,font_size=16,background="rgb(135,174,237)", color="black") %>%
 	kableExtra::row_spec(row=1,extra_css=xtraCss3)
 
-familia <- out_class_family$`Methylation Family`[1]
-fscore <- out_class_family$`Class Score`[1]
-subfam <- out$`Methylation Subgroup`[1]
-subScore <- out$`Subgroup Score`[1]
+gb$familia <- out_class_family$`Methylation Family`[1]
+gb$fscore <- out_class_family$`Class Score`[1]
+gb$subfam <- out$`Methylation Subgroup`[1]
+gb$subScore <- out$`Subgroup Score`[1]
 
 ```
 <caption style="font-size:12px;"><ul style="font-size:12px; list-style-type: none;" class="no-bullets">
@@ -359,7 +361,7 @@ indicates no matching methylation class (score <0.3) and for classifier subclass
 <h4> Methylation Class Description</h4>
 
 <p style="font-size:14px; border-radius:10px; border-width:2px; border-style:solid; border-color:rgb(192,192,192); padding:15px;border-padding:10px">
-`r I(as.character(mnp.v11b6::reflist[idx,7]))`
+`r I(as.character(mnp.v11b6::reflist[gb$idx,7]))`
 </p>
 <hr class="solid">
 
@@ -452,7 +454,7 @@ if (is450k==TRUE) {
 cnvUrl <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/cnvggplotly.R"
 githubURL <- "https://github.com/NYU-Molecular-Pathology/Methylation/raw/main/Rdata/newOvGenes.rds"
 devtools::source_url(cnvUrl)
-gb <- globalenv(); assign("gb", gb)
+
 tryCatch(
     expr = {newOvGenes <- readRDS(url(githubURL, method = "libcurl"))},
     error = function(e) {
@@ -692,23 +694,25 @@ theMlhTab
 library("jsonlite")
 library("crayon")
 library("RCurl")
+gb <- globalenv(); assign("gb", gb)
+
 dfNewRed <- data.frame(
     record_id = sampleID,
     b_number = bnumber,
     barcode_and_row_column = sentrix,
     array_type = ifelse(is450k, yes = "450k", no = "EPIC"),
     classifier_sex = tolower(sex),
-    classifier_score = familia,
-    classifier_value = fscore,
-    subgroup = subfam,
-    subgroup_score = subScore,
-    mgmt_status = mgmtData$Status,
-    mlh1_status = mlhP[[1]][1],
-    mlh1_pos_loci = mlhP[[1]][2],
-    second_tech = tech2,
-    primary_tech = tech,
-    run_number = run_id,
-    tm_number = mp_number
+    classifier_score = gb$familia,
+    classifier_value = gb$fscore,
+    subgroup = gb$subfam,
+    subgroup_score = gb$subScore,
+    mgmt_status = gb$mgmtData$Status,
+    mlh1_status = gb$mlhP[[1]][1],
+    mlh1_pos_loci = gb$mlhP[[1]][2],
+    second_tech = gb$tech2,
+    primary_tech = gb$tech,
+    run_number = gb$run_id,
+    tm_number = gb$mp_number
 )
 
 #datarecord = jsonlite::toJSON((as.list(dfNewRed[1,])), auto_unbox=T)
