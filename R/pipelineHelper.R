@@ -327,7 +327,7 @@ do_report <- function(data = NULL, genCn=F) {
                     dat$outFi,
                     getwd(),
                     quiet = FALSE,
-                    params = list(token = gb$ApiToken, rundata = dat)
+                    params = list(token = gb$ApiToken, rundata = dat, RGsetEpic=RGsetEpic)
                 )
             },
             error=function(e){
@@ -502,3 +502,4 @@ AssignArgs <- function(runID, baseFolder, token, selectRDs, redcapUp, gb){
     assign("redcapUpload", redcapUp,  envir = gb)
     return(selectRDs)
 }
+
