@@ -17,11 +17,17 @@ params:
 #wrapper {
     width: 600px;
     float:right;
+    position: absolute;
+        top: 0px;
+        right: 0px;
 }
 #second {
     float:right; /* add this */
     overflow: auto;
     padding: 1em;
+    position: absolute;
+        top: 0px;
+        right: 0px;
 }
 
 h1.title {
@@ -150,8 +156,9 @@ Sample Information
 ```
 
 ```{r 'Sample Info', class.source="bg-success", size="normalsize"}
-	dat <- params$rundata
-	sample = 1
+gb <- globalenv(); assign("gb", gb)
+dat <- params$rundata
+sample = 1
 run_id = paste(dat$run_id)
 tech = paste(dat$tech)
 tech2 = paste(dat$tech2)
@@ -696,12 +703,28 @@ library("crayon")
 library("RCurl")
 gb <- globalenv(); assign("gb", gb)
 
+message(gb$sampleID)
+message(gb$sentrix)
+message(ifelse(gb$is450k, yes = "450k", no = "EPIC"))
+message(tolower(gb$sex))
+message(gb$familia)
+message(gb$fscore)
+message(gb$subfam)
+message(gb$subScore)
+message(gb$mgmtData$Status)
+message(gb$mlhP[[1]][1])
+message(gb$mlhP[[1]][2])
+message(gb$tech2)
+message(gb$tech)
+message(gb$run_id)
+message(gb$mp_number)
+
 dfNewRed <- data.frame(
-    record_id = sampleID,
-    b_number = bnumber,
-    barcode_and_row_column = sentrix,
-    array_type = ifelse(is450k, yes = "450k", no = "EPIC"),
-    classifier_sex = tolower(sex),
+    record_id = gb$sampleID,
+    b_number = gb$bnumber,
+    barcode_and_row_column = gb$sentrix,
+    array_type = ifelse(gb$is450k, yes = "450k", no = "EPIC"),
+    classifier_sex = tolower(gb$sex),
     classifier_score = gb$familia,
     classifier_value = gb$fscore,
     subgroup = gb$subfam,
