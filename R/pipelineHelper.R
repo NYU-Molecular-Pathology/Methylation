@@ -310,33 +310,35 @@ getRunList <- function(data, samList){
 
 # Helper function called by makeReports.v11b6 to generate the HTML report
 do_report <- function(data = NULL, genCn=F) {
-    msgFunName(pipeLnk,"do_report")
-    msgParams("data")
-    print(data)
-    if(!is.null(data)){
-        dat <- getRunData(data)
-        message(paste0(capture.output(dat), collapse="\n"))
-        RGsetEpic <- getRGset(getwd(), dat$senLi)
-        if(genCn==T){generateCNVpng(RGsetEpic,dat$sampleID)}
-        msgRunUp(dat$sampleID, dat$run_id, dat$senLi)
-        tryCatch(
-            expr = {
-                rmarkdown::render(
-                    reportMd,
-                    "html_document",
-                    dat$outFi,
-                    getwd(),
-                    quiet = FALSE,
-                    params = list(token = gb$ApiToken, rundata = dat, RGsetEpic=RGsetEpic)
-                )
-            },
-            error=function(e){
-                beepr::beep(1)
-                message(bkRed("Report Generation Failed:"),"\n", dat$outFi)
-                message("The following error returned:\n", e)
-            }, finally=message("\nRunning next sample\n")
+  msgFunName(pipeLnk,"do_report")
+  msgParams("data")
+  print(data)
+  #data = data[1, ]
+  if(!is.null(data)){
+    dat <- getRunData(data)
+    message(paste0(capture.output(dat), collapse="\n"))
+    RGsetEpic <- getRGset(getwd(), dat$senLi)
+    if(genCn==T){generateCNVpng(RGsetEpic,dat$sampleID)}
+    msgRunUp(dat$sampleID, dat$run_id, dat$senLi)
+    tryCatch(
+      expr = {
+        rmarkdown::render(
+          reportMd,
+          "html_document",
+          dat$outFi,
+          getwd(),
+          quiet = FALSE,
+          params = list(token = gb$ApiToken, rundata = dat, RGsetEpic=RGsetEpic)
         )
-    } else {message(bkRed("Data is NULL, check your SampleSheet.csv"))}
+      },
+      error=function(e){
+        beepr::beep(1)
+        message(bkRed("Report Generation Failed:"),"\n", dat$outFi)
+        message("The following error returned:\n", e)
+        stopifnot("Report Generation Failed"=FALSE)
+      }, finally=message("\nRunning next sample\n")
+    )
+  } else {message(bkRed("Data is NULL, check your SampleSheet.csv"))}
 }
 
 # FUN: Iterates over each sample in the csv file to generate a report
