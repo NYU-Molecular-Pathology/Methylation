@@ -44,10 +44,10 @@ h1.title {
 <div id="wrapper"><div id="second">
 <img src="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/dockerScripts/logos/logos.png" width="200px"></div></div>
 
-```{r global_options, include=FALSE, warning=FALSE}
+```{r global_options, include=FALSE, warning=FALSE, error=FALSE}
 stopifnot(!is.null(params$rundata))
 message("params$rundata")
-print(params$rundata)
+message(paste0(capture.output(params$rundata), collapse="\n"))
 gb <- globalenv(); assign("gb", gb)
 if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, quiet=T)}
 # Setting US CRAN REPO
@@ -89,7 +89,7 @@ knitr::opts_knit$set(verbose = FALSE)
 #knitr::opts_knit$set(progress_handler = progressr::handlers(progressr::handler_progress()))
 ```
 
-```{r setup, cache.path="cache/", include=FALSE, cache=FALSE}
+```{r setup, cache.path="cache/", include=FALSE, cache=FALSE, error=FALSE}
 knitr::opts_chunk$set(error = TRUE, echo = FALSE, message = FALSE, warning = FALSE, self.contained=TRUE, comment = '', cache.extra = list(R.version, sessionInfo(), format(Sys.Date(), '%Y-%m')))
 options(scipen = 5)
 require("compiler")
@@ -157,30 +157,28 @@ Sample Information
 <div style="background-image: linear-gradient(180deg, BlanchedAlmond, white); font-size: 16px">
 ```
 
-```{r 'Sample Info', class.source="bg-success", size="normalsize"}
+```{r 'Sample Info', class.source="bg-success", size="normalsize", error=FALSE}
 gb <- globalenv(); assign("gb", gb)
 dat <- params$rundata
 sample = 1
-run_id = paste(dat$run_id)
-tech = paste(dat$tech)
-tech2 = paste(dat$tech2)
-bnumber = paste(dat$bnumber)
-mp_number = paste(dat$mp_number)
-sampleID = paste(dat$sampleID)
-RGset = RGsetEpic
-RGset <- RGset[,sample]
-RGset2 <- RGset
+gb$run_id = paste(dat$run_id)
+gb$tech = paste(dat$tech)
+gb$tech2 = paste(dat$tech2)
+gb$bnumber = paste(dat$bnumber)
+gb$mp_number = paste(dat$mp_number)
+gb$sampleID = paste(dat$sampleID)
+RGset = params$RGsetEpic
+gb$RGset2 <- RGset <- RGset[,sample]
 FFPE=NULL
-
 stopifnot(!is.null(run_id)|!is.null(tech)|!is.null(tech2)|!is.null(bnumber)|!is.null(RGset))
-
+stopifnot(!is.null(sampleID))
 redfolder <- file.path("~","Desktop", run_id)
 redFile <- paste0(run_id,"_Redcap.csv")
-redcsv <- file.path(redfolder,redFile)
+gb$redcsv <- file.path(redfolder,redFile)
 
-is450k <- RGset@annotation[[1]] == "IlluminaHumanMethylation450k"
+gb$is450k <- is450k <- RGset@annotation[[1]] == "IlluminaHumanMethylation450k"
 
-redcapDF <- data.frame(
+gb$redcapDF <- data.frame(
     record_id = character(),
     b_number = character(),
     barcode_and_row_column = character(),
@@ -216,10 +214,10 @@ if (is450k) {
 	# Mset_ba <- mnp.v11b4::MNPbatchadjust(Mset, FFPE)
 	# sex <- ifelse(mnp.v11b4::MNPgetSex(Mset)$predictedSex == "M", "male", "female")
 	} else {
-		Mset <- mnp.v11b6::MNPpreprocessIllumina(RGset)
+		gb$Mset <- mnp.v11b6::MNPpreprocessIllumina(RGset)
 		Mset@annotation=c(array="IlluminaHumanMethylationEPIC", annotation="ilm10b4.hg19")
 		if (is.null(FFPE)) {FFPE <- mnp.v11b6::MNPgetFFPE(RGset)}
-		Mset_ba <- mnp.v11b6::MNPbatchadjust(Mset, FFPE)
+		gb$Mset_ba <- mnp.v11b6::MNPbatchadjust(Mset, FFPE)
 		detP <- minfi::detectionP(RGset)
 		bs <- minfi::getBeta(Mset)
 		sexEstimate <-as.data.frame(signif(sest::get.proportion_table(bs, detP), digits = 2))
@@ -227,8 +225,8 @@ if (is450k) {
 		yest1 <- as.double(sexEstimate$`Y:(0,0.1]`) >= 0.12
 		sex <- ifelse((yest == TRUE && yest1 == TRUE), "male", "female")
 	}
-
-sentrix <- colnames(RGset)
+gb$sex <- sex
+gb$sentrix <- sentrix <- colnames(RGset)
 chiptype <- minfi::annotation(RGset)[[1]]
 suppinfo <- c(sampleID,run_id,tech,bnumber,mp_number,sentrix,chiptype,FFPE,sex)
 names(suppinfo) <- c("ID", "Batch ID", "Tech", "B-number", "MP-TN#", "Sentrix ID", "Array type", "Material type", "Gender")
@@ -245,33 +243,32 @@ supM(pander::pander(t(suppinfo), split.table = Inf))
 </h3>
 <h3><p></p></h3>
 
-```{r 'Brain Classifier Family', size="normalsize"}
+```{r 'Brain Classifier Family', size="normalsize", error=FALSE}
 library(verbose=F, warn.conflicts = F, quietly = T, package= "knitr")
 library(verbose=F, warn.conflicts = F, quietly = T, package= "kableExtra")
 gb <- globalenv(); assign("gb", gb)
-
-if (is450k==T) {
-    library(verbose=F,warn.conflicts = F, quietly = T, package="mnp.v11b4")
-    probs <- mnp.v11b4::MNPpredict(Mset_ba[, 1], type = 'prob')
-	probs_mcf <- mnp.v11b4::MNPpredict(Mset_ba[, 1], type='prob',MCF=TRUE)
-	} else {
-	    library(verbose=F,warn.conflicts=F, quietly=T, package="mnp.v11b6")
-	    tryCatch(
-	        expr = {
-	            probs <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob')
-	            probs_mcf <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob', MCF = TRUE)
-	        },
-	        error = function(e) {
-	            message("An error occured at Brain Classifier prediction:")
-	            message("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-	            message("Value of Mset_ba is:", "\n", paste0(Mset_ba[, 1]))
-	            message("Trying MNPpredict_betas with Mset instead of Mset batch adjusted:\n")
-	            probs <- mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob')
-	            probs_mcf <-
-	                mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob', MCF = TRUE)
-	        }
-	    )
-}
+library(
+    verbose = F,
+    warn.conflicts = F,
+    quietly = T,
+    package = "mnp.v11b6"
+)
+tryCatch(
+    expr = {
+        probs <- mnp.v11b6::MNPpredict(gb$Mset_ba[, 1], type = 'prob')
+        probs_mcf <-
+            mnp.v11b6::MNPpredict(gb$Mset_ba[, 1], type = 'prob', MCF = TRUE)
+    },
+    error = function(e) {
+        message("An error occured at Brain Classifier prediction:")
+        
+        message("Trying MNPpredict_betas with Mset instead of Mset batch adjusted:\n")
+        probs <- mnp.v11b6::MNPpredict(gb$Mset[, 1], type = 'prob')
+        probs_mcf <- mnp.v11b6::MNPpredict(gb$Mset[, 1], type = 'prob', MCF = TRUE)
+    }
+)
+stopifnot(!is.null(probs))
+stopifnot(!is.null(probs_mcf))
 
 oo <- order(probs, decreasing = T)
 oo_mcf <- order(probs_mcf, decreasing = T)
@@ -279,32 +276,32 @@ eps <- 1e-3
 
 out_class_family <- probs_mcf[oo_mcf[1:5]]
 out_class_family <- cbind(round(pmax(pmin(out_class_family, 1 - eps), eps),3), colnames(probs_mcf)[oo_mcf][1:5])
-out <- probs[oo[1:5]]
-out <- cbind(round(pmax(pmin(out,1 - eps),eps),3),colnames(probs)[oo][1:5])
+gb$out <- probs[oo[1:5]]
+gb$out <- cbind(round(pmax(pmin(gb$out,1 - eps),eps),3),colnames(probs)[oo][1:5])
 
 colnames(out_class_family) <- c("Class Score","Methylation Family")
-colnames(out) <- c("Subgroup Score","Methylation Subgroup")
+colnames(gb$out) <- c("Subgroup Score","Methylation Subgroup")
 
-idx <- match(colnames(probs)[oo][1],mnp.v11b6::reflist[,2])
-out_class_family <- as.data.frame(out_class_family)
-out <- as.data.frame(out)
-out_score <- as.numeric(paste0(out$`Subgroup Score`[1]))
+gb$idx <- match(colnames(probs)[oo][1],mnp.v11b6::reflist[,2])
+gb$out_class_family <- as.data.frame(out_class_family)
+gb$out <- as.data.frame(gb$out)
+gb$out_score <- as.numeric(paste0(gb$out$`Subgroup Score`[1]))
 
 subVal_int <- NULL
-if (is.null(out_score)|is.na(out_score)) {
+if (is.null(gb$out_score)|is.na(gb$out_score)) {
     warning("out_score value (sub score) is NULL.  Assigning value of 0.00")
-    out_score <- 0.000
+    gb$out_score <- 0.000
 }
-if (out_score >= 0.500) {subVal_int <- "Positive"}
-if (out_score < 0.500 & out_score >= 0.100) {subVal_int <- "Indeterminate"}
-if (out_score < 0.300) {subVal_int <- "Negative"}
+if (gb$out_score >= 0.500) {subVal_int <- "Positive"}
+if (gb$out_score < 0.500 & gb$out_score >= 0.100) {subVal_int <- "Indeterminate"}
+if (gb$out_score < 0.300) {subVal_int <- "Negative"}
 if (is.null(subVal_int)) {
     warning("subscore value (subVal_int) is NULL")
     subVal_int <- "Indeterminate"
 }
 
-out$Interpretation = c(subVal_int,"","","","")
-fsco <- as.numeric(paste0(out_class_family$`Class Score`[1]))
+gb$out$Interpretation = c(subVal_int,"","","","")
+fsco <- as.numeric(paste0(gb$out_class_family$`Class Score`[1]))
 
 famVal <- NULL
 if (is.null(fsco)|is.na(fsco)) {
@@ -320,7 +317,7 @@ if (is.null(famVal)) {
     warning("family value (famVal) is NULL")
     famVal <- "Indeterminate"
 }
-out_class_family$Interpretation = c(famVal,"","","","")
+gb$out_class_family$Interpretation = c(famVal,"","","","")
 xtraCss1="border-radius:0px;border-width:1px;border-style:solid;border-color:rgb(192,192,192);"
 xtraCss2="border-radius:0px;border-width:3px;border-style:solid;border-color:rgb(26,105,16);"
 xtraCss3="border-radius:0px;border-width:3px;border-style:solid;border-color:rgb(16,28,105);"
@@ -329,7 +326,7 @@ btso = c("bordered")
 kgb <- c("striped",font_size = 14, bootstrap_options = btso)
 kgh <- c(booktabs = T, escape = F, linesep = "")
 
-out_class_family %>% 
+gb$out_class_family %>% 
 	knitr::kable("html",kgh,align='clc') %>%
 	kableExtra::kable_styling(kgb,full_width=F,position="float_left") %>%
 	kableExtra::column_spec(column=c(1,2),extra_css=xtraCss1) %>%
@@ -337,7 +334,7 @@ out_class_family %>%
 	kableExtra::row_spec(row=0,font_size=16,background="rgb(127,217,126)",color="black") %>%
 	kableExtra::row_spec(row=1,extra_css=xtraCss2)
 			
-out %>% 
+gb$out %>% 
 	knitr::kable("html",kgh,align='clc')%>%
     kableExtra::kable_styling(kgb,full_width=F,position="left") %>%
 	kableExtra::column_spec(column=c(1,2), extra_css=xtraCss1) %>%
@@ -345,10 +342,10 @@ out %>%
 	kableExtra::row_spec(row=0,font_size=16,background="rgb(135,174,237)", color="black") %>%
 	kableExtra::row_spec(row=1,extra_css=xtraCss3)
 
-gb$familia <- out_class_family$`Methylation Family`[1]
-gb$fscore <- out_class_family$`Class Score`[1]
-gb$subfam <- out$`Methylation Subgroup`[1]
-gb$subScore <- out$`Subgroup Score`[1]
+gb$familia <- gsub(",","",gb$out_class_family$`Methylation Family`[1]) 
+gb$fscore <- gb$out_class_family$`Class Score`[1]
+gb$subfam <- gsub(",","",gb$out$`Methylation Subgroup`[1])
+gb$subScore <- gb$out$`Subgroup Score`[1]
 
 ```
 <caption style="font-size:12px;"><ul style="font-size:12px; list-style-type: none;" class="no-bullets">
@@ -383,7 +380,7 @@ indicates no matching methylation class (score <0.3) and for classifier subclass
 
 </h3>
 </div>
-```{r, label='TSNE Cluster', fig.height=8, fig.width=12}
+```{r, label='TSNE Cluster', fig.height=8, fig.width=12, eval=FALSE}
 me.col <- c( "#1F78B4","#2980BA","#3388C1","#3D91C8","#4799CF","hotpink","hotpink","hotpink","hotpink","hotpink","hotpink","#58D68D","#8FCDC0","#96D1B3","#9ED5A7","#A6D99B","#AEDD8F","#A9DB82","#97D574","#85CF65","#74C957","#62C349","#50BD3A","#3EB72C","#2DB11D","#26AC17","#41AA27","#5BA737","#76A547","#ff4d00","#ABA068","#ff4d00","#E09C88","#FA9998","#ff4d00","#F48D78","#ff4d00","#ED8157","#EA7B47","#E77536","#E46F26","#E06916","#E26F1A","#E67A25","#E98531","#ED8F3C","#F09A47","#F4A452","#F7AF5E","#FBB969","#FDB368","#FD9C5A","#FD854D","#FD6D3F","#FE5632","#FE3F24","#FE2817","#FE110A","#FC0406","#F11421","#E6253B","#DC3556","#D14670","#C6568B","#BC67A5","#B177C0","#A687DB","#A17DDB","#9C72DC","#9668DC","#915DDD","#8B53DE","#8648DE","#803EDF","#7B33DF","#863FCB","#9653B0","#A66795","#B67B7A","#C68F5F","#D6A343","#E6B728","#F6CB0D","#FFFF00","#FFFF00","#FFFF00","#F6D916","#5e2f1b","#2980B9","#b8b8b8","#A9A9A9","#A9A9A9","#A9A9A9","#A9A9A9","#9E9E9E","#939393","#868686","#787878","#676767","#0400ff" )
 set.seed(12345)
 
@@ -431,7 +428,7 @@ supM(theplot)
 ### Copy Number Variation Profile
 </h3>
 </div>
-```{r, label='CNV Plot', fig.width = 12, fig.height=7}
+```{r, label='CNV Plot', fig.width = 12, fig.height=7, error=FALSE}
 if (is450k==TRUE) {
     library(verbose=F,warn.conflicts = F, quietly = T, package="mnp.v11b4")
     MNPcnv450k <- function(Mset, sex = NULL, ...){
@@ -481,7 +478,7 @@ Depiction of chromosomes 1 to 22 (and X/Y if automatic prediction was successful
 </p>
 
 ### CNV Gains and Loss
-```{r, label='CNV table'}
+```{r, label='CNV table', error=FALSE}
 require(mnp.v11b6)
 dra <- supM(gb$new.ggplotly(xx, getTables = T, sex=sex, newOvGenes=newOvGenes))
 gDF <- t(data.frame(Gains = c(rownames(dra[(dra$Gain == T),]))))
@@ -517,14 +514,14 @@ MGMT Prediction
 </div>
 
 <div style="width:50%;">
-```{r, include=FALSE, cache=TRUE}
+```{r, include=FALSE}
 require("tidyverse")
 require("plotly")
 require("ggplot2")
 htmltools::tagList(plotly::ggplotly(ggplot2::ggplot(),width = 500, height = 200))
 ```
 <div style="width:50%;height:200px">
-```{r,label='MGMTPred', results='asis', out.width='50%', out.height='200px', plotly=TRUE, include=TRUE, fig.keep='all', fig.height=0.3, fig.width=1.5}
+```{r,label='MGMTPred', results='asis', out.width='50%', out.height='200px', plotly=TRUE, include=TRUE, fig.keep='all', fig.height=0.3, fig.width=1.5, error=FALSE}
 #
 Mset_raw <- minfi::preprocessRaw(RGset) #, echo=FALSE, self.contained=TRUE
 
@@ -551,13 +548,14 @@ supM(print(theBarPlot))
 </div>
 #### MGMT Status
 
-```{r,label='MGMT tab', results='asis', fig.keep='all', out.width='50%', out.height='200px', plotly=TRUE, fig.height=1.5, fig.width=3.5, include=TRUE, self.contained=TRUE}
+```{r,label='MGMT tab', results='asis', fig.keep='all', out.width='50%', out.height='200px', plotly=TRUE, fig.height=1.5, fig.width=3.5, include=TRUE, self.contained=TRUE, error=FALSE}
 #
 if (is450k) {
     mgmtData <- mnp.v11b4::MNPpredict_mgmt(Mset_raw)
 } else{
     mgmtData <- mnp.v11b6::MNPpredict_mgmt(Mset_raw)
 }
+gb$mgmtData<- mgmtData
 theTable <- supM(knitr::kable(mgmtData) %>% kableExtra::kable_styling(kgb,full_width = F, position = "left", font_size = 18))
 theTable
 ```
@@ -575,8 +573,8 @@ grades, and CIMP-status.* Acta Neuropathologica, p.547-560, Number 4, 2012.</p>
 </h3>
 </div>
 <div>
-```{r, label='MLH1 Functions', fig.align="center", fig.height=12, fig.width=12, dpi=40}
-get.clinical.data = function(ratioSet, RGset){
+```{r, label='MLH1 Functions', fig.align="center", fig.height=12, fig.width=12, dpi=40, error=FALSE}
+gb$get.clinical.data = function(ratioSet, RGset){
 	#Output is DF with sample information, betas for relevant MLH1 loci
 	MLH1_CGIDS = c("cg23658326","cg11600697","cg21490561","cg00893636")
 	mlh.b = minfi::getBeta(ratioSet)[MLH1_CGIDS,]
@@ -614,7 +612,7 @@ get.clinical.data = function(ratioSet, RGset){
 }
 
 ## Plot Beta densities for samples and plot ----------------------------------------------------------
-getPlotTable = function(clin.data){
+gb$getPlotTable = function(clin.data){
 	title.string = c("MLH1 Result" = clin.data$m.reslt[1], "Total Positive Loci" = clin.data$MLH1.pos.loci[1])
 	title.string <- as.data.frame(title.string); colnames(title.string) = NULL
 	return(title.string)
@@ -659,7 +657,7 @@ renderPlot <- function(beta.matrix, clin.res) {
 	return(suppressWarnings(fig))
 	}
 
-drawPlotTab <- function(mlhP){ 
+gb$drawPlotTab <- function(mlhP){ 
 	be = c(booktabs = T, escape = F, linesep = "")
 	return(
 		mlhP %>% knitr::kable("html",be, align = 'clc') %>% 
@@ -669,7 +667,7 @@ drawPlotTab <- function(mlhP){
 		)
 	}
 
-pipeline = function(RGset, getFig=F, getTable=F) {
+gb$pipeline = function(RGset, getFig=F, getTable=F) {
 	Mset = preprocessIllumina(RGset, bg.correct = TRUE, normalize = "controls")
 	ratioSet = ratioConvert(Mset, what = "both", keepCN = FALSE)
 	beta.matrix = getBeta(ratioSet)
@@ -684,8 +682,8 @@ pipeline = function(RGset, getFig=F, getTable=F) {
 }
 ```
 
-```{r, label='MLH1 Prediction', fig.align="center", fig.height=8, fig.width=10, dpi=36}
-theMlhplot <- pipeline(RGset, getFig = T, getTable = F) 
+```{r, label='MLH1 Prediction', fig.align="center", fig.height=8, fig.width=10, dpi=36, error=FALSE}
+theMlhplot <- gb$pipeline(gb$RGset2, getFig = T, getTable = F) 
 supM(theMlhplot)
 ```
 </div>
@@ -693,17 +691,12 @@ supM(theMlhplot)
 <div>
 #### MLH1 Status
 
-```{r, label='MLH1 plot'}
-gb$mlhP <- gb$pipeline(RGset2,getFig = F, getTable = T)
-gb$theMlhTab <- drawPlotTab(gb$mlhP)
-gb$theMlhTab
-```
-
-```{r, label='REDCapWrite', include=FALSE, message=TRUE, error=FALSE}
-library("jsonlite")
-library("crayon")
-library("RCurl")
+```{r, label='MLH1 plot', error=FALSE}
 gb <- globalenv(); assign("gb", gb)
+mlhP <- gb$pipeline(gb$RGset2, getFig = F, getTable = T)
+gb$theMlhTab <- gb$drawPlotTab(mlhP)
+gb$theMlhTab
+gb$mlhP <- mlhP
 
 stopifnot(!is.null(gb$sampleID))
 stopifnot(!is.null(gb$sentrix))
@@ -741,33 +734,28 @@ dfNewRed <- data.frame(
     run_number = gb$run_id,
     tm_number = gb$mp_number
 )
-
-#datarecord = jsonlite::toJSON((as.list(dfNewRed[1,])), auto_unbox=T)
-makePost <- function(datarecord){
-    ur = "https://redcap.nyumc.org/apps/redcap/api/"
-    tk <- params$token
-    RCurl::postForm(ur, token = tk, content = 'record', format = 'csv', type = 'flat',
-                    data = datarecord, returnFormat = 'csv', overwriteBehavior='normal')
-}
-
-#expr=makePost(datarecord)
-
-writeRedcap <- function(redcsv, dfNewRed,dfRedcap){
+stopifnot(!is.null(dfNewRed))
+writeRedcap <- function(redcsv, dfNewRed, dfRedcap){
 	redDF <- rbind(dfRedcap, dfNewRed)
 	row.names(redDF) = NULL
-	#write.table(dfNewRed, file= redcsv, row.names=F, col.names=T, append=T, quotes=F)
-	write.csv(x = redDF,file = redcsv, row.names = F)
+	#write.table(redDF, file= redcsv, row.names=F, col.names=T, append=T)
+	write.csv(x = redDF,file = redcsv, row.names = F, quote=F)
 }
-deskPath <- file.path("~", "Desktop", run_id)
+deskPath <- file.path("~", "Desktop", gb$run_id)
 redcsv <- list.files(path= deskPath, pattern="_Redcap.csv", full.names=T)[1]
 
 if(!is.na(redcsv)){
 dfRedcap = read.csv(redcsv, header = T, row.names = NULL)
 dfRedcap <- as.data.frame(dfRedcap, row.names = NULL)
+stopifnot(!is.null(colnames(dfRedcap)))
 writeRedcap(redcsv, dfNewRed, dfRedcap)
 }else{
     message("REDCap Upload failed for sample:", sampleID, "will attempt upload at run end.")
 }
+```
+
+```{r, label='garbage collection', echo=FALSE, message=FALSE, error=FALSE, include=FALSE}
+gc()
 ```
 </div>
 
