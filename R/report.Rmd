@@ -456,11 +456,12 @@ if (is450k==TRUE) {
 	#mnp.v11b4::MNPcnvggplotly(xx)
     } else {
 	    xx <- supM(mnp.v11b6::MNPcnv(Mset,sex = sex,main = sampleID))
-	    }
+    }
+
 cnvUrl <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/cnvggplotly.R"
-githubURL <- "https://github.com/NYU-Molecular-Pathology/Methylation/raw/main/Rdata/newOvGenes.rds"
 devtools::source_url(cnvUrl)
 
+githubURL <- "https://github.com/NYU-Molecular-Pathology/Methylation/raw/main/Rdata/newOvGenes.rds"
 tryCatch(
     expr = {newOvGenes <- readRDS(url(githubURL, method = "libcurl"))},
     error = function(e) {
