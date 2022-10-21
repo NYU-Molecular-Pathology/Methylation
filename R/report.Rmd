@@ -380,7 +380,7 @@ indicates no matching methylation class (score <0.3) and for classifier subclass
 
 </h3>
 </div>
-```{r, label='TSNE Cluster', fig.height=8, fig.width=12, eval=FALSE}
+```{r, label='TSNE Cluster', fig.height=8, fig.width=12}
 me.col <- c( "#1F78B4","#2980BA","#3388C1","#3D91C8","#4799CF","hotpink","hotpink","hotpink","hotpink","hotpink","hotpink","#58D68D","#8FCDC0","#96D1B3","#9ED5A7","#A6D99B","#AEDD8F","#A9DB82","#97D574","#85CF65","#74C957","#62C349","#50BD3A","#3EB72C","#2DB11D","#26AC17","#41AA27","#5BA737","#76A547","#ff4d00","#ABA068","#ff4d00","#E09C88","#FA9998","#ff4d00","#F48D78","#ff4d00","#ED8157","#EA7B47","#E77536","#E46F26","#E06916","#E26F1A","#E67A25","#E98531","#ED8F3C","#F09A47","#F4A452","#F7AF5E","#FBB969","#FDB368","#FD9C5A","#FD854D","#FD6D3F","#FE5632","#FE3F24","#FE2817","#FE110A","#FC0406","#F11421","#E6253B","#DC3556","#D14670","#C6568B","#BC67A5","#B177C0","#A687DB","#A17DDB","#9C72DC","#9668DC","#915DDD","#8B53DE","#8648DE","#803EDF","#7B33DF","#863FCB","#9653B0","#A66795","#B67B7A","#C68F5F","#D6A343","#E6B728","#F6CB0D","#FFFF00","#FFFF00","#FFFF00","#F6D916","#5e2f1b","#2980B9","#b8b8b8","#A9A9A9","#A9A9A9","#A9A9A9","#A9A9A9","#9E9E9E","#939393","#868686","#787878","#676767","#0400ff" )
 set.seed(12345)
 
