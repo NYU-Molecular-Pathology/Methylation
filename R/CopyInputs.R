@@ -32,7 +32,7 @@ CreateRunDir <- function(newRun) {
     message(crayon::bgGreen("New Run Path:"), "\n", newRun)
     if (!dir.exists(newRun)) {
         dir.create(newRun, recursive = T)
-        #Sys.chmod(newRun, "0777", use_umask = FALSE)
+        Sys.chmod(newRun, "0777", use_umask = TRUE)
     }
     if(Sys.info()[['sysname']]=="Darwin"){
     cmd <- paste("chmod -R 770", newRun)
@@ -40,14 +40,13 @@ CreateRunDir <- function(newRun) {
     cmd1 <-
         paste0(
             'chmod -R +ai ',
-            "'group:NYUMC\\Shared-RSC-CBioinformatics-user01",
-            " allow list,add_file,search,delete,add_subdirectory,readattr,writeattr,readextattr,writeextattr,readsecurity,file_inherit,directory_inherit'",
+            "'group:NYUMC\\shared-rsc-CBioinfo-Meth-Clinicalruns",
+            " allow list,add_file,search,add_subdirectory,delete_child,readattr,writeattr,readextattr,writeextattr,readsecurity,file_inherit,directory_inherit'",
             " '",
             newRun,
             "'","/*"
         )
-
-    system(cmd1)
+    try(system(cmd1),silent=T)
     setDirectory(newRun)
     cmd2 <-
         paste0(
@@ -61,11 +60,11 @@ CreateRunDir <- function(newRun) {
             newRun,
             "'"
         )
-    system(cmd2)
+    try(system(cmd2),silent=T)
 
     cmd3 <-
         paste0(
-            'chmod -R +a ',
+            'chmod -R +ai ',
             file.path(
                 "'group:NYUMC",
                 "shared-rsc-CBioinfo-Meth-Clinicalruns",
@@ -76,7 +75,7 @@ CreateRunDir <- function(newRun) {
             newRun,
             "'","/*"
         )
-    system(cmd3)
+    try(system(cmd3),silent=T)
     }
 
     setDirectory(newRun)
