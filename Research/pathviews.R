@@ -211,6 +211,7 @@ WritePathVals <- function(geneVals, geneListIn){
     topPaths <- topPaths[order(topPaths$qvalue),]
     topPaths <- topPaths[1:5,] # take top 5 pathways
     pathWayGenes <- as.data.frame(topPaths)
-    write.csv(pathWayGenes, file = file.path(getwd(),geneListIn), row.names = F, quote = F)
+    write.csv(pathWayGenes, file = geneListIn, row.names = F, quote = F)
     return(pathWayGenes)
 }
+
