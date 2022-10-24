@@ -16,7 +16,7 @@ gb <- globalenv(); assign("gb", gb)
 
 writeRedcapPred <- function(run_id, dfNewRed) {
     redfolder <- file.path("~","Desktop", run_id)
-    redcsv <- list.files(path=redfolder, pattern="_Redcap.csv", full.names=T)[1]
+    redcsv <- list.files(path=redfolder, pattern="_v11_Redcap.csv", full.names=T)[1]
     if (!is.na(redcsv)) {
         dfRedcap = read.csv(redcsv, header = T, row.names = NULL)
         dfRedcap <- as.data.frame(dfRedcap, row.names = NULL)
@@ -32,7 +32,7 @@ writeRedcapPred <- function(run_id, dfNewRed) {
 
 SetDesktopOutput <- function(run_id){
     redfolder <- file.path("~","Desktop", run_id)
-    redcsv <- file.path(redfolder, paste0(run_id,"_Redcap.csv"))
+    redcsv <- file.path(redfolder, paste0(run_id,"_v11_Redcap.csv"))
     redcapDF <- data.frame(
         record_id = character(),
         b_number = character(),
@@ -51,7 +51,6 @@ SetDesktopOutput <- function(run_id){
         run_number = character(),
         tm_number = character()
     )
-
     if (!dir.exists(redfolder)) {dir.create(redfolder)}
     if (!file.exists(redcsv)) {write.csv(x = redcapDF, file = redcsv, row.names = F)}
 }
