@@ -437,8 +437,8 @@ LoopPathwayHeatMap <- function(pathWayGenes){
 #    if(!dir.exists(hmOutPath)){dir.create(hmOutPath, recursive = T)}
     for(pathRow in 1:nrow(pathWayGenes)){
         currPathway <- pathWayGenes[pathRow,]
-        message("Looping Pathway Creation for: ", currPathway)
         pathwayName <- paste0(gsub(" ", "_", currPathway$Description))
+        message("Looping Pathway Creation for: ", pathwayName)
         avgExist <- CheckGeneOutput(pathwayName)
         if(avgExist==F){
             your_genes <- stringr::str_split(currPathway$geneID, pattern = "/")[[1]]
@@ -451,11 +451,11 @@ LoopPathwayHeatMap <- function(pathWayGenes){
         titleValue <- paste("Average Probe Beta Values for", currPathway$Description, "Genes")
         avgBetas <- as.matrix(avgBetas)
         avgBetas <- na.omit(avgBetas)
-        hm <- gb$GetHeatMapGenes(avgBetas, titleValue, ha, geneNamesHeatMap=T, colSplt=3)
         msgTitle <- paste("##", currPathway$Description)
         cat("\n\n")  
         cat(msgTitle)
         cat("\n\n")
+        hm <- gb$GetHeatMapGenes(avgBetas, titleValue, ha, geneNamesHeatMap=T, colSplt=3)
         knitr::asis_output(hm) 
         cat("\n\n")
         cat("\n\n")
