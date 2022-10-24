@@ -59,11 +59,15 @@ makePlotly<-function(fig) {
             }
         }
     }
+
     otherPlot <-
         otherPlot %>% plotly::layout(legend = list(
             title = list(text = "<b>Legend</b><br>", font = list(size = 14)),
             font = list(size = 12)
-        ))
+        )) 
+      mrg <- list(l = 50, r = 50, b = 100, t = 100, pad = 4)  
+  otherPlot <-
+        otherPlot %>% plotly::layout(margin = mrg)
 
     return(otherPlot)
 }
