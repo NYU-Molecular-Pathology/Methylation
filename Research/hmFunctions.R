@@ -433,12 +433,12 @@ LoopPathwayHeatMap <- function(pathWayGenes){
     doParallel::registerDoParallel(cores=6)
     cat("# Pathway Gene HeatMaps {.tabset}")
     cat("\n\n")
-    hmOutPath <- file.path(getwd(), "figures", "data")
-    if(!dir.exists(hmOutPath)){dir.create(hmOutPath, recursive = T)}
+#    hmOutPath <- file.path(getwd(), "figures", "data")
+#    if(!dir.exists(hmOutPath)){dir.create(hmOutPath, recursive = T)}
     for(pathRow in 1:nrow(pathWayGenes)){
         currPathway <- pathWayGenes[pathRow,]
+        message("Looping Pathway Creation for: ", currPathway)
         pathwayName <- paste0(gsub(" ", "_", currPathway$Description))
-        
         avgExist <- CheckGeneOutput(pathwayName)
         if(avgExist==F){
             your_genes <- stringr::str_split(currPathway$geneID, pattern = "/")[[1]]
@@ -452,14 +452,13 @@ LoopPathwayHeatMap <- function(pathWayGenes){
         avgBetas <- as.matrix(avgBetas)
         avgBetas <- na.omit(avgBetas)
         hm <- gb$GetHeatMapGenes(avgBetas, titleValue, ha, geneNamesHeatMap=T, colSplt=3)
-
-      msgTitle <- paste("##", currPathway$Description)
-       cat("\n\n")  
+        msgTitle <- paste("##", currPathway$Description)
+        cat("\n\n")  
         cat(msgTitle)
-       cat("\n\n")
+        cat("\n\n")
         knitr::asis_output(hm) 
         cat("\n\n")
-         cat("\n\n")
+        cat("\n\n")
         #gb$saveHmPng(fi_prefix= "hm_genes_", fi_suffix=".png", hm, topvar = paste0(currPathway$Description), outDir = hmOutPath)
     }
 }
