@@ -24,7 +24,7 @@ writeRedcapPred <- function(run_id, dfNewRed) {
         row.names(redDF) = NULL
         write.csv(x = redDF, file = redcsv, row.names = F)
     } else{
-        message("REDCap Upload failed for sample:", sampleID,
+        message("Saving the REDCap csv data failed for sample:", sampleID,
                 "second upload attempt will be made at end of run."
         )
     }
