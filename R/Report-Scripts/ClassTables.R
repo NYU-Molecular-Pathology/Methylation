@@ -260,17 +260,21 @@ PrintScoreTable <- function(outV12, dat) {
         kableExtra::kable_styling(kgb, full_width = F, position = "left") %>%
         kableExtra::column_spec(column = 1, background = "palegreen", bold = T, extra_css = txtc)
     v12Data <- as.data.frame(t(outV12[3:4,]))
-    v12Data$Class_score <- v12Data[2,1]
-    v12Data$Subgroup_score <- v12Data[2,2]
-    v12Data <- v12Data[1,]
-    rownames(v12Data) <- NULL
+    #message(paste0(capture.output(v12Data), collapse="\n"))
+    v12redcap <- as.data.frame(matrix(nrow=1))
+    v12redcap$Class_predict <- gsub(pattern=",", "", v12Data$Class[1])
+    v12redcap$Class_score <- v12Data$Class[2]
+    v12redcap$Subgroup_predict <- gsub(pattern=",", "",v12Data$Subclass[1])
+    v12redcap$Subgroup_score <- v12Data$Subclass[2]
+    v12redcap <- v12redcap[1,-1]
+    rownames(v12redcap) <- NULL
     redcsv <- file.path("~", "Desktop", dat$run_id, paste0(dat$run_id, "_v12.csv"))
     if (file.exists(redcsv)) {
         dfRedcap = as.data.frame(read.csv(redcsv, header = T, row.names = NULL))
-        redDF <- rbind(dfRedcap, v12Data)
+        redDF <- rbind(dfRedcap, v12redcap)
         row.names(redDF) = NULL
     } else{
-        redDF <- v12Data
+        redDF <- v12redcap
     }
     write.csv(x = redDF,file = redcsv, row.names = F, quote=F)
     return(outTable12)
