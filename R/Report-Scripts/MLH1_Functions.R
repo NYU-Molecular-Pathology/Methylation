@@ -81,6 +81,7 @@ drawPlotTab <- function(mlhP){
     return(theMlhTab)
 }
 
+
 Mlh1Pipeline <- function(RGset) {
     Mset = minfi::preprocessIllumina(RGset, bg.correct = TRUE, normalize = "controls")
     ratioSet = ratioConvert(Mset, what = "both", keepCN = FALSE)
@@ -89,5 +90,10 @@ Mlh1Pipeline <- function(RGset) {
     beta.matrix = getBeta(ratioSet)
     theMlhplot <- renderPlot(beta.matrix, clin.res)
     mlhP <- getPlotTable(clin.data = clin.res)
-    return(list("theMlhplot"=theMlhplot, "mlhP"=drawPlotTab(mlhP)))
+    return(list(
+        "theMlhplot" = theMlhplot,
+        "mlhP" = drawPlotTab(mlhP),
+        "theValue" = clin.res
+    ))
 }
+
