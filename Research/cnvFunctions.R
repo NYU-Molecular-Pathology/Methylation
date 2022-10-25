@@ -178,9 +178,9 @@ gb$GetFreqData <- function(cnData,plotChr,plotTitle){
     return(freqDat)
 }
 
-gb$SaveCnvData <- function(freqDat, plotName){
+SaveCnvData <- function(freqDat, plotName){
     cnvDir <- file.path(getwd(), "cnv")
-    if (!dir.exists(cnvDir)) {dir.create(cnvDir)}
+    if (!dir.exists(cnvDir)) {dir.create(cnvDir, recursive=T)}
     suppressWarnings(write.csv(
         freqDat,
         file = file.path(cnvDir, paste(plotName, "cnv.csv", sep = "_")),
