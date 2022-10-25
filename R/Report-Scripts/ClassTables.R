@@ -264,10 +264,14 @@ PrintScoreTable <- function(outV12, dat) {
     v12Data$Subgroup_score <- v12Data[2,2]
     v12Data <- v12Data[1,]
     rownames(v12Data) <- NULL
-    redcsv <- file.path("~", "Desktop", dat$run_id, paste0(dat$run_id,"_v12.csv"))
-    dfRedcap = as.data.frame(read.csv(redcsv, header = T, row.names = NULL))
-    redDF <- rbind(dfRedcap, v12Data)
-	row.names(redDF) = NULL
+    redcsv <- file.path("~", "Desktop", dat$run_id, paste0(dat$run_id, "_v12.csv"))
+    if (file.exists(redcsv)) {
+        dfRedcap = as.data.frame(read.csv(redcsv, header = T, row.names = NULL))
+        redDF <- rbind(dfRedcap, v12Data)
+        row.names(redDF) = NULL
+    } else{
+        redDF <- v12Data
+    }
     write.csv(x = redDF,file = redcsv, row.names = F, quote=F)
     return(outTable12)
 }
