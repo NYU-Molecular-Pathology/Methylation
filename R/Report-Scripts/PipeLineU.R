@@ -30,7 +30,13 @@ UniD_dataqc <- function (loading, detP.cut = 0.05, bc.cut = 3, arrayType) {
     return(Beta.raw)
 }
 
-UniD_loadData <- UniD_load <- function (sampleID, run_id=NULL) {
+UniD_loadData <- function (sampleID, run_id=NULL) {
+    if(grepl("control", sampleID)==T){
+        sampleID <- "control"
+    }
+    if(is.null(run_id)){
+        run_id <- basename(getwd())
+    }
     samSh <- paste0(run_id,"_samplesheet.csv")
     inFile <- file.path("~","Desktop", run_id, samSh)
     if(file.exists(inFile)){
@@ -50,7 +56,7 @@ UniD_loadData <- UniD_load <- function (sampleID, run_id=NULL) {
     loading[["detP"]] <- detP
     return(loading)
 }
-
+                     
 PipelineU <- function(sampleID = "NONE", RGset, run_id = NULL) {
     is450k<-RGset@annotation[[1]] == "IlluminaHumanMethylation450k"
     if(is.null(run_id)){run_id <- "NONE"}
