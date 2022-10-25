@@ -15,19 +15,21 @@ supM <- function(objTing){return(suppressMessages(suppressWarnings(objTing)))}
 gb <- globalenv(); assign("gb", gb)
 
 writeRedcapPred <- function(run_id, dfNewRed) {
-    redfolder <- file.path("~","Desktop", run_id)
-    redcsv <- list.files(path=redfolder, pattern="_v11_Redcap.csv", full.names=T)[1]
-    if (!is.na(redcsv)) {
+    redfolder <- file.path("~", "Desktop", run_id)
+    redcsv <- file.path(redfolder, paste0(run_id, "_v11_Redcap.csv"))
+    if (file.exists(redcsv)) {
         dfRedcap = read.csv(redcsv, header = T, row.names = NULL)
         dfRedcap <- as.data.frame(dfRedcap, row.names = NULL)
-        redDF <- rbind(dfRedcap, dfNewRed)
-        row.names(redDF) = NULL
-        write.csv(x = redDF, file = redcsv, row.names = F)
+        if (nrow(dfRedcap) > 0) {
+            redDF <- rbind(dfRedcap, dfNewRed)
+        } else{
+            redDF <- dfNewRed
+        }
     } else{
-        message("Saving the REDCap csv data failed for sample:", sampleID,
-                "second upload attempt will be made at end of run."
-        )
+        redDF <- dfNewRed
     }
+    row.names(redDF) = NULL
+    write.csv(redDF, redcsv, row.names = F)
 }
 
 SetDesktopOutput <- function(run_id){
