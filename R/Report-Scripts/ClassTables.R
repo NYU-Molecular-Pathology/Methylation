@@ -259,9 +259,12 @@ PrintScoreTable <- function(outV12, dat) {
     outTable12 <- outV12 %>% mutate_all(as.character) %>% knitr::kable("html", be, align = 'clc') %>%
         kableExtra::kable_styling(kgb, full_width = F, position = "left") %>%
         kableExtra::column_spec(column = 1, background = "palegreen", bold = T, extra_css = txtc)
-    v12Data <- as.data.frame(t(outV12[3:4,]))
+    v12Data <- as.data.frame(t(outV12))
     #message(paste0(capture.output(v12Data), collapse="\n"))
     v12redcap <- as.data.frame(matrix(nrow=1))
+    v12redcap$record_id <- paste0(dat$sampleID)
+    v12redcap$Super <-  gsub(pattern=",", "", v12Data$`Super Family`[1])
+    v12redcap$Super_score <- v12Data$`Super Family`[2]
     v12redcap$Class_predict <- gsub(pattern=",", "", v12Data$Class[1])
     v12redcap$Class_score <- v12Data$Class[2]
     v12redcap$Subgroup_predict <- gsub(pattern=",", "",v12Data$Subclass[1])
