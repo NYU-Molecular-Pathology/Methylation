@@ -245,8 +245,8 @@ grabProbes <- function(your_genes, RGSet, region){
 col_fun3 <- circlize::colorRamp2(c(0, 0.20, 0.25, 0.5, 0.75, 1), c("black","darkblue","deepskyblue", "white", "tomato","red"))
                                            
 saveHmPng <- function(fi_prefix, fi_suffix, hm, topvar = "", outDir=NULL) {
-  if(is.null(outDir)){outDir<-gb$runDir}
-  hmOutDir <- file.path(outDir, "HeatMaps")
+  if(is.null(outDir)){outDir<-getwd()}
+  hmOutDir <- file.path(outDir, "figures", "heatmaps")
   if(!dir.exists(hmOutDir)){dir.create(hmOutDir)}
   imgFile <- file.path(hmOutDir, paste0(fi_prefix, topvar, fi_suffix))
   wd <- as.numeric(hm@ht_list_param[["width"]]) + 5
@@ -433,8 +433,8 @@ LoopPathwayHeatMap <- function(pathWayGenes){
     doParallel::registerDoParallel(cores=6)
     cat("# Pathway Gene HeatMaps {.tabset}")
     cat("\n\n")
-#    hmOutPath <- file.path(getwd(), "figures", "data")
-#    if(!dir.exists(hmOutPath)){dir.create(hmOutPath, recursive = T)}
+    hmOutPath <- file.path(getwd(), "figures", "heatmaps")
+    if(!dir.exists(hmOutPath)){dir.create(hmOutPath, recursive = T)}
     for(pathRow in 1:nrow(pathWayGenes)){
         currPathway <- pathWayGenes[pathRow,]
         pathwayName <- paste0(gsub(" ", "_", currPathway$Description))
@@ -459,6 +459,6 @@ LoopPathwayHeatMap <- function(pathWayGenes){
         knitr::asis_output(hm) 
         cat("\n\n")
         cat("\n\n")
-        #gb$saveHmPng(fi_prefix= "hm_genes_", fi_suffix=".png", hm, topvar = paste0(currPathway$Description), outDir = hmOutPath)
+        saveHmPng(fi_prefix= "hm_genes_", fi_suffix=".png", hm, topvar = paste0(currPathway$Description), outDir = hmOutPath)
     }
 }
