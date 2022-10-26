@@ -429,12 +429,12 @@ CheckGeneOutput <- function(pathwayName) {
     }
 }
 
-LoopPathwayHeatMap <- function(pathWayGenes){
+LoopPathwayHeatMap <- function(pathWayGenes, ha){
     doParallel::registerDoParallel(cores=6)
     cat("# Pathway Gene HeatMaps {.tabset}")
     cat("\n\n")
-    hmOutPath <- file.path(getwd(), "figures", "heatmaps")
-    if(!dir.exists(hmOutPath)){dir.create(hmOutPath, recursive = T)}
+    hmOutPath <- getwd() #file.path(getwd(), "figures", "heatmaps")
+    #if(!dir.exists(hmOutPath)){dir.create(hmOutPath, recursive = T)}
     for(pathRow in 1:nrow(pathWayGenes)){
         currPathway <- pathWayGenes[pathRow,]
         pathwayName <- paste0(gsub(" ", "_", currPathway$Description))
@@ -455,10 +455,14 @@ LoopPathwayHeatMap <- function(pathWayGenes){
         cat("\n\n")  
         cat(msgTitle)
         cat("\n\n")
+        
         hm <- gb$GetHeatMapGenes(avgBetas, titleValue, ha, geneNamesHeatMap=T, colSplt=3)
         knitr::asis_output(hm) 
         cat("\n\n")
         cat("\n\n")
-        saveHmPng(fi_prefix= "hm_genes_", fi_suffix=".png", hm, topvar = paste0(currPathway$Description), outDir = NULL)
+        saveHmPng(fi_prefix= "hm_genes_", fi_suffix=".png", hm, 
+                  topvar = paste0(currPathway$Description), outDir = NULL)
     }
 }
+                                           
+
