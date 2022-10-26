@@ -89,10 +89,13 @@ DebugDataFrame <-function(e, gb){
     subfam <- fixNull(gb$out$`Methylation Subgroup`[1])
     subScore <- fixNull(gb$out$`Subgroup Score`[1])
     mgmtStat <- fixNull(gb$mgmtValues$mgmtVal)
-    mlh1_status <- fixNull(paste0(gb$mlhP[[1]][1]))
-    mlh1_pos_loci <- fixNull(paste0(gb$mlhP[[1]][2]))
+     mlh_status <- gb$mlh1Pred$theValue$m.reslt
+    mlh_total <- gb$mlh1Pred$theValue$MLH1.pos.loci
+    mlh1_status <- fixNull(paste0(mlh_status))
+    mlh1_pos_loci <- fixNull(paste0(mlh_total))
     run_id <- fixNull(paste(gb$dat$run_id))
-    message("sampleID: ", gb$sampleID)
+    
+    message("sampleID: ", gb$dat$sampleID)
     message("paste(dat$bnumber): ", paste(gb$dat$bnumber))
     message("colnames(RGset): ", colnames(gb$RGset))
     message("is450k: ", paste0(ifelse(gb$is450k, yes = "450k", no = "EPIC")))
@@ -122,7 +125,7 @@ GetRedcapDF <- function(gb) {
     mlh_total <- gb$mlh1Pred$theValue$MLH1.pos.loci
     
     dfNewRed <- data.frame(
-        record_id = gb$sampleID,
+        record_id = gb$dat$sampleID,
         b_number = paste(gb$dat$bnumber),
         barcode_and_row_column = colnames(gb$RGset),
         array_type = ifelse(gb$is450k, yes = "450k", no = "EPIC"),
