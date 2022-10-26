@@ -304,3 +304,23 @@ GetTracksPlot <- function(annEPICSub, bVals, results.ranges){
     ))
 }
                         
+GetDesign <- function(targPairs) {
+  cellType <- factor(targPairs$Sample_Group)
+  individual <- factor(targPairs$Sample_Source)
+  design <- model.matrix(~ 0 + cellType + individual, data = targPairs)
+  colnames(design) <- c(levels(cellType), levels(individual)[-1])
+  return(design)
+}
+
+ReadLoadDmps <- function(fit, contMat, annEPICSub, cateFile) {
+  fit2 <- contrasts.fit(fit, contMat)
+  fit2 <- eBayes(fit2)
+  summary(decideTests(fit2))
+  DMPs <- topTable(fit2, num = Inf, coef = 1, genelist = annEPICSub)
+  if (!file.exists(cateFile)) {
+    write.table(DMPs, file = cateFile, sep = ",", row.names = FALSE)
+  }
+  return(DMPs)
+}
+                        
+
