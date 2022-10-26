@@ -267,7 +267,7 @@ PrintScoreTable <- function(outV12, dat) {
     v12redcap$Super_score <- v12Data$`Super Family`[2]
     v12redcap$Class_predict <- gsub(pattern=",", "", v12Data$Class[1])
     v12redcap$Class_score <- v12Data$Class[2]
-    v12redcap$Subgroup_predict <- gsub(pattern=",", "",v12Data$Subclass[1])
+    v12redcap$Subgroup_predict <- gsub(pattern=",", "", v12Data$Subclass[1])
     v12redcap$Subgroup_score <- v12Data$Subclass[2]
     v12redcap <- v12redcap[1,-1]
     rownames(v12redcap) <- NULL
@@ -282,6 +282,7 @@ PrintScoreTable <- function(outV12, dat) {
     write.csv(x = redDF,file = redcsv, row.names = F, quote=F)
     return(outTable12)
 }
+
                            
 FormatSuppInfo <- function(suppinfo){
     names(suppinfo) <- c(
