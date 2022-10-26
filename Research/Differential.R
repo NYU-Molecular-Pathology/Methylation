@@ -386,3 +386,8 @@ GetEpicAnno <- function(RGSet, mVals){
   annEPIC[match(rownames(mVals), annEPIC$Name), c(1:4, 12:19, 24:ncol(annEPIC))]
 }
                         
+DropDashes <- function(targCol){
+   newValues <- stringr::str_replace_all(targCol, pattern="-", replacement = "_") 
+   return(newValues)
+}
+                        
