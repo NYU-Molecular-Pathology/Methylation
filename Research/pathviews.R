@@ -1,5 +1,5 @@
 gb <- globalenv(); assign("gb", gb)
-if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 6, quiet=T)}
+if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 4, quiet=T)}
 
 # Setting US CRAN REPO
 rlis = getOption("repos")
