@@ -186,7 +186,7 @@ moveSampleSheet <- function(methDir, runID = NULL) {
     if (!dir.exists(deskDir)) {
         dir.create(deskDir)
     }
-    if(is.null(methDir)){methDir <- getwd()}
+    if(is.null(methDir)){methDir <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"}
     currDir = file.path(methDir, runID)
     outFile = paste0(runID, "_samplesheet.csv")
     message("Copying from currDir:\n",currDir)
