@@ -81,7 +81,6 @@ drawPlotTab <- function(mlhP){
     return(theMlhTab)
 }
 
-
 Mlh1Pipeline <- function(RGset) {
     Mset = minfi::preprocessIllumina(RGset, bg.correct = TRUE, normalize = "controls")
     ratioSet = ratioConvert(Mset, what = "both", keepCN = FALSE)
