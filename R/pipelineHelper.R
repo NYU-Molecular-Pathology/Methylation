@@ -463,22 +463,21 @@ SetBaseFolder <- function(token, baseFolder, runID){
     return(baseFolder)
 }
 
-# Executes the functions in order to setup a run
-PrepareRun <- function(token, baseFolder=NULL, runID, runLocal=F){
-    gb$msgFunName(paste0(mainHub,"methylExpress.R"),"PrepareRun")
-    if(runLocal==F){
+PrepareRun <- function(token, baseFolder=NULL, runID, runLocal=F, rdInput=F){
+  gb$msgFunName(paste0(mainHub,"methylExpress.R"),"PrepareRun")
+  if(runLocal==F){
         gb$checkMounts()
         gb$checkValidRun(runID)
-        baseFolder <- gb$SetBaseFolder(token, baseFolder, runID)
-        setwd(file.path(baseFolder, runID))
+        gb$SetBaseFolder(token, baseFolder, runID)
         gb$copyWorksheetFile(runID = runID) # copies the xlsm file
         gb$readSheetWrite(runID = runID) # reads xlsm and generates input .csv samplesheet
         gb$get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
         gb$moveSampleSheet(baseFolder, runID) #copies outputs temp to desktop for QC.Rmd
     } else{
-        baseFolder <- gb$SetBaseFolder(token, baseFolder, runID)
-        setwd(file.path(baseFolder, runID))
-        gb$RunLocalIdats(runID, token)
+        gb$SetBaseFolder(token, baseFolder, runID)
+        if(rdInput==F){
+            gb$RunLocalIdats(runID, token)
+        }
     }
 }
 
