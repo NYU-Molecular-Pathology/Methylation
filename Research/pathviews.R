@@ -205,6 +205,25 @@ LoopHSAfiles <- function(hsaOutFi){
 }
 }
 
+LoopSaveHsaPng <- function(pathWayGenes, pathCsvOut){
+  endFile <- paste0(pathWayGenes$ID,"_",pathCsvOut)
+  for(i in 1:length(endFile)){
+    hsaPath <- stringr::str_split_fixed(endFile[i],"_",2)[[1]]  
+    message(hsaPath)
+    png1 <- paste0(hsaPath,".body.png")
+    png2 <- paste0(hsaPath,".promotor.png")
+    if(file.exists(png1)){
+    imageCap <- gb$renameDots(png1, "Gene Body Mean Values")
+    cat(paste0("## ", pathWayGenes$Description[i], "\n\n"))
+    cat(imageCap)
+    cat("\n\n")
+    imageCap <- gb$renameDots(png2,"Gene Promotor Mean Values")
+    cat(imageCap)
+    cat("\n\n")
+    }
+  }
+}
+
 WritePathVals <- function(geneVals, geneListIn){
     # Sort lowest Pvalues and lowest qvalue
     message("Min p-value: ", min(geneVals$pvalue))
