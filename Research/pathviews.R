@@ -47,34 +47,41 @@ subsetDmp <- function(annot, beta,i) {
 #'
 #' @return CSV file with promotor and body gene mean values
 #'
-writeMeansDmp <- function(topPaths, betas, annot, 
-         geneListIn= "Genes_Pathway.csv",
-         pathCsvOut="signaling_pathway.csv")
-{
-    genelist <- read.delim(geneListIn,header = T,sep = ",",row.names = NULL)
-    for (geneRow in 1:nrow(topPaths)) {
-        rap1 <- genelist[geneRow, ]
-        beta <- as.data.frame(betas)
-        specific_genes <- as.data.frame(str_split(rap1$geneID, "/"))
-        endFile <- paste0(rap1$ID[1], "_", basename(pathCsvOut))
-        endPath <- getwd()
-        #if (!dir.exists(endPath)) {dir.create(endPath)}
-        endFile <- file.path(endPath, endFile)
-        if(file.exists(endFile)){
-            message(endFile, " exists")
-        }else{
-            data_final <- data.frame(Promoter = numeric(0), Body = numeric(0))
-            for (rw in 1:nrow(specific_genes)) {
-                i = specific_genes[rw, 1]
-                beta.pb <- subsetDmp(annot, beta, i)
-                promo.mean <- mean(beta.pb$pro$Promoter_Mean)
-                body.mean <- mean(beta.pb$bod$Body_Mean)
-                avg.join <- c(promo.mean, body.mean)
-                data_final[i, ] <- c(avg.join[1], avg.join[2])
-            }
-            write.csv(data_final, file = endFile, quote = F)
-        }
+writeMeansDmp <- function(topPaths,
+                             betas,
+                             annot,
+                             geneListIn = "Genes_Pathway.csv",
+                             pathCsvOut = "signaling_pathway.csv") {
+  genelist <-
+    read.delim(geneListIn,
+               header = T,
+               sep = ",",
+               row.names = NULL)
+  for (geneRow in 1:nrow(topPaths)) {
+    rap1 <- genelist[geneRow,]
+    beta <- as.data.frame(betas)
+    specific_genes <- as.data.frame(str_split(rap1$geneID, "/"))
+    endFile <- paste0(rap1$ID[1], "_", basename(pathCsvOut))
+    endPath <- "./data"
+    if (!dir.exists(endPath)) {
+      dir.create(endPath, recursive = T)
     }
+    endFile <- file.path(endPath, endFile)
+    if (file.exists(endFile)) {
+      message(endFile, " exists")
+    } else{
+      data_final <- data.frame(Promoter = numeric(0), Body = numeric(0))
+      for (rw in 1:nrow(specific_genes)) {
+        i = specific_genes[rw, 1]
+        beta.pb <- subsetDmp(annot, beta, i)
+        promo.mean <- mean(beta.pb$pro$Promoter_Mean)
+        body.mean <- mean(beta.pb$bod$Body_Mean)
+        avg.join <- c(promo.mean, body.mean)
+        data_final[i,] <- c(avg.join[1], avg.join[2])
+      }
+      write.csv(data_final, file = endFile, quote = F)
+    }
+  }
 }
 
 ####### Pathview analysis using clusterprofiler ########
