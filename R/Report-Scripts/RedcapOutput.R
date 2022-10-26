@@ -15,21 +15,17 @@ supM <- function(objTing){return(suppressMessages(suppressWarnings(objTing)))}
 gb <- globalenv(); assign("gb", gb)
 
 writeRedcapPred <- function(run_id, dfNewRed) {
-    redfolder <- file.path("~", "Desktop", run_id)
-    redcsv <- file.path(redfolder, paste0(run_id, "_v11_Redcap.csv"))
-    if (file.exists(redcsv)) {
-        dfRedcap = read.csv(redcsv, header = T, row.names = NULL)
-        dfRedcap <- as.data.frame(dfRedcap, row.names = NULL)
-        if (nrow(dfRedcap) > 0) {
-            redDF <- rbind(dfRedcap, dfNewRed)
-        } else{
-            redDF <- dfNewRed
-        }
-    } else{
-        redDF <- dfNewRed
-    }
-    row.names(redDF) = NULL
-    write.csv(redDF, redcsv, row.names = F)
+  redDir <- file.path("~", "Desktop", run_id)
+  redcsv <- file.path(redDir, paste0(run_id, "_v11_Redcap.csv"))
+  if (file.exists(redcsv)) {
+    dfRedcap = read.csv(redcsv, header = T, row.names = NULL)
+    dfRedcap <- as.data.frame(dfRedcap, row.names = NULL)
+    redDF <- rbind(dfRedcap, dfNewRed)
+  } else{
+    redDF <- dfNewRed
+  }
+  row.names(redDF) = NULL
+  write.csv(redDF, redcsv, row.names = F)
 }
 
 SetDesktopOutput <- function(run_id){
@@ -122,7 +118,7 @@ GetRedcapDF <- function(gb) {
     subScore <- gb$out$`Subgroup Score`[1]
     mgmtStat <- gb$mgmtValues$mgmtVal
     gb$is450k <- gb$RGset@annotation[["array"]] != "IlluminaHumanMethylationEPIC"
-    mlh_status <- gb$mlh1Pred$theValue$clin.res
+    mlh_status <- gb$mlh1Pred$theValue$m.reslt
     mlh_total <- gb$mlh1Pred$theValue$MLH1.pos.loci
     
     dfNewRed <- data.frame(
@@ -147,13 +143,13 @@ GetRedcapDF <- function(gb) {
     return(dfNewRed)
 }
 
-TryREDCap <- function(gb){
-    tryCatch(
-        gb$writeRedcapPred(gb$dat$run_id, dfNewRed = gb$GetRedcapDF(gb)),
-        error = function(e) {
-            gb$DebugDataFrame(e, gb)
-        }
-    )
+TryREDCap <- function(gb) {
+  tryCatch(
+    gb$writeRedcapPred(gb$dat$run_id, dfNewRed = gb$GetRedcapDF(gb)),
+    error = function(e) {
+      gb$DebugDataFrame(e, gb)
+    }
+  )
 }
 
 CheckScoreCsv <- function(targets){
