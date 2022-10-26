@@ -355,3 +355,8 @@ DrawDMRAnno <- function(DMPs, mSetSqFlt, col_samTypes, contMat, targPairs){
   return(results.ranges)
 }
                         
+GetEpicAnno <- function(RGSet, mVals){
+  annEPIC <- getAnnotation(RGSet)
+  annEPIC[match(rownames(mVals), annEPIC$Name), c(1:4, 12:19, 24:ncol(annEPIC))]
+}
+                        
