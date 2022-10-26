@@ -57,8 +57,8 @@ writeMeansDmp <- function(topPaths, betas, annot,
         beta <- as.data.frame(betas)
         specific_genes <- as.data.frame(str_split(rap1$geneID, "/"))
         endFile <- paste0(rap1$ID[1], "_", basename(pathCsvOut))
-        endPath <- file.path(getwd(), "figures", "pathway")
-        if (!dir.exists(endPath)) {dir.create(endPath)}
+        endPath <- getwd()
+        #if (!dir.exists(endPath)) {dir.create(endPath)}
         endFile <- file.path(endPath, endFile)
         if(file.exists(endFile)){
             message(endFile, " exists")
