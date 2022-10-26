@@ -322,37 +322,63 @@ ReadLoadDmps <- function(fit, contMat, annEPICSub, cateFile) {
   }
   return(DMPs)
 }
-                        
 
-DrawDMRAnno <- function(DMPs, mSetSqFlt, col_samTypes, contMat, targPairs){
-  design <- gb$GetDesign(targPairs)
-  targPhenotype <- targPairs[, col_samTypes]
-  mVals <- minfi::getM(mSetSqFlt)
-  bVals <- minfi::getBeta(mSetSqFlt)
-  cat("## Top 4 most significantly differentially methylated CpG")
-  cat("\n\n")
-  par(mfrow = c(2, 2))
-  par(mar=c(1,1,1,1))
-  sapply(rownames(DMPs)[1:4], function(cpg) {
-      minfi::plotCpg(gb$bVals, cpg = cpg, pheno = targPhenotype, ylab = "Beta values")
-  })
-  cat("\n\n")
-  myAnnotation <- DMRcate::cpg.annotate(
-    object = mVals, datatype = "array", what = "M", analysis.type = "variability", design = design,
-    contrasts = TRUE, cont.matrix = contMat, arraytype = "EPIC")
-  pal <- brewer.pal(8,"Dark2")
-  DMRs <- dmrcate(myAnnotation, lambda=1000, C=2)
-  results.ranges <- DMRcate::extractRanges(DMRs)
-  groups <- pal[1:length(unique(targPairs$Sample_Group))]
-  names(groups) <- levels(factor(targPairs$Sample_Group))
-  cols <- groups[as.character(factor(targPairs$Sample_Group))]
-  par(mfrow=c(1,1))
-  cat("## DMR.plot")
-  cat("\n\n")
-  DMRcate::DMR.plot(ranges = results.ranges, dmr = 2, CpGs = bVals, phen.col = cols, 
-           what = "Beta", arraytype = "EPIC", genome = "hg19")
-  cat("\n\n")
-  return(results.ranges)
+                        
+                        
+DrawFourCpg <- function(DMPs, bVals, targPhenotype){
+    cat("## Top 4 most significantly differentially methylated CpG")
+    cat("\n\n")
+    par(mfrow = c(2, 2))
+    par(mar=c(1,1,1,1))
+    invisible(sapply(rownames(DMPs)[1:4], function(cpg) {
+        minfi::plotCpg(bVals, cpg = cpg, pheno = targPhenotype, ylab = "Beta values")
+    }))
+    cat("\n\n")
+}
+
+GetDMRcolors <- function(targPairs){
+    pal <- brewer.pal(8,"Dark2")
+    groups <- pal[1:length(unique(targPairs$Sample_Group))]
+    names(groups) <- levels(factor(targPairs$Sample_Group))
+    cols <- groups[as.character(factor(targPairs$Sample_Group))]
+    return(cols)
+}
+
+MakeDMRAnno <- function(targFit, contMat){
+    targPairs <- targFit$targPairs
+    mSetSqFlt <- targFit$mSetSqFlt
+    design <- gb$GetDesign(targPairs)
+    mVals <- minfi::getM(mSetSqFlt)
+    myAnnotation <- DMRcate::cpg.annotate(
+        object = mVals,
+        datatype = "array",
+        what = "M",
+        analysis.type = "variability",
+        design = design,
+        contrasts = TRUE,
+        cont.matrix = contMat,
+        arraytype = "EPIC"
+    )
+    DMRs <- dmrcate(myAnnotation, lambda=1000, C=2)
+    results.ranges <- DMRcate::extractRanges(DMRs)
+    return(results.ranges)
+}
+
+DrawDMRAnno <- function(results.ranges, targPairs, bVals) {
+    cols <- GetDMRcolors(targPairs)
+    par(mfrow = c(1, 1))
+    cat("## DMR.plot")
+    cat("\n\n")
+    DMRcate::DMR.plot(
+        ranges = results.ranges,
+        dmr = 2,
+        CpGs = bVals,
+        phen.col = cols,
+        what = "Beta",
+        arraytype = "EPIC",
+        genome = "hg19"
+    )
+    cat("\n\n")
 }
                         
 GetEpicAnno <- function(RGSet, mVals){
