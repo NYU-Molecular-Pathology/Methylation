@@ -44,6 +44,7 @@ GetOvAnnot <- function() {
     githubURL <- "https://github.com/NYU-Molecular-Pathology/Methylation/raw/main/Rdata/newOvGenes.rds"
     gb <- globalenv()
     assign("gb", gb)
+    if(!file.exists("newOvGenes.rds")){
     tryCatch(
         expr = {
             newOvGenes <- readRDS(url(githubURL, method = "libcurl"))
@@ -55,6 +56,8 @@ GetOvAnnot <- function() {
             newOvGenes <- readRDS("newOvGenes.rds")
         }
     )
+        }else{newOvGenes <- readRDS("newOvGenes.rds")}
+
     return(newOvGenes)
 }
 
@@ -80,12 +83,14 @@ GetCNVTables <- function(dra){
     return(list("gainDf"=gainDf, "lossDf"=lossDf, "gainTab"=gainTab, "lossTab"=lossTab))
 }
 
+gb$newOvGenes <- newOvGenes <- gb$GetOvAnnot()
+
 NewGgplotly <- function (msetDat, dat) {
     Mset<-msetDat$Mset
     sex <- msetDat$sex
     sampleID <- dat$sampleID  
     options(warn = -1)
-    newOvGenes <- gb$GetOvAnnot()
+    newOvGenes <- gb$newOvGenes
     xx <- gb$GetCNxx(Mset, sex, sampleID)
     ylim = c(-2, 2)
     bin.ratio <- xx@bin$ratio - xx@bin$shift
