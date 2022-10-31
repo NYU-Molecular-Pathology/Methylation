@@ -8,7 +8,7 @@ library(verbose=F, warn.conflicts = F, quietly = T, package= "htmltools")
 
 PlotSuppInfo <- function(RGset, Mset, sampleID, FFPE = NULL){
     if(is.null(FFPE)) {FFPE <- sarc.v12b6::MNPgetFFPE(RGset)}
-    sex = ifelse(sarc.v12b6::MNPgetSex(Mset)$predictedSex == "M", "Male", "Female"))
+    sex = ifelse(sarc.v12b6::MNPgetSex(Mset)$predictedSex == "M", "Male", "Female")
     suppinfo = c(sampleID, colnames(RGset), annotation(RGset)[1], FFPE, sex)
     names(suppinfo)<- c("ID","Sentrix ID","Array type","Material type","Gender")
     suppinfo <- as.data.frame(suppinfo)
