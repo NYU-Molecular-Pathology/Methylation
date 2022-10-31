@@ -40,24 +40,28 @@ GetCNxx <- function(Mset, sex, sampleID) {
 }
 
 GetOvAnnot <- function() {
-    cnvUrl <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/cnvggplotly.R"
-    githubURL <- "https://github.com/NYU-Molecular-Pathology/Methylation/raw/main/Rdata/newOvGenes.rds"
+    cnvUrl <-
+        "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/cnvggplotly.R"
+    githubURL <-
+        "https://github.com/NYU-Molecular-Pathology/Methylation/raw/main/Rdata/newOvGenes.rds"
     gb <- globalenv()
     assign("gb", gb)
-    if(!file.exists("newOvGenes.rds")){
-    tryCatch(
-        expr = {
-            newOvGenes <- readRDS(url(githubURL, method = "libcurl"))
-        },
-        error = function(e) {
-            if (!file.exists("newOvGenes.rds")) {
-                utils::download.file(githubURL, file.path(getwd(), "newOvGenes.rds"), method = "libcurl")
+    if (!file.exists("newOvGenes.rds")) {
+        tryCatch(
+            expr = {
+                newOvGenes <- readRDS(url(githubURL, method = "libcurl"))
+            },
+            error = function(e) {
+                if (!file.exists("newOvGenes.rds")) {
+                    utils::download.file(githubURL, file.path(getwd(), "newOvGenes.rds"), method = "libcurl")
+                }
+                newOvGenes <- readRDS("newOvGenes.rds")
             }
-            newOvGenes <- readRDS("newOvGenes.rds")
-        }
-    )
-        }else{newOvGenes <- readRDS("newOvGenes.rds")}
-
+        )
+    } else{
+        newOvGenes <- readRDS("newOvGenes.rds")
+    }
+    assign("newOvGenes", newOvGenes, gb)
     return(newOvGenes)
 }
 
@@ -209,3 +213,4 @@ MNPciplot_mgmt <- function(Mset, sample = 1) {
         layout(autosize = T, width = 500, height = 200)
     return(theBarPlot)
 }
+
