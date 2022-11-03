@@ -26,7 +26,6 @@ writeRedcapPred <- function(run_id, dfNewRed) {
   }
   row.names(redDF) = NULL
   write.csv(redDF, redcsv, row.names = F)
-  
   redcsv <- file.path(redDir, paste0(run_id, "_Redcap.csv"))
   if (file.exists(redcsv)) {
     dfRedcap = read.csv(redcsv, header = T, row.names = NULL)
