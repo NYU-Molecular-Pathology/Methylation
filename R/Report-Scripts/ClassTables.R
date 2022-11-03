@@ -424,4 +424,11 @@ PrintOutTable <- function(classTables,gitPath){
     knitr::asis_output("<h4>Methylation Class Description</h4>")
 }
 
-                      
+PrintGainLoss <- function(gnLss){
+    knitr::asis_output('<p class="cnvdesc"></p> <hr class="dotted"><h4>CNV Gains and Loss</h4>')
+    if (nrow(gnLss$gainDf) > 0) {knitr::asis_output(gnLss$gainTab)}
+    if (nrow(gnLss$lossDf) > 0) {knitr::asis_output(gnLss$lossTab)}
+    knitr::asis_output('<hr class="solid">')
+}
+
+ 
