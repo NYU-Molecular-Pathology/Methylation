@@ -416,3 +416,12 @@ SuppInfoTable <- function(dat, RGset, msetDat){
         kableExtra::row_spec(row = 1, font_size = 11)
     return(suppTab)
 }
+
+PrintOutTable <- function(classTables,gitPath){
+    knitr::asis_output(classTables$famTable)
+    knitr::asis_output(classTables$grpTable)
+    htmltools::includeHTML(file.path(gitPath,"InterpretKey.html"))
+    knitr::asis_output("<h4>Methylation Class Description</h4>")
+}
+
+                      
