@@ -56,7 +56,15 @@ lapply(scripts, function(i){message("Sourcing: ", i); devtools::source_url(i)})
 selectRDs <- AssignArgs(runID, baseFolder, token, selectRDs, redcapUp, gb)
 
 # Execute Functions ----------------------------------------------------
-PrepareRun(token, baseFolder, runID, runLocal=runLocal) # If running local and  runLocal = TRUE
+gb$PrepareRun(token, baseFolder, runID, runLocal=runLocal) # If running local and  runLocal = TRUE
+
+require(compiler)
+enableJIT(3)
+mainPage = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/Report-Scripts/"
+scripts <- c("ClassTables.R", "MLH1_Functions.R", "PipeLineU.R",
+             "RedcapOutput.R", "TsneFunctions.R", "cnvggplotly.R")
+scripts <- paste0(mainPage, scripts)
+lapply(scripts, function(i) {message("Sourcing: ", i);devtools::source_url(i)})
 
 unloadNamespace("mnp.v11b4")
 unloadNamespace("mnp.v12b6")
@@ -65,4 +73,4 @@ loadNamespace("mnp.v11b6")
 require("mnp.v11b6")
 library("mnp.v11b6")
 
-StartRun(selectRDs, emailNotify=T, redcapUp=redcapUp) # can change to default false
+gb$StartRun(selectRDs, emailNotify=T, redcapUp=redcapUp) # can change to default false
