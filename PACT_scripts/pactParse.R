@@ -388,33 +388,6 @@ GetPhilipsData <- function(inputFi){
     return(philipsExport)
 }
 
-GrabRunNumber <- function(inputFi){
-    shNames <- readxl::excel_sheets(inputFi)
-    sh <- which(grepl("PACT-", shNames, ignore.case = T))[1]
-    rawSheetData <- GetExcelData(inputFi, sh, shRange="A6:P200", cm=T)
-    run_number <- try(rawSheetData[which(rawSheetData$`DNA #`=="Run ID:"), 8], silent=T)
-    return(run_number)
-}
-
-GetRawSamplesheet <- function(inputFi){
-    shNames <- readxl::excel_sheets(inputFi)
-    sh <- which(grepl("PACT-", shNames, ignore.case = T))[1]
-    msgRd <- paste0('Reading Excel Sheet named \"', shNames[sh],'\" from file:')
-    message(crayon::bgGreen(msgRd),'\n',inputFi)
-    rawSheetData <- GetExcelData(inputFi, sh, shRange="A6:P200", cm=T)
-    toDrop <- which(rawSheetData[, "DNA #"]=="HAPMAP")[1]
-    rawSheetData <- rawSheetData[1:toDrop,]
-    return(rawSheetData)
-}
-
-WriteMainSheet <- function(mainSheet, sheetHead){
-    outFile <- file.path("~","Desktop",paste(mainSheet[1,"Run_Number"],"SampleSheet.csv",sep="-"))
-    write.table(sheetHead, sep=",", file=outFile, row.names=F, col.names=F, quote=F)
-    message("Writing file output: ", outFile)
-    suppressWarnings(write.table(mainSheet,sep=",", file=outFile, row.names=F, col.names=T, append=T,quote=F))
-    return(outFile)
-}
-
 GetExcelData <- function(inputFi, sheetNum, shRange, toSkip=0, cm=F){
     sheetData <- suppressMessages(as.data.frame(
         readxl::read_excel(
@@ -430,6 +403,34 @@ GetExcelData <- function(inputFi, sheetNum, shRange, toSkip=0, cm=F){
     sheetData[is.na(sheetData)] <- ""
     return(sheetData)
 }
+
+GrabRunNumber <- function(inputFi){
+    shNames <- readxl::excel_sheets(inputFi)
+    sh <- which(grepl("PACT-", shNames, ignore.case = T))[1]
+    rawSheetData <- GetExcelData(inputFi, sh, shRange="A6:X200", cm=T)
+    run_number <- try(rawSheetData[which(rawSheetData$`DNA #`=="Run ID:"), 8], silent=T)
+    return(run_number)
+}
+
+GetRawSamplesheet <- function(inputFi){
+    shNames <- readxl::excel_sheets(inputFi)
+    sh <- which(grepl("PACT-", shNames, ignore.case = T))[1]
+    msgRd <- paste0('Reading Excel Sheet named \"', shNames[sh],'\" from file:')
+    message(crayon::bgGreen(msgRd),'\n',inputFi)
+    rawSheetData <- GetExcelData(inputFi, sh, shRange="A6:X200", cm=T)
+    toDrop <- which(rawSheetData[, "DNA #"]=="HAPMAP")[1]
+    rawSheetData <- rawSheetData[1:toDrop,]
+    return(rawSheetData)
+}
+
+WriteMainSheet <- function(mainSheet, sheetHead){
+    outFile <- file.path("~","Desktop",paste(mainSheet[1,"Run_Number"],"SampleSheet.csv",sep="-"))
+    write.table(sheetHead, sep=",", file=outFile, row.names=F, col.names=F, quote=F)
+    message("Writing file output: ", outFile)
+    suppressWarnings(write.table(mainSheet,sep=",", file=outFile, row.names=F, col.names=T, append=T,quote=F))
+    return(outFile)
+}
+
 
 AltParseFormat <- function(inputFi, runID){
     rawSheetData <- GetRawSamplesheet(inputFi)
