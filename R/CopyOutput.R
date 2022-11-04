@@ -37,8 +37,8 @@ CopyHtmlFiles <- function(newFolder) {
     message(mkGrn("Now copying html reports..."),"\n")
     fi2copy <- dir(getwd(), pattern = ".html", full.names = T)
     print(fi2copy)
-    file.copy(fi2copy, newFolder, overwrite=F, copy.mode = F, copy.date = T)
-    #fs::file_copy(fi2copy, newFolder, overwrite=F)
+    #file.copy(fi2copy, newFolder, overwrite=F, copy.mode = F, copy.date = T)
+    fs::file_copy(fi2copy, newFolder, overwrite=F)
 }
 
 CheckDirMake <- function(newFolder){
@@ -400,7 +400,7 @@ CopyFilesOut <- function(file.list, newFolder){
                 missed <- !file.exists(file.path(newFolder, basename(file.list)))
                 if(any(missed)){
                 file.list <- file.list[missed]
-                cmnd = paste("cp -p", file.list, file.path(newFolder, basename(file.list)))
+                cmnd = paste("rsync -a", file.list, file.path(newFolder, basename(file.list)))
                 print(cmnd)
                 for (foo in cmnd) {
                     thisFoo <- basename(foo)
