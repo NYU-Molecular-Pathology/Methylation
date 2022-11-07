@@ -47,7 +47,7 @@ KnitReportRmd <- function(dat, token, reportMd){
             rundata = dat,
             RGsetEpic = RGsetEpic,
             knitDir = getwd()
-        )
+            )
     )
 }
 
