@@ -195,10 +195,12 @@ copy.cnv.files <- function(newFolder, runID, runYear=NULL) {
 
 GrabSampleSheet <- function(){
     samSh <- dir(path=getwd(), full.names=T, ".xlsm")
+    if(length(samSh)>0){return(NULL)}
     if(length(samSh)>1){
         message("Multiple samplesheets found:\n")
         print(samSh)
         samSh <- samSh[stringr::str_detect(samSh,pattern = "\\$",negate = T)]
+        samSh <- samSh[!stringi::stri_detect_fixed(samSh, "~$")]
     }
     message("Using following samplesheet:\n", samSh[1])
     stopifnot(length(samSh)>0)
