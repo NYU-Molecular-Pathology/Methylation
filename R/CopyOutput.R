@@ -195,7 +195,7 @@ copy.cnv.files <- function(newFolder, runID, runYear=NULL) {
 
 GrabSampleSheet <- function(){
     samSh <- dir(path=getwd(), full.names=T, ".xlsm")
-    if(length(samSh)>0){return(NULL)}
+    if(length(samSh)>0 == FALSE){return(NULL)}
     if(length(samSh)>1){
         message("Multiple samplesheets found:\n")
         print(samSh)
