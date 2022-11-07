@@ -92,8 +92,10 @@ PromptInputCsv <- function(runID) {
     csvFilePath <- as.character(csvFilePath)
     if(!file.exists(csvFilePath)){
         warning("The file ",csvFilePath," does not exist!")
-        csvFilePath <- readline("Try pasting the full path again and hit return/Enter: ")
+        cat("Try pasting the full path again and hit return/Enter: ")
+        csvFilePath <- readLines(file("stdin"),1)
         csvFilePath <- as.character(csvFilePath)
+        print(csvFilePath)
     }
     rd_numbers <- read.csv(file = csvFilePath, header = F, colClasses="character")[,1]
     rd_numbers <- as.data.frame(rd_numbers)
