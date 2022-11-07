@@ -54,10 +54,6 @@ lapply(scripts, function(i){message("Sourcing: ", i); devtools::source_url(i)})
 
 # Define Parameters ----------------------------------------------------
 selectRDs <- AssignArgs(runID, baseFolder, token, selectRDs, redcapUp, gb)
-
-# Execute Functions ----------------------------------------------------
-gb$PrepareRun(token, baseFolder, runID, runLocal=runLocal) # If running local and  runLocal = TRUE
-
 require(compiler)
 enableJIT(3)
 mainPage = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/Report-Scripts/"
@@ -73,41 +69,6 @@ loadNamespace("mnp.v11b6")
 require("mnp.v11b6")
 library("mnp.v11b6")
 
-do_report <-  function(data = NULL, genCn=F) {
-  msgFunName(pipeLnk,"do_report")
-  msgParams("data")
-  #data = data[1, ]
-  if(!is.null(data)){
-    dat <- getRunData(data)
-    message(paste0(capture.output(dat), collapse="\n"))
-    RGsetEpic <- getRGset(getwd(), dat$senLi)
-    RGset <- RGsetEpic[,1]
-    if(genCn==T){generateCNVpng(RGsetEpic,dat$sampleID)}
-    msgRunUp(dat$sampleID, dat$run_id, dat$senLi)
-    tryCatch(
-      expr = {
-        rmarkdown::render(
-          reportMd,
-          "html_document",
-          dat$outFi,
-          getwd(),
-          quiet = FALSE,
-          params = list(
-            token = gb$ApiToken,
-            rundata = dat,
-            RGsetEpic = RGsetEpic,
-            knitDir = getwd()
-          )
-        )
-      },
-      error=function(e){
-        beepr::beep(1)
-        message(bkRed("Report Generation Failed:"),"\n", dat$outFi)
-        message("The following error returned:\n", e)
-        stopifnot("Report Generation Failed"=FALSE)
-      }, finally=message("\nRunning next sample\n")
-    )
-  } else {message(bkRed("Data is NULL, check your SampleSheet.csv"))}
-}
-
+# Execute Functions ----------------------------------------------------
+gb$PrepareRun(token, baseFolder, runID, runLocal=runLocal) # If running local and  runLocal = TRUE
 gb$StartRun(selectRDs, emailNotify=T, redcapUp=redcapUp) # can change to default false
