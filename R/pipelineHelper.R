@@ -308,16 +308,15 @@ getRunList <- function(data, samList){
     return(toRun)
 }
 
-# Helper function called by makeReports.v11b6 to generate the HTML report
-do_report <- function(data = NULL, genCn=F) {
+do_report <-  function(data = NULL, genCn=F) {
   msgFunName(pipeLnk,"do_report")
   msgParams("data")
-  print(data)
   #data = data[1, ]
   if(!is.null(data)){
     dat <- getRunData(data)
     message(paste0(capture.output(dat), collapse="\n"))
     RGsetEpic <- getRGset(getwd(), dat$senLi)
+    RGset <- RGsetEpic[,1]
     if(genCn==T){generateCNVpng(RGsetEpic,dat$sampleID)}
     msgRunUp(dat$sampleID, dat$run_id, dat$senLi)
     tryCatch(
@@ -328,7 +327,12 @@ do_report <- function(data = NULL, genCn=F) {
           dat$outFi,
           getwd(),
           quiet = FALSE,
-          params = list(token = gb$ApiToken, rundata = dat, RGsetEpic=RGsetEpic)
+          params = list(
+            token = gb$ApiToken,
+            rundata = dat,
+            RGsetEpic = RGsetEpic,
+            knitDir = getwd()
+          )
         )
       },
       error=function(e){
