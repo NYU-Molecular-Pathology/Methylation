@@ -478,7 +478,8 @@ PrepareRun <- function(token, baseFolder=NULL, runID, runLocal=F, rdInput=F){
         gb$get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
         gb$moveSampleSheet(baseFolder, runID) #copies outputs temp to desktop for QC.Rmd
     } else{
-        gb$SetBaseFolder(token, baseFolder, runID)
+        baseFolder <- SetBaseFolder(token, baseFolder, runID)
+        assign("baseFolder", baseFolder)
         if(rdInput==F){
             gb$RunLocalIdats(runID, token)
         }
