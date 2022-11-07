@@ -116,6 +116,7 @@ copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
 GrabSampleSheet <- function(){
     msgFunName(cpInLnk2, "GrabSampleSheet")
     samSh <- dir(path=getwd(), full.names=T, ".xlsm")
+    if(length(samSh)>0 == FALSE){return(NULL)}
     if(length(samSh)>1){
         message("Multiple samplesheets found:\n")
         print(samSh)
