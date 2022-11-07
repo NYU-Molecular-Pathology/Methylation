@@ -193,26 +193,12 @@ copy.cnv.files <- function(newFolder, runID, runYear=NULL) {
     }
 }
 
-GrabSampleSheet <- function(){
-    samSh <- dir(path=getwd(), full.names=T, ".xlsm")
-    if(length(samSh)>0 == FALSE){return(NULL)}
-    if(length(samSh)>1){
-        message("Multiple samplesheets found:\n")
-        print(samSh)
-        samSh <- samSh[stringr::str_detect(samSh,pattern = "\\$",negate = T)]
-        samSh <- samSh[!stringi::stri_detect_fixed(samSh, "~$")]
-    }
-    message("Using following samplesheet:\n", samSh[1])
-    stopifnot(length(samSh)>0)
-    return(samSh[1])
-}
-
 # Returns Total Sample Count in the run
 getTotalSamples <- function(thisSh=NULL){
     msgFunName(cpOutLnk, "getTotalSamples")
 
     templateDir = "Clinical_Methylation/methylation_run_TEMPLATE.xlsm"
-    thisSh <-  ifelse(is.null(thisSh), GrabSampleSheet(), thisSh)
+    thisSh <-  ifelse(is.null(thisSh), gb$GrabSampleSheet(), thisSh)
     thisSh <- thisSh[!stringi::stri_detect_fixed(thisSh, "~$")]
     if(length(thisSh)==0){print("No .xlsm sheet, defaulting to 16 total samples");return(16)}
     worksheet <- suppressMessages(readxl::read_excel(thisSh[1], col_names="Total", range="B4:B4"))
@@ -240,7 +226,7 @@ AddPngFilePath <- function(sh_Dat){
 uploadCnPng <- function() {
     msgFunName(cpOutLnk, "uploadCnPng")
     rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
-    samSh <- GrabSampleSheet()
+    samSh <- gb$GrabSampleSheet()
     sampleNumb <- getTotalSamples()
 
     sh_Dat <-suppressMessages(
