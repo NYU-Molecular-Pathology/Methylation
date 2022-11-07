@@ -262,6 +262,9 @@ ReadSamSheet <- function(samList){
     msgParams(samList)
 
     samSh <- gb$GrabSampleSheet()
+    if(is.null(samSh)){
+      return(as.data.frame(read.csv("samplesheet.csv")))
+    }
     xlSheets <- readxl::excel_sheets(samSh)
     redSheet <- as.integer(which(grepl("REDCap",xlSheets)==T))
     message("Excel sheet names:")
