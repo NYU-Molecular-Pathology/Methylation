@@ -59,7 +59,7 @@ enableJIT(3)
 mainPage = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/Report-Scripts/"
 scripts <- c("ClassTables.R", "MLH1_Functions.R", "PipeLineU.R", "RedcapOutput.R", "TsneFunctions.R", "cnvggplotly.R")
 scripts <- paste0(mainPage, scripts)
-lapply(scripts, function(i) {message("Sourcing: ", i);devtools::source_url(i)})
+lapply(scripts, function(i) {devtools::source_url(i); return(message("Sourced: ", i))})
 
 unloadNamespace("mnp.v11b4")
 unloadNamespace("mnp.v12b6")
