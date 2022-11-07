@@ -271,7 +271,10 @@ PrintScoreTable <- function(outV12, dat) {
     v12redcap$Subgroup_score <- v12Data$Subclass[2]
     v12redcap <- v12redcap[1,-1]
     rownames(v12redcap) <- NULL
-    redcsv <- file.path("~", "Desktop", dat$run_id, paste0(dat$run_id, "_v12.csv"))
+        v12FiOut <- paste0(dat$run_id, "_v12.csv")
+        v12DirOut <- file.path("~", "Desktop", dat$run_id)
+    redcsv <- file.path(v12DirOut, v12FiOut)
+        if(!dir.exists(v12DirOut)){dir.create(v12DirOut)}
     if (file.exists(redcsv)) {
         dfRedcap = as.data.frame(read.csv(redcsv, header = T, row.names = NULL))
         redDF <- rbind(dfRedcap, v12redcap)
