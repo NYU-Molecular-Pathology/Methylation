@@ -334,8 +334,9 @@ uploadToRedcap <- function(file.list,
     msgFunName(cpOutLnk, "uploadToRedcap")
     rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
     runID <- ifelse(is.null(runNumb), gb$runID, runNumb)
-
+    message(paste(file.list))
     htmlLi <- stringr::str_replace_all(basename(file.list), ".html", "")
+    message(paste(htmlLi))
     for (recordName in htmlLi) {
         callApiImport(rcon, recordName, runID)
         isEmpty <- checkRedcapRecord(recordName)==''
