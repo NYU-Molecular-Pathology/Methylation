@@ -27,6 +27,7 @@ devtools::source_url("https://raw.githubusercontent.com/NYU-Molecular-Pathology/
 philipsFtp <- "/Volumes/molecular/Molecular/Philips_SFTP" # Philips datadump path
 methDir <- "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
 critialMnts <- c("/Volumes/CBioinformatics/Methylation/", "/Volumes/molecular/")
+saveRDS(params, file="params.rds") # Debug params <- readRDS("params.rds")
 gb$CheckMntDirs(critialMnts, params)
 gb$CheckFiExist(params$pactName, philipsFtp)
 gb$CopyPdfsPngs(params)
