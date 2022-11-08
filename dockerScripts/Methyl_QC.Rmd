@@ -112,8 +112,7 @@ geometry:
 ---
 
 ```{r set-options, include=FALSE, cache=FALSE, cache.path="cache/", echo=FALSE}
-pkgs <- 
-    c("knitr", "kableExtra", "magick", "webshot", "plyr", "ggplot2", "reshape2", "data.table", "DT", "plotly", "MethylAid", "minfi", "scales", "IlluminaHumanMethylation450kmanifest", "IlluminaHumanMethylationEPICmanifest", "IlluminaHumanMethylationEPICanno.ilm10b4.hg19", "Biobase", "RColorBrewer", "limma", "ggfortify", "Rtsne", "qdapTools", "gplots", "readxl", "stringr", "ggrepel", "Polychrome", "tinytex", "gridExtra", "rmarkdown", "BiocParallel", "pals", "grid", "grDevices", "magrittr")
+pkgs <- c("knitr", "kableExtra", "magick", "webshot", "plyr", "ggplot2", "reshape2", "data.table", "DT", "plotly", "MethylAid", "minfi", "scales", "IlluminaHumanMethylation450kmanifest", "IlluminaHumanMethylationEPICmanifest", "IlluminaHumanMethylationEPICanno.ilm10b4.hg19", "Biobase", "RColorBrewer", "limma", "ggfortify", "Rtsne", "qdapTools", "gplots", "readxl", "stringr", "ggrepel", "Polychrome", "tinytex", "gridExtra", "rmarkdown", "BiocParallel", "pals", "grid", "grDevices", "magrittr")
 if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 4, quiet=T)}
 librarian::shelf(pkgs, ask=F)
 knitr::opts_chunk$set(echo = TRUE)
@@ -227,9 +226,8 @@ makeLabels <- function(totNum, xName, yName, plotName, thePlot) {
         guides(colour = guide_legend(
             title = "Samples",
             override.aes = list(fill = NA, shape = 19),
-            byrow = TRUE,
-            ncol = 9
-            )) + coord_cartesian(clip = 'off') 
+            byrow = TRUE, ncol = 9)
+            ) + coord_cartesian(clip = 'off') 
     return(legendLabel)
 }
 ## Generate Plots for Probes --------------------------------------
@@ -239,12 +237,14 @@ plotParams <- function(totNum, dParam, xincept, yincept) {
     plot.colours <- glasbey()[1:(length(dParam$x))]
     
     thePlot <-
-        ggplot(dParam,
-            aes(x = dParam[, 2],
-                y = dParam[, 3],
-                color = dParam$Sample_Name,
-                label = dParam$Sample_Name), 
-            show.legend = F) +
+        ggplot(
+            dParam,
+            aes(
+                x = dParam[, 2], y = dParam[, 3],
+                color = dParam$Sample_Name, label = dParam$Sample_Name
+                ),
+            show.legend = F
+        ) +
         scale_color_manual(values = plot.colours) + 
         geom_point(shape = 19, size = 5, alpha = 0.8) + 
         guides(color = guide_legend(nrow = totNum)) + theme_bw() +
