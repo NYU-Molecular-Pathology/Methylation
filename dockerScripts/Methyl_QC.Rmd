@@ -22,8 +22,12 @@ if(is.null(params$baseDir)){
 }else{
     baseDir <- paste0(params$baseDir)
     }
-
+runPath <- file.path("/Volumes/CBioinformatics/Methylation/Clinical_Runs", runID)
+system(paste("cd", runPath))
+knitr::opts_knit$set(runPath) # rprojroot::find_rstudio_root_file()
+setwd(runPath)
 message("Using the following base Directory:\n",baseDir)
+message("Using the following Knit Directory:\n",runPath)
 
 # Check if sheetNamePath provided else use Desktop to look for samplesheet pattern
 if(is.null(params$sheetNamePath)){
