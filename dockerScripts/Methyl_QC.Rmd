@@ -77,7 +77,11 @@ if (nrow(fixerrors) < 8) {
     # Check here if you have odd number of arrays used in makeLabels function
     totNum <- nrow(fixerrors) / 8 # total arrays for biocParrallel workers
 }
-targets$basenames <- fixerrors$Basename # path/to/idat/files
+
+basePaths <- file.path(runPath, fixerrors$SentrixID_Pos)
+fixerrors$Basename <- basePaths
+targets$basenames <- basePaths # path/to/idat/files
+#targets$basenames <- fixerrors$Basename # path/to/idat/files
 runID <- paste0(targets$RunID[1])
 wsDate <- fixerrors$Date[1] #format(Sys.time(), '%d %B, %Y')
 location <- file.path(baseDir, paste0(runID, "_Redcap.csv")) # redcap brain classifier file
@@ -140,10 +144,10 @@ table{align:"left" !important;}
 ```{r SampleSheetfix, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
 library(ggplot2)
 ## Get MU Data & Colors --------------------------------------
-sheetNamePath <- list.files(baseDir,pattern = "_samplesheet.csv", full.names = T)[1]
+sheetNamePath <- list.files(baseDir, pattern = "_samplesheet.csv", full.names = T)[1]
 message(paste0("Sample sheet name is: ", sheetNamePath))
 fixerrors <- read.csv(sheetNamePath)
-fixerrors$Basename <- file.path(getwd(),fixerrors$SentrixID_Pos)
+fixerrors$Basename <- file.path(runPath, fixerrors$SentrixID_Pos)
 ```
 
 ```{r BioCParallel, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
