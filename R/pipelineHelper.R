@@ -115,7 +115,6 @@ CopyRmdFile <- function(runID, rmdFile){
 # QC REPORT maker: knits the QC RMD file
 generateQCreport <- function(runID=NULL) {
     msgFunName(pipeLnk, "generateQCreport")
-
     if (is.null(runID)){runID<-paste0(basename(getwd()))}
     qcFileName <- CopyRmdFile(runID, gb$QC_file)
     if(!is.null(qcFileName)){
@@ -125,7 +124,7 @@ generateQCreport <- function(runID=NULL) {
             rmdToKnit,
             output_file = outQCpath,
             quiet = F,
-            params = list(runID = runID)
+            params = list(runID = runID, baseDir = file.path("~", "Desktop", runID), knitDir=getwd())
         )
         qcCache <- stringr::str_replace_all(string = rmdToKnit, ".Rmd", "_cache")
         unlink(qcCache, recursive = T) #clear cache
