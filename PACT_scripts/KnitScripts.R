@@ -251,6 +251,10 @@ parsePhilipsCn <- function(cnvInfo, sam, cnvTab){
 
 parseCNV <- function(outPath, sam, cnvTab){
     cnvFi = file.path(outPath, sam, "aberration_cnv.csv")
+    if(!file.exists(cnvFi)){
+        warning("File does not exist:\n", cnvFi, "\nSkipping Philips...")
+        return(cnvTab)
+    }
     cnvInfo <- as.data.frame(readr::read_csv(
         cnvFi, col_types = readr::cols(.default = readr::col_character())
     ))
