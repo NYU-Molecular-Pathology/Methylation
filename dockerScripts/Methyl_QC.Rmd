@@ -5,6 +5,7 @@ params:
   runID: NULL
   sheetNamePath: NULL
   baseDir: NULL
+  knitDir: NULL
   author: "Jonathan Serrano"
 ---
 ```{r setup, include=FALSE, cache=FALSE, cache.path="cache/",echo=FALSE}
