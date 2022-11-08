@@ -8,72 +8,88 @@ params:
   knitDir: NULL
   author: "Jonathan Serrano"
 ---
+
 ```{r setup, include=FALSE, cache=FALSE, cache.path="cache/",echo=FALSE}
-# Check if RunID provided else use basename of working directory
 gb <- globalenv(); assign("gb", gb)
-if(is.null(params$runID)){
+if (is.null(params$runID)) {
     runID <- paste0(basename(getwd()))
-}else{runID=params$runID}
+} else{
+    runID = params$runID
+}
 stopifnot(!is.null(runID))
 message(paste("Using", runID, "as RunID"))
 assign("runID", runID, envir = gb)
 # Check if baseDir provided else use Desktop
-if(is.null(params$baseDir)){
-    baseDir = file.path("~","Desktop",runID)
-}else{
+if (is.null(params$baseDir)) {
+    baseDir = file.path("~", "Desktop", runID)
+} else{
     baseDir <- paste0(params$baseDir)
-    }
-if(is.null(knitDir)){
-runPath <- file.path("/Volumes/CBioinformatics/Methylation/Clinical_Runs", runID)
-} else{runPath <- params$knitDir}
+}
+if (is.null(knitDir)) {
+    runPath <- file.path("/Volumes/CBioinformatics/Methylation/Clinical_Runs", runID)
+} else{
+    runPath <- params$knitDir
+}
 system(paste("cd", runPath))
 knitr::opts_knit$set(runPath) # rprojroot::find_rstudio_root_file()
 setwd(runPath)
-message("Using the following output Directory:\n",baseDir)
-message("Using the following Knit Directory:\n",runPath)
+message("Using the following output Directory:\n", baseDir)
+message("Using the following Knit Directory:\n", runPath)
 # Check if sheetNamePath provided else use Desktop to look for samplesheet pattern
-if(is.null(params$sheetNamePath)){
-    sheetNamePath <- list.files(baseDir, pattern = "_samplesheet.csv", full.names = T)[1]
-}else{sheetNamePath = params$sheetNamePath}
+if (is.null(params$sheetNamePath)) {
+    sheetNamePath <- list.files(baseDir, "_samplesheet.csv", full.names = T)[1]
+} else{
+    sheetNamePath = params$sheetNamePath
+}
 
-if (length(sheetNamePath) > 1){warning(">1 samplesheet in the folder")}
+if (length(sheetNamePath) > 1) {
+    warning(">1 samplesheet in the folder")
+}
 
 if (length(sheetNamePath) == 0) {
-    warning("No samplesheet in the folder ", baseDir, "\nCopying from current directory...")
-    samSheet <- dir(getwd(), pattern = "samplesheet.csv", full.names = T)
-    fs::file_copy(path = samSheet,
-                  new_path = file.path("~", "Desktop", runID, paste0(runID, "_samplesheet.csv")))
-    sheetNamePath <- file.path(baseDir, paste0(runID, "_samplesheet.csv"))
+    warning("No samplesheet in the directory:\n",
+            baseDir,
+            "\nCopying from current directory...")
+    samSheet <- dir(getwd(), "samplesheet.csv", full.names = T)
+    sheetName <- paste0(runID, "_samplesheet.csv")
+    newOutPath <- file.path("~", "Desktop", runID, sheetName)
+    fs::file_copy(path = samSheet, new_path = newOutPath)
+    sheetNamePath <- file.path(baseDir, sheetName)
 }
-if(is.na(sheetNamePath)){
-    sheetNamePath <- dir(getwd(), pattern = "samplesheet.csv", full.names = T)
+
+if (is.na(sheetNamePath)) {
+    sheetNamePath <- dir(getwd(), "samplesheet.csv", full.names = T)
 }
+
 message(paste0("Sample sheet name is: ", sheetNamePath))
 fixerrors <- read.csv(sheetNamePath, strip.white = T)
 
-if(!dir.exists(baseDir)){
+if (!dir.exists(baseDir)) {
     baseDir <- getwd()
 }
-targets <- minfi::read.metharray.sheet(baseDir, pattern = "samplesheet.csv")
 
-if(nrow(fixerrors)<8){
+targets <- minfi::read.metharray.sheet(baseDir, "samplesheet.csv")
+
+if (nrow(fixerrors) < 8) {
     warning("Less than 8 samples are run, disabling biocparrallel")
-    totNum<-1
-}else{
-# Check here if you have odd number of arrays used in makeLabels function
-totNum <- nrow(fixerrors)/8 # total number of arrays for biocParrallel workers
+    totNum <- 1
+} else{
+    # Check here if you have odd number of arrays used in makeLabels function
+    totNum <- nrow(fixerrors) / 8 # total arrays for biocParrallel workers
 }
 targets$basenames <- fixerrors$Basename # path/to/idat/files
 runID <- paste0(targets$RunID[1])
 wsDate <- fixerrors$Date[1] #format(Sys.time(), '%d %B, %Y')
-location <- file.path(baseDir, paste0(runID,"_Redcap.csv")) # redcap brain classifier file
+location <- file.path(baseDir, paste0(runID, "_Redcap.csv")) # redcap brain classifier file
 
 if (!file.exists(location)) {
-	warning(paste0("File not found: ", location,"\nQC Summary Table will not generate"))
+    warnMsg1 <- paste0("File not found:\n", location)
+    warning(warnMsg1)
+    warning("QC Summary Table will not generate without _Redcap.csv file")
 }
 
-titleName <- paste("Methylation Sample QC for Batch", runID) #heading 1
-fileName <- paste0(runID,"_QC.html") # output file name
+titleName <- paste("Methylation Assay QC for Batch", runID) #heading 1
+fileName <- paste0(runID, "_QC.html") # output file name
 pSubTitle <- 'Clinical Methylation Run' # subtitle
 summarName <- paste("Classifier Report Summary for", runID) # summary table heading
 ```
