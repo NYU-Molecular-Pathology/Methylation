@@ -1,6 +1,6 @@
 options("install.packages.compile.from.source" = "No")
 options("install.packages.check.source" = "no")
-
+options(warn = -1)
 # Load/install missing pacakges without asking
 supM <- function(pk){return(suppressPackageStartupMessages(suppressWarnings(pk)))}
 
@@ -94,20 +94,17 @@ preReqPkgs <- c(
     'BiocParallel'
 )
 
-pkgs <- c(
+pkgs1 <- c(
     "abind",
     "animation",
     "arrow",
     "askpass",
     "beepr",
     "BiocStyle",
-    "BiocVersion",
     "biocViews",
     "bookdown",
     "brio",
-    "broom",
     "Cairo",
-    "carData",
     "caret",
     "chromote",
     "chron",
@@ -122,13 +119,12 @@ pkgs <- c(
     "dichromat",
     "diffobj",
     "digest",
-    "docstring",
     "doParallel",
-    "DT",
-    "dtplyr",
+    "DT"
+    )
+
+pkgs2 <- c(
     "easypackages",
-    "enrichplot",
-    "ensembldb",
     "evaluate",
     "extrafont",
     "extrafontdb",
@@ -136,7 +132,6 @@ pkgs <- c(
     "forecast",
     "formattable",
     "fs",
-    "future",
     "gdata",
     "gdtools",
     "getopt",
@@ -148,18 +143,16 @@ pkgs <- c(
     "ggrepel",
     "ggtext",
     "ggthemes",
-    "ggtree",
-    "ggupset",
     "gh",
-    "gitcreds",
     "GlobalOptions",
     "graphlayouts",
     "grid",
     "gridBase",
     "gridGraphics",
-    "gridtext",
+    "gridtext")
+
+pkgs3 <- c(
     "Hmisc",
-    "hrbrthemes",
     "htmlTable",
     "htmltools",
     "htmlwidgets",
@@ -277,5 +270,7 @@ if(checkRequire("FField")){
     install.packages(gitLink, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F)
 }
 
-supM(librarian::shelf(pkgs, ask = F, update_all = F, quiet = FALSE))
+supM(librarian::shelf(pkgs1, ask = F, update_all = F, quiet = T))
+supM(librarian::shelf(pkgs2, ask = F, update_all = F, quiet = T))
+supM(librarian::shelf(pkgs3, ask = F, update_all = F, quiet = T))
 invisible(gc())
