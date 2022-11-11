@@ -321,6 +321,7 @@ do_report <-  function(data = NULL, genCn=F) {
     RGset <- RGsetEpic[,1]
     if(genCn==T){generateCNVpng(RGsetEpic,dat$sampleID)}
     msgRunUp(dat$sampleID, dat$run_id, dat$senLi)
+    message("Knitting report: ", reportMd)
     tryCatch(
       expr = {
         rmarkdown::render(
