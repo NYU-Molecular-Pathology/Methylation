@@ -70,4 +70,5 @@ library("mnp.v11b6")
 
 # Execute Functions ----------------------------------------------------
 gb$PrepareRun(token, baseFolder, runID, runLocal=runLocal) # If running local and  runLocal = TRUE
+gb$reportMd <- reportMd <- "~/report.Rmd"
 gb$StartRun(selectRDs, emailNotify=T, redcapUp=redcapUp) # can change to default false
