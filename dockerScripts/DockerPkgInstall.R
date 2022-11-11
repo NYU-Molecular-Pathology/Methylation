@@ -1,0 +1,281 @@
+options("install.packages.compile.from.source" = "No")
+options("install.packages.check.source" = "no")
+
+# Load/install missing pacakges without asking
+supM <- function(pk){return(suppressPackageStartupMessages(suppressWarnings(pk)))}
+
+# Setting US CRAN REPO
+rlis = getOption("repos")
+rlis["CRAN"] = "http://cran.us.r-project.org"
+options(repos = rlis)
+
+loadLibrary <- function(pkgName) {
+    supM(library(pkgName, quietly = T, logical.return = T, warn.conflicts = F, character.only = T))
+}
+
+checkRequire <- function(pkgName){
+    return(suppressWarnings(!require(pkgName, character.only = T, warn.conflicts = F)))
+}
+
+in.pkg <- function(pkg, character.only=T){
+    install.packages(pkg, dependencies=T, verbose=T, ask=F, quiet = F)
+}
+
+corePkgs <-
+    c(
+        "randomForest",
+        "glmnet",
+        "ggplot2",
+        "gridExtra",
+        "knitr",
+        "pander",
+        "gmp",
+        "Matrix",
+        "minfi",
+        "bumphunter",
+        "locfit",
+        "parallel",
+        "iterators",
+        "foreach",
+        "Biostrings",
+        "XVector",
+        "MatrixGenerics",
+        "matrixStats",
+        "GenomicRanges",
+        "GenomeInfoDb",
+        "stats4",
+        "miniCRAN",
+        "tabulizer",
+        "remotes",
+        "stringr",
+        "tidyr",
+        "readxl",
+        "Biobase",
+        "BiocGenerics",
+        "usethis",
+        "stats",
+        "graphics",
+        "grDevices",
+        "utils",
+        "datasets",
+        "methods",
+        "base"
+    )
+
+preReqPkgs <- c(
+    'MASS',
+    'ade4',
+    'dbplyr',
+    'png',
+    'rjson',
+    'generics',
+    'tidyselect',
+    'RCurl',
+    'plyr',
+    'readr',
+    'dplyr',
+    'R.utils',
+    'GenomicFeatures',
+    'annotate',
+    'RSQLite',
+    'DBI',
+    'AnnotationDbi',
+    'reshape2',
+    'S4Vectors',
+    'IRanges',
+    'SummarizedExperiment',
+    'genefilter',
+    'DNAcopy',
+    'beanplot',
+    'limma',
+    'reshape',
+    'data.table',
+    'HDF5Array',
+    'BiocParallel'
+)
+
+pkgs <- c(
+    "abind",
+    "animation",
+    "arrow",
+    "askpass",
+    "beepr",
+    "BiocStyle",
+    "BiocVersion",
+    "biocViews",
+    "bookdown",
+    "brio",
+    "broom",
+    "Cairo",
+    "carData",
+    "caret",
+    "chromote",
+    "chron",
+    "cli",
+    "clipr",
+    "colorspace",
+    "compiler",
+    "CopyNumberPlots",
+    "cpp11",
+    "crayon",
+    "curl",
+    "dichromat",
+    "diffobj",
+    "digest",
+    "docstring",
+    "doParallel",
+    "DT",
+    "dtplyr",
+    "easypackages",
+    "enrichplot",
+    "ensembldb",
+    "evaluate",
+    "extrafont",
+    "extrafontdb",
+    "fontawesome",
+    "forecast",
+    "formattable",
+    "fs",
+    "future",
+    "gdata",
+    "gdtools",
+    "getopt",
+    "ggforce",
+    "ggfortify",
+    "ggnewscale",
+    "ggplotify",
+    "ggraph",
+    "ggrepel",
+    "ggtext",
+    "ggthemes",
+    "ggtree",
+    "ggupset",
+    "gh",
+    "gitcreds",
+    "GlobalOptions",
+    "graphlayouts",
+    "grid",
+    "gridBase",
+    "gridGraphics",
+    "gridtext",
+    "Hmisc",
+    "hrbrthemes",
+    "htmlTable",
+    "htmltools",
+    "htmlwidgets",
+    "httr",
+    "igraph",
+    "jpeg",
+    "jquerylib",
+    "jsonlite",
+    "kableExtra",
+    "magrittr",
+    "markdown",
+    "MethylAid",
+    "needs",
+    "openxlsx",
+    "pals",
+    "parameters",
+    "plotly",
+    "Polychrome",
+    "prettyunits",
+    "purrr",
+    "raster",
+    "Rcpp",
+    "redcapAPI",
+    "rmarkdown",
+    "Rtsne",
+    "sjmisc",
+    "sourcetools",
+    "spatial",
+    "sqldf",
+    "stringi",
+    "systemfonts",
+    "targets",
+    "terra",
+    "testit",
+    "tibble",
+    "tidyverse",
+    "tinytex",
+    "utf8",
+    "uuid",
+    "webshot2",
+    "websocket",
+    "xtable",
+    "yaml",
+    "zip",
+    "zoo"
+)
+
+biocPkgs <-
+    c(
+        "lumi",
+        "methylumi",
+        "conumee",
+        "minfi",
+        "IlluminaHumanMethylation450kmanifest",
+        "IlluminaHumanMethylation450kanno.ilmn12.hg19",
+        "IlluminaHumanMethylationEPICanno.ilm10b4.hg19"
+    )
+
+if(checkRequire("devtools")){in.pkg("devtools")};loadLibrary("devtools")
+if(checkRequire("remotes")){in.pkg("remotes")}
+if(checkRequire("librarian")){in.pkg("librarian")}
+
+if (checkRequire("BiocManager")){in.pkg("BiocManager")};loadLibrary("BiocManager")
+if (checkRequire("Biobase")) {BiocManager::install("Biobase", update = F, ask = F)};loadLibrary("Biobase")
+
+loadLibrary("librarian")
+
+if(checkRequire("mapview")){remotes::install_github("r-spatial/mapview", dependencies = T, upgrade="never")}
+
+supM(librarian::shelf(corePkgs, ask = F, update_all = F, quiet = FALSE))
+supM(librarian::shelf(preReqPkgs, ask = F, update_all = F, quiet = FALSE))
+supM(librarian::shelf(biocPkgs, ask = F, update_all = F, quiet = FALSE))
+
+if(checkRequire("IlluminaHumanMethylationEPICmanifest")){
+    devtools::install_github(repo = "mwsill/IlluminaHumanMethylationEPICmanifest",
+                             dependencies = T, upgrade = "never")
+}
+
+if(checkRequire("mgmtstp27")){
+    gitLink <- "https://github.com/badozor/mgmtstp27/raw/master/archive/mgmtstp27_0.6-3.tar.gz"
+    install.packages(gitLink, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F)
+}
+
+if (!("needs" %in% rownames(installed.packages()))) {
+    install.packages("needs", dependencies = T, verbose = T, ask = F)
+}
+options(needs.promptUser = FALSE)
+
+spat_config <- '--with-proj-lib=/usr/local/lib/ --with-proj-include=/usr/local/include/'
+options(configure.args = c("sf" = spat_config, "rgdal" = spat_config))
+
+if(checkRequire("sf")){
+    tryCatch(install.packages(c("sf"), type = "source", dependencies=T, verbose=T),
+             error=function(e){
+                 remotes::install_github("r-spatial/sf", configure.args = "--with-proj-lib=/usr/local/lib/",
+                                         dependencies=T, upgrade="never")})
+}
+
+invisible(gc())
+
+options("install.packages.compile.from.source" = "No")
+options("install.packages.check.source" = "no")
+loadLibrary("BiocManager")
+loadLibrary("Biobase")
+
+terraDep <- c('tinytest', 'ncdf4', 'leaflet')
+supM(librarian::shelf(terraDep, ask = F, update_all = F, quiet = FALSE))
+
+if(checkRequire("terra")) {
+    install.packages('terra', repos = 'https://rspatial.r-universe.dev', dependencies = T, verbose = T)
+}
+
+if(checkRequire("FField")){
+    gitLink <- "https://cran.r-project.org/src/contrib/Archive/FField/FField_0.1.0.tar.gz"
+    install.packages(gitLink, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F)
+}
+
+supM(librarian::shelf(pkgs, ask = F, update_all = F, quiet = FALSE))
+invisible(gc())
