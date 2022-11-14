@@ -57,7 +57,8 @@ corePkgs <-
         "utils",
         "datasets",
         "methods",
-        "base"
+        "base",
+        "Rhdf5lib"
     )
 
 preReqPkgs <- c(
