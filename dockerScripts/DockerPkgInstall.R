@@ -23,8 +23,8 @@ in.pkg <- function(pkg, character.only=T){
 
 corePkgs <-
     c(
-        #"randomForest",
-        #"glmnet",
+        "randomForest",
+        "glmnet",
         "ggplot2",
         "gridExtra",
         "knitr",
