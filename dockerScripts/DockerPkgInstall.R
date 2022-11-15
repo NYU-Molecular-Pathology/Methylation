@@ -260,7 +260,8 @@ pkgs3 <- c(
     "xtable",
     "yaml",
     "zip",
-    "zoo"
+    "zoo",
+    "mlr", "wateRmelon", "RPMM", "impute"
 )
 
 biocPkgs <-
