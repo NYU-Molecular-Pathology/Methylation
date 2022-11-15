@@ -284,9 +284,11 @@ if (checkRequire("Biobase")) {BiocManager::install("Biobase", update = F, ask = 
 loadLibrary("librarian")
 
 if(checkRequire("mapview")){remotes::install_github("r-spatial/mapview", dependencies = T, upgrade="never")}
-
+message("Librarian Installing corePkgs...")
 supM(librarian::shelf(corePkgs, ask = F, update_all = F, quiet = FALSE))
+message("Librarian Installing preReqPkgs...")
 supM(librarian::shelf(preReqPkgs, ask = F, update_all = F, quiet = FALSE))
+message("Librarian Installing biocPkgs...")
 supM(librarian::shelf(biocPkgs, ask = F, update_all = F, quiet = FALSE))
 
 if(checkRequire("IlluminaHumanMethylationEPICmanifest")){
@@ -332,8 +334,10 @@ if(checkRequire("FField")){
     gitLink <- "https://cran.r-project.org/src/contrib/Archive/FField/FField_0.1.0.tar.gz"
     install.packages(gitLink, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F)
 }
-
+message("Librarian Installing pkgs1...")
 supM(librarian::shelf(pkgs1, ask = F, update_all = F, quiet = T))
+message("Librarian Installing pkgs2...")
 supM(librarian::shelf(pkgs2, ask = F, update_all = F, quiet = T))
+message("Librarian Installing pkgs3...")
 supM(librarian::shelf(pkgs3, ask = F, update_all = F, quiet = T))
 invisible(gc())
