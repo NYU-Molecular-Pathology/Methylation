@@ -1,8 +1,7 @@
+#!/usr/bin/env Rscript
 if(!require(compiler)){install.packages("compiler", dependencies=T)}
 library(compiler)
 enableJIT(3)
-
-#!/usr/bin/env Rscript
 
 cbioLn <- switch (Sys.info()[['sysname']],
                   "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
