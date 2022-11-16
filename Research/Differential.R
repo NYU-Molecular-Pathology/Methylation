@@ -247,11 +247,27 @@ SubSetGroup <- function(strPatt, samPairs){
     return(samPairs[idx])
 }
                         
-GetTracksPlot <- function(annEPICSub, bVals, results.ranges){
+GetTracksPlot <- function(annEPICSub, bVals, results.ranges, dmrIndex=1){
+    library("GenomicRanges")
+    library("knitr")
+    library("limma")
+    library("minfi")
+    library("RColorBrewer")
+    library("missMethyl")
+    library("minfiData")
+    library("Gviz")
+    library("DMRcate")
+    library("stringr")
+    library("httr")
+    library("methylationArrayAnalysis")
+    data(cpgIslands)
+    httr::set_config(httr::config(ssl_verifypeer = 0))
+    httr::set_config(httr::config(ssl_verifyhost=0))
+    #chr <- as.character(unique(seqnames(cpgIslands)))
+    gen <- genome(cpgIslands)
+    atrack <- AnnotationTrack(cpgIslands, name = "CpG")
     gen <- "hg19"
     pal <- brewer.pal(8,"Dark2")
-    # the index of the DMR that we will plot
-    dmrIndex <- 1
     # extract chromosome number and location from DMR results
     chrom <- as.character(seqnames(results.ranges[dmrIndex]))
     start <- as.numeric(start(results.ranges[dmrIndex]))
@@ -260,34 +276,33 @@ GetTracksPlot <- function(annEPICSub, bVals, results.ranges){
     minbase <- start - (0.25*(end-start))
     maxbase <- end + (0.25*(end-start))
     dataDirectory <- system.file("extdata", package = "methylationArrayAnalysis")
-    islandHMM <- as.data.frame(read.csv(paste0(
+   islandHMM <- as.data.frame(read.csv(paste0(
         dataDirectory, "/model-based-cpg-islands-hg19-chr17.txt"),
         sep="\t", stringsAsFactors=FALSE, header=FALSE))
-    colnames(islandHMM) <- c("Chr", "start", "end", "v1", "v2", "v3", "v4", "v5")
+     colnames(islandHMM) <- c("Chr", "start", "end", "length",	"CpGcount",	"GCcontent"	,"pctGC", "obsExp")
     islandHMM$start <- as.numeric(islandHMM$start)
     islandHMM$end <- as.numeric(islandHMM$end)
-    #islandHMM <- makeGRangesFromDataFrame(islandHMM, keep.extra.columns = TRUE)
-    islandData <- GRanges(seqnames=Rle(islandHMM[,1]),
-                          ranges=IRanges(start=islandHMM[,2], end=islandHMM[,3]),
-                          strand=Rle(strand("*" )))
-    dnase <- read.csv(paste0(dataDirectory,"/wgEncodeRegDnaseClusteredV3chr17.bed"),
+    #islandData<- makeGRangesFromDataFrame(islandHMM, keep.extra.columns = TRUE)
+    
+     islandData <- GRanges(seqnames=Rle(islandHMM[,1]),
+                           ranges=IRanges(start=islandHMM[,2], end=islandHMM[,3]), strand=Rle(strand("*" )))
+    
+     dnase <- read.csv(paste0(dataDirectory,"/wgEncodeRegDnaseClusteredV3chr17.bed"),
                       sep="\t",stringsAsFactors=FALSE,header=FALSE)
 
     dnaseData <- GRanges(seqnames=dnase[,1],
                          ranges=IRanges(start=dnase[,2], end=dnase[,3]),
                          strand=Rle("*"),
                          data=dnase[,5])
-
+    
     iTrack <- IdeogramTrack(genome = gen, chromosome = chrom, name="")
-    gTrack <- GenomeAxisTrack(col="black", cex=1, name="", fontcolor="black")
-    httr::set_config(httr::config(ssl_verifypeer = 0L))
-    rTrack <- try(UcscTrack(genome=gen, chromosome=chrom, track="NCBI RefSeq",
-                            from=minbase, to=maxbase, trackType="GeneRegionTrack",
-                            rstarts="exonStarts", rends="exonEnds", gene="name",
-                            symbol="name2", transcript="name", strand="strand",
-                            fill="darkblue",stacking="squish", name="RefSeq",
-                            showId=TRUE, geneSymbol=TRUE),silent = T)
-
+    gTrack <- GenomeAxisTrack(col="black", cex=1, name="GenomeAxis", fontcolor="black")
+    rTrack <- gb$supM(UcscTrack(genome=gen, chromosome=chrom, track="UCSC Genes", 
+                        from=minbase, to=maxbase, trackType="GeneRegionTrack", 
+                        start=minbase, end=maxbase,
+                        gene="name", symbol="name2", transcript="name", strand="strand", fill="darkblue",stacking="full", name="UCSC Genes", 
+                        showId=TRUE, geneSymbol=TRUE))
+    
     annEPICOrd <- annEPICSub[order(annEPICSub$chr,annEPICSub$pos),]
     bValsOrd <- bVals[match(annEPICOrd$Name,rownames(bVals)),]
     cpgData <- GRanges(seqnames=Rle(annEPICOrd$chr),
@@ -296,7 +311,6 @@ GetTracksPlot <- function(annEPICSub, bVals, results.ranges){
                        betas=bValsOrd)
     # extract data on CpGs in DMR
     cpgData <- subsetByOverlaps(cpgData, results.ranges[dmrIndex])
-
     # methylation data track
     methTrack <- DataTrack(range=cpgData, groups=targPairs$Sample_Group,genome = gen,
                            chromosome=chrom, ylim=c(-0.05,1.05), col=pal,
@@ -305,24 +319,15 @@ GetTracksPlot <- function(annEPICSub, bVals, results.ranges){
                            cex.axis=0.8, cex.legend=0.8)
     # CpG island track
     islandTrack <- AnnotationTrack(range=islandData, genome=gen, name="CpG Is.",
-                                   chromosome=chrom,fill="darkgreen")
-
+                                   chromosome=chrom, fill="darkgreen")
     # DNaseI hypersensitive site data track
     dnaseTrack <- DataTrack(range=dnaseData, genome=gen, name="DNAseI",
                             type="gradient", chromosome=chrom)
-
     # DMR position data track
     dmrTrack <- AnnotationTrack(start=start, end=end, genome=gen, name="DMR",
                                 chromosome=chrom,fill="darkred")
-
-    tracks <- list(iTrack, gTrack, methTrack, dmrTrack, islandTrack, dnaseTrack,
-                   rTrack)
-    return(list(
-        "tracks"=tracks,
-        "minbase"=minbase,
-        "maxbase"=maxbase
-
-    ))
+    tracks <- list(iTrack, gTrack, methTrack, dmrTrack,islandTrack, dnaseTrack, rTrack)
+    return(list("tracks"=tracks, "minbase"=minbase, "maxbase"=maxbase))
 }
                         
 GetDesign <- function(targPairs) {
