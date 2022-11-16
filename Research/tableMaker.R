@@ -242,3 +242,17 @@ SubSetGroup <- function(strPatt, samPairs){
     idx <- which(grepl(samPairs, pattern = strPatt, ignore.case=T))
     return(samPairs[idx])
 }
+
+CheckTargetIdats <- function(targets) {
+    stopifnot(gb$col_samNames %in% colnames(targets) == T) 
+    stopifnot(gb$col_samTypes %in% colnames(targets) == T)
+    if (gb$needFi == T) {
+        rds <-gb$readInfo(inputSheet = gb$samsheet) # inputSheet can be xlsx or csv
+        stopifnot(length(rds) > 1 & stringr::str_detect(rds[1], "RD-"))
+        gb$grabRDCopyIdat(rd_numbers = rds, gb$token,copyIdats = T)
+        gb$MoveIdats()
+    } else{
+        targets <- as.data.frame(read.csv("samplesheet.csv"))
+    }
+    return(targets)
+}
