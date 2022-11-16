@@ -338,7 +338,7 @@ GetDesign <- function(targPairs) {
   return(design)
 }
 
-ReadLoadDmps <- function(fit, contMat, annEPICSub, cateFile) {
+ReadLoadDmps <- function(fit, contMat, annEPICSub, cateFile="./figures/diffmean/pairwise_DMPs.csv") {
   fit2 <- contrasts.fit(fit, contMat)
   fit2 <- eBayes(fit2)
   summary(decideTests(fit2))
