@@ -115,38 +115,58 @@ function(targPairs, detP,rgSet){
     qcReport(rgSet, sampNames=targPairs$ID, sampGroups=targPairs$Sample_Group,
              pdf="qcReport.pdf")
 }
+
                         
-PlotDensityMds <- function(targPairs,mSetSq){
-    pal <- brewer.pal(12,"Set3")
-    cat("\n\n")
-    cat("## MDS 1")
-    cat("\n\n")
-    legFact <- levels(factor(targPairs$Sample_Group))
-    plotMDS(getM(mSetSq), top=1000, gene.selection="common",
-            col=pal[factor(targPairs$Sample_Group)])
-    legend("top", legend=legFact, text.col=pal,
-           bg="white", cex=0.7)
-    cat("\n\n")
-    cat("## MDS PCA 1 & 3")
-    cat("\n\n")
-    plotMDS(getM(mSetSq), top=1000, gene.selection="common",
-            col=pal[factor(targPairs$Sample_Group)], dim=c(1,3))
-    legend("top", legend=legFact, text.col=pal,
-           cex=0.7, bg="white")
-    cat("\n\n")
-    cat("## MDS PCA 2 & 3")
-    cat("\n\n")
-    plotMDS(getM(mSetSq), top=1000, gene.selection="common",
-            col=pal[factor(targPairs$Sample_Group)], dim=c(2,3))
-    legend("topleft", legend=legFact, text.col=pal,
-           cex=0.7, bg="white")
-    cat("\n\n")
+                        
+GetGgMds <- function(mds,targPairs){
+  scaleUp <- element_text(size = rel(1.2))
+  toplot <- data.frame(Dim1 = mds$x, Dim2 = mds$y, Group = factor(targPairs$Sample_Group))
+  theplot <- ggplot(toplot, size = 5, aes(Dim1, Dim2, colour = Group)) + 
+    geom_point(size = 3) + theme_bw() +
+    theme( axis.title = scaleUp, legend.text = scaleUp, legend.title = scaleUp)
+  return(theplot)
 }
                         
-PlotDimensions<- function(mSetSqFlt,targPairs){
+                        
+PlotDensityMds <- function(targPairs, mSetSq) {
+  par(mfrow = c(1, 1))
+  pal <- RColorBrewer::brewer.pal(8, "Dark2")
+  legFact <- levels(factor(targPairs$Sample_Group))
+  facPalCol <- pal[factor(targPairs$Sample_Group)]
+  methylSet <- getM(mSetSq)
+  
+  cat("\n\n")
+  cat("## MDS 1")
+  cat("\n\n")
+  mds1 <- plotMDS(methylSet, top = 1000, gene.selection = "common", col = facPalCol,
+    dim = c(1, 2)
+  )
+  GetGgMds(mds1,targPairs)
+  cat("\n\n")
+  cat("## MDS PCA 1 & 3")
+  cat("\n\n")
+  mds2 <- plotMDS(methylSet, top = 1000, gene.selection = "common", col = facPalCol,
+    dim = c(1, 3)
+  )
+  GetGgMds(mds2,targPairs)
+  cat("\n\n")
+  cat("## MDS PCA 2 & 3")
+  cat("\n\n")
+  mds3 <- plotMDS(methylSet, top = 1000, gene.selection = "common", col = facPalCol,
+    dim = c(2, 3)
+  )
+  GetGgMds(mds3,targPairs)
+  cat("\n\n")
+}
+
+                        
+PlotDimensions <- function(mSetSqFlt,targPairs){
     par(mfrow=c(1,1))
-    pal <- brewer.pal(12,"Set3")
+    pal <- RColorBrewer::brewer.pal(8,"Dark2")
     legFact <- levels(factor(targPairs$Sample_Group))
+      cat("\n\n")
+    cat("## MDS Mset 1")
+    cat("\n\n")
     plotMDS(getM(mSetSqFlt), top=1000, gene.selection="common",
             col=pal[factor(targPairs$Sample_Group)], cex=0.8)
     legend("right", legend=legFact, text.col=pal,
@@ -154,6 +174,7 @@ PlotDimensions<- function(mSetSqFlt,targPairs){
     cat("\n\n")
     cat("## MDS Mset Sample Type")
     cat("\n\n")
+    
     plotMDS(getM(mSetSqFlt), top=1000, gene.selection="common",
             col=pal[factor(targPairs$Sample_Source)])
     legend("right", legend=levels(factor(targPairs$Sample_Source)), text.col=pal,
