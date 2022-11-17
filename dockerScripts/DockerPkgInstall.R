@@ -279,23 +279,37 @@ biocPkgs <-
 if(checkRequire("devtools")){in.pkg("devtools")};loadLibrary("devtools")
 if(checkRequire("remotes")){in.pkg("remotes")}
 if(checkRequire("librarian")){in.pkg("librarian")}
-
+if(checkRequire("pak")) {
+    install.packages(lib = '/usr/local/lib/R/site-library/', 'pak', repos = 'https://r-lib.github.io/p/pak/dev/',
+                     dependencies = T)
+}
 if (checkRequire("BiocManager")){in.pkg("BiocManager")};loadLibrary("BiocManager")
 if (checkRequire("Biobase")) {BiocManager::install("Biobase", update = F, ask = F)};loadLibrary("Biobase")
 
 loadLibrary("librarian")
 
 if(checkRequire("mapview")){remotes::install_github("r-spatial/mapview", dependencies = T, upgrade="never")}
-message("Librarian Installing corePkgs...")
-supM(librarian::shelf(corePkgs, ask = F, update_all = F, quiet = FALSE))
-message("Librarian Installing preReqPkgs...")
-supM(librarian::shelf(preReqPkgs, ask = F, update_all = F, quiet = FALSE))
-message("Librarian Installing biocPkgs...")
-supM(librarian::shelf(biocPkgs, ask = F, update_all = F, quiet = FALSE))
+
+CheckPackages <- function(pkgList) {
+    toDrop <- pkgList %in% rownames(installed.packages())
+    pkgLiSub <- pkgList[!toDrop]
+    if (length(pkgLiSub) > 0) {
+        try(pak::pkg_install(pkgLiSub, dependencies = T, ask = F,
+                             lib = '/usr/local/lib/R/site-library/'), silent=T)
+    }
+    supM(librarian::shelf(pkgList, ask = F, update_all = F, quiet = FALSE))
+}
+
+
+message("Librarian Loading corePkgs...")
+CheckPackages(corePkgs)
+message("Librarian Loading preReqPkgs...")
+CheckPackages(preReqPkgs)
+message("Librarian Loading biocPkgs...")
+CheckPackages(biocPkgs)
 
 if(checkRequire("IlluminaHumanMethylationEPICmanifest")){
-    devtools::install_github(repo = "mwsill/IlluminaHumanMethylationEPICmanifest",
-                             dependencies = T, upgrade = "never")
+    pak::pkg_install("mwsill/IlluminaHumanMethylationEPICmanifest", ask=F, dependencies = T)
 }
 
 if(checkRequire("mgmtstp27")){
@@ -337,9 +351,9 @@ if(checkRequire("FField")){
     install.packages(gitLink, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F)
 }
 message("Librarian Installing pkgs1...")
-supM(librarian::shelf(pkgs1, ask = F, update_all = F, quiet = T))
+CheckPackages(pkgs1)
 message("Librarian Installing pkgs2...")
-supM(librarian::shelf(pkgs2, ask = F, update_all = F, quiet = T))
+CheckPackages(pkgs2)
 message("Librarian Installing pkgs3...")
-supM(librarian::shelf(pkgs3, ask = F, update_all = F, quiet = T))
+CheckPackages(pkgs3)
 invisible(gc())
