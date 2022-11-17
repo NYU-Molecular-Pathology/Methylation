@@ -213,7 +213,8 @@ pkgs2 <- c(
     "grid",
     "gridBase",
     "gridGraphics",
-    "gridtext")
+    "gridtext"
+)
 
 pkgs3 <- c(
     "Hmisc",
@@ -235,7 +236,7 @@ pkgs3 <- c(
     "parameters",
     "plotly",
     "Polychrome",
-    "prettyunits",
+    #"prettyunits",
     "raster",
     "Rcpp",
     "redcapAPI",
