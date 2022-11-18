@@ -1,5 +1,5 @@
 ---
-title: "Methylation Profiling Report (v11)"
+title: "Methylation Profiling Report"
 author: "Quick Links:"
 output: 
  html_document: 
@@ -16,6 +16,7 @@ params:
 ```{r set-options, echo=FALSE, cache=FALSE , message=FALSE, warning=FALSE}
 gb <- globalenv(); assign("gb", gb)
 dat <- params$rundata; assign("dat", params$rundata, envir=gb)
+saveRDS(params, file="params.rds") # Debug params <- readRDS("params.rds")
 gitPath <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/Report-Scripts"
 htmltools::includeCSS(file.path(gitPath,"SarcStyle.html"))
 gb$RGset <- RGset <- params$RGsetEpic[, 1]
@@ -32,7 +33,12 @@ htmltools::includeHTML(file.path(gitPath,"InterpretKey.html"))
 ```
 <h4>Methylation Class Description</h4>
 <p class="methtab">`r I(as.character(mnp.v11b6::reflist[gb$outList$idx,7]))`</p><hr class="solid">
-
+###  Brain Tumor Methylation Classifier Version 12
+```{r,label="classifier v12", error=FALSE, message=TRUE, fig.align = "left"}
+outV12 <- gb$GetV12score(RGset)
+knitr::asis_output(gb$PrintScoreTable(outV12, gb$dat))
+```
+<a class="molecneuro"></a><hr class="rounded">
 ### TSNE Clustering Version 11 Classifier (Interactive)
 ```{r, label='TSNE Cluster', fig.height=7, fig.width=13, out.width ='90%'}
 gb$supM(gb$GetClusterPlot(gb$msetDat, gb$dat))
@@ -45,11 +51,15 @@ cnv11 <- gb$supM(gb$NewGgplotly(gb$msetDat, gb$dat))
 
 ```{r, label='CNV loss gains table', fig.width = 12, fig.height=7, out.height="500px"}
 gb$supM(cnv11$thePlot)
-knitr::asis_output('<p class="cnvdesc"></p> <hr class="dotted"><h4>CNV Gains and Loss</h4>')
-if (nrow(cnv11$gainLoss$gainDf) > 0) {knitr::asis_output(cnv11$gainLoss$gainTab)}
-if (nrow(cnv11$gainLoss$lossDf) > 0) {knitr::asis_output(cnv11$gainLoss$lossTab)}
+gb$PrintGainLoss(cnv11$gainLoss)
 ```
 <hr class="solid">
+### Copy Number Variation Profile Version 12
+```{r, label="CNV v12", fig.width = 20, fig.height=10, fig.align = "left"}
+Mset12 <- mnp.v12b6::MNPpreprocessIllumina(RGset)
+mnp.v12b6::MNPcnvplot(Mset12, sex=ifelse(mnp.v12b6::MNPgetSex(Mset12)$predictedSex=="M","Male","Female"), main=gb$dat$sampleID)
+```
+<p class="conumee"></p><hr class="solid">
 ### MGMT Status Prediction
 ```{r, label="mgmtTable", results='asis', fig.height=1.3, fig.align="left", out.width='40%'}
 Mset_raw <- minfi::preprocessRaw(RGset)
@@ -66,7 +76,16 @@ print(mlh1Pred$theMlhplot)
 knitr::asis_output(mlh1Pred$mlhP)
 gb$TryREDCap(gb=globalenv())
 ```
-</div>
-
-<hr class="dotted"><h4>Reference</h4><a class="naturep"> </a>
+</div><hr class="hr.dashed">
+### UniD Prediction
+```{r, label='UniD predict', message=FALSE, results='hide'}
+gb$predU <- gb$supM(gb$PipelineU(sampleID = gb$dat$sampleID, gb$RGset, run_id=gb$dat$run_id))
+```
+<p style="font-weight:bold" class="unidcap"></p><p class="unidtxt"></p></br>
+```{r, label='UniD output', fig.align="left", results='asis', include=TRUE, fig.keep='all'}
+uniDtabs <- gb$supM(gb$GetUniDTables(gb$predU))
+knitr::asis_output(uniDtabs$tab1)
+knitr::asis_output(uniDtabs$tab2)
+```
+<p class="unidtypes"></p><hr class="dotted"><h4>Reference</h4><a class="naturep"> </a>
 <p class="bibrefnames"></p><span><p class="implements"></p></span>
