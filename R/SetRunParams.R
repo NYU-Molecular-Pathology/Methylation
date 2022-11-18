@@ -142,6 +142,11 @@ defineParams <- function(mnp.pk.loc = NULL,
         baseDir
     )
     i=1:length(inVars)
+    for (x in 1:length(defVars)) {
+        if(!is.null(inVars[[x]])){
+            defVars[1,x] <- inVars[[x]]
+        }
+    }
     invisible(lapply(i,function(x){if(!is.null(inVars[[x]])){setVar(names(defVars[x]), inVars[[x]])}}))
     if(loadClassifier==T){loadClassifierPacks()}
     i=1:length(defVars)

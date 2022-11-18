@@ -6,18 +6,16 @@ gb <- globalenv(); assign("gb", gb)
 if(!require("devtools")){install.packages("devtools", quiet=T)}
 
 # Parameters Input trailing commandline ----------------------------------------------------
-token <-      args[1]
-runID <-      args[2]
-selectRDs <-  args[3]
-baseFolder <- args[4]
-redcapUp <-   args[5]
-runLocal <-   args[6]
+args[1] -> token
+args[2] -> runID
+args[3] -> selectRDs
+args[4] -> baseFolder
+args[5] -> redcapUp
+args[6] -> runLocal
 
-osType <- Sys.info()[['sysname']]
-if(osType=="Linux"){
+if(Sys.info()[['sysname']]=="Linux"){
   .libPaths("~/molecpathlab/production/Methylation/common_libs")
-  if(!require("devtools")){install.packages("devtools", quiet=T)}
-  baseFolder <- "~/molecpathlab/production/Methylation"
+  assign("baseFolder", "~/molecpathlab/production/Methylation", envir = gb)
 }
 
 # Check Input Parameters ----------------------------------------------------
