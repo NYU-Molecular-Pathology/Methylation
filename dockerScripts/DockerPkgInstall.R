@@ -294,8 +294,7 @@ CheckPackages <- function(pkgList) {
     toDrop <- pkgList %in% rownames(installed.packages())
     pkgLiSub <- pkgList[!toDrop]
     if (length(pkgLiSub) > 0) {
-        try(pak::pkg_install(pkgLiSub, dependencies = T, ask = F,
-                             lib = '/usr/local/lib/R/site-library/'), silent=T)
+        pak::pkg_install(pkgLiSub, ask = F, lib = '/usr/local/lib/R/site-library/')
     }
     supM(librarian::shelf(pkgList, ask = F, update_all = F, quiet = FALSE))
 }
