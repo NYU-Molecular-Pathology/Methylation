@@ -53,7 +53,7 @@ cnv11 <- gb$supM(gb$NewGgplotly(gb$msetDat, gb$dat))
 gb$supM(cnv11$thePlot)
 gb$PrintGainLoss(cnv11$gainLoss)
 ```
-<hr class="solid">
+
 ### Copy Number Variation Profile Version 12
 ```{r, label="CNV v12", fig.width = 20, fig.height=10, fig.align = "left"}
 Mset12 <- mnp.v12b6::MNPpreprocessIllumina(RGset)
