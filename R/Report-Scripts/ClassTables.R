@@ -420,7 +420,8 @@ SuppInfoTable <- function(dat, RGset, msetDat){
     return(suppTab)
 }
 
-PrintOutTable <- function(classTables,gitPath){
+PrintClassTable <- function(outList,gitPath){
+    classTables <- gb$GetClassProbTables(outList)
     knitr::asis_output(classTables$famTable)
     knitr::asis_output(classTables$grpTable)
     htmltools::includeHTML(file.path(gitPath,"InterpretKey.html"))
@@ -433,5 +434,4 @@ PrintGainLoss <- function(gnLss){
     if (nrow(gnLss$lossDf) > 0) {knitr::asis_output(gnLss$lossTab)}
     knitr::asis_output('<hr class="solid">')
 }
-
  
