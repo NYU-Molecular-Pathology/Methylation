@@ -1,4 +1,12 @@
+#!/usr/bin/env R
 library("base"); gb <- globalenv(); assign("gb", gb)
+args <- commandArgs(TRUE)
+if(!require("devtools")){install.packages("devtools", quiet=T)}
+
+# Input Arguments ------------------------------------------
+args[1] -> token
+args[2] -> inputSheet
+
 dsh="\n================"
 dsh2="================\n"
 
@@ -165,5 +173,5 @@ checkMounts()
 sourceFuns()
 
 # Example Use
-#rds <- readInfo(inputSheet)
-#grabRDCopyIdat(rd_numbers=rds, token=token)
+rds <- readInfo(inputSheet)
+grabRDCopyIdat(rd_numbers=rds, token=token)
