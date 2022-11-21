@@ -51,7 +51,10 @@ cnv11 <- gb$supM(gb$NewGgplotly(gb$msetDat, gb$dat))
 
 ```{r, label='CNV loss gains table', fig.width = 12, fig.height=7, out.height="500px"}
 gb$supM(cnv11$thePlot)
-gb$PrintGainLoss(cnv11$gainLoss)
+gnLss <- cnv11$gainLoss
+knitr::asis_output('<p class="cnvdesc"></p> <hr class="dotted"><h4>CNV Gains and Loss</h4>')
+if (nrow(gnLss$gainDf) > 0) {knitr::asis_output(gnLss$gainTab)}
+if (nrow(gnLss$lossDf) > 0) {knitr::asis_output(gnLss$lossTab)}
 ```
 
 ### Copy Number Variation Profile Version 12
