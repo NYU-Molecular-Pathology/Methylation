@@ -329,6 +329,7 @@ do_report <-  function(data = NULL, genCn=F) {
           "html_document",
           dat$outFi,
           getwd(),
+          clean = TRUE,
           quiet = FALSE,
           params = list(
             token = gb$ApiToken,
