@@ -5,7 +5,7 @@ output:
  html_document: 
    toc: yes
    toc_collapsed: no
-   self_contained: yes
+   self_contained: true
 params:
     token: "NONE"
     rundata: NULL
