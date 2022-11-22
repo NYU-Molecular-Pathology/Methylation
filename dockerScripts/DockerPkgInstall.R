@@ -297,13 +297,21 @@ CheckPackages <- function(pkgList) {
         tryCatch(
             pak::pkg_install(pkgLiSub, ask = F, lib = '/usr/local/lib/R/site-library/'),
             error = function(e) {
-                tryCatch(in.pkg(pkgLiSub),
-
+                tryCatch(
+                    in.pkg(pkgLiSub),
+                    error = function(e) {
+                        BiocManager::install(pkgLiSub, update = F, ask = F)
+                    }
                 )
             }
         )
     }
-    supM(librarian::shelf(pkgList, ask = F, update_all = F, quiet = FALSE))
+    supM(librarian::shelf(
+        pkgList,
+        ask = F,
+        update_all = F,
+        quiet = FALSE
+    ))
 }
 
 

@@ -25,9 +25,24 @@ CheckPackages <- function(pkgList) {
     toDrop <- pkgList %in% rownames(installed.packages())
     pkgLiSub <- pkgList[!toDrop]
     if (length(pkgLiSub) > 0) {
-        pak::pkg_install(pkgLiSub, ask = F, lib = '/usr/local/lib/R/site-library/')
+        tryCatch(
+            pak::pkg_install(pkgLiSub, ask = F, lib = '/usr/local/lib/R/site-library/'),
+            error = function(e) {
+                tryCatch(
+                    in.pkg(pkgLiSub),
+                    error = function(e) {
+                        BiocManager::install(pkgLiSub, update = F, ask = F)
+                    }
+                )
+            }
+        )
     }
-    supM(librarian::shelf(pkgList, ask = F, update_all = F, quiet = FALSE))
+    supM(librarian::shelf(
+        pkgList,
+        ask = F,
+        update_all = F,
+        quiet = FALSE
+    ))
 }
 
 pkgs1 <- c(
