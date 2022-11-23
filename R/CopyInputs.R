@@ -94,7 +94,7 @@ setRunDir <- function(runID=NULL, workFolder=NULL){
     if(grepl("TEST",runID)){
         if(dir.exists(newRun)){unlink(newRun, T, T)}
         dir.create(newRun)
-        try(unlink(file.path("~/Desktop",runID), T, T),silent = T)
+        try(unlink(file.path(fs::path_home(),"Desktop",runID), T, T),silent = T)
     }
     methylPath <- CreateRunDir(newRun)
     return(methylPath)
@@ -183,7 +183,7 @@ moveSampleSheet <- function(methDir, runID = NULL) {
         runID = paste0(basename(getwd()))
         message("Setting runID=", runID)
     }
-    deskDir = file.path("~","Desktop", runID)
+    deskDir = file.path(fs::path_home(),"Desktop", runID)
     if (!dir.exists(deskDir)) {
         dir.create(deskDir)
     }
