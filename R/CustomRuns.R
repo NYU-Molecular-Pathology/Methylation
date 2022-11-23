@@ -1,6 +1,6 @@
 gb <- globalenv(); assign("gb", gb)
 #reportMd <- "/Volumes/CBioinformatics/Methylation/report_v12.Rmd"
-reportMd <- "~/report.Rmd" # From curl github download
+reportMd <- file.path(fs::path_home(),"report.Rmd") # From curl github download
 sarcRmdFile = "/Volumes/CBioinformatics/Methylation/SarcReport.Rmd"
 GetLocalData <- function(rg){
     dat <- data.frame(
