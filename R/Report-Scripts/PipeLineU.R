@@ -38,7 +38,7 @@ UniD_loadData <- function (sampleID, run_id=NULL) {
         run_id <- basename(getwd())
     }
     samSh <- paste0(run_id,"_samplesheet.csv")
-    inFile <- file.path("~","Desktop", run_id, samSh)
+    inFile <- file.path(fs::path_home(),"Desktop", run_id, samSh)
     if(file.exists(inFile)){
         targets <- read.csv(inFile, strip.white = T)
     }else{
