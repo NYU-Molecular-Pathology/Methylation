@@ -21,7 +21,7 @@ message(paste("Using", runID, "as RunID"))
 assign("runID", runID, envir = gb)
 # Check if baseDir provided else use Desktop
 if (is.null(params$baseDir)) {
-    baseDir = file.path("~", "Desktop", runID)
+    baseDir = file.path(fs::path_home(), "Desktop", runID)
 } else{
     baseDir <- paste0(params$baseDir)
 }
@@ -52,7 +52,7 @@ if (length(sheetNamePath) == 0) {
             "\nCopying from current directory...")
     samSheet <- dir(getwd(), "samplesheet.csv", full.names = T)
     sheetName <- paste0(runID, "_samplesheet.csv")
-    newOutPath <- file.path("~", "Desktop", runID, sheetName)
+    newOutPath <- file.path(fs::path_home(), "Desktop", runID, sheetName)
     fs::file_copy(path = samSheet, new_path = newOutPath)
     sheetNamePath <- file.path(baseDir, sheetName)
 }
@@ -440,7 +440,7 @@ failedDP <- plotDP$data$MP_num[failedDP]
 summaryFail <- runName <- NULL
 runName <- paste(targets$RunID[1])
 if (is.null(runName)) {runName = paste0(basename(getwd()))}
-location <- file.path("~","Desktop",runName, paste0(runName,"_Redcap.csv"))
+location <- file.path(fs::path_home(),"Desktop",runName, paste0(runName,"_Redcap.csv"))
 if(!file.exists(location)){knitr::knit_exit()}
 ```
 <hr class="solid"><div style="background-image: linear-gradient(to right, mediumpurple,mediumpurple,mediumpurple, white, white); border-radius: 18px; padding: 5px; border-padding:6px;"><h2 style="color: White;">
