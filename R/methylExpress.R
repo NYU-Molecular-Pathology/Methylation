@@ -12,10 +12,10 @@ args[5] -> redcapUp   # <- TRUE
 args[6] -> runLocal   # <- FALSE
 
 # Check BigPurple Enironment & Devtools -------------------------------------------------------
-if(Sys.info()[['sysname']]=="Linux"){
-  .libPaths("~/molecpathlab/production/Methylation/common_libs")
-  assign("baseFolder", "~/molecpathlab/production/Methylation", envir = gb)
-}
+# if(Sys.info()[['sysname']]=="Linux"){
+#   .libPaths("~/molecpathlab/production/Methylation/common_libs")
+#   assign("baseFolder", "~/molecpathlab/production/Methylation", envir = gb)
+# }
 if(!require("devtools")){install.packages("devtools", quiet=T)}
 
 # Check Input Parameters -----------------------------------------------------------------------
