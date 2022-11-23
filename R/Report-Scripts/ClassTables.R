@@ -272,7 +272,7 @@ PrintScoreTable <- function(outV12, dat) {
     v12redcap <- v12redcap[1,-1]
     rownames(v12redcap) <- NULL
         v12FiOut <- paste0(dat$run_id, "_v12.csv")
-        v12DirOut <- file.path("~", "Desktop", dat$run_id)
+        v12DirOut <- file.path(fs::path_home(), "Desktop", dat$run_id)
     redcsv <- file.path(v12DirOut, v12FiOut)
         if(!dir.exists(v12DirOut)){dir.create(v12DirOut)}
     if (file.exists(redcsv)) {
