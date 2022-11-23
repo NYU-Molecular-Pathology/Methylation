@@ -8,8 +8,8 @@ bkBlu <- function(...){crayon::bgBlue$bold$white(paste(...))}
 
 # Global Variables ----------------------------------
 apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
-reportMd <- "~/report.Rmd" # From curl github download
-QC_file <- "~/Methyl_QC.Rmd" # From curl github download
+reportMd <- file.path(fs::path_home(),"report.Rmd") # From curl github download
+QC_file <- file.path(fs::path_home(),"Methyl_QC.Rmd") # From curl github download
 pipeLnk <- "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/pipelineHelper.R"
 
 cbioLn <- switch (Sys.info()[['sysname']],
@@ -124,7 +124,7 @@ generateQCreport <- function(runID=NULL) {
             rmdToKnit,
             output_file = outQCpath,
             quiet = F,
-            params = list(runID = runID, baseDir = file.path("~", "Desktop", runID), knitDir=getwd())
+            params = list(runID = runID, baseDir = file.path(fs::path_home(), "Desktop", runID), knitDir=getwd())
         )
         qcCache <- stringr::str_replace_all(string = rmdToKnit, ".Rmd", "_cache")
         unlink(qcCache, recursive = T) #clear cache
