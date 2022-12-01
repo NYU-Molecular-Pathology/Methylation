@@ -16,7 +16,7 @@ params:
 ```{r set-options, echo=FALSE, cache=FALSE , message=FALSE, warning=FALSE}
 gb <- globalenv(); assign("gb", gb)
 dat <- params$rundata; assign("dat", params$rundata, envir=gb)
-saveRDS(params, file="params.rds") # Debug params <- readRDS("params.rds")
+#saveRDS(params, file="params.rds") # Debug params <- readRDS("params.rds")
 gitPath <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/Report-Scripts"
 htmltools::includeCSS(file.path(gitPath,"SarcStyle.html"))
 gb$RGset <- RGset <- params$RGsetEpic[, 1]
