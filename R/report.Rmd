@@ -2,11 +2,11 @@
 title: "Methylation Profiling Report"
 author: "Quick Links:"
 output: 
- html_document: 
-   toc: yes
-   toc_collapsed: no
-   self_contained: true
-   clean: true
+  html_document: 
+    toc: yes
+    toc_collapsed: no
+    self_contained: TRUE
+    clean: TRUE
 params:
     token: "NONE"
     rundata: NULL

@@ -326,12 +326,12 @@ do_report <-  function(data = NULL, genCn=F) {
       expr = {
         rmarkdown::render(
           reportMd,
-          "html_document",
+          output_format = "html_document",
           dat$outFi,
           getwd(),
           clean = TRUE,
           quiet = FALSE,
-          output_options = list(self_contained=T),
+          output_options = list(self_contained=T, clean_supporting=T),
           params = list(
             token = gb$ApiToken,
             rundata = dat,
