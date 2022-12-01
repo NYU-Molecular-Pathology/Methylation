@@ -331,6 +331,7 @@ do_report <-  function(data = NULL, genCn=F) {
           getwd(),
           clean = TRUE,
           quiet = FALSE,
+          output_options = list(self_contained=T),
           params = list(
             token = gb$ApiToken,
             rundata = dat,

@@ -6,6 +6,7 @@ output:
    toc: yes
    toc_collapsed: no
    self_contained: true
+   clean: true
 params:
     token: "NONE"
     rundata: NULL
