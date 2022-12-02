@@ -7,6 +7,8 @@ cbioLn <- switch (Sys.info()[['sysname']],
 if(Sys.info()[['sysname']]=="Darwin"){
   Sys.setenv(PROJ_LIBS = "/opt/homebrew/opt/proj/lib")
   Sys.setenv(SQLITE3_LIBS = "/opt/homebrew/opt/sqlite/lib")
+#  Sys.setenv(LDFLAGS="-L/usr/local/opt/sqlite/lib")
+#  Sys.setenv(CPPFLAGS="-I/usr/local/opt/sqlite/include")
   }
 
 uniDpath <- file.path(cbioLn, "UniD")
