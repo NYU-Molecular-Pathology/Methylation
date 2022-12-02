@@ -173,5 +173,5 @@ checkMounts()
 sourceFuns()
 
 # Example Use
-rds <- readInfo(inputSheet)
-grabRDCopyIdat(rd_numbers=rds, token=token)
+#rds <- readInfo(inputSheet)
+#grabRDCopyIdat(rd_numbers=rds, token=token)
