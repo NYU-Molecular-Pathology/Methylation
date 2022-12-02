@@ -680,7 +680,7 @@ if(Sys.info()[['sysname']]=="Darwin"){
   }
   options(needs.promptUser=FALSE)
 }
-if(!(require("Rcpp")){remotes::install_github("RcppCore/Rcpp")}
+if(!(require("Rcpp"))){remotes::install_github("RcppCore/Rcpp")}
 spat_config <- '--with-proj-lib=/usr/local/lib/ --with-proj-include=/usr/local/include/'
 options(configure.args = c("sf" = spat_config, "rgdal" = spat_config))
 if(checkRequire("sf")){
