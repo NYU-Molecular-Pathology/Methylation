@@ -36,11 +36,13 @@ if (Sys.info()[['sysname']]=="Darwin" & !dir.exists(file.path("~", ".R"))) {
         'LLVM_LOC = /usr/local/opt/llvm',
         'CC=/usr/local/gfortran/bin/gcc -fopenmp',
         'CXX=/usr/local/gfortran/bin/g++ -fopenmp',
-        'CFLAGS=-g -O3 -Wall -pedantic -std=gnu99 -mtune=native -pipe',
-        'CXXFLAGS=-g -O3 -Wall -pedantic -std=c++11 -mtune=native -pipe',
+        'CFLAGS=-g -O3 -w -pedantic -std=gnu99 -mtune=native -pipe',
+        'CXXFLAGS=-g -O3 -w -pedantic -std=c++11 -mtune=native -pipe',
         'LDFLAGS=-L/usr/local/opt/gettext/lib -L$(LLVM_LOC)/lib -Wl,-rpath,$(LLVM_LOC)/lib',
         'LDFLAGS=-L/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib',
-        'CPPFLAGS=-I/usr/local/opt/gettext/include -I$(LLVM_LOC)/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include'
+        'CPPFLAGS=-I/usr/local/opt/gettext/include -I$(LLVM_LOC)/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include',
+        'PROJ_LIBS = /opt/homebrew/opt/proj/lib',
+        'SQLITE3_LIBS = /opt/homebrew/opt/sqlite/lib'
     )
     writeLines(params, fileConn)
     close(fileConn)
@@ -678,7 +680,7 @@ if(Sys.info()[['sysname']]=="Darwin"){
   }
   options(needs.promptUser=FALSE)
 }
-
+if(!(require("Rcpp")){remotes::install_github("RcppCore/Rcpp")}
 spat_config <- '--with-proj-lib=/usr/local/lib/ --with-proj-include=/usr/local/include/'
 options(configure.args = c("sf" = spat_config, "rgdal" = spat_config))
 if(checkRequire("sf")){
