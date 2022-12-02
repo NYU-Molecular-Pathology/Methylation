@@ -32,7 +32,9 @@ Download and install the following packages:<br>
 - [X] **Rswitch**: https://rud.is/rswitch/<br />
 - [X] **Homebrew**: https://brew.sh/ you can install using the following line in terminal:<br />
 `/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh`<br />
-- [X] **Library Magic**: `brew install libmagic`<br />
+- [X] **Library Magic, Sqlite and Proj**: `brew install libmagic sqlite proj`<br />
+- [X] **Compilers and Unpackers**: `brew install llvm aspell gdal autoconf automake gcc openssl@3 zlib`<br />
+- [X] **Additional Libraries**: `brew install texinfo pango cairo open-mpi poppler-qt5 graphviz libopenmpt`<br />
 
 <details>
 <summary>NOTE</summary>
