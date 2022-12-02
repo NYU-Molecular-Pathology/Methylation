@@ -4,6 +4,11 @@ cbioLn <- switch (Sys.info()[['sysname']],
                   "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
                   "Linux" = "~/molecpathlab/production/Methylation/classifiers")
 
+if(Sys.info()[['sysname']]=="Darwin"){
+  Sys.setenv(PROJ_LIBS = "/opt/homebrew/opt/proj/lib")
+  Sys.setenv(SQLITE3_LIBS = "/opt/homebrew/opt/sqlite/lib")
+  }
+
 uniDpath <- file.path(cbioLn, "UniD")
 
 # Classifier Packages and Versions
