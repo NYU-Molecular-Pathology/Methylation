@@ -33,7 +33,7 @@ Download and install the following packages:<br>
 - [X] **Homebrew**: https://brew.sh/ you can install using the following line in terminal:<br />
 `/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh`<br />
 - [X] **Library Magic, Sqlite and Proj**: `brew install libmagic sqlite proj`<br />
-- [X] **Compilers and Unpackers**: `brew install llvm aspell gdal autoconf automake gcc openssl@3 zlib go pandoc`<br />
+- [X] **Compilers and Unpackers**: `brew install llvm aspell gdal autoconf automake gcc libgit2 openssl@3 zlib go pandoc`<br />
 - [X] **Additional Libraries**: `brew install texinfo pango cairo open-mpi poppler-qt5 graphviz libopenmpt`<br />
 
 <details>
