@@ -77,10 +77,18 @@ gb$reportMd <- reportMd <- "~/report.Rmd"
 # Execute Pipeline Functions ----------------------------------------------------------------------
 gb$PrepareRun(token, baseFolder, runID, runLocal=runLocal) # If running local set runLocal = TRUE
 
-csvFi <- read.csv(file.path(getwd(), "samplesheet.csv"))
-BN00 <- which(stringr::str_detect(csvFi$MP_num, "BN00"))
-if(length(BN00)>0){
-  selectRDs <- c(selectRDs, csvFi$Sample_Name[BN00])
-}
+GetPriorityCases <-
+  function(selectRDs, samSheet = "samplesheet.csv") {
+    csvFi <- read.csv(file.path(getwd(), samSheet))
+    BN00 <- which(stringr::str_detect(csvFi$MP_num, "BN00"))
+    if (length(BN00) > 0) {
+      selectRDs <- c(selectRDs, csvFi$Sample_Name[BN00])
+      message("Prioritizing these cases first:\n",
+              paste(capture.output(selectRDs), collapse=" "))
+    }
+    return(selectRDs)
+  }
+
+selectRDs <- GetPriorityCases(selectRDs)
 
 gb$StartRun(selectRDs, emailNotify=T, redcapUp=redcapUp) # Can be changed to default false
