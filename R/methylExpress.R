@@ -78,9 +78,9 @@ gb$reportMd <- reportMd <- "~/report.Rmd"
 gb$PrepareRun(token, baseFolder, runID, runLocal=runLocal) # If running local set runLocal = TRUE
 
 GetPriorityCases <-
-  function(selectRDs, samSheet = "samplesheet.csv") {
+  function(selectRDs, samSheet = "samplesheet.csv", kwd="BN0") {
     csvFi <- read.csv(file.path(getwd(), samSheet))
-    BN00 <- which(stringr::str_detect(csvFi$MP_num, "BN00"))
+    BN00 <- which(stringr::str_detect(csvFi$MP_num, kwd))
     if (length(BN00) > 0) {
       selectRDs <- c(selectRDs, csvFi$Sample_Name[BN00])
       message("Prioritizing these cases first:\n",
