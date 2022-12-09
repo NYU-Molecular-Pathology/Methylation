@@ -370,7 +370,7 @@ GetSheetHeading <- function(inputFi){
 GetPhilipsData <- function(inputFi){
     shNames <- readxl::excel_sheets(inputFi)
     sh2 <- which(grepl("Philips", shNames, ignore.case = T))[1]
-    philipsExport <- GetExcelData(inputFi, sh2, NULL, 0, cm=T)
+    philipsExport <- GetExcelData(inputFi, sh2, NULL, 3, cm=T)
     filterColumns <- GetPhilipsColumns()
     philipsExport <- philipsExport[,filterColumns]
     blankOrder <- philipsExport[,"Epic Order Number"] == ""
