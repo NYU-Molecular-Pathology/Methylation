@@ -98,6 +98,63 @@ pSubTitle <- 'Clinical Methylation Run' # subtitle
 summarName <- paste("Classifier Report Summary for", runID) # summary table heading
 ```
 
+<style type="text/css">
+h1.title{color: white; background-image: linear-gradient(to right, indigo, indigo, indigo, white, white); border-radius:18px; padding:5px; border-padding:6px;}
+h2.section.level2{color: white; background-image: linear-gradient(to right, indigo, indigo, indigo, white, white); border-radius:18px; padding:5px; border-padding:6px;}
+
+.main-container{max-width: 95% !important;margin-left:25px; padding: 10px;}
+div.main-container{max-width: 95% !important;margin-left:25px; padding: 10px;}
+div.container-fluid{max-width: 95% !important;margin-left:25px; padding: 10px;}
+table.table.table-striped{margin-left:0px;margin-right:auto;align:"left";}
+table{align:"left" !important;}
+</style>
+
+<style type="text/css">
+.main-container { 
+     max-width: 1600px !important;
+ } 
+ .table tbody tr:nth-child(even) {
+     background-color: #f2f2f2 !important;
+ }
+ .table thead th {
+     background-color: #FF6319 !important;
+     color: white !important;
+     font-size: 14px;
+ }
+ tbody {
+     font-size: 12px;
+ }
+ hr {
+     page-break-after: always;
+ }
+ .hr {
+     page-break-after: always;
+ }
+</style>
+
+```{css, echo=FALSE}
+.main-container { 
+     max-width: 1600px !important;
+ } 
+ .table tbody tr:nth-child(even) {
+     background-color: #f2f2f2 !important;
+ }
+ .table thead th {
+     background-color: #FF6319 !important;
+     color: white !important;
+     font-size: 14px;
+ }
+ tbody {
+     font-size: 12px;
+ }
+ hr {
+     page-break-after: always;
+ }
+ .hr {
+     page-break-after: always;
+ }
+```
+
 ---
 title: "`r titleName`"
 subtitle: "`r pSubTitle`"
@@ -130,16 +187,6 @@ R.utils::setOption("device.ask.default", FALSE)
 par(mar = c(8, 8, 0, 0)) #it's important to have that in a separate chunk
 ``` 
 
-<style type="text/css">
-h1.title{color: white; background-image: linear-gradient(to right, indigo, indigo, indigo, white, white); border-radius:18px; padding:5px; border-padding:6px;}
-h2.section.level2{color: white; background-image: linear-gradient(to right, indigo, indigo, indigo, white, white); border-radius:18px; padding:5px; border-padding:6px;}
-
-.main-container{max-width: 95% !important;margin-left:25px; padding: 10px;}
-div.main-container{max-width: 95% !important;margin-left:25px; padding: 10px;}
-div.container-fluid{max-width: 95% !important;margin-left:25px; padding: 10px;}
-table.table.table-striped{margin-left:0px;margin-right:auto;align:"left";}
-table{align:"left" !important;}
-</style>
 
 ```{r SampleSheetfix, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
 library(ggplot2)
