@@ -102,9 +102,9 @@ summarName <- paste("Classifier Report Summary for", runID) # summary table head
 h1.title{color: white; background-image: linear-gradient(to right, indigo, indigo, indigo, white, white); border-radius:18px; padding:5px; border-padding:6px;}
 h2.section.level2{color: white; background-image: linear-gradient(to right, indigo, indigo, indigo, white, white); border-radius:18px; padding:5px; border-padding:6px;}
 
-.main-container{max-width: 95% !important;margin-left:25px; padding: 10px;}
-div.main-container{max-width: 95% !important;margin-left:25px; padding: 10px;}
-div.container-fluid{max-width: 95% !important;margin-left:25px; padding: 10px;}
+.main-container{max-width: 65% !important;margin-left:25px; padding: 10px;}
+div.main-container{max-width: 65% !important;margin-left:25px; padding: 10px;}
+div.container-fluid{max-width: 65% !important;margin-left:25px; padding: 10px;}
 table.table.table-striped{margin-left:0px;margin-right:auto;align:"left";}
 table{align:"left" !important;}
 </style>
@@ -186,7 +186,6 @@ R.utils::setOption("device.ask.default", FALSE)
 ```{r, label = "Margin Params", include=FALSE}
 par(mar = c(8, 8, 0, 0)) #it's important to have that in a separate chunk
 ``` 
-
 
 ```{r SampleSheetfix, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
 library(ggplot2)
@@ -396,7 +395,7 @@ get.op.dat <- function() {
 
 swm <- function(funObj){return(suppressMessages(suppressWarnings(funObj)))}
 ```
-\newpage
+
 ```{r Plot Getter, echo=FALSE, message=FALSE, warning=FALSE, cache=FALSE, include=FALSE, paged.print=FALSE}
 
 ## Plot Names --------------------------------------
@@ -434,8 +433,6 @@ df <- data.frame(x=1:length(sdata@DPfreq), y=sdata@DPfreq, row.names=names(sdata
 plotDP <- swm(plotParams(totNum, dParam = getNewData(dat.dp, cutoff = 0.95), xincept = 0, yincept = 0.95))
 plotDP <- swm(makeLabels(totNum, plotName = paste0(pltNames[5]), xName = "Samples", yName = "Pvalue", thePlot = plotDP))
 ```
-\newpage
-
 ```{r MU_plot1, echo=FALSE, error=FALSE, fig.align="center",  fig.margin=TRUE,  message=FALSE, warning=FALSE, fig.width=18.5, fig.height=12, include=FALSE}
 pltCap <- paste(targets$RunID[1])
 pmu <- plotMU + ggplot2::labs(
@@ -443,29 +440,23 @@ pmu <- plotMU + ggplot2::labs(
 failedMU <- plotMU$data$x <= 9
 failedMU <- plotMU$data$MP_num[failedMU]
 ```
-
-<style>hr.solid {border-top: 3px solid #bbb;}</style>
-
-\newpage
 ```{r MU_plot2, echo=FALSE, error=FALSE, fig.align="center", fig.margin=TRUE,  message=FALSE, warning=FALSE, fig.width=18.5, fig.height=12, include=FALSE}
 plotMU2 <- pmu 
 ```
-<hr class="solid">
-\newpage
 ```{r OP_plot, echo=FALSE, error=FALSE, fig.align="center", fig.margin=TRUE,  message=FALSE, warning=FALSE, fig.width=18.5, fig.height=12}
 plotMU2 + ggplot2::theme(plot.title = ggplot2::element_text(color = "navy", size = 26, face = "bold"))
 plotOP + ggplot2::labs(subtitle ="Sample biological positive control is assessed based on Non-polymorphic (NP) control probes. NP controls are used to test the overall performance of assay from amplification to detection.\nSamples falling **above threshold (SBPC > 11) pass** this QC and anything below the threshold are considered bad samples.\n", caption = pltCap)
 failedOP <- plotOP$data$x <= 11; failedOP <- plotOP$data$MP_num[failedOP]
 ```
 <hr class="solid">
-\newpage
+
 ```{r BS_Plot, echo=FALSE, warning=FALSE, fig.align="center", message=FALSE, fig.margin = TRUE,fig.width=18.5, fig.height=12}
 plotBS + ggplot2::labs(subtitle = "Bisulfite conversion quality is assessed based on Bisulfite Conversion I (BSI) control probes. BSI control probes use Infinium I probe design to monitor efficiency of bisulfite conversion.\nSamples falling **above threshold (BS > 10) pass** this QC and anything below the threshold are considered bad samples.\n", caption = pltCap)
 failedBS <- plotBS$data$x <= 10
 failedBS <- plotBS$data$MP_num[failedBS]
 ```
 <hr class="solid">
-\newpage
+
 ```{r HC_Plot, echo=FALSE,  fig.margin=TRUE,  warning=FALSE, fig.align="center", message=FALSE, fig.width=18.5, fig.height=12}
 plotHC + ggplot2::labs(subtitle = "Sample hybridization is assessed based on Hybridization control (HC) probes.\nHC probes test the overall performance of the entire assay using synthetic targets instead of amplified DNA.\n**Samples falling above threshold (SHC > 12.75) pass this QC** and anything below the threshold are considered QC Failed samples.",
 caption = pltCap)
@@ -474,7 +465,7 @@ failedHC <- plotHC$data$x <= 12.75
 failedHC <- plotHC$data$MP_num[failedHC]
 ```
 <hr class="solid">
-\newpage
+
 ```{r DP_Plot, fig.margin=TRUE,  echo=FALSE, warning=FALSE, fig.align="center", message=FALSE, fig.width=18, fig.height=12}
 
 plotDP + ggplot2::labs(subtitle = "Sample negative control is assessed based on negative control (NC) probes. NC are randomly permuted sequences that should not hybridize to DNA template.\nThe mean signal of these probes defines the background of the system.\nTo be considered as passing this QC, **less than 95%** of probes should be above the background signal.", 
@@ -546,7 +537,7 @@ controlSample <- paste0(clas.tb$tm_number[(which(grepl('control',bNum)))])
 controlSample <- paste(controlSample, sep = "\n")
 ```
 </div>
-\newpage
+
 <p>
 <h3 style="color:#3CB371">PC Control:
 ```{r, post_note_two, echo=FALSE, results='asis'}
