@@ -22,7 +22,7 @@
 ## 💻 Essential Downloads
 Download and install the following packages:<br>
 - [X] **R 4.1 or higher** from CRAN: https://cran.r-project.org/bin/macosx/<br />
-- [X] **Gfortran** from CRAN R MacOS tools: https://cran.r-project.org/bin/macosx/tools/ <br />
+- [X] **Gfortran** from GitHub use dmg installer: https://github.com/fxcoudert/gfortran-for-macOS/releases/tag/11.2-bigsur-intel <br />
 - [X] **RStudio 1.4 or later**: https://www.rstudio.com/products/rstudio/download/#download<br />
 - [X] **XQuartz**: https://www.xquartz.org/<br />
 - [X] **LaTeX** for Mac: https://www.tug.org/mactex/mactex-download.html<br />
