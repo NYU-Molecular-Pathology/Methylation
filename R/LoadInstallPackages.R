@@ -2,7 +2,8 @@
 
 cbioLn <- switch (Sys.info()[['sysname']],
                   "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
-                  "Linux" = "~/molecpathlab/production/Methylation/classifiers")
+                  "Linux" = "/private_pkgs/classifiers"#"~/molecpathlab/production/Methylation/classifiers"
+                 )
 
 if(Sys.info()[['sysname']]=="Darwin"){
   Sys.setenv(PROJ_LIBS = "/opt/homebrew/opt/proj/lib")
