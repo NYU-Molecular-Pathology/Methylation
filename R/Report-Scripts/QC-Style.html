@@ -102,6 +102,23 @@ ul.scrs {
     list-style-type:none;
     width:50%;    
 }
+
+p.mnpnote::after {
+    color:#00008B;
+    font-size:16px;
+    content:'Having a Brain Classifier Score below 0.90 does not indicate the sample failed QC.'
+}
+    
+p.qcnote::after {
+    color:#00008B;
+    font-size:16px;
+    content:'Brain classifier output score is not included as part of sample QC. Samples can pass QC and also have no matching Brain tumor classification.'
+}
+ 
+h3.pcnote::before {
+    color:#3CB371;
+    content:'PC Control:'
+}
     
 </style>
 </html>
