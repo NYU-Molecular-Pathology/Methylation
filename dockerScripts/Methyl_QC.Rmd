@@ -13,9 +13,7 @@ params:
 gb <- globalenv(); assign("gb", gb)
 if (is.null(params$runID)) {
     runID <- paste0(basename(getwd()))
-} else{
-    runID = params$runID
-}
+} else{runID = params$runID}
 stopifnot(!is.null(runID)); assign("runID", runID, envir = gb); gb$runID <- runID
 
 defaultBaseDir = file.path(fs::path_home(), "Desktop", runID)
