@@ -11,7 +11,6 @@ h1.title {
 }
 
 h2.section.level2 {
-    color: white;
     background-image: linear-gradient(to right, indigo, indigo, indigo, white, white);
     border-radius: 18px;
     padding: 5px;
@@ -78,7 +77,6 @@ ul li {
 
 .table thead th {
     background-color: #89CFF0 !important;
-    color: white !important;
     font-size: 14px;
 }
 
@@ -106,18 +104,13 @@ ul.scrs {
 p.mnpnote::after {
     color:#00008B;
     font-size:16px;
-    content:'Having a Brain Classifier Score below 0.90 does not indicate the sample failed QC.'
+    content:'**Note**: Having a Brain Classifier Score below 0.90 does not indicate the sample failed QC.'
 }
     
 p.qcnote::after {
     color:#00008B;
     font-size:16px;
     content:'Brain classifier output score is not included as part of sample QC. Samples can pass QC and also have no matching Brain tumor classification.'
-}
- 
-h3.pcnote::before {
-    color:#3CB371;
-    content:'PC Control:'
 }
     
 </style>
