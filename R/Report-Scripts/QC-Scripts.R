@@ -184,3 +184,38 @@ plotParams <- function(totNum, dParam, xincept, yincept) {
       }
   return(thePlot)
 }
+
+SetKnitPath <- function(runPath, baseDir){
+    system(paste("cd", runPath))
+    knitr::opts_knit$set(runPath) # rprojroot::find_rstudio_root_file()
+    knitr::opts_knit$set(root.dir=runPath)
+    message("\nUsing the following output Directory:\n", baseDir)
+    message("\nUsing the following Knit Directory:\n", runPath)
+}
+
+GetSheetNamePath <- function(params, baseDir) {
+    if (is.null(params$sheetNamePath)) {
+        sheetNamePath <- list.files(baseDir, "_samplesheet.csv", full.names = T)
+        if (length(sheetNamePath) > 1) {
+            warning(">1 samplesheet in the folder")
+        }
+        sheetNamePath <- sheetNamePath[1]
+    } else{
+        sheetNamePath = params$sheetNamePath
+    }
+    if (length(sheetNamePath) == 0) {
+        warning("No samplesheet found:\n", baseDir)
+        samSheetDir <-
+            dir(getwd(), "samplesheet.csv", full.names = T)
+        sheetName <- paste0(params$runID, "_samplesheet.csv")
+        newOut <-
+            file.path(fs::path_home(), "Desktop", params$runID, sheetName)
+        fs::file_copy(path = samSheetDir, new_path = newOut)
+        sheetNamePath <- file.path(baseDir, sheetName)
+    }
+    if (is.na(sheetNamePath)) {
+        sheetNamePath <- dir(getwd(), "samplesheet.csv", full.names = T)[1]
+    }
+    message(paste0("Sample sheet name is: ", sheetNamePath))
+    return(sheetNamePath)
+}
