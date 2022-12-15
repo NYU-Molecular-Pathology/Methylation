@@ -1,3 +1,4 @@
+gb <- globalenv(); assign("gb", gb)
 options("install.packages.compile.from.source" = "No")
 options("install.packages.check.source" = "no")
 options(warn = -1)
@@ -184,9 +185,25 @@ plotParams <- function(totNum, dParam, xincept, yincept) {
   return(thePlot)
 }
 
+
+
 ## Get Plot Specific Probes --------------------------------------
-getProbes <- function(probeName){d <- sdata@plotdata; d <- d[grepl(qcProbes[probeName], d$Type), ]
-return(d)
+getProbes <- function(probeName, gb) {
+    qcProbes <- list(
+        BSI = "^BISULFITE CONVERSION I$",
+        BSII = "^BISULFITE CONVERSION II$",
+        EC = "^EXTENSION$",
+        SPI = "^SPECIFICITY I$",
+        HYB = "^HYBRIDIZATION$",
+        NP = "^NON-POLYMORPHIC$",
+        SPII = "^SPECIFICITY II$",
+        TR = "^TARGET REMOVAL$",
+        SC = "^STAINING$",
+        NC = "^NEGATIVE$"
+    )
+    d <- gb$sdata@plotdata
+    d <- d[grepl(qcProbes[probeName], d$Type),]
+    return(d)
 }
 
 ## Merges Dataframe Values --------------------------------------
