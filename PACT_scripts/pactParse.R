@@ -194,7 +194,7 @@ WriteFileHeader <- function(inputFi){
 GetTypeIndex <- function(samNumber, rawSheetData){
     return(
         unlist(lapply(samNumber, function(samName){return(which(samName == rawSheetData$`DNA #`))}))
-        )
+    )
 }
 
 CheckControlRows <- function(rawSheetData, allBnumber){
@@ -367,10 +367,27 @@ GetSheetHeading <- function(inputFi){
     return(sheetHead)
 }
 
+GetExcelData <- function(inputFi, sheetNum, shRange, toSkip=0, cm=F){
+    sheetData <- suppressMessages(as.data.frame(
+        readxl::read_excel(
+            inputFi,
+            sheet = sheetNum,
+            na = "",
+            range = shRange,
+            col_types = "text",
+            col_names = cm,
+            skip=toSkip
+        )
+    ))
+    sheetData[is.na(sheetData)] <- ""
+    return(sheetData)
+}
+
 GetPhilipsData <- function(inputFi){
     shNames <- readxl::excel_sheets(inputFi)
     sh2 <- which(grepl("Philips", shNames, ignore.case = T))[1]
     philipsExport <- GetExcelData(inputFi, sh2, NULL, 3, cm=T)
+    philipsExport <- philipsExport[philipsExport$`Test Name`!="",]
     filterColumns <- GetPhilipsColumns()
     philipsExport <- philipsExport[,filterColumns]
     blankOrder <- philipsExport[,"Epic Order Number"] == ""
@@ -386,22 +403,6 @@ GetPhilipsData <- function(inputFi){
     }
     philipsExport[philipsExport==""] <- 0
     return(philipsExport)
-}
-
-GetExcelData <- function(inputFi, sheetNum, shRange, toSkip=0, cm=F){
-    sheetData <- suppressMessages(as.data.frame(
-        readxl::read_excel(
-            inputFi,
-            sheet = sheetNum,
-            na = "",
-            range = shRange,
-            col_types = "text",
-            col_names = cm,
-            skip=toSkip
-        )
-    ))
-    sheetData[is.na(sheetData)] <- ""
-    return(sheetData)
 }
 
 GrabRunNumber <- function(inputFi){
@@ -431,7 +432,6 @@ WriteMainSheet <- function(mainSheet, sheetHead){
     return(outFile)
 }
 
-
 AltParseFormat <- function(inputFi, runID){
     rawSheetData <- GetRawSamplesheet(inputFi)
     philipsExport <- GetPhilipsData(inputFi)
@@ -449,10 +449,10 @@ parseExcelFile <- function(inputFi, runID = NULL){
         sheetHead <- GetExcelData(inputFi, sheetNum=shNames[sh], shRange="A1:B17")
         sheetHead <- rbind(sheetHead,c("",""),c("[Data]",""))
         sheetVals <- GetExcelData(inputFi, shNames[sh], NULL, 19, T)
-        } else{
+    } else{
         sheetHead <- GetSheetHeading(inputFi)
         sheetVals <- AltParseFormat(inputFi, runID)
-        }
+    }
     mainSheet <- sanitizeSheet(sheetVals)
     try(WritePhilipsGender(mainSheet,inputFi, shNames), silent=T)
     outFile <- WriteMainSheet(mainSheet, sheetHead)
@@ -498,7 +498,7 @@ PostRedcapCurl <- function(rcon, datarecord, retcon = 'ids') {
         expr = {RCurl::postForm(
             rcon$url, token = rcon$token, content = 'record', format = 'json',
             type = 'flat', data = datarecord, returnContent = retcon, returnFormat = 'csv')
-            },
+        },
         error = function(e) {message("REDCap push failed!\n", e)},
         finally = message(datarecord)
     )
@@ -524,13 +524,14 @@ pushToRedcap <- function(outVals, token=NULL) {
     tryCatch(
         redcapAPI::importFiles(rcon = rcon, file = outFile, record = runID, field = "pact_csv_sheet", repeat_instance = 1),
         error=function(e){message("REDCap file upload error failed:\n", e)}
-        )
+    )
     emailNotify(record, rcon)
 }
 
 # Gets dataframe and saves as CSV file -----
 writeSampleSheet <- function(inputSheet, token, runID = NULL) {
     inputFi <- getExcelPath(inputSheet)
+    message("Found file:\n", inputFi)
     if (file.exists(inputFi)) {
         outVals <- parseExcelFile(inputFi, runID)
     } else {
