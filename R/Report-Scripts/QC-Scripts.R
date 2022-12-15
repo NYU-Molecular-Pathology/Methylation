@@ -386,4 +386,12 @@ GetNotesData <- function(xlsmSheet){
 }
 
 
+GetFixedDf <- function(sheetNamePath, runPath){
+    fixerrors <- read.csv(sheetNamePath, strip.white = T)
+    basePaths <- file.path(runPath, fixerrors$SentrixID_Pos)
+    fixerrors$Basename <- basePaths
+    return(fixerrors)
+}
+
+
 
