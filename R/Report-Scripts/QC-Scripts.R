@@ -189,6 +189,7 @@ plotParams <- function(totNum, dParam, xincept, yincept) {
 
 ## Get Plot Specific Probes --------------------------------------
 getProbes <- function(probeName) {
+    gb <- globalenv(); assign("gb", gb)
     qcProbes <- list(
         BSI = "^BISULFITE CONVERSION I$",
         BSII = "^BISULFITE CONVERSION II$",
