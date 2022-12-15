@@ -401,5 +401,14 @@ GrabTargetsDf <- function(runPath, fixerrors){
     return(targets)
 }
 
+CheckRedCsv <- function(runID) {
+    redCsv <- file.path(fs::path_home(), "Desktop", runID, paste0(runID, "_Redcap.csv"))
+    if (!file.exists(redCsv)) {
+        warning(paste0("File not found - ", redCsv))
+        warning("Classifier Summary Table will not generate without _Redcap.csv file")
+    }else{
+        return(redCsv)
+    }
+}
 
 
