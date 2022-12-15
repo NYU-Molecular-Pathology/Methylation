@@ -102,18 +102,6 @@ ul.scrs {
     width:50%;    
 }
 
-p.mnpnote::after {
-    color:#00008B;
-    font-size:16px;
-    content:'**Note**: Having a Brain Classifier Score below 0.90 does not indicate the sample failed QC.'
-}
-    
-p.qcnote::after {
-    color:#00008B;
-    font-size:16px;
-    content:'Brain classifier output score is not included as part of sample QC. Samples can pass QC and also have no matching Brain tumor classification.'
-}
-
 .table>tbody>tr>td,
 .table>tbody>tr>th,
 .table>tfoot>tr>td,
@@ -142,6 +130,18 @@ p.qcnote::after {
     
 .tr{
     padding: 2px !important;
+}
+    
+p.mnpnote::after {
+    color:#00008B;
+    font-size:16px;
+    content:'**Note**: Having a Brain Classifier Score below 0.90 does not indicate the sample failed QC.'
+}
+    
+p.qcnote::after {
+    color:#00008B;
+    font-size:16px;
+    content:'Brain classifier output score is not included as part of sample QC. Samples can pass QC and also have no matching Brain tumor classification.'
 }
    
 </style>
