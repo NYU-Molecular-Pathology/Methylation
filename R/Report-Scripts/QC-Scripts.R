@@ -369,5 +369,20 @@ GetControlSam <- function(mnpOutTb){
     return(controlSample)
 }
 
+GetNotesData <- function(xlsmSheet){
+    noteData <- 
+        as.data.frame(readxl::read_excel(xlsmSheet, 2, "M1:M7", col_types = c("text")),
+                      row.names=NULL)
+    noteData <- noteData[c(!is.na(noteData[, 1]) & noteData[, 1] != 0), 1]  %>% as.data.frame
+    colnames(noteData) <- "Worksheet Notes"
+    noteData <- noteData %>%
+        kable("html", booktabs = T, escape = F, linesep = "") %>%
+        kable_styling("striped", full_width = F, font_size = 16, position = "left") %>%
+        column_spec(column = c(1), extra_css = columnCss) %>%
+        row_spec(row = 0, font_size = 24, extra_css = rwcss)
+    noteData <- noteData %>% kable_styling(position="left")
+    return(noteData)
+}
+
 
 
