@@ -316,3 +316,38 @@ GetTotalPairs <- function(fixerrors) {
     return(totNum)
 }
 
+genSumFail <- function(failPlot, failTex, sf = summaryFail) {
+    ftx = paste("<h4>The following samples **Failed", failTex, "QC:**</h4>")
+    if (length(failPlot) > 0) {
+        sf <- paste(sf, paste(ftx, paste0(failPlot, "</li>\n"), sep = "\n<li>"))
+    }
+    return(sf)
+}
+
+GetSummaryTab <- function(mnpOutTb){
+    tableHeader <-
+        c("RD-number", "B-Number", "TM-number", "Methylation Class", "Classifier Score", 
+          "Subgroup", "Subscore", "MGMT Status")
+    gCol <- ifelse(mnpOutTb$mgmt_status == "methylated", "red", "blue")
+    gCel <- ifelse(mnpOutTb$classifier_value < 0.90, "red", "green")
+    bNum =  mnpOutTb$b_number
+    tableSum <- mnpOutTb %>% 
+    	dplyr::mutate(
+    		classifier_value = cell_spec(classifier_value, "html", color = gCel, bold = T),
+    		mgmt_status = cell_spec(mgmt_status, "html", color = gCol)) %>% 
+        dplyr::select(
+            record_id, b_number, tm_number, classifier_score, classifier_value, 
+            subgroup, subgroup_score, mgmt_status
+            ) %>%
+        kable(format = "html", booktabs = T, escape = F,
+              linesep = "", align = "c", col.names = tableHeader) %>% 
+    	kable_styling("striped", position="left") %>%
+    	row_spec(which(grepl('control',bNum)),bold=T, color="white",background="orange") %>%
+    	row_spec(which(grepl('low',bNum)), bold=T, color="white",background="salmon") %>%
+    	row_spec(which(grepl('_',bNum)),bold=T, color="white",background="salmon") %>%
+    	kable_styling(latex_options="scale_down")
+    tableSum <- tableSum %>% kable_styling(position="left")
+    return(tableSum)
+}
+
+
