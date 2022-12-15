@@ -350,4 +350,13 @@ GetSummaryTab <- function(mnpOutTb){
     return(tableSum)
 }
 
+GetFailedSams <- function(mnpOutTb){
+    rNum = mnpOutTb$record_id
+    lowClassVals <- paste0("**",rNum[mnpOutTb$classifier_value < 0.90],"**")
+    lowValScores <- mnpOutTb$classifier_value[mnpOutTb$classifier_value < 0.90]
+    lowScoring <-  paste(lowClassVals, lowValScores, sep = ", ")
+    failedSams <- unlist(lapply(lowScoring, function(x){paste("<li>", x,"</li>\n")}))
+    return(failedSams)
+}
+
 
