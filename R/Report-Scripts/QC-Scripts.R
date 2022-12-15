@@ -202,6 +202,7 @@ getProbes <- function(probeName) {
         SC = "^STAINING$",
         NC = "^NEGATIVE$"
     )
+    stopifnot(!is.null(gb$sdata))
     d <- gb$sdata@plotdata
     d <- d[grepl(qcProbes[probeName], d$Type),]
     return(d)
