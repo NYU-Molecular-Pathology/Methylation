@@ -72,7 +72,6 @@ draw_key_polygon3 <- function(data, params, size) {
 # register new key drawing fun, global & persistent during R session
 GeomBar$draw_key = draw_key_polygon3
 set.seed(123)
-plot.colours <- glasbey()[1:(length(MUvals$final_data$Sample_Name))]
 
 ## Generate Plot labels  ------------------
 makeLabels <- function(totNum, xName, yName, plotName, thePlot) {
