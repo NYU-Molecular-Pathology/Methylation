@@ -270,3 +270,16 @@ GetSheetNamePath <- function(params, baseDir) {
     message(paste0("Sample sheet name is: ", sheetNamePath))
     return(sheetNamePath)
 }
+
+GetTotalPairs <- function(fixerrors) {
+    # Checks here if you have odd number of arrays used in makeLabels function
+    if (nrow(fixerrors) < 8) {
+        warning("Less than 8 samples are run, disabling BiocParallel")
+        totNum <- 1
+    } else{
+        # total arrays for biocParrallel workers
+        totNum <- nrow(fixerrors) / 8 
+    }
+    return(fixerrors)
+}
+
