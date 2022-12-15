@@ -359,4 +359,15 @@ GetFailedSams <- function(mnpOutTb){
     return(failedSams)
 }
 
+GetControlSam <- function(mnpOutTb){
+    tm <- mnpOutTb$tm_number
+    controlSample <- paste0(tm[(which(grepl('control', mnpOutTb$b_number)))])
+    if (length(controlSample) == 0) {
+        controlSample <- paste0(tm[(which(grepl('control', mnpOutTb$record_id)))])
+    }
+    controlSample <- paste("PC Control:", paste(controlSample))
+    return(controlSample)
+}
+
+
 
