@@ -370,9 +370,9 @@ GetControlSam <- function(mnpOutTb){
 }
 
 GetNotesData <- function(xlsmSheet){
-    noteData <- 
-        as.data.frame(readxl::read_excel(xlsmSheet, 2, "M1:M7", col_types = c("text")),
-                      row.names=NULL)
+    columnCss <- "border-width:2px;border-style:solid;background-color:rgb(255,250,205);border-color:rgb(105,105,105);width:900px;"
+    rwcss <- "color:white;text-align:center;font-weight:bold;border-color:rgb(105,105,105);background-color:rgb(139,69,19);"
+    noteData <- as.data.frame(readxl::read_excel(xlsmSheet, 2, "M1:M7", col_types = c("text")), row.names=NULL)
     noteData <- noteData[c(!is.na(noteData[, 1]) & noteData[, 1] != 0), 1]  %>% as.data.frame
     colnames(noteData) <- "Worksheet Notes"
     noteData <- noteData %>%
