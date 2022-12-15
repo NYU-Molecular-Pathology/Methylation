@@ -8,7 +8,9 @@ params:
   knitDir: NULL
   author: "Jonathan Serrano"
 ---
+
 <style type="text/css">.main-container{margin-left: 25px;}</style>
+
 ```{r setup, include=FALSE, cache=FALSE, echo=FALSE}
 gb <- globalenv(); assign("gb", gb)
 if (is.null(params$runID)) {
@@ -135,6 +137,20 @@ R.utils::setOption("device.ask.default", FALSE)
 
 gitPath="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/Report-Scripts"
 htmltools::includeCSS(file.path(gitPath,"QC-Style.html"))
+```
+
+```{css, echo = FALSE}
+@page {
+  size: 11in 8.5in; 
+}
+@media only screen {
+ html {
+    font-size: 12px;
+  }
+  :root {
+    --base-font-size: 12px;
+  }
+}
 ```
 
 ---
@@ -607,14 +623,13 @@ htmltools::includeCSS(file.path(gitPath,"QC-Style.html"))
 ```
 </ul></p>
 
-### Note:
-
 <p style="color:#00008B;font-size:16px;">
 **Note**: Having a Brain Classifier Score below 0.90 does not indicate the sample failed QC.</p>
 
 <p style="color:#00008B;font-size:16px;"> Brain classifier output score is not included as part of sample QC. Samples can pass QC and also have no matching Brain tumor classification.</p>
 
-```{r Summary_notes, echo=FALSE, fig.align="center", fig.width=18, fig.height=12, message=FALSE, warning=FALSE, results="asis", include=TRUE}
+<p class="comment">
+```{r Summary_notes, echo=FALSE, fig.align="center", message=FALSE, warning=FALSE, results="asis", include=TRUE}
 library("knitr");library("kableExtra");library("dplyr")
 worksheetNam <- file.path(getwd(),paste0(runID,".xlsm"))
 
@@ -636,11 +651,12 @@ if (file.exists(worksheetNam) & file.exists(redCsv)) {
     noteData <- as.data.frame(noteData[!is.na(noteData),])
     noteData <- as.data.frame(noteData[noteData != 0, 1])
     colnames(noteData) <- "Worksheet Notes"
-    noteData <- noteData %>% 
+    noteData %>% 
         kable("html", booktabs = T, escape = F, linesep = "") %>%
         kable_styling("striped", full_width = F, font_size = 16, position = "left") %>%
         column_spec(column = c(1), extra_css = columnCss) %>%
         row_spec(row = 0, font_size = 24, extra_css = rwcss)
-    knitr::asis_output(noteData)
+    #knitr::asis_output(noteData)
 }
 ```
+</p>
