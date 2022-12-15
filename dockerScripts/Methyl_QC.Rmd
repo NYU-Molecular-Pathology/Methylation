@@ -8,12 +8,15 @@ params:
   knitDir: NULL
   author: "Jonathan Serrano"
 ---
+<style type="text/css">.main-container{margin-left: 25px;}</style>
 
 ```{r setup, include=FALSE, cache=FALSE, echo=FALSE}
 gb <- globalenv(); assign("gb", gb)
 if (is.null(params$runID)) {
     runID <- paste0(basename(getwd()))
-} else{runID = params$runID}
+} else{
+    runID = params$runID
+}
 stopifnot(!is.null(runID)); assign("runID", runID, envir = gb); gb$runID <- runID
 
 defaultBaseDir = file.path(fs::path_home(), "Desktop", runID)
@@ -33,8 +36,8 @@ if (length(sheetNamePath) > 1) {warning(">1 samplesheet in the folder")}
 system(paste("cd", runPath))
 knitr::opts_knit$set(runPath) # rprojroot::find_rstudio_root_file()
 setwd(runPath)
-message("Using the following output Directory:\n", baseDir)
-message("Using the following Knit Directory:\n", runPath)
+message("\nUsing the following output Directory:\n", baseDir)
+message("\nUsing the following Knit Directory:\n", runPath)
 
 if (length(sheetNamePath) == 0) {
     warning("No samplesheet in the directory:\n", baseDir, "\nCopying from current directory...")
@@ -153,8 +156,6 @@ geometry:
 classoption: landscape
 ---
 
-\blandscape
-
 ```{r, label = "Margin Params", include=FALSE}
 gitPath="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/Report-Scripts"
 htmltools::includeHTML(file.path(gitPath,"QC-Style.html"))
@@ -196,8 +197,8 @@ qcProbes = list(
 
 ## MU data --------------------------------------
 rotateData <- function(data, columns) {
-    data[, columns] <- c(0.5 * (data[, columns[1]] + data[, columns[2]]),
-                         data[, columns[1]] - data[, columns[2]])
+    data[, columns] <- 
+        c(0.5 * (data[, columns[1]] + data[, columns[2]]), data[, columns[1]] - data[, columns[2]])
     return(data)
 }
 
@@ -482,28 +483,32 @@ failedHC <- plotHC$data$MP_num[failedHC]
 ```
 
 ```{r DP_Plot, fig.margin=TRUE,  echo=FALSE, warning=FALSE, fig.align="center", message=FALSE, fig.width=18, fig.height=12}
-
 plotDP + ggplot2::labs(subtitle = "Sample negative control is assessed based on negative control (NC) probes. NC are randomly permuted sequences that should not hybridize to DNA template.\nThe mean signal of these probes defines the background of the system.\nTo be considered as passing this QC, **less than 95%** of probes should be above the background signal.", 
                        caption = pltCap)
 failedDP <- plotDP$data$y <= 0.95
 failedDP <- plotDP$data$MP_num[failedDP]
 ```
-<hr class="solid">
-```{r checkQC, include=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
-summaryFail <- runName <- NULL
-runName <- gb$runID #paste(targets$RunID[1])
-if (is.null(runName)) {runName = paste0(basename(getwd()))}
-redCsv <- file.path(fs::path_home(),"Desktop",runName, paste0(runName,"_Redcap.csv"))
-if(!file.exists(redCsv)){knitr::knit_exit()}
-```
-
-<h2>`r I(as.character(summarName))`</h2>
-
+<hr class="solid"><h2>`r I(as.character(summarName))`</h2>
+<style type="text/css">
+.table>tbody>tr>td, .table>tbody>tr>th, .table>tfoot>tr>td, .table>tfoot>tr>th, .table>thead>tr>td, .table>thead>tr>th {
+    padding: 1px !important;
+    line-height: 1.2 !important;
+    font-size: 10pt !important;
+    vertical-align: top;
+    border-top: 1px solid #ddd;
+}
+</style>
 <div style="align:left;margin-right:auto;margin-left:0px;font-size:10pt">
 ```{r label="Summary Table", fig.align="left", message=FALSE, echo=FALSE, warning=FALSE}
 library("kableExtra")
 library("dplyr")
-mnpOutTb <- read.csv(gb$redCsv, strip.white = T)
+
+summaryFail <- NULL
+runID <- gb$runID #paste(targets$RunID[1])
+if (is.null(runID)) {runID = paste0(basename(getwd()))}
+redCsv <- file.path(fs::path_home(),"Desktop",runID, paste0(runID,"_Redcap.csv"))
+if(!file.exists(redCsv)){knitr::knit_exit()}
+mnpOutTb <- as.data.frame(read.csv(redCsv, strip.white = T))
 
 tableHeader <-
     c(
@@ -517,7 +522,6 @@ tableHeader <-
         "MGMT Status"
     )
 
-
 genSumFail <- function(failPlot, failTex, sf = summaryFail) {
     ftx = paste("<h4>The following samples **Failed", failTex, "QC:**</h4>")
     if (length(failPlot) > 0) {
@@ -525,6 +529,7 @@ genSumFail <- function(failPlot, failTex, sf = summaryFail) {
     }
     return(sf)
 }
+
 summaryFail <- genSumFail(failedMU, "Signal intensity")
 summaryFail <- genSumFail(failedOP, "Positive Control")
 summaryFail <- genSumFail(failedBS, "Bisulfite Conversion")
@@ -537,17 +542,16 @@ gCel <- ifelse(mnpOutTb$classifier_value < 0.90, "red", "green")
 bNum =  mnpOutTb$b_number
 rNum = mnpOutTb$record_id
 
-kgh <- c(booktabs = T, escape = F, linesep = "")
 tableSum <- mnpOutTb %>% 
 	dplyr::mutate(
 		classifier_value = cell_spec(classifier_value, "html", color = gCel, bold = T),
 		mgmt_status = cell_spec(mgmt_status, "html", color = gCol)) %>% 
     dplyr::select(
-        record_id, b_number, tm_number,
-        classifier_score, classifier_value, 
+        record_id, b_number, tm_number, classifier_score, classifier_value, 
         subgroup, subgroup_score, mgmt_status
         ) %>%
-    kable(format = "html", kgh, align = "c", col.names = tableHeader) %>% 
+    kable(format = "html", booktabs = T, escape = F,
+          linesep = "", align = "c", col.names = tableHeader) %>% 
 	kable_styling("striped", position="left") %>%
 	row_spec(which(grepl('control',bNum)),bold=T, color="white",background="orange") %>%
 	row_spec(which(grepl('low',bNum)), bold=T, color="white",background="salmon") %>%
@@ -557,7 +561,6 @@ tableSum <- mnpOutTb %>%
 tableSum <- tableSum %>% kable_styling(position="left")
 knitr::asis_output(tableSum)
 ```
-
 
 ```{r label="Failed and Control Values", fig.align="left", message=FALSE, echo=FALSE, warning=FALSE}
 jb="<h4>The following samples did not classify with a score >0.90:</h4>\n\n"
@@ -603,15 +606,10 @@ if (length(failedSams)>0) {
 	cat(failText,sep="\n\n");cat(failedSams,sep="");cat("", sep="\n\n")
 	}else{cat("All samples classified with positive matches", sep = "\n\n")}
 ```
-</ul>
-</p>
-
-<p class="mnpnote"></p><p class="qcnote"></p>
-
-<p class="comment">
+</ul></p> <p class="mnpnote"> </p> <p class="qcnote"> </p> <p class="comment">
 ```{r Summary_notes, echo=FALSE, fig.align="center", fig.width=18, fig.height=12, message=FALSE, warning=FALSE, results="asis"}
 library("knitr");library("kableExtra");library("dplyr")
-worksheetNam <- paste0(getwd(),"/",runName,".xlsm")
+worksheetNam <- paste0(getwd(),"/",runID,".xlsm")
 
 columnCss <-
     "border-width:2px;border-style:solid;background-color:rgb(255,250,205);
@@ -640,5 +638,3 @@ if (file.exists(worksheetNam) & file.exists(redCsv)) {
 }
 ```
 </p>
-
-\elandscape 
