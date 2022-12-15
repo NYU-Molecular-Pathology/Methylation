@@ -7,7 +7,7 @@ gb <- globalenv(); assign("gb", gb)
 token <- args[1]
 inputSheet <- args[2]
 runID <- args[3]
-#token=NULL;inputSheet=NULL
+
 dsh="\n================"
 dsh2="\n==========================\n"
 
@@ -542,4 +542,5 @@ writeSampleSheet <- function(inputSheet, token, runID = NULL) {
 
 loadPacks()
 checkMounts()
+
 writeSampleSheet(inputSheet, token, runID)
