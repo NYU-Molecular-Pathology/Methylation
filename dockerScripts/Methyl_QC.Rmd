@@ -9,8 +9,6 @@ params:
   author: "Jonathan Serrano"
 ---
 
-<style type="text/css">.main-container{margin-left: 25px;}</style>
-
 ```{r setup, include=FALSE, cache=FALSE, echo=FALSE}
 gb <- globalenv(); assign("gb", gb)
 if (is.null(params$runID)) {
@@ -605,7 +603,7 @@ if(!is.null(controlSample)) {
 
 <p class="comment" style="width:70%;">
 <ul>
-```{r, post_note, echo=FALSE, results='asis', out.width="50%"}
+```{r, post_note, echo=FALSE, results='asis', out.width="70%"}
  if (!is.null(summaryFail) & summaryFail !="") {
  	cat(summaryFail, sep = "\n\n")
  	} else {cat("All samples **Passed each QC Critera**", sep = "\n\n")}
@@ -615,21 +613,24 @@ if(!is.null(controlSample)) {
 ## Classifier Scores Summary
 
 <ul class="scrs">
-```{r, post_note2, echo=FALSE, results='asis', out.width="50%"}
+```{r, post_note2, echo=FALSE, results='asis', out.width="70%"}
 if (length(failedSams)>0) {
 	cat(failText,sep="\n\n");cat(failedSams,sep="");cat("", sep="\n\n")
 }else{cat("All samples classified with positive matches", sep = "\n\n")}
 htmltools::includeCSS(file.path(gitPath,"QC-Style.html"))
 ```
-</ul></p>
+</ul>
+</p>
 
 <p style="color:#00008B;font-size:16px;">
-**Note**: Having a Brain Classifier Score below 0.90 does not indicate the sample failed QC.</p>
+**Note**: Having a Brain Classifier Score below 0.90 does not indicate the sample failed QC.
+</p>
 
-<p style="color:#00008B;font-size:16px;"> Brain classifier output score is not included as part of sample QC. Samples can pass QC and also have no matching Brain tumor classification.</p>
+<p style="color:#00008B;font-size:16px;">
+Brain classifier output score is not included as part of sample QC. Samples can pass QC and also have no matching Brain tumor classification.
+</p>
 
-<p class="comment">
-```{r Summary_notes, echo=FALSE, fig.align="center", message=FALSE, warning=FALSE, results="asis", include=TRUE}
+```{r Summary_notes, echo=FALSE, fig.align="center", message=FALSE, warning=FALSE,include=TRUE, results='asis'}
 library("knitr");library("kableExtra");library("dplyr")
 worksheetNam <- file.path(getwd(),paste0(runID,".xlsm"))
 
@@ -659,4 +660,5 @@ if (file.exists(worksheetNam) & file.exists(redCsv)) {
     #knitr::asis_output(noteData)
 }
 ```
-</p>
+
+<br/>
