@@ -1,6 +1,6 @@
 options("install.packages.compile.from.source" = "No")
 options("install.packages.check.source" = "no")
-
+options(warn = -1)
 # Load/install missing pacakges without asking
 supM <- function(pk){return(suppressPackageStartupMessages(suppressWarnings(pk)))}
 
