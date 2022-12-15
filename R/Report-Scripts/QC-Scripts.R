@@ -72,6 +72,7 @@ draw_key_polygon3 <- function(data, params, size) {
 # register new key drawing fun, global & persistent during R session
 GeomBar$draw_key = draw_key_polygon3
 set.seed(123)
+plot.colours <- glasbey()[1:(length(MUvals$final_data$Sample_Name))]
 
 ## Generate Plot labels  ------------------
 makeLabels <- function(totNum, xName, yName, plotName, thePlot) {
@@ -172,7 +173,7 @@ plotParams <- function(totNum, dParam, xincept, yincept) {
           annotate(
               "text",
               x = dParam[, 2],
-              y = (dParam[, 3]) - 0.007,
+              y = (dParam[, 3]) - 0.0075,
               label = samlab,
               angle = 90,
               size = 3
@@ -183,6 +184,58 @@ plotParams <- function(totNum, dParam, xincept, yincept) {
       }
   return(thePlot)
 }
+
+## Get Plot Specific Probes --------------------------------------
+getProbes <- function(probeName){d <- sdata@plotdata; d <- d[grepl(qcProbes[probeName], d$Type), ]
+return(d)
+}
+
+## Merges Dataframe Values --------------------------------------
+mergeDF <- function(df, tg) {
+	mdf <- merge(df,tg,by = "row.names",suffixes = c("", ".y"))
+	return(mdf)
+}
+
+## Get Data Values for Plot --------------------------------------
+getData <- function(theD, exGrn, exRed, cutoff){
+	dGrn <- theD[(exGrn), c(1:5, 7)]
+	x <- tapply((dGrn$IntGrn), dGrn$Samples, mean)
+	is.na(x) <- !is.finite(x)
+	dRed <- theD[as.array(exRed), c(1:6)]
+	df <- data.frame(x, y = tapply(dRed$IntRed, dRed$Samples, mean))
+	mdf <- mergeDF(df,tg=targets)
+	plot_data <- rotateData(mdf,columns = c("x", "y"))
+	fdt <- plot_data; ott <- subset(plot_data, plot_data$x <= cutoff)
+	return(list(final_data = fdt,outlier = ott))
+}
+
+get.hc.dat <- function() {
+	d <- getProbes("HYB")
+	d <- d[order(d$Samples),]
+	hiD <- grepl("High", d$ExtendedType)
+	loD <- grepl("Low", d$ExtendedType)
+	x <- 0.5 * (d$IntGrn[hiD] + d$IntGrn[loD])
+	y <- d$IntGrn[hiD] - d$IntGrn[loD]
+	df <- data.frame(x = x, y = y, row.names = d$Samples[hiD])
+	mdf <- mergeDF(df,tg = targets)
+	return(mdf)
+}
+
+get.bs.dat <- function() {
+	bsD = getProbes(probeName = "BSI")
+	BSvals <- getData(theD = bsD, exGrn = grepl("C1|C2|C3", bsD$ExtendedType),
+	                  exRed = grepl("C4|C5|C6", bsD$ExtendedType), cutoff = 10)
+	return(BSvals)
+}
+
+get.op.dat <- function() {
+	newD <- getProbes(probeName = "NP")
+	OPvals <- getData(theD = newD, exGrn = newD$ExtendedType %in% c("NP (C)", "NP (G)"), 
+					  exRed = newD$ExtendedType %in% c("NP (A)", "NP (T)"), cutoff = 11)
+	return(OPvals)
+}
+
+swm <- function(funObj){return(suppressMessages(suppressWarnings(funObj)))}
 
 SetKnitPath <- function(runPath, baseDir){
     system(paste("cd", runPath))
