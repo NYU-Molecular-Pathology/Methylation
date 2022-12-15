@@ -212,20 +212,34 @@ mergeDF <- function(df, tg) {
 	return(mdf)
 }
 
+## MU data --------------------------------------
+rotateData <- function(data, columns) {
+    data[, columns] <- 
+        c(0.5 * (data[, columns[1]] + data[, columns[2]]), data[, columns[1]] - data[, columns[2]])
+    return(data)
+}
+
+## Subset Custom Data --------------------------------------
+GetNewDt <- function(data_final){
+  dataList <- list(final_data = data_final)
+  names(dataList) <- c("final_data")
+  return(dataList)
+}
+
 ## Get Data Values for Plot --------------------------------------
-getData <- function(theD, exGrn, exRed, cutoff){
+getData <- function(theD, exGrn, exRed, cutoff, targets){
 	dGrn <- theD[(exGrn), c(1:5, 7)]
 	x <- tapply((dGrn$IntGrn), dGrn$Samples, mean)
 	is.na(x) <- !is.finite(x)
 	dRed <- theD[as.array(exRed), c(1:6)]
 	df <- data.frame(x, y = tapply(dRed$IntRed, dRed$Samples, mean))
 	mdf <- mergeDF(df,tg=targets)
-	plot_data <- rotateData(mdf,columns = c("x", "y"))
+	plot_data <- gb$rotateData(mdf,columns = c("x", "y"))
 	fdt <- plot_data; ott <- subset(plot_data, plot_data$x <= cutoff)
 	return(list(final_data = fdt,outlier = ott))
 }
 
-get.hc.dat <- function() {
+get.hc.dat <- function(targets) {
 	d <- getProbes("HYB")
 	d <- d[order(d$Samples),]
 	hiD <- grepl("High", d$ExtendedType)
@@ -237,17 +251,17 @@ get.hc.dat <- function() {
 	return(mdf)
 }
 
-get.bs.dat <- function() {
+get.bs.dat <- function(targets) {
 	bsD = getProbes(probeName = "BSI")
 	BSvals <- getData(theD = bsD, exGrn = grepl("C1|C2|C3", bsD$ExtendedType),
-	                  exRed = grepl("C4|C5|C6", bsD$ExtendedType), cutoff = 10)
+	                  exRed = grepl("C4|C5|C6", bsD$ExtendedType), cutoff = 10, targets)
 	return(BSvals)
 }
 
-get.op.dat <- function() {
+get.op.dat <- function(targets) {
 	newD <- getProbes(probeName = "NP")
 	OPvals <- getData(theD = newD, exGrn = newD$ExtendedType %in% c("NP (C)", "NP (G)"), 
-					  exRed = newD$ExtendedType %in% c("NP (A)", "NP (T)"), cutoff = 11)
+					  exRed = newD$ExtendedType %in% c("NP (A)", "NP (T)"), cutoff = 11, targets)
 	return(OPvals)
 }
 
@@ -298,19 +312,5 @@ GetTotalPairs <- function(fixerrors) {
         totNum <- nrow(fixerrors) / 8 
     }
     return(fixerrors)
-}
-
-## MU data --------------------------------------
-rotateData <- function(data, columns) {
-    data[, columns] <- 
-        c(0.5 * (data[, columns[1]] + data[, columns[2]]), data[, columns[1]] - data[, columns[2]])
-    return(data)
-}
-
-## Subset Custom Data --------------------------------------
-GetNewDt <- function(data_final, cutoff){
-  dataList <- list(final_data = data_final)
-  names(dataList) <- c("final_data")
-  return(dataList)
 }
 
