@@ -151,31 +151,5 @@ p.qcnote::after {
    
 </style>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script>
-    var doc = new jsPDF();
-    var specialElementHandlers = {
-        '#editor': function (element, renderer) { return true; }
-    };
-
-    $('#cmd').click(function () {
-        doc.fromHTML($('#content').html(), 15, 15, {
-            'width': 170,
-            'elementHandlers': specialElementHandlers
-        });
-        doc.save('sample-file.pdf');
-    });
-</script>
-
-<div id="editor"></div>
-
-<script>
-    const btn = document.getElementById("button");
-
-    btn.addEventListener("click", function () {
-        var element = document.getElementById('body');
-        html2pdf().from(element).save('filename.pdf');
-    });
-</script>
 
 </html>
