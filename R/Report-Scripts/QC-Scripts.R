@@ -313,6 +313,6 @@ GetTotalPairs <- function(fixerrors) {
         # total arrays for biocParrallel workers
         totNum <- nrow(fixerrors) / 8 
     }
-    return(fixerrors)
+    return(totNum)
 }
 
