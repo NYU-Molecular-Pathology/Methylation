@@ -283,3 +283,17 @@ GetTotalPairs <- function(fixerrors) {
     return(fixerrors)
 }
 
+## MU data --------------------------------------
+rotateData <- function(data, columns) {
+    data[, columns] <- 
+        c(0.5 * (data[, columns[1]] + data[, columns[2]]), data[, columns[1]] - data[, columns[2]])
+    return(data)
+}
+
+## Subset Custom Data --------------------------------------
+GetNewDt <- function(data_final, cutoff){
+  dataList <- list(final_data = data_final)
+  names(dataList) <- c("final_data")
+  return(dataList)
+}
+
