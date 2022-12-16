@@ -77,10 +77,11 @@ gb <- globalenv(); assign("gb", gb)
 mcc = parallel::detectCores()/2
 BiocParallel::register(BiocParallel::MulticoreParam(mcc))
 mcParam <- BiocParallel::MulticoreParam(workers = mcc, progressbar = T)
-totNum <- gb$GetTotalPairs(gb$fixerrors)
+gb$totNum <- totNum <- gb$GetTotalPairs(gb$fixerrors)
 fixerrors <- as.data.frame(gb$fixerrors)
 # MethylAid Summarize ------------------------------------------
 sdata <- MethylAid::summarize(fixerrors, verbose = T, batchSize = gb$totNum, force = T, BPPARAM = mcParam)
+gb$sdata <- sdata
 ## Get MU Data & Colors ----------------------------------------
 gb$targets <- fixerrors
 MU <- log2(t(sdata@MU))
@@ -90,6 +91,7 @@ d <- sdata@plotdata; assign("d", sdata@plotdata, envir = gb)
 mergedMU <- merge(MU, targets, by = "row.names")
 data_rotated <- gb$rotateData(mergedMU, columns = c("Methylated", "Unmethylated"))
 data_rotated$x = data_rotated[,2]; data_rotated$y = data_rotated[,3]
+gb$data_rotated <- data_rotated
 MUvals <- gb$GetNewDt(data_rotated)
 plot.colours <- pals::glasbey()[1:(length(MUvals$final_data$Sample_Name))]
 ```
@@ -106,7 +108,7 @@ pltNames <- c(
 swm <- function(funObj){return(suppressMessages(suppressWarnings(funObj)))}
 totNum <- gb$totNum; plotParams <- gb$plotParams; makeLabels <- gb$makeLabels
 ## MU Plot --------------------------------------------------------------------------------
-dat.mu <- swm(gb$GetNewDt(data_rotated))
+dat.mu <- swm(gb$GetNewDt(gb$data_rotated))
 plotMU <- swm(plotParams(totNum, dParam = dat.mu, xincept = 9, yincept = 0))
 plotMU <- swm(makeLabels(totNum, plotName = paste0(pltNames[1]),
                          xName = "Log2 sqrt(M*U)", yName = "Log2 (M/U)", thePlot = plotMU))
