@@ -173,7 +173,7 @@ plotParams <- function(totNum, dParam, xincept, yincept) {
           annotate(
               "text",
               x = dParam[, 2],
-              y = (dParam[, 3]) - 0.0075,
+              y = (dParam[, 3]) - 0.007,
               label = samlab,
               angle = 90,
               size = 3
