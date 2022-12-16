@@ -433,3 +433,16 @@ CheckParamKnitDir <- function(params, runID){
 }
 
 
+MsgFailedSams <- function(failedSams) {
+    if (length(failedSams) > 0) {
+        failText = "\n\n<h4>The following samples did not classify with a score >0.90:</h4>\n\n"
+        cat(failText, sep = "\n\n")
+        cat(failedSams, sep = "")
+        cat("", sep = "\n\n")
+    } else{
+        cat("All samples classified with positive matches", sep = "\n\n")
+    }
+}
+
+
+
