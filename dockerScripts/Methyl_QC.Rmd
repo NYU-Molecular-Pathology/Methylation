@@ -97,6 +97,7 @@ plot.colours <- pals::glasbey()[1:(length(MUvals$final_data$Sample_Name))]
 ```
 
 ```{r Plot Getter, echo=FALSE, message=FALSE, warning=FALSE, results='hide', paged.print=FALSE}
+gb <- globalenv(); assign("gb", gb)
 ## Plot Title Names -------------------------------------- --------------------------------
 pltNames <- c(
     "Signal Intensity QC- Checks Raw signal quality (*MU > 9* is Passing)",
@@ -137,6 +138,7 @@ plotDP <- swm(makeLabels(totNum, plotName = paste0(pltNames[5]),
 ```
 
 ```{r "Signal Intensity QC", echo=FALSE, error=FALSE, fig.align="left", fig.margin=TRUE, message=FALSE, warning=FALSE, results='hide', fig.width=14.8, fig.height=9.6}
+gb <- globalenv(); assign("gb", gb)
 summaryFail <- NULL
 pltCap <- paste(gb$runID, "Page 2 of 8")
 pmu <- plotMU + ggplot2::labs(
@@ -144,6 +146,7 @@ pmu <- plotMU + ggplot2::labs(
 failedMU <- plotMU$data$x <= 9
 failedMU <- plotMU$data$MP_num[failedMU]
 summaryFail <- gb$genSumFail(failedMU, "Signal intensity", summaryFail)
+gb$summaryFail <- summaryFail;assign("summaryFail", summaryFail, envir = gb)
 ```
 
 ```{r "Signal Intensity QC2", echo=FALSE, warning=FALSE, message=FALSE, fig.align="left", fig.margin=TRUE, results='hide', fig.width=14.8, fig.height=9.6}
@@ -156,7 +159,7 @@ pltCap <- paste(gb$runID, "Page 3 of 8")
 plotOP + ggplot2::labs(subtitle = "Sample biological positive control is assessed based on Non-polymorphic (NP) control probes. NP controls are used to test the overall performance of assay from amplification to detection.\nSamples falling **above threshold (SBPC > 11) pass** this QC and anything below the threshold are considered bad samples.\n", caption = pltCap)
 failedOP <- plotOP$data$x <= 11
 failedOP <- plotOP$data$MP_num[failedOP]
-summaryFail <- gb$genSumFail(failedOP, "Positive Control", summaryFail)
+gb$summaryFail <- gb$genSumFail(failedOP, "Positive Control", gb$summaryFail)
 ```
 
 ```{r "Bisulfite Conversion", echo=FALSE, warning=FALSE, message=FALSE, fig.align="left", fig.margin=TRUE, fig.width=14.8, fig.height=9.6}
@@ -164,7 +167,7 @@ pltCap <- paste(gb$runID, "Page 4 of 8")
 plotBS + ggplot2::labs(subtitle = "Bisulfite conversion quality is assessed based on Bisulfite Conversion I (BSI) control probes. BSI control probes use Infinium I probe design to monitor efficiency of bisulfite conversion.\nSamples falling **above threshold (BS > 10) pass** this QC and anything below the threshold are considered bad samples.\n", caption = pltCap)
 failedBS <- plotBS$data$x <= 10
 failedBS <- plotBS$data$MP_num[failedBS]
-summaryFail <- gb$genSumFail(failedBS, "Bisulfite Conversion", summaryFail)
+gb$summaryFail <- gb$genSumFail(failedBS, "Bisulfite Conversion", gb$summaryFail)
 ```
 
 ```{r "Sample hybridization Plot", echo=FALSE, fig.margin=TRUE, warning=FALSE, fig.align="left", message=FALSE, fig.width=14.8, fig.height=9.6}
@@ -172,7 +175,7 @@ pltCap <- paste(gb$runID, "Page 5 of 8")
 plotHC + ggplot2::labs(subtitle = "Sample hybridization is assessed based on Hybridization control (HC) probes.\nHC probes test the overall performance of the entire assay using synthetic targets instead of amplified DNA.\n**Samples falling above threshold (SHC > 12.75) pass this QC** and anything below the threshold are considered QC Failed samples.", caption = pltCap)
 failedHC <- plotHC$data$x <= 12.75
 failedHC <- plotHC$data$MP_num[failedHC]
-summaryFail <- gb$genSumFail(failedHC, "Probe Hybridization", summaryFail)
+gb$summaryFail <- gb$genSumFail(failedHC, "Probe Hybridization", gb$summaryFail)
 ```
 
 ```{r "Sample negative control Plot", fig.margin=TRUE, echo=FALSE, warning=FALSE, fig.align="left", message=FALSE, fig.width=14.8, fig.height=9.6}
@@ -180,7 +183,7 @@ pltCap <- paste(gb$runID, "Page 6 of 8")
 plotDP + ggplot2::labs(subtitle = "Sample negative control is assessed based on negative control (NC) probes. NC are randomly permuted sequences that should not hybridize to DNA template.\nThe mean signal of these probes defines the background of the system.\nTo be considered as passing this QC, **less than 95%** of probes should be above the background signal.", caption = pltCap)
 failedDP <- plotDP$data$y <= 0.95
 failedDP <- plotDP$data$MP_num[failedDP]
-summaryFail <- gb$genSumFail(failedDP, "Negative Control", summaryFail)
+gb$summaryFail <- gb$genSumFail(failedDP, "Negative Control", gb$summaryFail)
 summarName <- paste("Classifier Report Summary for", runID) # summary table heading
 ```
 <hr class="solid"><h2>`r I(as.character(summarName))`</h2><div style="align-content:left;width:950px">
@@ -196,7 +199,7 @@ gb$GetControlSam(mnpOutTb)
 ```
 <div><h2>QC Summary</h2>
 ```{r, post_note, echo=FALSE, results='asis', out.width="65%"}
-gb$MsgFailedQCs(summaryFail)
+gb$MsgFailedQCs(gb$summaryFail)
 ```
 <h2>Classifier Scores Summary</h2><ul class="scrs">
 ```{r, post_note2, echo=FALSE, results='asis', out.width="65%"}
