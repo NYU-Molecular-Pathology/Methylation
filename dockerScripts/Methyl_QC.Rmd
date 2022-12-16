@@ -199,6 +199,7 @@ gb$GetControlSam(mnpOutTb)
 ```
 <div><h2>QC Summary</h2>
 ```{r, post_note, echo=FALSE, results='asis', out.width="65%"}
+gb <- globalenv(); assign("gb", gb)
 gb$MsgFailedQCs(gb$summaryFail)
 ```
 <h2>Classifier Scores Summary</h2><ul class="scrs">
