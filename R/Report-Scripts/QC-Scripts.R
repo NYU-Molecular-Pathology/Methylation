@@ -210,7 +210,6 @@ getProbes <- function(probeName) {
 
 ## Merges Dataframe Values --------------------------------------
 mergeDF <- function(df, tg) {
-	rownames(tg) <- tg$SentrixID_Pos
 	mdf <- merge(df, tg, by = "row.names", suffixes = c("", ".y"))
 	return(mdf)
 }
