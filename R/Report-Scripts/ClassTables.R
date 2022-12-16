@@ -66,12 +66,12 @@ LoadReportPkgs <- function(pkgs, optsLi, chunkOpts){
     knitr::opts_knit$set(root.dir = getwd())
     options(width = 300, scipen = 5)
     library(verbose=F, warn.conflicts = F, quietly = T, package = "pander")
-    panderOptions('table.alignment.default', "left")
+    pander::panderOptions('table.alignment.default', "left")
     require("compiler")
 #    invisible(supM(compiler::enableJIT(3)))
     invisible(supM(compiler::compilePKGS(enable = TRUE)))
  #   supM(compiler::setCompilerOptions(suppressAll = TRUE, optimize = 3))
-    
+
 knitr::opts_chunk$set(chunkOpts)
 supM(library(verbose=F, warn.conflicts = F, quietly = T, package="ggplot2"))
 }
@@ -120,7 +120,7 @@ GetFamilyProb <- function(is450k, Mset_ba, Mset){
             probs_mcf <- mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob', MCF = TRUE)
         }
     )
-    
+
     return(probs_mcf)
 }
 
@@ -177,7 +177,7 @@ GetProbData <- function(is450k, Mset_ba, Mset) {
     if(!exists('calfit')){
         load(file.path(
             "/Volumes/CBioinformatics/Methylation/Methylation_classifier_v11b6/",
-            "mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData"))    
+            "mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData"))
         }
     tryCatch(
         expr = {
@@ -286,7 +286,7 @@ PrintScoreTable <- function(outV12, dat) {
     return(outTable12)
 }
 
-                           
+
 FormatSuppInfo <- function(suppinfo){
     names(suppinfo) <- c(
         "ID",
@@ -303,7 +303,7 @@ FormatSuppInfo <- function(suppinfo){
     colnames(suppinfo) <- ""
     return(suppinfo)
 }
-                           
+
 GetSuppInfo <- function(dat, RGset, msetDat) {
     suppinfo <-
         c(
@@ -329,16 +329,16 @@ GetCNVTables <- function(dra){
     kgh <- c(booktabs = T, escape = F, linesep = "")
     extra_css1 = "border-radius:0px;border-width:1px;border-style:solid;border-color:rgb(192,192,192);"
     txtc = "text-align:center;"
-    gainTab <- 
-    	gainDf %>% knitr::kable("html", kgh, align = 'clc') %>% 
+    gainTab <-
+    	gainDf %>% knitr::kable("html", kgh, align = 'clc') %>%
     	kableExtra::kable_styling(kgb, full_width = F, position="left") %>%
-    	kableExtra::row_spec(row = 1, extra_css = extra_css1) %>% 
+    	kableExtra::row_spec(row = 1, extra_css = extra_css1) %>%
         kableExtra::column_spec(column = 1, background = "palegreen", extra_css = txtc)
-    
-    lossTab <- 
-    	lossDf %>% knitr::kable("html", kgh, align = 'clc') %>% 
+
+    lossTab <-
+    	lossDf %>% knitr::kable("html", kgh, align = 'clc') %>%
     	kableExtra::kable_styling(kgb, full_width = F, position="left") %>%
-    	kableExtra::row_spec(row = 1, extra_css = extra_css1) %>% 
+    	kableExtra::row_spec(row = 1, extra_css = extra_css1) %>%
         kableExtra::column_spec(column = 1, background = "#CD5C5C", extra_css = txtc)
     return(list("gainDf"=gainDf, "lossDf"=lossDf, "gainTab"=gainTab, "lossTab"=lossTab))
 }
@@ -356,7 +356,7 @@ GetUniDTables <- function(predU){
         kableExtra::kable_styling(kgb, full_width = F, position="left")
     return(list("tab1"=unitab1,"tab2"=unitab2))
 }
-                           
+
 GetMgmtPlot <- function(Mset_raw){
     be = c(booktabs = T, escape = F, linesep = "")
     btso = c("bordered")
@@ -365,7 +365,7 @@ GetMgmtPlot <- function(Mset_raw){
     plotmgmt <- as.data.frame(mnp.v12b6::MNPpredict_mgmt(Mset_raw), row.names = NULL)
     newVals <- sapply(plotmgmt[1,2:5],function(x)plyr::round_any(x,.0001))
     plotmgmt[1,2:5] <- newVals
-    mgmtPlot <- plotmgmt %>% mutate_all(as.character) %>% 
+    mgmtPlot <- plotmgmt %>% mutate_all(as.character) %>%
         knitr::kable("html", be, align = 'clc') %>%
         kableExtra::kable_styling(kgb, full_width = F, position="left")
     return(list("mgmtVal" = plotmgmt, "mgmtPlot" = mgmtPlot))
@@ -382,35 +382,35 @@ GetClassProbTables <- function(outList){
     btso = c("bordered")
     kgb <- c("striped",font_size = 14, bootstrap_options = btso, position = "left")
     kgh <- c(booktabs = T, escape = F, linesep = "")
-    
-    famTable <- out_class_family %>% 
+
+    famTable <- out_class_family %>%
     	knitr::kable("html",kgh,align='clc') %>%
     	kableExtra::kable_styling(kgb, full_width = F, position="float_left") %>%
     	kableExtra::column_spec(column=c(1,2),extra_css=xtraCss1) %>%
         kableExtra::column_spec(column = 2, background = "rgb(204,255,204)", extra_css = txtc) %>%
         kableExtra::row_spec(row = 0, font_size = 16, background = "rgb(127,217,126)", color = "black") %>%
     	kableExtra::row_spec(row=1,extra_css=xtraCss2)
-    			
-    grpTable <- out %>% 
+
+    grpTable <- out %>%
     	knitr::kable("html",kgh,align='clc') %>%
         kableExtra::kable_styling(kgb, full_width = F) %>%
     	kableExtra::column_spec(column=c(1,2), extra_css=xtraCss1) %>%
     	kableExtra::column_spec(column=2,background="rgb(204,230,255)", extra_css=txtc) %>%
     	kableExtra::row_spec(row=0,font_size=16,background="rgb(135,174,237)", color="black") %>%
     	kableExtra::row_spec(row=1,extra_css=xtraCss3)
-    
+
     return(list("famTable"=famTable,"grpTable"=grpTable))
 }
-                      
+
 SuppInfoTable <- function(dat, RGset, msetDat){
     suppinfo <- GetSuppInfo(dat, RGset, msetDat)
     suppinfo <- as.data.frame(t(suppinfo))
     rownames(suppinfo) <- NULL
     kgb <- c("striped", font_size = 9, bootstrap_options = c("bordered"), position = "float_left")
     totCol <- ncol(suppinfo)
-    suppTab <- suppinfo %>% 
+    suppTab <- suppinfo %>%
     	knitr::kable("html",c(booktabs = T, escape = F, linesep = ""), align='clc') %>%
-    	kableExtra::kable_styling(kgb, full_width = F, position="left") %>% 
+    	kableExtra::kable_styling(kgb, full_width = F, position="left") %>%
         column_spec(column = c(1:totCol), width = "200px") %>%
         column_spec(1, border_left = "3px solid white") %>%
         column_spec(5, border_right = "3px solid white") %>%
@@ -434,4 +434,4 @@ PrintGainLoss <- function(gnLss){
     if (nrow(gnLss$lossDf) > 0) {knitr::asis_output(gnLss$lossTab)}
     knitr::asis_output('<hr class="solid">')
 }
- 
+

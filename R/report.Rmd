@@ -69,7 +69,7 @@ mnp.v12b6::MNPcnvplot(Mset12, sex=ifelse(mnp.v12b6::MNPgetSex(Mset12)$predictedS
 ### MGMT Status Prediction
 ```{r, label="mgmtTable", results='asis', fig.height=1.3, fig.align="left", out.width='40%'}
 Mset_raw <- minfi::preprocessRaw(RGset)
-print(gb$supM(mnp.v12b6::MNPciplot_mgmt(Mset_raw)))
+knitr::asis_output(gb$supM(mnp.v12b6::MNPciplot_mgmt(Mset_raw)))
 gb$mgmtValues <- gb$GetMgmtPlot(Mset_raw)
 knitr::asis_output(gb$mgmtValues$mgmtPlot)
 ```
@@ -78,7 +78,7 @@ knitr::asis_output(gb$mgmtValues$mgmtPlot)
 <div>
 ```{r, label='MLH1 Prediction', fig.align="left", fig.asp=0.8, fig.width=5}
 gb$mlh1Pred <- mlh1Pred <- gb$Mlh1Pipeline(RGset)
-print(mlh1Pred$theMlhplot)
+knitr::asis_output(mlh1Pred$theMlhplot)
 knitr::asis_output(mlh1Pred$mlhP)
 gb$TryREDCap(gb=globalenv())
 ```
@@ -88,7 +88,7 @@ gb$TryREDCap(gb=globalenv())
 gb$predU <- gb$supM(gb$PipelineU(sampleID = gb$dat$sampleID, gb$RGset, run_id=gb$dat$run_id))
 ```
 <p style="font-weight:bold" class="unidcap"></p><p class="unidtxt"></p></br>
-```{r, label='UniD output', fig.align="left", results='asis', fig.keep='all'}
+```{r, label='UniD output', fig.align="left", results='asis'}
 uniDtabs <- gb$supM(gb$GetUniDTables(gb$predU))
 knitr::asis_output(uniDtabs$tab1)
 knitr::asis_output(uniDtabs$tab2)
