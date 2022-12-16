@@ -411,4 +411,24 @@ CheckRedCsv <- function(runID) {
     }
 }
 
+CheckParamRunID <- function(params, gb){
+    defaultRunID <- paste0(basename(getwd()))
+    if (is.null(params$runID)) {runID <- defaultRunID} else{runID = params$runID}
+    stopifnot(!is.null(runID)); assign("runID", runID, envir = gb)
+    gb$runID <- runID
+    return(gb$runID)
+}
+
+CheckParamBaseDir <- function(params, runID){
+    defaultBaseDir = file.path(fs::path_home(), "Desktop", runID)
+    if (is.null(params$baseDir)) {baseDir = defaultBaseDir} else{baseDir <- paste0(params$baseDir)}
+    return(baseDir)
+}
+
+CheckParamKnitDir <- function(params, runID){
+    defaultRunPath = file.path("/Volumes/CBioinformatics/Methylation/Clinical_Runs", runID)
+    if(is.null(params$knitDir)){runPath <- defaultRunPath}else{runPath <- params$knitDir}
+    return(knitDir)
+}
+
 
