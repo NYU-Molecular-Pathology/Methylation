@@ -429,7 +429,7 @@ CheckParamBaseDir <- function(params, runID){
 CheckParamKnitDir <- function(params, runID){
     defaultRunPath = file.path("/Volumes/CBioinformatics/Methylation/Clinical_Runs", runID)
     if(is.null(params$knitDir)){runPath <- defaultRunPath}else{runPath <- params$knitDir}
-    return(knitDir)
+    return(runPath)
 }
 
 
