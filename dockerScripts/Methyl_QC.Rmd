@@ -203,11 +203,10 @@ gb$MsgFailedSams(failedSams)
 htmltools::includeHTML(file.path(gitPath,"QC-Style.html"))
 ```
 </ul></p><h3>NOTE:</h3><p class="mnpnote"></p><p class="qcnote"></p>
-```{r, label="Summary_notes", echo=FALSE, results='asis'}
+```{r, label="Summary_notes", echo=FALSE, results='asis', out.width="65%"}
 xlsmSheet <- file.path(gb$runPath, paste0(runID,".xlsm"))
 if(!file.exists(xlsmSheet)){knitr::knit_exit()}
 noteData <- GetNotesData(xlsmSheet)
 knitr::asis_output(noteData)
-cat("\n\nPage 8 of 8")
 ```
-</div>
+<footer><p>Page 8 of 8</p></footer></div>
