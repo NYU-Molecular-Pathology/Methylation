@@ -59,16 +59,17 @@ table {
     align: "left" !important;
 }
 
-ul, li {
+li {
     margin: 2px;
     font-size: 16px;
-    list-style-type: none;
+    list-style-type: none !important;
     color: darkred;
     background: #ff9999;
-    padding: 5px;
-    margin-left: 25px;
+    padding: 2px;
+    border: 2px solid black;
+    margin-left: 20px;
     list-style-type: none;
-    width:500px;
+    width: 500px;
 }
 
 .table tbody tr:nth-child(even) {
@@ -76,12 +77,12 @@ ul, li {
 }
 
 .table thead th {
-    background-color: #899bf0 !important;
+    background-color: #555 !important;
     font-size: 14px;
 }
 
 tbody {
-    font-size: 12px;
+    font-size: 14px;
 }
 
 hr {
@@ -93,13 +94,19 @@ hr {
 }
     
 ul.scrs {
-    color:black; 
+    color: black !important; 
     padding: 5px; 
     margin-left: 10px;
     list-style-type:none;
     width:500px;    
 }
 
+footer {
+  text-align: right;
+  padding: 3px;
+  color: black;
+}
+    
 .table>tbody>tr>td,
 .table>tbody>tr>th,
 .table>tfoot>tr>td,
@@ -110,7 +117,7 @@ ul.scrs {
     line-height: 1.2 !important;
     vertical-align: top;
     border-top: 1px solid #ddd;
-    font-size:12px !important;
+    font-size:14px !important;
 }
     
 .table-condensed>tbody>tr>td,
