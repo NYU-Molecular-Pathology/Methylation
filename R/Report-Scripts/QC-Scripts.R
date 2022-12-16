@@ -422,6 +422,7 @@ CheckParamRunID <- function(params, gb){
 CheckParamBaseDir <- function(params, runID){
     defaultBaseDir = file.path(fs::path_home(), "Desktop", runID)
     if (is.null(params$baseDir)) {baseDir = defaultBaseDir} else{baseDir <- paste0(params$baseDir)}
+    if(!dir.exists(baseDir)){baseDir <- getwd()}
     return(baseDir)
 }
 
