@@ -76,14 +76,14 @@ set.seed(123)
 
 ## Generate Plot labels  ------------------
 makeLabels <- function(totNum, xName, yName, plotName, thePlot) {
-    legendLabel <- thePlot + xlab(xName) + ylab(yName) + ggtitle(plotName) + 
+    legendLabel <- thePlot + xlab(xName) + ylab(yName) + ggtitle(plotName) +
         theme(
             plot.background = element_blank(),
             legend.title = element_text(size = 12),
             legend.text = element_text(size = 10),
             legend.key = element_rect(size = 2),
             axis.title = element_text(size = 14),
-            legend.direction = "horizontal", 
+            legend.direction = "horizontal",
             legend.position = "bottom",
             axis.text.x = element_text(size = 14),
             axis.text.y = element_text(size = 14),
@@ -100,7 +100,7 @@ makeLabels <- function(totNum, xName, yName, plotName, thePlot) {
             title = "Samples",
             override.aes = list(fill = NA, shape = 19),
             byrow = TRUE, ncol = 9)
-            ) + coord_cartesian(clip = 'off') 
+            ) + coord_cartesian(clip = 'off')
     return(legendLabel)
 }
 ## Generate Plots for Probes --------------------------------------
@@ -125,8 +125,8 @@ plotParams <- function(totNum, dParam, xincept, yincept) {
                    alpha = 0.8) +
         guides(color = guide_legend(nrow = totNum)) + theme_bw() +
         guides(color = guide_legend(ncol = 8)) +
-        scale_fill_manual(values = plot.colours) 
-  
+        scale_fill_manual(values = plot.colours)
+
   if (yincept == 0){
       thePlot <- thePlot + ggrepel::geom_label_repel(
           aes(
@@ -154,14 +154,14 @@ plotParams <- function(totNum, dParam, xincept, yincept) {
           force = 12,
           max.iter = 10000
       )
-      
+
       thePlot <- thePlot +
           geom_vline(xintercept = xincept, linetype = 'dashed', colour = "red") +
           coord_cartesian(clip="off") +
           expand_limits(x=min(dParam[,2]), y=max(dParam[,3])*0.25) +
-          guides(fill = guide_legend(show.legend = F)) + 
-          theme(legend.position = "none") + 
-          scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) + 
+          guides(fill = guide_legend(show.legend = F)) +
+          theme(legend.position = "none") +
+          scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) +
           scale_y_continuous(breaks = scales::pretty_breaks(n = 10))
     }
   if (yincept != 0) {
@@ -216,7 +216,7 @@ mergeDF <- function(df, tg) {
 
 ## MU data --------------------------------------
 rotateData <- function(data, columns) {
-    data[, columns] <- 
+    data[, columns] <-
         c(0.5 * (data[, columns[1]] + data[, columns[2]]), data[, columns[1]] - data[, columns[2]])
     return(data)
 }
@@ -262,7 +262,7 @@ get.bs.dat <- function(targets) {
 
 get.op.dat <- function(targets) {
 	newD <- getProbes(probeName = "NP")
-	OPvals <- getData(theD = newD, exGrn = newD$ExtendedType %in% c("NP (C)", "NP (G)"), 
+	OPvals <- getData(theD = newD, exGrn = newD$ExtendedType %in% c("NP (C)", "NP (G)"),
 					  exRed = newD$ExtendedType %in% c("NP (A)", "NP (T)"), cutoff = 11, targets)
 	return(OPvals)
 }
@@ -311,12 +311,12 @@ GetTotalPairs <- function(fixerrors) {
         totNum <- 1
     } else{
         # total arrays for biocParrallel workers
-        totNum <- nrow(fixerrors) / 8 
+        totNum <- nrow(fixerrors) / 8
     }
     return(totNum)
 }
 
-genSumFail <- function(failPlot, failTex, sf = summaryFail) {
+genSumFail <- function(failPlot, failTex, sf = gb$summaryFail) {
     ftx = paste("<h4>The following samples **Failed", failTex, "QC:**</h4>")
     if (length(failPlot) > 0) {
         sf <- paste(sf, paste(ftx, paste0(failPlot, "</li>\n"), sep = "\n<li>"))
@@ -326,21 +326,21 @@ genSumFail <- function(failPlot, failTex, sf = summaryFail) {
 
 GetSummaryTab <- function(mnpOutTb){
     tableHeader <-
-        c("RD-number", "B-Number", "TM-number", "Methylation Class", "Classifier Score", 
+        c("RD-number", "B-Number", "TM-number", "Methylation Class", "Classifier Score",
           "Subgroup", "Subscore", "MGMT Status")
     gCol <- ifelse(mnpOutTb$mgmt_status == "methylated", "red", "blue")
     gCel <- ifelse(mnpOutTb$classifier_value < 0.90, "red", "green")
     bNum =  mnpOutTb$b_number
-    tableSum <- mnpOutTb %>% 
+    tableSum <- mnpOutTb %>%
     	dplyr::mutate(
     		classifier_value = cell_spec(classifier_value, "html", color = gCel, bold = T),
-    		mgmt_status = cell_spec(mgmt_status, "html", color = gCol)) %>% 
+    		mgmt_status = cell_spec(mgmt_status, "html", color = gCol)) %>%
         dplyr::select(
-            record_id, b_number, tm_number, classifier_score, classifier_value, 
+            record_id, b_number, tm_number, classifier_score, classifier_value,
             subgroup, subgroup_score, mgmt_status
             ) %>%
         kable(format = "html", booktabs = T, escape = F,
-              linesep = "", align = "c", col.names = tableHeader) %>% 
+              linesep = "", align = "c", col.names = tableHeader) %>%
     	kable_styling("striped", position="left") %>%
     	row_spec(which(grepl('control',bNum)),bold=T, color="white",background="orange") %>%
     	row_spec(which(grepl('low',bNum)), bold=T, color="white",background="salmon") %>%

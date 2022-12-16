@@ -3,10 +3,12 @@ title: "Methylation Profiling Report"
 author: "Quick Links:"
 output: 
   html_document: 
+    self_contained: yes
+    mode: selfcontained
+    keep_md: false
     toc: yes
     toc_collapsed: no
-    self_contained: TRUE
-    clean: TRUE
+    clean: true
 params:
     token: "NONE"
     rundata: NULL
@@ -18,7 +20,7 @@ params:
 gb <- globalenv(); assign("gb", gb)
 dat <- params$rundata; assign("dat", params$rundata, envir=gb)
 #saveRDS(params, file="params.rds") # Debug params <- readRDS("params.rds")
-gitPath <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/Report-Scripts"
+gitPath = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/Report-Scripts"
 htmltools::includeCSS(file.path(gitPath,"SarcStyle.html"))
 gb$RGset <- RGset <- params$RGsetEpic[, 1]
 gb$msetDat <- gb$GetSexMsetBa(RGset, FFPE=NULL)
@@ -86,7 +88,7 @@ gb$TryREDCap(gb=globalenv())
 gb$predU <- gb$supM(gb$PipelineU(sampleID = gb$dat$sampleID, gb$RGset, run_id=gb$dat$run_id))
 ```
 <p style="font-weight:bold" class="unidcap"></p><p class="unidtxt"></p></br>
-```{r, label='UniD output', fig.align="left", results='asis', include=TRUE, fig.keep='all'}
+```{r, label='UniD output', fig.align="left", results='asis', fig.keep='all'}
 uniDtabs <- gb$supM(gb$GetUniDTables(gb$predU))
 knitr::asis_output(uniDtabs$tab1)
 knitr::asis_output(uniDtabs$tab2)
