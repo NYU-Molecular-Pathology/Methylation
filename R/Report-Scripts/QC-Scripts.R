@@ -366,7 +366,10 @@ GetControlSam <- function(mnpOutTb){
         controlSample <- paste0(tm[(which(grepl('control', mnpOutTb$record_id)))])
     }
     controlSample <- paste("PC Control:", paste(controlSample))
-    return(controlSample)
+    if(!is.null(controlSample)) {
+        conSam <- paste0('<p><h3 style="color:#3CB371">', controlSample, "</h3></p>")
+        return(cat(conSam, sep = "\n\n"))
+    }
 }
 
 GetNotesData <- function(xlsmSheet){
