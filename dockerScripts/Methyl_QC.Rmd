@@ -25,7 +25,6 @@ gb$SetKnitPath(runPath, baseDir)
 # Read Sample Data -------------------------------------------------
 sheetNamePath <- gb$GetSheetNamePath(params, baseDir)
 fixerrors <- gb$GetFixedDf(sheetNamePath, runPath)
-totNum <- gb$GetTotalPairs(fixerrors)
 targets <- GrabTargetsDf(runPath, fixerrors)
 redCsv <- gb$CheckRedCsv(runID)
 # Set Run Data Values ----------------------------------------------
@@ -77,6 +76,7 @@ par(mar = c(8, 8, 0, 0)) #it's important to have that in a separate chunk
 mcc = parallel::detectCores()/2
 BiocParallel::register(BiocParallel::MulticoreParam(mcc))
 mcParam <- BiocParallel::MulticoreParam(workers = mcc, progressbar = T)
+totNum <- gb$GetTotalPairs(gb$fixerrors)
 fixerrors <- as.data.frame(gb$fixerrors)
 # MethylAid Summarize ------------------------------------------
 sdata <- MethylAid::summarize(fixerrors, verbose = T, batchSize = gb$totNum, force = T, BPPARAM = mcParam)
@@ -85,7 +85,6 @@ gb$targets <- fixerrors
 MU <- log2(t(sdata@MU))
 targets <- sdata@targets; assign("targets", sdata@targets, envir = gb)
 d <- sdata@plotdata; assign("d", sdata@plotdata, envir = gb)
-gb$targets <- targets
 ## Merge and Rotate Data ----------------------------------------
 mergedMU <- merge(MU, targets, by = "row.names")
 data_rotated <- gb$rotateData(mergedMU, columns = c("Methylated", "Unmethylated"))
@@ -179,12 +178,10 @@ failedDP <- plotDP$data$MP_num[failedDP]
 summaryFail <- genSumFail(failedDP, "Negative Control", summaryFail)
 summarName <- paste("Classifier Report Summary for", runID) # summary table heading
 ```
-<hr class="solid"><h2>`r I(as.character(summarName))`</h2>
-<div style="align:left;margin-right:auto;margin-left:0px;font-size:10pt;width:950px">
+<hr class="solid"><h2>`r I(as.character(summarName))`</h2><div style="align-content:left;width:950px">
 ```{r label="Summary Table", fig.align="left", message=FALSE, echo=FALSE, warning=FALSE}
 redCsv <- file.path(fs::path_home(),"Desktop",runID, paste0(runID,"_Redcap.csv"))
 if(!file.exists(redCsv)){knitr::knit_exit()}
-
 mnpOutTb <- as.data.frame(read.csv(redCsv, strip.white = T))
 knitr::asis_output(gb$GetSummaryTab(mnpOutTb))
 ```
