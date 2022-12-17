@@ -1,63 +1,33 @@
-options("install.packages.compile.from.source" = "No")
-options("install.packages.check.source" = "no")
-options(warn = -1)
-# Load/install missing pacakges without asking
-supM <- function(pk){return(suppressPackageStartupMessages(suppressWarnings(pk)))}
 
-# Setting US CRAN REPO
-options(repos="https://packagemanager.rstudio.com/all/__linux__/focal/latest")
-
-loadLibrary <- function(pkgName) {
-    supM(library(pkgName, quietly = T, logical.return = T, warn.conflicts = F, character.only = T))
-}
-
-checkRequire <- function(pkgName){
-    return(suppressWarnings(!require(pkgName, character.only = T, warn.conflicts = F)))
-}
-
-in.pkg <- function(pkg, character.only=T){
-    install.packages(pkg, dependencies=T, verbose=T, ask=F, quiet = F)
-}
-
-corePkgs <-
-    c(
-        "randomForest",
-        "glmnet",
-        "ggplot2",
-        "gridExtra",
-        "knitr",
-        "pander",
-        "gmp",
-        #"Matrix",
-        "minfi",
-        #"bumphunter",
-        "locfit",
-        "parallel",
-        "iterators",
-        "foreach",
-        "Biostrings",
-        #"XVector",
-        #"MatrixGenerics",
-        "matrixStats",
-        "GenomicRanges",
-        "GenomeInfoDb",
-        "stats4",
-        #"remotes",
-        "stringr",
-        "tidyr",
-        "readxl",
-        "Biobase",
-        "BiocGenerics",
-        #"usethis",
-        "stats",
-        "graphics",
-        "grDevices",
-        "utils",
-        #"datasets",
-        #"methods",
-        #"base",
-        "Rhdf5lib"
-    )
+corePkgs <- c(
+    "randomForest",
+    "glmnet",
+    "ggplot2",
+    "gridExtra",
+    "knitr",
+    "pander",
+    "gmp",
+    "minfi",
+    "locfit",
+    "parallel",
+    "iterators",
+    "foreach",
+    "Biostrings",
+    "matrixStats",
+    "GenomicRanges",
+    "GenomeInfoDb",
+    "stats4",
+    "stringr",
+    "tidyr",
+    "readxl",
+    "Biobase",
+    "BiocGenerics",
+    "stats",
+    "graphics",
+    "grDevices",
+    "utils",
+    "Rhdf5lib"
+)
 
 preReqPkgs <- c(
     'MASS',
@@ -105,32 +75,36 @@ preReqPkgs <- c(
     'BiocParallel'
 )
 
-biocPkgs <-
-    c(
-        "lumi",
-        "methylumi",
-        "conumee",
-        "minfi",
-        "IlluminaHumanMethylation450kmanifest",
-        "IlluminaHumanMethylation450kanno.ilmn12.hg19",
-        "IlluminaHumanMethylationEPICanno.ilm10b4.hg19"
-    )
-
+biocPkgs <- c(
+    "lumi",
+    "methylumi",
+    "conumee",
+    "minfi",
+    "IlluminaHumanMethylation450kmanifest",
+    "IlluminaHumanMethylation450kanno.ilmn12.hg19",
+    "IlluminaHumanMethylationEPICanno.ilm10b4.hg19"
+)
+# Options Set ------------------------------------------------
+options("install.packages.compile.from.source" = "No")
+options("install.packages.check.source" = "no")
+options(repos="https://packagemanager.rstudio.com/all/__linux__/focal/latest")
+options(warn = -1)
+# Load/install missing pacakges without asking ------------------------------------------------
+supM <- function(pk){return(suppressPackageStartupMessages(suppressWarnings(pk)))}
+loadLibrary <- function(pkgName) {supM(library(pkgName, quietly = T, logical.return = T, warn.conflicts = F, character.only = T))}
+checkRequire <- function(pkgName){return(suppressWarnings(!require(pkgName, character.only = T, warn.conflicts = F)))}
+in.pkg <- function(pkg, character.only=T){install.packages(pkg, dependencies=T, verbose=T, ask=F, quiet = F)}
+# Check Main Packages ------------------------------------------------
 if(checkRequire("devtools")){in.pkg("devtools")};loadLibrary("devtools")
 if(checkRequire("remotes")){in.pkg("remotes")}
 if(checkRequire("librarian")){in.pkg("librarian")}
 if(checkRequire("pak")) {install.packages(lib = '/usr/local/lib/R/site-library/', 'pak', repos = 'https://r-lib.github.io/p/pak/dev/', dependencies = T)}
 if(checkRequire("BiocManager")){in.pkg("BiocManager")};loadLibrary("BiocManager")
 if(checkRequire("Biobase")) {BiocManager::install("Biobase", update = F, ask = F)}
-
 loadLibrary("Biobase");loadLibrary("librarian");loadLibrary("BiocManager");loadLibrary("Biobase")
 
-terraDep <- c('tinytest', 'ncdf4', 'leaflet')
-supM(librarian::shelf(terraDep, ask = F, update_all = F, quiet = FALSE))
-
-if(checkRequire("terra")) {
-    install.packages('terra', repos = 'https://rspatial.r-universe.dev', dependencies = T, verbose = T)
-}
+supM(librarian::shelf(c('tinytest', 'ncdf4', 'leaflet'), ask = F, update_all = F, quiet = FALSE))
+if(checkRequire("terra")) {install.packages('terra', repos = 'https://rspatial.r-universe.dev', dependencies = T, verbose = T)}
 
 if(checkRequire("FField")){
     gitLink <- "https://cran.r-project.org/src/contrib/Archive/FField/FField_0.1.0.tar.gz"
@@ -179,18 +153,13 @@ if(checkRequire("mgmtstp27")){
     gitLink <- "https://github.com/badozor/mgmtstp27/raw/master/archive/mgmtstp27_0.6-3.tar.gz"
     install.packages(gitLink, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F)
 }
-if (!("needs" %in% rownames(installed.packages()))) {
-    install.packages("needs", dependencies = T, verbose = T, ask = F)
-}
+if (!("needs" %in% rownames(installed.packages()))) {install.packages("needs", dependencies = T, verbose = T, ask = F)}
 options(needs.promptUser = FALSE)
-
 spat_config <- '--with-proj-lib=/usr/local/lib/ --with-proj-include=/usr/local/include/'
 options(configure.args = c("sf" = spat_config, "rgdal" = spat_config))
-
 if(checkRequire("sf")){tryCatch(
     install.packages(c("sf"), type = "source", dependencies=T, verbose=T),
     error=function(e){remotes::install_github("r-spatial/sf", configure.args = "--with-proj-lib=/usr/local/lib/", dependencies=T, upgrade="never")})
 }
-
 invisible(gc())
 
