@@ -5,9 +5,10 @@ options(warn = -1)
 supM <- function(pk){return(suppressPackageStartupMessages(suppressWarnings(pk)))}
 
 # Setting US CRAN REPO
-rlis = getOption("repos")
-rlis["CRAN"] = "http://cran.us.r-project.org"
-options(repos = rlis)
+#rlis = getOption("repos")
+#rlis["CRAN"] = "http://cran.us.r-project.org"
+#options(repos = rlis)
+options(repos="https://packagemanager.rstudio.com/all/__linux__/focal/latest")
 
 loadLibrary <- function(pkgName) {
     supM(library(pkgName, quietly = T, logical.return = T, warn.conflicts = F, character.only = T))
