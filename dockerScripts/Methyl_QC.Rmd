@@ -21,6 +21,7 @@ devtools::source_url(file.path(gitPath, "QC-Scripts.R"))
 runID <- gb$CheckParamRunID(params, gb)
 baseDir <- gb$CheckParamBaseDir(params, runID)
 runPath <- gb$CheckParamKnitDir(params, runID)
+gb$runPath <- runPath
 gb$SetKnitPath(runPath, baseDir)
 # Read Sample Data -------------------------------------------------
 sheetNamePath <- gb$GetSheetNamePath(params, baseDir)
@@ -71,7 +72,7 @@ classoption:
 par(mar = c(8, 8, 0, 0)) #it's important to have that in a separate chunk
 ``` 
 
-```{r BioCParallel, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, results='hide'}
+```{r BioCParallel, echo=FALSE, message=TRUE, warning=FALSE, paged.print=FALSE, results='hide'}
 gb <- globalenv(); assign("gb", gb)
 # Set Parallel Parameters --------------------------------------
 mcc = parallel::detectCores()/2
@@ -80,7 +81,7 @@ mcParam <- BiocParallel::MulticoreParam(workers = mcc, progressbar = T)
 gb$totNum <- totNum <- gb$GetTotalPairs(gb$fixerrors)
 fixerrors <- as.data.frame(gb$fixerrors)
 # MethylAid Summarize ------------------------------------------
-sdata <- MethylAid::summarize(fixerrors, verbose = T, batchSize = gb$totNum, force = T, BPPARAM = mcParam)
+sdata <- MethylAid::summarize(fixerrors, verbose = T, batchSize = totNum, force = T, BPPARAM = mcParam)
 gb$sdata <- sdata
 ## Get MU Data & Colors ----------------------------------------
 gb$targets <- fixerrors
@@ -198,7 +199,7 @@ knitr::asis_output(gb$GetSummaryTab(mnpOutTb))
 gb$GetControlSam(mnpOutTb)
 ```
 <div><h2>QC Summary</h2>
-```{r, post_note, echo=FALSE, results='asis', out.width="65%"}
+```{r, post_note, echo=FALSE, results='asis', out.width="65%", message=TRUE}
 gb$MsgFailedQCs(gb$summaryFail)
 ```
 <h2>Classifier Scores Summary</h2><ul class="scrs">
@@ -209,7 +210,8 @@ htmltools::includeHTML(file.path(gitPath,"QC-Style.html"))
 ```
 </ul></p><h3>NOTE:</h3><p class="mnpnote"></p><p class="qcnote"></p>
 ```{r, label="Summary_notes", echo=FALSE, results='asis', out.width="65%"}
-xlsmSheet <- file.path(gb$runPath, paste0(runID,".xlsm"))
+gb <- globalenv(); assign("gb", gb)
+xlsmSheet <- file.path(gb$runPath, paste0(gb$runID,".xlsm"))
 if(!file.exists(xlsmSheet)){knitr::knit_exit()}
 noteData <- gb$GetNotesData(xlsmSheet)
 knitr::asis_output(noteData)
