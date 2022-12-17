@@ -450,7 +450,7 @@ MsgFailedSams <- function(failedSams) {
 
 MsgFailedQCs <- function(summaryFail) {
     cat('<p class="comment" style="width:80%;"><ul>')
-    if (length(summaryFail)>0 & summaryFail != "") {
+    if (length(summaryFail)>0) {
         cat(summaryFail, sep = "\n\n")
     } else {
         cat("All samples **Passed each QC Critera**", sep = "\n\n")
