@@ -281,7 +281,7 @@ message("Librarian Installing pkgs3...")
 CheckPackages(biocPkgs)
 invisible(gc())
 
-if(checkRequire("illuminaio"){BiocManager::install("illuminaio", update = F, ask = F))}
+if(checkRequire("illuminaio")){BiocManager::install("illuminaio", update = F, ask = F, dependencies = T))}
 if(checkRequire("mapview")){remotes::install_github("r-spatial/mapview", dependencies = T, upgrade="never")}
 if(checkRequire("IlluminaHumanMethylationEPICmanifest")){
     pak::pkg_install("mwsill/IlluminaHumanMethylationEPICmanifest", ask=F, dependencies = T)
