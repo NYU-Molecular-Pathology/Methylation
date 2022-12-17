@@ -233,34 +233,6 @@ if (checkRequire("BiocManager")){in.pkg("BiocManager")};loadLibrary("BiocManager
 if (checkRequire("Biobase")) {BiocManager::install("Biobase", update = F, ask = F)};loadLibrary("Biobase")
 
 loadLibrary("librarian")
-
-if(checkRequire("mapview")){remotes::install_github("r-spatial/mapview", dependencies = T, upgrade="never")}
-if(checkRequire("IlluminaHumanMethylationEPICmanifest")){
-    pak::pkg_install("mwsill/IlluminaHumanMethylationEPICmanifest", ask=F, dependencies = T)
-}
-if(checkRequire("mgmtstp27")){
-    gitLink <- "https://github.com/badozor/mgmtstp27/raw/master/archive/mgmtstp27_0.6-3.tar.gz"
-    install.packages(gitLink, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F)
-}
-if (!("needs" %in% rownames(installed.packages()))) {
-    install.packages("needs", dependencies = T, verbose = T, ask = F)
-}
-options(needs.promptUser = FALSE)
-
-spat_config <- '--with-proj-lib=/usr/local/lib/ --with-proj-include=/usr/local/include/'
-options(configure.args = c("sf" = spat_config, "rgdal" = spat_config))
-
-if(checkRequire("sf")){
-    tryCatch(install.packages(c("sf"), type = "source", dependencies=T, verbose=T),
-             error=function(e){
-                 remotes::install_github("r-spatial/sf", configure.args = "--with-proj-lib=/usr/local/lib/",
-                                         dependencies=T, upgrade="never")})
-}
-
-invisible(gc())
-
-options("install.packages.compile.from.source" = "No")
-options("install.packages.check.source" = "no")
 loadLibrary("BiocManager")
 loadLibrary("Biobase")
 
@@ -308,6 +280,31 @@ CheckPackages(preReqPkgs)
 message("Librarian Installing pkgs3...")
 CheckPackages(biocPkgs)
 invisible(gc())
+
+if(checkRequire("illuminaio"){BiocManager::install("illuminaio", update = F, ask = F))}
+if(checkRequire("mapview")){remotes::install_github("r-spatial/mapview", dependencies = T, upgrade="never")}
+if(checkRequire("IlluminaHumanMethylationEPICmanifest")){
+    pak::pkg_install("mwsill/IlluminaHumanMethylationEPICmanifest", ask=F, dependencies = T)
+}
+if(checkRequire("mgmtstp27")){
+    gitLink <- "https://github.com/badozor/mgmtstp27/raw/master/archive/mgmtstp27_0.6-3.tar.gz"
+    install.packages(gitLink, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F)
+}
+if (!("needs" %in% rownames(installed.packages()))) {
+    install.packages("needs", dependencies = T, verbose = T, ask = F)
+}
+options(needs.promptUser = FALSE)
+
+spat_config <- '--with-proj-lib=/usr/local/lib/ --with-proj-include=/usr/local/include/'
+options(configure.args = c("sf" = spat_config, "rgdal" = spat_config))
+
+if(checkRequire("sf")){
+    tryCatch(install.packages(c("sf"), type = "source", dependencies=T, verbose=T),
+             error=function(e){
+                 remotes::install_github("r-spatial/sf", configure.args = "--with-proj-lib=/usr/local/lib/",
+                                         dependencies=T, upgrade="never")})
+}
+
 
 message("Librarian Installing pkgs1...")
 CheckPackages(pkgs1)
