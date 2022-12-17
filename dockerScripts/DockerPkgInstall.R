@@ -289,8 +289,6 @@ if (checkRequire("Biobase")) {BiocManager::install("Biobase", update = F, ask = 
 
 loadLibrary("librarian")
 
-if(checkRequire("mapview")){remotes::install_github("r-spatial/mapview", dependencies = T, upgrade="never")}
-
 CheckPackages <- function(pkgList) {
     toDrop <- pkgList %in% rownames(installed.packages())
     pkgLiSub <- pkgList[!toDrop]
@@ -348,30 +346,6 @@ if(checkRequire("sf")){
 }
 
 invisible(gc())
-
-# options("install.packages.compile.from.source" = "No")
-# options("install.packages.check.source" = "no")
-# loadLibrary("BiocManager")
-# loadLibrary("Biobase")
-
-# terraDep <- c('tinytest', 'ncdf4', 'leaflet')
-# supM(librarian::shelf(terraDep, ask = F, update_all = F, quiet = FALSE))
-
-# if(checkRequire("terra")) {
-#     install.packages('terra', repos = 'https://rspatial.r-universe.dev', dependencies = T, verbose = T)
-# }
-
-# if(checkRequire("FField")){
-#     gitLink <- "https://cran.r-project.org/src/contrib/Archive/FField/FField_0.1.0.tar.gz"
-#     install.packages(gitLink, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F)
-# }
-# message("Librarian Installing pkgs1...")
-# CheckPackages(pkgs1)
-# message("Librarian Installing pkgs2...")
-# CheckPackages(pkgs2)
-# message("Librarian Installing pkgs3...")
-# CheckPackages(pkgs3)
-# invisible(gc())
 options("install.packages.compile.from.source" = "No")
 options("install.packages.check.source" = "no")
 options(warn = -1)
@@ -663,40 +637,13 @@ if (checkRequire("Biobase")) {BiocManager::install("Biobase", update = F, ask = 
 loadLibrary("librarian")
 
 if(checkRequire("mapview")){remotes::install_github("r-spatial/mapview", dependencies = T, upgrade="never")}
-
-CheckPackages <- function(pkgList) {
-    toDrop <- pkgList %in% rownames(installed.packages())
-    pkgLiSub <- pkgList[!toDrop]
-    if (length(pkgLiSub) > 0) {
-        tryCatch(
-            pak::pkg_install(pkgLiSub, ask = F, lib = '/usr/local/lib/R/site-library/'),
-            error = function(e) {
-                tryCatch(
-                    in.pkg(pkgLiSub),
-                    error = function(e) {
-                        BiocManager::install(pkgLiSub, update = F, ask = F)
-                    })})
-        }
-    supM(librarian::shelf(pkgList, ask = F, update_all = F, quiet = FALSE))
-}
-
-
-message("Librarian Loading corePkgs...")
-CheckPackages(corePkgs)
-message("Librarian Loading preReqPkgs...")
-CheckPackages(preReqPkgs)
-message("Librarian Loading biocPkgs...")
-CheckPackages(biocPkgs)
-
 if(checkRequire("IlluminaHumanMethylationEPICmanifest")){
     pak::pkg_install("mwsill/IlluminaHumanMethylationEPICmanifest", ask=F, dependencies = T)
 }
-
 if(checkRequire("mgmtstp27")){
     gitLink <- "https://github.com/badozor/mgmtstp27/raw/master/archive/mgmtstp27_0.6-3.tar.gz"
     install.packages(gitLink, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F)
 }
-
 if (!("needs" %in% rownames(installed.packages()))) {
     install.packages("needs", dependencies = T, verbose = T, ask = F)
 }
