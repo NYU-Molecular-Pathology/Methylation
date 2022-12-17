@@ -27,12 +27,12 @@ CheckPackages <- function(pkgList) {
     pkgLiSub <- pkgList[!toDrop]
     if (length(pkgLiSub) > 0) {
         tryCatch(
-            pak::pkg_install(pkgLiSub, ask = F, lib = '/usr/local/lib/R/site-library/'),
+            pak::pkg_install(pkgLiSub, ask = F, lib = '/usr/local/lib/R/site-library/', dependencies=T),
             error = function(e) {
                 tryCatch(
                     in.pkg(pkgLiSub),
                     error = function(e) {
-                        BiocManager::install(pkgLiSub, update = F, ask = F)
+                        BiocManager::install(pkgLiSub, update = F, ask = F, dependencies=T)
                     }
                 )
             }
@@ -41,6 +41,7 @@ CheckPackages <- function(pkgList) {
     supM(librarian::shelf(
         pkgList,
         ask = F,
+        dependencies=T,
         update_all = F,
         quiet = FALSE
     ))
@@ -150,27 +151,17 @@ pkgs3 <- c(
     "yaml",
     "zip",
     "zoo",
-    "mlr", "wateRmelon", "RPMM", "impute"
+    "mlr", 
+    "wateRmelon", 
+    "RPMM", 
+    "impute"
 )
 
 loadLibrary("librarian")
-
-options("install.packages.compile.from.source" = "No")
-options("install.packages.check.source" = "no")
 loadLibrary("BiocManager")
 loadLibrary("Biobase")
+if(checkRequire("arrow")) {CheckPackages('arrow')}
 
-terraDep <- c('tinytest', 'ncdf4', 'leaflet')
-supM(librarian::shelf(terraDep, ask = F, update_all = F, quiet = FALSE))
-
-if(checkRequire("terra")) {
-    install.packages('terra', repos = 'https://rspatial.r-universe.dev', dependencies = T, verbose = T)
-}
-
-if(checkRequire("FField")){
-    gitLink <- "https://cran.r-project.org/src/contrib/Archive/FField/FField_0.1.0.tar.gz"
-    install.packages(gitLink, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F)
-}
 message("Librarian Installing pkgs1...")
 CheckPackages(pkgs1)
 message("Librarian Installing pkgs2...")
