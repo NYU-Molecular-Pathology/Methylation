@@ -305,11 +305,13 @@ if(checkRequire("sf")){
                                          dependencies=T, upgrade="never")})
 }
 
-
-message("Librarian Installing pkgs1...")
-CheckPackages(pkgs1)
-message("Librarian Installing pkgs2...")
-CheckPackages(pkgs2)
-message("Librarian Installing pkgs3...")
-CheckPackages(pkgs3)
+   
 invisible(gc())
+# message("Librarian Installing pkgs1...")
+# CheckPackages(pkgs1)
+# message("Librarian Installing pkgs2...")
+# CheckPackages(pkgs2)
+# message("Librarian Installing pkgs3...")
+# CheckPackages(pkgs3)
+# invisible(gc())
+
