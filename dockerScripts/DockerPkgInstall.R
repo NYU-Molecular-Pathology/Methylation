@@ -105,112 +105,6 @@ preReqPkgs <- c(
     'BiocParallel'
 )
 
-pkgs1 <- c(
-    "abind",
-    "animation",
-    "arrow",
-    "beepr",
-    "BiocStyle",
-    "biocViews",
-    "bookdown",
-    "brio",
-    "Cairo",
-    "caret",
-    "chromote",
-    "chron",
-    "cli",
-    "clipr",
-    "colorspace",
-    "compiler",
-    "CopyNumberPlots",
-    "cpp11",
-    "crayon",
-    "curl",
-    "dichromat",
-    "diffobj",
-    "digest",
-    "doParallel",
-    "DT"
-    )
-
-pkgs2 <- c(
-    "easypackages",
-    "evaluate",
-    "extrafont",
-    "extrafontdb",
-    "fontawesome",
-    "forecast",
-    "formattable",
-    "fs",
-    "gdata",
-    "gdtools",
-    "getopt",
-    "ggforce",
-    "ggfortify",
-    "ggnewscale",
-    "ggplotify",
-    "ggraph",
-    "ggrepel",
-    "ggtext",
-    "ggthemes",
-    "gh",
-    "GlobalOptions",
-    "graphlayouts",
-    "grid",
-    "gridBase",
-    "gridGraphics",
-    "gridtext"
-)
-
-pkgs3 <- c(
-    "Hmisc",
-    "htmlTable",
-    "htmltools",
-    "htmlwidgets",
-    "httr",
-    "igraph",
-    "jpeg",
-    "jquerylib",
-    "jsonlite",
-    "kableExtra",
-    "magrittr",
-    "markdown",
-    "MethylAid",
-    "needs",
-    "openxlsx",
-    "pals",
-    "parameters",
-    "plotly",
-    "Polychrome",
-    #"prettyunits",
-    "raster",
-    "Rcpp",
-    "redcapAPI",
-    "rmarkdown",
-    "Rtsne",
-    "sjmisc",
-    "sourcetools",
-    "spatial",
-    "sqldf",
-    "stringi",
-    "systemfonts",
-    "targets",
-    "terra",
-    "testit",
-    "tibble",
-    "tidyverse",
-    "tinytex",
-    "utf8",
-    "uuid",
-    "webshot2",
-    "websocket",
-    "xtable",
-    "yaml",
-    "zip",
-    "zoo",
-    "mlr", "wateRmelon", "RPMM", "impute"
-)
-
 biocPkgs <-
     c(
         "lumi",
@@ -225,16 +119,11 @@ biocPkgs <-
 if(checkRequire("devtools")){in.pkg("devtools")};loadLibrary("devtools")
 if(checkRequire("remotes")){in.pkg("remotes")}
 if(checkRequire("librarian")){in.pkg("librarian")}
-if(checkRequire("pak")) {
-    install.packages(lib = '/usr/local/lib/R/site-library/', 'pak', repos = 'https://r-lib.github.io/p/pak/dev/',
-                     dependencies = T)
-}
-if (checkRequire("BiocManager")){in.pkg("BiocManager")};loadLibrary("BiocManager")
-if (checkRequire("Biobase")) {BiocManager::install("Biobase", update = F, ask = F)};loadLibrary("Biobase")
+if(checkRequire("pak")) {install.packages(lib = '/usr/local/lib/R/site-library/', 'pak', repos = 'https://r-lib.github.io/p/pak/dev/', dependencies = T)}
+if(checkRequire("BiocManager")){in.pkg("BiocManager")};loadLibrary("BiocManager")
+if(checkRequire("Biobase")) {BiocManager::install("Biobase", update = F, ask = F)}
 
-loadLibrary("librarian")
-loadLibrary("BiocManager")
-loadLibrary("Biobase")
+loadLibrary("Biobase");loadLibrary("librarian");loadLibrary("BiocManager");loadLibrary("Biobase")
 
 terraDep <- c('tinytest', 'ncdf4', 'leaflet')
 supM(librarian::shelf(terraDep, ask = F, update_all = F, quiet = FALSE))
@@ -245,39 +134,39 @@ if(checkRequire("terra")) {
 
 if(checkRequire("FField")){
     gitLink <- "https://cran.r-project.org/src/contrib/Archive/FField/FField_0.1.0.tar.gz"
-    inst
-    all.packages(gitLink, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F)
+    install.packages(gitLink, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F)
 }
+
+CatchPak <- function(pkgLiSub) {
+    tryCatch(
+        pak::pkg_install(pkgLiSub, ask = F, lib = '/usr/local/lib/R/site-library/'),
+        error = function(e) {tryCatch(in.pkg(pkgLiSub), error = function(e) {
+            BiocManager::install(pkgLiSub, update = F, ask = F)
+            })}
+        )
+}
+
 
 CheckPackages <- function(pkgList) {
     toDrop <- pkgList %in% rownames(installed.packages())
     pkgLiSub <- pkgList[!toDrop]
     if (length(pkgLiSub) > 0) {
-        tryCatch(
-            pak::pkg_install(pkgLiSub, ask = F, lib = '/usr/local/lib/R/site-library/'),
-            error = function(e) {
-                tryCatch(
-                    in.pkg(pkgLiSub),
-                    error = function(e) {
-                        BiocManager::install(pkgLiSub, update = F, ask = F)
-                    }
-                )
-            }
-        )
+        CatchPak(pkgLiSub)
     }
     supM(librarian::shelf(
         pkgList,
         ask = F,
         update_all = F,
-        quiet = FALSE
+        quiet = F
     ))
 }
 
-message("Librarian Installing pkgs1...")
+
+message("Librarian Installing corePkgs...")
 CheckPackages(corePkgs)
-message("Librarian Installing pkgs2...")
+message("Librarian Installing preReqPkgs...")
 CheckPackages(preReqPkgs)
-message("Librarian Installing pkgs3...")
+message("Librarian Installing biocPkgs...")
 CheckPackages(biocPkgs)
 invisible(gc())
 
@@ -298,20 +187,10 @@ options(needs.promptUser = FALSE)
 spat_config <- '--with-proj-lib=/usr/local/lib/ --with-proj-include=/usr/local/include/'
 options(configure.args = c("sf" = spat_config, "rgdal" = spat_config))
 
-if(checkRequire("sf")){
-    tryCatch(install.packages(c("sf"), type = "source", dependencies=T, verbose=T),
-             error=function(e){
-                 remotes::install_github("r-spatial/sf", configure.args = "--with-proj-lib=/usr/local/lib/",
-                                         dependencies=T, upgrade="never")})
+if(checkRequire("sf")){tryCatch(
+    install.packages(c("sf"), type = "source", dependencies=T, verbose=T),
+    error=function(e){remotes::install_github("r-spatial/sf", configure.args = "--with-proj-lib=/usr/local/lib/", dependencies=T, upgrade="never")})
 }
 
-   
 invisible(gc())
-# message("Librarian Installing pkgs1...")
-# CheckPackages(pkgs1)
-# message("Librarian Installing pkgs2...")
-# CheckPackages(pkgs2)
-# message("Librarian Installing pkgs3...")
-# CheckPackages(pkgs3)
-# invisible(gc())
 
