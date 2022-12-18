@@ -20,3 +20,4 @@ remotes::install_github("SymbolixAU/googlePolylines", dependencies = T)
 install.packages(lib = '/usr/local/lib/R/site-library/', c('nleqslv', 'ade4', 'pixmap'), dependencies = T)
 install.packages(lib = '/usr/local/lib/R/site-library/', "stringi", dependencies = T)
 devtools::install_github("mdsumner/ncdf4", dependencies = T, upgrade ="always")
+if(!require("arrow")){install.packages("arrow", dependencies = T, verbose = T, ask = F)}
