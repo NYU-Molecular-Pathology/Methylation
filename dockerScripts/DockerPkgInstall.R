@@ -146,6 +146,7 @@ if(CheckReq("IlluminaHumanMethylationEPICmanifest")){pak::pkg_install("mwsill/Il
 mgmLink <- "https://github.com/badozor/mgmtstp27/raw/master/archive/mgmtstp27_0.6-3.tar.gz"
 if(CheckReq("mgmtstp27")){install.packages(mgmLink, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F)}
 if(CheckReq("needs")){install.packages("needs", dependencies = T, verbose = T, ask = F)}; options(needs.promptUser = FALSE)
+if(CheckReq("websocket")){install.packages("websocket", dependencies = T, verbose = T, ask = F)}
 if(CheckReq("chromote")){install.packages("chromote", dependencies = T, verbose = T, ask = F)}
 spat_config <- '--with-proj-lib=/usr/local/lib/ --with-proj-include=/usr/local/include/'
 options(configure.args = c("sf" = spat_config, "rgdal" = spat_config))
