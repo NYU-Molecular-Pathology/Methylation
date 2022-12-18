@@ -89,6 +89,9 @@ biocPkgs <- c(
     "IlluminaHumanMethylationEPICanno.ilm10b4.hg19"
 )
 
+ChromePkgs <-
+c("webshot2", "pagedown","curl","websocket", "curl", "jsonlite", "processx", "R6", "later", "promises", "magrittr", "rlang", "fastmap")
+
 # Options Set ------------------------------------------------
 options("install.packages.compile.from.source" = "No")
 options("install.packages.check.source" = "no")
@@ -117,9 +120,7 @@ if(CheckReq("FField")){install.packages(fieldLink, repos = NULL, dependencies = 
 
 CatchPak <- function(pkgLiSub) {
     tryCatch(pak::pkg_install(pkgLiSub, ask = F, lib = '/usr/local/lib/R/site-library/'),
-             error = function(e) {tryCatch(InstPkg(pkgLiSub), error = function(e) {
-                 BiocManager::install(pkgLiSub, update = F, ask = F)})}
-             )
+             error = function(e) {tryCatch(InstPkg(pkgLiSub), error = function(e) {BiocManager::install(pkgLiSub, update = F, ask = F)})})
 }
 
 
@@ -136,8 +137,8 @@ message("Librarian Installing preReqPkgs...")
 CheckPackages(preReqPkgs)
 message("Librarian Installing biocPkgs...")
 CheckPackages(biocPkgs)
-
-invisible(gc())
+message("Librarian Installing ChromePkgs...")
+CheckPackages(ChromePkgs)
 
 if(CheckReq("illuminaio")){BiocManager::install("illuminaio", update = F, ask = F, dependencies = T)}
 if(CheckReq("arrow")){install.packages("arrow", dependencies = T, verbose = T, ask = F)}
@@ -146,7 +147,6 @@ if(CheckReq("IlluminaHumanMethylationEPICmanifest")){pak::pkg_install("mwsill/Il
 mgmLink <- "https://github.com/badozor/mgmtstp27/raw/master/archive/mgmtstp27_0.6-3.tar.gz"
 if(CheckReq("mgmtstp27")){install.packages(mgmLink, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F)}
 if(CheckReq("needs")){install.packages("needs", dependencies = T, verbose = T, ask = F)}; options(needs.promptUser = FALSE)
-if(CheckReq("websocket")){install.packages(c("websocket", "curl", "jsonlite", "processx", "R6", "later", "promises", "magrittr", "rlang", "fastmap"), dependencies = T, verbose = T, ask = F)}
 if(CheckReq("chromote")){remotes::install_github("rstudio/chromote", dependencies = T, upgrade="never")}
 spat_config <- '--with-proj-lib=/usr/local/lib/ --with-proj-include=/usr/local/include/'
 options(configure.args = c("sf" = spat_config, "rgdal" = spat_config))
