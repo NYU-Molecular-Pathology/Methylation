@@ -140,6 +140,7 @@ CheckPackages(biocPkgs)
 invisible(gc())
 
 if(CheckReq("illuminaio")){BiocManager::install("illuminaio", update = F, ask = F, dependencies = T)}
+if(CheckReq("arrow")){install.packages("arrow", dependencies = T, verbose = T, ask = F)}
 if(CheckReq("mapview")){remotes::install_github("r-spatial/mapview", dependencies = T, upgrade="never")}
 if(CheckReq("IlluminaHumanMethylationEPICmanifest")){pak::pkg_install("mwsill/IlluminaHumanMethylationEPICmanifest", ask=F, dependencies = T)}
 mgmLink <- "https://github.com/badozor/mgmtstp27/raw/master/archive/mgmtstp27_0.6-3.tar.gz"
