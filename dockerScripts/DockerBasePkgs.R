@@ -170,3 +170,98 @@ message("Librarian Installing pkgs3...")
 CheckPackages(pkgs3)
 pak::pkg_install("mwsill/IlluminaHumanMethylationEPICmanifest" , ask=F , dependencies = T)
 invisible(gc())
+
+rlis = getOption("repos")
+rlis["CRAN"] = "http://cran.us.r-project.org"
+options(repos = rlis)
+
+pkgs <-
+    c(
+        "knitr",
+        "kableExtra",
+        "magick",
+        "webshot",
+        "plyr",
+        "ggplot2",
+        "reshape2",
+        "data.table",
+        "DT",
+        "plotly",
+        "MethylAid",
+        "minfi",
+        "scales",
+        "htmltools",
+        "IlluminaHumanMethylation450kmanifest",
+        "IlluminaHumanMethylationEPICmanifest",
+        "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
+        "Biobase",
+        "RColorBrewer",
+        "limma",
+        "ggfortify",
+        "Rtsne",
+        "qdapTools",
+        "gplots",
+        "readxl",
+        "stringr",
+        "ggrepel",
+        "Polychrome",
+        "tinytex",
+        "gridExtra",
+        "rmarkdown",
+        "BiocParallel",
+        "pals",
+        "grid",
+        "grDevices",
+        "magrittr",
+        "dplyr"
+    )
+gc()
+
+rlis = getOption("repos")
+rlis["CRAN"] = "http://cran.us.r-project.org"
+options(repos = rlis)
+
+pkgs <-
+    c(
+        "knitr",
+        "kableExtra",
+        "magick",
+        "webshot",
+        "plyr",
+        "ggplot2",
+        "reshape2",
+        "data.table",
+        "DT",
+        "plotly",
+        "MethylAid",
+        "minfi",
+        "scales",
+        "htmltools",
+        "IlluminaHumanMethylation450kmanifest",
+        "IlluminaHumanMethylationEPICmanifest",
+        "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
+        "Biobase",
+        "RColorBrewer",
+        "limma",
+        "ggfortify",
+        "Rtsne",
+        "qdapTools",
+        "gplots",
+        "readxl",
+        "stringr",
+        "ggrepel",
+        "Polychrome",
+        "tinytex",
+        "gridExtra",
+        "rmarkdown",
+        "BiocParallel",
+        "pals",
+        "grid",
+        "grDevices",
+        "magrittr",
+        "dplyr"
+    )
+
+if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 4, quiet=T)}
+librarian::shelf(pkgs, ask=F, dependencies=T, update_all = F, quiet = F)
+
