@@ -89,8 +89,7 @@ biocPkgs <- c(
     "IlluminaHumanMethylationEPICanno.ilm10b4.hg19"
 )
 
-ChromePkgs <-
-c("webshot2", "pagedown","curl","websocket", "curl", "jsonlite", "processx", "R6", "later", "promises", "magrittr", "rlang", "fastmap")
+ChromePkgs <- c("webshot2", "pagedown","curl","websocket", "curl", "jsonlite", "processx", "R6", "later", "promises", "magrittr", "rlang", "fastmap")
 
 # Options Set ------------------------------------------------
 options("install.packages.compile.from.source" = "No")
@@ -150,8 +149,12 @@ if(CheckReq("needs")){install.packages("needs", dependencies = T, verbose = T, a
 if(CheckReq("chromote")){remotes::install_github("rstudio/chromote", dependencies = T, upgrade="never")}
 spat_config <- '--with-proj-lib=/usr/local/lib/ --with-proj-include=/usr/local/include/'
 options(configure.args = c("sf" = spat_config, "rgdal" = spat_config))
-if(CheckReq("sf")){tryCatch(install.packages(c("sf"), type = "source", dependencies=T, verbose=T), error=function(e){remotes::install_github("r-spatial/sf", configure.args = "--with-proj-lib=/usr/local/lib/", dependencies=T, upgrade="never")})
+if(CheckReq("sf")){
+    tryCatch(install.packages("sf", type = "source", dependencies=T, verbose=T), 
+             error=function(e){
+                 remotes::install_github("r-spatial/sf", configure.args = "--with-proj-lib=/usr/local/lib/", 
+                                         dependencies=T, upgrade="never")})
 }
 
-invisible(gc())
+gc()
 
