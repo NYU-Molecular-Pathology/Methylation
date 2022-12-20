@@ -94,7 +94,8 @@ ChromePkgs <- c("webshot2", "pagedown","curl","websocket", "curl", "jsonlite", "
 # Options Set ------------------------------------------------
 options("install.packages.compile.from.source" = "No")
 options("install.packages.check.source" = "no")
-options(repos="https://packagemanager.rstudio.com/all/__linux__/focal/latest")
+options(BioC_mirror = "https://packagemanager.rstudio.com/bioconductor")
+options(repos = c(CRAN = "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"))
 options(warn = -1)
 
 # Load/install missing pacakges without asking ------------------------------------------------
