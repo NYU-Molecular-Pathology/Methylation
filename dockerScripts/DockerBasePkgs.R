@@ -8,7 +8,8 @@ supM <- function(pk){return(suppressPackageStartupMessages(suppressWarnings(pk))
 #rlis = getOption("repos")
 #rlis["CRAN"] = "http://cran.us.r-project.org"
 #options(repos = rlis)
-options(repos="https://packagemanager.rstudio.com/all/__linux__/focal/latest")
+options(BioC_mirror = "https://packagemanager.rstudio.com/bioconductor")
+options(repos = c(CRAN = "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"))
 
 loadLibrary <- function(pkgName) {
     supM(library(pkgName, quietly = T, logical.return = T, warn.conflicts = F, character.only = T))
@@ -160,6 +161,8 @@ pkgs3 <- c(
 loadLibrary("librarian")
 loadLibrary("BiocManager")
 loadLibrary("Biobase")
+options(BioC_mirror = "https://packagemanager.rstudio.com/bioconductor")
+options(repos = c(CRAN = "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"))
 if(checkRequire("arrow")) {CheckPackages('arrow')}
 
 message("Librarian Installing pkgs1...")
