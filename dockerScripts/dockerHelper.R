@@ -6,7 +6,7 @@ bky <- function(txtVar,...){crayon::black$bgYellow$bold(txtVar,...)}
 bkRed <- function(txtVar,...){crayon::bgRed$bold$white(txtVar,...)}
 reportMd <- "~/report.Rmd" #system.file("report.Rmd", package="mnp.v11b6")
 #/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/inst
-QC_file <- "~/Methyl_QC.Rmd" #system.file('Methyl_QC.Rmd', package = "mnp.v11b6") 
+QC_file <- "~/Methyl_QC.Rmd" #system.file('Methyl_QC.Rmd', package = "mnp.v11b6")
 #/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/inst/
 
 pipeLnk <- "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/pipelineHelper.R"
@@ -18,7 +18,7 @@ msgParams <- function(...){message("Params passed: ", crayon::bgGreen(paste(...,
 # Helper function to return the index of priority selected samples first
 reOrderRun <- function(selectRDs, sh=NULL){
     msgFunName(pipeLnk,"reOrderRun")
-    
+
     if(is.null(selectRDs)){return(NULL)}; if(is.null(sh)){sh<-"samplesheet.csv"}
     allRd <- as.data.frame(read.csv(sh))
     runFirst <- which(allRd[,1] %in% selectRDs)
@@ -29,7 +29,7 @@ reOrderRun <- function(selectRDs, sh=NULL){
 # Saves the methyl CNV as a png file in the cwd
 generateCNVpng <- function(RGsetEpic, sampleName) {
     msgFunName(pipeLnk,"generateCNVpng")
-    
+
     imgName <- paste(sampleName, "cnv.png", sep="_")
     MsetEpic <- minfi::preprocessRaw(RGsetEpic)
     png(filename=imgName,width=1820, height=1040)
@@ -39,7 +39,7 @@ generateCNVpng <- function(RGsetEpic, sampleName) {
 
 getRGset <- function(runPath, sentrix){
     msgFunName(pipeLnk,"getRGset")
-    
+
     barcode = stringr::str_split_fixed(sentrix, "_",2)[1]
     RGsetEpic <- minfi::read.metharray(file.path(runPath, sentrix), verbose = T, force = T)
     aEpic=c(array="IlluminaHumanMethylationEPIC", annotation="ilm10b4.hg19")
@@ -62,7 +62,7 @@ generateQCreport <- function(runID=NULL, qc=NULL) {
   currentQC = dir(getwd(), "*QC.Rmd", full.names = T)
   qcFile = paste0(runID, "_QC.html") # output file name
   if(file.exists(file.path(getwd(), qcFile))){
-      message(qcFile, "Already Exists!  Skipping render...")    
+      message(qcFile, "Already Exists!  Skipping render...")
   }else{
     qcFile <- file.path(dirname(currentQC), qcFile)
     rmarkdown::render(
@@ -80,7 +80,7 @@ generateQCreport <- function(runID=NULL, qc=NULL) {
 # Sends an email notification that the run is complete from redcap admin
 launchEmailNotify <-function(runID){
     msgFunName(pipeLnk,"launchEmailNotify")
-    
+
     isMC = sjmisc::str_contains(runID, "MGDM") | sjmisc::str_contains(runID, "MC")
     rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
     ur=paste0(rcon$url);tk=rcon$token
@@ -97,7 +97,7 @@ launchEmailNotify <-function(runID){
 # FUN: Creates the QC record for the current run on redcap if it does not exist
 create.QC.record <- function(runID=NULL){
     msgFunName(pipeLnk,"create.QC.record")
-    
+
     rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
     uri=paste0(rcon$url); tk=rcon$token
     if(is.null(runID)){runID<-paste0(basename(gb$workDir))}
@@ -112,7 +112,7 @@ create.QC.record <- function(runID=NULL){
 # Check if the QC File will be read
 checkRunOutput <- function(runID) {
     msgFunName(pipeLnk,"checkRunOutput")
-    
+
     csvLocation <- file.path(fs::path_home(),"Desktop",runID,paste0(runID,"_Redcap.csv"))
     if (!file.exists(csvLocation)) {
         message(bkRed("File not found:")," ", csvLocation,"\n",bkRed("QC Summary Table will not Knit"),"\n")
@@ -124,7 +124,7 @@ checkRunOutput <- function(runID) {
 # gets rid of desktop files if run is successful
 tidyUpFiles <- function(runID){
     msgFunName(pipeLnk,"tidyUpFiles")
-    
+
     deskDir <- file.path("~/Desktop",runID)
     backupD <- file.path(gb$methDir,"csvRedcap")
     if(!dir.exists(backupD)){dir.create(backupD)}
@@ -143,7 +143,7 @@ msgProgress <- function(msg,i,samList){
 # Helper function called by makeReports.v11b6 to generate the HTML report
 do_report <-function(data = NULL, genCn=F) {
     msgFunName(pipeLnk,"do_report")
-    
+
     if(!is.null(data)){
         samplename_data = paste0(data[,1])
         sentrix_pos_list = (data[,5])
@@ -194,7 +194,7 @@ loopRender <- function(samList = NULL, data,redcapUp=T) {
     samSh <- samSh[removeTemp]
   }
         message("Reading the following .xlsm in current directory:", samSh)
-        sampleNumb <- getTotalSamples()
+        sampleNumb <- gb$getTotalSamples()
         sampleNumb = as.integer(sampleNumb)
         sh_Dat <- as.data.frame(
             readxl::read_excel(samSh, sheet = 3,range = "A1:N97",col_types = c("text")))[, 1:13]
@@ -233,7 +233,7 @@ loopRender <- function(samList = NULL, data,redcapUp=T) {
 makeReports.v11b6<-function(runPath=NULL,sheetName=NULL,selectSams=NULL,genCn=F,
                             skipQC=F,email=T,cpReport=T,redcapUp=T){
     msgFunName(pipeLnk,"makeReports.v11b6")
-    
+
     assign("genCn",genCn, envir = gb)
     if (is.null(sheetName)) {sheetName="samplesheet.csv"}
     data <- read.csv(sheetName, strip.white=T)
@@ -262,7 +262,7 @@ startRun <- function(selectRDs=NULL, emailNotify=T){
     msgFunName(pipeLnk,"startRun")
     msgParams("selectRDs=NULL, emailNotify=T")
     msgParams(selectRDs,emailNotify)
-    
+
     if(!is.null(selectRDs)){
         sampleOrder <- reOrderRun(selectRDs) # Re-order sample report generation for priority
         makeReports.v11b6(skipQC=F, email=T, cpReport=T, selectSams=sampleOrder, redcapUp=T)
@@ -274,7 +274,7 @@ startRun <- function(selectRDs=NULL, emailNotify=T){
 # FUN: Checks if all the paths are accessible to the Rscript location
 checkMounts <- function(){
     msgFunName(pipeLnk,"checkMounts")
-    
+
     # List of three mount paths needed to run the pipleine
     critialMnts <- c("/Volumes/CBioinformatics/Methylation",
                      "/Volumes/molecular/MOLECULAR LAB ONLY", "/Volumes/snudem01labspace/idats")
@@ -298,7 +298,7 @@ checkMounts <- function(){
 # Executes the functions in order to setup a run
 prepareRun <- function(token, baseFolder=NULL){
     msgFunName(pipeLnk,"prepareRun")
-    
+
     runValid <- gb$checkValidRun(gb$runID)
     message("Is the runID valid? ", runValid)
     if(!runValid){

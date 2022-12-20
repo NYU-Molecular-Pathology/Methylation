@@ -15,27 +15,10 @@ if(Sys.info()[['sysname']]=="Darwin"){
 uniDpath <- file.path(cbioLn, "UniD")
 
 # Classifier Packages and Versions
-mnpV4 <-
-    data.frame(
-        mnpVers = "mnp.v11b4",
-        mnpPath = "mnp.v11b4",
-        mnpNumb = "0.1.126")
-mnpV6 <-
-    data.frame(
-        mnpVers = "mnp.v11b6",
-        mnpPath = "mnp.v11b6",
-        mnpNumb = "0.1.140")
-mnpV12 <-
-    data.frame(
-        mnpVers = "mnp.v12b6",
-        mnpPath = "mnp.v12b6",
-        mnpNumb = "0.1.132")
-
-srcV12 <-
-    data.frame(
-        mnpVers = "sarc.v12b6",
-        mnpPath = "sarc.v12b6",
-        mnpNumb = "0.1.129")
+mnpV4 <- data.frame(mnpVers = "mnp.v11b4", mnpPath = "mnp.v11b4", mnpNumb = "0.1.126")
+mnpV6 <- data.frame(mnpVers = "mnp.v11b6", mnpPath = "mnp.v11b6", mnpNumb = "0.1.140")
+mnpV12 <- data.frame(mnpVers = "mnp.v12b6", mnpPath = "mnp.v12b6", mnpNumb = "0.1.132")
+srcV12 <- data.frame(mnpVers = "sarc.v12b6", mnpPath = "sarc.v12b6", mnpNumb = "0.1.129")
 
 # Custom Classifier packages:
 classPacks <- c(
@@ -93,7 +76,9 @@ cranPkgs <-
         "stringr",
         "tinytex",
         "future.apply",
-        "Rcpp", "httpuv", "shiny"
+        "Rcpp",
+        "httpuv",
+        "shiny"
     )
 
 # GitHub Packages ----
@@ -117,7 +102,8 @@ biocPkgs <-
         'IlluminaHumanMethylationEPICmanifest',
         'IlluminaHumanMethylationEPICanno.ilm10b2.hg19',
         'IlluminaHumanMethylationEPICanno.ilm10b4.hg19',
-        'MethylAid', 'conumee','BiocParallel', "Biobase","limma","MatrixGenerics", "GenomeInfoDb"
+        'MethylAid', 'conumee','BiocParallel', "Biobase",
+        "limma","MatrixGenerics", "GenomeInfoDb"
     )
 
 # Extra Libraries ----
@@ -271,7 +257,7 @@ setOptions <- function(){
     options("device.ask.default" = FALSE)
     options("install.packages.compile.from.source"="Yes")
     options("install.packages.check.source"="yes")
-    #compiler::enableJIT(3); 
+    #compiler::enableJIT(3);
     compiler::compilePKGS(enable=T);
     compiler::setCompilerOptions(suppressAll=T, optimize=3)
     fixProf()
@@ -304,7 +290,7 @@ classifierInstall <- function(pathtoFile=NULL, instNew=T, rmpkg=F) {
 }
 
 checkBioC <- function(){
-    if(sw(suppressPackageStartupMessages((!require("BiocManager"))))){
+    if(sw(suppressPackageStartupMessages((!require("BiocManager", warn.conflicts = F))))){
         install.packages("BiocManager", Ncpus = 4)
         BiocManager::install(version="3.10", update=T, ask=F, type="source")
     } else{ld("BiocManager")}
@@ -339,13 +325,13 @@ loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bcPks=biocP
         expr = {
             loadMainPkgs()
             sup(installAll(pkgs, pk.inst))
-            if(!require("BiocManager")){install.packages("BiocManager", dependencies=T, quiet=F)}
+            if(!require("BiocManager", warn.conflicts = F)){install.packages("BiocManager", dependencies=T, quiet=F)}
             sup(installAll(ghPk, gh.inst))
             sup(installAll(bcPks, bc.inst))
             readyPkgs(ezLibs)
 
-            if(!require("MethylAid")){BiocManager::install("MethylAid",update=F, ask=F)}
-            if(!require("librarian")){
+            if(!require("MethylAid", warn.conflicts = F)){BiocManager::install("MethylAid",update=F, ask=F)}
+            if(!require("librarian", warn.conflicts = F)){
                 install.packages("librarian", dependencies=T, verbose=T, Ncpus = 4, quiet=F)
                 }
             pkgs <- c(
@@ -478,13 +464,13 @@ setEnviron <- function(){
     options(repos = rlis)
     if(Sys.info()[['sysname']]=="Darwin"){
         Sys.setenv(RSTUDIO_PANDOC = "/Applications/RStudio.app/Contents/MacOS/pandoc")
-        system("export RSTUDIO_PANDOC=/Applications/RStudio.app/Contents/MacOS/pandoc")        
+        system("export RSTUDIO_PANDOC=/Applications/RStudio.app/Contents/MacOS/pandoc")
         system("export RSTUDIO_WHICH_R=/usr/local/bin/R")
         Sys.setenv(RSTUDIO_WHICH_R = "/usr/local/bin/R")
         }
     options("install.packages.compile.from.source" = "never")
     options("install.packages.check.source"="no")
-    if(!require("devtools")){install.packages("devtools", dependencies=T)}
+    if(!require("devtools", warn.conflicts = F)){install.packages("devtools", dependencies=T)}
 }
 
 # classifier mnpPath currVers
