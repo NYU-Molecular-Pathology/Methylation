@@ -229,7 +229,7 @@ msg_step() {
 
 white_bg() {
     msgString=$1
-    echo "${WHT_BG}<u style='padding:2px;margin-top:5px;margin-bottom:5px;line-height:2'>${msgString}</u></span></br>"
+    echo "${WHT_BG}<u style='padding:2px;margin-top:5px;margin-bottom:5px;line-height:2;font-size:14pt;'>${msgString}</u></span></br>"
 }
 
 msg_bold() {
@@ -399,19 +399,16 @@ msg_step 1 "#bae1ff" "Create a new directory for your PACT consensus"
 msg_code "mkdir \"${consensusDir}${pactRun}_consensus\""
 msg_code "cd \"${consensusDir}${pactRun}_consensus\""
 msg_step 2 "#bae1ff" "Download the template RMD file and csv description file from GitHub to that folder"
-msg_code "curl -o ${pactRun}_desc.csv -L ${pactGithub}/PACT_desc.csv -s"
-msg_code "curl -o ${pactRun}_consensus.Rmd -L ${pactGithub}/PACT_consensus.Rmd -s"
+msg_code "curl -o ${pactRun}_desc.csv -L ${pactGithub}/PACT_desc.csv -s && curl -o ${pactRun}_consensus.Rmd -L ${pactGithub}/PACT_consensus.Rmd -s"
 msg_step 3 "#bae1ff" "To this directory, copy all the .cnv.plot.pdf facets files from"
 msg_code "cp /Volumes/molecular/Molecular/REDCap/cnv_facets/${pactRun}/*.pdf ./"
 msg_step 4 "#bae1ff" "Copy the following files to this concenus Rmd directory from the Desktop"
-msg_code "cp ~/Desktop/${pactRun}_MethylMatch.xlsx ./"
-msg_code "cp ~/Desktop/${runID}-SampleSheet.csv ./"
+msg_code "cp ~/Desktop/${runID}-SampleSheet.csv ~/Desktop/${pactRun}_MethylMatch.xlsx ./"
 msg_step 5 "#bae1ff" "Next copy the QC file below to the consensus Rmd directory${normal}"
-msg_code "cp /Volumes/molecular/Molecular/REDCap/cnv_facets/${pactRun}/${pactRun}-QC.tsv ./"
-msg_code "cp /Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/${pactRun}.html ./"
-msg_code "cp /Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/${pactRun}-Somatic_Variants.html ./"
-msg_step 6 "#bae1ff" "Use the Evernote Guide to pre-generate the indels from our in-house QC"
+msg_code "cp  /Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/${pactRun}-Somatic_Variants.html /Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/${pactRun}.html /Volumes/molecular/Molecular/REDCap/cnv_facets/${pactRun}/${pactRun}-QC.tsv ./"
+msg_step 6 "#bae1ff" "Use the Evernote Guide to download the indels from our in-house QC html file"
 white_bg "<b>${evernoteLink}</b>"
+msg_code "RScript devtools::source_url('https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/MakeIndelList.R')"
 msg_step 7 "#bae1ff" "Open Philips Intellispace and the ${pactRun}_desc.csv file and annotate the variant calls"
 white_bg "<b>${consensusDir}${pactRun}_consensus/${pactRun}_desc.csv</b>"
 msg_note "NOTE -" "Make sure you Rsync the facet files for the run from the data mover node to the Z-drive:"
