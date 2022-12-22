@@ -128,14 +128,13 @@ makeSampleSheet <- function(df, samplesheet_ID, bn = NULL, outputFi="samplesheet
     write.csv(samplesheet_csv, file = outputFi, quote = F,row.names = F)
 }
 
-grabRDCopyIdat <-
-function(rd_numbers, token, copyIdats=T, outputFi="samplesheet_og.csv"){
+grabRDCopyIdat <- function(rd_numbers, token, copyIdats=T, outputFi="samplesheet_og.csv"){
     ApiToken <- token
     result_raw <- gb$search.redcap(rd_numbers, token)
 
     result <- result_raw[!is.na(result_raw$barcode_and_row_column),]
     samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[,"barcode_and_row_column"],"_",2))
-    if(nrow(samplesheet_ID)>0) {
+    if(nrow(samplesheet_ID)==0) {
         message(
             "The RD-numbers you entered have not been run yet or do not have idat files in REDCap:\n\n",
             paste(capture.output(result_raw), collapse = "\n")
