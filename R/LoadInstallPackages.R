@@ -479,10 +479,8 @@ setEnviron <- function(){
 checkClassifier <- function(mnpClass) {
     ms <- colorMsg()
     isInstalled <- mnpClass[,1] %in% rownames(installed.packages())
-    isdocker <- switch (Sys.info()[['sysname']], "Darwin" = F, "Linux" = T)
-    if(isdocker==T){
-      mnpClass[,2] <- paste0(mnpClass[,1],"_", mnpClass[,3], ".tgz")
-    }
+#    isdocker <- switch (Sys.info()[['sysname']], "Darwin" = F, "Linux" = T)
+#    if(isdocker==T){mnpClass[,2] <- paste0(mnpClass[,1],"_", mnpClass[,3], ".tgz")}
     if (isInstalled==F) {
         cat(ms[2])
         cat(mnpClass[, 1], sep = "\n")
