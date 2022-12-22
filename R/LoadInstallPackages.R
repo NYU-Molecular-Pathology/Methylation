@@ -20,6 +20,12 @@ mnpV6 <- data.frame(mnpVers = "mnp.v11b6", mnpPath = "mnp.v11b6", mnpNumb = "0.1
 mnpV12 <- data.frame(mnpVers = "mnp.v12b6", mnpPath = "mnp.v12b6", mnpNumb = "0.1.132")
 srcV12 <- data.frame(mnpVers = "sarc.v12b6", mnpPath = "sarc.v12b6", mnpNumb = "0.1.129")
 
+if(Sys.info()[['sysname']]=="Linux"){
+  uniDpath <- paste(uniDpath,"0.0.1.tgz", sep="_")
+  mnpV4 <- data.frame(mnpVers = "mnp.v11b4", mnpPath = "mnp.v11b4", mnpNumb = "0.1.124")
+  mnpV6 <- data.frame(mnpVers = "mnp.v11b6", mnpPath = "mnp.v11b6", mnpNumb = "0.1.126")
+}
+
 # Custom Classifier packages:
 classPacks <- c(
     sest = "https://github.com/jungch/sest/raw/master/sest.tar",
@@ -477,6 +483,10 @@ setEnviron <- function(){
 checkClassifier <- function(mnpClass) {
     ms <- colorMsg()
     isInstalled <- mnpClass[,1] %in% rownames(installed.packages())
+    isdocker <- switch (Sys.info()[['sysname']], "Darwin" = F, "Linux" = T)
+    if(isdocker==T){
+      mnpClass[,2] <- paste0(mnpClass[,1],"_", mnpClass[,3], ".tgz")
+    }
     if (isInstalled==F) {
         cat(ms[2])
         cat(mnpClass[, 1], sep = "\n")
