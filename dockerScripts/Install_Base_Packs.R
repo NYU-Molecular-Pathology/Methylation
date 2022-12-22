@@ -11,8 +11,8 @@ options(repos = c(CRAN = "https://packagemanager.rstudio.com/cran/__linux__/foca
 # Custom Classifier packages:
 classPacks <- c(
     sest = "https://github.com/jungch/sest/raw/master/sest.tar",
-    mgmtstp27 = "https://github.com/badozor/mgmtstp27/raw/master/archive/mgmtstp27_0.6-3.tar.gz",
-    mnpqc = paste0(file.path(cbioLn, "mnpqc_0.1.0.tar.gz"))
+    mgmtstp27 = "https://github.com/badozor/mgmtstp27/raw/master/archive/mgmtstp27_0.6-3.tar.gz"
+    #mnpqc = paste0(file.path(cbioLn, "mnpqc_0.1.0.tar.gz"))
 )
 
 # Cran Packages ----
