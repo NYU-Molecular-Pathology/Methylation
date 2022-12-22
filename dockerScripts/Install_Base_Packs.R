@@ -318,7 +318,7 @@ installAll <- function(pkgList, instFun){invisible(lapply(X=1:length(pkgList), f
 # Loads default packages or custom if input provided
 #' @return package installs or loads
 #' @export
-loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bcPks=biocPkgs, qcPkgs=qcPkgs) {
+loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bcPks=biocPkgs, qcPk=qcPkgs) {
     tryCatch(
         expr = {
             loadMainPkgs()
@@ -329,7 +329,7 @@ loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bcPks=biocP
             readyPkgs(ezLibs)
             if(!require("MethylAid", warn.conflicts = F)){BiocManager::install("MethylAid",update=F, ask=F)}
             if(!require("librarian", warn.conflicts = F)){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 4, quiet=F)}
-            librarian::shelf(qcPkgs, ask=F, update_all = F, quiet = F)
+            librarian::shelf(qcPk, ask=F, update_all = F, quiet = F)
             reqPkgs <- c("grid", "ggplot2", "pals", "scales", "stringr", "scales")
             lapply(reqPkgs, require, character.only = TRUE)
         },
