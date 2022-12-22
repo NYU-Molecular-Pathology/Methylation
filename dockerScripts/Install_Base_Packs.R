@@ -12,7 +12,6 @@ options(repos = c(CRAN = "https://packagemanager.rstudio.com/cran/__linux__/foca
 classPacks <- c(
     sest = "https://github.com/jungch/sest/raw/master/sest.tar",
     mgmtstp27 = "https://github.com/badozor/mgmtstp27/raw/master/archive/mgmtstp27_0.6-3.tar.gz"
-    #mnpqc = paste0(file.path(cbioLn, "mnpqc_0.1.0.tar.gz"))
 )
 
 # Cran Packages ----
@@ -291,7 +290,7 @@ checkBioC <- function(){
         install.packages("BiocManager", Ncpus = 4)
         BiocManager::install(version="3.10", update=T, ask=F, type="source")
     } else{ld("BiocManager")}
-    if(rq("zip")){install.packages("zip", dependencies=T, type="binary")
+    if(rq("zip")){install.packages("zip", dependencies=T)
     } else{ld("zip")}
 }
 
@@ -351,6 +350,7 @@ setEnviron <- function(){
     options("install.packages.compile.from.source" = "never")
     options("install.packages.check.source"="no")
     if(!require("devtools", warn.conflicts = F)){install.packages("devtools", dependencies=T)}
+    if(!require("compiler", warn.conflicts = F)){install.packages("compiler", dependencies=T)}
 }
 
 # Load all Functions ---------------------
