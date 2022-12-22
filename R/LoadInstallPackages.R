@@ -1,16 +1,20 @@
 #!/usr/bin/env Rscript
 if(!require("devtools")){install.packages("devtools", dependencies=T, ask=F)}
-cbioLn <- switch (Sys.info()[['sysname']],
-                  "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
-                  "Linux" = "/private_pkgs/classifiers"#"~/molecpathlab/production/Methylation/classifiers"
-                 )
+cbioLn <- switch (
+  Sys.info()[['sysname']],
+  "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
+  "Linux" = "/private_pkgs/classifiers"#"~/molecpathlab/production/Methylation/classifiers"
+)
 
 if(Sys.info()[['sysname']]=="Darwin"){
   Sys.setenv(PROJ_LIBS = "/opt/homebrew/opt/proj/lib")
   Sys.setenv(SQLITE3_LIBS = "/opt/homebrew/opt/sqlite/lib")
 #  Sys.setenv(LDFLAGS="-L/usr/local/opt/sqlite/lib")
 #  Sys.setenv(CPPFLAGS="-I/usr/local/opt/sqlite/include")
-  }
+  } else{
+  options(BioC_mirror = "https://packagemanager.rstudio.com/bioconductor")
+  options(repos = c(CRAN = "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"))
+}
 
 uniDpath <- file.path(cbioLn, "UniD")
 
