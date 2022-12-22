@@ -24,11 +24,6 @@ mnpV6 <- data.frame(mnpVers = "mnp.v11b6", mnpPath = "mnp.v11b6", mnpNumb = "0.1
 mnpV12 <- data.frame(mnpVers = "mnp.v12b6", mnpPath = "mnp.v12b6", mnpNumb = "0.1.132")
 srcV12 <- data.frame(mnpVers = "sarc.v12b6", mnpPath = "sarc.v12b6", mnpNumb = "0.1.129")
 
-if(Sys.info()[['sysname']]=="Linux"){
-  uniDpath <- paste(uniDpath,"0.0.1.tgz", sep="_")
-  mnpV4 <- data.frame(mnpVers = "mnp.v11b4", mnpPath = "mnp.v11b4", mnpNumb = "0.1.124")
-  mnpV6 <- data.frame(mnpVers = "mnp.v11b6", mnpPath = "mnp.v11b6", mnpNumb = "0.1.126")
-}
 
 # Custom Classifier packages:
 classPacks <- c(
