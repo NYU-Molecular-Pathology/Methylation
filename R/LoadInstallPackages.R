@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-
+if(!require("devtools")){install.packages("devtools", dependencies=T, ask=F)}
 cbioLn <- switch (Sys.info()[['sysname']],
                   "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
                   "Linux" = "/private_pkgs/classifiers"#"~/molecpathlab/production/Methylation/classifiers"
@@ -355,9 +355,6 @@ loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bcPks=biocP
                 "MethylAid",
                 "minfi",
                 "scales",
-                #"IlluminaHumanMethylation450kmanifest",
-                #"IlluminaHumanMethylationEPICmanifest",
-                #"IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
                 "Biobase",
                 "RColorBrewer",
                 "limma",
