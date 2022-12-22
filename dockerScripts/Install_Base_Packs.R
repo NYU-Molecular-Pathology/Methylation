@@ -147,9 +147,6 @@ ld <- function(libName) {
 }
 up <- function(){update.packages(repos='http://cran.rstudio.com/', type = "source", ask=F, checkBuilt=T)}
 rq <- function(pkgName){ifelse(pkgName %in% row.names(installed.packages()), F, T)}
-mkred <- function(strMsg) {return(crayon::white$bgRed$bold(strMsg))}
-mkblu <- function(strMsg) {return(crayon::white$bgBlue$bold(strMsg))}
-mkGrn <- function(strMsg) {return(crayon::white$bgGreen$bold(strMsg))}
 
 msgCheck <- function(pkg, warn = F) {
     if (warn == F) {message("Checking ", pkg, "...")} else{
@@ -361,6 +358,7 @@ startLoadingAll <- function() {
     setEnviron()
     loadPacks()
     installAll(classPacks, srcInst)
+    closeAllConnections()
 }
 
 startLoadingAll()
