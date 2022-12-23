@@ -130,7 +130,8 @@ qcPkgs <- c(
     "dplyr",
     "sqldf",
     "gridExtra",
-    "reshape"
+    "reshape",
+    "mlr", "wateRmelon", "RPMM", "impute"
 )
 
 # Extra Libraries ----
