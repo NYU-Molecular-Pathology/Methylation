@@ -376,7 +376,8 @@ loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bcPks=biocP
                 "dplyr",
                 "sqldf",
                 "gridExtra",
-                "reshape"
+                "reshape",
+                "mlr", "wateRmelon", "RPMM", "impute"
             )
             librarian::shelf(pkgs, ask=F, update_all = FALSE, quiet = FALSE)
             require('grid')
