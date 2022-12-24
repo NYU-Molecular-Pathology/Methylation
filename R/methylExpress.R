@@ -36,6 +36,8 @@ CheckInputArg(redcapUp, gb, T); CheckInputArg(runLocal, gb, F)
 
 # Cancel if no token or runID -------------------------------------------------------------------
 stopifnot(!is.null(token)); stopifnot(!is.null(runID))
+gb$ApiToken <- gb$token <- token
+
 if(!is.null(baseFolder) & !identical(baseFolder, "NULL")) {
     message("Checking if custom run directory is valid: ", baseFolder, "\n")
     stopifnot("Input directory does not exist! Create it with mkdir" = dir.exists(baseFolder) == T)
@@ -77,8 +79,7 @@ gb$reportMd <- reportMd <- "~/report.Rmd"
 # Execute Pipeline Functions ----------------------------------------------------------------------
 gb$PrepareRun(token, baseFolder, runID, runLocal=runLocal) # If running local set runLocal = TRUE
 
-GetPriorityCases <-
-  function(selectRDs, samSheet = "samplesheet.csv", kwd="BN0") {
+GetPriorityCases <- function(selectRDs, samSheet = "samplesheet.csv", kwd="BN0") {
     csvFi <- read.csv(file.path(getwd(), samSheet))
     BN00 <- which(stringr::str_detect(csvFi$MP_num, kwd))
     if (length(BN00) > 0) {
@@ -87,7 +88,7 @@ GetPriorityCases <-
               paste(capture.output(selectRDs), collapse=" "))
     }
     return(selectRDs)
-  }
+}
 
 selectRDs <- GetPriorityCases(selectRDs)
 
