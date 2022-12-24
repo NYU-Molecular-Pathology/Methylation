@@ -256,3 +256,14 @@ StartRun <- function(selectRDs = NULL, emailNotify = T, redcapUp = T) {
     )
 }
 
+GetPriorityCases <- function(selectRDs, samSheet = "samplesheet.csv", kwd="BN0") {
+    csvFi <- read.csv(file.path(getwd(), samSheet))
+    BN00 <- which(stringr::str_detect(csvFi$MP_num, kwd))
+    if (length(BN00) > 0) {
+      selectRDs <- c(selectRDs, csvFi$Sample_Name[BN00])
+      message("Prioritizing these cases first:\n",
+              paste(capture.output(selectRDs), collapse=" "))
+    }
+    return(selectRDs)
+}
+
