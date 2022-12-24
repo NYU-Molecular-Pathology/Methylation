@@ -11,11 +11,6 @@ args[4] -> baseFolder # <- NULL
 args[5] -> redcapUp   # <- TRUE
 args[6] -> runLocal   # <- FALSE
 
-# Check BigPurple Enironment & Devtools -------------------------------------------------------
-# if(Sys.info()[['sysname']]=="Linux"){
-#   .libPaths("~/molecpathlab/production/Methylation/common_libs")
-#   assign("baseFolder", "~/molecpathlab/production/Methylation", envir = gb)
-# }
 if(!require("devtools")){install.packages("devtools", quiet=T)}
 
 # Check Input Parameters -----------------------------------------------------------------------
@@ -38,33 +33,20 @@ CheckInputArg(redcapUp, gb, T); CheckInputArg(runLocal, gb, F)
 stopifnot(!is.null(token)); stopifnot(!is.null(runID))
 gb$ApiToken <- gb$token <- token
 
-if(!is.null(baseFolder) & !identical(baseFolder, "NULL")) {
-    message("Checking if custom run directory is valid: ", baseFolder, "\n")
+if(!is.null(baseFolder) & !identical(baseFolder, "NULL")) {message("Checking if custom run directory is valid: ", baseFolder, "\n")
     stopifnot("Input directory does not exist! Create it with mkdir" = dir.exists(baseFolder) == T)
 } else{baseFolder <- NULL}
 
-LoadGitHubScripts <- function(ghRepo, scriptList){
-  scripts = file.path(ghRepo, scriptList)
+LoadGitHubScripts <- function(ghRepo, scriptList){scripts <- file.path(ghRepo, scriptList)
   return(lapply(scripts, function(i){message("Sourcing: ", i); devtools::source_url(i)}))
 }
 
-# Source GitHub Scripts -------------------------------------------------------------------------
+
+# Source GitHub Scripts --------------------------------------------------------------------------
 mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R"
-scriptList <-
-  c(
-    "LoadInstallPackages.R",
-    "SetRunParams.R",
-    "MakeSampleSheet.R",
-    "CopyInputs.R",
-    "CopyOutput.R",
-    "pipelineHelper.R",
-    "CustomRuns.R"
-  )
-
+scriptList <- c("LoadInstallPackages.R", "SetRunParams.R", "MakeSampleSheet.R", "CopyInputs.R", "CopyOutput.R", "pipelineHelper.R", "CustomRuns.R")
 # Source Additional Scripts for Rmd Knit ---------------------------------------------------------
-rmdScripts <- c("ClassTables.R", "MLH1_Functions.R", "PipeLineU.R",
-                "RedcapOutput.R", "TsneFunctions.R", "cnvggplotly.R")
-
+rmdScripts <- c("ClassTables.R", "MLH1_Functions.R", "PipeLineU.R", "RedcapOutput.R", "TsneFunctions.R", "cnvggplotly.R")
 LoadGitHubScripts(mainHub, scriptList)
 LoadGitHubScripts(file.path(mainHub,"Report-Scripts"), rmdScripts)
 
@@ -78,18 +60,6 @@ gb$reportMd <- reportMd <- "~/report.Rmd"
 
 # Execute Pipeline Functions ----------------------------------------------------------------------
 gb$PrepareRun(token, baseFolder, runID, runLocal=runLocal) # If running local set runLocal = TRUE
-
-GetPriorityCases <- function(selectRDs, samSheet = "samplesheet.csv", kwd="BN0") {
-    csvFi <- read.csv(file.path(getwd(), samSheet))
-    BN00 <- which(stringr::str_detect(csvFi$MP_num, kwd))
-    if (length(BN00) > 0) {
-      selectRDs <- c(selectRDs, csvFi$Sample_Name[BN00])
-      message("Prioritizing these cases first:\n",
-              paste(capture.output(selectRDs), collapse=" "))
-    }
-    return(selectRDs)
-}
-
-selectRDs <- GetPriorityCases(selectRDs)
+selectRDs <- gb$GetPriorityCases(selectRDs) # Prioritizes select RD-numbers and BN cases
 
 gb$StartRun(selectRDs, emailNotify=T, redcapUp=redcapUp) # Can be changed to default false
