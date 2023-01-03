@@ -2,7 +2,15 @@ gb <- globalenv(); assign("gb", gb)
 #reportMd <- "/Volumes/CBioinformatics/Methylation/report_v12.Rmd"
 reportMd <- file.path(fs::path_home(),"report.Rmd") # From curl github download
 sarcRmdFile = "/Volumes/CBioinformatics/Methylation/SarcReport.Rmd"
+cpInLnk4 = "https://github.com/NYU-Molecular-Pathology/Methylation/main/R/CustomRuns.R"
+
+msgFunName <- function(pthLnk, funNam) {
+    message("\nExecuting function: ", crayon::black$bgYellow(funNam),
+            " from RScript in:\n", pthLnk, "\n")
+}
+
 GetLocalData <- function(rg){
+    msgFunName(cpInLnk4,"GetLocalData")
     dat <- data.frame(
         sampleID = paste0(rg),
         bnumber = "NONE",
@@ -17,6 +25,7 @@ GetLocalData <- function(rg){
 }
 
 GetTargetData <- function(data) {
+        msgFunName(cpInLnk4,"GetTargetData")
     runDt <- data.frame(
         sampleID = paste0(data[, "Sample_Name"]),
         bnumber = paste0(data[, "DNA_Number"]),
@@ -31,6 +40,7 @@ GetTargetData <- function(data) {
 }
 
 KnitReportRmd <- function(dat, token, reportMd){
+            msgFunName(cpInLnk4,"KnitReportRmd")
     message(paste0(capture.output(dat), collapse = "\n"))
     RGsetEpic <- suppressWarnings(gb$getRGset(getwd(), dat$senLi))
     RGset <- RGsetEpic[,1]
@@ -53,6 +63,7 @@ KnitReportRmd <- function(dat, token, reportMd){
 }
 
 loop_targets <- function(targets, reportMd="/Volumes/CBioinformatics/Methylation/report_v12.Rmd"){
+                msgFunName(cpInLnk4,"loop_targets")
     require(compiler)
     enableJIT(3)
     mainPage = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/Report-Scripts/"
@@ -72,6 +83,7 @@ loop_targets <- function(targets, reportMd="/Volumes/CBioinformatics/Methylation
 }
 
 loop_local <- function(RGSet){
+                    msgFunName(cpInLnk4,"loop_local")
     reportMd <- "/Volumes/CBioinformatics/Methylation/report_v12.Rmd"
     for (rg in colnames(RGSet)) {
         thisSam <- RGSet[, rg]
@@ -86,6 +98,7 @@ loop_local <- function(RGSet){
 }
 
 PromptInputCsv <- function(runID) {
+                        msgFunName(cpInLnk4,"PromptInputCsv")
     message('No idat files in current directory and no .xlsm file was found with the runID named "', runID,'"')
     message("Enter the full path name to a local csv file without quotes that has a list of RD-numbers and press return")
     message("The file should have no header and just list RD-numbers in Column A (Example: /Users/myName/Desktop/myFileList_rd_numbers.csv)")
@@ -106,6 +119,8 @@ PromptInputCsv <- function(runID) {
 }
 
 MakeLocalSampleSheet <- function(runID, token){
+                            msgFunName(cpInLnk4,"MakeLocalSampleSheet")
+    stopifnot(!is.null(token))
     idatScript <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/pullRedcap_manual.R"
     rd_numbers <- PromptInputCsv(runID)
     stopifnot(length(rd_numbers)>=1 & length(rd_numbers)!=0 & stringr::str_detect(rd_numbers[1],"RD-"))
@@ -132,6 +147,8 @@ RunFromSamplesheet <- function(samSh="samplesheet.csv"){
 }
 
 RunLocalIdats <- function(runID, token){
+    msgFunName(cpInLnk4,"RunLocalIdats")
+    stopifnot(!is.null(token))
     if(!file.exists(file.path(getwd(), paste0(runID,".xlsm")))){
         idatFiles <- dir(path = getwd(), pattern = ".idat", full.names = T)
         if(!file.exists(file.path(getwd(), "samplesheet.csv")) & length(idatFiles)!=0){
@@ -140,7 +157,7 @@ RunLocalIdats <- function(runID, token){
             loop_local(RGSet)
         }else{
             if(!file.exists(file.path(getwd(), "samplesheet.csv"))){
-                MakeLocalSampleSheet(runID)
+                MakeLocalSampleSheet(runID, token)
             }
             targets <- RunFromSamplesheet("samplesheet.csv")
             loop_targets(targets)
@@ -153,6 +170,7 @@ RunLocalIdats <- function(runID, token){
 
 # Work Directory Functions ----------------------------------------------------
 CheckBaseDir <- function(baseFolder){
+    msgFunName(cpInLnk4,"CheckBaseDir")
     if(is.null(baseFolder)){
         gb$baseDir <- gb$methDir <- gb$baseFolder <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
     }else{gb$baseDir <- gb$methDir <- gb$baseFolder <- baseFolder}
@@ -168,6 +186,7 @@ CheckBaseDir <- function(baseFolder){
 
 # Sets the working folder directory
 SetBaseFolder <- function(token, baseFolder, runID){
+        msgFunName(cpInLnk4,"SetBaseFolder")
     baseFolder <- CheckBaseDir(baseFolder)
     methylPath <- gb$setRunDir(runID=gb$runID, workFolder = baseFolder)
     message("Working directory set to:\n", crayon::bgGreen(methylPath), "\n")
@@ -179,6 +198,7 @@ SetBaseFolder <- function(token, baseFolder, runID){
 }
 
 PrepareRun <- function(token, baseFolder=NULL, runID, runLocal=F, rdInput=F){
+            msgFunName(cpInLnk4,"PrepareRun")
     gb$checkMounts()
     if(runLocal==F){
         gb$checkValidRun(runID)
@@ -196,14 +216,15 @@ PrepareRun <- function(token, baseFolder=NULL, runID, runLocal=F, rdInput=F){
 }
 
 
-
 SarcomaReport <- function(RGset, sampleID, output_dir = getwd()) {
+                msgFunName(cpInLnk4,"SarcomaReport")
     output_file <- paste0(sampleID, "_sarc.html")
     RGset <- RGset[,1]
     rmarkdown::render(input= gb$sarcRmdFile, output_dir = output_dir, output_file = output_file)
 }
 
 PromptRDnumbers <- function(){
+                    msgFunName(cpInLnk4,"PromptRDnumbers")
     message("Type your RD-numbers without quotes below")
     message("Separate with spaces & press Enter twice to exit")
     rd_numbers <- scan(what = " ")
@@ -217,6 +238,7 @@ PromptRDnumbers <- function(){
 }
 
 MakeBlankRun <- function(rd_numbers, token, outputFi="samplesheet.csv"){
+                        msgFunName(cpInLnk4,"MakeBlankRun")
     stopifnot(length(rd_numbers)>=1 & length(rd_numbers)!=0 & stringr::str_detect(rd_numbers[1],"RD-"))
     if(!exists("grabRDCopyIdat")){
         idatScript <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/pullRedcap_manual.R"
@@ -228,6 +250,7 @@ MakeBlankRun <- function(rd_numbers, token, outputFi="samplesheet.csv"){
 }
 
 MakeSarcomaReport <- function(worksheet = "samplesheet.csv", targets = NULL) {
+                            msgFunName(cpInLnk4,"MakeSarcomaReport")
     if (is.null(targets)) {
         if (file.exists(worksheet)) {
             targets <- as.data.frame(read.csv(worksheet))
@@ -244,6 +267,7 @@ MakeSarcomaReport <- function(worksheet = "samplesheet.csv", targets = NULL) {
 }
 
 StartRun <- function(selectRDs = NULL, emailNotify = T, redcapUp = T) {
+    msgFunName(cpInLnk4,"StartRun")
     gb$msgFunName(paste0(mainHub,"methylExpress.R"),"startRun")
     # Re-order sample report generation for priority
     if (!is.null(selectRDs)) {runOrder <- gb$reOrderRun(selectRDs) }else{runOrder <- NULL}
@@ -257,6 +281,7 @@ StartRun <- function(selectRDs = NULL, emailNotify = T, redcapUp = T) {
 }
 
 GetPriorityCases <- function(selectRDs, samSheet = "samplesheet.csv", kwd="BN0") {
+    msgFunName(cpInLnk4,"GetPriorityCases")
     csvFi <- read.csv(file.path(getwd(), samSheet))
     BN00 <- which(stringr::str_detect(csvFi$MP_num, kwd))
     if (length(BN00) > 0) {
