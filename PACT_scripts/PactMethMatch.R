@@ -168,7 +168,10 @@ queryCases <- function(vals2find, db) {
 
 addOutputLinks <- function(output){
     winpath = "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/MethylationClassifier/"
-    yearPath <- lapply(stringr::str_split_fixed(output$run_number,"-",2)[,1], function(yr) {
+    yearSplit <- stringr::str_split_fixed(output$run_number,"-",2)[,1]
+    yearSplit <- stringr::str_remove_all(yearSplit, "MC")
+    yearSplit <- yearSplit[!is.na(yearSplit)]
+    yearPath <- lapply(yearSplit, function(yr) {
         rnum <- NULL
         if(nchar(yr)>2){rnum <- substring(yr, 3)}else{rnum <- yr}
         if(nchar(yr)>0){paste0("20",rnum)}else{rnum}
