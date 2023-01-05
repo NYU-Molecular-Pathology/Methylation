@@ -18,8 +18,8 @@ message("PACT Run: ", inputSheet,"\n")
 message("Run ID: ", runID,"\n")
 
 # Check Input Params -----
-stopifnot(exists("token")|!is.null(token))
-stopifnot(exists("inputSheet")|!is.null(inputSheet))
+stopifnot(exists("token") & !is.null(token))
+stopifnot(exists("inputSheet") & !is.null(inputSheet))
 
 # FUN: Checks if z-drive is accessible to the Rscript
 checkMounts <- function(){
