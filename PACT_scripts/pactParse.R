@@ -295,17 +295,46 @@ MatchIndex <- function(list1, list2){
     return(unlist(lapply(list1, function(x) {which(x==list2)})))
 }
 
+MsgPrint <- function(obj){message(paste0(capture.output(obj), collapse="\n"))}
+
+CheckDupesMatch <- function(nameList, secondCol) {
+    matchIdx <- MatchIndex(secondCol, nameList)
+    if (any(duplicated(matchIdx))) {
+        message("The sample sheet may contain duplicate accession Numbers!")
+        message("Dropping Duplicate Index:")
+        dupesIdx <- matchIdx[duplicated(matchIdx)]
+        MsgPrint(dupesIdx)
+        MsgPrint(nameList[dupesIdx])
+        MsgPrint(secondCol[dupesIdx])
+        return(unique(matchIdx))
+    } else{
+        return(unique(matchIdx))
+    }
+}
+
 GetIndexMatch <- function(rawSheetData, philipsExport){
+    message("Running GetIndexMatch function in pactParse.R")
+
     accessions <- rawSheetData$`Accession#`
     philipsN <- c(philipsExport$`Normal Specimen ID`)
     philipsT <- c(philipsExport$`Tumor Specimen ID`)
 
+    philipsIdxT <- CheckDupesMatch(philipsT, accessions)
+    philipsIdxN <- CheckDupesMatch(philipsN, accessions)
+
+    wetLabIdxT <- CheckDupesMatch(accessions, philipsT)
+    wetLabIdxN <- CheckDupesMatch(accessions, philipsN)
+
+    stopifnot(length(philipsIdxT) == length(philipsIdxN))
+    stopifnot(length(wetLabIdxT) == length(wetLabIdxN))
+
     idx <- data.frame(
-        philipsT = MatchIndex(accessions, philipsT),
-        philipsN = MatchIndex(accessions, philipsN),
-        wetLabT = MatchIndex(philipsT, accessions),
-        wetLabN = MatchIndex(philipsN, accessions)
+        philipsT = philipsIdxT,
+        philipsN = philipsIdxN,
+        wetLabT = wetLabIdxT,
+        wetLabN = wetLabIdxN
     )
+
     return(idx)
 }
 
@@ -436,7 +465,7 @@ AltParseFormat <- function(inputFi, runID){
     rawSheetData <- GetRawSamplesheet(inputFi)
     philipsExport <- GetPhilipsData(inputFi)
     pact_run <- stringr::str_split_fixed(base::basename(inputFi), ".xls", 2)[1,1]
-    mainSheet <-  BuildMainSheet(philipsExport, rawSheetData, runID, pact_run)
+    mainSheet <- BuildMainSheet(philipsExport, rawSheetData, runID, pact_run)
     return(mainSheet)
 }
 
