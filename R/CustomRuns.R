@@ -1,5 +1,4 @@
 gb <- globalenv(); assign("gb", gb)
-#reportMd <- "/Volumes/CBioinformatics/Methylation/report_v12.Rmd"
 reportMd <- file.path(fs::path_home(),"report.Rmd") # From curl github download
 sarcRmdFile = "/Volumes/CBioinformatics/Methylation/SarcReport.Rmd"
 cpInLnk4 = "https://github.com/NYU-Molecular-Pathology/Methylation/main/R/CustomRuns.R"
@@ -62,8 +61,9 @@ KnitReportRmd <- function(dat, token, reportMd){
     )
 }
 
-loop_targets <- function(targets, reportMd="/Volumes/CBioinformatics/Methylation/report_v12.Rmd"){
-                msgFunName(cpInLnk4,"loop_targets")
+loop_targets <- function(targets, reportMd){
+    msgFunName(cpInLnk4,"loop_targets")
+    reportMd <- file.path(fs::path_home(),"report.Rmd")
     require(compiler)
     enableJIT(3)
     mainPage = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/Report-Scripts/"
@@ -84,7 +84,7 @@ loop_targets <- function(targets, reportMd="/Volumes/CBioinformatics/Methylation
 
 loop_local <- function(RGSet){
                     msgFunName(cpInLnk4,"loop_local")
-    reportMd <- "/Volumes/CBioinformatics/Methylation/report_v12.Rmd"
+    reportMd <- file.path(fs::path_home(),"report.Rmd")
     for (rg in colnames(RGSet)) {
         thisSam <- RGSet[, rg]
         dat <- GetLocalData(rg)
