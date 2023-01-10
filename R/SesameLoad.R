@@ -4,32 +4,15 @@
 # https://bioconductor.org/packages/release/bioc/vignettes/sesame/inst/doc/sesame.html
 # https://doi.org/10.1093/nar/gky691
 gb <- globalenv(); assign("gb", gb)
-
 sesaLnk = "https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/R/SesameLoad.R"
 
 msgFunName <- function(pthLnk, funNam) {
     message("\nExecuting function: ", funNam, " from RScript in:\n", pthLnk, "\n")
 }
 
-
-rqPk <- function(pk) {
-    if (!require(pk, character.only = T)) {
-        install.packages(
-            pk,
-            warn.conflicts = F,
-            ask = F,
-            dependencies = T,
-            Ncpus = 5
-        )
-    } else{
-        library(
-            pk,
-            warn.conflicts = F,
-            mask.ok = T,
-            character.only = T,
-            quietly = T
-        )
-    }
+rqPk <- function(pk) {if (!require(pk, character.only = T)) {
+    install.packages(pk, warn.conflicts = F, ask = F, dependencies = T, Ncpus = 5)
+    } else{library(pk, warn.conflicts = F, mask.ok = T, character.only = T, quietly = T)}
 }
 
 DirMake <- function(pathName){if(!dir.exists(pathName)){dir.create(pathName)}}
@@ -41,6 +24,7 @@ CheckCachePath <- function(){
     DirMake(file.path(cachePath,"ExperimentHub"))
     DirMake(file.path(cachePath,"BiocFileCache"))
 }
+
 
 # Install Packages ------------------------------------------------------------------------
 LoadPacman <- function(){
@@ -70,51 +54,61 @@ SwapSesNames <- function(sesameSet, targets) {
 
 
 SaveSesameTable <- function(sesameOutput, targets, outFiName){
+    msgFunName(sesaLnk, "SaveSesameTable")
     sesameOutput$sesameID = rownames(sesameOutput)
     rownames(targets) <- targets$Sample_Name
     reOrdered <- targets[rownames(sesameOutput),]
     sesameOut <- cbind(sesameOutput, reOrdered)
     sesameOut <- as.data.frame(sesameOut,fix.empty.names=T)
     sesameOut <- apply(sesameOut,2,as.character)
-    outputPath <- file.path(fs::path_home(),"Desktop", outFiName)
+    outputPath <- file.path(fs::path_home(), outFiName)
     write.table(sesameOut, file = outputPath, quote=F, sep=",", row.names=F)
     return(sesameOut)
 }
 
-
-GenerateSesameTab <- function(sampleSheet, outFiName="sesameOutput.csv"){
+GenerateSesameTab <- function(outFiName="samples", inputPath=NULL, sampleSheet="samplesheet.csv"){
     msgFunName(sesaLnk, "GenerateSesameTab")
     sesameData::sesameDataCacheAll()
-    mcc = parallel::detectCores()/2
-    targets <- read.csv(sampleSheet, row.names=NULL)
-    ssets = mclapply(sesame::searchIDATprefixes(getwd()), sesame::readIDATpair, mc.cores = mcc)
-    ssets <- SwapSesNames(sesameSet = ssets, targets)
-    betas = sesame::openSesame(getwd(), BPPARAM=BiocParallel::MulticoreParam(mcc), func = getBetas)
-    betas <- SwapSesNames(sesameSet = betas, targets)
+    if(is.null(inputPath)){inputPath <- getwd()}
+    outFiName <- paste(outFiName, "sesameOutput.csv", sep="_")
 
-    sdfs = sesame::openSesame(getwd(), BPPARAM=BiocParallel::MulticoreParam(mcc), func = NULL) # return SigDF list
-    allele_freqs = sesame::openSesame(getwd(), func = getAFs, BPPARAM=BiocParallel::MulticoreParam(mcc))
-    sdfs = sesame::openSesame(sdfs, prep = "Q", func = NULL, BPPARAM=BiocParallel::MulticoreParam(mcc))
+    targets <- read.csv(sampleSheet, row.names = NULL)
+    allIdats <- file.path(inputPath, targets$SentrixID_Pos) #sesame::searchIDATprefixes(getwd())
+    names(allIdats) <- targets$SentrixID_Pos
+    mcc = parallel::detectCores() / 2
+
+    betas <- sesame::openSesame(getwd(), BPPARAM = BiocParallel::MulticoreParam(mcc), func = getBetas)
+    betas <- SwapSesNames(betas, targets)
+
     model <- sesame::sesameAnno_get("Anno/HM450/Clock_Horvath353.rds")
+    tissueRef <- sesameData::sesameDataGet("EPIC.tissueSignature")
 
-    ages <- unlist(mclapply(colnames(betas), FUN = function(n){
-        theAge <- sesame::predictAge(betas[,n], model)
+    samNames <- if(is.null(colnames(betas))){names(betas)} else{colnames(betas)}
+
+    ages <- unlist(parallel::mclapply(samNames, FUN = function(n, betas, model) {
+        nSam <- if(is.null(colnames(betas))){betas[[n]]}else{betas[, n]}
+        theAge <- sesame::predictAge(nSam, model)
         names(theAge) <- n
-        return(theAge)
-        }))
-    sesame_sex <- mclapply(ssets, sesame::inferSex, platform="EPIC", mc.cores = mcc)
-    karyotype_sex <- mclapply(ssets, sesame::inferSexKaryotypes, mc.cores = mcc)
-    predicted_ethnicity <- mclapply(ssets, sesame::inferEthnicity, mc.cores = mcc)
-    tissueRef <- sesameDataGet("EPIC.tissueSignature")
+        return(theAge)},
+        mc.cores = mcc, betas, model))
 
-    tissues <- unlist(mclapply(
-        colnames(betas), FUN = function(n){
-            tissue <- sesame::inferTissue(betas[, n], reference = tissueRef)
-            names(tissue) <- n
-            return(tissue)},
-        mc.cores = mcc))
+    tissues <- unlist(parallel::mclapply(samNames, FUN = function(n, betas, tissueRef) {
+        nSam <- if(is.null(colnames(betas))){betas[[n]]}else{betas[, n]}
+        tissue <- if(length(nSam)==486427){"NOT EPIC"}else{sesame::inferTissue(nSam, reference = tissueRef)}
+        names(tissue) <- n
+        return(tissue)},
+        mc.cores = mcc, tissueRef, betas))
 
-    sesameOutput <- data.frame(
+    ssetsRaw = parallel::mclapply(allIdats, sesame::readIDATpair, mc.cores = mcc)
+    ssets <- SwapSesNames(sesameSet = ssetsRaw, targets)
+
+    sesame_sex <- parallel::mclapply(ssets, function(x){
+        sesame::inferSex(x, platform = ifelse(nrow(x)==486427,"HM450", "EPIC"))}, mc.cores = mcc)
+
+    karyotype_sex <- parallel::mclapply(ssets, sesame::inferSexKaryotypes, mc.cores = mcc)
+    predicted_ethnicity <- parallel::mclapply(ssets, sesame::inferEthnicity, mc.cores = mcc)
+
+    sesameOutDf <- data.frame(
         karyotype_sex = cbind(karyotype_sex),
         predicted_ethnicity = cbind(predicted_ethnicity),
         sesame_sex = cbind(sesame_sex),
@@ -122,8 +116,10 @@ GenerateSesameTab <- function(sampleSheet, outFiName="sesameOutput.csv"){
         sesame_tissue = cbind(tissues)
     )
 
-    sesameOut <- SaveSesameTable(sesameOutput, targets, outFiName)
+    sesameOut <- SaveSesameTable(sesameOutDf, targets, outFiName)
     return(sesameOut)
-    #knitr::kable(sesameOut)
 }
+
+
 LoadPacman()
+
