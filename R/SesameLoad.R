@@ -25,7 +25,6 @@ CheckCachePath <- function(){
     DirMake(file.path(cachePath,"BiocFileCache"))
 }
 
-
 # Install Packages ------------------------------------------------------------------------
 LoadPacman <- function(){
     msgFunName(sesaLnk, "LoadPacman")
@@ -97,7 +96,7 @@ GenerateSesameTab <- function(outFiName="samples", inputPath=NULL, sampleSheet="
         tissue <- if(length(nSam)==486427){"NOT EPIC"}else{sesame::inferTissue(nSam, reference = tissueRef)}
         names(tissue) <- n
         return(tissue)},
-        mc.cores = mcc, tissueRef, betas))
+        mc.cores = mcc, betas, tissueRef))
 
     ssetsRaw = parallel::mclapply(allIdats, sesame::readIDATpair, mc.cores = mcc)
     ssets <- SwapSesNames(sesameSet = ssetsRaw, targets)
@@ -119,7 +118,6 @@ GenerateSesameTab <- function(outFiName="samples", inputPath=NULL, sampleSheet="
     sesameOut <- SaveSesameTable(sesameOutDf, targets, outFiName)
     return(sesameOut)
 }
-
 
 LoadPacman()
 
