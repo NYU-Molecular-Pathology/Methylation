@@ -401,6 +401,7 @@ msg_code "cp /Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/cli
 msg_step 5 "#bae1ff" "Use the Evernote Guide to download the indels from our in-house QC html file as a .csv file and then run the Rscript:"
 white_bg "<b>${evernoteLink}</b>"
 msg_code "curl -o ${HOME}/MakeIndelList.R -L ${pactGithub}/MakeIndelList.R -s"
+msg_code "chmod +rwx ${HOME}/MakeIndelList.R"
 msg_code "RScript --verbose -e \"${HOME}/MakeIndelList.R ${pactRun}\""
 msg_step 6 "#bae1ff" "Open Philips Intellispace and the ${pactRun}_desc.csv file and annotate the variant calls"
 white_bg "<b>${consensusDir}${pactRun}_consensus/${pactRun}_desc.csv</b>"
