@@ -258,8 +258,8 @@ rsyncDir="/gpfs/home/${kerbero}/molecpathlab/production/NGS607/${runID}/output"
 zdrive="/mnt/${kerbero}/molecular/Molecular"
 
 echo "Author: Jonathan Serrano"
-echo
-echo "Current Date: $now"
+echo " "
+echo "Current Date: `date`"
 echo " "
 
 echo "<h2 style='padding-top: 10px !important;'>${FG_BLU}Your Input Args${normal}</h2>"
