@@ -6,7 +6,7 @@ args[1] -> pactRunName
 
 if(!require("stringr")){install.packages("stringr", dependencies = T)}
 if(!require("dplyr")){install.packages("dplyr", dependencies = T)}
-library("dplyr")
+library("dplyr", mask.ok = T)
 
 monthDay <- gsub("0(\\d)", "\\1", format(Sys.Date(), "%m_%d_"))
 thisYear <- format(Sys.Date(), "%Y.csv")
