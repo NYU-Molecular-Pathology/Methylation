@@ -258,7 +258,8 @@ rsyncDir="/gpfs/home/${kerbero}/molecpathlab/production/NGS607/${runID}/output"
 zdrive="/mnt/${kerbero}/molecular/Molecular"
 
 echo "Author: Jonathan Serrano"
-echo "\nCurrent Date: ${now}"
+echo
+echo "Current Date: $now"
 echo " "
 
 echo "<h2 style='padding-top: 10px !important;'>${FG_BLU}Your Input Args${normal}</h2>"
@@ -398,7 +399,7 @@ msg_code "cp /Volumes/molecular/Molecular/REDCap/cnv_facets/${pactRun}/*.pdf ~/D
 msg_step 4 "#bae1ff" "Next copy the QC file below to the consensus Rmd directory${normal}"
 msg_code "cp /Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/${pactRun}-Somatic_Variants.html /Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/${pactRun}.html /Volumes/molecular/Molecular/REDCap/cnv_facets/${pactRun}/${pactRun}-QC.tsv ./"
 msg_step 5 "#bae1ff" "Use the Evernote Guide to download the indels from our in-house QC html file as a .csv file and then run the Rscript:"
-white_bg "<b>${evernoteLink}</b>"
+msg_code "open ${evernoteLink}"
 msg_code "curl -o ${HOME}/MakeIndelList.R -L ${pactGithub}/MakeIndelList.R -s"
 msg_code "chmod +rwx ${HOME}/MakeIndelList.R"
 msg_code "RScript --verbose ${HOME}/MakeIndelList.R ${pactRun}"
