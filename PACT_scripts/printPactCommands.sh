@@ -261,7 +261,7 @@ echo "Author: Jonathan Serrano"
 echo "\nCurrent Date: ${now}"
 echo " "
 
-echo "<h2 style='padding-top: 10px !important;'>${FG_BLU}Your Input${normal}</h2>"
+echo "<h2 style='padding-top: 10px !important;'>${FG_BLU}Your Input Args${normal}</h2>"
 msg_step 1 "white" "PACT RUNID: ${runID}</br>"
 msg_step 2 "white" "PACT Run Name: ${pactRun}</br>"
 msg_step 3 "white" "Consensus Directory: ${consensusDir}</br>"
