@@ -364,8 +364,7 @@ msg_code "cd \"/mnt/${kerbero}${outputDir}${currYear}/${pactRun}/\" && rsync -vr
 msg_step 5 "#baffc9" "<b>Rsync the PDF facet files and QC tsv for the Methylation CNV concensus</b>"
 msg_code "rsync -vrthP ${productionDir}/NGS607/${runID}/output/cnv/FACETS/*.pdf ${productionDir}/NGS607/${runID}/${pactRun}-QC.tsv ${zdrive}/REDCap/cnv_facets/${pactRun}/"
 msg_step 6 "#baffc9" "Email the PACT team once the QC files are copied to notify them the following"
-msg_code "
-The in-house pipeline completed for ${pactRun}.
+msg_code "The in-house pipeline completed for ${pactRun}.
 
 The data for this week’s PACT run is copied here:
 smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/NGS607/${currYear}/${runID}/
@@ -373,9 +372,9 @@ smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/NGS607/${curr
 The QC and output is copied here:
 smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics/${currYear}/${pactRun}/${pactRun}.html
 "
+msg_step 7 "#baffc9" "Check the following directories copied into Z-drive ${runID} folder"
 white_bg "From ${productionDir}/NGS607/${runID}/output/clinical/:"
 white_bg "${pactRun}-Somatic_Variants.html <b>AND</b> ${pactRun}-Germline_Variants.html <b>AND</b> ${pactRun}.html"
-msg_step 7 "#baffc9" "Check the following directories copied into Z-drive ${runID} folder"
 white_bg "From ${productionDir}/NGS607/${runID}/output"
 white_bg "/clinical"
 white_bg "/annotations/"
