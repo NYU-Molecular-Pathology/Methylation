@@ -119,6 +119,24 @@ batchCorrectBs <- function(betas,RGSet,topVar=NULL, supervise = F) {
     return(topVarBetas)
 }
 
+
+LoadRdsObj <- function(file.name){
+    library("foreach")
+    library("utils")
+    filesize <- file.info(file.name)$size
+    chunksize <- ceiling(filesize / 100)
+    pb <- txtProgressBar(min = 0, max = 100, style=3)
+    infile <- file(file.name, "rb")
+    data <- foreach(it = icount(100), .combine = c) %do% {
+        setTxtProgressBar(pb, it)
+        readBin(infile, "raw", chunksize)
+    }
+    close(infile)
+    close(pb)
+    return(unserialize(data))
+}
+
+
 getRgset <- function(rgOut, targets, batchCorrect = F, arraySheet="samplesheet.csv", idatPath=NULL) {
     require("minfi")
     if(is.null(idatPath)){idatPath <- getwd()}
@@ -131,15 +149,17 @@ getRgset <- function(rgOut, targets, batchCorrect = F, arraySheet="samplesheet.c
                 pattern = arraySheet,
                 verbose = T
             )
+            sheet$Basename <- file.path(idatPath, paste0(sheet$Slide, "_" , sheet$Array))
             RGSet <- minfi::read.metharray.exp(
                 base = idatPath, 
                 targets = sheet, 
                 verbose = T, force = T)
         }
         saveRDS(RGSet, file = rgOut)
-    } else{RGSet <- readRDS(rgOut)}
+    } else{RGSet <- LoadRdsObj(rgOut)}
     return(RGSet)
 }
+
 
 cleanRawProbes <- function(rawBetaDat, RGSet, samNames, targets) {
     if (!file.exists(rawBetaDat)) {
@@ -148,6 +168,8 @@ cleanRawProbes <- function(rawBetaDat, RGSet, samNames, targets) {
     } else{betas <- readRDS(rawBetaDat)}
     return(betas)
 }
+
+
 # Check if MDS data already loaded
 getMdsPlot <- function(RGSet, samNames,samTypes, topN=1000) {
     mSetSq <- preprocessQuantile(RGSet)
