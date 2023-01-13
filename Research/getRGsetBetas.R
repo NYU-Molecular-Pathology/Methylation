@@ -120,7 +120,14 @@ batchCorrectBs <- function(betas,RGSet,topVar=NULL, supervise = F) {
 }
 
 
-LoadRdsObj <- function(file.name){
+SaveObj <- function(object, file.name){
+    outfile <- file(file.name, "wb")
+    serialize(object, outfile)
+    close(outfile)
+}
+
+
+LoadRdatObj <- function(file.name){
     library("foreach")
     library("utils")
     filesize <- file.info(file.name)$size
@@ -155,8 +162,8 @@ getRgset <- function(rgOut, targets, batchCorrect = F, arraySheet="samplesheet.c
                 targets = sheet, 
                 verbose = T, force = T)
         }
-        saveRDS(RGSet, file = rgOut)
-    } else{RGSet <- LoadRdsObj(rgOut)}
+        SaveObj(RGSet, file = rgOut)
+    } else{RGSet <- LoadRdatObj(rgOut)}
     return(RGSet)
 }
 
@@ -164,8 +171,8 @@ getRgset <- function(rgOut, targets, batchCorrect = F, arraySheet="samplesheet.c
 cleanRawProbes <- function(rawBetaDat, RGSet, samNames, targets) {
     if (!file.exists(rawBetaDat)) {
         betas <- gb$cleanUpProbes(RGSet=RGSet, targets=targets)
-        saveRDS(betas, file = rawBetaDat)
-    } else{betas <- readRDS(rawBetaDat)}
+        SaveObj(betas, file = rawBetaDat)
+    } else{betas <- LoadRdatObj(rawBetaDat)}
     return(betas)
 }
 
