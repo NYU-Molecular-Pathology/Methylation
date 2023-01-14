@@ -34,12 +34,11 @@ GuessArrayTypes <- function (nProbes)
 
 ReadRGparallel <- function (targets, folder, files = NULL, copy = FALSE, verbose = TRUE,
           arraytype = NULL, ncores = NULL, extended = FALSE, force = TRUE) {
-    require("minfi");require("parallel")
+    require("minfi");require("parallel");require("doParallel")
     if(class(targets)[1]!="data.table"){targets <- as.data.table(targets)}
     if (is.null(files)) {files <- targets$Basename}
     if (copy == TRUE) {files <- paste0(folder, basename(targets$Basename))}
     if(is.null(ncores)){ncores <- parallel::detectCores()/2}
-    ncores <- get_ncores(ncores)
     cl <- parallel::makePSOCKcluster(ncores)
     parallel::clusterEvalQ(cl, {requireNamespace(c("minfi", "S4Vectors"))})
     doParallel::registerDoParallel(cl)
