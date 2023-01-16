@@ -466,3 +466,12 @@ LoopPathwayHeatMap <- function(pathWayGenes, ha){
 }
                                            
 
+LoopSaveHm <- function(hm.db, varProbes, fi_prefix = "hm_top_", fi_suffix = "_notAnnot.png"){
+  for (tn in 1:length(varProbes)) {
+      hm <- hm.db[[tn]]
+      hmOutPath <- file.path(getwd(), "figures", "heatmaps")
+      if(!dir.exists(hmOutPath)){dir.create(hmOutPath, recursive = T)}
+      gb$saveHmPng(fi_prefix, fi_suffix, hm, topvar = varProbes[tn],outDir = hmOutPath)
+  }
+}
+                                           
