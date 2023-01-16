@@ -174,6 +174,7 @@ sanitizeSheet<- function(inputFi, samsheet) {
     if (class(targets) != "data.frame") {
         targets <- as.data.frame(targets)
     }
+    stopifnot(gb$col_samNames %in% colnames(targets) == T & gb$col_samTypes %in% colnames(targets) == T)
     return(targets)
 }
 
@@ -243,6 +244,7 @@ SubSetGroup <- function(strPatt, samPairs){
     return(samPairs[idx])
 }
 
+
 CheckTargetIdats <- function(targets) {
     stopifnot(gb$col_samNames %in% colnames(targets) == T) 
     stopifnot(gb$col_samTypes %in% colnames(targets) == T)
@@ -256,3 +258,4 @@ CheckTargetIdats <- function(targets) {
     }
     return(targets)
 }
+
