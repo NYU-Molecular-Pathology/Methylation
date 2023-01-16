@@ -1,5 +1,5 @@
 gb <- globalenv(); assign("gb", gb)
-
+library("utils")
 
 # FUN: Save object as Rdata file
 SaveObj <- function(object, file.name){
