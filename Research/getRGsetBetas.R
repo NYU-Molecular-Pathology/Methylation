@@ -89,9 +89,9 @@ loadSupervise <- function(RGSet, betas, supbetaOut, varProbes, col_sentrix="Sent
     topVar = 1:max(varProbes)
     # supervised dmp top Variance with getSupervise
     superbetas <- gb$getSupervise(betas, newRg, topVar, dmpTyp = dmpTyp) 
-    saveRDS(superbetas, file = supbetaOut)
+    SaveObj(superbetas, file.name = supbetaOut)
   } else{
-    superbetas <- readRDS(supbetaOut)
+    superbetas <- LoadRdatObj(supbetaOut)
   }
   return(superbetas)
 }
