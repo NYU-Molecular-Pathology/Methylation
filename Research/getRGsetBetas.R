@@ -162,7 +162,7 @@ getRgset <- function(rgOut, targets, batchCorrect = F, arraySheet="samplesheet.c
                 targets = sheet, 
                 verbose = T, force = T)
         }
-        SaveObj(RGSet, file = rgOut)
+        SaveObj(RGSet, file.name = rgOut)
     } else{RGSet <- LoadRdatObj(rgOut)}
     return(RGSet)
 }
@@ -171,7 +171,7 @@ getRgset <- function(rgOut, targets, batchCorrect = F, arraySheet="samplesheet.c
 cleanRawProbes <- function(rawBetaDat, RGSet, samNames, targets) {
     if (!file.exists(rawBetaDat)) {
         betas <- gb$cleanUpProbes(RGSet=RGSet, targets=targets)
-        SaveObj(betas, file = rawBetaDat)
+        SaveObj(betas, file.name = rawBetaDat)
     } else{betas <- LoadRdatObj(rawBetaDat)}
     return(betas)
 }
@@ -246,20 +246,20 @@ cleanRgset <- function(RGSet, col_sentrix, betas) {
 
 checkMdsRds <- function(mbfile, runDir, RGSet, targets) {
   if (file.exists(file.path(runDir, mbfile))) {
-    mSetSq.beta <- readRDS(mbfile)
+    mSetSq.beta <- LoadRdatObj(mbfile)
   } else{
     mSetSq.beta <- gb$supM(gb$getMdsPlot(RGSet, targets$Sample_ID, targets$Type))
-    saveRDS(mSetSq.beta, file = file.path(gb$runDir, gb$mbfile))
+    SaveObj(mSetSq.beta, file.name = file.path(gb$runDir, gb$mbfile))
   }
   return(mSetSq.beta)
 }
 
 GetMsetSq <- function(RGSet, targets) {
     if (file.exists(file.path(gb$runDir, gb$mbfile))) {
-        mSetSq.beta <- readRDS(gb$mbfile)
+        mSetSq.beta <- LoadRdatObj(gb$mbfile)
     } else{
         mSetSq.beta <- gb$supM(gb$getMdsPlot(RGSet, targets$Sample_ID, targets$Type))
-        saveRDS(mSetSq.beta, file = file.path(gb$runDir, gb$mbfile))
+        SaveObj(mSetSq.beta, file = file.path(gb$runDir, gb$mbfile))
     }
     return(mSetSq.beta)
 }
