@@ -90,19 +90,22 @@ gb$selectPlots <- function(doPlotly = F, tplots, ty, tps, outDirs) {
   }
   return(assign("diagPlot", tplots[[1]]))
 }
+
+
 gb$grabAllBeta <- function(targets1, betas) {
     betas1 <- betas[ ,targets1$SampleFilter] # filtering betas
     if(file.exists(file.path(gb$runDir,gb$unbetaVariance))){
-      unBets <- readRDS(unbetaVariance)
+      unBets <- LoadRdatObj(unbetaVariance)
     }else{
     unBets <- gb$takeTopVariance(betas1, topVar = 1:10000)
-    saveRDS(unBets, file=file.path(gb$runDir,gb$unbetaVariance))
+    SaveObj(unBets, file.name=file.path(gb$runDir,gb$unbetaVariance))
     }
     
     unBets <- unBets[,targets1$SampleFilter]
     allBetas1 <-list(unBets[1:100,], unBets[1:1000,], unBets)
     return(allBetas1)
 }
+
 
 doMultiple <- function(allBetas1,tsne_titles, outDirs, targets1, tps,ty,custom){
     plotN = NULL
