@@ -147,6 +147,7 @@ LoadRdatObj <- function(file.name){
 getRgset <- function(rgOut, targets, batchCorrect = F, arraySheet="samplesheet.csv", idatPath=NULL) {
     require("minfi")
     if(is.null(idatPath)){idatPath <- getwd()}
+    targets$Basename <- file.path(gb$idatPath, targets$SentrixID_Pos)
     if (!file.exists(rgOut)) {
         if (batchCorrect == T & !is.null(targets$Batch)) {
             RGSet <- gb$combine.EPIC.450K(targets = targets)
