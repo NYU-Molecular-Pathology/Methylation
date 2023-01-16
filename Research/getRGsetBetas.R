@@ -1,4 +1,35 @@
 gb <- globalenv(); assign("gb", gb)
+
+
+# FUN: Save object as Rdata file
+SaveObj <- function(object, file.name){
+    outfile <- file(file.name, "wb")
+    serialize(object, outfile)
+    close(outfile)
+}
+
+# FUN: Load object from Rdata file with progressbar
+LoadRdatObj <- function(file.name, msgProg=T){
+    library("foreach")
+    library("utils")
+    filesize <- file.info(file.name)$size
+    chunksize <- ceiling(filesize / 100)
+    pb <- txtProgressBar(min = 0, max = 100, style=3)
+    infile <- file(file.name, "rb")
+    if(msgProg==T){
+    data <- foreach(it = icount(100), .combine = c) %do% {
+        setTxtProgressBar(pb, it)
+        readBin(infile, "raw", chunksize)
+    }
+    }else{
+        data <- foreach(it = icount(100), .combine = c) %do% {readBin(infile, "raw", chunksize)}
+    }
+    close(infile)
+    close(pb)
+    return(unserialize(data))
+}
+
+
 # FUN: Obtain RGSet with Probes common to 450K Array ---------------------------
 combine.EPIC.450K <- function(targets, batchFilter=NULL){
     if(length(targets$Batch)>0){
@@ -117,30 +148,6 @@ batchCorrectBs <- function(betas,RGSet,topVar=NULL, supervise = F) {
     topVarBetas <- ifelse(top_variable_beta < 0, 0, top_variable_beta)
     topVarBetas <- ifelse(topVarBetas > 1, 1, topVarBetas)
     return(topVarBetas)
-}
-
-
-SaveObj <- function(object, file.name){
-    outfile <- file(file.name, "wb")
-    serialize(object, outfile)
-    close(outfile)
-}
-
-
-LoadRdatObj <- function(file.name){
-    library("foreach")
-    library("utils")
-    filesize <- file.info(file.name)$size
-    chunksize <- ceiling(filesize / 100)
-    pb <- txtProgressBar(min = 0, max = 100, style=3)
-    infile <- file(file.name, "rb")
-    data <- foreach(it = icount(100), .combine = c) %do% {
-        setTxtProgressBar(pb, it)
-        readBin(infile, "raw", chunksize)
-    }
-    close(infile)
-    close(pb)
-    return(unserialize(data))
 }
 
 
