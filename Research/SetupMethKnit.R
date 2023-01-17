@@ -20,12 +20,12 @@ rFiles = c(
     "Differential.R"
 )
 scripts <- paste0(mainHub, rFiles)
-pkgs <- c("MEAL","SummarizedExperiment", "S4Vectors", "minfi", "maxprobes", "limma", "IRanges", "impute", "IlluminaHumanMethylationEPICanno.ilm10b4.hg19", "IlluminaHumanMethylation450kanno.ilmn12.hg19", "GenomicRanges", "conumee", "BiocGenerics", "Biobase", "cowplot")
+pkgs <- c("MEAL","SummarizedExperiment", "S4Vectors", "minfi", "limma", "IRanges", "impute", "IlluminaHumanMethylationEPICanno.ilm10b4.hg19", "IlluminaHumanMethylation450kanno.ilmn12.hg19", "GenomicRanges", "conumee", "BiocGenerics", "Biobase", "cowplot")
 
 supSrt(lapply(scripts, function(i){message("Sourcing: ", i);devtools::source_url(i)}))
 supSrt(librarian::shelf(pkgs, ask = F, update_all = F, quiet = FALSE))
-if(!require("maxprobes")){ devtools::install_github("markgene/maxprobes", dependencies = T)}
-if(!require("cnv.methyl")){devtools::install_github("https://github.com/ijcBIT/cnv.methyl.git", dependencies = T)}
+#if(!require("maxprobes")){ devtools::install_github("markgene/maxprobes", dependencies = T)}
+#if(!require("cnv.methyl")){devtools::install_github("https://github.com/ijcBIT/cnv.methyl.git", dependencies = T)}
 
 knitOpt <- list(
     echo = FALSE,
