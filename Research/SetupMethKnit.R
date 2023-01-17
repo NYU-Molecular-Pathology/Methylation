@@ -42,8 +42,12 @@ knitOpt <- list(
 )
 
 #knitr::opts_knit$set(knitOpt); knitr::opts_chunk$set(knitOpt)
-animation::ani.options(autobrowse = FALSE); options(width=1800)
-library("mnp.v11b6"); library("magrittr"); library("dplyr")
+animation::ani.options(autobrowse = FALSE)
+options(width=1800)
+
+library("mnp.v11b6")
+library("magrittr")
+library("dplyr")
 
 setKnitDir <- function(runDir) {
     syscmd <- paste("cd", runDir)
