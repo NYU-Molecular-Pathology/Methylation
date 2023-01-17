@@ -198,7 +198,7 @@ cleanRawProbes <- function(rawBetaDat, RGSet, samNames, targets) {
 
 
 # Check if MDS data already loaded
-getMdsPlot <- function(RGSet, samNames,samTypes, topN=1000) {
+getMdsPlot <- function(RGSet, samNames, topN=1000) {
     mSetSq <- preprocessQuantile(RGSet)
     mSetSq <- addSnpInfo(mSetSq)
     mSetSq <- dropLociWithSnps(mSetSq, snps = c("SBE", "CpG"), maf = 0) # drop the loci which has snps
@@ -211,8 +211,9 @@ getMdsPlot <- function(RGSet, samNames,samTypes, topN=1000) {
     return(mSetSq.beta)
 }
 
-plot.mds<- function(mSetSq.beta, targets, topN) {
-    myColors <- c(targets$color)
+plot.mds <- function(mSetSq.beta, targets, varName, topN) {
+    varColorCol <- paste0(varName, "_color")
+    myColors <- c(targets[,varColorCol])
     names(myColors) <- targets$Sample_Name
     plotNam <- paste0("top_", topN, "_msetBeta", ".png")
     outPlotNam <- file.path(getwd(),"figures","mds")
@@ -224,7 +225,7 @@ plot.mds<- function(mSetSq.beta, targets, topN) {
       plot = T, col = myColors, pch=19, labels=colnames(mSetSq.beta),
       main = paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot")
     )
-    names(myColors) <- targets$Type
+    names(myColors) <- targets[,varName]
     legend("topright", legend = c(unique(names(myColors))), 
            col = paste(as.list(unique(myColors))), pch = 15, cex = 0.8)
     invisible(dev.off())
@@ -274,12 +275,14 @@ checkMdsRds <- function(mbfile, runDir, RGSet, targets) {
   return(mSetSq.beta)
 }
 
-GetMsetSq <- function(RGSet, targets) {
+GetMsetSq <- function(RGSet, targets, varName) {
     if (file.exists(file.path(gb$runDir, gb$mbfile))) {
         mSetSq.beta <- LoadRdatObj(gb$mbfile)
     } else{
-        mSetSq.beta <- gb$supM(gb$getMdsPlot(RGSet, targets$Sample_ID, targets$Type))
+        mSetSq.beta <- gb$supM(gb$getMdsPlot(RGSet, targets$Sample_ID))
         SaveObj(mSetSq.beta, file = file.path(gb$runDir, gb$mbfile))
     }
     return(mSetSq.beta)
 }
+
+
