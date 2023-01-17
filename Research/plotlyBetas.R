@@ -13,6 +13,7 @@ grabPngNames <- function(tsne_titles=NULL, keywrd="Top"){
   return(outDirs)
 }
 
+
 makePlotly<-function(fig) {
     otherPlot <-
         supM(plotly::ggplotly(
@@ -32,21 +33,31 @@ makePlotly<-function(fig) {
     otherPlot[["x"]][["layout"]] <- opLayout
     hoverinfo <- paste0("Sample: ", fig[["data"]][["samples"]], "</br></br>")
     opInfo <- otherPlot[["x"]][["data"]]
+    
+    markerSyms <- c("circle", "square", "diamond", "cross", "X", "triangle-up", "triangle-down", "triangle-left","triangle-right", "triangle-ne", "triangle-se", "triangle-sw", "triangle-nw", "pentagon", "hexagon", "hexagon2", "octagon", "star", "hexagram", "star-triangle-up", "star-triangle-down", "star-square", "star-diamond", "diamond-tall", "diamond-wide", "hourglass", "bowtie", "circle-cross", "circle-x", "square-cross", "square-x", "diamond-cross")
 
     for (sam in 1:length(opInfo)) {
         opInfo[[sam]][["hoverinfo"]] <- "none"
-        opInfo[[sam]][["marker"]][["symbol"]] <- 'circle'
+        #opInfo[[sam]][["marker"]][["symbol"]] <- 'circle'
         opInfo[[sam]][["marker"]][["size"]] <- 10
         opInfo[[sam]][["hoverinfo"]] <- c("text") #"text",
     }
 
     otherPlot[["x"]][["data"]] <- opInfo
     uniGrp <- unique(fig[["data"]]$GROUPS)
-
+    markerSyms <- markerSyms[1:length(uniGrp)]
+    
+    for (grpLabNam in 1:length(otherPlot[["x"]][["data"]])) {
+      thisLabel <- otherPlot[["x"]][["data"]][[grpLabNam]]$name
+      markerIdx <- which(stringr::str_detect(thisLabel,uniGrp))
+      otherPlot[["x"]][["data"]][[grpLabNam]][["marker"]][["symbol"]] <- markerSyms[markerIdx]
+    }
+    
     for (grpT in 1:length(uniGrp)) {
         grpNam <- uniGrp[grpT]
         currGrp <- fig[["data"]]$GROUPS == grpNam
         samLabs <- fig[["data"]]$samples
+        samSymShape <- markerSyms[grpT]
 
         for (grpLabNam in 1:length(otherPlot[["x"]][["data"]])) {
             currLabNam <- otherPlot[["x"]][["data"]][[grpLabNam]]$name
@@ -59,7 +70,8 @@ makePlotly<-function(fig) {
             }
         }
     }
-
+    
+    
     otherPlot <-
         otherPlot %>% plotly::layout(legend = list(
             title = list(text = "<b>Legend</b><br>", font = list(size = 14)),
@@ -71,6 +83,7 @@ makePlotly<-function(fig) {
 
     return(otherPlot)
 }
+
 
 gb$selectPlots <- function(doPlotly = F, tplots, ty, tps, outDirs) {
   for (zz in 1:nrow(outDirs)) {
@@ -92,17 +105,21 @@ gb$selectPlots <- function(doPlotly = F, tplots, ty, tps, outDirs) {
 }
 
 
-gb$grabAllBeta <- function(targets1, betas) {
-    betas1 <- betas[ ,targets1$SampleFilter] # filtering betas
-    if(file.exists(file.path(gb$runDir,gb$unbetaVariance))){
-      unBets <- LoadRdatObj(unbetaVariance)
-    }else{
-    unBets <- gb$takeTopVariance(betas1, topVar = 1:10000)
-    SaveObj(unBets, file.name=file.path(gb$runDir,gb$unbetaVariance))
+gb$grabAllBeta <- function(targets1, betas, supervised = F) {
+    if (supervised == T) {
+        allBetas1 <- list(betas[1:100,], betas[1:1000,], betas)
+    } else{
+        betas1 <- betas[, targets1$SampleFilter] # filtering betas
+        
+        if (file.exists(file.path(gb$runDir, gb$unbetaVariance))) {
+            unBets <- readRDS(gb$unbetaVariance)
+        } else{
+            unBets <- gb$takeTopVariance(betas1, topVar = 1:10000)
+            saveRDS(unBets, file = file.path(gb$runDir, gb$unbetaVariance))
+        }
+        unBets <- unBets[, targets1$SampleFilter]
+        allBetas1 <- list(unBets[1:100, ], unBets[1:1000, ], unBets)
     }
-    
-    unBets <- unBets[,targets1$SampleFilter]
-    allBetas1 <-list(unBets[1:100,], unBets[1:1000,], unBets)
     return(allBetas1)
 }
 
@@ -132,23 +149,27 @@ doMultiple <- function(allBetas1, tsne_titles, outDirs, targets1, tps,ty,custom)
   return(plotList)
 }
 
-plotSaver <- function(outDirs,tsne_titles,tps,ty,plotList,custom) {
+
+plotSaver <- function(outDirs,tsne_titles,tps,ty,plotList,custom, names2Label=NULL) {
   plotN=NULL
   options("device.ask.default"=F)
  pltList <- foreach::foreach(plotN = 1:length(plotList),.packages="foreach") %do% {
     pL<- plotList[[plotN]]
 ###################### TO CHANGE ########################
     gc(verbose=F)
-    return(gb$genTsnePlot(
+    return(
+        gb$genTsnePlot(
       tsne_plot=plotList[[plotN]],
       titleLabel=tsne_titles[plotN],
       symbolsLabel = pL$symbol,
       colorLabel = pL$GROUPS,
-      names2Label = NULL)) # any specific sample names to label on the plot
+      names2Label = names2Label) # any specific sample names to label on the plot
+      ) 
 ###################### TO CHANGE ########################
  }
  return(pltList)
 }
+
 
 gb$subsetBetas <- 
   function(targFilter,samGroup, betas, targets, samNames,tsne_titles, doPlotly=F, supervised=F) {
