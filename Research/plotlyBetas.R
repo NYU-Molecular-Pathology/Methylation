@@ -88,17 +88,23 @@ makePlotly<-function(fig) {
 gb$selectPlots <- function(doPlotly = F, tplots, ty, tps, outDirs) {
   for (zz in 1:nrow(outDirs)) {
     invisible(gc())
-    tabStart <- paste('### Top', tps[ty, 1], outDirs[zz, 3])
-    cat(paste(tabStart, '\n\n'))
-    gc(verbose = F)
     fig <- tplots[[zz]]
-    supM(print(fig))
-    cat('\n\n')
-    
+    tabStart <- paste('### Top', tps[ty, 1], outDirs[zz, 3])
     cat(paste(tabStart, '(Interactive)','\n\n'))
     gc(verbose = F)
     op <- gb$makePlotly(fig)
     supM(print(htmltools::tagList(ggplotly(op))))
+    cat('\n\n')
+    cat(paste(tabStart, '\n\n'))
+    gc(verbose = F)
+    fig <- fig + theme(legend.direction="vertical", legend.margin=margin(t=-25))
+    #fig <- fig + guides(fill = guide_legend(ncol = 1, nrow = 10, byrow = T))
+    leg <- supM(cowplot::get_legend(fig))
+    fig <- fig + theme(legend.position = "none")
+    supM(print(fig))
+    #cat('\n\n')
+    grid::grid.newpage()
+    grid::grid.draw(leg)
     cat('\n\n')
   }
   return(assign("diagPlot", tplots[[1]]))
@@ -171,32 +177,41 @@ plotSaver <- function(outDirs,tsne_titles,tps,ty,plotList,custom, names2Label=NU
 }
 
 
-gb$subsetBetas <- 
-  function(targFilter,samGroup, betas, targets, samNames,tsne_titles, doPlotly=F, supervised=F) {
-    tps <- unique(targFilter)
-    targets$SamGroups <- targets$SampleFilter <- NULL
-    targets$SampleFilter <- samNames # creating new column
-    targets$SamGroups <- targets[, colnames(targFilter)]
-    ty = NULL
-    for (ty in 1:nrow(tps)) {
-      invisible(gc())
-      custom = tps[ty, 1]
-      message("Current Sample Group TSNE: ", custom)
-      targets1 <- targets[targFilter == custom, ]
-      if (supervised == T) {
-        allBetas1 <- list(betas[1:100, ], betas[1:1000, ], betas)
-      } else{
-        allBetas1 <- gb$grabAllBeta(targets1, betas)
-      }
-      outDirs <- gb$grabPngNames(tsne_titles)[,]
-      plotList = NULL
-      plotList <- gb$doMultiple(allBetas1, tsne_titles, outDirs, targets1, tps, ty, custom)
-      tplots <- NULL
-      gc(verbose=F)
-      tplots <- gb$plotSaver(outDirs, tsne_titles, tps, ty, plotList, custom)
-      gb$selectPlots(doPlotly, tplots, ty, tps, outDirs)
-    }
+gb$subsetBetas <- function(targFilter,
+                           samGroup,
+                           betas,
+                           targets,
+                           samShapes,
+                           samNames,
+                           tsne_titles,
+                           doPlotly = F,
+                           supervised = F,
+                           names2Label = NULL) {
+  tps <- unique(targFilter)
+  targets$SamGroups <- targets$SampleFilter <- NULL
+  targets$SampleFilter <- samNames # creating new column
+  targets$SamGroups <- targets[, colnames(targFilter)]
+  targets$Sym_Shape <- samShapes
+  targets$PointColors <- targets[, samGroup]
+  colorColName <- paste0(samGroup, "_color")
+  targets$color <- targets[, colorColName]
+  ty = NULL
+  for (ty in 1:nrow(tps)) {
+    gc(verbose = F)
+    custom = tps[ty, 1]
+    message("Current Sample Group TSNE: ", custom, "\nAll Target Filter Groups: ", paste(unique(targFilter)))
+    targets1 <- targets[targFilter == custom,]
+    allBetas1 <- gb$grabAllBeta(targets1, betas, supervised)
+    outDirs <- gb$grabPngNames(tsne_titles)[, ]
+    tplots <- plotList <- NULL
+    plotList <- gb$doMultiple(allBetas1, tsne_titles, outDirs, targets1, tps, ty, custom)
+    gc(verbose = F)
+    tplots <-
+      gb$plotSaver(outDirs, tsne_titles, tps, ty, plotList, custom, names2Label)
+    gb$selectPlots(doPlotly, tplots, ty, tps, outDirs)
+  }
 }
+
 
 takeTopVariance <- function(betas, topVar = 1:10000){
     var_probes <- apply(betas, 1, var) # vars <- apply(gset.funnorm.beta,1,var)
