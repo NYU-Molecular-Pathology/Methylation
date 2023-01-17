@@ -107,25 +107,29 @@ gb$grabAllBeta <- function(targets1, betas) {
 }
 
 
-doMultiple <- function(allBetas1,tsne_titles, outDirs, targets1, tps,ty,custom){
-    plotN = NULL
-    tsneList <-lapply(X = 1:length(allBetas1), FUN=function(X){
+doMultiple <- function(allBetas1, tsne_titles, outDirs, targets1, tps,ty,custom){
+  plotN = NULL
+  
+  tsneList <- lapply(X = 1:length(allBetas1), FUN = function(X) {
       return(suppressMessages(gb$generateTvals(allBetas1[[X]])))
-      })
-    plotList <- list(foreach::foreach(plotN = 1:length(tsneList),.packages="foreach")%do%{
-###################### TO CHANGE ########################
-      gc(verbose=F)
-      tsne_plot <- gb$getTsneVal(
-        TSNE = tsneList[[plotN]],
-        saNames = targets1$SampleFilter,
-        samGrp = targets1$Type,
-        colorGrp = targets1$color,
-        symGrp = targets1[,gb$col_samGrp]
-        ) #targets1[,col_samGroup]
-###################### TO CHANGE ########################
-      return(tsne_plot)
-      })[[1]]
-    return(plotList)
+    })
+  
+  plotList <-
+    list(foreach::foreach(plotN = 1:length(tsneList), .packages = "foreach") %do%
+           {
+             ###################### TO CHANGE ########################
+             gc(verbose = F)
+             tsne_plot <- gb$getTsneVal(
+               TSNE = tsneList[[plotN]],
+               saNames = targets1$SampleFilter,
+               samGrp = targets1$PointColors,
+               colorGrp = targets1$color, #targets1$Type,#
+               symGrp = targets1$Sym_Shape#targets1[, gb$col_shapes]
+             ) #targets1[,col_samGroup]
+             ###################### TO CHANGE ########################
+             return(tsne_plot)
+           })[[1]]
+  return(plotList)
 }
 
 plotSaver <- function(outDirs,tsne_titles,tps,ty,plotList,custom) {
