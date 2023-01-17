@@ -109,34 +109,47 @@ FixNullNaVars <- function(targets, varColumns) {
   return(targets)
 }
 
+
 GetDefaultColors <- function(col_vect=NULL){
-  if (is.null(col_vect)) {
-        col_vect <- pals::glasbey()
-    }
-    col_vect[6] = "#eb7d34" #changing dark forest-black to orange color
-    col_vect[4] = "#ADD8E6"
+  if (is.null(col_vect)) {col_vect <- pals::glasbey()}
+    col_vect[c(6,4)] = c("#eb7d34","#ADD8E6") #changing dark forest-black to orange color
     col_vect <- unique(col_vect)
     return(col_vect)
-  
+}
+
+
+CheckColorCount <- function(varColumns, targets, col_vect) {
+  for (vc in varColumns) {
+    if (length(unique(targets[, vc])) > length(col_vect)) {
+      warning(
+        'Column "', vc, '" has more than 32 variables!',
+        '\nYou need to input more colors in colorTargets(col_vect) or reduce number of variables!'
+      )
+    }
+  }
 }
 
 
 colorTargets <- function(targets, varColumns = c("Type","Origin"), col_vect = NULL){
     
-    col_vect <- GetDefaultColors(col_vect)
-    targets <- FixNullNaVars(targets, varColumns)
+    col_vect <- gb$GetDefaultColors(col_vect)
+    targets <- gb$FixNullNaVars(targets, varColumns)
     
     message("Targets Dimnames:\n", paste(dimnames(targets)[[2]], collapse = " | "))
     
-    if ("Type" %in% varColumns == F) {
+    if (length(varColumns) <= 1) {
+      if ("Type" %in% varColumns == F) {
         targets$Type <- targets[, varColumns[1]]
         varColumns <- c(varColumns, "Type")
-    }
-    
-    if (length(unique(varColumns)) == 1) {
+      }
+      
+      if (length(unique(varColumns)) == 1) {
         targets$NewCol <- targets[, varColumns[1]]
         varColumns <- c(varColumns, "NewCol")
+      }
     }
+    
+    CheckColorCount(varColumns, targets, col_vect)
     
     dat <- targets[, varColumns] # varColumns
     anno_df <- data.frame(dat)
@@ -144,52 +157,28 @@ colorTargets <- function(targets, varColumns = c("Type","Origin"), col_vect = NU
     colorValues <- lapply(vars2Color, function(x) {x = (col_vect)[1:(length(x))]})
     
     for (x in 1:length(vars2Color)) {
-        for (varNum in 1:length(vars2Color[x])) {
-            names(colorValues[x][[1]]) = c(vars2Color[x][[1]])
-        }
+      for (varNum in 1:length(vars2Color[x])) {
+        names(colorValues[x][[1]]) = c(vars2Color[x][[1]])
+      }
     }
+    
     targets$color <- NULL
+    colorColNames <- unlist(lapply(varColumns, paste0, "_color"))
     
-    for (colNam in varColumns) {
-        for (samNam in names(colorValues[colNam][[1]])) {
-            currColor <- targets$Type == samNam
-            targets$color[currColor] <- paste0(colorValues$Type[samNam])
-        }
-    }
-   
-    for (colNam in colorColName) {
-      for (varName in names(colorValues[colNam][[1]])) {
-        currColor <- targets$Type == varName
-        targets[,colNam][currColor] <- paste0(colorValues$Type[varName])
-      }
-      
+    for (colorCol in colorColNames) {
+      targets[, colorCol] <- NA
     }
     
     for (colNam in varColumns) {
-        for (samNam in names(colorValues[colNam][[1]])) {
-          currColor <- targets$Type == samNam
-          targets$color[currColor] <- paste0(colorValues$Type[samNam])
-        }
-    }
-    
-    colorColName <- unlist(lapply(varColumns, paste0, "_color"))
-    
-    for (colorCol in colorColName) {
-      targets[, colorColName] <- NA
-    }
-    
-    for (colNam in varColumns) {
-      currColId <- paste0(colNam, "_color")
+      newColumnId <- paste0(colNam, "_color")
       for (samNam in names(colorValues[colNam][[1]])) {
-        currColor <- targets[, colNam] == samNam
+        varToColor <- targets[, colNam] == samNam
         colorHex <- paste0(colorValues[[colNam]][[samNam]])
-        targets[, currColId][currColor] <- colorHex
+        targets[, newColumnId][varToColor] <- colorHex
       }
     }
-    stopifnot(!is.null(targets$color))
     return(targets)
 }
-
 
 
 getColors <- function(samTypes) {
