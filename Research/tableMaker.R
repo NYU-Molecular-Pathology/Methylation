@@ -269,7 +269,8 @@ sourceParams <- function(X = c("Params_input.R", "Params_output.R")) {
     invisible(lapply(paramFiles, source))
 }
 
-GetCsvSheet <- function(needFi, samsheet, token, outputFi="samplesheet_og.csv"){
+GetCsvSheet <- function(needFi, samsheet, token, outputFi="samplesheet_og.csv", idatPath=NULL){
+  if(is.null(idatPath)){idatPath<- file.path(getwd(),"idats")}
     # Using "pullRedcap_manual.R"
     rds <- gb$readInfo(inputSheet = samsheet) # inputSheet can be xlsx or csv
     stopifnot(length(rds)>1 & stringr::str_detect(rds[1],"RD-"))
@@ -283,6 +284,7 @@ GetCsvSheet <- function(needFi, samsheet, token, outputFi="samplesheet_og.csv"){
         gb$makeSampleSheet(result, samplesheet_ID, bn = NULL, outputFi=outputFi)
     }
 }
+
 
 SubSetGroup <- function(strPatt, samPairs){
     idx <- which(grepl(samPairs, pattern = strPatt, ignore.case=T))
