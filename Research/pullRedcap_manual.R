@@ -128,10 +128,10 @@ makeSampleSheet <- function(df, samplesheet_ID, bn = NULL, outputFi="samplesheet
     write.csv(samplesheet_csv, file = outputFi, quote = F,row.names = F)
 }
 
-grabRDCopyIdat <- function(rd_numbers, token, copyIdats=T, outputFi="samplesheet_og.csv"){
+grabRDCopyIdat <- function(rd_numbers, token, copyIdats=T, outputFi="samplesheet_og.csv", idatPath=NULL){
+    if(is.null(idatPath)){idatPath<- file.path(getwd(),"idats")}
     ApiToken <- token
     result_raw <- gb$search.redcap(rd_numbers, token)
-
     result <- result_raw[!is.na(result_raw$barcode_and_row_column),]
     samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[,"barcode_and_row_column"],"_",2))
     if(nrow(samplesheet_ID)==0) {
@@ -144,7 +144,7 @@ grabRDCopyIdat <- function(rd_numbers, token, copyIdats=T, outputFi="samplesheet
     gb$makeSampleSheet(result, samplesheet_ID, bn = NULL, outputFi=outputFi) # writes API export as minfi dataframe sheet
     # copies idat files from return to current directory
     if(copyIdats==T){
-        supM(gb$get.idats(csvNam = outputFi))
+        supM(gb$get.idats(csvNam = outputFi, runDir=idatPath))
     }
 }
 
