@@ -94,7 +94,11 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL,
     devAskNewPage(ask=F) #options("device.ask.default"=F)
     if(symFlags==T) {
         shapeVals <- c(19, 17, 15, 7, 8, 9, 1, 3, 4, 5)
-        sv <- shapeVals[1:length(unique(tsne_plot$symbol))]
+        plotSymLen <- 1:length(unique(tsne_plot$symbol))
+        if(length(plotSymLen)>10){
+          shapeVals <- sample(c(1:25))
+        }
+        sv <- shapeVals[plotSymLen]
         shapeLabels <-levels(as.factor(tsne_plot$symbol))
         if (any(is.na(shapeLabels))) {
             shapeLabels <- colorLabel
@@ -115,18 +119,26 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL,
     }
     # Adding Main Plot Colors and Axis Labels
     groupTsne <- groupTsne +
-        scale_color_manual(values=colours, name= "Sample Label") +
-        labs(color = colorLabel, size = 4) + theme_bw(base_size = 16) +
-        theme(
-            panel.grid.major = ggplot2::element_blank(),
-            panel.grid.minor = ggplot2::element_blank(),
-            panel.background = ggplot2::element_blank(), text = et
-        ) +
-        ggtitle(label = titleLabel) +
-        theme(plot.title = et, legend.text = et, text = et,
-              legend.position = "right", axis.text.y = et, axis.text.x = et) +
-        guides(fill = guide_legend(title = "Sample Legend")) +
-        labs(x = "TSNE 1", y = "TSNE 2")
+      scale_color_manual(values = colours, name = "Sample Label") +
+      labs(color = colorLabel, size = 4) + theme_bw(base_size = 16) +
+      theme(
+        panel.grid.major = ggplot2::element_blank(),
+        panel.grid.minor = ggplot2::element_blank(),
+        panel.background = ggplot2::element_blank(),
+        text = et
+      ) +
+      ggtitle(label = titleLabel) +
+      theme(
+        plot.title = et,
+        legend.text = et,
+        text = et,
+        legend.position = "bottom",
+        axis.text.y = et,
+        axis.text.x = et
+      ) +
+      guides(fill = guide_legend(title = "Sample Legend")) +
+      labs(x = "TSNE 1", y = "TSNE 2") +
+      guides(fill = guide_legend(ncol = 2, nrow = 30, byrow = TRUE))
     
     # Below only runs to label sample IDs if label group is provided
     if (!is.null(groupToLabel)) {
@@ -188,24 +200,28 @@ gb$selectPlots <- function(doPlotly=F,tplots,ty,tps,outDirs){
 }
 
 doMultiple <- function(allBetas1,tsne_titles, outDirs, targets1, tps,ty,custom){
-    library('foreach'); require('foreach')
-    plotN = NULL
-    tsneList <-lapply(X = 1:length(allBetas1), FUN=function(X){
+  plotN = NULL
+  
+  tsneList <- lapply(X = 1:length(allBetas1), FUN = function(X) {
       return(suppressMessages(gb$generateTvals(allBetas1[[X]])))
-      })
-    plotList <- list(foreach::foreach(plotN = 1:length(tsneList),.packages="foreach") %do% {
-###################### TO CHANGE ########################      
-      tsne_plot <- gb$getTsneVal(
-        TSNE = tsneList[[plotN]],
-        saNames = targets1$SampleFilter,
-        samGrp = targets1$Type,
-        colorGrp = targets1$color,
-        symGrp = targets1[,gb$col_samGrp]
-        ) #targets1[,col_samGroup]
-###################### TO CHANGE ########################
-      return(tsne_plot)
-      })[[1]]
-    return(plotList)
+    })
+  
+  plotList <-
+    list(foreach::foreach(plotN = 1:length(tsneList), .packages = "foreach") %do%
+           {
+             ###################### TO CHANGE ########################
+             gc(verbose = F)
+             tsne_plot <- gb$getTsneVal(
+               TSNE = tsneList[[plotN]],
+               saNames = targets1$SampleFilter,
+               samGrp = targets1$PointColors,
+               colorGrp = targets1$color, #targets1$Type,#
+               symGrp = targets1$Sym_Shape#targets1[, gb$col_shapes]
+             ) #targets1[,col_samGroup]
+             ###################### TO CHANGE ########################
+             return(tsne_plot)
+           })[[1]]
+  return(plotList)
 }
 
 getTopPlot <- function(samNames){
