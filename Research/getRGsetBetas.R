@@ -127,9 +127,11 @@ loadSupervise <- function(RGSet, betas, supbetaOut, varProbes, col_sentrix="Sent
   return(superbetas)
 }
 
-# COMABAT batch correction between 2 groups
-batchCorrectBs <- function(betas,RGSet,topVar=NULL, supervise = F) {
-    batch = targets$Batch
+
+# COMABAT batch correction between groups
+batchCorrectBs <- function(betas, RGSet, targets, batchEffectColumn) {
+    targets$batch = targets[, batchEffectColumn]
+    batch <- targets$batch
     modcombat = model.matrix(~ 1, data = targets)
     combat_beta <- sva::ComBat(
         dat = betas,
@@ -138,16 +140,26 @@ batchCorrectBs <- function(betas,RGSet,topVar=NULL, supervise = F) {
         par.prior = T,
         prior.plots = F
     )
-    if (supervise == T) {combat_beta <-getSupervise(combat_beta,RGSet)}
-    if (!is.null(topVar)) {
-        var_probes <- apply(combat_beta, 1.0, var)
-        select_var <- names(sort(var_probes[topVar], decreasing = T))
-        top_variable_beta <- combat_beta[select_var,]
-    } else {top_variable_beta <- combat_beta}
     # fix if any beta >1 or < 0, so impute >1 is 1 and <0 is 0
-    topVarBetas <- ifelse(top_variable_beta < 0, 0, top_variable_beta)
-    topVarBetas <- ifelse(topVarBetas > 1, 1, topVarBetas)
-    return(topVarBetas)
+    combat_beta <- ifelse(combat_beta < 0, 0, combat_beta)
+    combat_beta <- ifelse(combat_beta > 1, 1, combat_beta)
+    return(combat_beta)
+}
+
+
+RemoveBatchEffect <- function(batchEffectColumn = NULL,
+                              betas,
+                              RGSet,
+                              targets,
+                              combatOut) {
+    if (!file.exists(combatOut)) {
+        betas <- batchCorrectBs(betas, RGSet, targets, batchEffectColumn)
+        gb$SaveObj(betas, file.name = combatOut)
+    } else{
+        betas <- gb$LoadRdatObj(combatOut)
+    }
+    
+    return(betas)
 }
 
 
