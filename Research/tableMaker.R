@@ -258,7 +258,7 @@ sourceParams <- function(X = c("Params_input.R", "Params_output.R")) {
     invisible(lapply(paramFiles, source))
 }
 
-GetCsvSheet <- function(needFi, samsheet, token, outputFi="samplesheet_og.csv", idatPath=NULL){
+GetCsvSheet <- function(needFi, samsheet, token, idatPath=NULL, outputFi="samplesheet_og.csv"){
   if(is.null(idatPath)){idatPath<- file.path(getwd(),"idats")}
     # Using "pullRedcap_manual.R"
     rds <- gb$readInfo(inputSheet = samsheet) # inputSheet can be xlsx or csv
