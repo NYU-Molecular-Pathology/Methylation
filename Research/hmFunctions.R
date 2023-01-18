@@ -152,49 +152,61 @@ assignColors2 <- function(targets, varColumns = c("Type","Origin"), col_vect = N
     if(all(names(colorValues)==names(anno_df))){return(gb$getHeatAnno(colorValues,anno_df))}
 }
 
-modifyHaColors <- function(varColumns,targets, ha){
+modifyHaColors <- function(varColumns, targets, ha) {
   for (vCol in varColumns) {
-      colours <- unique(targets$color)
-      varNames <- sort(unique(targets[, vCol]))
-      colours <- colours[1:length(varNames)]
-      names(colours) <- varNames
-      colMap <- ha@anno_list[[vCol]]@color_mapping
-      colMap@colors <- colMap@full_col <- colours
-      colMap@levels <- names(colours)
-      ha@anno_list[[vCol]]@color_mapping <- colMap
-    }
-    
-    return(ha)
+    colorColName <- paste0(vCol, "_color")
+    colours <- unique(targets[, colorColName])
+    varNames <- sort(unique(targets[, vCol]))
+    colours <- colours[1:length(varNames)]
+    names(colours) <- varNames
+    colMap <- ha@anno_list[[vCol]]@color_mapping
+    colMap@colors <- colMap@full_col <- colours
+    colMap@levels <- names(colours)
+    ha@anno_list[[vCol]]@color_mapping <- colMap
+  }
+  return(ha)
 }
 
-assignColors3 <- function(targets, varColumns = c("Type","Origin"), col_vect = NULL, manualNames=NULL) {
-    dimnames(targets)[[2]]
-    if ("Type" %in% varColumns == F) {
+assignColors3 <- function(targets, varColumns = c("Type", "Origin"), col_vect = NULL, manualNames = NULL) {
+    message("~~~~Targets Dimnames:\n\n", paste(dimnames(targets)[[2]], collapse = "\n"))
+    
+    col_vect <- gb$GetDefaultColors(col_vect)
+    targets <- gb$FixNullNaVars(targets, varColumns)
+    
+    if (length(varColumns) <= 1) {
+      if ("Type" %in% varColumns == F) {
         targets$Type <- targets[, varColumns[1]]
         varColumns <- c(varColumns, "Type")
-    }
-    if (length(unique(varColumns)) == 1) {
+      }
+      
+      if (length(unique(varColumns)) == 1) {
         targets$NewCol <- targets[, varColumns[1]]
         varColumns <- c(varColumns, "NewCol")
-    }  
-    dat <- targets[,varColumns] # varColumns
+      }
+    }
+    
+    dat <- targets[, varColumns] # varColumns
     anno_df <- data.frame(dat)
-    col_vect <-unique(targets$color)
-    vars2Color <- as.list(lapply(dat, function(x){return(sort(unique(x)))}))
-    colorValues <-lapply(vars2Color, function(x) {x = (col_vect)[1:(length(x))]})
-    colorValues <-lapply(X=names(colorValues), function(X) {
-        currCol <- colorValues[X][[1]]
-        curNam <- vars2Color[[X]]
-        names(currCol)<-curNam
-        colorValues[X][[1]] <- currCol
-        names(colorValues[X])<-X
-        return(colorValues[X][[1]])}
-    )
-    names(colorValues)<- varColumns
-    stopifnot(all(names(colorValues)==names(anno_df)))
-    ha <- suppressWarnings(gb$getHeatAnno(colorValues,anno_df))
+    vars2Color <- as.list(lapply(dat, function(x) {return(sort(unique(x)))}))
+    
+    colorValues <- lapply(vars2Color, function(x) {
+      x = (col_vect)[1:(length(x))]
+    })
+    
+    colorValues <- lapply(X = names(colorValues), function(X) {
+      currCol <- colorValues[X][[1]]
+      curNam <- vars2Color[[X]]
+      names(currCol) <- curNam
+      colorValues[X][[1]] <- currCol
+      names(colorValues[X]) <- X
+      return(colorValues[X][[1]])
+    })
+    
+    names(colorValues) <- varColumns
+    stopifnot(all(names(colorValues) == names(anno_df)))
+    ha <- suppressWarnings(gb$getHeatAnno(colorValues, anno_df))
     return(ha)
-}
+  }
 
 addGeneName <- function(annot, oldBeta) {
   geneName <- annot[rownames(oldBeta), "UCSC_RefGene_Name"]
