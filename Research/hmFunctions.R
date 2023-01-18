@@ -467,13 +467,11 @@ LoopPathwayHeatMap <- function(pathWayGenes, ha){
         cat("\n\n")  
         cat(msgTitle)
         cat("\n\n")
-        
         hm <- gb$GetHeatMapGenes(avgBetas, titleValue, ha, geneNamesHeatMap=T, colSplt=3)
         knitr::asis_output(hm) 
         cat("\n\n")
         cat("\n\n")
-        saveHmPng(fi_prefix= "hm_genes_", fi_suffix=".png", hm, 
-                  topvar = paste0(currPathway$Description), outDir = NULL)
+        saveHmPng(fi_prefix= "hm_genes_", fi_suffix=".png", hm, topvar = paste0(currPathway$Description), outDir = NULL)
     }
 }
                                            
