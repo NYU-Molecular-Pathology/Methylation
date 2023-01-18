@@ -71,5 +71,10 @@ setKnitDir <- function(runDir) {
   knitr::opts_knit$set(root.dir = runDir)
 }
 
+CheckDirCreate <- function(pathLocation){
+    dataOutDir <- file.path(getwd(), pathLocation)
+    if (!dir.exists(dataOutDir)) {dir.create(dataOutDir)}
+}
+
 set.seed(1234)
 Sys.setenv('R_MAX_VSIZE'=32000000000)
