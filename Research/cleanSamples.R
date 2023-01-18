@@ -19,12 +19,12 @@ CheckSamNames <- function(samNames, targets){
   return(targets)
 }
 
-SetKeyColumns <- function(targets, col_samTypes, col_samNames, col_other) {
+SetKeyColumns <- function(targets, col_samTypes, col_samNames, col_other, col_shapes) {
     targets <- dfTargets(targets)
     targets$Type <- targets[, col_samTypes] # Creates any new "Type" column
     targets$Sample_Name <- targets$Sample_ID <- targets[, col_samNames] # generates Sample_ID column if doesn't exist
     targets$Other_Group <- targets$Sample_Group <- targets[, col_other]
-
+    targets$Sym_Shape <- targets[,col_shapes]
     targets <- CheckSamNames(targets$Sample_ID, targets)
     return(targets)
   }
