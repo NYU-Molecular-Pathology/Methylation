@@ -188,6 +188,7 @@ CleanUpSheetRows <- function(sheet, idatPath){
 getRgset <-  function(rgOut, targets, mergeProbes = F, arraySheet="samplesheet.csv", idatPath=NULL) {
     require("minfi")
     if(is.null(idatPath)){idatPath <- getwd()}
+    gc(verbose = F)
     if (file.exists(rgOut)) {
       RGSet <- LoadRdatObj(rgOut)
       }else{
@@ -205,6 +206,7 @@ getRgset <-  function(rgOut, targets, mergeProbes = F, arraySheet="samplesheet.c
 
 
 cleanRawProbes <- function(rawBetaDat, RGSet, samNames, targets) {
+    gc(verbose = F)
     if (!file.exists(rawBetaDat)) {
         betas <- gb$cleanUpProbes(RGSet=RGSet, targets=targets)
         SaveObj(betas, file.name = rawBetaDat)
