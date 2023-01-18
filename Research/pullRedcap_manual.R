@@ -167,11 +167,19 @@ fixBaseName <- function(targets, runDir, col_sentrix) {
   return(targets)
 }
 
+FixBaseName <- function(targets, runDir, col_sentrix) {
+  if(class(targets)!="data.frame"){targets <- as.data.frame(targets)}
+  stopifnot(col_sentrix %in% colnames(targets))
+  senCol <- min(which(grepl(col_sentrix, colnames(targets)) == T))
+  targets$Basename <- file.path(runDir, targets[, senCol]) # writes path to idat files
+  return(targets)
+}
+
 # Search REDCap Worksheets for MRN Match for output -------------------------------------
 loadPacks()
 checkMounts()
 sourceFuns()
 
 # Example Use
-#rds <- readInfo(inputSheet)
+#rds <- readInfo(inputSheet="~/Desktop/MySampleSheet.xlsx")
 #grabRDCopyIdat(rd_numbers=rds, token=token)
