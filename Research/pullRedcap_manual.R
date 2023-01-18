@@ -161,6 +161,7 @@ fillMissingDat <- function(targets, col_samNames="Sample_Name", originalFi="samp
 
 fixBaseName <- function(targets, runDir, col_sentrix) {
   if(class(targets)!="data.frame"){targets <- as.data.frame(targets)}
+  stopifnot(col_sentrix %in% colnames(targets))
   senCol <- min(which(grepl(col_sentrix, colnames(targets)) == T))
   targets$Basename <- file.path(runDir, targets[, senCol]) # writes path to idat files
   return(targets)
