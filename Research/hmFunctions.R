@@ -257,10 +257,9 @@ grabProbes <- function(your_genes, RGSet, region){
 col_fun3 <- circlize::colorRamp2(c(0, 0.20, 0.25, 0.5, 0.75, 1), c("black","darkblue","deepskyblue", "white", "tomato","red"))
                                            
 SaveHmPng <- function(fi_prefix, fi_suffix, hm, topvar = "", outDir=NULL) {
-  if(is.null(outDir)){outDir<-getwd()}
-  hmOutDir <- file.path(".", "figures", "heatmaps")
-  if(!dir.exists(hmOutDir)){dir.create(hmOutDir)}
-  imgFile <- file.path(hmOutDir, paste0(fi_prefix, topvar, fi_suffix))
+  if(is.null(outDir)){outDir <- file.path(".", "figures", "heatmaps")}
+  if(!dir.exists(outDir)){dir.create(outDir)}
+  imgFile <- file.path(outDir, paste0(fi_prefix, topvar, fi_suffix))
   wd <- as.numeric(hm@ht_list_param[["width"]]) + 5
   ht <- as.numeric(hm@ht_list_param[["height"]]) + 5
   png(
@@ -272,20 +271,21 @@ SaveHmPng <- function(fi_prefix, fi_suffix, hm, topvar = "", outDir=NULL) {
   )
   ComplexHeatmap::draw(hm)
   invisible(dev.off())
-}                                  
+}                                
                                            
-gb$getHeatMap2 <-
-  function(betaRanges,
-           titleValue,
-           ha,
-           geneNamesHeatMap = F,
-           colSplt = NULL,
-           rwsplt = NULL,
-           rwOrder = NULL, 
-           clusRows = F,
-           clusCols = F) {
-    titleOfPlot <- paste("Heatmap of", titleValue, sep = " ")
-    hmTopNumbers <- ComplexHeatmap::Heatmap(betaRanges, 
+gb$getHeatMap2 <- function(
+    betaRanges,
+    titleValue,
+    ha,
+    geneNamesHeatMap = F,
+    colSplt = NULL,
+    rwsplt = NULL,
+    rwOrder = NULL, 
+    clusRows = F,
+    clusCols = F) 
+{
+  titleOfPlot <- paste("Heatmap of", titleValue, sep = " ")
+   hmTopNumbers <- ComplexHeatmap::Heatmap(betaRanges, 
         col = gb$col_fun3,  ## Define the color scale
         cluster_rows = clusRows,
     cluster_row_slices = F,
@@ -474,13 +474,12 @@ LoopPathwayHeatMap <- function(pathWayGenes, ha){
     }
 }
                                            
-
 LoopSaveHm <- function(hm.db, varProbes, fi_prefix = "hm_top_", fi_suffix = "_notAnnot.png"){
   for (tn in 1:length(varProbes)) {
       hm <- hm.db[[tn]]
-      hmOutPath <- file.path(getwd(), "figures", "heatmaps")
+      hmOutPath <- file.path(".", "figures", "heatmaps")
       if(!dir.exists(hmOutPath)){dir.create(hmOutPath, recursive = T)}
-      gb$saveHmPng(fi_prefix, fi_suffix, hm, topvar = varProbes[tn],outDir = hmOutPath)
+      SaveHmPng(fi_prefix, fi_suffix, hm, topvar = varProbes[tn], outDir = hmOutPath)
   }
 }
                                            
