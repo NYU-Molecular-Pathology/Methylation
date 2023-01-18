@@ -191,7 +191,8 @@ getColors <- function(samTypes) {
   return(myColors)
 }
 
-sanitizeSheet<- function(inputFi, samsheet) {
+
+sanitizeSheet <- function(inputFi, samsheet) {
     library("magrittr")
     library("dplyr")
     if (stringr::str_detect(inputFi, ".xlsx")) {
@@ -202,15 +203,22 @@ sanitizeSheet<- function(inputFi, samsheet) {
     }
     colnames(samSh) <- gsub(pattern = " ", replacement = "_", colnames(samSh))
     samSh <- samSh %>% dplyr::mutate_all(stringr::str_replace_all, " ", "-")
-    
     write.csv(samSh, samsheet, quote = F, row.names = F)
     targets <- read.csv(samsheet, strip.white = T)
     if (class(targets) != "data.frame") {
         targets <- as.data.frame(targets)
     }
     stopifnot(gb$col_samNames %in% colnames(targets) == T & gb$col_samTypes %in% colnames(targets) == T)
+    samNames <- targets[,gb$col_samNames]
+    sentrixs <- targets[,gb$col_sentrix]
+    # Create any missing header columns to standardize names
+    targets[,"Barcode"] <- targets[,"Sentrix_ID"] <- targets[,"SentrixID_Pos"] <- NA
+    targets[,"Sample_ID"] <- targets[,"Sample_Name"] <- targets[,"Sample_Group"] <- NA
+    targets[,"Sample_ID"] <- targets[,"Sample_Name"] <- samNames
+    targets[,"Barcode"] <- targets[,"Sentrix_ID"] <- targets[,"SentrixID_Pos"] <- sentrixs
     return(targets)
 }
+
 
 animation::ani.options(autobrowse = FALSE); options(width=1200)
 library("mnp.v11b6")
