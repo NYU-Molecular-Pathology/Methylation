@@ -163,27 +163,40 @@ RemoveBatchEffect <- function(batchEffectColumn = NULL,
 }
 
 
-getRgset <- function(rgOut, targets, batchCorrect = F, arraySheet="samplesheet.csv", idatPath=NULL) {
+CleanUpSheetRows <- function(sheet, idatPath){
+    sheet$Barcode <-  targets[,gb$col_sentrix]
+    sheet[,gb$col_sentrix] <- NA
+    sheet[,gb$col_sentrix] <- sheet$Barcode
+    splitSentrix <- stringr::str_split_fixed(sheet$Barcode, "_", 2)
+    sheet$Slide <- splitSentrix[,1]
+    sheet$Array <- splitSentrix[,2]
+    sheet$Basename <- file.path(idatPath, paste0(sheet$Slide, "_" , sheet$Array))
+    sheet$Sample_Name <- sheet[, gb$col_samNames]
+    shFiles <- c(paste0(sheet$Basename, "_Grn.idat"), paste0(sheet$Basename, "_Red.idat"))
+    if(any(!file.exists(shFiles))){
+      warning("Some idat files are missing and samples will be dropped!")
+      message("The following cases are missing:")
+      message(paste0(capture.output(sheet[!file.exists(shFiles),]), collapse="\n"))
+      }
+    sheet <- sheet[file.exists(shFiles),]
+    return(sheet)
+}
+
+getRgset <-  function(rgOut, targets, mergeProbes = F, arraySheet="samplesheet.csv", idatPath=NULL) {
     require("minfi")
     if(is.null(idatPath)){idatPath <- getwd()}
-    targets$Basename <- file.path(gb$idatPath, targets$SentrixID_Pos)
-    if (!file.exists(rgOut)) {
-        if (batchCorrect == T & !is.null(targets$Batch)) {
+    if (file.exists(rgOut)) {
+      RGSet <- LoadRdatObj(rgOut)
+      }else{
+        if (mergeProbes == T & !is.null(targets$Batch)) {
             RGSet <- gb$combine.EPIC.450K(targets = targets)
         } else{
-            sheet <- minfi::read.metharray.sheet(
-                base = getwd(),
-                pattern = arraySheet,
-                verbose = T
-            )
-            sheet$Basename <- file.path(idatPath, paste0(sheet$Slide, "_" , sheet$Array))
-            RGSet <- minfi::read.metharray.exp(
-                base = idatPath, 
-                targets = sheet, 
-                verbose = T, force = T)
-        }
+          sheet <- minfi::read.metharray.sheet(getwd(), arraySheet)
+          sheet <- CleanUpSheetRows(sheet, idatPath)
+          RGSet <- minfi::read.metharray.exp(base = idatPath, targets = sheet, verbose = T, force = T)
+          }
         SaveObj(RGSet, file.name = rgOut)
-    } else{RGSet <- LoadRdatObj(rgOut)}
+      }
     return(RGSet)
 }
 
