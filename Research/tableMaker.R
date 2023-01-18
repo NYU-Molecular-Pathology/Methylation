@@ -113,6 +113,8 @@ FixNullNaVars <- function(targets, varColumns) {
 GetDefaultColors <- function(col_vect=NULL){
   if (is.null(col_vect)) {col_vect <- pals::glasbey()}
     col_vect[c(6,4)] = c("#eb7d34","#ADD8E6") #changing dark forest-black to orange color
+    col_vect_extra <- c("#CCF000", "#0F99FA", "#669999", "#00CCCC", "#660099", "#CC0066", "#FF9999", "#FFFF00", "#BF2600")
+    col_vect <- c(col_vect, col_vect_extra)
     col_vect <- unique(col_vect)
     return(col_vect)
 }
