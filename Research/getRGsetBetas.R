@@ -315,11 +315,13 @@ getTargCsv <- function(csvFi = "samplesheet.csv") {
 
 
 MatchRGtargets <- function(RGSet, sampleSheet=NULL){
-  if(is.null(samplesheet)){samplesheet <- file.path(getwd(),"csv","samplesheet.csv")}
+  if(is.null(sampleSheet)){sampleSheet <- file.path(getwd(),"csv","samplesheet.csv")}
   toDrop <- targets[,gb$col_sentrix] %in% RGSet@colData@rownames
   targets <- targets[toDrop,]
   write.csv(targets, sampleSheet, quote=F, row.names=F)
-  targets <- getTargCsv(sampleSheet)
+  targets <- gb$getTargCsv(sampleSheet)
   return(targets)
 }
+
+
 
