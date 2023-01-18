@@ -487,3 +487,17 @@ LoopSaveHm <- function(hm.db, varProbes, fi_prefix = "hm_top_", fi_suffix = "_no
   }
 }
                                            
+
+LoopPrintHeatMap <- function(unBetas, ha, geneNams, colSplt=3, hm.db = NULL) {
+    for (topNum in gb$varProbes) {
+      cat(paste("###", "Top", topNum, "\n\n"))
+      hmTitle <- paste("Top", topNum, "Variance Probes Beta Values")
+      bv <- unBetas[1:topNum, ]
+      hm <- gb$getHeatMap(bv, hmTitle, ha, geneNams, colSplt = colSplt)
+      hm
+      hm.db <- c(hm.db, hm)
+      cat('\n\n')
+    }
+    return(hm.db)
+  }
+                                           
