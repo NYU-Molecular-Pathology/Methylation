@@ -306,3 +306,20 @@ GetMsetSq <- function(RGSet, targets, varName) {
     return(mSetSq.beta)
 }
 
+getTargCsv <- function(csvFi = "samplesheet.csv") {
+  gc(verbose = F)
+  targets <- read.csv(csvFi, strip.white = T, row.names = NULL)
+  targets <- dfTargets(targets)
+  return(targets)
+}
+
+
+MatchRGtargets <- function(RGSet, sampleSheet=NULL){
+  if(is.null(samplesheet)){samplesheet <- file.path(getwd(),"csv","samplesheet.csv")}
+  toDrop <- targets[,gb$col_sentrix] %in% RGSet@colData@rownames
+  targets <- targets[toDrop,]
+  write.csv(targets, sampleSheet, quote=F, row.names=F)
+  targets <- getTargCsv(sampleSheet)
+  return(targets)
+}
+
