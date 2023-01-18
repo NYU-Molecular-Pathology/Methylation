@@ -272,11 +272,13 @@ dropBadQc <- function(targets, betas, csvFi="samplesheet.csv") {
 # Matches RGset to any dropped samples of cleaned Beta Values
 cleanRgset <- function(RGSet, col_sentrix, betas) {
   rgDat <- RGSet@colData@listData
-  senDat <- rgDat[[col_sentrix]]
-  dropSam <- rgDat[["Sample_ID"]] %in% colnames(betas)
+  rgDat[[gb$col_sentrix]] <- rgDat[["Barcode"]]
+  senDat <- rgDat[[gb$col_sentrix]]
+  dropSam <- rgDat[["Sample_Name"]] %in% colnames(betas)
   rgRows <- RGSet@colData@rownames
   return(RGSet[, rgRows %in% senDat[dropSam]])
 }
+
 
 checkMdsRds <- function(mbfile, runDir, RGSet, targets) {
   if (file.exists(file.path(runDir, mbfile))) {
@@ -288,6 +290,7 @@ checkMdsRds <- function(mbfile, runDir, RGSet, targets) {
   return(mSetSq.beta)
 }
 
+
 GetMsetSq <- function(RGSet, targets, varName) {
     if (file.exists(file.path(gb$runDir, gb$mbfile))) {
         mSetSq.beta <- LoadRdatObj(gb$mbfile)
@@ -297,5 +300,4 @@ GetMsetSq <- function(RGSet, targets, varName) {
     }
     return(mSetSq.beta)
 }
-
 
