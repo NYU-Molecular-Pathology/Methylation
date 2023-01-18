@@ -256,9 +256,9 @@ grabProbes <- function(your_genes, RGSet, region){
                                            
 col_fun3 <- circlize::colorRamp2(c(0, 0.20, 0.25, 0.5, 0.75, 1), c("black","darkblue","deepskyblue", "white", "tomato","red"))
                                            
-saveHmPng <- function(fi_prefix, fi_suffix, hm, topvar = "", outDir=NULL) {
+SaveHmPng <- function(fi_prefix, fi_suffix, hm, topvar = "", outDir=NULL) {
   if(is.null(outDir)){outDir<-getwd()}
-  hmOutDir <- file.path(outDir, "figures", "heatmaps")
+  hmOutDir <- file.path(".", "figures", "heatmaps")
   if(!dir.exists(hmOutDir)){dir.create(hmOutDir)}
   imgFile <- file.path(hmOutDir, paste0(fi_prefix, topvar, fi_suffix))
   wd <- as.numeric(hm@ht_list_param[["width"]]) + 5
@@ -272,8 +272,7 @@ saveHmPng <- function(fi_prefix, fi_suffix, hm, topvar = "", outDir=NULL) {
   )
   ComplexHeatmap::draw(hm)
   invisible(dev.off())
-}  
-                                           
+}                                  
                                            
 gb$getHeatMap2 <-
   function(betaRanges,
