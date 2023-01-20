@@ -319,3 +319,13 @@ GetSamFreqTab <- function(targets, varCol1, varCol2 = NULL) {
 }
 
 
+MessageBatches <- function(targets, col_batchEffect) {
+  if (!is.null(col_batchEffect)) {
+    cat(paste("## Batch Effect Column Name:", col_batchEffect, "\n\n"))
+    cat("Different Batches:\n")
+    cat(paste(unique(targets[, col_batchEffect]), collapse = ",\n"))
+    cat("\n\n")
+  }
+}
+
+
