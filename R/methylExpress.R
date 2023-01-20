@@ -38,12 +38,8 @@ rmdScripts <- c("ClassTables.R", "MLH1_Functions.R", "PipeLineU.R", "RedcapOutpu
 LoadGitHubScripts(mainHub, scriptList)
 LoadGitHubScripts(file.path(mainHub,"Report-Scripts"), rmdScripts)
 
-baseFolder <- gb$CheckBaseFolderInput(baseFolder)
-
-# Unload Libraries to properly source v11 Package References -------------------------------------
-gb$LoadAndUnloadPacks()
-
 # Assign Parameters if Defined -------------------------------------------------------------------
+baseFolder <- gb$CheckBaseFolderInput(baseFolder)
 selectRDs <- gb$AssignArgs(runID, baseFolder, token, selectRDs, redcapUp, gb)
 gb$reportMd <- reportMd <- "~/report.Rmd"
 
