@@ -184,3 +184,9 @@ CheckBaseFolderInput <- function(baseFolder){
     return(baseFolder)
 }
 
+LoadAndUnloadPacks <- function(){
+    unloadNamespace("mnp.v11b4"); unloadNamespace("mnp.v12b6"); unloadNamespace("sarc.v12b6")
+    loadNamespace("mnp.v11b6"); require("mnp.v11b6"); library("mnp.v11b6")
+}
+
+
