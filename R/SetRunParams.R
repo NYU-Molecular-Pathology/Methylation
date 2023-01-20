@@ -176,17 +176,17 @@ message(varStr,": ", ifelse(is.null(varValue), "NULL", varValue));return(assign(
 }
 
 
-CheckBaseFolderInput <- function(baseFolder){
-    if(!is.null(baseFolder) & !identical(baseFolder, "NULL")) {
-        message("Checking if custom run directory is valid: ", baseFolder, "\n")
-        stopifnot("Input directory does not exist! Create it with mkdir" = dir.exists(baseFolder) == T)
-    } else{baseFolder <- NULL}
-    return(baseFolder)
-}
-
 LoadAndUnloadPacks <- function(){
     unloadNamespace("mnp.v11b4"); unloadNamespace("mnp.v12b6"); unloadNamespace("sarc.v12b6")
     loadNamespace("mnp.v11b6"); require("mnp.v11b6"); library("mnp.v11b6")
 }
 
+CheckBaseFolderInput <- function(baseFolder){
+    if(!is.null(baseFolder) & !identical(baseFolder, "NULL")) {
+        message("Checking if custom run directory is valid: ", baseFolder, "\n")
+        stopifnot("Input directory does not exist! Create it with mkdir" = dir.exists(baseFolder) == T)
+    } else{baseFolder <- NULL}
+    LoadAndUnloadPacks()
+    return(baseFolder)
+}
 
