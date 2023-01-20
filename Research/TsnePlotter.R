@@ -96,7 +96,8 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL,
         shapeVals <- c(19, 17, 15, 7, 8, 9, 1, 3, 4, 5)
         plotSymLen <- 1:length(unique(tsne_plot$symbol))
         if(length(plotSymLen)>10){
-          shapeVals <- sample(c(1:25))
+          newVals <-c(1:25, 32:127)
+          shapeVals <- newVals
         }
         sv <- shapeVals[plotSymLen]
         shapeLabels <-levels(as.factor(tsne_plot$symbol))
@@ -111,7 +112,7 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL,
     et <- ggplot2::element_text(size = 12)
     # Creating Main ggplot Object
     groupTsne <- ggplot(tsne_plot, aes(x=tsne_plot$x,y=tsne_plot$y,group=tsne_plot$GROUPS)) +
-        geom_point(aes(x, y, color = tsne_plot$GROUPS, shape = symShape), size = 3, alpha = 0.85)
+        geom_point(aes(x, y, color = tsne_plot$GROUPS, shape = symShape), size = 5, alpha = 0.85)
     # Adding Symbols if provided
     if (symFlags == T) {
         groupTsne <- groupTsne + 
@@ -120,7 +121,7 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL,
     # Adding Main Plot Colors and Axis Labels
     groupTsne <- groupTsne +
       scale_color_manual(values = colours, name = "Sample Label") +
-      labs(color = colorLabel, size = 4) + theme_bw(base_size = 16) +
+      labs(color = colorLabel, size = 5) + theme_bw(base_size = 16) +
       theme(
         panel.grid.major = ggplot2::element_blank(),
         panel.grid.minor = ggplot2::element_blank(),
