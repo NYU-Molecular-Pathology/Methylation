@@ -306,3 +306,16 @@ CheckTargetIdats <- function(targets) {
     return(targets)
 }
 
+
+GetSamFreqTab <- function(targets, varCol1, varCol2 = NULL) {
+  varColHead <- c("Sample Type", "Freq")
+  sampleColumn <- targets[, varCol1]
+  t1 <- setNames(as.data.frame(table(sampleColumn), row.names = NULL), varColHead)
+  if (!is.null(varCol2)) {
+    sampleColumn <- targets[, varCol2]
+    t1 <- c(t1, setNames(as.data.frame(table(sampleColumn), row.names = NULL), varColHead))
+  } 
+  return(list(t1))
+}
+
+
