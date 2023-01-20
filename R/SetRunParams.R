@@ -168,3 +168,19 @@ setDirectory <- function(foldr) {
         setwd(foldr)
         assign("workDir", foldr)} else{warning(mm2)}
 }
+
+# Check Input Parameters -----------------------------------------------------------------------
+CheckInputArg <- function(varValue, gb, defVal = NULL) {varStr <- deparse(substitute(varValue))
+if(length(varValue)==0|identical(varValue,NULL)|identical(varValue,"NULL")){gb[[varStr]]<-varValue<-defVal}else{varValue<-ifelse(is.na(varValue),NULL,varValue)}
+message(varStr,": ", ifelse(is.null(varValue), "NULL", varValue));return(assign(varStr, varValue, envir = gb))
+}
+
+
+CheckBaseFolderInput <- function(baseFolder){
+    if(!is.null(baseFolder) & !identical(baseFolder, "NULL")) {
+        message("Checking if custom run directory is valid: ", baseFolder, "\n")
+        stopifnot("Input directory does not exist! Create it with mkdir" = dir.exists(baseFolder) == T)
+    } else{baseFolder <- NULL}
+    return(baseFolder)
+}
+
