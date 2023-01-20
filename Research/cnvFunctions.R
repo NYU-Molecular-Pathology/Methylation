@@ -38,6 +38,8 @@ customCNV <- function (Mset, sex = NULL) {
     }
 }
 
+# The GDC transforms copy number values into segment mean--equal to log2(copy-number/ 2).
+# https://docs.gdc.cancer.gov/Data/Bioinformatics_Pipelines/CNV_Pipeline/
 writeSegTab <- function(segFile, targets, idatPath= NULL) {
     if(is.null(idatPath)){idatPath <- getwd()}
   if (!file.exists(segFile)) {
