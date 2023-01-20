@@ -506,6 +506,8 @@ StartRun <- function(selectRDs = NULL, emailNotify = T, redcapUp = T) {
 }
 
 AssignArgs <- function(runID, baseFolder, token, selectRDs, redcapUp, gb){
+    assign("token", token, envir = gb)
+    assign("ApiToken", token, envir = gb)
     gb$defineParams(methDir = baseFolder, baseDir = baseFolder, ApiToken = token)
     gb$setVar("runID", runID)
     if(!is.null(selectRDs)){selectRDs <- stringr::str_split(selectRDs, ",")}
