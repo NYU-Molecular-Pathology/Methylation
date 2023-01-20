@@ -171,8 +171,9 @@ setDirectory <- function(foldr) {
 
 # Check Input Parameters -----------------------------------------------------------------------
 CheckInputArg <- function(varValue, gb, defVal = NULL) {varStr <- deparse(substitute(varValue))
-if(length(varValue)==0|identical(varValue,NULL)|identical(varValue,"NULL")){gb[[varStr]]<-varValue<-defVal}else{varValue<-ifelse(is.na(varValue),NULL,varValue)}
-message(varStr,": ", ifelse(is.null(varValue), "NULL", varValue));return(assign(varStr, varValue, envir = gb))
+    if (length(varValue) == 0 | identical(varValue, NULL) | identical(varValue, "NULL")) {gb[[varStr]] <- varValue <- defVal} else{ varValue <- ifelse(is.na(varValue), NULL, varValue)}
+    if(varStr=="token"){message("\n~~~~~~~~~~~~~~~~~~~~~Parameters input~~~~~~~~~~~~~~~~~~~~~")}
+    message(varStr, ": " , ifelse(is.null(varValue), "NULL", varValue)); return(assign(varStr, varValue, envir = gb))
 }
 
 
