@@ -511,6 +511,7 @@ AssignArgs <- function(runID, baseFolder, token, selectRDs, redcapUp, gb){
     if(!is.null(selectRDs)){selectRDs <- stringr::str_split(selectRDs, ",")}
     assign("redcapUp", redcapUp, envir = gb)
     assign("redcapUpload", redcapUp,  envir = gb)
+    selectRDs <- gb$GetPriorityCases(selectRDs) # Prioritizes select RD-numbers and BN cases
     return(selectRDs)
 }
 
