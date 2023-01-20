@@ -74,7 +74,8 @@ makeDt <-
       targets,
       selection = "single",
       autoHideNavigation = F,
-      options = dtOpts
+      options = dtOpts,
+      class = 'white-space: nowrap'
     )
     return(theDt)
 }
@@ -111,9 +112,9 @@ FixNullNaVars <- function(targets, varColumns) {
 
 
 GetDefaultColors <- function(col_vect=NULL){
-  if (is.null(col_vect)) {col_vect <- pals::glasbey()}
-    col_vect[c(6,4)] = c("#eb7d34","#ADD8E6") #changing dark forest-black to orange color
-    col_vect_extra <- c("#CCF000", "#0F99FA", "#669999", "#00CCCC", "#660099", "#CC0066", "#FF9999", "#FFFF00", "#BF2600")
+  if(is.null(col_vect)){col_vect <- pals::glasbey()}
+    col_vect[c(6,4,18)] = c("#eb7d34","#ADD8E6","#5A5A5A") #changing dark forest-black to orange color
+    col_vect_extra <- c("#CCF000", "#0F99FA", "#669999", "#00CCCC", "#660099", "#CC0066", "#000000", "#FFFF00", "#BF2600","#FF9999")
     col_vect <- c(col_vect, col_vect_extra)
     col_vect <- unique(col_vect)
     return(col_vect)
