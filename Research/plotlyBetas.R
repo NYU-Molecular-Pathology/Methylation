@@ -14,7 +14,8 @@ grabPngNames <- function(tsne_titles=NULL, keywrd="Top"){
 }
 
 
-makePlotly<-function(fig) {
+makePlotly <- 
+function(fig) {
     otherPlot <-
         supM(plotly::ggplotly(
             fig,
@@ -33,9 +34,8 @@ makePlotly<-function(fig) {
     otherPlot[["x"]][["layout"]] <- opLayout
     hoverinfo <- paste0("Sample: ", fig[["data"]][["samples"]], "</br></br>")
     opInfo <- otherPlot[["x"]][["data"]]
-    
     markerSyms <- c("circle", "square", "diamond", "cross", "X", "triangle-up", "triangle-down", "triangle-left","triangle-right", "triangle-ne", "triangle-se", "triangle-sw", "triangle-nw", "pentagon", "hexagon", "hexagon2", "octagon", "star", "hexagram", "star-triangle-up", "star-triangle-down", "star-square", "star-diamond", "diamond-tall", "diamond-wide", "hourglass", "bowtie", "circle-cross", "circle-x", "square-cross", "square-x", "diamond-cross")
-
+    markerSyms<- c(markerSyms, paste0(markerSyms,"-open"))
     for (sam in 1:length(opInfo)) {
         opInfo[[sam]][["hoverinfo"]] <- "none"
         #opInfo[[sam]][["marker"]][["symbol"]] <- 'circle'
@@ -70,8 +70,6 @@ makePlotly<-function(fig) {
             }
         }
     }
-    
-    
     otherPlot <-
         otherPlot %>% plotly::layout(legend = list(
             title = list(text = "<b>Legend</b><br>", font = list(size = 14)),
@@ -84,8 +82,7 @@ makePlotly<-function(fig) {
     return(otherPlot)
 }
 
-
-gb$selectPlots <- function(doPlotly = F, tplots, ty, tps, outDirs) {
+selectPlots <- function(doPlotly = F, tplots, ty, tps, outDirs) {
   for (zz in 1:nrow(outDirs)) {
     invisible(gc())
     fig <- tplots[[zz]]
@@ -97,14 +94,23 @@ gb$selectPlots <- function(doPlotly = F, tplots, ty, tps, outDirs) {
     cat('\n\n')
     cat(paste(tabStart, '\n\n'))
     gc(verbose = F)
-    fig <- fig + theme(legend.direction="vertical", legend.margin=margin(t=-25))
+    fig <- fig +
+      theme(
+        legend.direction = "vertical",
+        legend.margin = margin(t = -25),
+        legend.box.margin = margin(0, 0, 0, 0),
+        legend.justification = "right",
+        legend.position = "top"
+      )
     #fig <- fig + guides(fill = guide_legend(ncol = 1, nrow = 10, byrow = T))
     leg <- supM(cowplot::get_legend(fig))
     fig <- fig + theme(legend.position = "none")
+    #par(mfrow=c(2,1))
     supM(print(fig))
-    #cat('\n\n')
     grid::grid.newpage()
     grid::grid.draw(leg)
+    #par(mfrow=c(1,1))
+    
     cat('\n\n')
   }
   return(assign("diagPlot", tplots[[1]]))
