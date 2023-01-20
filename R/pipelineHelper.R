@@ -506,6 +506,7 @@ StartRun <- function(selectRDs = NULL, emailNotify = T, redcapUp = T) {
 }
 
 AssignArgs <- function(runID, baseFolder, token, selectRDs, redcapUp, gb){
+    stopifnot(!is.null(token)); stopifnot(!is.null(runID))
     assign("token", token, envir = gb)
     assign("ApiToken", token, envir = gb)
     gb$defineParams(methDir = baseFolder, baseDir = baseFolder, ApiToken = token)
