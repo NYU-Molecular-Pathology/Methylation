@@ -16,21 +16,16 @@ if(!require("devtools")){install.packages("devtools", quiet=T)}
 # Check Input Parameters -----------------------------------------------------------------------
 CheckInputArg <- function(varValue, gb, defVal = NULL) {varStr <- deparse(substitute(varValue))
     if (length(varValue) == 0 | identical(varValue, NULL) | identical(varValue, "NULL")) {gb[[varStr]] <- varValue <- defVal} else{ varValue <- ifelse(is.na(varValue), NULL, varValue)}
+    if(varStr=="token"){message("\n~~~~~~~~~~~~~~~~~~~~~Parameters input~~~~~~~~~~~~~~~~~~~~~")}
     message(varStr, ": " , ifelse(is.null(varValue), "NULL", varValue)); return(assign(varStr, varValue, envir = gb))
 }
 
 # Message and Check Input Args ------------------------------------------------------------------
-message("\n~~~~~~~~~~~~~~~~~~~~~Parameters input~~~~~~~~~~~~~~~~~~~~~")
 CheckInputArg(token, gb); CheckInputArg(runID, gb); CheckInputArg(selectRDs, gb); CheckInputArg(baseFolder, gb)
 CheckInputArg(redcapUp, gb, T); CheckInputArg(runLocal, gb, F)
 
 stopifnot(!is.null(token)); stopifnot(!is.null(runID))
-gb$ApiToken <- gb$token <- token
-assign("token", token, envir = gb); assign("ApiToken", token, envir = gb)
-
-if(!is.null(baseFolder) & !identical(baseFolder, "NULL")) {message("Checking if custom run directory is valid: ", baseFolder, "\n")
-    stopifnot("Input directory does not exist! Create it with mkdir" = dir.exists(baseFolder) == T)
-} else{baseFolder <- NULL}
+gb$ApiToken <- gb$token <- token; assign("token", token, envir = gb); assign("ApiToken", token, envir = gb)
 
 LoadGitHubScripts <- function(ghRepo, scriptList){scripts <- file.path(ghRepo, scriptList)
     return(invisible(lapply(scripts, function(i){message("Sourcing: ", i); devtools::source_url(i)})))
@@ -43,9 +38,10 @@ rmdScripts <- c("ClassTables.R", "MLH1_Functions.R", "PipeLineU.R", "RedcapOutpu
 LoadGitHubScripts(mainHub, scriptList)
 LoadGitHubScripts(file.path(mainHub,"Report-Scripts"), rmdScripts)
 
+baseFolder <- gb$CheckBaseFolderInput(baseFolder)
+
 # Unload Libraries to properly source v11 Package References -------------------------------------
-unloadNamespace("mnp.v11b4"); unloadNamespace("mnp.v12b6"); unloadNamespace("sarc.v12b6")
-loadNamespace("mnp.v11b6"); require("mnp.v11b6"); library("mnp.v11b6")
+gb$LoadAndUnloadPacks()
 
 # Assign Parameters if Defined -------------------------------------------------------------------
 selectRDs <- gb$AssignArgs(runID, baseFolder, token, selectRDs, redcapUp, gb)
