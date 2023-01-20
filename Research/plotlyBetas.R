@@ -175,7 +175,8 @@ plotSaver <- function(outDirs,tsne_titles,tps,ty,plotList,custom, names2Label=NU
       titleLabel=tsne_titles[plotN],
       symbolsLabel = pL$symbol,
       colorLabel = pL$GROUPS,
-      names2Label = names2Label) # any specific sample names to label on the plot
+      names2Label = names2Label # any specific sample names to label on the plot
+      ) 
       ) 
 ###################### TO CHANGE ########################
  }
@@ -184,15 +185,16 @@ plotSaver <- function(outDirs,tsne_titles,tps,ty,plotList,custom, names2Label=NU
 
 
 gb$subsetBetas <- function(targFilter,
-                           samGroup,
-                           betas,
-                           targets,
-                           samShapes,
-                           samNames,
-                           tsne_titles,
-                           doPlotly = F,
-                           supervised = F,
-                           names2Label = NULL) {
+                        samGroup,
+                        betas,
+                        targets,
+                        samShapes,
+                        samNames,
+                        tsne_titles,
+                        doPlotly = F,
+                        supervised = F,
+                        names2Label = NULL)
+{
   tps <- unique(targFilter)
   targets$SamGroups <- targets$SampleFilter <- NULL
   targets$SampleFilter <- samNames # creating new column
@@ -205,15 +207,19 @@ gb$subsetBetas <- function(targFilter,
   for (ty in 1:nrow(tps)) {
     gc(verbose = F)
     custom = tps[ty, 1]
-    message("Current Sample Group TSNE: ", custom, "\nAll Target Filter Groups: ", paste(unique(targFilter)))
-    targets1 <- targets[targFilter == custom,]
+    message("Current Sample Group TSNE: ", custom, "\nAll Target Group Filters: ",paste(unique(targFilter)))
+    
+    # Filter The Beta Values ---------
+    targets1 <- targets[targFilter == custom, ]
     allBetas1 <- gb$grabAllBeta(targets1, betas, supervised)
-    outDirs <- gb$grabPngNames(tsne_titles)[, ]
+    outDirs <- gb$grabPngNames(tsne_titles)[,]
+    
     tplots <- plotList <- NULL
-    plotList <- gb$doMultiple(allBetas1, tsne_titles, outDirs, targets1, tps, ty, custom)
+    # Get T-sne Values ---------
+    plotList <-gb$doMultiple(allBetas1, tsne_titles, outDirs, targets1, tps, ty, custom)
     gc(verbose = F)
-    tplots <-
-      gb$plotSaver(outDirs, tsne_titles, tps, ty, plotList, custom, names2Label)
+    
+    tplots <- gb$plotSaver(outDirs, tsne_titles, tps, ty, plotList, custom, names2Label)
     gb$selectPlots(doPlotly, tplots, ty, tps, outDirs)
   }
 }
