@@ -231,13 +231,13 @@ LoopSaveHsaPng <- function(pathWayGenes, pathCsvOut){
   }
 }
 
-WritePathVals <- function(geneVals, geneListIn){
+WritePathVals<- function(geneVals, geneListIn){
     # Sort lowest Pvalues and lowest qvalue
-    message("Min p-value: ", min(geneVals$pvalue))
+    message("Min p-value: ",min(geneVals$pvalue))
     topPaths <- topPaths[order(topPaths$qvalue),]
     topPaths <- topPaths[1:5,] # take top 5 pathways
     pathWayGenes <- as.data.frame(topPaths)
-    write.csv(pathWayGenes, file = geneListIn, row.names = F, quote = F)
+    write.csv(pathWayGenes, file = file.path(".","figures","pathway",geneListIn), row.names = F, quote = F)
     return(pathWayGenes)
 }
 
