@@ -1,7 +1,6 @@
 #!/usr/bin/env Rscript
-library("base")
-gb <- globalenv(); assign("gb", gb)
-args <- commandArgs(TRUE)
+library("base"); gb <- globalenv(); assign("gb", gb); args <- commandArgs(TRUE)
+if(!require("devtools")){install.packages("devtools", quiet=T)}
 
 # Parameters Input trailing commandline -------------------------------------------------------
 args[1] -> token      # <- NULL
@@ -11,22 +10,7 @@ args[4] -> baseFolder # <- NULL
 args[5] -> redcapUp   # <- TRUE
 args[6] -> runLocal   # <- FALSE
 
-if(!require("devtools")){install.packages("devtools", quiet=T)}
-
-# Check Input Parameters -----------------------------------------------------------------------
-CheckInputArg <- function(varValue, gb, defVal = NULL) {varStr <- deparse(substitute(varValue))
-    if (length(varValue) == 0 | identical(varValue, NULL) | identical(varValue, "NULL")) {gb[[varStr]] <- varValue <- defVal} else{ varValue <- ifelse(is.na(varValue), NULL, varValue)}
-    if(varStr=="token"){message("\n~~~~~~~~~~~~~~~~~~~~~Parameters input~~~~~~~~~~~~~~~~~~~~~")}
-    message(varStr, ": " , ifelse(is.null(varValue), "NULL", varValue)); return(assign(varStr, varValue, envir = gb))
-}
-
-# Message and Check Input Args ------------------------------------------------------------------
-CheckInputArg(token, gb); CheckInputArg(runID, gb); CheckInputArg(selectRDs, gb); CheckInputArg(baseFolder, gb)
-CheckInputArg(redcapUp, gb, T); CheckInputArg(runLocal, gb, F)
-
-stopifnot(!is.null(token)); stopifnot(!is.null(runID))
-gb$ApiToken <- gb$token <- token; assign("token", token, envir = gb); assign("ApiToken", token, envir = gb)
-
+# Source and Load Functions and Packages --------------------------------------------------------------------------
 LoadGitHubScripts <- function(ghRepo, scriptList){scripts <- file.path(ghRepo, scriptList)
     return(invisible(lapply(scripts, function(i){message("Sourcing: ", i); devtools::source_url(i)})))
 }
@@ -37,6 +21,13 @@ scriptList <- c("LoadInstallPackages.R", "SetRunParams.R", "MakeSampleSheet.R", 
 rmdScripts <- c("ClassTables.R", "MLH1_Functions.R", "PipeLineU.R", "RedcapOutput.R", "TsneFunctions.R", "cnvggplotly.R")
 LoadGitHubScripts(mainHub, scriptList)
 LoadGitHubScripts(file.path(mainHub,"Report-Scripts"), rmdScripts)
+
+# Message and Check Input Args ------------------------------------------------------------------
+gb$CheckInputArg(token, gb); gb$CheckInputArg(runID, gb); gb$CheckInputArg(selectRDs, gb); gb$CheckInputArg(baseFolder, gb)
+gb$CheckInputArg(redcapUp, gb, T); gb$CheckInputArg(runLocal, gb, F)
+
+stopifnot(!is.null(token)); stopifnot(!is.null(runID))
+gb$ApiToken <- gb$token <- token; assign("token", token, envir = gb); assign("ApiToken", token, envir = gb)
 
 # Assign Parameters if Defined -------------------------------------------------------------------
 baseFolder <- gb$CheckBaseFolderInput(baseFolder)
