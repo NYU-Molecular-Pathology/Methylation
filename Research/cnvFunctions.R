@@ -362,3 +362,20 @@ rmDupeAnnotation <- function(dupeRows) {
       return(newRow)}))
   return(dupeRows2)
 }
+
+
+GenCNVdataGroupSave <- function(cnData, targets, col_samGroup, plotChr = NULL) {
+  cnData$group <- NULL
+  targets$Type <- targets[col_samGroup, ]
+  for (sn in unique(cnData$sample)) {
+    selec <- cnData$sample == sn
+    cnData$group[selec] <- targets$Type[targets$Sample_Name == sn]
+  }
+  
+  for (samgrp in unique(cnData$group)) {
+    plotTitle <- paste0(samgrp)
+    cnDat2 <- gb$filterGrp(cnData, samgrp)
+    gb$SaveLoadCnvs(cnDat2, plotName = plotTitle, plotTitle, plotChr=plotChr)
+  }
+}
+
