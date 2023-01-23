@@ -184,7 +184,8 @@ addOutputLinks <- function(output){
 }
 
 modifyOutput <- function(output,vals2find){
-    output$Test_Number <- NA
+    
+  output$Test_Number <- NA
     for(i in 1:nrow(output)) {
         theVal = NA
         for (var in 1:ncol(vals2find)) {
@@ -246,6 +247,11 @@ getOuputData <- function(token, flds, inputSheet, readFlag){
     db <- grabAllRecords(flds, rcon)
     if(nrow(vals2find)!=0){
         output <- queryCases(vals2find, db)
+    }
+    
+    if(nrow(output)==0){
+      warning("No Methylation Cases on this Pact run, generating blank file")
+      output[1,] <- "NONE"
     }
 
     runId <- ifelse(readFlag == T, substr(inputSheet,1,nchar(inputSheet)-4), inputSheet)
@@ -409,4 +415,7 @@ checkMounts()
 output <- getOuputData(token, flds, inputSheet, readFlag)
 
 # CNV PNG Creation -------------------------------------
-QueCnvMaker(output, token)
+if(output[1,1]!="NONE"){
+  QueCnvMaker(output, token)
+}
+
