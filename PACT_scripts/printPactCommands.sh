@@ -408,7 +408,7 @@ msg_code "cp ${HOME}/Desktop/${pactRun}_desc.csv ${consensusDir}${pactRun}_conse
 msg_step 6 "#bae1ff" "Open Philips Intellispace and the ${pactRun}_desc.csv file and annotate the variant calls:"
 white_bg "<b>${consensusDir}${pactRun}_consensus/${pactRun}_desc.csv</b>"
 msg_step 7 "#bae1ff" "Once you have completely filled the consensus description file, knit the Rmd in Rstudio and view it"
-msg_code "Rscript --verbose -e \"rmarkdown::render('${pactRun}_consensus.Rmd', params=list(pactName='${pactRun}', userName='Jonathan'))\""
+msg_code "Rscript --verbose -e \"rmarkdown::render('${pactRun}_consensus.Rmd', params=list(pactName='${pactRun}', userName='${kerbero}'))\""
 msg_step 8 "#bae1ff" "After the concensus html file is created, copy to the output folder"
 msg_code "cp ${consensusDir}${pactRun}_consensus/${pactRun}_consensus.html \"/Volumes${outputDir}${currYear}/${pactRun}/\""
 echo "$BOX2"
