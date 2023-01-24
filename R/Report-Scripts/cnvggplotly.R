@@ -32,6 +32,7 @@ MNPcnv450kNew <- function(Mset, sex = NULL, ...) {
 GetCNxx <- function(Mset, sex, sampleID) {
     is450k <-  Mset@annotation[["array"]] != "IlluminaHumanMethylationEPIC"
     if (is450k == TRUE) {
+        load(paste(path.package('mnp.v11b4'),'/ext/ovgenes.RData',sep=''))
         xx <- MNPcnv450kNew(Mset, sex = sex, main = sampleID)
     } else {
         xx <- supM(mnp.v11b6::MNPcnv(Mset, sex = sex, main = sampleID))
@@ -165,6 +166,7 @@ NewGgplotly <- function (msetDat, dat) {
             "<br>", "Genes: ", newOvGenes[1:length(xx@bin$ratio)]
         )
     } else {
+        load(paste(path.package('mnp.v11b4'),'/ext/ovgenes.RData',sep=''))
         ggpb$x$data[[1]]$text <- paste0(
             seqnames(xx@anno@bins),
             "<br>", "start: ", start(xx@anno@bins),
