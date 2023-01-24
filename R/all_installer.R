@@ -587,7 +587,7 @@ message("...loading")
 supM(librarian::shelf(preReqPkgs, ask = F, update_all = F, quiet = FALSE))
 
 message("Loading BioConductor Packages and IlluminaHumanMethylation Manifest...")
-supM(librarian::shelf(biocPkgs, ask = F, update_all = F, quiet = FALSE))
+supM(librarian::shelf(biocPkgs, ask = F, update_all = F, quiet = FALSE, dependencies=T))
 
 if(checkRequire("IlluminaHumanMethylationEPICmanifest")){
     devtools::install_github(
