@@ -587,6 +587,7 @@ message("...loading")
 supM(librarian::shelf(preReqPkgs, ask = F, update_all = F, quiet = FALSE))
 
 message("Loading BioConductor Packages and IlluminaHumanMethylation Manifest...")
+BiocManager::install("FDb.InfiniumMethylation.hg19", update = F, ask = F, dependencies=T)
 supM(librarian::shelf(biocPkgs, ask = F, update_all = F, quiet = FALSE, dependencies=T))
 
 if(checkRequire("IlluminaHumanMethylationEPICmanifest")){
