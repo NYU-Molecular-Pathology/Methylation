@@ -107,9 +107,25 @@ GetSexMsetBa <- function(RGset, FFPE=NULL){
     return(list("sex"=sex, "Mset"= Mset, "Mset_ba"=Mset_ba, "FFPE"=FFPE))
 }
 
+
 GetFamilyProb <- function(is450k, Mset_ba, Mset){
-    library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylationEPICmanifest")
-    library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b6")
+    if(is450k){
+        library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylation450kmanifest")
+        library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b4")
+        tryCatch(
+        expr = {
+            probs_mcf <- mnp.v11b4::MNPpredict(Mset_ba[, 1], type = 'prob', MCF = TRUE)
+        },
+        error = function(e) {
+            message("Error occured at Brain Classifier v11 prediction:")
+            message("Using MNPpredict(Mset[, 1]) instead of Mset_ba\n")
+            probs_mcf <- mnp.v11b4::MNPpredict(Mset[, 1], type = 'prob', MCF = TRUE)
+        }
+        )
+    }else{
+        library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylationEPICmanifest")
+        library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b6")
+        
     tryCatch(
         expr = {
             probs_mcf <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob', MCF = TRUE)
@@ -119,8 +135,8 @@ GetFamilyProb <- function(is450k, Mset_ba, Mset){
             message("Using MNPpredict(Mset[, 1]) instead of Mset_ba\n")
             probs_mcf <- mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob', MCF = TRUE)
         }
-    )
-
+        )
+        }
     return(probs_mcf)
 }
 
@@ -210,13 +226,18 @@ GetOutScore <- function(out){
 }
 
 GetOutClass <- function(msetDat){
-        Mset_ba <- msetDat$Mset_ba
-        Mset <- msetDat$Mset
-        is450k <- Mset_ba@annotation[["array"]] == "IlluminaHumanMethylationEPIC"
+    Mset_ba <- msetDat$Mset_ba
+    Mset <- msetDat$Mset
+    is450k <- Mset_ba@annotation[["array"]] != "IlluminaHumanMethylationEPIC"
     library(verbose=F, warn.conflicts = F, quietly = T, package= "knitr")
     library(verbose=F, warn.conflicts = F, quietly = T, package= "kableExtra")
-    library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b6", mask.ok = T)
-    requireNamespace("mnp.v11b6", quietly = T)
+    if(is450k==T){
+        library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b4", mask.ok = T)
+        requireNamespace("mnp.v11b4", quietly = T)
+    }else{
+        library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b6", mask.ok = T)
+        requireNamespace("mnp.v11b6", quietly = T)
+    }
     probs <- gb$GetProbData(is450k, Mset_ba, Mset)
     oo <- base::order(probs, decreasing = T)
     eps <- 1e-3
@@ -228,6 +249,7 @@ GetOutClass <- function(msetDat){
     out <- as.data.frame(out)
     subVal_int <- GetOutScore(out)
     out$Interpretation = c(subVal_int,"","","","")
+    
     out_class_family <- GetOutFamily(is450k, Mset_ba, Mset)
     return(list("out"=out,"idx"=idx, "out_class_family"=out_class_family))
 }
