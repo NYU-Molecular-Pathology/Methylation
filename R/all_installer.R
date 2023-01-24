@@ -724,12 +724,12 @@ if (checkRequire("GenVisR")) {
 suppressWarnings(librarian::shelf(pkgs, ask = F, update_all = F, quiet = FALSE))
 invisible(gc())
 
-cbioLn <- switch(
-    Sys.info()[['sysname']],
-    "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
-    "Linux" = "~/molecpathlab/production/Methylation/classifiers"
+cbioLn <- switch(Sys.info()[['sysname']],
+                 "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
+                 "Linux" = "~/molecpathlab/production/Methylation/classifiers"
     )
 
+librarian::shelf(c("mlr", "wateRmelon", "RPMM", "impute"), ask=F, update_all = FALSE, quiet = FALSE)
 if (checkRequire("UniD")) {try(install.packages(file.path(cbioLn, "UniD"), type="source", repos=NULL), silent=T)}
 
 closeAllConnections()
