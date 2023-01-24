@@ -69,6 +69,7 @@ loadPacks <- function(){
 
 # API Call functions -----
 grabAllRecords <- function(flds, rcon){
+    message("Pulling REDCap data...")
     params = list(rcon, fields=flds, labels=F, dates = F, survey = F, dag = F, factors=F, form_complete_auto=F)
     dbCols <- do.call(redcapAPI::exportRecords, c(params))
     return(as.data.frame(dbCols))
@@ -245,6 +246,11 @@ getOuputData <- function(token, flds, inputSheet, readFlag){
     rcon <- redcapAPI::redcapConnection(apiUrl, token)
     vals2find <- getCaseValues(inputSheet, readFlag)
     db <- grabAllRecords(flds, rcon)
+    if(nrow(db)==0){
+        message("Your REDCap API connection failed!")
+        message("Check the Database for non-ASCII characters and your API Token: ", token)
+        stopifnot(nrow(db)>0)
+    }
     if(nrow(vals2find)!=0){
         output <- queryCases(vals2find, db)
     }
