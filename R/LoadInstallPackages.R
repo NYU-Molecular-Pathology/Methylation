@@ -510,15 +510,19 @@ startLoadingAll <- function() {
     checkClassifier(mnpV6)
     checkClassifier(mnpV12)
     checkClassifier(srcV12)
+  
   if(!require("impute")){
-    try( BiocManager::install("impute", update=F, ask=F, dependencies=T, type="binary"), silent=T)
+    try(BiocManager::install("impute", update=F, ask=F, dependencies=T, type="binary"), silent=T)
   }
+  
   if(!require("wateRmelon")){
-    try( BiocManager::install("wateRmelon", update=F, ask=F, dependencies=T, type="binary"), silent=T)
+    try(BiocManager::install("wateRmelon", update=F, ask=F, dependencies=T, type="binary"), silent=T)
   }
-    try(if (!requireNamespace("UniD", quietly = TRUE)) {
-        install.packages(uniDpath, type = "source", dependencies = T, repo = NULL)
-    }, silent = T)
+   
+  if (!requireNamespace("UniD", quietly = TRUE)) {
+    try(install.packages(uniDpath, type = "source", dependencies = T, repo = NULL), silent = T)
+  }
+
     closeAllConnections()
 }
 
