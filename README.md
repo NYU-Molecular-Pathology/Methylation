@@ -27,7 +27,7 @@ Download and install the following packages:<br>
 - [X] **XQuartz**: https://www.xquartz.org/<br />
 - [X] **LaTeX** for Mac: https://www.tug.org/mactex/mactex-download.html<br />
 - [X] **Pandoc**: https://pandoc.org/installing.html<br />
-- [X] **XCode 12.0** or higher for Mac OS: https://developer.apple.com/download/all/?q=xcode<br>
+- [X] **XCode command line tools** for Mac OS: `xcode-select --install`<br>
 - [X] **Java 8 JDK**: https://www.oracle.com/java/technologies/downloads/#java8-mac
 - [X] **Rswitch**: https://rud.is/rswitch/<br />
 - [X] **Homebrew**: https://brew.sh/ you can install using the following line in terminal:<br />
