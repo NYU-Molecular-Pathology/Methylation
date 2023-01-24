@@ -181,7 +181,7 @@ preReqPkgs <- c(
     'AnnotationDbi',
     'reshape2',
     'matrixStats',
-    #'FDb.InfiniumMethylation.hg19',
+    'FDb.InfiniumMethylation.hg19',
     'S4Vectors',
     'IRanges',
     'GenomeInfoDb',
