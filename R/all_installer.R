@@ -587,22 +587,21 @@ message("...loading")
 supM(librarian::shelf(preReqPkgs, ask = F, update_all = F, quiet = FALSE))
 
 message("Loading BioConductor Packages and IlluminaHumanMethylation Manifest...")
-BiocManager::install("FDb.InfiniumMethylation.hg19", update = F, ask = F, dependencies=T)
-
-supM(librarian::shelf(biocPkgs, ask = F, update_all = F, quiet = FALSE, dependencies=T))
 
 if(checkRequire("IlluminaHumanMethylationEPICmanifest")){
-    devtools::install_github(
-        repo = "mwsill/IlluminaHumanMethylationEPICmanifest",
-        dependencies = T, upgrade = "never"
-    )
+    devtools::install_github(repo = "mwsill/IlluminaHumanMethylationEPICmanifest", dependencies = T, upgrade = "never")
 }
+
+if(checkRequire("FDb.InfiniumMethylation.hg19")){
+    BiocManager::install("FDb.InfiniumMethylation.hg19", update=F, ask=F, dependencies=T)
+}
+
+supM(librarian::shelf(biocPkgs, ask=F, update_all=F, quiet=F, dependencies=T))
 
 if(checkRequire("mgmtstp27")){
     gitLink <- "https://github.com/badozor/mgmtstp27/raw/master/archive/mgmtstp27_0.6-3.tar.gz"
     install.packages(gitLink, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F)
 }
-
 
 fixProf <- function() {
     txt1 <- "^[:blank:]*autoload\\(\"needs\", \"needs\"\\)"
@@ -664,14 +663,11 @@ if(Sys.info()[['sysname']]=="Darwin"){
     checkNeeds()
     closeAllConnections()
     isGdal <- paste(system("echo `gdalinfo --version`", intern = T))
-
     if(!exists("isGdal")){
         system("brew install pkg-config")
         system("brew install gdal")
     }
-
     isProj <- system("which proj", intern=T)
-
     if(!exists("isProj")){
         system("brew install pkg-config")
         system("brew install proj")
@@ -682,9 +678,11 @@ if(Sys.info()[['sysname']]=="Darwin"){
   }
   options(needs.promptUser=FALSE)
 }
+
 if(!(require("Rcpp"))){remotes::install_github("RcppCore/Rcpp")}
 spat_config <- '--with-proj-lib=/usr/local/lib/ --with-proj-include=/usr/local/include/'
 options(configure.args = c("sf" = spat_config, "rgdal" = spat_config))
+
 if(checkRequire("sf")){
     tryCatch(
         install.packages(c("sf"), type = "source", dependencies=T, verbose=T, Ncpus = 4),
@@ -695,13 +693,13 @@ if(checkRequire("sf")){
 }
 
 if(checkRequire("rgdal")){
-    install.packages("rgdal", configure.args = c("--with-proj-lib=/usr/local/lib/", "--with-proj-include=/usr/local/include/"), type = "source", dependencies=T, verbose=T, Ncpus = 4)
+    install.packages("rgdal", configure.args = c("--with-proj-lib=/usr/local/lib/", "--with-proj-include=/usr/local/include/"), 
+                     type = "source", dependencies=T, verbose=T, Ncpus = 4)
+}
 
-}
 invisible(gc())
-if(Sys.info()[['sysname']]=="Darwin"){
-    system("export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib")
-}
+
+if(Sys.info()[['sysname']]=="Darwin"){system("export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib")}
 
 options("install.packages.compile.from.source" = "No")
 options("install.packages.check.source" = "no")
@@ -710,6 +708,7 @@ loadLibrary("Biobase")
 
 terraDep <- c('tinytest', 'ncdf4', 'leaflet')
 suppressWarnings(librarian::shelf(terraDep, ask = F, update_all = F, quiet = FALSE))
+
 if(checkRequire("terra")) {
     install.packages('terra', repos = 'https://rspatial.r-universe.dev', dependencies = T, verbose = T, Ncpus = 4)
 }
@@ -725,14 +724,12 @@ if (checkRequire("GenVisR")) {
 suppressWarnings(librarian::shelf(pkgs, ask = F, update_all = F, quiet = FALSE))
 invisible(gc())
 
+cbioLn <- switch(
+    Sys.info()[['sysname']],
+    "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
+    "Linux" = "~/molecpathlab/production/Methylation/classifiers"
+    )
 
-cbioLn <- switch (Sys.info()[['sysname']],
-                  "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
-                  "Linux" = "~/molecpathlab/production/Methylation/classifiers"
-)
-
-if (checkRequire("UniD")) {
-    try(install.packages(file.path(cbioLn, "UniD"), type="source", repos=NULL), silent=T)
-}
+if (checkRequire("UniD")) {try(install.packages(file.path(cbioLn, "UniD"), type="source", repos=NULL), silent=T)}
 
 closeAllConnections()
