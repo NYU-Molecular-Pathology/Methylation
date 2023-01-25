@@ -417,7 +417,7 @@ GetMgmtPlot <- function(Mset_raw){
 }
 
 GetClassProbTables <- function(outList){
-        out_class_family=outList$out_class_family
+    out_class_family=outList$out_class_family
     stopifnot(!is.null(outList) & !is.null(out_class_family))
     out <- outList$out
     xtraCss1="border-radius:0px;border-width:1px;border-style:solid;border-color:rgb(192,192,192);"
@@ -446,6 +446,7 @@ GetClassProbTables <- function(outList){
 
     return(list("famTable"=famTable,"grpTable"=grpTable))
 }
+                      
 
 SuppInfoTable <- function(dat, RGset, msetDat){
     suppinfo <- GetSuppInfo(dat, RGset, msetDat)
@@ -465,6 +466,7 @@ SuppInfoTable <- function(dat, RGset, msetDat){
     return(suppTab)
 }
 
+                      
 PrintClassTable <- function(outList,gitPath){
     classTables <- gb$GetClassProbTables(outList)
     knitr::asis_output(classTables$famTable)
@@ -473,10 +475,21 @@ PrintClassTable <- function(outList,gitPath){
     knitr::asis_output("<h4>Methylation Class Description</h4>")
 }
 
+                      
 PrintGainLoss <- function(gnLss){
     knitr::asis_output('<p class="cnvdesc"></p> <hr class="dotted"><h4>CNV Gains and Loss</h4>')
     if (nrow(gnLss$gainDf) > 0) {knitr::asis_output(gnLss$gainTab)}
     if (nrow(gnLss$lossDf) > 0) {knitr::asis_output(gnLss$lossTab)}
     knitr::asis_output('<hr class="solid">')
 }
+
+                      
+GetRefList <- function(Mset_ba, outList) {
+  if (Mset_ba@annotation[["array"]] != "IlluminaHumanMethylationEPIC") {
+    return(I(as.character(mnp.v11b4::reflist[outList$idx,7])))
+  } else{
+    return(I(as.character(mnp.v11b6::reflist[outList$idx,7])))
+  }
+}
+
 
