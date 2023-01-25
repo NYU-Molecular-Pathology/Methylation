@@ -125,6 +125,15 @@ makeSampleSheet <- function(df, samplesheet_ID, bn = NULL, outputFi="samplesheet
         Date = df$arrived
     )
     samplesheet_csv <- samplesheet_csv[!is.na(samplesheet_csv$SentrixID_Pos),]
+    toDrop <- stringr::str_detect(samplesheet_csv$SentrixID_Pos, "DUPLICATE")
+         if(any(toDrop)==T){
+                  message("Dropping duplicated samples!!")
+                  otherCsv <- samplesheet_csv[toDrop,]
+                  message(paste0(capture.output(otherCsv), collapse="\n"))
+                  write.csv(otherCsv, file = "duplicated_samples.csv", quote = F,row.names = F)
+         }
+    toKeep <- stringr::str_detect(samplesheet_csv$SentrixID_Pos, "DUPLICATE", T)
+    samplesheet_csv <- samplesheet_csv[toKeep,]     
     write.csv(samplesheet_csv, file = outputFi, quote = F,row.names = F)
 }
 
