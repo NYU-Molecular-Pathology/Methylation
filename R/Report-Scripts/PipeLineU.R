@@ -30,20 +30,18 @@ UniD_dataqc <- function (loading, detP.cut = 0.05, bc.cut = 3, arrayType) {
     return(Beta.raw)
 }
 
-UniD_loadData <- function (sampleID, run_id=NULL) {
-    if(grepl("control", sampleID)==T){
-        sampleID <- "control"
-    }
-    if(is.null(run_id)){
-        run_id <- basename(getwd())
-    }
+UniD_loadData <-  function (sampleID, run_id=NULL) {
+    if(grepl("control", sampleID)==T){sampleID <- "control"}
+    if(is.null(run_id)){run_id <- basename(getwd())}
     samSh <- paste0(run_id,"_samplesheet.csv")
     inFile <- file.path(fs::path_home(),"Desktop", run_id, samSh)
     if(file.exists(inFile)){
         targets <- read.csv(inFile, strip.white = T)
     }else{
+        message("Target samplesheet not found: ", inFile)
         samSh <- paste0("samplesheet.csv")
-        inFile <- file.path(getwd(), samSh)
+        inFile <- file.path(fs::path_home(),"Desktop", samSh)
+        message("Trying to find: ", inFile)
         targets <- read.csv(inFile, strip.white = T)
     }
     targRow <- targets[,1]==sampleID
@@ -79,6 +77,7 @@ PipelineU <- function(sampleID = "NONE", RGset, run_id = NULL) {
         F,
         write = F
     )
+    
     Pred <- UniD::UniD.pred(
         inputdata = Beta.clean,
         inputdata.BMIQ = Beta.BMIQ,
@@ -90,10 +89,10 @@ PipelineU <- function(sampleID = "NONE", RGset, run_id = NULL) {
         outDir = outDir,
         write = F
     )
-    pred <- as.data.frame(Pred, row.names = NULL)
-    pred$sample <- sampleID
-    rownames(pred) <- NULL
-    return(pred)
+    predU <- as.data.frame(Pred, row.names = NULL)
+    predU$sample <- sampleID
+    rownames(predU) <- NULL
+    return(predU)
 }
 
 
