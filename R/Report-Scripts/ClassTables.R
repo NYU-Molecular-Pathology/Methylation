@@ -187,8 +187,8 @@ detach_package <- function(pkg, character.only = FALSE) {
 
 
 Get450kProb <- function(betas){
-  betas <- betas[match(rownames(rf.pred$importance), rownames(betas)), drop = F]
-  pred <- predict(rf.pred, t(betas), type = "prob")
+  betas <- betas[match(rownames(mnp.v11b4::rf.pred$importance), rownames(betas)), drop = F]
+  pred <- predict(mnp.v11b4::rf.pred, t(betas), type = "prob")
   sidat <- rownames(pred)
   classes <- colnames(pred)
   currData <- predict(mnp.v11b4::calfit$glmnet.fit, newx = pred, type = "response", s = 0.000683)
