@@ -30,12 +30,12 @@ knitr::asis_output(gb$SuppInfoTable(dat, RGset, gb$msetDat))
 ```{r 'Brain Classifier Family'}
 gb$outList <- outList <- gb$supM(gb$GetOutClass(gb$msetDat))
 classTables <- gb$GetClassProbTables(outList)
-knitr::asis_output(classTables$famTable)
-knitr::asis_output(classTables$grpTable)
+knitr::asis_output(classTables$famTable); knitr::asis_output(classTables$grpTable)
 htmltools::includeHTML(file.path(gitPath,"InterpretKey.html"))
+gb$theRefLi <- gb$GetRefList(gb$msetDat$Mset_ba, gb$outList)
 ```
 <h4>Methylation Class Description</h4>
-<p class="methtab">`r I(as.character(mnp.v11b6::reflist[gb$outList$idx,7]))`</p><hr class="solid">
+<p class="methtab">`r I(gb$theRefLi)`</p><hr class="solid">
 ###  Brain Tumor Methylation Classifier Version 12
 ```{r,label="classifier v12", error=FALSE, message=TRUE, fig.align = "left"}
 outV12 <- gb$GetV12score(RGset)
