@@ -140,6 +140,7 @@ GetFamilyProb <- function(is450k, Mset_ba, Mset){
     return(probs_mcf)
 }
 
+
 GetFamScore <- function(out_class_family){
     fsco <- as.numeric(paste0(out_class_family$`Class Score`[1]))
     famVal <- NULL
@@ -156,6 +157,7 @@ GetFamScore <- function(out_class_family){
     }
     return(famVal)
 }
+
 
 GetOutFamily <- function(is450k, Mset_ba, Mset){
     probs_mcf <- GetFamilyProb(is450k, Mset_ba, Mset)
@@ -183,30 +185,50 @@ detach_package <- function(pkg, character.only = FALSE) {
         }
 }
 
+
+Get450kProb <- function(betas){
+  betas <- betas[match(rownames(rf.pred$importance), rownames(betas)), drop = F]
+  pred <- predict(rf.pred, t(betas), type = "prob")
+  sidat <- rownames(pred)
+  classes <- colnames(pred)
+  currData <- predict(mnp.v11b4::calfit$glmnet.fit, newx = pred, type = "response", s = 0.000683)
+  pred <- matrix(currData, nrow = nrow(pred))
+  class(pred) <- "numeric"
+  storage.mode(pred) <- "numeric"
+  colnames(pred) <- classes
+  rownames(pred) <- sidat
+  return(pred)
+}
+
+
 GetProbData <- function(is450k, Mset_ba, Mset) {
-    library(verbose = F, warn.conflicts = F, quietly = T, package = "IlluminaHumanMethylationEPICmanifest")
-    library(verbose = F, warn.conflicts = F, quietly = T, package = "mnp.v11b6")
-    try(unloadNamespace("mnp.v11b4"), silent = T)
-    try(detach_package("mnp.v11b4"), silent = T)
-    invisible(loadNamespace("mnp.v11b6"))
-    invisible(requireNamespace("mnp.v11b6"))
+    if(is450k==T){
+      invisible(loadNamespace("mnp.v11b4")); invisible(requireNamespace("mnp.v11b4"))
+    }else{
+      library(verbose = F, warn.conflicts = F, quietly = T, package = "IlluminaHumanMethylationEPICmanifest")
+      library(verbose = F, warn.conflicts = F, quietly = T, package = "mnp.v11b6")
+      try(unloadNamespace("mnp.v11b4"), silent = T); try(detach_package("mnp.v11b4"), silent = T)
+      invisible(loadNamespace("mnp.v11b6")); invisible(requireNamespace("mnp.v11b6"))
+    }
     if(!exists('calfit')){
-        load(file.path(
-            "/Volumes/CBioinformatics/Methylation/Methylation_classifier_v11b6/",
-            "mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData"))
-        }
-    tryCatch(
-        expr = {
-            probs <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob')
-        },
-        error = function(e) {
-            message("Error occured at Brain Classifier v11 prediction:")
-            message("Using Mset instead of Mset_ba:\n", e)
-            probs <- mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob')
-        }
-    )
+        load(file.path("/Volumes/CBioinformatics/Methylation/Methylation_classifier_v11b6/",
+                       "mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData"))
+    }
+    if(is450k==T) {
+      betas <- minfi::getBeta(Mset_ba[, 1])
+      probs <- Get450kProb(betas)
+    }else{
+        tryCatch(
+          expr = {probs <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob')},
+          error = function(e) {
+              message("Error occured at Brain Classifier v11 prediction:")
+              message("Using Mset instead of Mset_ba:\n", e)
+              probs <- mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob')
+              }
+          )}
     return(probs)
 }
+
 
 GetOutScore <- function(out){
     out_score <- as.numeric(paste0(out$`Subgroup Score`[1]))
@@ -225,12 +247,13 @@ GetOutScore <- function(out){
     return(subVal_int)
 }
 
+
 GetOutClass <- function(msetDat){
+    library(verbose=F, warn.conflicts = F, quietly = T, package= "knitr")
+    library(verbose=F, warn.conflicts = F, quietly = T, package= "kableExtra")  
     Mset_ba <- msetDat$Mset_ba
     Mset <- msetDat$Mset
     is450k <- Mset_ba@annotation[["array"]] != "IlluminaHumanMethylationEPIC"
-    library(verbose=F, warn.conflicts = F, quietly = T, package= "knitr")
-    library(verbose=F, warn.conflicts = F, quietly = T, package= "kableExtra")
     if(is450k==T){
         library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b4", mask.ok = T)
         requireNamespace("mnp.v11b4", quietly = T)
@@ -249,10 +272,10 @@ GetOutClass <- function(msetDat){
     out <- as.data.frame(out)
     subVal_int <- GetOutScore(out)
     out$Interpretation = c(subVal_int,"","","","")
-    
     out_class_family <- GetOutFamily(is450k, Mset_ba, Mset)
     return(list("out"=out,"idx"=idx, "out_class_family"=out_class_family))
 }
+
 
 GetV12score <- function(RGset, FFPE=NULL){
     library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v12b6")
