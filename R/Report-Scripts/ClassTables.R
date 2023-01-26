@@ -203,6 +203,9 @@ Get450kProb <- function(betas){
 
 GetProbData <- function(is450k, Mset_ba, Mset) {
     if(is450k==T){
+      library(verbose = F, warn.conflicts = F, quietly = T, package = "IlluminaHumanMethylation450kmanifest")
+      library(verbose = F, warn.conflicts = F, quietly = T, package = "mnp.v11b4")
+      try(unloadNamespace("mnp.v11b6"), silent = T); try(detach_package("mnp.v11b6"), silent = T)
       invisible(loadNamespace("mnp.v11b4")); invisible(requireNamespace("mnp.v11b4"))
     }else{
       library(verbose = F, warn.conflicts = F, quietly = T, package = "IlluminaHumanMethylationEPICmanifest")
