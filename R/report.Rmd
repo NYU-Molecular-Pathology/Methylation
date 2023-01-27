@@ -85,13 +85,24 @@ gb$TryREDCap(gb=globalenv())
 </div><hr class="hr.dashed">
 ### UniD Prediction
 ```{r, label='UniD predict', message=FALSE, results='hide'}
-gb$predU <- gb$supM(gb$PipelineU(sampleID = gb$dat$sampleID, gb$RGset, run_id=gb$dat$run_id))
+gb$predU <- NULL
+tryCatch(
+    expr = {
+        gb$predU <- gb$supM(gb$PipelineU(sampleID = gb$dat$sampleID, gb$RGset, run_id = gb$dat$run_id))
+    },
+    error = function(e) {gb$predU <- NULL}
+)
 ```
 <p style="font-weight:bold" class="unidcap"></p><p class="unidtxt"></p></br>
 ```{r, label='UniD output', fig.align="left", results='asis'}
-uniDtabs <- gb$supM(gb$GetUniDTables(gb$predU))
-knitr::asis_output(uniDtabs$tab1)
-knitr::asis_output(uniDtabs$tab2)
+if(!is.null(gb$predU)){
+    uniDtabs <- gb$supM(gb$GetUniDTables(gb$predU))
+    knitr::asis_output(uniDtabs$tab1)
+    knitr::asis_output(uniDtabs$tab2)
+    }else{
+        cat("UniD prediction not availible for this sample")
+    }
 ```
 <p class="unidtypes"></p><hr class="dotted"><h4>Reference</h4><a class="naturep"> </a>
 <p class="bibrefnames"></p><span><p class="implements"></p></span>
+
