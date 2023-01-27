@@ -99,10 +99,7 @@ if(!is.null(gb$predU)){
     uniDtabs <- gb$supM(gb$GetUniDTables(gb$predU))
     knitr::asis_output(uniDtabs$tab1)
     knitr::asis_output(uniDtabs$tab2)
-    }else{
-        cat("UniD prediction not availible for this sample")
-    }
+    }else{cat("UniD prediction not availible for this sample")}
 ```
 <p class="unidtypes"></p><hr class="dotted"><h4>Reference</h4><a class="naturep"> </a>
 <p class="bibrefnames"></p><span><p class="implements"></p></span>
-
