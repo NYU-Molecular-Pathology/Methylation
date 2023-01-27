@@ -1,27 +1,18 @@
 #!/usr/bin/env Rscript
-library("base")
-args <- commandArgs(TRUE)
-gb <- globalenv(); assign("gb", gb)
+library("base"); args <- commandArgs(TRUE); gb <- globalenv(); assign("gb", gb)
+dsh<-"\n================"; dsh2<-"\n==========================\n"
 
-# Main arguments input in comandline
-token <- args[1]
-inputSheet <- args[2]
-runID <- args[3]
+# Main arguments input in comandline (Uncomment to Debug or run Locally) -----------------------
+args[1] -> token        #<- '8XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' = APITOKEN
+args[2] -> inputSheet   #<- 'PACT-YY-##'
+args[3] -> runID        #<- 'YYMMDD_NB######_0###_AH7ABCDEFG'
 
-dsh="\n================"
-dsh2="\n==========================\n"
-
-# Displays the Input args -----
+# Display & Verify the Input args --------------------------------------------------------------
 message(dsh,"\nParameters input",dsh)
-message("token: ",token)
-message("PACT Run: ", inputSheet,"\n")
-message("Run ID: ", runID,"\n")
+message("token:    ", token, "\n", "PACT Run: ", inputSheet,"\n","Run ID:   ", runID,"\n")
+stopifnot(exists("token") & !is.null(token) & exists("inputSheet") & !is.null(inputSheet))
 
-# Check Input Params -----
-stopifnot(exists("token") & !is.null(token))
-stopifnot(exists("inputSheet") & !is.null(inputSheet))
-
-# FUN: Checks if z-drive is accessible to the Rscript
+# FUN: Checks if z-drive is accessible to the Rscript ------------------------------------------
 checkMounts <- function(){
     molecDrive = "/Volumes/molecular/MOLECULAR LAB ONLY"
     zDrive = "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular"
@@ -35,46 +26,41 @@ checkMounts <- function(){
     } else {message("Z-drive path is accessible")}
 }
 
+# FUN: Returns hardcoded Philips Export Tab Column Names----------------------------------------
 GetPhilipsColumns <- function() {
     filterColumns <- c(
-        "MRN",
-        "Test Name",
-        "Tumor Specimen ID",
-        "Normal Specimen ID",
-        "Test Number",
-        "Epic Order Number",
-        "Diagnosis for interpretation",
-        "Tumor DNA/RNA Number",
-        "Normal DNA/RNA Number",
-        "Tumor Percentage"
-    )
+        "MRN", "Test Name", "Tumor Specimen ID", "Normal Specimen ID", "Test Number",
+        "Epic Order Number", "Diagnosis for interpretation", "Tumor DNA/RNA Number",
+        "Normal DNA/RNA Number","Tumor Percentage"
+        )
     return(filterColumns)
 }
 
-# Function to silently load library without conflict warnings
+# Function to silently load library without conflict warnings ----------------------------------
 libLoad <- function(libName) {
     lib.opts <- list(package = libName, character.only = T, verbose = F, warn.conflicts = F)
     suppressWarnings(suppressPackageStartupMessages(do.call(library, c(lib.opts))))
     message(libName, " ...loaded successful")
 }
 
-# Functions to load or install missing required packages -----
+# Functions to load or install missing required packages ---------------------------------------
 loadPacks <- function(){
+    if(!require("devtools")){install.packages("devtools", quiet=T, dependencies=T)}
     if(suppressWarnings(!require("redcapAPI"))){
         params=list('nutterb/redcapAPI', dependencies=T, upgrade="always", type="source")
-        do.call(devtools::install_github,c(params))
+        do.call(devtools::install_github, c(params))
     } else{libLoad("redcapAPI")}
     pkgs = c("foreach","jsonlite","RCurl","readxl","stringr")
     rlis = getOption("repos");rlis["CRAN"] = "http://cran.us.r-project.org"
     options(repos = rlis)
     invisible(lapply(pkgs, function(pk){
         if(suppressWarnings(!require(pk, character.only=T))){
-            install.packages(pk,dependencies=T, verbose=T, repos="http://cran.us.r-project.org", type="both")
+            install.packages(pk, dependencies=T, verbose=T, repos="http://cran.us.r-project.org", type="both")
             libLoad(pk)
         }else{libLoad(pk)}}))
 }
 
-# Returns Path to xlsx file -----
+# FUN: Returns Path to xlsx file ---------------------------------------------------------------
 getExcelPath <- function(inputSheet, pathType=1){
     if(stringr::str_detect(inputSheet,"/")==T){return(inputSheet)}
     drive = file.path("", "Volumes", "molecular", "MOLECULAR LAB ONLY")
@@ -87,7 +73,7 @@ getExcelPath <- function(inputSheet, pathType=1){
     return(inputFiPath)
 }
 
-# Removes and fixes newlines, commas, and blanks from samplesheet
+# Removes and fixes newlines, commas, and blanks from samplesheet ------------------------------
 sanitizeSheet <- function(sheetVals){
     mainSheet <- sheetVals[!is.na(sheetVals[,1]),]
     mainSheet$Tumor_Type <- gsub(" ", "-", mainSheet$Tumor_Type)
@@ -114,7 +100,7 @@ sanitizeSheet <- function(sheetVals){
     return(mainSheet)
 }
 
-# Reads the genders and outputs a .tsv file on desktop
+# Reads the genders and outputs a tsv file to /Molecular/MethylationClassifier/CNV_PNG ---------
 WritePhilipsGender <- function(mainSheet, inputFi, shNames){
     sh2 <- which(grepl("Philips", shNames, ignore.case = T))[1]
     cnvSheet <- mainSheet[,1:15]
@@ -130,14 +116,8 @@ WritePhilipsGender <- function(mainSheet, inputFi, shNames){
 GetExcelData <- function(inputFi, sheetNum, shRange, toSkip=0, cm=F){
     sheetData <- suppressMessages(as.data.frame(
         readxl::read_excel(
-            inputFi,
-            sheet = sheetNum,
-            na = "",
-            range = shRange,
-            col_types = "text",
-            col_names = cm,
-            skip=toSkip
-        )
+            inputFi, sheet = sheetNum, na = "", range = shRange, col_types = "text", col_names = cm,skip=toSkip
+            )
     ))
     sheetData[is.na(sheetData)] <- ""
     return(sheetData)
@@ -217,7 +197,7 @@ FixPairedList <- function(philipsExport, rawSheetData){
     rawSheetData$`Type & Tissue`[normalIndex] <- "Normal"
     allBnumber <- c(philipsExport$`Tumor DNA/RNA Number`, philipsExport$`Normal DNA/RNA Number`)
     if(!all(allBnumber %in% rawSheetData$`DNA #`)==T){
-        warning("Not all B-numbers from PhilipsExport are found in the SampleSheet!")
+        message(crayon::bgRed("Not all B-numbers from PhilipsExport tab are in the SampleSheet DNA # Column!"))
     }
     rawSheetData <- CheckControlRows(rawSheetData, allBnumber)
     return(rawSheetData$`Type & Tissue`)
@@ -226,11 +206,34 @@ FixPairedList <- function(philipsExport, rawSheetData){
 AddSampleIndexes <- function(pairedList, rawSheetData, philipsExport){
     tissueType <- FixPairedList(philipsExport, rawSheetData)
     sheetTumors <- which(tissueType == "Tumor")
+    sheetControl <- which(tissueType != "Control")
     sheetNormals <- which(tissueType == "Normal" & tissueType != "Control")
     mainSheet <- data.frame(matrix("", nrow = nrow(pairedList), ncol = 0))
     mainSheet$Sample_Name <- mainSheet$Sample_ID <- paste(pairedList[, 1])
     mainSheet$Paired_Normal <- ""
-    mainSheet$Paired_Normal[sheetTumors] <- paste(mainSheet$Sample_ID[sheetNormals])
+
+    if(length(mainSheet$Paired_Normal[sheetTumors])!=length(paste(mainSheet$Sample_ID[sheetNormals]))){
+        suppressWarnings(mainSheet$Paired_Normal[sheetTumors] <- paste(mainSheet$Sample_ID[sheetNormals]))
+        theSampleIdEx <- paste(mainSheet$Sample_ID[sheetNormals])
+        extraIndex <- which(theSampleIdEx %in% mainSheet$Paired_Normal[sheetTumors] == F)
+        message(crayon::bgRed(paste(length(extraIndex),
+                "Samples are extra normals and will need to be added manually:")))
+        thenNext <- theSampleIdEx[extraIndex]
+        message(paste0(capture.output(thenNext), collapse="\n"))
+        newNormList <- paste(mainSheet$Sample_ID[sheetNormals])[-extraIndex]
+        mainSheet$Paired_Normal[sheetTumors] <- newNormList
+        #missingTumorNorm <- stringr::str_ends(mainSheet$Sample_ID, "0_0")
+        missingTumorNorm <- which(stringr::str_ends(mainSheet$Sample_ID,  paste(thenNext,collapse="|")))
+        if(length(missingTumorNorm)>0){
+            message(crayon::bgRed("There are samples missing tumor normal pairs and will be dropped:"))
+            message(paste0(capture.output(mainSheet[missingTumorNorm,1]), collapse="\n"))
+            mainSheet <- mainSheet[-missingTumorNorm,]
+            rownames(mainSheet) <- 1:nrow(mainSheet)
+        }
+        }else{
+            mainSheet$Paired_Normal[sheetTumors] <- paste(mainSheet$Sample_ID[sheetNormals])
+    }
+
     mainSheet$I7_Index_ID <- paste(rawSheetData$I7_Index_ID)
     mainSheet$index <- paste(rawSheetData$index)
     mainSheet$Specimen_ID <- paste(rawSheetData$`Accession#`)
@@ -301,9 +304,8 @@ CheckDupesMatch <- function(nameList, secondCol) {
     matchIdx <- MatchIndex(secondCol, nameList)
     if (any(duplicated(matchIdx))) {
         message("The sample sheet may contain duplicate accession Numbers!")
-        message("Dropping Duplicate Index:")
         dupesIdx <- matchIdx[duplicated(matchIdx)]
-        MsgPrint(dupesIdx)
+        message("Dropping Duplicate Index: ",dupesIdx)
         MsgPrint(nameList[dupesIdx])
         MsgPrint(secondCol[dupesIdx])
         return(unique(matchIdx))
@@ -325,8 +327,21 @@ GetIndexMatch <- function(rawSheetData, philipsExport){
     wetLabIdxT <- CheckDupesMatch(accessions, philipsT)
     wetLabIdxN <- CheckDupesMatch(accessions, philipsN)
 
-    stopifnot(length(philipsIdxT) == length(philipsIdxN))
-    stopifnot(length(wetLabIdxT) == length(wetLabIdxN))
+    if(length(philipsIdxT) != length(philipsIdxN)){
+        message("Indexes are not aligned for Philips tumor normal samples!")
+        totalDrop <- philipsIdxN %in% philipsIdxT
+        message("Dropping ",length(which(totalDrop==F)), " cases...")
+        philipsIdxN <- philipsIdxN[totalDrop]
+
+    }
+
+    if(length(wetLabIdxT) != length(wetLabIdxN)){
+        message("Indexes are not aligned for Wetlab tumor normal samples!")
+        totalDrop <- 1:length(philipsIdxT)
+        message("Dropping unmatched normal cases...")
+        wetLabIdxN <- wetLabIdxN[totalDrop]
+        wetLabIdxT <- wetLabIdxT[totalDrop]
+    }
 
     idx <- data.frame(
         philipsT = philipsIdxT,
@@ -375,7 +390,6 @@ BuildMainSheet <- function(philipsExport, rawSheetData, runID, pact_run) {
     testNumber <-  philipsExport[,'Test Number']
     tumorPercent <- philipsExport[,'Tumor Percentage']
     diagColumn <- philipsExport[,'Diagnosis for interpretation']
-
     pairedList <- GetPairedList(philipsExport, runID)
     pairedList <- BindUnpairedRows(rawSheetData, pairedList, runID)
     mainSheet <- AddSampleIndexes(pairedList, rawSheetData, philipsExport)
@@ -559,8 +573,7 @@ pushToRedcap <- function(outVals, token=NULL) {
 
 # Gets dataframe and saves as CSV file -----
 writeSampleSheet <- function(inputSheet, token, runID = NULL) {
-    inputFi <- getExcelPath(inputSheet)
-    message("Found file:\n", inputFi)
+    inputFi <- getExcelPath(inputSheet); message("Found file:\n", inputFi)
     if (file.exists(inputFi)) {
         outVals <- parseExcelFile(inputFi, runID)
     } else {
