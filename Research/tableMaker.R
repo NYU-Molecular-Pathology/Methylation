@@ -116,6 +116,11 @@ GetDefaultColors <- function(col_vect=NULL){
     col_vect[c(6,4,18)] = c("#eb7d34","#ADD8E6","#5A5A5A") #changing dark forest-black to orange color
     col_vect_extra <- c("#CCF000", "#0F99FA", "#669999", "#00CCCC", "#660099", "#CC0066", "#000000", "#FFFF00", "#BF2600","#FF9999")
     col_vect <- c(col_vect, col_vect_extra)
+    extraCols<- c(
+        "#5a6d40","#15da78","#deb313","#68f821","#019965","#158b26","#79889d","#1332ba","#795a34","#a746a3","#06d667",
+        "#300ed7","#999a55","#c6123e","#a4ac34","#ff93c7","#a71938","#78ca61","#e4303c","#5d0b75","#2b330b","#cda142",
+        "#6aefa7","#a243c5","#32fe88","#4f4ecd","#3ab8b4","#ac60bb","#bbcbb4","#111789")
+    col_vect <- c(col_vect, extraCols)
     col_vect <- unique(col_vect)
     return(col_vect)
 }
@@ -134,12 +139,9 @@ CheckColorCount <- function(varColumns, targets, col_vect) {
 
 
 colorTargets <- function(targets, varColumns = c("Type","Origin"), col_vect = NULL){
-    
     col_vect <- gb$GetDefaultColors(col_vect)
     targets <- gb$FixNullNaVars(targets, varColumns)
-    
     message("Targets Dimnames:\n", paste(dimnames(targets)[[2]], collapse = " | "))
-    
     if (length(varColumns) <= 1) {
       if ("Type" %in% varColumns == F) {
         targets$Type <- targets[, varColumns[1]]
@@ -153,7 +155,6 @@ colorTargets <- function(targets, varColumns = c("Type","Origin"), col_vect = NU
     }
     
     CheckColorCount(varColumns, targets, col_vect)
-    
     dat <- targets[, varColumns] # varColumns
     anno_df <- data.frame(dat)
     vars2Color <- as.list(lapply(dat, unique))
