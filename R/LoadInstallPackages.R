@@ -1,5 +1,6 @@
 #!/usr/bin/env Rscript
 if(!require("devtools")){install.packages("devtools", dependencies=T, ask=F)}
+
 cbioLn <- switch (
   Sys.info()[['sysname']],
   "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
