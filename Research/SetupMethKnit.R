@@ -36,14 +36,14 @@ pkgs <-
     "conumee",
     "BiocGenerics",
     "Biobase",
-    "cowplot",
-    "emojifont"
+    "cowplot"
   )
+
 scripts = paste0(mainHub, rFiles)
 suppressWarnings(lapply(scripts, function(i){message("Sourcing: ", i);devtools::source_url(i)}))
 supSrt(librarian::shelf(pkgs, ask = F, update_all = F, quiet = FALSE))
-#if(!require("maxprobes")){ devtools::install_github("markgene/maxprobes")}
-#if(!require("cnv.methyl")){devtools::install_github("https://github.com/ijcBIT/cnv.methyl.git", dependencies = T)}
+if(!require("maxprobes")){ devtools::install_github("markgene/maxprobes")}
+if(!require("cnv.methyl")){devtools::install_github("https://github.com/ijcBIT/cnv.methyl.git", dependencies = T)}
 
 knitOpt <- list(
     echo = FALSE,
