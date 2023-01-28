@@ -3,8 +3,7 @@ if(!require("devtools")){install.packages("devtools", dependencies=T, ask=F)}
 cbioLn <- switch (
   Sys.info()[['sysname']],
   "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
-  "Linux" = "/Volumes/CBioinformatics/Methylation/classifiers"
-  #"/private_pkgs/classifiers"#"~/molecpathlab/production/Methylation/classifiers"
+  "Linux" = "/private_pkgs/classifiers"#"~/molecpathlab/production/Methylation/classifiers"
 )
 
 if(Sys.info()[['sysname']]=="Darwin"){
