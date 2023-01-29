@@ -79,6 +79,6 @@ CheckDirCreate <- function(pathLocation){
     dataOutDir <- file.path(getwd(), pathLocation)
     if (!dir.exists(dataOutDir)) {dir.create(dataOutDir)}
 }
-
+#Sys.setenv('R_MAX_VSIZE'=32000000000)
 set.seed(1234)
-Sys.setenv('R_MAX_VSIZE'=32000000000)
+
