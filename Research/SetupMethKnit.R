@@ -1,4 +1,6 @@
 gb <- globalenv(); assign("gb", gb)
+# TODO: add args to load Differential + parrallel envir
+
 # https://bookdown.org/yihui/rmarkdown-cookbook/custom-knit.html
 supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
 supPk <- function(sobj){return(suppressPackageStartupMessages(sobj))}
@@ -16,8 +18,8 @@ rFiles = c(
     "tableMaker.R",
     "pathviews.R",
     "pullRedcap_manual.R",
-    "cleanSamples.R",
-    "Differential.R"
+    "cleanSamples.R"
+#    "Differential.R"
 )
 
 pkgs <-
