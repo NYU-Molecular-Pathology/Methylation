@@ -190,6 +190,11 @@ CheckControlRows <- function(rawSheetData, allBnumber){
 }
 
 FixPairedList <- function(philipsExport, rawSheetData){
+    mislabelled <- philipsExport$`Tumor DNA/RNA Number` %in% philipsExport$`Normal DNA/RNA Number`
+    if(any(mislabelled)){
+        message(crayon::bgRed("There are samples potentially mislabelled! in Philips:"),"\n")
+        message(paste0(capture.output(as.data.frame(philipsExport$`Tumor DNA/RNA Number`[mislabelled])), collapse="\n"))
+    }
     tumorIndex <- GetTypeIndex(philipsExport$`Tumor DNA/RNA Number`, rawSheetData)
     normalIndex <- GetTypeIndex(philipsExport$`Normal DNA/RNA Number`, rawSheetData)
     rawSheetData$`Type & Tissue` <- ""
