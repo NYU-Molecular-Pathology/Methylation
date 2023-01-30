@@ -10,7 +10,7 @@ if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=
 
 # Load/install Packages
 pkgs <- c(
-  'animation',
+#  'animation',
   'knitr',
   'readr',
   'ggplot2',
@@ -25,7 +25,7 @@ pkgs <- c(
   "kableExtra",
   "foreach",
   "minfi",
-  "magick",
+#  "magick",
   "magrittr",
   "conumee",
   "mnp.v11b6",
@@ -40,9 +40,7 @@ pkgs <- c(
   "ComplexHeatmap",
   "assertr",
   "Biobase",
-  "magick",
   "irlba",
-  "magick",
   "grid",
   "RColorBrewer",
   "Cairo",
@@ -224,7 +222,8 @@ sanitizeSheet <- function(inputFi, samsheet) {
 }
 
 
-animation::ani.options(autobrowse = FALSE); options(width=1200)
+#animation::ani.options(autobrowse = FALSE)
+options(width=1200)
 library("mnp.v11b6")
 library(magrittr) # needs to be run every time you start R and want to use %>%
 library(dplyr)  
