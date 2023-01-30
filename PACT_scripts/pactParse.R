@@ -74,8 +74,8 @@ getExcelPath <- function(inputSheet, pathType=1){
 }
 
 # Removes and fixes newlines, commas, and blanks from samplesheet ------------------------------
-sanitizeSheet <- function(sheetVals){
-    mainSheet <- sheetVals[!is.na(sheetVals[,1]),]
+sanitizeSheet <- function(mainSheet){
+    mainSheet <- mainSheet[!is.na(mainSheet[,1]),]
     mainSheet$Tumor_Type <- gsub(" ", "-", mainSheet$Tumor_Type)
     for(i in 1:ncol(mainSheet)){
         mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub("[\r\n]", "", x) })
@@ -298,33 +298,54 @@ GetPairedList <- function(philipsExport, runID){
     return(pairedList)
 }
 
+MsgPrint <- function(obj){message(paste0(capture.output(obj), collapse="\n"))}
 
 MatchIndex <- function(list1, list2){
     return(unlist(lapply(list1, function(x) {which(x==list2)})))
 }
 
-MsgPrint <- function(obj){message(paste0(capture.output(obj), collapse="\n"))}
 
 CheckDupesMatch <- function(nameList, secondCol) {
     matchIdx <- MatchIndex(secondCol, nameList)
     if (any(duplicated(matchIdx))) {
-        message("The sample sheet may contain duplicate accession Numbers!")
+        message(crayon::bgRed("The sample sheet may contain duplicate accession Numbers!"))
         dupesIdx <- matchIdx[duplicated(matchIdx)]
-        message("Dropping Duplicate Index: ",dupesIdx)
+        message("Dropping Duplicate at row Index: ", dupesIdx)
         MsgPrint(nameList[dupesIdx])
         MsgPrint(secondCol[dupesIdx])
-        return(unique(matchIdx))
+        #return(unique(matchIdx))
+        return(matchIdx)
     } else{
         return(unique(matchIdx))
     }
 }
 
-GetIndexMatch <- function(rawSheetData, philipsExport){
-    message("Running GetIndexMatch function in pactParse.R")
 
+CheckMissingPairs <- function(philipsT, philipsN){
+    if(any(is.na(philipsT)|philipsT==0)){
+        philipsT[is.na(philipsT)] <- 0
+        missingPair <- which(philipsT==0)
+        message(crayon::bgRed("Some samples are missing tumor/normal pairs:"))
+        message("Philips Normal: ", philipsN[missingPair], "\nPhilips Tumor: ", philipsT[missingPair])
+    }
+
+    if(any(is.na(philipsN)|philipsN==0)){
+        philipsN[is.na(philipsN)] <- 0
+        missingPair <- which(philipsN==0)
+        message(crayon::bgRed("Some samples are missing tumor/normal pairs:"))
+        message("Philips Normal: ", philipsN[missingPair], "\nPhilips Tumor: ", philipsT[missingPair])
+    }
+}
+
+
+GetIndexMatch <- function(rawSheetData, philipsExport){
+
+    message("Running GetIndexMatch function in pactParse.R")
     accessions <- rawSheetData$`Accession#`
     philipsN <- c(philipsExport$`Normal Specimen ID`)
     philipsT <- c(philipsExport$`Tumor Specimen ID`)
+
+    CheckMissingPairs(philipsT, philipsN)
 
     philipsIdxT <- CheckDupesMatch(philipsT, accessions)
     philipsIdxN <- CheckDupesMatch(philipsN, accessions)
@@ -333,17 +354,29 @@ GetIndexMatch <- function(rawSheetData, philipsExport){
     wetLabIdxN <- CheckDupesMatch(accessions, philipsN)
 
     if(length(philipsIdxT) != length(philipsIdxN)){
-        message("Indexes are not aligned for Philips tumor normal samples!")
+        message("Total Tumors: ", length(philipsIdxT))
+        message("Total Normals: ", length(philipsIdxN))
+        message(crayon::bgRed("Indexes are not aligned for Philips tumor normal samples!"))
         totalDrop <- philipsIdxN %in% philipsIdxT
         message("Dropping ",length(which(totalDrop==F)), " cases...")
+        message(paste(philipsN[which(totalDrop==F)], collapse="\n"))
         philipsIdxN <- philipsIdxN[totalDrop]
-
     }
 
     if(length(wetLabIdxT) != length(wetLabIdxN)){
         message("Indexes are not aligned for Wetlab tumor normal samples!")
         totalDrop <- 1:length(philipsIdxT)
         message("Dropping unmatched normal cases...")
+        tumorLonger <- length(wetLabIdxT) > length(wetLabIdxN)
+        totalAdd <- abs(length(wetLabIdxT) - length(wetLabIdxN))
+        if(tumorLonger==T){
+            message(crayon::bgRed("More Normals than Tumors listed in worksheet!"))
+
+        }else{
+            message(crayon::bgRed("More Tumors than Normals listed in worksheet!"))
+        }
+        #data.frame(Tumors = accessions[wetLabIdxT], Normals = accessions[wetLabIdxN])
+        #message(paste(accessions[wetLabIdxT],collapse="\n"))
         wetLabIdxN <- wetLabIdxN[totalDrop]
         wetLabIdxT <- wetLabIdxT[totalDrop]
     }
@@ -496,12 +529,12 @@ parseExcelFile <- function(inputFi, runID = NULL){
     if(!is.na(sh)){
         sheetHead <- GetExcelData(inputFi, sheetNum=shNames[sh], shRange="A1:B17")
         sheetHead <- rbind(sheetHead,c("",""),c("[Data]",""))
-        sheetVals <- GetExcelData(inputFi, shNames[sh], NULL, 19, T)
+        mainSheet <- GetExcelData(inputFi, shNames[sh], NULL, 19, T)
     } else{
         sheetHead <- GetSheetHeading(inputFi)
-        sheetVals <- AltParseFormat(inputFi, runID)
+        mainSheet <- AltParseFormat(inputFi, runID)
     }
-    mainSheet <- sanitizeSheet(sheetVals)
+    mainSheet <- sanitizeSheet(mainSheet)
     try(WritePhilipsGender(mainSheet,inputFi, shNames), silent=T)
     outFile <- WriteMainSheet(mainSheet, sheetHead)
     return(c(runID = mainSheet[1, "Sample_Project"], outFile = outFile))
