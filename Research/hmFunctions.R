@@ -4,14 +4,17 @@
 #' @param anno_df the dataframe that ou are annotating, these are the filtered columns of the varColumns
 gb <- globalenv(); assign("gb", gb)
 
-suppressPackageStartupMessages(library("ComplexHeatmap"))
-suppressMessages(require("ComplexHeatmap"))
-suppressPackageStartupMessages(library('magick'))
-suppressMessages(require('Cairo'))
-library("grid")
-suppressMessages(require("grid"))
-ht_opt$message = FALSE
-suppressMessages(options(bitmapType='cairo'))
+LoadHeatMapLibs <- function(){
+  suppressPackageStartupMessages(library("ComplexHeatmap"))
+  suppressMessages(require("ComplexHeatmap"))
+  suppressPackageStartupMessages(library('magick'))
+  suppressMessages(require('Cairo'))
+  library("grid")
+  suppressMessages(require("grid"))
+  suppressMessages(options(bitmapType='cairo'))
+  return(ht_opt$message = FALSE)
+}
+
 
 # Returns heatmap annotations to colors on variables
 getHeatAnno <- function(colorValues, anno_df) {
