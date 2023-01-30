@@ -61,7 +61,7 @@ assignColors <- function(targets, varColumns = c("Type", "Grade"), col_vect = NU
     colorValues <-lapply(vars2Color, function(x) {x = (col_vect)[1:(length(x))]})
     for (x in 1:length(vars2Color)) {
         for (varNum in 1:length(vars2Color[x])) {
-            names(colorValues[x][[1]]) = c(vars2Color[x][[1]])
+          names(colorValues[x][[1]]) = c(vars2Color[x][[1]])
         }
     }
     if(all(names(colorValues)==names(anno_df))){
