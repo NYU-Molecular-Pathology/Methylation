@@ -70,8 +70,6 @@ assignColors <- function(targets, varColumns = c("Type", "Grade"), col_vect = NU
 }
 
 ## Define the Heatmap ----------------------
-col_fun2 <- circlize::colorRamp2(c(0, 0.25, 0.5, 0.75, 1), c("darkblue","deepskyblue", "white", "tomato","red"))
-
 drawHeatMap <- function(yourHeatMap) {
     return(
         ComplexHeatmap::draw(
@@ -97,7 +95,8 @@ calc_ht_size = function(ht, unit = "inch") {
 }
 
 getHeatMap <- function(betaRanges, titleValue, ha, geneNamesHeatMap=F, colSplt = NULL, rwsplt=NULL){
-    titleOfPlot <- paste("Heatmap of",titleValue,sep = " ")
+  col_fun2 <- circlize::colorRamp2(c(0, 0.25, 0.5, 0.75, 1), c("darkblue","deepskyblue", "white", "tomato","red"))  
+  titleOfPlot <- paste("Heatmap of",titleValue,sep = " ")
     hmTopNumbers <- ComplexHeatmap::Heatmap(
         betaRanges,
         col = gb$col_fun2,  ## Define the color scale
@@ -258,7 +257,7 @@ grabProbes <- function(your_genes, RGSet, region){
   return(z[1:cutt,])
 }
                                            
-col_fun3 <- circlize::colorRamp2(c(0, 0.20, 0.25, 0.5, 0.75, 1), c("black","darkblue","deepskyblue", "white", "tomato","red"))
+
                                            
 SaveHmPng <- function(fi_prefix, fi_suffix, hm, topvar = "", outDir=NULL) {
   if(is.null(outDir)){outDir <- file.path(".", "figures", "heatmaps")}
@@ -277,17 +276,14 @@ SaveHmPng <- function(fi_prefix, fi_suffix, hm, topvar = "", outDir=NULL) {
   invisible(dev.off())
 }                                
                                            
-gb$getHeatMap2 <- function(
-    betaRanges,
-    titleValue,
-    ha,
-    geneNamesHeatMap = F,
+getHeatMap2 <- function(betaRanges, titleValue, ha, geneNamesHeatMap = F,
     colSplt = NULL,
     rwsplt = NULL,
     rwOrder = NULL, 
     clusRows = F,
     clusCols = F) 
 {
+  col_fun3 <- circlize::colorRamp2(c(0, 0.20, 0.25, 0.5, 0.75, 1), c("black","darkblue","deepskyblue", "white", "tomato","red"))
   titleOfPlot <- paste("Heatmap of", titleValue, sep = " ")
    hmTopNumbers <- ComplexHeatmap::Heatmap(betaRanges, 
         col = gb$col_fun3,  ## Define the color scale
@@ -390,7 +386,8 @@ GetCsvGeneColumns <- function(pathwayName, z){
 }
 
 GetHeatMapGenes <-function(betaRanges, titleValue, ha, geneNamesHeatMap=F, colSplt = NULL, rwsplt=NULL){
-    titleOfPlot <- paste("Heatmap of",titleValue,sep = " ")
+  col_fun2 <- circlize::colorRamp2(c(0, 0.25, 0.5, 0.75, 1), c("darkblue","deepskyblue", "white", "tomato","red"))  
+  titleOfPlot <- paste("Heatmap of",titleValue,sep = " ")
     hmTopNumbers <- ComplexHeatmap::Heatmap(
         betaRanges,
         col = gb$col_fun2,  ## Define the color scale
