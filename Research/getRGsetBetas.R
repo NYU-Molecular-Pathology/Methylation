@@ -56,19 +56,23 @@ combine.EPIC.450K <- function(targets, batchFilter=NULL){
 
 # Remove Low Quality and select probes using annotations
 cleanUpProbes <- function(RGSet, targets, getfunorm=F){
-    detP <- detectionP(RGSet)
+    library("minfi")  
+    detPfile <- "data/DetPvals.Rdata"
+    if(!file.exists(detPfile)){
+      detP <- minfi::detectionP(RGSet)
+      gb$SaveObj(detP, file.name = detPfile)
+    }else{
+      detP <- gb$LoadRdatObj(detPfile)
+    }
+    #detP <- detectionP(RGSet)
     colnames(detP) <- RGSet@colData@listData[["Sample_Name"]]
     keep <- colMeans(detP) < 0.05
     RGSet <- RGSet[, keep]
     targets <- targets[keep,]
     detP <- detP[, keep]
     dropping <- table(keep)["FALSE"]>0
-    if(!is.na(dropping)){
-    if(dropping==TRUE){
-      message("Dropping probes: ")
-        table(keep)
-        }
-    }
+    if(!is.na(dropping)){if(dropping==TRUE){message(
+        "Dropping probes: ", paste0(capture.output(as.data.frame(table(keep))), collapse = "\n"))}}
     mSetSq <- suppressWarnings(preprocessQuantile(RGSet))
     detP <- detP[match(featureNames(mSetSq), rownames(detP)), ]
     keep <- rowSums(detP < 0.01) == ncol(mSetSq)
