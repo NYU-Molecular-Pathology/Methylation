@@ -13,7 +13,6 @@ LoadHeatMapLibs <- function(){
   suppressMessages(require("grid"))
   suppressMessages(options(bitmapType='cairo'))
   ht_opt$message = FALSE
-  return()
 }
 
 
