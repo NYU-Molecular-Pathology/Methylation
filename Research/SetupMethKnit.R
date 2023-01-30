@@ -6,15 +6,8 @@ supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
 supPk <- function(sobj){return(suppressPackageStartupMessages(sobj))}
 supSrt <- function(pk){return(suppressPackageStartupMessages(suppressWarnings(pk)))}
 
-if(!require("rprofile")){
-    devtools::install_github("csgillespie/rprofile", dependencies = T)
-}
-
-rprofile::set_startup_options(
-    show.signif.stars = FALSE,
-    useFancyQuotes = FALSE,
-    Ncpus = parallel::detectCores()-2
-)
+#if(!require("rprofile")){devtools::install_github("csgillespie/rprofile", dependencies = T)}
+#rprofile::set_startup_options(show.signif.stars = FALSE, useFancyQuotes = FALSE, Ncpus = parallel::detectCores()-2)
 
 mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/"
 rFiles = c(
@@ -76,15 +69,15 @@ knitOpt <- list(
 
 animation::ani.options(autobrowse = FALSE)
 options(width = 1500)
-library("mnp.v11b6")
-library("magrittr")
-library("dplyr")
+library("mnp.v11b6"); library("magrittr"); library("dplyr"); require("minfi")
+
 
 setKnitDir <- function(runDir) {
     syscmd <- paste("cd", runDir)
     system(syscmd); setwd(runDir)
     knitr::opts_knit$set(root.dir = runDir)
 }
+
 
 CheckDirCreate <- function(pathLocation){
     dataOutDir <- file.path(getwd(), pathLocation)
