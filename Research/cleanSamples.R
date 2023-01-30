@@ -71,3 +71,20 @@ CheckOriginal <- function(ogSheet) {
         gb$makeSampleSheet(result, samplesheet_ID, bn = NULL, outputFi = ogSheet)
     }
 }
+
+ModifyTargetColumns <- function(targets, gb){
+  if (gb$needFi == T) {
+    gb$GetCsvSheet(gb$needFi, gb$samsheet, gb$token, idatPath = gb$idatPath)
+    targets <- gb$SetKeyColumns(targets, gb$col_samTypes, gb$col_samNames, 
+                                gb$col_other, gb$col_shapes, gb$sam.grp.type)
+    targets <- gb$fillMissingDat(targets, "Sample_Name")
+    }else{
+    targets <- gb$SetKeyColumns(targets, gb$col_samTypes, gb$col_samNames, 
+                                gb$col_other, gb$col_shapes, gb$sam.grp.type)
+    }
+  targets <- gb$colorTargets(targets, varColumns = gb$selectedVars)
+  targets <- gb$FixBaseName(targets, runDir = gb$idatPath, gb$col_sentrix)
+  return(targets)
+}
+
+
