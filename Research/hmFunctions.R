@@ -4,6 +4,7 @@
 #' @param anno_df the dataframe that ou are annotating, these are the filtered columns of the varColumns
 gb <- globalenv(); assign("gb", gb)
 
+# FUN: Loads required libraries into the environment
 LoadHeatMapLibs <- function(){
   suppressPackageStartupMessages(library("ComplexHeatmap"))
   suppressMessages(require("ComplexHeatmap"))
