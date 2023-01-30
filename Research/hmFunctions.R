@@ -292,14 +292,14 @@ gb$getHeatMap2 <- function(
    hmTopNumbers <- ComplexHeatmap::Heatmap(betaRanges, 
         col = gb$col_fun3,  ## Define the color scale
         cluster_rows = clusRows,
-    cluster_row_slices = F,
-    cluster_column_slices = F,
+        cluster_row_slices = F,
+        cluster_column_slices = F,
         cluster_columns = clusCols,  ## Cluster the columns
         show_column_names = F,  ## Show the Column Names (which is sample #)
         column_names_gp = gpar(fontsize = 12),  ## Column Name Size
         show_row_names = geneNamesHeatMap,  ## Show Row names (which is probes)
-    row_order=rwOrder,    
-    row_names_side = "left",
+        row_order=rwOrder,    
+        row_names_side = "left",
         row_title_side = "left",
         row_names_gp = gpar(fontsize = 10),
         row_title_gp = gpar(fontsize = 12, fontface = "bold"),
@@ -349,7 +349,6 @@ GetProbeAverage <- function(csvColumns, betas, pathwayName){
             avgBetas[geneNam,sampleNam] <- probeAvg
         }
     }
-    
     outDir <- file.path(getwd(), "data")
     outFile <- paste(pathwayName, "avgBetas_per_gene.csv" , sep = "_")
     outPath <- file.path(outDir, outFile)
