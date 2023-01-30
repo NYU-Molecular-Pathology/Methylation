@@ -91,6 +91,17 @@ CheckDirCreate <- function(pathLocation){
     if (!dir.exists(dataOutDir)) {dir.create(dataOutDir)}
 }
 
+
+GetRunDirPath <- function(projectName){
+    userNam <- paste0(Sys.info()[["user"]])
+    if (Sys.info()[['sysname']] == "Darwin") {
+        runDir <- file.path("","Users",userNam,"Documents","Rprojects_local", projectName)
+    }else{
+        runDir <- file.path("/gpfs/home", userNam,"methylation_projects", projectName)
+    }
+    return(runDir)
+}
+
 #Sys.setenv('R_MAX_VSIZE'=32000000000)
 set.seed(1234)
 
