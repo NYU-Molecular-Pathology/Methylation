@@ -275,14 +275,10 @@ SaveHmPng <- function(fi_prefix, fi_suffix, hm, topvar = "", outDir=NULL) {
   ComplexHeatmap::draw(hm)
   invisible(dev.off())
 }                                
+
                                            
-getHeatMap2 <- function(betaRanges, titleValue, ha, geneNamesHeatMap = F,
-    colSplt = NULL,
-    rwsplt = NULL,
-    rwOrder = NULL, 
-    clusRows = F,
-    clusCols = F) 
-{
+# FUN: Alternate heatmap function                                           
+getHeatMap2 <- function(betaRanges, titleValue, ha, geneNamesHeatMap = F, colSplt = NULL, rwsplt = NULL, rwOrder = NULL, clusRows = F, clusCols = F){
   col_fun3 <- circlize::colorRamp2(c(0, 0.20, 0.25, 0.5, 0.75, 1), c("black","darkblue","deepskyblue", "white", "tomato","red"))
   titleOfPlot <- paste("Heatmap of", titleValue, sep = " ")
    hmTopNumbers <- ComplexHeatmap::Heatmap(betaRanges, 
@@ -325,6 +321,8 @@ getHeatMap2 <- function(betaRanges, titleValue, ha, geneNamesHeatMap = F,
     return(gb$drawHeatMap(hmTopNumbers))
 }
 
+
+# FUN: Returns blank data frame to fill                                            
 GetEmptyDf <- function(csvColumns,betas){
     temp <- matrix(nrow= ncol(csvColumns), ncol=dim(betas)[2])
     avgBetas <- data.frame(temp)
