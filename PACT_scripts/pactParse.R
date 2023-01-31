@@ -305,47 +305,54 @@ MatchIndex <- function(list1, list2){
 }
 
 
-CheckDupesMatch <- function(nameList, secondCol) {
-    matchIdx <- MatchIndex(secondCol, nameList)
-    if (any(duplicated(matchIdx))) {
-        message(crayon::bgRed("The sample sheet may contain duplicate accession Numbers!"))
-        dupesIdx <- matchIdx[duplicated(matchIdx)]
-        message("Dropping Duplicate at row Index: ", dupesIdx)
-        MsgPrint(nameList[dupesIdx])
-        MsgPrint(secondCol[dupesIdx])
-        #return(unique(matchIdx))
-        return(matchIdx)
-    } else{
-        return(unique(matchIdx))
-    }
-}
-
-
-CheckMissingPairs <- function(philipsT, philipsN){
+CheckMissingPairs <- function(ngsNumbers, philipsT, philipsN){
     if(any(is.na(philipsT)|philipsT==0)){
         philipsT[is.na(philipsT)] <- 0
         missingPair <- which(philipsT==0)
         message(crayon::bgRed("Some samples are missing tumor/normal pairs:"))
-        message("Philips Normal: ", philipsN[missingPair], "\nPhilips Tumor: ", philipsT[missingPair])
+        message(ngsNumbers[missingPair],"\nPhilips Normal: ", philipsN[missingPair], "\nPhilips Tumor: ", philipsT[missingPair])
     }
 
     if(any(is.na(philipsN)|philipsN==0)){
         philipsN[is.na(philipsN)] <- 0
         missingPair <- which(philipsN==0)
         message(crayon::bgRed("Some samples are missing tumor/normal pairs:"))
-        message("Philips Normal: ", philipsN[missingPair], "\nPhilips Tumor: ", philipsT[missingPair])
+        message(ngsNumbers[missingPair],"\nPhilips Normal: ", philipsN[missingPair], "\nPhilips Tumor: ", philipsT[missingPair])
+    }
+
+    if(any(philipsN %in% philipsT)){
+        theDupe <- which(philipsN %in% philipsT ==T)
+        message(crayon::bgRed("Some Philips samples have the same tumor/normal accession number:"))
+        MsgPrint(ngsNumbers[theDupe])
+        MsgPrint(philipsN[theDupe])
+    }
+}
+
+
+CheckDupesMatch <- function(nameList, secondCol) {
+    matchIdx <- MatchIndex(secondCol, nameList)
+    if (any(duplicated(matchIdx))) {
+        message(crayon::bgRed("The sample sheet may contain duplicate accession Numbers!"))
+        dupesIdx <- matchIdx[duplicated(matchIdx)]
+        message("Duplicate at row Index: ", dupesIdx)
+        MsgPrint(nameList[dupesIdx])
+        MsgPrint(secondCol[dupesIdx])
+        #return(unique(matchIdx))
+        return(matchIdx)
+    } else{
+        return(matchIdx)
     }
 }
 
 
 GetIndexMatch <- function(rawSheetData, philipsExport){
-
     message("Running GetIndexMatch function in pactParse.R")
     accessions <- rawSheetData$`Accession#`
     philipsN <- c(philipsExport$`Normal Specimen ID`)
     philipsT <- c(philipsExport$`Tumor Specimen ID`)
+    ngsNumbers <- philipsExport$`Test Number`
 
-    CheckMissingPairs(philipsT, philipsN)
+    CheckMissingPairs(ngsNumbers, philipsT, philipsN)
 
     philipsIdxT <- CheckDupesMatch(philipsT, accessions)
     philipsIdxN <- CheckDupesMatch(philipsN, accessions)
@@ -356,29 +363,47 @@ GetIndexMatch <- function(rawSheetData, philipsExport){
     if(length(philipsIdxT) != length(philipsIdxN)){
         message("Total Tumors: ", length(philipsIdxT))
         message("Total Normals: ", length(philipsIdxN))
-        message(crayon::bgRed("Indexes are not aligned for Philips tumor normal samples!"))
-        totalDrop <- philipsIdxN %in% philipsIdxT
-        message("Dropping ",length(which(totalDrop==F)), " cases...")
-        message(paste(philipsN[which(totalDrop==F)], collapse="\n"))
-        philipsIdxN <- philipsIdxN[totalDrop]
+        tumorLonger <- length(philipsIdxT) > length(philipsIdxN)
+        totalAdd <- abs(length(philipsIdxT) - length(philipsIdxN))
+        message(crayon::bgRed("Not all Philips samples are paired with a tumor or normal!"))
+        if(tumorLonger==F){
+            totalDrop <- philipsIdxN %in% philipsIdxT
+            message(crayon::bgRed(paste(totalAdd, "more Normals than Tumors listed in worksheet!")))
+            message(message(paste0(capture.output(data.frame(
+                NGS=ngsNumbers[!totalDrop], Potential.Extra=philipsN[!totalDrop])), collapse="\n")))
+            philipsIdxT <- c(philipsIdxT, rep(0,totalAdd))
+        }else{
+            totalDrop <- philipsIdxT %in% philipsIdxN
+            message(crayon::bgRed(paste(totalAdd, "more Tumors than Normals listed in worksheet!")))
+            message(message(paste0(capture.output(data.frame(
+                NGS=ngsNumbers[!totalDrop], Potential.Extra=philipsT[!totalDrop])), collapse="\n")))
+            philipsIdxN <- c(philipsIdxN, rep(0,totalAdd))
+        }
+        message("Extra ",length(which(totalDrop==F)), " cases...")
+        #message(paste(philipsN[which(totalDrop==F)], collapse="\n"))
+        #philipsIdxN <- philipsIdxN[totalDrop]
     }
 
     if(length(wetLabIdxT) != length(wetLabIdxN)){
-        message("Indexes are not aligned for Wetlab tumor normal samples!")
-        totalDrop <- 1:length(philipsIdxT)
-        message("Dropping unmatched normal cases...")
+        message("Total Tumors: ", length(wetLabIdxT))
+        message("Total Normals: ", length(wetLabIdxN))
+        message("Wetlab Tumor/Normal samples are not paired correctly!")
         tumorLonger <- length(wetLabIdxT) > length(wetLabIdxN)
         totalAdd <- abs(length(wetLabIdxT) - length(wetLabIdxN))
-        if(tumorLonger==T){
+        if(tumorLonger==F){
+            totalDrop <- wetLabIdxN %in% wetLabIdxT
+            #totalDrop <- 1:length(philipsIdxT)
             message(crayon::bgRed("More Normals than Tumors listed in worksheet!"))
-
+            message(message(paste0(capture.output(data.frame(Potential.Extra=philipsN[!totalDrop])), collapse="\n")))
+            wetLabIdxT <- c(wetLabIdxT, rep(0,totalAdd))
         }else{
+            totalDrop <- 1:length(philipsIdxN)
             message(crayon::bgRed("More Tumors than Normals listed in worksheet!"))
+            message(message(paste0(capture.output(data.frame(Potential.Extra=philipsT[!totalDrop])), collapse="\n")))
+            wetLabIdxN <- c(wetLabIdxN, rep(0,totalAdd))
         }
-        #data.frame(Tumors = accessions[wetLabIdxT], Normals = accessions[wetLabIdxN])
-        #message(paste(accessions[wetLabIdxT],collapse="\n"))
-        wetLabIdxN <- wetLabIdxN[totalDrop]
-        wetLabIdxT <- wetLabIdxT[totalDrop]
+        #wetLabIdxN <- wetLabIdxN[totalDrop]
+        #wetLabIdxT <- wetLabIdxT[totalDrop]
     }
 
     idx <- data.frame(
