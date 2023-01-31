@@ -345,6 +345,31 @@ CheckDupesMatch <- function(nameList, secondCol) {
 }
 
 
+CheckTotalIndexes <- function(tumorSam, normalSam, ngsNumbers, sheetType = "Philips"){
+    if(length(tumorSam) != length(normalSam)){
+        message("Total Tumors: ", length(tumorSam))
+        message("Total Normals: ", length(normalSam))
+        tumorLonger <- length(tumorSam) > length(normalSam)
+        totalAdd <- abs(length(tumorSam) - length(normalSam))
+        message(crayon::bgRed(paste("Not all",sheetType,"samples are paired with a tumor or normal!")))
+        if(tumorLonger==F){
+            totalDrop <- normalSam %in% tumorSam
+            message(crayon::bgRed(paste(totalAdd, "more Normals than Tumors listed in worksheet!")))
+            message(message(paste0(capture.output(data.frame(
+                NGS=ngsNumbers[!totalDrop], Potential.Extra=philipsN[!totalDrop])), collapse="\n")))
+            tumorSam <- c(tumorSam, rep(0,totalAdd))
+        }else{
+            totalDrop <- tumorSam %in% normalSam
+            message(crayon::bgRed(paste(totalAdd, "more Tumors than Normals listed in worksheet!")))
+            message(message(paste0(capture.output(data.frame(
+                NGS=ngsNumbers[!totalDrop], Potential.Extra=philipsT[!totalDrop])), collapse="\n")))
+            normalSam <- c(normalSam, rep(0,totalAdd))
+        }
+        message("Extra ", length(which(totalDrop==F)), " cases...")
+    }
+
+}
+
 GetIndexMatch <- function(rawSheetData, philipsExport){
     message("Running GetIndexMatch function in pactParse.R")
     accessions <- rawSheetData$`Accession#`
@@ -359,6 +384,8 @@ GetIndexMatch <- function(rawSheetData, philipsExport){
 
     wetLabIdxT <- CheckDupesMatch(accessions, philipsT)
     wetLabIdxN <- CheckDupesMatch(accessions, philipsN)
+
+
 
     if(length(philipsIdxT) != length(philipsIdxN)){
         message("Total Tumors: ", length(philipsIdxT))
@@ -379,9 +406,7 @@ GetIndexMatch <- function(rawSheetData, philipsExport){
                 NGS=ngsNumbers[!totalDrop], Potential.Extra=philipsT[!totalDrop])), collapse="\n")))
             philipsIdxN <- c(philipsIdxN, rep(0,totalAdd))
         }
-        message("Extra ",length(which(totalDrop==F)), " cases...")
-        #message(paste(philipsN[which(totalDrop==F)], collapse="\n"))
-        #philipsIdxN <- philipsIdxN[totalDrop]
+        message("Extra ", length(which(totalDrop==F)), " cases...")
     }
 
     if(length(wetLabIdxT) != length(wetLabIdxN)){
@@ -394,16 +419,17 @@ GetIndexMatch <- function(rawSheetData, philipsExport){
             totalDrop <- wetLabIdxN %in% wetLabIdxT
             #totalDrop <- 1:length(philipsIdxT)
             message(crayon::bgRed("More Normals than Tumors listed in worksheet!"))
-            message(message(paste0(capture.output(data.frame(Potential.Extra=philipsN[!totalDrop])), collapse="\n")))
+            message(message(paste0(capture.output(data.frame(Potential.Extra=philipsN[totalDrop])), collapse="\n")))
             wetLabIdxT <- c(wetLabIdxT, rep(0,totalAdd))
+            message("Extra ", length(which(totalDrop==T)), " cases...")
         }else{
-            totalDrop <- 1:length(philipsIdxN)
+            totalDrop <- wetLabIdxT %in% wetLabIdxN
             message(crayon::bgRed("More Tumors than Normals listed in worksheet!"))
             message(message(paste0(capture.output(data.frame(Potential.Extra=philipsT[!totalDrop])), collapse="\n")))
             wetLabIdxN <- c(wetLabIdxN, rep(0,totalAdd))
+            message("Extra ", length(which(totalDrop==F)), " cases...")
         }
-        #wetLabIdxN <- wetLabIdxN[totalDrop]
-        #wetLabIdxT <- wetLabIdxT[totalDrop]
+
     }
 
     idx <- data.frame(
