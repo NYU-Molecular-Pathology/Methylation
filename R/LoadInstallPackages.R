@@ -1,5 +1,6 @@
 #!/usr/bin/env Rscript
 if(!require("devtools")){install.packages("devtools", dependencies=T, ask=F)}
+
 yourHome <- fs::path_home()
 
 cbioLn <- switch (
@@ -9,14 +10,19 @@ cbioLn <- switch (
     #"/private_pkgs/classifiers" # docker
 )
 
-if(Sys.info()[['sysname']]=="Darwin") {
+if (Sys.info()[['sysname']]=="Darwin") {
     Sys.setenv(PROJ_LIBS = "/opt/homebrew/opt/proj/lib")
     Sys.setenv(SQLITE3_LIBS = "/opt/homebrew/opt/sqlite/lib")
 } else{
     options(BioC_mirror = "https://packagemanager.rstudio.com/bioconductor")
     options(repos = c(CRAN = "https://packagemanager.rstudio.com/cran/__linux__/focal/latest")
-    
     )
+}
+
+if (Sys.info()[['sysname']]=="Darwin") {
+    typeSrc <- "binary"
+} else{
+    typeSrc <- "source"
 }
 
 uniDpath <- file.path(cbioLn, "UniD")
@@ -147,7 +153,7 @@ pk.inst <- function(pkg){
             },
             warning = function(cond) {
                 message("\nWarning on package:\n", pkg, "\n-----------\n",cond)
-                do.call(install.packages, c(pk.opt, list(type = "binary")))
+                do.call(install.packages, c(pk.opt, list(type = typeSrc)))
             },
             error = function(cond) {
                 msgCheck(cond,T)
@@ -174,7 +180,7 @@ gh.inst <- function(pkNam, ...) {
                 do.call(devtools::install_github, params)
             },
             error = function(cond) {
-                params  <- c(gh.opt, list(type = "binary"))
+                params  <- c(gh.opt, list(type = typeSrc))
                 do.call(devtools::install_github, params)
             },
             finally={ld(names(pkNam))}
@@ -288,12 +294,12 @@ checkNeeds <- function(){
 
 setOptions <- function(){
     options(needs.promptUser=F)
-    #Sys.setenv(R_ENABLE_JIT=T)
+    Sys.setenv(R_ENABLE_JIT=T)
     options("needs.promptUser"=F); options("promptUser"=F)
     options("device.ask.default" = FALSE)
     options("install.packages.compile.from.source"="Yes")
     options("install.packages.check.source"="yes")
-    #compiler::enableJIT(3);
+    compiler::enableJIT(3);
     compiler::compilePKGS(enable=T);
     compiler::setCompilerOptions(suppressAll=T, optimize=3)
     fixProf()
@@ -303,7 +309,7 @@ cpMakeV <- function(editFile=F){
     #mkFi <- "/Volumes/CBioinformatics/jonathan/Rprojects/Methylation-scripts/Makevars"
     #message("Copying Makevars to local dotfiles: ", mkFi)
     #message("Copying Makevars to local dotfiles")
-    if(!dir.exists("~/.R/")){
+    if(!dir.exists(file.path(yourHome,".R/"))){
         message("No Makevars file in ~/.R/")
         #dir.create("~/.R/")
     }else{
@@ -330,7 +336,9 @@ checkBioC <- function(){
         install.packages("BiocManager", Ncpus = 4)
         BiocManager::install(version="3.10", update=T, ask=F, type="source")
     } else{ld("BiocManager")}
-    if(rq("zip")){install.packages("zip", dependencies=T, type="binary")
+    
+    if (rq("zip")){
+        install.packages("zip", dependencies=T, type=typeSrc)
     } else{ld("zip")}
 }
 
