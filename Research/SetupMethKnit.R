@@ -6,8 +6,12 @@ supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
 supPk <- function(sobj){return(suppressPackageStartupMessages(sobj))}
 supSrt <- function(pk){return(suppressPackageStartupMessages(suppressWarnings(pk)))}
 
-#if(!require("rprofile")){devtools::install_github("csgillespie/rprofile", dependencies = T)}
-#rprofile::set_startup_options(show.signif.stars = FALSE, useFancyQuotes = FALSE, Ncpus = parallel::detectCores()-2)
+if(Sys.info()[['sysname']]=="Linux") {
+    if(!require("rprofile")){devtools::install_github("csgillespie/rprofile", dependencies = T)}
+    rprofile::set_startup_options(show.signif.stars = FALSE, useFancyQuotes = FALSE, Ncpus = parallel::detectCores()-2)
+    Sys.setenv("R_PROFILE"=file.path(Sys.getenv("HOME"), "Rprofile.site"))
+    Sys.setenv(IMAGEMAGICK_V6_HOME="/gpfs/share/apps/imagemagick/6.9.10/bin/convert")
+}
 
 mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/"
 rFiles = c(
@@ -45,14 +49,16 @@ pkgs <-
     )
 
 scripts = paste0(mainHub, rFiles)
+scripts = paste("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/LoadInstallPackages.R", scripts)
 suppressWarnings(lapply(scripts, function(i){message("Sourcing: ", i);devtools::source_url(i)}))
 supSrt(librarian::shelf(pkgs, ask = F, update_all = F, quiet = FALSE))
 
-extraDeps <- c("minfiData")
-supSrt(librarian::shelf(ask = F, update_all = F, quiet = F, dependencies = T, libs=extraDeps))
-if(!require("cnv.methyl")){devtools::install_github("https://github.com/ijcBIT/cnv.methyl.git", dependencies = T)}
-if(!require("maxprobes")){ devtools::install_github("markgene/maxprobes", dependencies = T)}
+#supSrt(librarian::shelf(ask = F, update_all = F, quiet = F, dependencies = T, libs=extraDeps))
+#easypackages::packages(extraDeps, prompt = F, Ncpus = 6)
 
+if(!require("minfiData")){BiocManager::install("minfiData")
+if(!require("maxprobes")){ devtools::install_github("markgene/maxprobes", dependencies = T)}
+if(!require("cnv.methyl")){devtools::install_github("https://github.com/ijcBIT/cnv.methyl.git", dependencies = T)}
 
 knitOpt <- list(
     echo = FALSE,
@@ -68,9 +74,11 @@ knitOpt <- list(
     fig.path = "figures/"
 )
 
-animation::ani.options(autobrowse = FALSE)
+try(animation::ani.options(autobrowse = FALSE), silent=T)
 options(width = 1500)
-library("magrittr"); library("dplyr"); require("minfi")
+library("magrittr")
+library("dplyr")
+require("minfi")
 
 
 setKnitDir <- function(runDir) {
@@ -95,6 +103,7 @@ GetRunDirPath <- function(projectName){
     }
     return(runDir)
 }
+
 
 #Sys.setenv('R_MAX_VSIZE'=32000000000)
 set.seed(1234)
