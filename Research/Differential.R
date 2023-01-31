@@ -51,85 +51,69 @@ GetMethSet <- function(RGSet){
     meth <- meth[sample(nrow(meth), 100000), ]
 }
 
+                        
 GetMealGene <- function(X, resAdj, listOfGenes){
     geneName <- paste0(listOfGenes[X])
     return(MEAL::getGeneVals(resAdj, geneName, genecol = "UCSC_RefGene_Name", fNames = c("chromosome", "start")))
 }
 
+                        
 GetNewGeneVals <- function(geneDataLi, resAdj) {
-    listOfGenes <- geneDataLi[,"Gene"]
+    listOfGenes <- geneDataLi[, "Gene"]
     X = 1:length(listOfGenes)
-    
-    geneValDf <- lapply(
-        X,
-        FUN = function(X, resAdj, listOfGenes) {
-            geneName <- paste0(listOfGenes[X])
-            theRow <-
-                MEAL::getGeneVals(
-                    resAdj,
-                    geneName,
-                    genecol = "UCSC_RefGene_Name",
-                    fNames = c("chromosome", "start")
+    geneValDf <- lapply(X, FUN = function(X, resAdj, listOfGenes) {
+        geneName <- paste0(listOfGenes[X])
+            theRow <- MEAL::getGeneVals(
+                resAdj, geneName, genecol = "UCSC_RefGene_Name", fNames = c("chromosome", "start")
                 )
             return(as.data.frame(theRow))
-        },
-        resAdj,
-        listOfGenes
-    )
+            }, resAdj, listOfGenes
+        )
     
-    newValues <- data.frame()
-    for (x in geneValDf) {
-        newValues <- rbind(newValues, x)
-    }
+    newVals <- data.frame()
+    for (x in geneValDf) {newVals <- rbind(newVals, x)}
     
-    for (gn in 1:length(newValues$UCSC_RefGene_Name)) {
-        newName <-
-            unlist(stringr::str_split(newValues$UCSC_RefGene_Name[gn], pattern = ";"))
+    for (gn in 1:length(newVals$UCSC_RefGene_Name)) {
+        newName <- unlist(stringr::str_split(newVals$UCSC_RefGene_Name[gn], pattern = ";"))
         newName <- paste(unique(newName), collapse = ";")
-        newValues[gn, "UCSC_RefGene_Name"] <- newName
+        newVals[gn, "UCSC_RefGene_Name"] <- newName
     }
-    newValues$Region <- ""
+    
+    newVals$Region <- ""
     for (rgn in 1:length(geneDataLi$Gene)) {
         theName <- geneDataLi$Gene[rgn]
-        for (xName in 1:length(newValues$UCSC_RefGene_Name)) {
-            theGene <-
-                unlist(stringr::str_split(newValues$UCSC_RefGene_Name[xName], ";"))
+        for (xName in 1:length(newVals$UCSC_RefGene_Name)) {
+            theGene <- unlist(stringr::str_split(newVals$UCSC_RefGene_Name[xName], ";"))
             if (any(grepl(pattern = theName, theGene)) == T) {
-                newValues[xName, "Region"] <- geneDataLi$Site[rgn]
+                newVals[xName, "Region"] <- geneDataLi$Site[rgn]
             }
         }
     }
-    return(newValues)
+    return(newVals)
 }
                         
 # DMRcate -------------------
                         
-PlotQCPdf <-
-function(targPairs, detP,rgSet){
+PlotQCPdf <- function(targPairs, detP,rgSet){
     pal <- brewer.pal(12,"Set3")
     legGroup <- levels(factor(targPairs$Sample_Group))
     par(mfrow=c(1,2))
     barplot(colMeans(detP), col=pal[factor(targPairs$Sample_Group)], las=2,
             cex.names=0.8, ylab="Mean detection p-values")
     abline(h=0.05,col="red")
-    legend("topleft", legend=legGroup, fill=pal,
-           bg="white")
+    legend("topleft", legend=legGroup, fill=pal, bg="white")
     barplot(colMeans(detP), col=pal[factor(targPairs$Sample_Group)], las=2,
             cex.names=0.8, ylim=c(0,0.002), ylab="Mean detection p-values")
     abline(h=0.05,col="red")
-    legend("topleft", legend=legGroup, fill=pal,
-           bg="white")
-    qcReport(rgSet, sampNames=targPairs$ID, sampGroups=targPairs$Sample_Group,
-             pdf="qcReport.pdf")
+    legend("topleft", legend=legGroup, fill=pal, bg="white")
+    qcReport(rgSet, sampNames=targPairs$ID, sampGroups=targPairs$Sample_Group, pdf="qcReport.pdf")
 }
 
-                        
-                        
+
 GetGgMds <- function(mds,targPairs){
   scaleUp <- element_text(size = rel(1.2))
   toplot <- data.frame(Dim1 = mds$x, Dim2 = mds$y, Group = factor(targPairs$Sample_Group))
-  theplot <- ggplot(toplot, size = 5, aes(Dim1, Dim2, colour = Group)) + 
-    geom_point(size = 3) + theme_bw() +
+  theplot <- ggplot(toplot, size = 5, aes(Dim1, Dim2, colour = Group)) + geom_point(size = 3) + theme_bw() +
     theme( axis.title = scaleUp, legend.text = scaleUp, legend.title = scaleUp)
   return(theplot)
 }
@@ -141,13 +125,13 @@ PlotDensityMds <- function(targPairs, mSetSq) {
   legFact <- levels(factor(targPairs$Sample_Group))
   facPalCol <- pal[factor(targPairs$Sample_Group)]
   methylSet <- getM(mSetSq)
-  
   cat("\n\n")
   cat("## MDS 1")
   cat("\n\n")
   mds1 <- plotMDS(methylSet, top = 1000, gene.selection = "common", col = facPalCol,
     dim = c(1, 2)
   )
+  
   GetGgMds(mds1,targPairs)
   cat("\n\n")
   cat("## MDS PCA 1 & 3")
@@ -155,6 +139,7 @@ PlotDensityMds <- function(targPairs, mSetSq) {
   mds2 <- plotMDS(methylSet, top = 1000, gene.selection = "common", col = facPalCol,
     dim = c(1, 3)
   )
+  
   GetGgMds(mds2,targPairs)
   cat("\n\n")
   cat("## MDS PCA 2 & 3")
@@ -162,6 +147,8 @@ PlotDensityMds <- function(targPairs, mSetSq) {
   mds3 <- plotMDS(methylSet, top = 1000, gene.selection = "common", col = facPalCol,
     dim = c(2, 3)
   )
+  
+  
   GetGgMds(mds3,targPairs)
   cat("\n\n")
 }
@@ -171,13 +158,15 @@ PlotDimensions <- function(mSetSqFlt,targPairs){
     par(mfrow=c(1,1))
     pal <- RColorBrewer::brewer.pal(8,"Dark2")
     legFact <- levels(factor(targPairs$Sample_Group))
-      cat("\n\n")
+    
+    cat("\n\n")
     cat("## MDS Mset 1")
     cat("\n\n")
+    
     plotMDS(getM(mSetSqFlt), top=1000, gene.selection="common",
             col=pal[factor(targPairs$Sample_Group)], cex=0.8)
-    legend("right", legend=legFact, text.col=pal,
-           cex=0.65, bg="white")
+    legend("right", legend=legFact, text.col=pal, cex=0.65, bg="white")
+    
     cat("\n\n")
     cat("## MDS Mset Sample Type")
     cat("\n\n")
@@ -190,6 +179,7 @@ PlotDimensions <- function(mSetSqFlt,targPairs){
     cat("\n\n")
     cat("## mSetSqFlt Dim 1 & 3")
     cat("\n\n")
+    
     # Examine higher dimensions to look at other sources of variation
     plotMDS(getM(mSetSqFlt), top=1000, gene.selection="common",
             col=pal[factor(targPairs$Sample_Source)], dim=c(1,3))
@@ -202,17 +192,19 @@ PlotDimensions <- function(mSetSqFlt,targPairs){
     
     plotMDS(getM(mSetSqFlt), top=1000, gene.selection="common",
             col=pal[factor(targPairs$Sample_Source)], dim=c(2,3))
+    
     legend("topright", legend=levels(factor(targPairs$Sample_Source)), text.col=pal,
            cex=0.7, bg="white")
     
     cat("\n\n")
     cat("## mSetSqFlt Dim 3 & 4")
     cat("\n\n")
+    
     plotMDS(getM(mSetSqFlt), top=1000, gene.selection="common",
             col=pal[factor(targPairs$Sample_Source)], dim=c(3,4))
     legend("right", legend=levels(factor(targPairs$Sample_Source)), text.col=pal,
            cex=0.7, bg="white")
-      cat("\n\n")
+    cat("\n\n")
 }
 
                         
@@ -291,10 +283,10 @@ GetTracksPlot <- function(annEPICSub, bVals, results.ranges, dmrIndex=1){
     islandHMM$end <- as.numeric(islandHMM$end)
     #islandData<- makeGRangesFromDataFrame(islandHMM, keep.extra.columns = TRUE)
     
-     islandData <- GRanges(seqnames=Rle(islandHMM[,1]),
-                           ranges=IRanges(start=islandHMM[,2], end=islandHMM[,3]), strand=Rle(strand("*" )))
+    islandData <- GRanges(seqnames=Rle(islandHMM[,1]),
+                          ranges=IRanges(start=islandHMM[,2], end=islandHMM[,3]), strand=Rle(strand("*" )))
     
-     dnase <- read.csv(paste0(dataDirectory,"/wgEncodeRegDnaseClusteredV3chr17.bed"),
+    dnase <- read.csv(paste0(dataDirectory,"/wgEncodeRegDnaseClusteredV3chr17.bed"),
                       sep="\t",stringsAsFactors=FALSE,header=FALSE)
 
     dnaseData <- GRanges(seqnames=dnase[,1],
@@ -304,11 +296,11 @@ GetTracksPlot <- function(annEPICSub, bVals, results.ranges, dmrIndex=1){
     
     iTrack <- IdeogramTrack(genome = gen, chromosome = chrom, name="")
     gTrack <- GenomeAxisTrack(col="black", cex=1, name="GenomeAxis", fontcolor="black")
-    rTrack <- gb$supM(UcscTrack(genome=gen, chromosome=chrom, track="UCSC Genes", 
-                        from=minbase, to=maxbase, trackType="GeneRegionTrack", 
-                        start=minbase, end=maxbase,
-                        gene="name", symbol="name2", transcript="name", strand="strand", fill="darkblue",stacking="full", name="UCSC Genes", 
-                        showId=TRUE, geneSymbol=TRUE))
+    rTrack <- gb$supM(UcscTrack(
+        genome=gen, chromosome=chrom, track="UCSC Genes", from=minbase, to=maxbase, trackType="GeneRegionTrack", 
+        start=minbase, end=maxbase, gene="name", symbol="name2", transcript="name", strand="strand", fill="darkblue",
+        stacking="full", name="UCSC Genes", showId=TRUE, geneSymbol=TRUE)
+                     )
     
     annEPICOrd <- annEPICSub[order(annEPICSub$chr,annEPICSub$pos),]
     bValsOrd <- bVals[match(annEPICOrd$Name,rownames(bVals)),]
@@ -319,39 +311,46 @@ GetTracksPlot <- function(annEPICSub, bVals, results.ranges, dmrIndex=1){
     # extract data on CpGs in DMR
     cpgData <- subsetByOverlaps(cpgData, results.ranges[dmrIndex])
     # methylation data track
-    methTrack <- DataTrack(range=cpgData, groups=targPairs$Sample_Group,genome = gen,
-                           chromosome=chrom, ylim=c(-0.05,1.05), col=pal,
-                           type=c("a","p"), name="DNA Meth.\n(beta value)",
-                           background.panel="white", legend=TRUE, cex.title=0.8,
-                           cex.axis=0.8, cex.legend=0.8)
+    methTrack <- DataTrack(
+        range=cpgData, groups=targPairs$Sample_Group,genome = gen, chromosome=chrom, 
+        ylim=c(-0.05,1.05), col=pal, type=c("a","p"), name="DNA Meth.\n(beta value)",
+        background.panel="white", legend=TRUE, cex.title=0.8, cex.axis=0.8, cex.legend=0.8
+    )
     # CpG island track
-    islandTrack <- AnnotationTrack(range=islandData, genome=gen, name="CpG Is.",
-                                   chromosome=chrom, fill="darkgreen")
+    islandTrack <- AnnotationTrack(
+        range=islandData, genome=gen, name="CpG Is.", chromosome=chrom, fill="darkgreen"
+    )
     # DNaseI hypersensitive site data track
-    dnaseTrack <- DataTrack(range=dnaseData, genome=gen, name="DNAseI",
-                            type="gradient", chromosome=chrom)
+    dnaseTrack <- DataTrack(
+        range=dnaseData, genome=gen, name="DNAseI", type="gradient", chromosome=chrom
+    )
     # DMR position data track
-    dmrTrack <- AnnotationTrack(start=start, end=end, genome=gen, name="DMR",
-                                chromosome=chrom,fill="darkred")
-    tracks <- list(iTrack, gTrack, methTrack, dmrTrack,islandTrack, dnaseTrack, rTrack)
+    dmrTrack <- AnnotationTrack(
+        start=start, end=end, genome=gen, name="DMR", chromosome=chrom, fill="darkred"
+    )
+    tracks <- list(iTrack, gTrack, methTrack, dmrTrack, islandTrack, dnaseTrack, rTrack)
     return(list("tracks"=tracks, "minbase"=minbase, "maxbase"=maxbase))
 }
-                        
+
+
 GetDesign <- function(targPairs) {
   cellType <- factor(targPairs$Sample_Group)
   individual <- factor(targPairs$Sample_Source)
+  
   design <- model.matrix(~ 0 + cellType + individual, data = targPairs)
   colnames(design) <- c(levels(cellType), levels(individual)[-1])
   return(design)
 }
+
 
 ReadLoadDmps <- function(fit, contMat, annEPICSub, cateFile="./figures/diffmean/pairwise_DMPs.csv") {
   fit2 <- contrasts.fit(fit, contMat)
   fit2 <- eBayes(fit2)
   summary(decideTests(fit2))
   DMPs <- topTable(fit2, num = Inf, coef = 1, genelist = annEPICSub)
+  
   if (!file.exists(cateFile)) {
-    write.table(DMPs, file = cateFile, sep = ",", row.names = FALSE)
+      write.table(DMPs, file = cateFile, sep = ",", row.names = FALSE)
   }
   return(DMPs)
 }
@@ -413,11 +412,13 @@ DrawDMRAnno <- function(results.ranges, targPairs, bVals) {
     cat("\n\n")
 }
                         
+
 GetEpicAnno <- function(RGSet, mVals){
   annEPIC <- getAnnotation(RGSet)
   annEPIC[match(rownames(mVals), annEPIC$Name), c(1:4, 12:19, 24:ncol(annEPIC))]
 }
                         
+
 DropDashes <- function(targCol){
    newValues <- stringr::str_replace_all(targCol, pattern="-", replacement = "_") 
    return(newValues)
