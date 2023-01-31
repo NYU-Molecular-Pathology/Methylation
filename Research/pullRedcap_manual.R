@@ -49,11 +49,16 @@ loadPacks <- function(){
     rlis = getOption("repos")
     rlis["CRAN"] = "http://cran.us.r-project.org"
     options(repos = rlis)
+    if (Sys.info()[['sysname']]=="Darwin") {
+             bothType <- "both"         
+    }else{
+             bothType <- "source"    
+    }
     invisible(lapply(pkgs, function(pk){
         if(suppressWarnings(!require(pk, character.only=T))){
-            install.packages(pk,dependencies=T, verbose=T, repos="http://cran.us.r-project.org", type="both")
+            install.packages(pk,dependencies=T, verbose=T, repos="http://cran.us.r-project.org", type=bothType)
         }}))
-    if(!require("redcapAPI")){install.packages("redcapAPI", dependencies = T, type="both",ask=F)}
+    if(!require("redcapAPI")){install.packages("redcapAPI", dependencies = T, type=bothType,ask=F)}
     if(!require("remotes")){install.packages("remotes", dependencies=T)}
     library("redcapAPI")
     library(dplyr)
@@ -186,7 +191,7 @@ FixBaseName <- function(targets, runDir, col_sentrix) {
 
 # Search REDCap Worksheets for MRN Match for output -------------------------------------
 loadPacks()
-checkMounts()
+if (Sys.info()[['sysname']]=="Darwin") {checkMounts()}
 sourceFuns()
 
 # Example Use
