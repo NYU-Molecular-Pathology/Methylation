@@ -49,9 +49,10 @@ suppressWarnings(lapply(scripts, function(i){message("Sourcing: ", i);devtools::
 supSrt(librarian::shelf(pkgs, ask = F, update_all = F, quiet = FALSE))
 
 extraDeps <- c("minfiData")
-supSrt(librarian::shelf(extraDeps, ask = F, update_all = F, quiet = FALSE, dependencies = T))
-if(!require("maxprobes")){ devtools::install_github("markgene/maxprobes", dependencies = T)}
+supSrt(librarian::shelf(ask = F, update_all = F, quiet = F, dependencies = T, libs=extraDeps))
 if(!require("cnv.methyl")){devtools::install_github("https://github.com/ijcBIT/cnv.methyl.git", dependencies = T)}
+if(!require("maxprobes")){ devtools::install_github("markgene/maxprobes", dependencies = T)}
+
 
 knitOpt <- list(
     echo = FALSE,
