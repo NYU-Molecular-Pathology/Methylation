@@ -1,20 +1,23 @@
 #!/usr/bin/env Rscript
 if(!require("devtools")){install.packages("devtools", dependencies=T, ask=F)}
 
+
+yourHome <- fs::path_home()
+
 cbioLn <- switch (
-  Sys.info()[['sysname']],
-  "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
-  "Linux" = "/private_pkgs/classifiers"#"~/molecpathlab/production/Methylation/classifiers"
+    Sys.info()[['sysname']],
+    "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
+    "Linux" = file.path(yourHome,"molecpathlab/production/Methylation/classifiers")
+    #"/private_pkgs/classifiers" # docker
 )
 
-if(Sys.info()[['sysname']]=="Darwin"){
-  Sys.setenv(PROJ_LIBS = "/opt/homebrew/opt/proj/lib")
-  Sys.setenv(SQLITE3_LIBS = "/opt/homebrew/opt/sqlite/lib")
-#  Sys.setenv(LDFLAGS="-L/usr/local/opt/sqlite/lib")
-#  Sys.setenv(CPPFLAGS="-I/usr/local/opt/sqlite/include")
-  } else{
-  options(BioC_mirror = "https://packagemanager.rstudio.com/bioconductor")
-  options(repos = c(CRAN = "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"))
+if(Sys.info()[['sysname']]=="Darwin") {
+    Sys.setenv(PROJ_LIBS = "/opt/homebrew/opt/proj/lib")
+    Sys.setenv(SQLITE3_LIBS = "/opt/homebrew/opt/sqlite/lib")
+} else{
+    options(BioC_mirror = "https://packagemanager.rstudio.com/bioconductor")
+    options(repos = c(CRAN = "https://packagemanager.rstudio.com/cran/__linux__/focal/latest")
+    )
 }
 
 uniDpath <- file.path(cbioLn, "UniD")
@@ -34,83 +37,77 @@ classPacks <- c(
 )
 
 # Cran Packages ----
-cranPkgs <-
-    c(
-        'devtools',
-        'remotes',
-        'sjmisc',
-        'stringi',
-        'digest',
-        'RCurl',
-        'rlang',
-        'parallel',
-        'grid',
-        'gridExtra',
-        'knitr',
-        'kableExtra',
-        'ggplot2',
-        'plotly',
-        'ggfortify',
-        'ggrepel',
-        'gplots',
-        'fastmatch',
-        'pals',
-        'Polychrome',
-        'qdapTools',
-        'beepr',
-        'xtable',
-        'pander',
-        'grDevices',
-        'graphics',
-        'stats',
-        'utils',
-        'magick',
-        'ade4',
-        "MASS",
-        "R.utils",
-        "optparse",
-        "targets",
-        "usethis",
-        "webshot",
-        "reshape",
-        "reshape2",
-        "data.table",
-        "DT",
-        "scales",
-        "RColorBrewer",
-        "readxl",
-        "stringr",
-        "tinytex",
-        "future.apply",
-        "Rcpp",
-        "httpuv",
-        "shiny"
-    )
+cranPkgs <- c(
+    'devtools',
+    'remotes',
+    'sjmisc',
+    'stringi',
+    'digest',
+    'RCurl',
+    'rlang',
+    'parallel',
+    'grid',
+    'gridExtra',
+    'knitr',
+    'kableExtra',
+    'ggplot2',
+    'plotly',
+    'ggfortify',
+    'ggrepel',
+    'gplots',
+    'fastmatch',
+    'pals',
+    'Polychrome',
+    'qdapTools',
+    'beepr',
+    'xtable',
+    'pander',
+    'grDevices',
+    'graphics',
+    'stats',
+    'utils',
+    'magick',
+    'ade4',
+    "MASS",
+    "R.utils",
+    "optparse",
+    "targets",
+    "usethis",
+    "webshot",
+    "reshape",
+    "reshape2",
+    "data.table",
+    "DT",
+    "scales",
+    "RColorBrewer",
+    "readxl",
+    "stringr",
+    "tinytex",
+    "future.apply",
+    "Rcpp",
+    "httpuv",
+    "shiny"
+)
 
 # GitHub Packages ----
-gHubPkgs <-
-    data.frame(
-        rmarkdown = 'rstudio/rmarkdown',
-        docstring = 'dasonk/docstring',
-        rstudioapi = 'rstudio/rstudioapi',
-        easypackages = 'jakesherman/easypackages',
-        redcapAPI = 'nutterb/redcapAPI',
-        crayon = "r-lib/crayon",
-        redcap = "epicentre-msf/redcap"
-    )
+gHubPkgs <- data.frame(
+    rmarkdown = 'rstudio/rmarkdown',
+    docstring = 'dasonk/docstring',
+    rstudioapi = 'rstudio/rstudioapi',
+    easypackages = 'jakesherman/easypackages',
+    redcapAPI = 'nutterb/redcapAPI',
+    crayon = "r-lib/crayon",
+    redcap = "epicentre-msf/redcap"
+)
 
 # BioConductor Packages ----
-biocPkgs <-
-    c(
-        'HDF5Array', 'rngtools', 'bumphunter','GEOquery', 'minfi', 'lumi', 'methylumi',
-        'randomForest', 'glmnet','IlluminaHumanMethylation450kmanifest',
-        'IlluminaHumanMethylation450kanno.ilmn12.hg19', 'Rtsne',
-        'IlluminaHumanMethylationEPICmanifest',
-        'IlluminaHumanMethylationEPICanno.ilm10b2.hg19',
-        'IlluminaHumanMethylationEPICanno.ilm10b4.hg19',
-        'MethylAid', 'conumee','BiocParallel', "Biobase",
-        "limma","MatrixGenerics", "GenomeInfoDb"
-    )
+biocPkgs <- c(
+    'HDF5Array', 'rngtools', 'bumphunter','GEOquery', 'minfi', 'lumi',
+    'methylumi', 'randomForest', 'glmnet','IlluminaHumanMethylation450kmanifest',
+    'IlluminaHumanMethylation450kanno.ilmn12.hg19', 'IlluminaHumanMethylationEPICmanifest', 'Rtsne',
+    'IlluminaHumanMethylationEPICanno.ilm10b2.hg19', 'IlluminaHumanMethylationEPICanno.ilm10b4.hg19',
+    'MethylAid', 'conumee','BiocParallel', "Biobase", "limma","MatrixGenerics", "GenomeInfoDb"
+)
 
 # Extra Libraries ----
 cpuPacks <- c("parallel","doSNOW","doParallel", "foreach","compiler")
@@ -119,12 +116,13 @@ easyPkgs <- c('tidyverse','sjmisc','stringi','digest','RCurl','gridExtra','needs
 # Helper Functions ----
 sup <- function(x){return(suppressWarnings(suppressPackageStartupMessages(x)))}
 sw <- function(pkgOb){try(return(suppressMessages(suppressWarnings(pkgOb))),silent=T)}
+
 ld <- function(libName) {
-    lib.opts <- list(
-        package = libName, character.only = T,verbose = T, warn.conflicts = F, quietly = F)
+    lib.opts <- list(package = libName, character.only = T,verbose = T, warn.conflicts = F, quietly = F)
     suppressPackageStartupMessages(do.call(library, c(lib.opts)))
     message(libName, " ...load successful")
 }
+
 up <- function(){update.packages(repos='http://cran.rstudio.com/', type = "source", ask=F, checkBuilt=T)}
 rq <- function(pkgName){ifelse(pkgName %in% row.names(installed.packages()), F, T)}
 mkred <- function(strMsg) {return(crayon::white$bgRed$bold(strMsg))}
@@ -481,8 +479,6 @@ setEnviron <- function(){
 checkClassifier <- function(mnpClass) {
     ms <- colorMsg()
     isInstalled <- mnpClass[,1] %in% rownames(installed.packages())
-#    isdocker <- switch (Sys.info()[['sysname']], "Darwin" = F, "Linux" = T)
-#    if(isdocker==T){mnpClass[,2] <- paste0(mnpClass[,1],"_", mnpClass[,3], ".tgz")}
     if (isInstalled==F) {
         cat(ms[2])
         cat(mnpClass[, 1], sep = "\n")
@@ -505,25 +501,37 @@ checkClassifier <- function(mnpClass) {
 startLoadingAll <- function() {
     setEnviron()
     loadPacks()
+
+    if(Sys.info()[['sysname']]=="Darwin") {
+        typeSrc <- "binary"
+    } else{
+        typeSrc <- "source"
+        classPath = "molecpathlab/production/Methylation/classifiers/"
+        mgmtstp27 = file.path(yourHome, classPath,"mgmtstp27_0.6-4.tar.gz")
+        if(!require("mgmtstp27")){
+            install.packages(mgmtstp27, repos=NULL, type="source", dependencies=T)
+        }
+    }
+
     installAll(classPacks, srcInst)
     checkClassifier(mnpV4)
     checkClassifier(mnpV6)
     checkClassifier(mnpV12)
     checkClassifier(srcV12)
-  
-  if(!require("impute")){
-    try(BiocManager::install("impute", update=F, ask=F, dependencies=T, type="binary"), silent=T)
-  }
-  
-  if(!require("wateRmelon")){
-    try(BiocManager::install("wateRmelon", update=F, ask=F, dependencies=T, type="binary"), silent=T)
-  }
-   
-  if (!requireNamespace("UniD", quietly = TRUE)) {
-    try(install.packages(uniDpath, type = "source", dependencies = T, repo = NULL), silent = T)
-  }
 
-    closeAllConnections()
+    if(!require("impute")){
+        try(BiocManager::install("impute", update=F, ask=F, dependencies=T, type=typeSrc), silent=T)
+    }
+
+    if(!require("wateRmelon")){
+        try(BiocManager::install("wateRmelon", update=F, ask=F, dependencies=T, type=typeSrc), silent=T)
+    }
+
+    if (!requireNamespace("UniD", quietly = TRUE)) {
+        try(install.packages(uniDpath, type = "source", dependencies = T, repo = NULL), silent = T)
+    }
+
+    try(closeAllConnections(), silent = T)
 }
 
 startLoadingAll()
