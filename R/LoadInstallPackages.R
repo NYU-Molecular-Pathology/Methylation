@@ -1,7 +1,5 @@
 #!/usr/bin/env Rscript
 if(!require("devtools")){install.packages("devtools", dependencies=T, ask=F)}
-
-
 yourHome <- fs::path_home()
 
 cbioLn <- switch (
@@ -17,6 +15,7 @@ if(Sys.info()[['sysname']]=="Darwin") {
 } else{
     options(BioC_mirror = "https://packagemanager.rstudio.com/bioconductor")
     options(repos = c(CRAN = "https://packagemanager.rstudio.com/cran/__linux__/focal/latest")
+    
     )
 }
 
@@ -518,7 +517,10 @@ startLoadingAll <- function() {
     checkClassifier(mnpV6)
     checkClassifier(mnpV12)
     checkClassifier(srcV12)
-
+    
+    uniDpkgs <- c("lumi","ade4","methylumi","mlr")
+    librarian::shelf(uniDpkgs, ask=F, update_all = F, quiet = F)
+    
     if(!require("impute")){
         try(BiocManager::install("impute", update=F, ask=F, dependencies=T, type=typeSrc), silent=T)
     }
@@ -526,8 +528,7 @@ startLoadingAll <- function() {
     if(!require("wateRmelon")){
         try(BiocManager::install("wateRmelon", update=F, ask=F, dependencies=T, type=typeSrc), silent=T)
     }
-
-    if (!requireNamespace("UniD", quietly = TRUE)) {
+    if (!requireNamespace("UniD", quietly = T)) {
         try(install.packages(uniDpath, type = "source", dependencies = T, repo = NULL), silent = T)
     }
 
