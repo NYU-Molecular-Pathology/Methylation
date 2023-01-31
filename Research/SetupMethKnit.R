@@ -69,7 +69,7 @@ knitOpt <- list(
 
 animation::ani.options(autobrowse = FALSE)
 options(width = 1500)
-library("mnp.v11b6"); library("magrittr"); library("dplyr"); require("minfi")
+library("magrittr"); library("dplyr"); require("minfi")
 
 
 setKnitDir <- function(runDir) {
