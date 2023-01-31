@@ -110,7 +110,7 @@ biocPkgs <- c(
 
 # Extra Libraries ----
 cpuPacks <- c("parallel","doSNOW","doParallel", "foreach","compiler")
-easyPkgs <- c('tidyverse','sjmisc','stringi','digest','RCurl','gridExtra','needs')
+easyPkgs <- c('tidyverse','sjmisc','stringi','digest','RCurl','gridExtra')
 
 # Helper Functions ----
 sup <- function(x){return(suppressWarnings(suppressPackageStartupMessages(x)))}
@@ -213,42 +213,75 @@ bc.inst <- function(pknm){
     } else {ld(pknm)}
 }
 
+
 fixProf <- function(){
     txt1 <- "^[:blank:]*autoload\\(\"needs\", \"needs\"\\)"
     txt2 <- "\n\nautoload(\"needs\", \"needs\")\n\n"
-    siteProf <- if(is.na(Sys.getenv("R_PROFILE", unset=NA))) {
-        file.path(Sys.getenv("R_HOME"),"etc","Rprofile.site")
-    } else {Sys.getenv("R_PROFILE")}
-    if (!file.exists(siteProf)) {file.create(siteProf)}
-    cxn <- file(siteProf); lines <- readLines(cxn)
-    if (!any(grepl(txt1,lines))) {write(txt2, file=siteProf, append=T)}
-    close(cxn)
+    profPath <- Sys.getenv("R_PROFILE", unset = NA)
+    siteProf <- if (is.na(profPath)) {
+        file.path(Sys.getenv("R_HOME"), "etc", "Rprofile.site")
+    } else {
+        Sys.getenv("R_PROFILE")
+    }
+    if (siteProf=="") {
+        siteProf <- file.path(Sys.getenv("HOME"), "Rprofile.site")
+    } else{
+        if (!file.exists(siteProf)) {
+            try(file.create(siteProf), silent = T)
+        }
+    }
+    if (!file.exists(siteProf)) {
+        siteProf <- file.path(Sys.getenv("HOME"), "Rprofile.site")
+        if (!file.exists(siteProf)) {
+            try(file.create(siteProf), silent = T)
+        }
+    }
+    if (file.exists(siteProf)) {
+        cxn <- file(siteProf)
+        lines <- readLines(cxn)
+        if (!any(grepl(txt1, lines))) {
+            try(write(txt2, file = siteProf, append = T), silent=T)
+        }
+        close(cxn)
+    }
 }
 
-fixNeeds <- function (){
-    sysfile <- system.file("extdata", "promptUser", package="needs")
-    write(0, file=sysfile); options(needs.promptUser=FALSE); invisible(needs:::autoload(TRUE))
+fixNeeds <- function(){
+  sysfile <- system.file("extdata", "promptUser", package = "needs")
+  options(needs.promptUser = FALSE)
+  invisible(needs:::autoload(TRUE))
+  if (file.exists(sysfile)) {
+    try(write(0, file = sysfile), silent = T)
+  }
 }
+
 
 checkNeeds <- function(){
     tryCatch(
         expr={
             if(!("needs" %in% rownames(installed.packages()))){
                 install.packages("needs",dependencies=T,verbose=T, Ncpus = 6)
-                fixNeeds();fixProf()
+                invisible(needs:::autoload(TRUE))
+                fixNeeds()
+                try(fixProf(),T)
             }else{
-                fixNeeds();fixProf()
+                fixNeeds()
+                try(fixProf(),T)
             }
         },
         error=function(cond){
             devtools::install_github("joshkatz/needs", ref = "development",
                                      dependencies=T,verbose=T,upgrade="always")
-            fixNeeds();fixProf()
+            invisible(needs:::autoload(TRUE))
+            fixNeeds()
+            try(fixProf(),T)
         },
         warning=function(cond){
             devtools::install_github("joshkatz/needs", ref = "development",
                                      dependencies=T,verbose=T,upgrade="always")
-            fixNeeds();fixProf()
+            invisible(needs:::autoload(TRUE))
+            fixNeeds()
+            try(fixProf(),T)
         }
     )
 }
