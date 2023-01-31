@@ -56,7 +56,7 @@ supSrt(librarian::shelf(pkgs, ask = F, update_all = F, quiet = FALSE))
 #supSrt(librarian::shelf(ask = F, update_all = F, quiet = F, dependencies = T, libs=extraDeps))
 #easypackages::packages(extraDeps, prompt = F, Ncpus = 6)
 
-if(!require("minfiData")){BiocManager::install("minfiData")
+if(!require("minfiData")){BiocManager::install("minfiData", update=F, ask=F, dependencies=T)}
 if(!require("maxprobes")){ devtools::install_github("markgene/maxprobes", dependencies = T)}
 if(!require("cnv.methyl")){devtools::install_github("https://github.com/ijcBIT/cnv.methyl.git", dependencies = T)}
 
