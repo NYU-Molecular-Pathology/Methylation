@@ -14,8 +14,8 @@ if (Sys.info()[['sysname']]=="Darwin") {
     Sys.setenv(PROJ_LIBS = "/opt/homebrew/opt/proj/lib")
     Sys.setenv(SQLITE3_LIBS = "/opt/homebrew/opt/sqlite/lib")
 } else{
-    options(BioC_mirror = "https://packagemanager.rstudio.com/bioconductor")
-    options(repos = c(CRAN = "https://packagemanager.rstudio.com/cran/__linux__/focal/latest")
+    #options(BioC_mirror = "https://packagemanager.rstudio.com/bioconductor")
+    #options(repos = c(CRAN = "https://packagemanager.rstudio.com/cran/__linux__/focal/latest")
     )
 }
 
