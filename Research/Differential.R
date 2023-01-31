@@ -1,4 +1,6 @@
 gb <- globalenv(); assign("gb", gb)
+
+
 SilentLoadLib <- function(pkg){
     stopifnot(suppressPackageStartupMessages(library(
         verbose = F,
@@ -6,32 +8,37 @@ SilentLoadLib <- function(pkg){
         quietly = T,
         character.only = T,
         package = pkg,
-        logical.return = T
-    )))
+        logical.return = T)))
 }
-mealPkgs <- c("MEAL", "MultiDataSet",  "minfi", "ggplot2")
-otherPkg <- c(
-    "RnBeads",
-"knitr", 
-"limma", 
-"minfi", 
-"IlluminaHumanMethylation450kanno.ilmn12.hg19", 
-"IlluminaHumanMethylation450kmanifest", 
-"RColorBrewer", 
-"missMethyl", 
-"minfiData", 
-"Gviz", 
-"DMRcate", 
-"stringr", 
-"methylationArrayAnalysis", 
-"GenomicRanges"
+
+
+LoadDifferentPacks <- function(outFigPath = NULL){
+    if(is.null(outFigPath)){
+        outFigPath <- file.path(getwd(),"figures","diffmean")
+    }
+    if(!dir.exists(outFigPath)){dir.create(outFigPath, recursive = T)}
+    mealPkgs <- c("MEAL", "MultiDataSet",  "minfi", "ggplot2")
+    otherPkg <- c(
+        "RnBeads",
+        "knitr",
+        "limma",
+        "minfi",
+        "IlluminaHumanMethylation450kanno.ilmn12.hg19",
+        "IlluminaHumanMethylation450kmanifest",
+        "RColorBrewer",
+        "missMethyl",
+        "minfiData",
+        "Gviz",
+        "DMRcate",
+        "stringr",
+        "methylationArrayAnalysis",
+        "GenomicRanges"
     )
+    librarian::shelf(mealPkgs, ask=F)
+    #invisible(lapply(mealPkgs, SilentLoadLib))
+    librarian::shelf(otherPkg, ask=F)
+}
 
-invisible(lapply(mealPkgs, SilentLoadLib))
-
-librarian::shelf(otherPkg, ask=F)
-outFigPath <- file.path(getwd(),"figures","diffmean")
-if(!dir.exists(outFigPath)){dir.create(outFigPath, recursive = T)}
 
 GetMethSet <- function(RGSet){
     Mset <- minfi::preprocessIllumina(RGSet)
@@ -349,8 +356,7 @@ ReadLoadDmps <- function(fit, contMat, annEPICSub, cateFile="./figures/diffmean/
   return(DMPs)
 }
 
-                        
-                        
+                                       
 DrawFourCpg <- function(DMPs, bVals, targPhenotype){
     cat("## Top 4 most significantly differentially methylated CpG")
     cat("\n\n")
