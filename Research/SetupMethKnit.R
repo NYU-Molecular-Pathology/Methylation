@@ -14,6 +14,7 @@ if(Sys.info()[['sysname']]=="Linux") {
 }
 
 mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/"
+mainLnk = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/LoadInstallPackages.R"
 rFiles = c(
     #"all_installer.R",
     "getRGsetBetas.R",
@@ -49,7 +50,7 @@ pkgs <-
     )
 
 scripts = paste0(mainHub, rFiles)
-scripts = paste("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/LoadInstallPackages.R", scripts)
+scripts = c(mainLnk, scripts)
 suppressWarnings(lapply(scripts, function(i){message("Sourcing: ", i);devtools::source_url(i)}))
 supSrt(librarian::shelf(pkgs, ask = F, update_all = F, quiet = FALSE))
 
