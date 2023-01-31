@@ -140,6 +140,12 @@ msgCheck <- function(pkg, warn = F) {
     }
 }
 
+if (Sys.info()[['sysname']]=="Darwin") {
+    bothType <- "both"
+}else{
+    bothType <- "source"
+}
+
 #' pk.inst will load a package library or install it if it does not exist
 #' @param pkg a character string package name
 #' @return Message if loading the library was successful
@@ -149,7 +155,7 @@ pk.inst <- function(pkg){
         pk.opt <- list(pkgs=pkg,dependencies=T,verbose=T,Ncpus = 6)
         tryCatch(
             expr = {
-                do.call(install.packages, c(pk.opt, list(type = "both")))
+                do.call(install.packages, c(pk.opt, list(type = bothType)))
             },
             warning = function(cond) {
                 message("\nWarning on package:\n", pkg, "\n-----------\n",cond)
