@@ -8,7 +8,7 @@ gb <- globalenv(); assign("gb", gb)
 LoadHeatMapLibs <- function(){
   suppressPackageStartupMessages(library("ComplexHeatmap"))
   suppressMessages(require("ComplexHeatmap"))
-  suppressPackageStartupMessages(library('magick'))
+  #suppressPackageStartupMessages(library('magick'))
   suppressMessages(require('Cairo'))
   library("grid")
   suppressMessages(require("grid"))
