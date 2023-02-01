@@ -46,7 +46,7 @@ if (Sys.info()[['sysname']]=="Darwin" & !dir.exists(file.path("~", ".R"))) {
     )
     writeLines(params, fileConn)
     close(fileConn)
-closeAllConnections()
+#closeAllConnections()
     cmd = 'devtools::source_url("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/all_installer.R")'
     #rstudioapi::restartSession(cmd)
 }
@@ -57,7 +57,7 @@ if (Sys.info()[['sysname']]=="Darwin" & !file.exists(file.path("~", ".Renviron")
     params <- c('PATH="/usr/local/gfortran/bin:${PATH}"')
     writeLines(params, fileConn)
     close(fileConn)
-closeAllConnections()
+#closeAllConnections()
 }
 
 # Setting US CRAN REPO
