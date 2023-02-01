@@ -97,8 +97,8 @@ selectPlots <- function(doPlotly = F, tplots, ty, tps, outDirs) {
     fig <- fig +
       theme(
         legend.direction = "vertical",
-        legend.margin = margin(t = -25),
-        legend.box.margin = margin(0, 0, 0, 0),
+        legend.margin = ggplot2::margin(t = -25),
+        legend.box.margin = ggplot2::margin(0, 0, 0, 0),
         legend.justification = "right",
         legend.position = "top"
       )
