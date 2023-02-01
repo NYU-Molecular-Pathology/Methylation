@@ -170,7 +170,7 @@ RemoveBatchEffect <- function(batchEffectColumn = NULL,
 }
 
 
-CleanUpSheetRows <- function(sheet, idatPath){
+CleanUpSheetRows <- function(sheet, idatPath, targets){
     sheet$Barcode <-  targets[,gb$col_sentrix]
     sheet[,gb$col_sentrix] <- NA
     sheet[,gb$col_sentrix] <- sheet$Barcode
@@ -178,7 +178,7 @@ CleanUpSheetRows <- function(sheet, idatPath){
     sheet$Slide <- splitSentrix[,1]
     sheet$Array <- splitSentrix[,2]
     sheet$Basename <- file.path(idatPath, paste0(sheet$Slide, "_" , sheet$Array))
-    sheet$Sample_Name <- sheet[, gb$col_samNames]
+    sheet$Sample_Name <- targets[, gb$col_samNames]
     shFiles <- c(paste0(sheet$Basename, "_Grn.idat"), paste0(sheet$Basename, "_Red.idat"))
     if(any(!file.exists(shFiles))){
       warning("Some idat files are missing and samples will be dropped!")
@@ -186,24 +186,34 @@ CleanUpSheetRows <- function(sheet, idatPath){
       message(paste0(capture.output(sheet[!file.exists(shFiles),]), collapse="\n"))
       }
     sheet <- sheet[file.exists(shFiles),]
+    toDrop <- anyDuplicated(sheet)
+    sheet <- sheet[-toDrop,]
     return(sheet)
 }
 
-getRgset <-  function(rgOut, targets, mergeProbes = F, arraySheet="samplesheet.csv", idatPath=NULL) {
-    require("minfi")
-    if(is.null(idatPath)){idatPath <- getwd()}
+getRgset <- function(rgOut, targets, mergeProbes = F, csvPath = "samplesheet.csv", idatPath = NULL){
+  require("minfi")
+  if(is.null(idatPath)){idatPath <- getwd()}
     gc(verbose = F)
     if (file.exists(rgOut)) {
-      RGSet <- LoadRdatObj(rgOut)
+      RGSet <- gb$LoadRdatObj(rgOut)
       }else{
         if (mergeProbes == T & !is.null(targets$Batch)) {
             RGSet <- gb$combine.EPIC.450K(targets = targets)
         } else{
-          sheet <- minfi::read.metharray.sheet(getwd(), arraySheet)
-          sheet <- CleanUpSheetRows(sheet, idatPath)
+          sheet <- NULL
+          isPathway <- stringr::str_detect(csvPath, .Platform$file.sep)
+          if (isPathway == T) {
+              sheet <- minfi::read.metharray.sheet(dirname(csvPath), pattern = basename(csvPath))
+          }else{
+              sheet <- minfi::read.metharray.sheet(getwd(), pattern = csvPath)
+          }
+          sheet <- as.data.frame(sheet)
+          sheet <- CleanUpSheetRows(sheet, idatPath, targets)
+          sheet <- sheet[!is.na(sheet$Sample_Name),]
           RGSet <- minfi::read.metharray.exp(base = idatPath, targets = sheet, verbose = T, force = T)
           }
-        SaveObj(RGSet, file.name = rgOut)
+        gb$SaveObj(RGSet, file.name = rgOut)
       }
     return(RGSet)
 }
@@ -318,8 +328,9 @@ getTargCsv <- function(csvFi = "samplesheet.csv") {
 }
 
 
-MatchRGtargets <- function(RGSet, sampleSheet=NULL){
-  if(is.null(sampleSheet)){sampleSheet <- file.path(getwd(),"csv","samplesheet.csv")}
+MatchRGtargets <- function(RGSet, targets, sampleSheet=NULL){
+  if(is.null(sampleSheet)){sampleSheet <- "samplesheet.csv"}
+  #file.path(getwd(),"csv","samplesheet.csv")}
   toDrop <- targets[,gb$col_sentrix] %in% RGSet@colData@rownames
   targets <- targets[toDrop,]
   write.csv(targets, sampleSheet, quote=F, row.names=F)
