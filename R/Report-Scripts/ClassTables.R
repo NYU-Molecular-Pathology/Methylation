@@ -200,6 +200,42 @@ Get450kProb <- function(betas){
   return(pred)
 }
 
+SpecialMNPpredict6 <- function (betas, calibrate = TRUE, type = "response", MCF = FALSE) {
+    betas <- betas[match(rownames(mnp.v11b6::rf.pred$importance), rownames(betas)), drop = FALSE]
+    if (calibrate) {
+        pred <- stats::predict(mnp.v11b6::rf.pred, t(betas), type = "prob")
+        pred2 <- matrix(stats::predict(mnp.v11b6::calfit, newx = pred, type = "response", 
+                                       s = 0.0006363791)[, , 1], nrow = nrow(pred))
+        colnames(pred2) <- colnames(pred)
+        colnames(pred2) <- mnp.v11b6::reflist[match(colnames(pred2), paste0(mnp.v11b6::reflist[[4]])), 2]
+        rownames(pred2) <- rownames(pred)
+        out <- pred2
+        if (MCF) {
+            pred3 <- lapply(cgroups, function(x) rowSums(pred2[,x, drop = FALSE]))
+            pred3 <- do.call(cbind, pred3)
+            pred2 <- pred2[, -which(colnames(pred2) %in% unlist(cgroups)), 
+                drop = FALSE]
+            pred2 <- cbind(pred3, pred2)
+            out <- pred2
+        }
+        if (type == "response") {
+            out <- factor(colnames(pred2)[apply(pred2, 1, which.max)], levels = colnames(pred2))
+            names(out) <- rownames(pred2)
+        }
+    } else {
+        if (type == "response") {
+            out <- stats::predict(mnp.v11b6::rf.pred, t(betas), type)
+            out <- mnp.v11b6::reflist[match(out, paste0(mnp.v11b6::reflist[[4]])), 2]
+            names(out) <- colnames(betas)
+        }
+        if (type == "prob") {
+            out <- stats::predict(mnp.v11b6::rf.pred, t(betas), type)
+            colnames(out) <- mnp.v11b6::reflist[match(colnames(out), paste0(mnp.v11b6::reflist[[4]])), 2]
+        }
+    }
+    return(out)
+}
+                            
 
 GetProbData <- function(is450k, Mset_ba, Mset) {
     if(is450k==T){
@@ -207,11 +243,13 @@ GetProbData <- function(is450k, Mset_ba, Mset) {
       library(verbose = F, warn.conflicts = F, quietly = T, package = "mnp.v11b4")
       try(unloadNamespace("mnp.v11b6"), silent = T); try(detach_package("mnp.v11b6"), silent = T)
       invisible(loadNamespace("mnp.v11b4")); invisible(requireNamespace("mnp.v11b4"))
+      require(warn.conflicts = F, quietly = T, package = "mnp.v11b4")
     }else{
       library(verbose = F, warn.conflicts = F, quietly = T, package = "IlluminaHumanMethylationEPICmanifest")
       library(verbose = F, warn.conflicts = F, quietly = T, package = "mnp.v11b6")
       try(unloadNamespace("mnp.v11b4"), silent = T); try(detach_package("mnp.v11b4"), silent = T)
       invisible(loadNamespace("mnp.v11b6")); invisible(requireNamespace("mnp.v11b6"))
+      require(warn.conflicts = F, quietly = T, package = "mnp.v11b6")
     }
     if(!exists('calfit')){
         load(file.path("/Volumes/CBioinformatics/Methylation/Methylation_classifier_v11b6/",
@@ -222,13 +260,17 @@ GetProbData <- function(is450k, Mset_ba, Mset) {
       probs <- Get450kProb(betas)
     }else{
         tryCatch(
-          expr = {probs <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob')},
+          expr = {
+            probs <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob')
+            },
           error = function(e) {
               message("Error occured at Brain Classifier v11 prediction:")
-              message("Using Mset instead of Mset_ba:\n", e)
-              probs <- mnp.v11b6::MNPpredict(Mset[, 1], type = 'prob')
+              message("Using SpecialMNPpredict6:\n", e)
+              betas <- minfi::getBeta(Mset_ba[, 1], type = "Illumina")
+              probs <- SpecialMNPpredict6(betas, type = 'prob')
               }
-          )}
+        )
+      }
     return(probs)
 }
 
