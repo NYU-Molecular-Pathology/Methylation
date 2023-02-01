@@ -580,7 +580,7 @@ startLoadingAll <- function() {
         try(install.packages(uniDpath, type = "source", dependencies = T, repo = NULL), silent = T)
     }
 
-    try(closeAllConnections(), silent = T)
+#    try(closeAllConnections(), silent = T)
 }
 
 startLoadingAll()
