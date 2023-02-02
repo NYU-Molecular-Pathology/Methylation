@@ -104,17 +104,20 @@ setRunDir <- function(runID=NULL, workFolder=NULL){
 getAllFiles <- function(idatDir, csvNam=NULL) {
     msgFunName(cpInLnk, "getAllFiles")
     msgParams(idatDir);msgParams(csvNam)
-    if(!is.null(csvNam)){ssheet=read.csv(csvNam,strip.white=T)
-    barcode=as.vector(ssheet$Sentrix_ID)} else {
-        ssheet=read.csv(csvNam,strip.white=T)
-        barcode=as.vector(ssheet$Sentrix_ID)}
-    allFi=NULL
-    senP=ssheet$SentrixID_Pos
+    if (!is.null(csvNam)) {
+        ssheet = read.csv(csvNam, strip.white = T)
+        barcode = as.vector(ssheet$Sentrix_ID)
+    } else {
+        ssheet = read.csv("samplesheet.csv", strip.white = T)
+        barcode = as.vector(ssheet$Sentrix_ID)
+    }
+    allFi = NULL
+    senP = ssheet$SentrixID_Pos
     for (i in 1:length(idatDir)){
         dirNames = file.path(idatDir[i], barcode)
         green.files <- file.path(dirNames, paste0(senP, "_Grn.idat"))
         red.files <- file.path(dirNames, paste0(senP, "_Red.idat"))
-        allFi <- c(allFi, green.files,red.files)
+        allFi <- c(allFi, green.files, red.files)
     }
     return(allFi)
 }
@@ -135,29 +138,54 @@ copyBaseIdats <- function(allFi) {
 # Helper FUN called during copying idats to notify if a network mount is not found
 warnMount <- function(idat.dir){
     msgFunName(cpInLnk, "warnMount")
-    message(crayon::bgRed("Directory not found, ensure the idat path is accessible:"),
-            "\n",idat.dir)
+    if(!dir.exists(idat.dir)){
+        message(crayon::bgRed("Directory not found, ensure the idat path is accessible:"), "\n", idat.dir)
+        stopifnot(dir.exists(idat.dir))
+        }
 }
+
+DataFrameMessage <- function(dat){
+    return(message(paste0(capture.output(as.data.frame(dat)), collapse="\n")))
+}
+
 
 # FUN: Returns a list of idat files that exist on Molecular and Snuderl lab drives -
 get.idats <- function(csvNam = "samplesheet.csv", runDir=NULL){
     msgFunName(cpInLnk, "get.idats")
     rsch.idat <- gb$rsch.idat
     clin.idat <- gb$clin.idat
-
-    if(!dir.exists(rsch.idat)){warnMount(rsch.idat)}
-    if(!dir.exists(clin.idat)){warnMount(clin.idat)}
-    stopifnot(dir.exists(rsch.idat)|dir.exists(clin.idat))
+    extr.idat <- file.path(gb$rsch.idat,"External")
+    warnMount(rsch.idat)
+    warnMount(clin.idat)
     if (is.null(runDir)){ runDir <- getwd()}
     if (file.exists(csvNam)) {
         allFi <- getAllFiles(idatDir = c(rsch.idat, clin.idat), csvNam = csvNam)
         allFi = allFi[file.exists(allFi)]
+        ssheet = read.csv(csvNam, strip.white = T)
         if (length(allFi) > 0) {
             message("Files found: ")
-            print(as.data.frame(allFi))
+            DataFrameMessage(allFi)
             message("Checking if idats exist in run directory...")
             cur.idat <- basename(dir(path=runDir, pattern = "*.idat$", recursive = F))
             bcds <- paste0(basename(allFi))
+            if(nrow(ssheet) * 2 != length(allFi)){
+                message("Still missing some idats! Checking External Folder: ", extr.idat)
+                barcode = as.vector(ssheet$SentrixID_Pos)
+                #allToFind <- unique(basename(getAllFiles(idatDir = c(rsch.idat, clin.idat), csvNam = csvNam)))
+                toSearch <- paste(barcode, collapse = "|")
+                stillMissing <- stringr::str_detect(allFi, pattern=toSearch, negate=T)
+                otherIdat <- dir(extr.idat, pattern = ".idat", full.names = T, recursive = T)
+                toBeFound <- barcode[stillMissing]
+                foundIdat <- stringr::str_detect(otherIdat, pattern=toBeFound)
+                if(any(foundIdat)==T){
+                    message("Found extra idats in External folder: ", extr.idat)
+
+                }else{
+                    message("Still missing idat files not in External folder: ", extr.idat)
+
+                }
+            }
+
             if (all(bcds %in% cur.idat)) {
                 message(".idat files already copied")
             }else{
