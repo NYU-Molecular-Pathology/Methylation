@@ -25,6 +25,26 @@ setDirectory <- function(foldr) {
         }else{warning(mm2)}
 }
 
+
+SetMacDirMod <- function(newRun){
+    cmd <- paste("chmod -R 770", newRun)
+    #system(cmd)
+    cmd1 <- paste0(
+        'chmod -R +ai ', "'group:NYUMC\\shared-rsc-CBioinfo-Meth-Clinicalruns",
+        " allow list,add_file,search,add_subdirectory,delete_child,readattr,writeattr,readextattr,writeextattr,readsecurity,file_inherit,directory_inherit'",
+        " '", newRun, "'","/*"
+    )
+    #try(system(cmd1), silent = T)
+    cmd2 <- paste0('chgrp ', file.path("'NYUMC", "shared-rsc-CBioinfo-Meth-Clinicalruns'", fsep = "\\"), " '", newRun, "'")
+    #try(system(cmd2), silent = T)
+    cmd3 <- paste0(
+        'chmod -R +ai ', file.path( "'group:NYUMC", "shared-rsc-CBioinfo-Meth-Clinicalruns", fsep = "\\"),
+        " allow list,add_file,search,delete,add_subdirectory,readattr,writeattr,readextattr,writeextattr,readsecurity,file_inherit,directory_inherit'",
+        " '", newRun, "'","/*"
+    )
+    #try(system(cmd3),silent=T)
+}
+
 CreateRunDir <- function(newRun) {
     if (endsWith(newRun, "/")) {
         newRun <- substr(newRun, 1, nchar(newRun) - 1)
@@ -32,52 +52,11 @@ CreateRunDir <- function(newRun) {
     message(crayon::bgGreen("New Run Path:"), "\n", newRun)
     if (!dir.exists(newRun)) {
         dir.create(newRun, recursive = T)
-        Sys.chmod(newRun, "0777", use_umask = TRUE)
+        Sys.chmod(newRun, "0777", use_umask = FALSE)
     }
-    if(Sys.info()[['sysname']]=="Darwin"){
-    cmd <- paste("chmod -R 770", newRun)
-    system(cmd)
-    cmd1 <-
-        paste0(
-            'chmod -R +ai ',
-            "'group:NYUMC\\shared-rsc-CBioinfo-Meth-Clinicalruns",
-            " allow list,add_file,search,add_subdirectory,delete_child,readattr,writeattr,readextattr,writeextattr,readsecurity,file_inherit,directory_inherit'",
-            " '",
-            newRun,
-            "'","/*"
-        )
-    try(system(cmd1),silent=T)
-    setDirectory(newRun)
-    cmd2 <-
-        paste0(
-            'chgrp ',
-            file.path(
-                "'NYUMC",
-                "shared-rsc-CBioinfo-Meth-Clinicalruns'",
-                fsep = "\\"
-            ),
-            " '",
-            newRun,
-            "'"
-        )
-    try(system(cmd2),silent=T)
-
-    cmd3 <-
-        paste0(
-            'chmod -R +ai ',
-            file.path(
-                "'group:NYUMC",
-                "shared-rsc-CBioinfo-Meth-Clinicalruns",
-                fsep = "\\"
-            ),
-            " allow list,add_file,search,delete,add_subdirectory,readattr,writeattr,readextattr,writeextattr,readsecurity,file_inherit,directory_inherit'",
-            " '",
-            newRun,
-            "'","/*"
-        )
-    try(system(cmd3),silent=T)
+    if (Sys.info()[['sysname']]=="Darwin"){
+        SetMacDirMod(newRun)
     }
-
     setDirectory(newRun)
     return(newRun)
 }
@@ -87,14 +66,14 @@ setRunDir <- function(runID=NULL, workFolder=NULL){
     msgFunName(cpInLnk, "setRunDir")
     msgParams(runID); msgParams(workFolder)
     workFolder <- ifelse(is.null(workFolder),gb$defaultDir, workFolder)
-    if(is.null(runID)){
+    if (is.null(runID)){
         runID <- paste0(basename(getwd()))
     }
     newRun <- file.path(workFolder, runID)
-    if(grepl("TEST",runID)){
-        if(dir.exists(newRun)){unlink(newRun, T, T)}
+    if (grepl("TEST",runID)){
+        if (dir.exists(newRun)){unlink(newRun, T, T)}
         dir.create(newRun)
-        try(unlink(file.path(fs::path_home(),"Desktop",runID), T, T),silent = T)
+        try(unlink(file.path(fs::path_home(), "Desktop", runID), T, T), silent = T)
     }
     methylPath <- CreateRunDir(newRun)
     return(methylPath)
@@ -102,8 +81,7 @@ setRunDir <- function(runID=NULL, workFolder=NULL){
 
 # FUN: Returns a list of idat files given an idat drive location -
 getAllFiles <- function(idatDir, csvNam=NULL) {
-    msgFunName(cpInLnk, "getAllFiles")
-    msgParams(idatDir);msgParams(csvNam)
+    msgFunName(cpInLnk, "getAllFiles"); msgParams(idatDir); msgParams(csvNam)
     if (!is.null(csvNam)) {
         ssheet = read.csv(csvNam, strip.white = T)
         barcode = as.vector(ssheet$Sentrix_ID)
@@ -126,7 +104,7 @@ getAllFiles <- function(idatDir, csvNam=NULL) {
 copyBaseIdats <- function(allFi) {
     msgFunName(cpInLnk, "copyBaseIdats")
     cat(crayon::white$bgCyan("Copying idats to current directory..."),"\n")
-    fs::file_copy(allFi, file.path(getwd()),overwrite=T)
+    fs::file_copy(allFi, file.path(getwd()), overwrite=T)
     idcs = basename(allFi)
     idatsCopied <- idcs[idcs != ""]
     success = file.exists(idatsCopied)
@@ -136,9 +114,9 @@ copyBaseIdats <- function(allFi) {
 }
 
 # Helper FUN called during copying idats to notify if a network mount is not found
-warnMount <- function(idat.dir){
-    msgFunName(cpInLnk, "warnMount")
-    if(!dir.exists(idat.dir)){
+WarnMounts <- function(idat.dir){
+    msgFunName(cpInLnk, "WarnMounts")
+    if (!dir.exists(idat.dir)){
         message(crayon::bgRed("Directory not found, ensure the idat path is accessible:"), "\n", idat.dir)
         stopifnot(dir.exists(idat.dir))
         }
@@ -188,9 +166,9 @@ get.idats <- function(csvNam = "samplesheet.csv", runDir=NULL){
     rsch.idat <- gb$rsch.idat
     clin.idat <- gb$clin.idat
     extr.idat <- file.path(gb$rsch.idat,"External")
-    warnMount(rsch.idat)
-    warnMount(clin.idat)
-    if (is.null(runDir)){ runDir <- getwd()}
+    WarnMounts(rsch.idat)
+    WarnMounts(clin.idat)
+    if (is.null(runDir)){runDir <- getwd()}
     if (!file.exists(csvNam)) {message("Cannot find your sheet named:", csvNam); stopifnot(file.exists(csvNam))}
     allFi <- getAllFiles(idatDir = c(rsch.idat, clin.idat), csvNam = csvNam)
     allFi = allFi[file.exists(allFi)]
@@ -215,33 +193,29 @@ get.idats <- function(csvNam = "samplesheet.csv", runDir=NULL){
 
 
 # FUN: Copies samplesheet to Desktop folder
-moveSampleSheet <- function(methDir, runID = NULL) {
+moveSampleSheet <- function(methDir = NULL, runID = NULL, deskDir=NULL) {
     msgFunName(cpInLnk, "moveSampleSheet")
     if (is.null(runID)) {
         runID = paste0(basename(getwd()))
         message("Setting runID=", runID)
     }
-    deskDir = file.path(fs::path_home(),"Desktop", runID)
-    if (!dir.exists(deskDir)) {
-        dir.create(deskDir)
+    if (is.null(deskDir)) {
+        deskDir = file.path(fs::path_home(),"Desktop", runID)
+        message("Setting deskDir=", deskDir)
     }
-    if(is.null(methDir)){methDir <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"}
-    currDir = file.path(methDir, runID)
+    if (!dir.exists(deskDir)) {dir.create(deskDir)}
+    if (is.null(methDir)){methDir <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"}
+    thisDir = file.path(methDir, runID)
     outFile = paste0(runID, "_samplesheet.csv")
-    message("Copying from currDir:\n",currDir)
-    message("To:\n",file.path(deskDir, "samplesheet.csv") )
-    fs::file_copy(
-        path = file.path(currDir, "samplesheet.csv"),
-        new_path = file.path(deskDir, "samplesheet.csv"),
-        overwrite = T
-    )
-    file.rename(from = file.path(deskDir, "samplesheet.csv"),
-                to = file.path(deskDir, outFile))
+    outputDir = file.path(deskDir, "samplesheet.csv")
+    message("Copying from thisDir:\n", thisDir, "\n", "to", "\n", outputDir)
+    fs::file_copy(path = file.path(thisDir, "samplesheet.csv"), new_path = outputDir, overwrite = T)
+    file.rename(from = outputDir, to = file.path(deskDir, outFile))
 }
 
 #  Copy idats and Worksheets creation
 writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
-     msgFunName(cpInLnk, "writeFromRedcap")
+    msgFunName(cpInLnk, "writeFromRedcap")
     if (is.null(bn)) {bn = file.path(getwd(), df$barcode_and_row_column)}
     message("~~~Writing from redcap samplesheet.csv:")
     names(df)
@@ -258,29 +232,27 @@ writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
         tech2 = df$second_tech,
         Date = df$arrived
     )
-    print(samplesheet_csv)
-    write.csv(
-        samplesheet_csv,
-        file = "samplesheet.csv",
-        quote = F,
-        row.names = F
-        )
+    DataFrameMessage(samplesheet_csv)
+    write.csv(samplesheet_csv, file = "samplesheet.csv", quote = F, row.names = F)
 }
 
 #' FUN: Returns dataframe of redcap search using default worksheet header and fields
 search.redcap <- function(rd_numbers, token=NULL, flds=NULL) {
     msgFunName(cpInLnk, "search.redcap")
-    if(!require("redcapAPI")){install.packages("redcapAPI", dependencies = T, type="both",ask=F);library("redcapAPI")}
-    if(is.null(token)){message("You must provide an ApiToken!")}
+    if (!require("redcapAPI")) {
+        install.packages("redcapAPI", dependencies = T, ask = F)
+    }
+    library("redcapAPI")
+    if (is.null(token)){message("You must provide an ApiToken!")}
     stopifnot(!is.null(token))
     rcon <- redcapAPI::redcapConnection(gb$apiLink, token)
     if (is.null(flds)){
-        flds = c("record_id","b_number","primary_tech","second_tech","run_number",
-                 "barcode_and_row_column","accession_number","arrived")
+        flds = c("record_id", "b_number", "primary_tech", "second_tech", "run_number", "barcode_and_row_column", "accession_number", "arrived")
         }
     result <- redcapAPI::exportRecords(
         rcon, records = rd_numbers, fields = flds, dag = F, factors = F,
-        labels = F,dates = F, form_complete_auto = F,format = 'csv')
+        labels = F, dates = F, form_complete_auto = F, format = 'csv'
+        )
     return(as.data.frame(result))
 }
 
@@ -289,24 +261,25 @@ get.rd.info <- function(rd_numbers=NULL, token=NULL, sh_name=NULL){
     msgFunName(cpInLnk, "get.rd.info")
     if (is.null(rd_numbers)){message("Input RD-numbers using get.rd.info(rd_numbers)")}
     if (is.null(sh_name)) {sh_name = "samplesheet.csv"}
-    if(is.null(token)){message("You must provide an ApiToken!")};stopifnot(!is.null(token))
+    if (is.null(token)){message("You must provide an ApiToken!")};stopifnot(!is.null(token))
     result <- search.redcap(rd_numbers, token, NULL)
     samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[,"barcode_and_row_column"],"_",2))
     writeFromRedcap(result, samplesheet_ID) # writes API export as minfi dataframe sheet
     get.idats(csvNam = sh_name)  # copies idat files from return to current directory
-
     return(result)
 }
 
-CopyFromDmn <- function(runID, runYear){
+
+# FUN: Copies methylation worksheet from molecular drive on data mover node
+CopySheetFromDmn <- function(runID, runYear){
     kerberos <- Sys.info()[["user"]]
     cmdStart <- "rsync --protect-args --size-only -avzPe ssh"
     sshUser <- paste0(kerberos, "@dmn-0002:")
+    molecMethPath <- "molecular/MOLECULAR LAB ONLY/NYU-METHYLATION"
+    molecProdPath <- "molecpathlab/production/Methylation"
     runSheet <- paste0(runID,".xlsm")
-    startPath <- file.path(
-        "/mnt", kerberos, "molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/WORKSHEETS", runYear, runSheet)
-    destPath <- file.path(
-        "/gpfs/home", kerberos, "molecpathlab/production/Methylation/Clinical_Runs", runID)
+    startPath <- file.path("/mnt", kerberos, molecMethPath, "WORKSHEETS", runYear, runSheet)
+    destPath <- file.path("/gpfs/home", kerberos, molecProdPath ,"Clinical_Runs", runID)
     cmdSync <- paste0(cmdStart, " '", sshUser, startPath, "' ", destPath)
     system(cmdSync)
 }
