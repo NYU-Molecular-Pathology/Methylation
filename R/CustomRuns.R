@@ -146,27 +146,33 @@ RunFromSamplesheet <- function(samSh="samplesheet.csv"){
     return(targets)
 }
 
-RunLocalIdats <- function(runID, token){
-    msgFunName(cpInLnk4,"RunLocalIdats")
-    stopifnot(!is.null(token))
-    if(!file.exists(file.path(getwd(), paste0(runID,".xlsm")))){
-        idatFiles <- dir(path = getwd(), pattern = ".idat", full.names = T)
-        if(!file.exists(file.path(getwd(), "samplesheet.csv")) & length(idatFiles)!=0){
-            idatBase <- unique(substring(idatFiles, 1, nchar(idatFiles) - 9))
-            RGSet <- minfi::read.metharray(basenames =idatBase, force=TRUE, verbose = T)
-            loop_local(RGSet)
-        }else{
-            if(!file.exists(file.path(getwd(), "samplesheet.csv"))){
-                MakeLocalSampleSheet(runID, token)
-            }
-            targets <- RunFromSamplesheet("samplesheet.csv")
-            loop_targets(targets)
-        }
-    }else{
-        gb$readSheetWrite(runID = runID)
-        gb$moveSampleSheet(baseFolder, runID)
-    }
+
+RunLocalIdats <- function(runID, token, samSheet = "samplesheet.csv"){
+  msgFunName(cpInLnk4,"RunLocalIdats"); stopifnot(!is.null(token))
+  samSheet = file.path(getwd(), "samplesheet.csv")
+  labWorkbook <- file.path(getwd(), paste0(runID,".xlsm"))
+  if (file.exists(labWorkbook) {
+    gb$readSheetWrite(runID = runID)
+    gb$moveSampleSheet(baseFolder, runID)
+    return(message("Samplesheet Copied"))
+  }
+  idatFiles <- dir(path = getwd(), pattern = ".idat", full.names = T)
+  if(!file.exists(samSheet) & length(idatFiles)>1) {
+    idatBase <- unique(substring(idatFiles, 1, nchar(idatFiles) - 9))
+    RGSet <- minfi::read.metharray(basenames = idatBase, force = T, verbose = T)
+    loop_local(RGSet)
+    return(message("Done!"))
+  }
+  if (!file.exists(samSheet)) {
+    MakeLocalSampleSheet(runID, token)
+    targets <- RunFromSamplesheet(samSheet)
+    targets$Basename <- paste0(file.path(getwd(), targets$SentrixID_Pos))
+  }
+  gb$get.idats()
+  loop_targets(targets)
+  return(message("Done!"))
 }
+
 
 # Work Directory Functions ----------------------------------------------------
 CheckBaseDir <- function(baseFolder){
