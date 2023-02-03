@@ -154,23 +154,24 @@ GetExternalIdats <- function(allFi, ssheet, extr.idat){
         message("All idats detected in folders!")
         return(allFi)
     }
-    message("Still missing some idats! Checking External Folder: ", extr.idat)
+    message(crayon::bgRed("Still missing some idats! Checking External Folder:")," ", extr.idat)
     basesNeeded = as.vector(ssheet$SentrixID_Pos)
     basesFound <- stringr::str_split_fixed(basename(allFi),"_",3)[,c(1,2)]
     basesFound <- unique(paste0(basesFound[,1], "_",basesFound[,2]))
     stillMissing <- !(basesNeeded %in% basesFound)
     toBeFound <- basesNeeded[stillMissing]
-    message("The following idats are missing:")
+    message(crayon::bgRed("The following idats are missing:"))
     DataFrameMessage(toBeFound)
+    message(crayon::bgGreen("Searching the External folder for more idats..."))
     otherIdat <- dir(extr.idat, pattern = ".idat", full.names = T, recursive = T)
     toBeSearch <- paste(toBeFound, collapse = "|")
     foundIdat <- stringr::str_detect(otherIdat, pattern=toBeSearch)
     if (any(foundIdat)==F){
-        message("Still missing idat files not in External folder: ", extr.idat)
+        message(crayon::bgRed("Still missing idat files not in External folder:"))
         DataFrameMessage(toBeFound)
         stopifnot(any(foundIdat)==T)
     }
-    message("Found extra idats in External folder: ", extr.idat)
+    message(crayon::bgGreen("Found extra idats in External folder:")," ", extr.idat)
     idatsToAdd <- otherIdat[foundIdat]
     DataFrameMessage(idatsToAdd)
     toDrop <- basename(idatsToAdd) %in% basename(allFi)
