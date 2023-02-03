@@ -1,41 +1,29 @@
 #!/usr/bin/env Rscript
 options(stringsAsFactors = FALSE)
-gb <- globalenv()
-assign("gb", gb)
+gb <- globalenv(); assign("gb", gb)
 apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
 cpOutLnk = "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/CopyOutput.R"
 rschDrv = "/Volumes/snudem01labspace/FINAL_PDF_Reports_Brain"
+
 msgFunName <- function(pthLnk, funNam) {
-    message("\nExecuting function: ",
-            funNam,
-            " from RScript in:\n",
-            pthLnk,
-            "\n")
+    message("\nExecuting function: ", funNam, " from RScript in:\n", pthLnk, "\n")
 }
-mkBlue <- function(strVar) {
-    return(crayon::white$bgBlue(strVar))
-}
-mkGrn <-
-    function(strVar) {
-        return(crayon::white$bgGreen$bold(strVar))
-    }
-mkRed <- function(strVar) {
-    return(crayon::white$bgRed$bold(strVar))
-}
+
+mkBlue <- function(strVar) {return(crayon::white$bgBlue(strVar))}
+mkGrn <- function(strVar) {return(crayon::white$bgGreen$bold(strVar))}
+mkRed <- function(strVar) {return(crayon::white$bgRed$bold(strVar))}
+
+CheckDirMake <- function(newFolder) {if (!dir.exists(newFolder)) {fs::dir_create(newFolder)}}
 
 # FUN: Generate CNV image
 saveCNVhtml <- function(data) {
     msgFunName(cpOutLnk, "saveCNVhtml")
     # get RGSet for sample
-    RGsetEpic <-
-        minfi::read.metharray(file.path(getwd(), 'idats', unlist(data[4])),
-                              verbose = F,
-                              force = T)
+    RGsetEpic <- minfi::read.metharray(file.path(getwd(), 'idats', unlist(data[4])), verbose = F, force = T)
     # Save the CNV as a png file
     MsetEpic <- minfi::preprocessRaw(RGsetEpic)
     sample_id <- unlist(data[1])
-    xx <-
-        mnp.v11b6::MNPcnv(MsetEpic, sex = unlist(data[6]), main = sample_id)
+    xx <- mnp.v11b6::MNPcnv(MsetEpic, sex = unlist(data[6]), main = sample_id)
     hg <- mnp.v11b6::MNPcnvggplotly(xx, getTables = F)
     htmlwidgets::saveWidget(hg, paste(sample_id, "_cnv.html", sep = ""))
 }
@@ -43,13 +31,7 @@ saveCNVhtml <- function(data) {
 # Helper archive function: creates a "previous" folder when reports already exists
 save.prev.folder <- function(newFolder) {
     msgFunName(cpOutLnk, "save.prev.folder")
-    message(
-        "\n",
-        mkRed(
-            'Output folder already exists, moving existing reports to new folder named "Previous"'
-        ),
-        "\n"
-    )
+    message("\n", mkRed( 'Output folder already exists, moving existing reports to new folder named "Previous"'), "\n")
     oldFi = dir(path = newFolder, full.names = T)
     prevs = file.path(newFolder, "previous")
     dir.create(prevs)
@@ -62,33 +44,22 @@ CopyHtmlFiles <- function(newFolder) {
     message(mkGrn("Now copying html reports..."), "\n")
     fi2copy <- dir(getwd(), pattern = ".html", full.names = T)
     print(fi2copy)
-    #file.copy(fi2copy, newFolder, overwrite=F, copy.mode = F, copy.date = T)
-    fs::file_copy(fi2copy, newFolder, overwrite = T)
+    file.copy(fi2copy, newFolder, overwrite=T, copy.mode = F, copy.date = T)
+    #fs::file_copy(fi2copy, newFolder, overwrite = T)
 }
 
-CheckDirMake <- function(newFolder) {
-    if (!dir.exists(newFolder)) {
-        fs::dir_create(newFolder)
-    }
-}
 
 # FUN: Copies Reports to Z drive
 copy.to.clinical <- function(clinOut, runID, runYear) {
     msgFunName(cpOutLnk, "copy.to.clinical")
-
     newFolder <- file.path(clinOut, runYear, runID)
-
     CheckDirMake(newFolder)
-    if (!dir.exists(newFolder)) {
-        message("Output Folder could not be created, htmls not copied to:\n",
-                newFolder)
-    }
-
+    if (!dir.exists(newFolder)) {message("Output Folder could not be created, htmls not copied to:\n", newFolder)}
     if (length(dir(path = newFolder, full.names = T)) > 0) {
         save.prev.folder(newFolder)
+    }else{
+        CopyHtmlFiles(newFolder)
     }
-    CopyHtmlFiles(newFolder)
-
 }
 
 # Checks if field is already filled in REDCap returns boolean
@@ -116,52 +87,24 @@ checkRedcapRecord <-
         return(result[[fieldName]])
     }
 
-writeLogFi <-
-    function(recordName,
-             isHtml = T,
-             logFile = "upload_log.tsv") {
-        message("Check ",
-                logFile,
-                "\n",
-                mkRed(recordName[1]),
-                " already has data in REDCap")
-        if (isHtml == T) {
-            i = paste(recordName[1], "already has an html file in REDCap\n")
-            write.table(
-                i,
-                file = logFile,
-                append = TRUE,
-                quote = F,
-                sep = '\t',
-                row.names = F,
-                col.names = F
-            )
-        } else{
-            i = "\n\nThe following data fields already have classifier_value filled in REDCap:\n"
-            write.table(
-                i,
-                file = logFile,
-                append = TRUE,
-                quote = F,
-                sep = '\t',
-                row.names = F,
-                col.names = F
-            )
-            i = paste(names(recordName),
-                      recordName,
-                      sep = ":",
-                      collapse = " ")
-            write.table(
-                i,
-                file = logFile,
-                append = TRUE,
-                quote = F,
-                sep = ' ',
-                row.names = F,
-                col.names = F
-            )
-        }
+
+MakeLogFile <- function(i, logFile){
+    write.table(i, file = logFile, append = TRUE, quote = F, sep = '\t', row.names = F, col.names = F)
+}
+
+
+writeLogFi <- function(recordName, isHtml = T, logFile = "upload_log.tsv") {
+    message("Check ", logFile, "\n", mkRed(recordName[1]), " already has data in REDCap")
+    if (isHtml == T) {
+        i = paste(recordName[1], "already has an html file in REDCap\n")
+        MakeLogFile(i, logFile)
+    } else{
+        i = "\n\nThe following data fields already have classifier_value filled in REDCap:\n"
+        MakeLogFile(i, logFile)
+        i = paste(names(recordName), recordName, sep = ":", collapse = " ")
+        MakeLogFile(i, logFile)
     }
+}
 
 RedcapRcurl <- function(datarecord) {
     message(crayon::bgBlue("Record Data Uploaded:"), datarecord)
@@ -178,23 +121,17 @@ RedcapRcurl <- function(datarecord) {
 
 WarnSentrix <- function(record, isEmpty) {
     if (record$barcode_and_row_column == isEmpty) {
-        message(mkRed(record$record_id),
-                " already has the same Sentrix ID on REDCap: ",
-                isEmpty)
+        message(mkRed(record$record_id), " already has the same Sentrix ID on REDCap: ", isEmpty)
     } else{
         warning(mkRed("Sentrix ID is already on REDCap!"))
-        message("Samplesheet Sentrix ID is: ",
-                record$barcode_and_row_column)
+        message("Samplesheet Sentrix ID is: ", record$barcode_and_row_column)
         message("The Sentrix ID on REDCap is: ", isEmpty)
-        writeLogFi(record$record_id,
-                   isHtml = F,
-                   logFile = "import_log.tsv")
+        writeLogFi(record$record_id, isHtml = F, logFile = "import_log.tsv")
     }
 }
 
 ValidateRedImport <- function(record) {
-    isEmpty <-
-        checkRedcapRecord(record$record_id, "barcode_and_row_column")
+    isEmpty <- checkRedcapRecord(record$record_id, "barcode_and_row_column")
     if (isEmpty == "") {
         RedcapRcurl(datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox = T))
     } else{
@@ -215,13 +152,7 @@ loopRedcapImport <- function(data) {
 
 GetRedcapCsv <- function(samsheet) {
     if (is.null(samsheet)) {
-        samsheet <-
-            dir(
-                path = getwd(),
-                full.names = T,
-                "_Redcap.csv",
-                recursive = F
-            )
+        samsheet <- dir(path = getwd(), full.names = T, "_Redcap.csv", recursive = F)
     }
     if (length(samsheet) == 1) {
         data <- read.csv(samsheet, stringsAsFactors = F)
@@ -241,17 +172,9 @@ GetRedcapCsv <- function(samsheet) {
 CheckImportData <- function(rawCsv) {
     msgFunName(cpOutLnk, "CheckImportData")
     message("Checking REDCap for existing data:")
-    toImport <-
-        unlist(lapply(
-            rawCsv$record_id,
-            FUN = function(rd) {
-                return(checkRedcapRecord(rd, "classifier_value") == "")
-            }
-        ))
+    toImport <- unlist(lapply(rawCsv$record_id, FUN = function(rd) {return(checkRedcapRecord(rd, "classifier_value") == "")}))
     if (any(!toImport)) {
-        message(
-            "The records already have existing classifier_value and will not be over-written in REDCap:"
-        )
+        message("The records already have existing classifier_value and will not be over-written in REDCap:")
         toSkip <- rawCsv[!toImport, ]
         print(toSkip)
         invisible(lapply(1:nrow(toSkip), function(x) {
@@ -270,9 +193,7 @@ importDesktopCsv <- function(rcon, samsheet = NULL) {
     rawCsv <- GetRedcapCsv(samsheet)
     data <- CheckImportData(rawCsv)
     if (nrow(data > 0)) {
-        cat(
-            redcapAPI::importRecords(rcon, data, "normal", "ids", logfile = "REDCapImportLog.txt")
-        )
+        cat(redcapAPI::importRecords(rcon, data, "normal", "ids", logfile = "REDCapImportLog.txt"))
     } else{
         message("No new data to import to REDCap")
     }
@@ -308,17 +229,10 @@ getTotalSamples <- function(thisSh = NULL) {
         print("No .xlsm sheet, defaulting to 16 total samples")
         return(16)
     }
-    worksheet <-
-        suppressMessages(readxl::read_excel(thisSh[1], col_names = "Total", range =
-                                                "B4:B4"))
+    worksheet <- suppressMessages(readxl::read_excel(thisSh[1], col_names = "Total", range = "B4:B4"))
     if (length(worksheet) == 0) {
-        warning("Samplesheet ",
-                thisSh[1],
-                " is invalid format or no integer in Cell B4 found.")
-        message(
-            "Manually edit samplesheet to fix-Try copying data into the template file:\n",
-            templateDir
-        )
+        warning("Samplesheet ", thisSh[1], " is invalid format or no integer in Cell B4 found.")
+        message("Manually edit samplesheet to fix-Try copying data into the template file:\n", templateDir)
         stopifnot(length(worksheet) > 0)
     } else {
         message("Total sample count found is: ", worksheet[1])
@@ -332,9 +246,7 @@ AddPngFilePath <- function(sh_Dat) {
     msgFunName(cpOutLnk, "AddPngFilePath")
     nfldr = file.path(stringr::str_split_fixed(gb$clinDrv, " ", 2)[1],
                       "MethylationClassifier")
-    pathNam = file.path(nfldr,
-                        paste0(gb$runID, "_CNVs"),
-                        paste0(sh_Dat$record_id, "_cnv.png"))
+    pathNam = file.path(nfldr, paste0(gb$runID, "_CNVs"), paste0(sh_Dat$record_id, "_cnv.png"))
     rms = paste(c("control_", "low_"), collapse = '|')
     pathNam <- stringr::str_replace(pathNam, rms, "")
     pathNam <- stringr::str_replace(pathNam, "//", "/")
@@ -349,25 +261,15 @@ uploadCnPng <- function() {
     samSh <- gb$GrabSampleSheet()
     sampleNumb <- getTotalSamples()
 
-    sh_Dat <-
-        suppressMessages(as.data.frame(
-            readxl::read_excel(
-                samSh,
-                sheet = 3,
-                range = "A1:N97",
-                col_types = c("text")
-            )
+    sh_Dat <- suppressMessages(as.data.frame(
+        readxl::read_excel(samSh, sheet = 3, range = "A1:N97", col_types = c("text"))
         )[1:sampleNumb, 1:13])
     sh_Dat <- AddPngFilePath(sh_Dat = sh_Dat)
     records <- sh_Dat$record_id
     for (idx in 1:length(records)) {
         pth = sh_Dat$cnv_file_path[idx]
         recordName = paste0(records[idx])
-        message(mkBlue("Importing CNV Record:"),
-                "\n",
-                recordName,
-                " ",
-                pth)
+        message(mkBlue("Importing CNV Record:"), "\n", recordName, " ", pth)
         redcapAPI::importFiles(
             rcon,
             pth,
@@ -440,16 +342,11 @@ callApiImport <- function(rcon, recordName, runID) {
     if (isEmpty == '') {
         DoRedcapApi(rcon, recordName, runID)
     } else{
-        message(mkRed(recordName),
-                " already has an assigned subgroup in REDCap: ",
-                isEmpty)
+        message(mkRed(recordName), " already has an assigned subgroup in REDCap: ", isEmpty)
         writeLogFi(recordName, isHtml = F, logFile = "import_log.tsv")
     }
 }
 
-TryRedImportFiles <- function() {
-
-}
 
 callApiFile <- function(rcon, recordName, ovwr = T) {
     recordFi <- paste0(recordName, ".html")
