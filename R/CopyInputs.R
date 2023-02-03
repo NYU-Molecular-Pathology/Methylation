@@ -149,6 +149,38 @@ DataFrameMessage <- function(dat){
 }
 
 
+GetExternalIdats <- function(allFi, ssheet, extr.idat){
+    if (nrow(ssheet) * 2 == length(allFi)){
+        message("All idats detected in folders!")
+        return(allFi)
+    }
+    message("Still missing some idats! Checking External Folder: ", extr.idat)
+    basesNeeded = as.vector(ssheet$SentrixID_Pos)
+    basesFound <- stringr::str_split_fixed(basename(allFi),"_",3)[,c(1,2)]
+    basesFound <- unique(paste0(basesFound[,1], "_",basesFound[,2]))
+    stillMissing <- !(basesNeeded %in% basesFound)
+    toBeFound <- basesNeeded[stillMissing]
+    message("The following idats are missing:")
+    DataFrameMessage(toBeFound)
+    otherIdat <- dir(extr.idat, pattern = ".idat", full.names = T, recursive = T)
+    toBeSearch <- paste(toBeFound, collapse = "|")
+    foundIdat <- stringr::str_detect(otherIdat, pattern=toBeSearch)
+    if (any(foundIdat)==F){
+        message("Still missing idat files not in External folder: ", extr.idat)
+        DataFrameMessage(toBeFound)
+        stopifnot(any(foundIdat)==T)
+    }
+    message("Found extra idats in External folder: ", extr.idat)
+    idatsToAdd <- otherIdat[foundIdat]
+    DataFrameMessage(idatsToAdd)
+    toDrop <- basename(idatsToAdd) %in% basename(allFi)
+    idatsToAdd <- idatsToAdd[!toDrop]
+    allFi <- c(allFi, idatsToAdd)
+    stopifnot(nrow(ssheet) * 2 == length(allFi))
+    return(allFi)
+}
+
+
 # FUN: Returns a list of idat files that exist on Molecular and Snuderl lab drives -
 get.idats <- function(csvNam = "samplesheet.csv", runDir=NULL){
     msgFunName(cpInLnk, "get.idats")
@@ -158,48 +190,25 @@ get.idats <- function(csvNam = "samplesheet.csv", runDir=NULL){
     warnMount(rsch.idat)
     warnMount(clin.idat)
     if (is.null(runDir)){ runDir <- getwd()}
-    if (file.exists(csvNam)) {
-        allFi <- getAllFiles(idatDir = c(rsch.idat, clin.idat), csvNam = csvNam)
-        allFi = allFi[file.exists(allFi)]
-        ssheet = read.csv(csvNam, strip.white = T)
-        if (length(allFi) > 0) {
-            message("Files found: ")
-            DataFrameMessage(allFi)
-            message("Checking if idats exist in run directory...")
-            cur.idat <- basename(dir(path=runDir, pattern = "*.idat$", recursive = F))
-            bcds <- paste0(basename(allFi))
-            if(nrow(ssheet) * 2 != length(allFi)){
-                message("Still missing some idats! Checking External Folder: ", extr.idat)
-                barcode = as.vector(ssheet$SentrixID_Pos)
-                #allToFind <- unique(basename(getAllFiles(idatDir = c(rsch.idat, clin.idat), csvNam = csvNam)))
-                toSearch <- paste(barcode, collapse = "|")
-                stillMissing <- stringr::str_detect(allFi, pattern=toSearch, negate=T)
-                otherIdat <- dir(extr.idat, pattern = ".idat", full.names = T, recursive = T)
-                toBeFound <- barcode[stillMissing]
-                foundIdat <- stringr::str_detect(otherIdat, pattern=toBeFound)
-                if(any(foundIdat)==T){
-                    message("Found extra idats in External folder: ", extr.idat)
-
-                }else{
-                    message("Still missing idat files not in External folder: ", extr.idat)
-
-                }
-            }
-
-            if (all(bcds %in% cur.idat)) {
-                message(".idat files already copied")
-            }else{
-                copyBaseIdats(allFi[!(bcds %in% cur.idat)])
-            }
-        } else {
-            warning(crayon::bgRed("No .idat files found!"))
-            message("Check worksheet for barcode if found in the folder path:")
-            message(rsch.idat, "\nor\n", clin.idat)
-            stopifnot(length(allFi) > 0)
-        }
-    } else {
-        message("Cannot find your sheet named:", csvNam)
-        stopifnot(file.exists(csvNam))
+    if (!file.exists(csvNam)) {message("Cannot find your sheet named:", csvNam); stopifnot(file.exists(csvNam))}
+    allFi <- getAllFiles(idatDir = c(rsch.idat, clin.idat), csvNam = csvNam)
+    allFi = allFi[file.exists(allFi)]
+    ssheet = read.csv(csvNam, strip.white = T)
+    if (!length(allFi) > 0) {
+        warning(crayon::bgRed("No .idat files found!"))
+        message("Check worksheet for barcode if found in the folder path:")
+        message(rsch.idat, "\nor\n", clin.idat)
+        stopifnot(length(allFi) > 0)
+    }
+    message("Files found: "); DataFrameMessage(allFi)
+    allFi <- GetExternalIdats(allFi, ssheet, extr.idat)
+    bcds <- paste0(basename(allFi))
+    message("Checking if idats exist in run directory...")
+    cur.idat <- basename(dir(path=runDir, pattern = "*.idat$", recursive = F))
+    if (all(bcds %in% cur.idat)) {
+        message(".idat files already copied to run directory")
+    }else{
+        copyBaseIdats(allFi[!(bcds %in% cur.idat)])
     }
 }
 
