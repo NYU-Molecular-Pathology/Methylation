@@ -166,9 +166,9 @@ RunLocalIdats <- function(runID, token, samSheet = "samplesheet.csv"){
   }
   if (!file.exists(samSheet)) {
     MakeLocalSampleSheet(runID, token)
+    }
     targets <- RunFromSamplesheet(samSheet)
     targets$Basename <- paste0(file.path(getwd(), targets$SentrixID_Pos))
-  }
   gb$get.idats()
   loop_targets(targets)
   return(message("Done!"))
