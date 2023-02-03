@@ -75,6 +75,7 @@ loop_targets <- function(targets, reportMd){
     gb$TryLoadUniD()
     try(silent=T, unloadNamespace("sarc.v12b6"))
     gb$LoadMnpData(F)
+    targets$RunID <- gb$runID
     for(i in 1:nrow(targets)){
         message("Sample ", i, " of ", nrow(targets))
         dat <- GetTargetData(data = targets[i,])
@@ -151,7 +152,7 @@ RunLocalIdats <- function(runID, token, samSheet = "samplesheet.csv"){
   msgFunName(cpInLnk4,"RunLocalIdats"); stopifnot(!is.null(token))
   samSheet = file.path(getwd(), "samplesheet.csv")
   labWorkbook <- file.path(getwd(), paste0(runID,".xlsm"))
-  if (file.exists(labWorkbook) {
+  if (file.exists(labWorkbook)) {
     gb$readSheetWrite(runID = runID)
     gb$moveSampleSheet(baseFolder, runID)
     return(message("Samplesheet Copied"))
