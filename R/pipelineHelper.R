@@ -524,3 +524,16 @@ AssignArgs <- function(runID, baseFolder, token, selectRDs, redcapUp, gb){
     return(selectRDs)
 }
 
+
+CheckIdatsCopied <- function(){
+    idatFiles <- dir(getwd(), pattern=".idat", full.names = T)
+    idatSize <- paste(round(file.info(idatFiles)$size/1024.0 ^ 2, 2),"MB")
+    idatFiSi <- as.data.frame(table(idatSize))
+
+    if(nrow(idatFiSi)>1){
+        message(crayon::bgRed("Some idat files are not the same size!"))
+        message("Make sure Red and Grn .idat pairs are the same file size by re-copying any files again.")
+        message(paste0(capture.output(idatFiSi), collapse="\n"))
+    }
+}
+
