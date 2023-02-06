@@ -145,39 +145,77 @@ SpecialMNPpredict6 <- function (betas, calibrate = TRUE, type = "response", MCF 
 }
 
 
-GetFamilyProb <-  function(is450k, Mset_ba, Mset){
-    if(is450k){
+GetFamilyProb <- function(is450k, Mset_ba, Mset){
+    if(is450k == T){
         library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylation450kmanifest")
         library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b4")
-        tryCatch(
-        expr = {
+        probs_mcf <- tryCatch(
+          expr = {
             probs_mcf <- mnp.v11b4::MNPpredict(Mset_ba[, 1], type = 'prob', MCF = TRUE)
+            return(probs_mcf)
         },
         error = function(e) {
-            message("Error occured at Brain Classifier v11 prediction:")
+            message("Error at GetFamilyProb in Brain Classifier v11 prediction mnp.v11b4::MNPpredict: \n", e)
             message("Using MNPpredict(Mset[, 1]) instead of Mset_ba\n")
             probs_mcf <- mnp.v11b4::MNPpredict(Mset[, 1], type = 'prob', MCF = TRUE)
-        }
+            return(probs_mcf)
+            }
         )
+        return(probs_mcf)
     }else{
-        library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylationEPICmanifest")
-        library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b6")
-        
-    tryCatch(
+      library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylationEPICmanifest")
+      library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b6")
+      probs_mcf <- tryCatch(
         expr = {
-            probs_mcf <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob', MCF = TRUE)
+          probs_mcf <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob', MCF = TRUE)
+          return(probs_mcf)
         },
         error = function(e) {
-            message("Error occured at Brain Classifier v11 prediction:")
-            message("Using SpecialMNPpredict6 instead \n")
+            message("Error at GetFamilyProb in Brain Classifier v11 function mnp.v11b6::MNPpredict:\n", e)
+            message("Trying SpecialMNPpredict6...")
             betas <- minfi::getBeta(Mset_ba[, 1], type = "Illumina")
             probs_mcf <- SpecialMNPpredict6(betas, type = 'prob', MCF = TRUE)
-        }
-        )
-        }
-    return(probs_mcf)
+            return(probs_mcf)
+            }
+      )
+      }
+}
+                            
+
+GetMnpV11Prob <- function(Mset_ba) {
+  probs <-
+    tryCatch(
+      expr = {
+        probs <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob')
+        return(probs)
+      },
+      error = function(e) {
+        message("Error at GetMnpV11Prob in Brain Classifier v11 function mnp.v11b6::MNPpredict:\n", e)
+        message("Trying SpecialMNPpredict6...")
+        betas <- minfi::getBeta(Mset_ba[, 1], type = "Illumina")
+        probs <- SpecialMNPpredict6(betas, type = 'prob')
+        return(probs)
+      }
+    )
+  return(probs)
 }
 
+LoadMnpManifest <- function(is450k){
+   if(is450k==T){
+      library(verbose = F, warn.conflicts = F, quietly = T, package = "IlluminaHumanMethylation450kmanifest")
+      library(verbose = F, warn.conflicts = F, quietly = T, package = "mnp.v11b4")
+      try(unloadNamespace("mnp.v11b6"), silent = T); try(detach_package("mnp.v11b6"), silent = T)
+      invisible(loadNamespace("mnp.v11b4")); invisible(requireNamespace("mnp.v11b4"))
+      require(warn.conflicts = F, quietly = T, package = "mnp.v11b4")
+    }else{
+      library(verbose = F, warn.conflicts = F, quietly = T, package = "IlluminaHumanMethylationEPICmanifest")
+      library(verbose = F, warn.conflicts = F, quietly = T, package = "mnp.v11b6")
+      try(unloadNamespace("mnp.v11b4"), silent = T); try(detach_package("mnp.v11b4"), silent = T)
+      invisible(loadNamespace("mnp.v11b6")); invisible(requireNamespace("mnp.v11b6"))
+      require(warn.conflicts = F, quietly = T, package = "mnp.v11b6")
+    }
+}
+                            
 
 GetFamScore <- function(out_class_family){
     fsco <- as.numeric(paste0(out_class_family$`Class Score`[1]))
@@ -240,19 +278,7 @@ Get450kProb <- function(betas){
 
 
 GetProbData <- function(is450k, Mset_ba, Mset) {
-    if(is450k==T){
-      library(verbose = F, warn.conflicts = F, quietly = T, package = "IlluminaHumanMethylation450kmanifest")
-      library(verbose = F, warn.conflicts = F, quietly = T, package = "mnp.v11b4")
-      try(unloadNamespace("mnp.v11b6"), silent = T); try(detach_package("mnp.v11b6"), silent = T)
-      invisible(loadNamespace("mnp.v11b4")); invisible(requireNamespace("mnp.v11b4"))
-      require(warn.conflicts = F, quietly = T, package = "mnp.v11b4")
-    }else{
-      library(verbose = F, warn.conflicts = F, quietly = T, package = "IlluminaHumanMethylationEPICmanifest")
-      library(verbose = F, warn.conflicts = F, quietly = T, package = "mnp.v11b6")
-      try(unloadNamespace("mnp.v11b4"), silent = T); try(detach_package("mnp.v11b4"), silent = T)
-      invisible(loadNamespace("mnp.v11b6")); invisible(requireNamespace("mnp.v11b6"))
-      require(warn.conflicts = F, quietly = T, package = "mnp.v11b6")
-    }
+   LoadMnpManifest(is450k)
     if(!exists('calfit')){
         load(file.path("/Volumes/CBioinformatics/Methylation/Methylation_classifier_v11b6/",
                        "mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData"))
@@ -260,20 +286,11 @@ GetProbData <- function(is450k, Mset_ba, Mset) {
     if(is450k==T) {
       betas <- minfi::getBeta(Mset_ba[, 1])
       probs <- Get450kProb(betas)
+      return(probs)
     }else{
-        tryCatch(
-          expr = {
-            probs <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob')
-            },
-          error = function(e) {
-              message("Error occured at Brain Classifier v11 prediction:")
-              message("Using SpecialMNPpredict6:\n", e)
-              betas <- minfi::getBeta(Mset_ba[, 1], type = "Illumina")
-              probs <- SpecialMNPpredict6(betas, type = 'prob')
-              }
-        )
-      }
-    return(probs)
+      probs <- GetMnpV11Prob(Mset_ba)
+      return(probs)
+    }
 }
 
 
