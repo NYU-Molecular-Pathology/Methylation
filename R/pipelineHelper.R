@@ -511,7 +511,24 @@ StartRun <- function(selectRDs = NULL, emailNotify = T, redcapUp = T) {
     )
 }
 
-AssignArgs <- function(runID, baseFolder, token, selectRDs, redcapUp, gb){
+
+GetPriorityCases <- function(selectRDs=NULL, samSheet = "samplesheet.csv", kwd="BN0") {
+    msgFunName(cpInLnk4,"GetPriorityCases")
+    csvFi <- read.csv(file.path(getwd(), samSheet))
+    BN00 <- which(stringr::str_detect(csvFi$MP_num, kwd))
+    if (length(BN00) > 0) {
+      if(is.null(selectRDs)){
+      selectRDs <- c(csvFi$Sample_Name[BN00])  
+      }else{
+      selectRDs <- c(selectRDs, csvFi$Sample_Name[BN00])
+      }
+      message("Prioritizing these cases first:\n", paste(capture.output(selectRDs), collapse=" "))
+    }
+    return(selectRDs)
+}
+
+
+AssignArgs <- function(runID, baseFolder, token, selectRDs=NULL, redcapUp, gb){
     stopifnot(!is.null(token)); stopifnot(!is.null(runID))
     assign("token", token, envir = gb)
     assign("ApiToken", token, envir = gb)
@@ -520,7 +537,7 @@ AssignArgs <- function(runID, baseFolder, token, selectRDs, redcapUp, gb){
     if(!is.null(selectRDs)){selectRDs <- stringr::str_split(selectRDs, ",")}
     assign("redcapUp", redcapUp, envir = gb)
     assign("redcapUpload", redcapUp,  envir = gb)
-    selectRDs <- gb$GetPriorityCases(selectRDs) # Prioritizes select RD-numbers and BN cases
+    selectRDs <- GetPriorityCases(selectRDs) # Prioritizes select RD-numbers and BN cases
     return(selectRDs)
 }
 
