@@ -174,6 +174,7 @@ h1{
   font-weight: 600!important;
   background-image: linear-gradient(to bottom, #2c3e50, orange, purple )!important;
   color: transparent!important;
+  text-shadow: #000000 1px 0 10px; 
   display: block;
   background-clip: text!important;
   -webkit-background-clip: text!important;
