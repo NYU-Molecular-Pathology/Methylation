@@ -12,6 +12,10 @@ message(dsh,"\nParameters input",dsh)
 message("token:    ", token, "\n", "PACT Run: ", inputSheet,"\n","Run ID:   ", runID,"\n")
 stopifnot(exists("token") & !is.null(token) & exists("inputSheet") & !is.null(inputSheet))
 
+MsgDF <- function(data){
+    return(message(paste0(capture.output(as.data.frame(data)), collapse = "\n")))
+}
+
 # FUN: Checks if z-drive is accessible to the Rscript ------------------------------------------
 checkMounts <- function(){
     molecDrive = "/Volumes/molecular/MOLECULAR LAB ONLY"
@@ -73,15 +77,42 @@ getExcelPath <- function(inputSheet, pathType=1){
     return(inputFiPath)
 }
 
+
+MsgChangesMade <- function(mainSheet, ptrn=","){
+    for(i in 1:ncol(mainSheet)){
+        theRows <- mainSheet[,i]
+        theMatch <- stringr::str_detect(theRows, pattern=ptrn)
+        if(any(theMatch)){
+            theCommas <- which(theMatch==T)
+            theSym <- paste0('"', ptrn, '"')
+            message(paste('The following', theSym, 'will be removed from rows',
+                          paste(theCommas, collapse=", "), 'in the column:', colnames(mainSheet)[i]))
+            MsgDF(theRows[theCommas])
+        }
+    }
+}
+
+
 # Removes and fixes newlines, commas, and blanks from samplesheet ------------------------------
 sanitizeSheet <- function(mainSheet){
     mainSheet <- mainSheet[!is.na(mainSheet[,1]),]
+    spacedTxt <- stringr::str_detect(mainSheet$Tumor_Type, " ")
+    if(any(spacedTxt)){
+        message("The following Tumor_Type have spaces:")
+        MsgDF(mainSheet$Tumor_Type[spacedTxt])
+    }
     mainSheet$Tumor_Type <- gsub(" ", "-", mainSheet$Tumor_Type)
+
+    MsgChangesMade(mainSheet)
+    MsgChangesMade(mainSheet, " ")
+    MsgChangesMade(mainSheet, "[\r\n]")
+
     for(i in 1:ncol(mainSheet)){
         mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub("[\r\n]", "", x) })
         mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub(",", "", x) })
         mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub(" ", "", x) })
     }
+
     mainSheet$Paired_Normal[mainSheet$Paired_Normal==0|is.na(mainSheet$Paired_Normal)] <-""
     mainSheet$Tumor_Type[mainSheet$Tumor_Type==0] <- "NA"
     mainSheet[,1:16] <- sapply(mainSheet[,1:16], function(x) { gsub("\\\\", "-", x) })
@@ -116,9 +147,14 @@ WritePhilipsGender <- function(mainSheet, inputFi, shNames){
 GetExcelData <- function(inputFi, sheetNum, shRange, toSkip=0, cm=F){
     sheetData <- suppressMessages(as.data.frame(
         readxl::read_excel(
-            inputFi, sheet = sheetNum, na = "", range = shRange, col_types = "text", col_names = cm,skip=toSkip
-            )
-    ))
+            inputFi,
+            sheet = sheetNum,
+            na = "",
+            range = shRange,
+            col_types = "text",
+            col_names = cm,
+            skip = toSkip
+        )))
     sheetData[is.na(sheetData)] <- ""
     return(sheetData)
 }
@@ -193,7 +229,7 @@ FixPairedList <- function(philipsExport, rawSheetData){
     mislabelled <- philipsExport$`Tumor DNA/RNA Number` %in% philipsExport$`Normal DNA/RNA Number`
     if(any(mislabelled)){
         message(crayon::bgRed("There are samples potentially mislabelled! in Philips:"),"\n")
-        message(paste0(capture.output(as.data.frame(philipsExport$`Tumor DNA/RNA Number`[mislabelled])), collapse="\n"))
+        MsgDF(philipsExport$`Tumor DNA/RNA Number`[mislabelled])
     }
     tumorIndex <- GetTypeIndex(philipsExport$`Tumor DNA/RNA Number`, rawSheetData)
     normalIndex <- GetTypeIndex(philipsExport$`Normal DNA/RNA Number`, rawSheetData)
@@ -224,14 +260,14 @@ AddSampleIndexes <- function(pairedList, rawSheetData, philipsExport){
         message(crayon::bgRed(paste(length(extraIndex),
                 "Samples are extra normals and will need to be added manually:")))
         thenNext <- theSampleIdEx[extraIndex]
-        message(paste0(capture.output(thenNext), collapse="\n"))
+        MsgDF(thenNext)
         newNormList <- paste(mainSheet$Sample_ID[sheetNormals])[-extraIndex]
         mainSheet$Paired_Normal[sheetTumors] <- newNormList
         #missingTumorNorm <- stringr::str_ends(mainSheet$Sample_ID, "0_0")
         missingTumorNorm <- which(stringr::str_ends(mainSheet$Sample_ID,  paste(thenNext,collapse="|")))
         if(length(missingTumorNorm)>0){
             message(crayon::bgRed("There are samples missing tumor normal pairs and will be dropped:"))
-            message(paste0(capture.output(mainSheet[missingTumorNorm,1]), collapse="\n"))
+            MsgDF(mainSheet[missingTumorNorm,1])
             mainSheet <- mainSheet[-missingTumorNorm,]
             rownames(mainSheet) <- 1:nrow(mainSheet)
         }
@@ -262,7 +298,7 @@ BindUnpairedRows <- function(rawSheetData, pairedList, runID){
         message(crayon::bgGreen("No additional paired sample rows to bind to sample sheet"))
         newRows <- NULL
     } else{
-        message("Binding rows:","\n", paste0(capture.output(accToBind), collapse = "\n"))
+        message("Binding rows:", "\n", paste0(capture.output(accToBind), collapse = "\n"))
         newRows <- unlist(lapply(1:length(accToBind), function(acc){
             return(paste(0, runID, accToBind[acc], rawSheetData$`DNA #`[acc], sep = "_"))
         }))
@@ -298,8 +334,6 @@ GetPairedList <- function(philipsExport, runID){
     return(pairedList)
 }
 
-MsgPrint <- function(obj){message(paste0(capture.output(obj), collapse="\n"))}
-
 MatchIndex <- function(list1, list2){
     return(unlist(lapply(list1, function(x) {which(x==list2)})))
 }
@@ -323,8 +357,8 @@ CheckMissingPairs <- function(ngsNumbers, philipsT, philipsN){
     if(any(philipsN %in% philipsT)){
         theDupe <- which(philipsN %in% philipsT ==T)
         message(crayon::bgRed("Some Philips samples have the same tumor/normal accession number:"))
-        MsgPrint(ngsNumbers[theDupe])
-        MsgPrint(philipsN[theDupe])
+        MsgDF(ngsNumbers[theDupe])
+        MsgDF(philipsN[theDupe])
     }
 }
 
@@ -335,8 +369,8 @@ CheckDupesMatch <- function(nameList, secondCol) {
         message(crayon::bgRed("The sample sheet may contain duplicate accession Numbers!"))
         dupesIdx <- matchIdx[duplicated(matchIdx)]
         message("Duplicate at row Index: ", dupesIdx)
-        MsgPrint(nameList[dupesIdx])
-        MsgPrint(secondCol[dupesIdx])
+        MsgDF(nameList[dupesIdx])
+        MsgDF(secondCol[dupesIdx])
         #return(unique(matchIdx))
         return(matchIdx)
     } else{
@@ -355,14 +389,14 @@ CheckTotalIndexes <- function(tumorSam, normalSam, ngsNumbers, sheetType = "Phil
         if(tumorLonger==F){
             totalDrop <- normalSam %in% tumorSam
             message(crayon::bgRed(paste(totalAdd, "more Normals than Tumors listed in worksheet!")))
-            message(message(paste0(capture.output(data.frame(
-                NGS=ngsNumbers[!totalDrop], Potential.Extra=philipsN[!totalDrop])), collapse="\n")))
+            MsgDF(data.frame(
+                NGS=ngsNumbers[!totalDrop], Potential.Extra=philipsN[!totalDrop]))
             tumorSam <- c(tumorSam, rep(0,totalAdd))
         }else{
             totalDrop <- tumorSam %in% normalSam
             message(crayon::bgRed(paste(totalAdd, "more Tumors than Normals listed in worksheet!")))
-            message(message(paste0(capture.output(data.frame(
-                NGS=ngsNumbers[!totalDrop], Potential.Extra=philipsT[!totalDrop])), collapse="\n")))
+            MsgDF(data.frame(
+                NGS=ngsNumbers[!totalDrop], Potential.Extra=philipsT[!totalDrop]))
             normalSam <- c(normalSam, rep(0,totalAdd))
         }
         message("Extra ", length(which(totalDrop==F)), " cases...")
@@ -385,8 +419,6 @@ GetIndexMatch <- function(rawSheetData, philipsExport){
     wetLabIdxT <- CheckDupesMatch(accessions, philipsT)
     wetLabIdxN <- CheckDupesMatch(accessions, philipsN)
 
-
-
     if(length(philipsIdxT) != length(philipsIdxN)){
         message("Total Tumors: ", length(philipsIdxT))
         message("Total Normals: ", length(philipsIdxN))
@@ -396,14 +428,14 @@ GetIndexMatch <- function(rawSheetData, philipsExport){
         if(tumorLonger==F){
             totalDrop <- philipsIdxN %in% philipsIdxT
             message(crayon::bgRed(paste(totalAdd, "more Normals than Tumors listed in worksheet!")))
-            message(message(paste0(capture.output(data.frame(
-                NGS=ngsNumbers[!totalDrop], Potential.Extra=philipsN[!totalDrop])), collapse="\n")))
+            MsgDF(data.frame(
+                NGS=ngsNumbers[!totalDrop], Potential.Extra=philipsN[!totalDrop]))
             philipsIdxT <- c(philipsIdxT, rep(0,totalAdd))
         }else{
             totalDrop <- philipsIdxT %in% philipsIdxN
             message(crayon::bgRed(paste(totalAdd, "more Tumors than Normals listed in worksheet!")))
-            message(message(paste0(capture.output(data.frame(
-                NGS=ngsNumbers[!totalDrop], Potential.Extra=philipsT[!totalDrop])), collapse="\n")))
+            MsgDF(data.frame(
+                NGS=ngsNumbers[!totalDrop], Potential.Extra=philipsT[!totalDrop]))
             philipsIdxN <- c(philipsIdxN, rep(0,totalAdd))
         }
         message("Extra ", length(which(totalDrop==F)), " cases...")
@@ -419,13 +451,13 @@ GetIndexMatch <- function(rawSheetData, philipsExport){
             totalDrop <- wetLabIdxN %in% wetLabIdxT
             #totalDrop <- 1:length(philipsIdxT)
             message(crayon::bgRed("More Normals than Tumors listed in worksheet!"))
-            message(message(paste0(capture.output(data.frame(Potential.Extra=philipsN[totalDrop])), collapse="\n")))
+            MsgDF(data.frame(Potential.Extra=philipsN[totalDrop]))
             wetLabIdxT <- c(wetLabIdxT, rep(0,totalAdd))
             message("Extra ", length(which(totalDrop==T)), " cases...")
         }else{
             totalDrop <- wetLabIdxT %in% wetLabIdxN
             message(crayon::bgRed("More Tumors than Normals listed in worksheet!"))
-            message(message(paste0(capture.output(data.frame(Potential.Extra=philipsT[!totalDrop])), collapse="\n")))
+            MsgDF(data.frame(Potential.Extra=philipsT[!totalDrop]))
             wetLabIdxN <- c(wetLabIdxN, rep(0,totalAdd))
             message("Extra ", length(which(totalDrop==F)), " cases...")
         }
@@ -464,8 +496,8 @@ FixLastColumns <- function(mainSheet, rawSheetData){
     mainSheet$GenomeFolder <- as.character("PhiX\\Illumina\\RTA\\Sequence\\WholeGenomeFASTA")
     dupes <- base::anyDuplicated(mainSheet$I7_Index_ID)
     if(length(dupes)>0 & dupes!=0){
-        message(crayon::bgRed("The following rows are duplicated and will be removed:"), "\n",
-                paste0(capture.output(mainSheet[dupes,]), collapse = "\n"))
+        message(crayon::bgRed("The following rows are duplicated and will be removed:"), "\n")
+        MsgDF(mainSheet[dupes,])
         mainSheet <- mainSheet[-dupes,]
         row.names(mainSheet) <- 1:nrow(mainSheet)
     }
@@ -575,7 +607,7 @@ AltParseFormat <- function(inputFi, runID){
 # Parses xlsx file and writes as csv file -----
 parseExcelFile <- function(inputFi, runID = NULL){
     shNames <- readxl::excel_sheets(inputFi)
-    message(paste0(capture.output(data.frame(`Sheet names in Workbook` = shNames)), collapse = "\n"))
+    MsgDF(data.frame(`Sheet names in Workbook` = shNames))
     sh <- which(grepl("SampleSheet", shNames, ignore.case = T))[1]
     if(!is.na(sh)){
         sheetHead <- GetExcelData(inputFi, sheetNum=shNames[sh], shRange="A1:B17")
