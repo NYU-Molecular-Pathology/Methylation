@@ -19,7 +19,7 @@ outputDir="/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinform
 reprtDir="/gpfs/data/molecpathlab/bin/QC_reprot/"
 pactGithub="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts"
 
-SHEETDIR="${productionDir}/samplesheets/LG-PACT/${FUSIONRUNID}"
+SHEETDIR="${productionDir}/samplesheets/archer/${FUSIONRUNID}"
 DEMUXDIR="${productionDir}/Demultiplexing/${FUSIONRUNID}"
 molecDir="${productionDir}/NGS607/"
 
@@ -282,7 +282,7 @@ msg_code "/Volumes/CBioinformatics/FUSION/parseFusion.sh /Users/${kerbero}/Downl
 msg_step 2 "#ffb3ba" "Review the generated SampleSheet.csv ouput below and make sure it contains no errors"
 msg_code "~/Desktop/${FUSIONRUNID}-SampleSheet.csv"
 msg_step 3 "#ffb3ba" "Check the script copied with group read/write permissions to the folder"
-msg_code "${productionDir}/samplesheets/LG-PACT/${FUSIONRUNID}/${FUSIONRUNID}-SampleSheet.csv"
+msg_code "${productionDir}/samplesheets/archer/${FUSIONRUNID}/${FUSIONRUNID}-SampleSheet.csv"
 echo "$BOX2"
 
 # Stage 1 -----------------------
@@ -292,7 +292,7 @@ msg_code "ssh -Y ${kerbero}@bigpurple.nyumc.org"
 msg_step 2 "#ffdfba" "Go into demux-nf2"
 msg_code "cd ~/molecpathlab/pipelines/demux-nf2/"
 msg_step 3 "#ffdfba" "Execute the deploy command"
-msg_code "make deploy RUNID=${FUSIONRUNID} SAMPLESHEET=${productionDir}/samplesheets/LG-PACT/${FUSIONRUNID}/${FUSIONRUNID}-SampleSheet.csv SEQTYPE=Archer"
+msg_code "make deploy RUNID=${FUSIONRUNID} SAMPLESHEET=${productionDir}/samplesheets/archer/${FUSIONRUNID}/${FUSIONRUNID}-SampleSheet.csv SEQTYPE=Archer"
 msg_step 4 "#ffdfba" "Go into the Demultiplexing run folder"
 msg_code "cd $DEMUXDIR"
 msg_step 5 "#ffdfba" "Update/submit and cat logs"
