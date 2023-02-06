@@ -179,7 +179,7 @@ h1{
   -webkit-background-clip: text!important;
   font-family: 'Allerta Stencil';
   margin-bottom: 0px !important;
-  -webkit-text-stroke-width: 2px;
+  -webkit-text-stroke-width: 1px;
   -webkit-text-stroke-color: black;
 }
 
@@ -256,7 +256,7 @@ echo "<span style='font-weight: bold'>Author</span>: Jonathan Serrano"
 echo " "
 echo "<span style='font-weight: bold'>Current Date</span>: $(date)"
 echo " "
-echo "<h2 style='padding-top: 10px !important; -webkit-text-stroke-width: 2px; -webkit-text-stroke-color: black;'>${FG_GRN}FUSION Seq Commands${normal}</h2>"
+echo "<h2 style='padding-top: 10px !important; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: black;'>${FG_GRN}FUSION Seq Commands${normal}</h2>"
 echo "<h2 style='padding-top: 10px !important;'>${FG_BLU}Your Input Args${normal}</h2>"
 msg_step 1 "white" "Sequencer Run ID FUSIONRUNID: ${FUSIONRUNID}</br>"
 msg_step 2 "white" "FUSION Run Name FSID: ${FSID}</br>"
