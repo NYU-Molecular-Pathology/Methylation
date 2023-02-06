@@ -320,14 +320,12 @@ msg_step 1 "#d9d2e9" "Execute the following commands locally after pipeline comp
 msg_code "cd ${HOME}"
 msg_step 2 "#d9d2e9" "Email the PACT team once the QC files are Generated and copied to notify them the following"
 msg_code "Demultiplexing completed for ${FSID}.
-
 The data for this week’s Fusion run is copied here:
 smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/Demultiplexing/${FUSIONRUNID}/
 "
 msg_step 3 "#d9d2e9" "After data is output, generate the QC and email"
 msg_code "Heatmaps are generated, and output here:
-
- smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/MOLECULAR LAB ONLY/NYU FUSION SEQer/${currYear} reports/${FSID}/"
+smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/MOLECULAR LAB ONLY/NYU FUSION SEQer/${currYear} reports/${FSID}/"
 echo "$BOX2"
 
 echo "
