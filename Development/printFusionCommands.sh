@@ -172,7 +172,7 @@ h1{
 .stagehead {
   font-size:40px !important;
   font-weight: 600!important;
-  background-image: linear-gradient(to bottom, #2c3e50, blue, purple )!important;
+  background-image: linear-gradient(to bottom, #2c3e50, orange, purple )!important;
   color: transparent!important;
   display: block;
   background-clip: text!important;
