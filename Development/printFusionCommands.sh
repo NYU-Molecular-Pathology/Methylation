@@ -336,7 +336,6 @@ echo "
         var str = document.getElementById(id);
         window.getSelection().selectAllChildren(str);
         document.execCommand(\"Copy\")
-
     }
 
     const copyButtonLabel = \"Copy Code\";
