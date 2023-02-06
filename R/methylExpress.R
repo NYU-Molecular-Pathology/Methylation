@@ -30,9 +30,10 @@ gb$CheckInputArg(redcapUp, gb, T); gb$CheckInputArg(runLocal, gb, F)
 gb$ApiToken <- gb$token <- token
 baseFolder <- gb$CheckBaseFolderInput(baseFolder)
 selectRDs <- gb$AssignArgs(runID, baseFolder, token, selectRDs, redcapUp, gb)
-gb$reportMd <- reportMd <- "~/report.Rmd"
+gb$reportMd <- reportMd <- file.path(fs::path_home(), "report.Rmd")
 
 # Execute Pipeline Functions ----------------------------------------------------------------------
 gb$PrepareRun(token, baseFolder, runID, runLocal=runLocal) # If running local set runLocal = TRUE
+gb$CheckIdatsCopied()
 gb$StartRun(selectRDs, emailNotify=T, redcapUp=redcapUp) # Can be changed to default false
 # gb$MakeSarcomaReport()
