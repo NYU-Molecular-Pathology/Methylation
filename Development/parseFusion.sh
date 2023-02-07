@@ -52,7 +52,7 @@ message_print "Executing" "python3 gen_sample_sheet_fixed.py -t \"${SHEETPATH}\"
 python3 gen_sample_sheet_fixed.py -t "$SHEETPATH" -o "$HOME/Desktop/" --I5_index "$HOME/Archer_Index2_Sequences.xlsx"
 
 NEWCSV=$(ls -t ~/Desktop/*-SampleSheet.csv | awk '{printf($0);exit}')
-message_print "SampleSheet output is on your Desktop:" "$NEWCSV"
+message_print "SampleSheet output is on your Desktop" "$NEWCSV"
 
 # Save Run String Variable Information -----------------------------------------------------------------------------------------------------------------
 FUSIONRUNID=$(basename ${NEWCSV%%-*})
@@ -80,5 +80,7 @@ ssh "$kerbero@bigpurple.nyumc.org" "chmod -R g+rwx $samSheetDest$FUSIONRUNID"
 message_curl ${GITHUBMAIN} "printFusionCommands.sh"
 chmod ugo+rwx "$HOME/printFusionCommands.sh"
 chmod +rwx "$HOME/printFusionCommands.sh"
+
+message_print "Saving Html File" "$HOME/printFusionCommands.sh $FUSIONRUNID ${FSID} ${kerbero} >${HOME}/${FSID}.html && open $HOME/${FSID}.html"
 
 $HOME/printFusionCommands.sh $FUSIONRUNID ${FSID} ${kerbero} >${HOME}/${FSID}.html && open $HOME/${FSID}.html
