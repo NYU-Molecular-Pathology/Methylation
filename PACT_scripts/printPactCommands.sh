@@ -186,7 +186,7 @@ h1{
   -webkit-background-clip: text!important;
   font-family: 'Allerta Stencil';
   margin-bottom: 0px !important;
-  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-width: 0.5px;
   -webkit-text-stroke-color: black;
 }
 
@@ -259,7 +259,7 @@ currYear="${FG_BLU}20$runMid${normal}"
 rsyncDir="/gpfs/home/${kerbero}/molecpathlab/production/NGS607/${runID}/output"
 zdrive="/mnt/${kerbero}/molecular/Molecular"
 
-echo -e "Author: Jonathan Serrano\nCurrent Date: `date`\n"
+echo -e "Author: Jonathan Serrano\nCurrent Date: $(date)\n"
 echo "<h2 style='padding-top: 10px !important; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: black;'>${FG_GRN}LG-PACT Commands${normal}</h2>"
 echo "<h2 style='padding-top: 10px !important;'>${FG_BLU}Your Input Args${normal}</h2>"
 msg_step 1 "white" "PACT RUNID: ${runID}</br>"
@@ -407,7 +407,7 @@ msg_code "Rscript --verbose -e \"rmarkdown::render('${pactRun}_consensus.Rmd', p
 msg_step 7 "#bae1ff" "After the concensus html file is created, copy to the output folder"
 msg_code "cp ${consensusDir}${pactRun}_consensus/${pactRun}_consensus.html \"/Volumes${outputDir}${currYear}/${pactRun}/\""
 msg_step 8 "#bae1ff" "After copying the html file, email everyone that the file is availible"
-msg_code "Hi all, 
+msg_code "Hi all,
 The methylation CNV consensus is copied here:
 \"/Volumes${outputDir}${currYear}/${pactRun}/\"
 "
@@ -419,7 +419,6 @@ echo "
         var str = document.getElementById(id);
         window.getSelection().selectAllChildren(str);
         document.execCommand(\"Copy\")
-
     }
 
     const copyButtonLabel = \"Copy Code\";
@@ -442,11 +441,18 @@ echo "
         let text = code.innerText;
         await navigator.clipboard.writeText(text);
         button.innerText = \"Code Copied\";
-
         setTimeout(() => {
             button.innerText = copyButtonLabel;
         }, 1000)
 
     }
+
+    function clearSelection(){
+    if (window.getSelection) {window.getSelection().removeAllRanges();}
+    else if (document.selection) {document.selection.empty();}
+    }
+
+    window.onload = clearSelection;
+
 </script>
 "
