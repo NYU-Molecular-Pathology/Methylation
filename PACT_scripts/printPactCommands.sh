@@ -48,6 +48,13 @@ html body {
     font-family: 'Helvetica Neue',Helvetica,'Segoe UI',Arial,freesans,sans-serif;
 }
 
+
+.pressed {
+  background-color: #06a96e;
+  background-image: linear-gradient(1deg, #00aa6c, #14C667 99%);
+}
+
+
 .boxed {
     background: rgb(90, 90, 90) !important;
     border: 3px solid black;
@@ -186,7 +193,7 @@ h1{
   -webkit-background-clip: text!important;
   font-family: 'Allerta Stencil';
   margin-bottom: 0px !important;
-  -webkit-text-stroke-width: 0.5px;
+  -webkit-text-stroke-width: 0.25px;
   -webkit-text-stroke-color: black;
 }
 
@@ -259,9 +266,11 @@ currYear="${FG_BLU}20$runMid${normal}"
 rsyncDir="/gpfs/home/${kerbero}/molecpathlab/production/NGS607/${runID}/output"
 zdrive="/mnt/${kerbero}/molecular/Molecular"
 
-echo -e "Author: Jonathan Serrano\nCurrent Date: $(date)\n"
+echo "<span style='font-weight: bold'>Author</span>: Jonathan Serrano</br>"
+echo "<span style='font-weight: bold'>Current Date</span>: $(date)</br>"
+echo "</br>"
 echo "<h2 style='padding-top: 10px !important; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: black;'>${FG_GRN}LG-PACT Commands${normal}</h2>"
-echo "<h2 style='padding-top: 10px !important;'>${FG_BLU}Your Input Args${normal}</h2>"
+echo "<h2 style='padding-top: 10px !important; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: black;'>${FG_BLU}Your Input Args${normal}</h2>"
 msg_step 1 "white" "PACT RUNID: ${runID}</br>"
 msg_step 2 "white" "PACT Run Name: ${pactRun}</br>"
 msg_step 3 "white" "Consensus Directory: ${consensusDir}</br>"
@@ -397,19 +406,20 @@ msg_step 3 "#bae1ff" "To this directory, copy all the .cnv.plot.pdf facets files
 msg_code "cp /Volumes/molecular/Molecular/REDCap/cnv_facets/${pactRun}/*.pdf ~/Desktop/${runID}-SampleSheet.csv ~/Desktop/${pactRun}_MethylMatch.xlsx ./"
 msg_step 4 "#bae1ff" "Next copy the QC file below to the consensus Rmd directory${normal}"
 msg_code "cp /Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/${pactRun}-Somatic_Variants.html /Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/${pactRun}.html /Volumes/molecular/Molecular/REDCap/cnv_facets/${pactRun}/${pactRun}-QC.tsv ./"
-msg_step 5 "#bae1ff" "Use the Evernote Guide to download the indels from our in-house QC html file as a .csv file and then run the Rscript:"
+msg_step 5 "#bae1ff" "Use the Evernote Guide to save the Somatic Variants as a .csv file to the downloads folder: ${HOME}/Downloads/export_mytable_MM_DD_${currYear}.csv"
 msg_code "open ${evernoteLink} && open ${consensusDir}${pactRun}_consensus/${pactRun}-Somatic_Variants.html"
-msg_code "curl -o ${HOME}/MakeIndelList.R -L ${pactGithub}/MakeIndelList.R -s && chmod +rwx ${HOME}/MakeIndelList.R"
+msg_step 6 "#bae1ff" "Once you have exported the csv file from Somatic variants html, download run the R script:"
+msg_code "cd ${HOME} && curl -o ${HOME}/MakeIndelList.R -L ${pactGithub}/MakeIndelList.R -s && chmod +rwx ${HOME}/MakeIndelList.R"
 msg_code "RScript --verbose ${HOME}/MakeIndelList.R ${pactRun}"
+msg_step 7 "#bae1ff" "Copy the csv file output by the Rscript from the desktop to your working directory:"
 msg_code "cp ${HOME}/Desktop/${pactRun}_desc.csv ${consensusDir}${pactRun}_consensus/"
-msg_step 6 "#bae1ff" "Once you have completely filled the consensus description file, knit the Rmd in Rstudio and view it"
-msg_code "Rscript --verbose -e \"rmarkdown::render('${pactRun}_consensus.Rmd', params=list(pactName='${pactRun}', userName='${kerbero}'))\""
-msg_step 7 "#bae1ff" "After the concensus html file is created, copy to the output folder"
+msg_step 8 "#bae1ff" "Return to your working directory and knit the rMarkdown file:"
+msg_code "cd ${consensusDir}${pactRun}_consensus/ && Rscript --verbose -e \"rmarkdown::render('${pactRun}_consensus.Rmd', params=list(pactName='${pactRun}', userName='${kerbero}'))\""
+msg_step 9 "#bae1ff" "Once the CNV concensus html file is created, copy it to the output folder and email everyone the file is ready"
 msg_code "cp ${consensusDir}${pactRun}_consensus/${pactRun}_consensus.html \"/Volumes${outputDir}${currYear}/${pactRun}/\""
-msg_step 8 "#bae1ff" "After copying the html file, email everyone that the file is availible"
 msg_code "Hi all,
 The methylation CNV consensus is copied here:
-\"/Volumes${outputDir}${currYear}/${pactRun}/\"
+smb://shares-cifs.nyumc.org/apps/acc_pathology${outputDir}${currYear}/${pactRun}/${pactRun}_consensus.html
 "
 echo "$BOX2"
 
@@ -441,10 +451,7 @@ echo "
         let text = code.innerText;
         await navigator.clipboard.writeText(text);
         button.innerText = \"Code Copied\";
-        setTimeout(() => {
-            button.innerText = copyButtonLabel;
-        }, 1000)
-
+        button.className = \"pressed\";
     }
 
     function clearSelection(){
