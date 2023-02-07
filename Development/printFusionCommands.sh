@@ -331,8 +331,8 @@ msg_stage 4 "Generate HeatMap and QC"
 msg_step 1 "#baffc9" "After Xiaojun says the data is downloaded to the Z-drive, download the github repo for the QC"
 msg_code "gh repo clone NYU-Molecular-Pathology/FusionSeq_QC"
 msg_step 2 "#baffc9" "Execute the Python script in that directory using your sample inputs"
-msg_code "python3 control_QC_both.py -d '/Volumes/molecular/MOLECULAR LAB ONLY/NYU FUSION SEQer/${currYear} reports/${FSID}' -r ${FSID} -o '/Volumes/molecular/MOLECULAR LAB ONLY/NYU FUSION SEQer/${currYear} reports/${FSID}/'"
-msg_step 3 "##baffc9" "After data is output, generate the QC and email"
+msg_code "cd FusionSeq_QC && python3 control_QC_both.py -d '/Volumes/molecular/MOLECULAR LAB ONLY/NYU FUSION SEQer/${currYear} reports/${FSID}' -r ${FSID} -o '/Volumes/molecular/MOLECULAR LAB ONLY/NYU FUSION SEQer/${currYear} reports/${FSID}/'"
+msg_step 3 "#baffc9" "After data is output, generate the QC and email"
 msg_code "Heatmaps are generated, and output here:
 smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/MOLECULAR LAB ONLY/NYU FUSION SEQer/${currYear} reports/${FSID}/"
 
