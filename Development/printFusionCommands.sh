@@ -284,7 +284,7 @@ msg_step 1 "#ffb3ba" "First mount the Molecular drive and execute the script. Fo
 msg_code "diskutil mountdisk /Volumes/CBioinformatics/"
 msg_code "/Volumes/CBioinformatics/FUSION/parseFusion.sh /Users/${kerbero}/Downloads/${FSID}.xlsx"
 msg_step 2 "#ffb3ba" "Review the generated SampleSheet.csv ouput below and make sure it contains no errors"
-msg_code "~/Desktop/${FUSIONRUNID}-SampleSheet.csv"
+msg_code "${HOME}/Desktop/${FUSIONRUNID}-SampleSheet.csv"
 msg_step 3 "#ffb3ba" "Check the script copied with group read/write permissions to the folder"
 msg_code "${productionDir}/samplesheets/archer/${FUSIONRUNID}/${FUSIONRUNID}-SampleSheet.csv"
 echo "$BOX2"
@@ -294,10 +294,10 @@ msg_stage 1 "Demultiplexing Steps"
 msg_step 1 "#ffdfba" "Once sequencing is finished, start demultiplexing by logging into BigPurple"
 msg_code "ssh -Y ${kerbero}@bigpurple.nyumc.org"
 msg_step 2 "#ffdfba" "Go into demux-nf2"
-msg_code "cd ~/molecpathlab/pipelines/demux-nf2/"
+msg_code "cd /gpfs/data/molecpathlab/pipelines/demux-nf2/"
 msg_step 3 "#ffdfba" "Execute the deploy command"
 msg_code "make deploy RUNID=${FUSIONRUNID} SAMPLESHEET=${productionDir}/samplesheets/archer/${FUSIONRUNID}/${FUSIONRUNID}-SampleSheet.csv SEQTYPE=Archer"
-msg_step 4 "#ffdfba" "Go into the Demultiplexing run folder"
+msg_step 4 "#ffdfba" "Go into the Demultiplexing run folder:"
 msg_code "cd $DEMUXDIR"
 msg_step 5 "#ffdfba" "Update/submit and cat logs"
 msg_code "make update && make submit"
@@ -305,7 +305,6 @@ echo "$BOX2"
 
 # Stage 2 -----------------------
 msg_stage 2 "Transfer demux output data to Z-Drive"
-
 msg_step 1 "#ffffba" "SSH into BigPurple and change permissions for the output run directory"
 msg_code "ssh ${kerbero}@bigpurple.nyumc.org"
 msg_code "chmod -R g+rwx ${DEMUXDIR}/output"
@@ -320,7 +319,6 @@ msg_step 4 "ffffba" "Email the FUSION team once the QC files are generated and c
 msg_code "Demultiplexing completed for ${FSID}.
 The data for this week’s Fusion run is copied here:
 smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/Demultiplexing/${FUSIONRUNID}/"
-
 echo "$BOX2"
 
 # Stage 3 -----------------------
@@ -332,7 +330,6 @@ msg_code "cd FusionSeq_QC && python3 control_QC_both.py -d '/Volumes/molecular/M
 msg_step 3 "#baffc9" "After data is output, generate the QC and email"
 msg_code "Heatmaps are generated and are copied here:
 smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/MOLECULAR LAB ONLY/NYU FUSION SEQer/${currYear} reports/${FSID}/"
-
 echo "$BOX2"
 
 echo "
