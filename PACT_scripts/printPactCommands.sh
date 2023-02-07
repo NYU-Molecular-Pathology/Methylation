@@ -181,11 +181,13 @@ h1{
   font-weight: 600!important;
   background-image: linear-gradient(to bottom, #2c3e50, blue, purple )!important;
   color: transparent!important;
-    display: block;
+  display: block;
   background-clip: text!important;
   -webkit-background-clip: text!important;
   font-family: 'Allerta Stencil';
   margin-bottom: 0px !important;
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: black;
 }
 
 </style>
@@ -257,11 +259,8 @@ currYear="${FG_BLU}20$runMid${normal}"
 rsyncDir="/gpfs/home/${kerbero}/molecpathlab/production/NGS607/${runID}/output"
 zdrive="/mnt/${kerbero}/molecular/Molecular"
 
-echo "Author: Jonathan Serrano"
-echo " "
-echo "Current Date: `date`"
-echo " "
-
+echo -e "Author: Jonathan Serrano\nCurrent Date: `date`\n"
+echo "<h2 style='padding-top: 10px !important; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: black;'>${FG_GRN}LG-PACT Commands${normal}</h2>"
 echo "<h2 style='padding-top: 10px !important;'>${FG_BLU}Your Input Args${normal}</h2>"
 msg_step 1 "white" "PACT RUNID: ${runID}</br>"
 msg_step 2 "white" "PACT Run Name: ${pactRun}</br>"
