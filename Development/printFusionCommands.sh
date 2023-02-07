@@ -43,6 +43,11 @@ html body {
     font-family: 'Helvetica Neue',Helvetica,'Segoe UI',Arial,freesans,sans-serif;
 }
 
+.pressed {
+  background-color: #06a96e;
+  background-image: linear-gradient(1deg, #00aa6c, #14C667 99%);
+}
+
 .boxed {
     background: rgb(90, 90, 90) !important;
     border: 3px solid black;
@@ -252,12 +257,11 @@ currYear="${FG_BLU}20$runMid${normal}"
 rsyncDir="/gpfs/home/${kerbero}/molecpathlab/production/NGS607/${FUSIONRUNID}/output"
 zdrive="/mnt/${kerbero}/molecular/Molecular"
 
-echo "<span style='font-weight: bold'>Author</span>: Jonathan Serrano"
-echo " "
-echo "<span style='font-weight: bold'>Current Date</span>: $(date)"
-echo " "
+echo "<span style='font-weight: bold'>Author</span>: Jonathan Serrano</br>"
+echo "<span style='font-weight: bold'>Current Date</span>: $(date)</br>"
+echo "</br>"
 echo "<h2 style='padding-top: 10px !important; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: black;'>${FG_GRN}FUSION Seq Commands${normal}</h2>"
-echo "<h2 style='padding-top: 10px !important;'>${FG_BLU}Your Input Args${normal}</h2>"
+echo "<h2 style='padding-top: 10px !important; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: black;'>${FG_BLU}Your Input Args${normal}</h2>"
 msg_step 1 "white" "Sequencer Run ID FUSIONRUNID: ${FUSIONRUNID}</br>"
 msg_step 2 "white" "FUSION Run Name FSID: ${FSID}</br>"
 msg_step 3 "white" "Kerberos ID: ${kerbero}</br>"
@@ -338,6 +342,7 @@ smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/MOLECULAR LAB ONLY/NYU 
 
 echo "$BOX2"
 
+
 echo "
 <script>
     function copyEvent(id) {
@@ -366,11 +371,15 @@ echo "
         let text = code.innerText;
         await navigator.clipboard.writeText(text);
         button.innerText = \"Code Copied\";
-
-        setTimeout(() => {
-            button.innerText = copyButtonLabel;
-        }, 1000)
-
+        button.className = \"pressed\";
     }
+
+    function clearSelection(){
+    if (window.getSelection) {window.getSelection().removeAllRanges();}
+    else if (document.selection) {document.selection.empty();}
+    }
+
+    window.onload = clearSelection;
+
 </script>
 "
