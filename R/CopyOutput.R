@@ -472,39 +472,53 @@ CopyFilesOut <- function(file.list, newFolder) {
 
 
 # FUN: Copies Reports to Z drive
-copy2outFolder <- function(clinDrv = NULL,
-                           runID,
-                           runYear = NULL) {
+copy2outFolder <- function(clinDrv = NULL, runID, runYear = NULL) {
     msgFunName(cpOutLnk, "copy2outFolder")
 
-    runYear <-
-        ifelse(is.null(runYear), paste0(format(Sys.Date(), "%Y")), runYear)
+    runYear <- ifelse(is.null(runYear), paste0(format(Sys.Date(), "%Y")), runYear)
     clinDrv <- ifelse(is.null(clinDrv), gb$clinDrv, clinDrv)
-    isMC = sjmisc::str_contains(runID, "MGDM") |
-        sjmisc::str_contains(runID, "MC")
-
+    isMC = sjmisc::str_contains(runID, "MGDM") | sjmisc::str_contains(runID, "MC")
     newFolder <- MakeOutputDir(runYear, clinDrv, runID, isMC)
     oldFi = dir(path = newFolder, full.names = T)
     message("Clinical Drive output folder:\n", newFolder)
-
     if (length(oldFi) > 0) {
         save.prev.folder(newFolder) # saves any old files
     }
-
     file.list <- dir(path = getwd(), ".html", full.names = T)
     CopyFilesOut(file.list, newFolder)
-
     if (isMC) {
-        clinOut = file.path(stringr::str_split_fixed(clinDrv, " ", 2)[1],
-                            "MethylationClassifier")
+        clinOut = file.path(stringr::str_split_fixed(clinDrv, " ", 2)[1], "MethylationClassifier")
         message("Clinical Drive output folder:\n", clinOut)
         importRedcapStart(clinOut)
         copy.to.clinical(clinOut, runID, runYear)
     }
-
     if (length(dir(getwd(), "_cnv.png", recursive = F)) > 2) {
         copy.cnv.files(newFolder, runID, runYear)
     }
-
     return(file.list)
 }
+
+
+CallApiFileForce <- function(rcon, recordName) {
+    msgFunName(cpOutLnk, "CallApiFileForce")
+    recordFi <- paste0(recordName, ".html")
+    message("\n", gb$mkBlue("Importing Record File:"), paste0(" ", recordFi))
+    fiPath <- file.path(getwd(), recordFi)
+    fld <- "classifier_pdf"
+    tryCatch(
+        expr = {suppressWarnings(redcapAPI::importFiles(rcon = rcon, file = fiPath, record = recordName, field = fld, overwrite = T, repeat_instance = 1))},
+        error = function(e) {message(recordFi, " was not imported to REDCap","\n", gb$mkRed(e$message))}
+        )
+}
+
+
+UploadToRedcapOnly <- function(file.list, token=NULL) {
+    msgFunName(cpOutLnk, "UploadToRedcapOnly")
+    stopifnot(!is.null(token))
+    message(paste0(capture.output(file.list), collapse="\n"))
+    rcon <- redcapAPI::redcapConnection(gb$apiLink, token)
+    htmlLi <- stringr::str_replace_all(basename(file.list), ".html", "")
+    message(paste0(capture.output(htmlLi), collapse="\n"))
+    for (recordName in htmlLi) {CallApiFileForce(rcon, recordName)}
+}
+
