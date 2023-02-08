@@ -287,3 +287,12 @@ StartRun <- function(selectRDs = NULL, emailNotify = T, redcapUp = T) {
     )
 }
 
+
+LoadGitHubScripts <- function(ghRepo, scriptList){scripts = file.path(ghRepo, scriptList)
+return(lapply(scripts, function(i){message("Sourcing: ", i); devtools::source_url(i)}))}
+
+mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R"
+rmdScripts <- c("ClassTables.R", "MLH1_Functions.R", "PipeLineU.R", "RedcapOutput.R", "TsneFunctions.R", "cnvggplotly.R")
+
+LoadGitHubScripts(file.path(mainHub,"Report-Scripts"), rmdScripts)
+
