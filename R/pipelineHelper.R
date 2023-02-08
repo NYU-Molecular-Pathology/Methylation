@@ -554,3 +554,10 @@ CheckIdatsCopied <- function(){
     }
 }
 
+
+StartCustomRun <- function(redcapUp = T) {
+    msgFunName(cpInLnk4,"StartCustomRun")
+    gb$makeReports.v11b6(skipQC = T, email = F, cpReport = F, selectSams = NULL, redcapUp = redcapUp)
+}
+
+
