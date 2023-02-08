@@ -4,10 +4,12 @@ apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
 cpInLnk = "https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/CopyInputs.R"
 defaultDir = "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
 
+# Helper function to debug prints the name of the function being run from GitHub source
 msgFunName <- function(pthLnk, funNam){
-message("\nExecuting function: ", crayon::black$bgYellow(funNam), " from RScript in:\n", pthLnk,"\n")
+    message("\nExecuting function: ", crayon::black$bgYellow(funNam), " from RScript in:\n", pthLnk,"\n")
 }
 
+# Helper function to debug prints parameters passed to a function
 msgParams <- function(...){
     message("\nParam passed: ", crayon::bgGreen(paste(deparse(substitute(...)), "=", ...)), "\n")
 }
@@ -17,15 +19,15 @@ setDirectory <- function(foldr) {
     msgFunName(cpInLnk,"setDirectory")
     bsDir = paste("cd", foldr)
     mm2 = crayon::white$bgRed("Location Not Found:", foldr)
-
+    
     if (dir.exists(foldr)) {
         system(bsDir)
         setwd(foldr)
         assign("workDir", foldr)
-        }else{warning(mm2)}
+    }else{warning(mm2)}
 }
 
-
+# FUN: Checks ACL file permissions form Mac OS directories on Network Drives
 SetMacDirMod <- function(newRun){
     cmd <- paste("chmod -R 770", newRun)
     #system(cmd)
@@ -45,6 +47,7 @@ SetMacDirMod <- function(newRun){
     #try(system(cmd3),silent=T)
 }
 
+# FUN: Creates a new run directory if it does not exist and chmods permission
 CreateRunDir <- function(newRun) {
     if (endsWith(newRun, "/")) {
         newRun <- substr(newRun, 1, nchar(newRun) - 1)
@@ -113,20 +116,21 @@ copyBaseIdats <- function(allFi) {
     if (all(success)) {cat("none","\n")} else {print(idatsCopied[!success])}
 }
 
-# Helper FUN called during copying idats to notify if a network mount is not found
+# Helper function called during copying idats to notify if a network mount is not found
 WarnMounts <- function(idat.dir){
     msgFunName(cpInLnk, "WarnMounts")
     if (!dir.exists(idat.dir)){
         message(crayon::bgRed("Directory not found, ensure the idat path is accessible:"), "\n", idat.dir)
         stopifnot(dir.exists(idat.dir))
-        }
+    }
 }
 
+# FUN: Helper function returns input as dataframe message
 DataFrameMessage <- function(dat){
     return(message(paste0(capture.output(as.data.frame(dat)), collapse="\n")))
 }
 
-
+# FUN: Checks for additional missing idat files if not in molecular or research iScan folders
 GetExternalIdats <- function(allFi, ssheet, extr.idat){
     if (nrow(ssheet) * 2 == length(allFi)){
         message("All idats detected in folders!")
@@ -198,18 +202,24 @@ moveSampleSheet <- function(methDir = NULL, runID = NULL, deskDir=NULL) {
     if (is.null(runID)) {
         runID = paste0(basename(getwd()))
         message("Setting runID=", runID)
-    }
+        }
     if (is.null(deskDir)) {
-        deskDir = file.path(fs::path_home(),"Desktop", runID)
+        deskDir = file.path(fs::path_home(), "Desktop", runID)
         message("Setting deskDir=", deskDir)
-    }
-    if (!dir.exists(deskDir)) {dir.create(deskDir)}
-    if (is.null(methDir)){methDir <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"}
+        }
+    if (!dir.exists(deskDir)) {
+        message("Creating Directory: ", deskDir)
+        dir.create(deskDir)
+        }
+    if (is.null(methDir)){
+        methDir <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
+        }
     thisDir = file.path(methDir, runID)
     outFile = paste0(runID, "_samplesheet.csv")
     outputDir = file.path(deskDir, "samplesheet.csv")
-    message("Copying from thisDir:\n", thisDir, "\n", "to", "\n", outputDir)
+    message("Copying from\nthisDir: ", thisDir, "\n", "to", "\noutputDir: ", outputDir)
     fs::file_copy(path = file.path(thisDir, "samplesheet.csv"), new_path = outputDir, overwrite = T)
+    message("Renaming samplesheet in new folder as: ", outFile)
     file.rename(from = outputDir, to = file.path(deskDir, outFile))
 }
 
@@ -217,7 +227,7 @@ moveSampleSheet <- function(methDir = NULL, runID = NULL, deskDir=NULL) {
 writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
     msgFunName(cpInLnk, "writeFromRedcap")
     if (is.null(bn)) {bn = file.path(getwd(), df$barcode_and_row_column)}
-    message("~~~Writing from redcap samplesheet.csv:")
+    message("~~~Writing from REDCap data samplesheet.csv:")
     names(df)
     samplesheet_csv = data.frame(
         Sample_Name = df[, "record_id"],
@@ -248,13 +258,14 @@ search.redcap <- function(rd_numbers, token=NULL, flds=NULL) {
     rcon <- redcapAPI::redcapConnection(gb$apiLink, token)
     if (is.null(flds)){
         flds = c("record_id", "b_number", "primary_tech", "second_tech", "run_number", "barcode_and_row_column", "accession_number", "arrived")
-        }
+    }
     result <- redcapAPI::exportRecords(
         rcon, records = rd_numbers, fields = flds, dag = F, factors = F,
         labels = F, dates = F, form_complete_auto = F, format = 'csv'
-        )
+    )
     return(as.data.frame(result))
 }
+
 
 # FUN: Copies .idat files to your directory and saves samplesheet.csv
 get.rd.info <- function(rd_numbers=NULL, token=NULL, sh_name=NULL){
