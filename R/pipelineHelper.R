@@ -528,21 +528,21 @@ GetPriorityCases <- function(selectRDs=NULL, samSheet = "samplesheet.csv", kwd="
 }
 
 
-AssignArgs <- function(runID, baseFolder, token, selectRDs=NULL, redcapUp, gb){
+AssignArgs <- function(runID, baseFolder = NULL, token = NULL, selectRDs = NULL, redcapUp, gb){
+    msgFunName(cpInLnk4,"AssignArgs")
     stopifnot(!is.null(token)); stopifnot(!is.null(runID))
-    assign("token", token, envir = gb)
-    assign("ApiToken", token, envir = gb)
+    assign("token", token, envir = gb); assign("ApiToken", token, envir = gb)
+    assign("redcapUp", redcapUp, envir = gb); assign("redcapUpload", redcapUp,  envir = gb)
     gb$defineParams(methDir = baseFolder, baseDir = baseFolder, ApiToken = token)
     gb$setVar("runID", runID)
     if(!is.null(selectRDs)){selectRDs <- stringr::str_split(selectRDs, ",")}
-    assign("redcapUp", redcapUp, envir = gb)
-    assign("redcapUpload", redcapUp,  envir = gb)
     selectRDs <- GetPriorityCases(selectRDs) # Prioritizes select RD-numbers and BN cases
     return(selectRDs)
 }
 
 
 CheckIdatsCopied <- function(){
+    msgFunName(cpInLnk4,"CheckIdatsCopied")
     idatFiles <- dir(getwd(), pattern=".idat", full.names = T)
     idatSize <- paste(round(file.info(idatFiles)$size/1024.0 ^ 2, 2),"MB")
     idatFiSi <- as.data.frame(table(idatSize))
@@ -559,5 +559,4 @@ StartCustomRun <- function(redcapUp = T) {
     msgFunName(cpInLnk4,"StartCustomRun")
     gb$makeReports.v11b6(skipQC = T, email = F, cpReport = F, selectSams = NULL, redcapUp = redcapUp)
 }
-
 
