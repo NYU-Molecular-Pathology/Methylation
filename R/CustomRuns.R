@@ -120,7 +120,7 @@ PromptInputCsv <- function(runID) {
 }
 
 MakeLocalSampleSheet <- function(runID, token){
-                            msgFunName(cpInLnk4,"MakeLocalSampleSheet")
+    msgFunName(cpInLnk4,"MakeLocalSampleSheet")
     stopifnot(!is.null(token))
     idatScript <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/pullRedcap_manual.R"
     rd_numbers <- PromptInputCsv(runID)
@@ -130,11 +130,13 @@ MakeLocalSampleSheet <- function(runID, token){
     gb$grabRDCopyIdat(rd_numbers, token, copyIdats=T, outputFi="samplesheet.csv")
 }
 
+
 RunFromSamplesheet <- function(samSh="samplesheet.csv"){
-    targets <- read.csv(file=file.path(getwd(),samSh), strip.white = T)
+    msgFunName(cpInLnk4, "RunFromSamplesheet")
+    targets <- read.csv(file=samSh, strip.white = T)
     targets[is.na(targets)] <- "NONE"
-    write.csv(targets,samSh, quote = F,row.names = F)
-    targets<- minfi::read.metharray.sheet(base=getwd(), pattern = samSh)
+    write.csv(targets, samSh, quote = F,row.names = F)
+    targets <- minfi::read.metharray.sheet(base = getwd(), pattern = basename(samSh))
     dupedSamples <- anyDuplicated(targets$Basename)
     if(dupedSamples!=0){
         warning("Removing Samples with identical (duplicated) Sentrix IDs")
