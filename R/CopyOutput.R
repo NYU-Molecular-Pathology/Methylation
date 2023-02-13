@@ -142,6 +142,7 @@ RedcapRcurl <- function(datarecord) {
     )
 }
 
+
 WarnSentrix <- function(record, isEmpty) {
     if (record$barcode_and_row_column == isEmpty) {
         message(mkRed(record$record_id), " already has the same Sentrix ID on REDCap: ", isEmpty)
@@ -153,6 +154,7 @@ WarnSentrix <- function(record, isEmpty) {
     }
 }
 
+
 ValidateRedImport <- function(record) {
     isEmpty <- checkRedcapRecord(record$record_id, "barcode_and_row_column")
     if (isEmpty == "") {
@@ -161,6 +163,7 @@ ValidateRedImport <- function(record) {
         WarnSentrix(record, isEmpty)
     }
 }
+
 
 loopRedcapImport <- function(data) {
     if (!is.null(data)) {
@@ -172,6 +175,7 @@ loopRedcapImport <- function(data) {
         message("Nothing imported to REDCap. Dataframe is null!")
     }
 }
+
 
 GetRedcapCsv <- function(samsheet) {
     if (is.null(samsheet)) {
@@ -191,6 +195,7 @@ GetRedcapCsv <- function(samsheet) {
         stopifnot(length(samsheet) == 1)
     }
 }
+
 
 CheckImportData <- function(rawCsv) {
     msgFunName(cpOutLnk, "CheckImportData")
@@ -220,6 +225,38 @@ importDesktopCsv <- function(rcon, samsheet = NULL) {
         cat(redcapAPI::importRecords(rcon, data, "normal", "ids", logfile = "REDCapImportLog.txt"))
     } else{
         message("No new data to import to REDCap")
+    }
+}
+
+
+AddPngFilePath <- function(sh_Dat) {
+    msgFunName(cpOutLnk, "AddPngFilePath")
+    nfldr = file.path(stringr::str_split_fixed(gb$clinDrv, " ", 2)[1],
+                      "MethylationClassifier")
+    pathNam = file.path(nfldr, paste0(gb$runID, "_CNVs"), paste0(sh_Dat$record_id, "_cnv.png"))
+    rms = paste(c("control_", "low_"), collapse = '|')
+    pathNam <- stringr::str_replace(pathNam, rms, "")
+    pathNam <- stringr::str_replace(pathNam, "//", "/")
+    sh_Dat$cnv_file_path <- pathNam
+    return(sh_Dat)
+}
+
+
+# Uploads any created cnv png files to redcap database
+uploadCnPng <- function() {
+    msgFunName(cpOutLnk, "uploadCnPng")
+    rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
+    samSh <- gb$GrabSampleSheet()
+    sampleNumb <- gb$getTotalSamples()
+    sh_Dat <- suppressMessages(as.data.frame(readxl::read_excel(
+        samSh, sheet = 3, range = "A1:N97", col_types = c("text")))[1:sampleNumb, 1:13])
+    sh_Dat <- AddPngFilePath(sh_Dat = sh_Dat)
+    records <- sh_Dat$record_id
+    for (idx in 1:length(records)) {
+        pth = sh_Dat$cnv_file_path[idx]
+        recordName = paste0(records[idx])
+        message(mkBlue("Importing CNV Record:"), "\n", recordName, " ", pth)
+        redcapAPI::importFiles(rcon, pth, recordName, field = "methyl_cn", overwrite = F, repeat_instance = 1)
     }
 }
 
@@ -267,38 +304,6 @@ getTotalSamples <- function(thisSh = NULL) {
 }
 
 
-AddPngFilePath <- function(sh_Dat) {
-    msgFunName(cpOutLnk, "AddPngFilePath")
-    nfldr = file.path(stringr::str_split_fixed(gb$clinDrv, " ", 2)[1],
-                      "MethylationClassifier")
-    pathNam = file.path(nfldr, paste0(gb$runID, "_CNVs"), paste0(sh_Dat$record_id, "_cnv.png"))
-    rms = paste(c("control_", "low_"), collapse = '|')
-    pathNam <- stringr::str_replace(pathNam, rms, "")
-    pathNam <- stringr::str_replace(pathNam, "//", "/")
-    sh_Dat$cnv_file_path <- pathNam
-    return(sh_Dat)
-}
-
-
-# Uploads any created cnv png files to redcap database
-uploadCnPng <- function() {
-    msgFunName(cpOutLnk, "uploadCnPng")
-    rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
-    samSh <- gb$GrabSampleSheet()
-    sampleNumb <- gb$getTotalSamples()
-    sh_Dat <- suppressMessages(as.data.frame(readxl::read_excel(
-        samSh, sheet = 3, range = "A1:N97", col_types = c("text")))[1:sampleNumb, 1:13])
-    sh_Dat <- AddPngFilePath(sh_Dat = sh_Dat)
-    records <- sh_Dat$record_id
-    for (idx in 1:length(records)) {
-        pth = sh_Dat$cnv_file_path[idx]
-        recordName = paste0(records[idx])
-        message(mkBlue("Importing CNV Record:"), "\n", recordName, " ", pth)
-        redcapAPI::importFiles(rcon, pth, recordName, field = "methyl_cn", overwrite = F, repeat_instance = 1)
-    }
-}
-
-
 # Imports the xlsm sheet 3 data
 importRedcapStart <- function(nfldr) {
     msgFunName(cpOutLnk, "importRedcapStart")
@@ -318,6 +323,7 @@ importRedcapStart <- function(nfldr) {
     }
 }
 
+
 DoRedcapApi <- function(rcon, recordName, runID) {
     message(mkBlue("Importing Record:"))
     data = data.frame(record_id = recordName, run_number = runID)
@@ -335,6 +341,7 @@ DoRedcapApi <- function(rcon, recordName, runID) {
             }
         )
 }
+
 
 callApiImport <- function(rcon, recordName, runID) {
     msgFunName(cpOutLnk, "callApiImport")
@@ -400,6 +407,7 @@ importSingle <- function(sh_Dat) {
     uploadToRedcap(file.list = paste0(record[1], ".html"), deskCSV = F)
 }
 
+
 MakeOutputDir <- function(runYear, clinDrv, runID, isMC) {
     msgFunName(cpOutLnk, "MakeOutputDir")
     researchOutDir = file.path(rschDrv, runID)
@@ -410,6 +418,7 @@ MakeOutputDir <- function(runYear, clinDrv, runID, isMC) {
     CheckDirMake(newFolder)
     return(newFolder)
 }
+
 
 RsyncCopyFiles <- function(file.list, newFolder) {
     msgFunName(cpOutLnk, "CopyFilesOut")
