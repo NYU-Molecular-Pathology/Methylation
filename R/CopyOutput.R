@@ -429,7 +429,7 @@ RsyncCopyFiles <- function(file.list, newFolder) {
     }
 }
 
-CopyFilesOut <- function(file.list, newFolder) {
+CopyFilesOut <- function(file.list, newFolder, runID) {
     msgFunName(cpOutLnk, "CopyFilesOut")
     message("\nCopying Existing Reports to Folder...\n",
             newFolder, "\n", mkBlue("Files to copy:"), "\n")
@@ -461,7 +461,7 @@ copy2outFolder <- function(clinDrv = NULL, runID, runYear = NULL) {
         SavePrevDir(newFolder) # saves any old files
     }
     file.list <- dir(path = getwd(), ".html", full.names = T)
-    CopyFilesOut(file.list, newFolder)
+    CopyFilesOut(file.list, newFolder, runID)
     if (isMC==T) {
         clinOut = file.path(stringr::str_split_fixed(clinDrv, " ", 2)[1], "MethylationClassifier")
         message("Clinical Drive output folder:\n", clinOut)
