@@ -194,6 +194,11 @@ loadPacks()
 if (Sys.info()[['sysname']]=="Darwin") {checkMounts()}
 sourceFuns()
 
+if(!is.na(inputSheet) & !is.na(token)){
+    rds <- readInfo(inputSheet)
+    grabRDCopyIdat(rd_numbers=rds, token=token)
+}
+
 # Example Use
 #rds <- readInfo(inputSheet="~/Desktop/MySampleSheet.xlsx")
 #grabRDCopyIdat(rd_numbers=rds, token=token)
