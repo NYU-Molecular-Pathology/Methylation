@@ -1,11 +1,11 @@
 #!/usr/bin/env R
 library("base"); gb <- globalenv(); assign("gb", gb)
-args <- commandArgs(TRUE)
+args <- commandArgs(T)
 if(!require("devtools")){install.packages("devtools", quiet=T)}
 
 # Input Arguments ------------------------------------------
-args[1] -> token
-args[2] -> inputSheet
+try(args[1] -> token)
+try(args[2] -> inputSheet)
 
 dsh="\n================"
 dsh2="================\n"
