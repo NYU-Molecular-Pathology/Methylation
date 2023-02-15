@@ -105,5 +105,5 @@ LoadRdatObj <- function(file.name, msgProg=T){
 if(!require("MethylCIBERSORT")){install.packages(path_to_file, repos = NULL, type="source")}
 library("MethylCIBERSORT")
 require("stats")
-
+source(path_to_ciber)
 
