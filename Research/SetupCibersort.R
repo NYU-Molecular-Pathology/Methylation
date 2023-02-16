@@ -43,7 +43,10 @@ package_list = c(
     "ggpubr",
     "readxl",
     "stringr",
-    "tibble"
+    "tibble",
+    "dplyr",
+    "doParallel",
+    "matrixStats"
 )
 
 librarian::shelf("tidyr", ask=F, update_all = T, quiet = F)
@@ -61,7 +64,6 @@ MergeSamSheets <- function(inputSheet, sampleSheet, colVariables){
     for (variableCol in colVariables) {
         redCsv[, variableCol] <- ""
     }
-
     for (varCol in colVariables) {
         for (sam in redCsv[,1]) {
             currSamIdx <- which(ogExcel[,1]==sam)
