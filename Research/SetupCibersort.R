@@ -50,7 +50,8 @@ package_list = c(
     "tibble",
     "dplyr",
     "doParallel",
-    "matrixStats"
+    "matrixStats",
+    "sva"
 )
 
 librarian::shelf("tidyr", ask=F, update_all = T, quiet = F)
@@ -112,4 +113,25 @@ if(!require("MethylCIBERSORT")){install.packages(path_to_file, repos = NULL, typ
 library("MethylCIBERSORT")
 require("stats")
 source(path_to_ciber)
+
+# COMABAT batch correction between groups
+batchCorrectBs <- function(betas, RGSet, targets, batchEffectColumn) {
+    targets$batch = targets[, batchEffectColumn]
+    batch <- targets$batch
+    modcombat = model.matrix(~ 1, data = targets)
+    gc(verbose = F)
+    #p = BiocParallel::bpstart(BiocParallel::MulticoreParam(6))
+    combat_beta <- sva::ComBat(
+        dat = betas,
+        batch = batch,
+        mod = modcombat,
+        par.prior = T,
+        prior.plots = F #, BPPARAM = p
+    )
+    #BiocParallel::bpstop(p)
+    # fix if any beta >1 or < 0, so impute >1 is 1 and <0 is 0
+    combat_beta <- ifelse(combat_beta < 0, 0, combat_beta)
+    combat_beta <- ifelse(combat_beta > 1, 1, combat_beta)
+    return(combat_beta)
+}
 
