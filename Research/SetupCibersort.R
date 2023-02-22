@@ -1,14 +1,18 @@
 #!/usr/bin/env R
 gb <- globalenv(); assign("gb", gb)
+options(install.packages.compile.from.source = "never")
+options(install.packages.check.source = "no")
 
 InstPkg <- function(pkg, character.only=T){install.packages(pkg, dependencies=T, verbose=T, ask=F, quiet = F)}
 CheckReq <- function(pkgName){if(suppressWarnings(!require(pkgName, character.only = T, warn.conflicts = F))){InstPkg(pkgName)}}
+
 isMac <- ifelse(Sys.info()[['sysname']] == "Darwin", T, F)
 if(isMac==T){pkgPath <- "/Volumes/CBioinformatics/Methylation/Other_Packages"}
 
 gitLink <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/pullRedcap_manual.R"
 path_to_file <- file.path(pkgPath, "MethylCIBERSORT_0.2.0.tar.gz")
 path_to_ciber <- file.path(pkgPath, "CIBERSORT.R")
+
 # Installation ----------------------
 CheckReq("devtools")
 CheckReq("BiocManager")
