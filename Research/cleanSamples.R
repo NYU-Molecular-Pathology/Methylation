@@ -10,14 +10,18 @@ writeTargets<- function(targets, csvFi="samplesheet.csv"){
   write.csv(targets, file=csvFi, quote=F, row.names=F)
 }
 
-CheckSamNames <- function(samNames, targets){
+
+CheckSamNames <-  function(samNames, targets){
   if(anyDuplicated(samNames) > 0){
-      warning("Sample IDs contain duplicates, assigning unique names")
-      samNames <- targets$Sample_ID = make.unique(samNames, sep="_")
+      warning("Sample IDs contain duplicates, assigning unique names\n")
+      message(paste0(capture.output(samNames[which(duplicated(samNames))]), collapse="\n"))
+      
+      samNames <- targets$Sample_ID <- make.unique(samNames, sep="_")
       targets$Sample_Name <- targets$Sample_ID <- samNames
     }
   return(targets)
 }
+
 
 SetKeyColumns <- function(targets, col_samTypes, col_samNames, col_other, col_shapes, sam.grp.type=NULL) {
     targets <- dfTargets(targets)
