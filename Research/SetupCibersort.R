@@ -54,7 +54,7 @@ package_list = c(
     "sva"
 )
 
-librarian::shelf("tidyr", ask=F, update_all = T, quiet = F)
+librarian::shelf("tidyr", ask=F, update_all = F, quiet = F)
 librarian::shelf(package_list, ask=F, update_all = F, quiet = F)
 devtools::source_url(gitLink)
 
