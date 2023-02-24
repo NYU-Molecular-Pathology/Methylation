@@ -335,15 +335,18 @@ checkMdsRds <- function(mbfile, runDir, RGSet, targets) {
 }
 
 
-GetMsetSq <- function(RGSet, targets, varName) {
-    if (file.exists(file.path(gb$runDir, gb$mbfile))) {
-        mSetSq.beta <- LoadRdatObj(gb$mbfile)
-    } else{
-        mSetSq.beta <- gb$supM(gb$getMdsPlot(RGSet, targets$Sample_ID))
-        SaveObj(mSetSq.beta, file = file.path(gb$runDir, gb$mbfile))
-    }
-    return(mSetSq.beta)
+GetMsetSq <- function(RGSet, targets, varName, mbfile) {
+  baseFi <- paste0(varName, "_", basename(mbfile))
+  mbOutFile <- file.path(getwd(), dirname(mbfile), baseFi)
+  if (file.exists(file.path(mbOutFile))) {
+    mSetSq.beta <- LoadRdatObj(mbOutFile)
+  } else{
+    mSetSq.beta <- gb$supM(gb$getMdsPlot(RGSet, targets$Sample_ID))
+    SaveObj(mSetSq.beta, file = file.path(mbOutFile))
+  }
+  return(mSetSq.beta)
 }
+
 
 getTargCsv <- function(csvFi = "samplesheet.csv") {
   gc(verbose = F)
@@ -362,6 +365,5 @@ MatchRGtargets <- function(RGSet, targets, sampleSheet=NULL){
   targets <- gb$getTargCsv(sampleSheet)
   return(targets)
 }
-
 
 
