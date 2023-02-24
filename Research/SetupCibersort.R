@@ -129,3 +129,39 @@ batchCorrectBs <- function(betas, targets, batch_col) {
     return(combat_beta)
 }
 
+
+GetCiberNoob <- function(targets, rgSetDataFi="rgsetData.Rdata", noobValData="noob_vals.Rdata"){
+    if(!file.exists(rgSetDataFi)) {
+        RGSet <- minfi::read.metharray.exp(targets = targets, force = T, verbose = T)
+        gb$SaveObj(RGSet, file.name = rgSetDataFi)
+    } else{
+        RGSet <- gb$LoadRdatObj(rgSetDataFi)
+    }
+    # Apply noob normalization based on methods section of methylcibersort
+    if(!file.exists(noobValData)) {
+        MSet.noob <- minfi::preprocessNoob(RGSet, verbose = T)
+        gb$SaveObj(MSet.noob, file.name = noobValData)
+    } else{
+        MSet.noob <- gb$LoadRdatObj(noobValData)
+    }
+    RSet <- minfi::ratioConvert(MSet.noob, what = "both", keepCN = T)
+    GRset <- minfi::mapToGenome(RSet)
+    return(GRset)
+}
+
+
+GetCiberBetas <- function(GRset, targets, batch_col=NULL, betaValData="ciberBeta.Rdata"){
+    if(!file.exists(betaValData)) {
+        beta <- minfi::getBeta(GRset)
+        colnames(beta) <- targets[, 1]
+        if (!is.null(batch_col)) {
+            beta <- gb$batchCorrectBs(beta, targets, batch_col)
+        }
+        gb$SaveObj(beta, file.name = betaValData)
+    } else{
+        beta <- gb$LoadRdatObj(betaValData)
+    }
+    return(beta)
+}
+
+
