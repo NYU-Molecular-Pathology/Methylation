@@ -76,12 +76,27 @@ CheckOriginal <- function(ogSheet) {
     }
 }
 
+FillMissingData2 <- function(targets, col_samNames="Sample_Name", originalFi="samplesheet_og.csv"){
+  newTarg <- read.csv(originalFi, strip.white=T, row.names=NULL)
+  targets <- merge(newTarg,targets, by=col_samNames, all=F, suffixes = c("",".xyzq"))
+  dupeDrop <- grepl(".xyzq", colnames(targets))==F
+  targets <- targets[, dupeDrop]
+  extraCol <- c("DNA_Number", "RunID", "MP_num", "Date")
+  toDrop <- !colnames(targets) %in% extraCol
+  targets <- targets[, toDrop] 
+  write.csv(targets, file="samplesheet.csv", quote=F, row.names=F)
+  targets <- read.csv("samplesheet.csv", strip.white=T, row.names=NULL)
+  if(class(targets)!="data.frame"){targets <- as.data.frame(targets)}
+  return(targets)
+}
+
+
 ModifyTargetColumns <- function(targets, gb){
   if (gb$needFi == T) {
     gb$GetCsvSheet(gb$needFi, gb$samsheet, gb$token, idatPath = gb$idatPath)
     targets <- gb$SetKeyColumns(targets, gb$col_samTypes, gb$col_samNames, 
                                 gb$col_other, gb$col_shapes, gb$sam.grp.type)
-    targets <- gb$fillMissingDat(targets, "Sample_Name")
+    targets <- FillMissingData2(targets, gb$col_samNames)
     }else{
     targets <- gb$SetKeyColumns(targets, gb$col_samTypes, gb$col_samNames, 
                                 gb$col_other, gb$col_shapes, gb$sam.grp.type)
