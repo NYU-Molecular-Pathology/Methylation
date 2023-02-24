@@ -339,6 +339,12 @@ MessageBatches <- function(targets, col_batchEffect) {
 }
 
 
+PrintSamTypes <- function(shCol){
+  samF <- setNames(as.data.frame(table(targets[, shCol]), NULL), c("Sample Type", "Freq"))
+  return(gb$smallTab(samF))
+}
+
+
 if(Sys.info()[['sysname']]!="Darwin") {
     if(!require("rprofile")){remotes::install_github("csgillespie/rprofile", upgrade="never")}
     rprofile::set_startup_options(show.signif.stars = FALSE, useFancyQuotes = FALSE, Ncpus = parallel::detectCores()-2)
