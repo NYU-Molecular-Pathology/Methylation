@@ -94,12 +94,12 @@ FillMissingData2 <- function(targets, col_samNames="Sample_Name", originalFi="sa
 ModifyTargetColumns <- function(targets, gb){
   if (gb$needFi == T) {
     gb$GetCsvSheet(gb$needFi, gb$samsheet, gb$token, idatPath = gb$idatPath)
-    targets <- gb$SetKeyColumns(targets, gb$col_samTypes, gb$col_samNames, 
-                                gb$col_other, gb$col_shapes, gb$sam.grp.type)
+    targets <- gb$SetKeyColumns(
+      targets, gb$col_samTypes, gb$col_samNames, gb$col_other, gb$col_shapes, gb$sam.grp.type)
     targets <- FillMissingData2(targets, gb$col_samNames)
     }else{
-    targets <- gb$SetKeyColumns(targets, gb$col_samTypes, gb$col_samNames, 
-                                gb$col_other, gb$col_shapes, gb$sam.grp.type)
+    targets <- gb$SetKeyColumns(
+      targets, gb$col_samTypes, gb$col_samNames, gb$col_other, gb$col_shapes, gb$sam.grp.type)
     }
   targets <- gb$colorTargets(targets, varColumns = gb$selectedVars)
   targets <- gb$FixBaseName(targets, runDir = gb$idatPath, gb$col_sentrix)
