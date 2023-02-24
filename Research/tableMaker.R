@@ -339,3 +339,11 @@ MessageBatches <- function(targets, col_batchEffect) {
 }
 
 
+if(Sys.info()[['sysname']]!="Darwin") {
+    if(!require("rprofile")){remotes::install_github("csgillespie/rprofile", upgrade="never")}
+    rprofile::set_startup_options(show.signif.stars = FALSE, useFancyQuotes = FALSE, Ncpus = parallel::detectCores()-2)
+    Sys.setenv("R_PROFILE"=file.path(Sys.getenv("HOME"), "Rprofile.site"))
+    magickPath <- paste0(system("which convert", intern=T))
+    Sys.setenv(IMAGEMAGICK_V6_HOME=magickPath)
+} 
+
