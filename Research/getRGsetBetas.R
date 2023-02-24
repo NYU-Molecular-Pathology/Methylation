@@ -133,20 +133,14 @@ loadSupervise <- function(RGSet, betas, supbetaOut, varProbes, col_sentrix="Sent
 
 
 # COMABAT batch correction between groups
-batchCorrectBs <- function(betas, RGSet, targets, batchEffectColumn) {
-    targets$batch = targets[, batchEffectColumn]
-    batch <- targets$batch
+batchCorrectBs <- function(betas, targets, batch_col) {
+    targets$facilityBatch <- targets[, batch_col]
+    batch <- targets$facilityBatch
     modcombat = model.matrix(~ 1, data = targets)
     gc(verbose = F)
-    #p = BiocParallel::bpstart(BiocParallel::MulticoreParam(6))
     combat_beta <- sva::ComBat(
-        dat = betas,
-        batch = batch,
-        mod = modcombat,
-        par.prior = T,
-        prior.plots = F #, BPPARAM = p
+        dat = betas, batch = batch, mod = modcombat, par.prior = T, prior.plots = F
     )
-    #BiocParallel::bpstop(p)
     # fix if any beta >1 or < 0, so impute >1 is 1 and <0 is 0
     combat_beta <- ifelse(combat_beta < 0, 0, combat_beta)
     combat_beta <- ifelse(combat_beta > 1, 1, combat_beta)
@@ -154,18 +148,18 @@ batchCorrectBs <- function(betas, RGSet, targets, batchEffectColumn) {
 }
 
 
-RemoveBatchEffect <- function(batchEffectColumn = NULL,
-                              betas,
-                              RGSet,
-                              targets,
-                              combatOut) {
-    if (!file.exists(combatOut)) {
-        betas <- batchCorrectBs(betas, RGSet, targets, batchEffectColumn)
-        gb$SaveObj(betas, file.name = combatOut)
-    } else{
+RemoveBatchEffect <- function(
+    batch_col = NULL, 
+    betas, 
+    RGSet, 
+    targets, 
+    combatOut){
+    if (file.exists(combatOut)) {
         betas <- gb$LoadRdatObj(combatOut)
+        return(betas)
     }
-    
+    betas <- batchCorrectBs(betas, RGSet, targets, batch_col)
+    gb$SaveObj(betas, file.name = combatOut)
     return(betas)
 }
 
