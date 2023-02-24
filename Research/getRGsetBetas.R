@@ -219,6 +219,37 @@ getRgset <- function(rgOut, targets, mergeProbes = F, csvPath = "samplesheet.csv
 }
 
 
+GetRgsetDat <- function(rgOut, targets, mergeProbes = F, csvPath =getwd(), idatPath = NULL){
+  require("minfi")
+  if(is.null(idatPath)){idatPath <- getwd()}
+    gc(verbose = F)
+    if (file.exists(rgOut)) {
+      RGSet <- gb$LoadRdatObj(rgOut)
+      }else{
+        if (mergeProbes == T & !is.null(targets$Batch)) {
+            RGSet <- gb$combine.EPIC.450K(targets = targets)
+        } else{
+          sheet <- NULL
+          isPathway <- stringr::str_detect(csvPath, .Platform$file.sep)
+          if (isPathway == T) {
+              sheet <- minfi::read.metharray.sheet(idatPath, pattern =  basename(csvPath))
+          }else{
+            if(!file.exists(file.path(idatPath, csvPath))){
+              file.copy(csvPath, idatPath)
+            }  
+            sheet <- minfi::read.metharray.sheet(idatPath, pattern = csvPath)
+          }
+          sheet <- as.data.frame(sheet)
+          sheet <- CleanUpSheetRows(sheet, idatPath, targets)
+          sheet <- sheet[!is.na(sheet$Sample_Name),]
+          RGSet <- minfi::read.metharray.exp(base = idatPath, targets = sheet, verbose = T, force = T)
+          }
+        gb$SaveObj(RGSet, file.name = rgOut)
+      }
+    return(RGSet)
+}
+
+
 cleanRawProbes <- function(rawBetaDat, RGSet, samNames, targets) {
     gc(verbose = F)
     if (!file.exists(rawBetaDat)) {
