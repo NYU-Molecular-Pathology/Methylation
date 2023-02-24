@@ -353,3 +353,8 @@ if(Sys.info()[['sysname']]!="Darwin") {
     Sys.setenv(IMAGEMAGICK_V6_HOME=magickPath)
 } 
 
+GetColorShape <- function(var1Col, var2Col){
+  return(paste0("Color Labels=", var1Col, " & ", "Shapes=", var2Col))
+}
+
+
