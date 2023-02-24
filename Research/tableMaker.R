@@ -210,7 +210,9 @@ sanitizeSheet <- function(inputFi, samsheet) {
     if (class(targets) != "data.frame") {
         targets <- as.data.frame(targets)
     }
+    
     stopifnot(gb$col_samNames %in% colnames(targets) == T & gb$col_samTypes %in% colnames(targets) == T)
+    
     samNames <- targets[,gb$col_samNames]
     sentrixs <- targets[,gb$col_sentrix]
     # Create any missing header columns to standardize names
@@ -218,6 +220,14 @@ sanitizeSheet <- function(inputFi, samsheet) {
     targets[,"Sample_ID"] <- targets[,"Sample_Name"] <- targets[,"Sample_Group"] <- NA
     targets[,"Sample_ID"] <- targets[,"Sample_Name"] <- samNames
     targets[,"Barcode"] <- targets[,"Sentrix_ID"] <- targets[,"SentrixID_Pos"] <- sentrixs
+    
+    if(any(duplicated(targets$Sample_ID))) {
+       warning("Duplicated sample IDs will be dropped!")
+       message(paste0(capture.output(targets[duplicated(targets$Sample_ID), ]), collapse="\n"))
+       targets <- targets[!duplicated(targets$Sample_ID), ]
+       row.names(targets) <- 1:nrow(targets)
+    }
+    
     return(targets)
 }
 
