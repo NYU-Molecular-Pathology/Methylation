@@ -14,15 +14,9 @@ grabPngNames <- function(tsne_titles=NULL, keywrd="Top"){
 }
 
 
-makePlotly <- 
-function(fig) {
+FormatPlotlyLayout <- function(fig){
     otherPlot <-
-        supM(plotly::ggplotly(
-            fig,
-            dynamicTicks = T,
-            height = 800, #800
-            width = 1200 #1200
-        ))
+        supM(plotly::ggplotly(fig, dynamicTicks = T, width = 1200, height = 800))
     otherPlot$x[["layout"]][["annotations"]] <- NULL
     opLayout <- otherPlot[["x"]][["layout"]]
     opLayout[["font"]][["size"]] <- 12
@@ -32,88 +26,133 @@ function(fig) {
     opLayout[["xaxis"]][["tickfont"]][["size"]] <- 12
     opLayout[["yaxis"]][["tickfont"]][["size"]] <- 12
     otherPlot[["x"]][["layout"]] <- opLayout
-    hoverinfo <- paste0("Sample: ", fig[["data"]][["samples"]], "</br></br>")
+    return(otherPlot)
+}
+
+
+GetPlotlySymbols <- function(fig, uniGrp){
+    markerSyms <- c(
+        "circle", "square", "diamond", "cross", "X", "triangle-up", "triangle-down", "triangle-left",
+        "triangle-right", "triangle-ne", "triangle-se", "triangle-sw", "triangle-nw", "pentagon",
+        "hexagon", "hexagon2", "octagon", "star", "hexagram", "star-triangle-up", "star-triangle-down",
+        "star-square", "star-diamond", "diamond-tall", "diamond-wide", "hourglass", "bowtie", "circle-cross",
+        "circle-x", "square-cross", "square-x", "diamond-cross"
+    )
+    markerSyms <- c(markerSyms, paste0(markerSyms,"-open"))
+    if(length(unique(fig[["data"]]$symbol))>1){
+        markerSyms <- markerSyms[1:length(uniGrp)]
+    }else{
+        markerSyms <- rep("circle", length(uniGrp))
+    }
+    return(markerSyms)
+}
+
+FormatHoverInfo <- function(otherPlot){
     opInfo <- otherPlot[["x"]][["data"]]
-    markerSyms <- c("circle", "square", "diamond", "cross", "X", "triangle-up", "triangle-down", "triangle-left","triangle-right", "triangle-ne", "triangle-se", "triangle-sw", "triangle-nw", "pentagon", "hexagon", "hexagon2", "octagon", "star", "hexagram", "star-triangle-up", "star-triangle-down", "star-square", "star-diamond", "diamond-tall", "diamond-wide", "hourglass", "bowtie", "circle-cross", "circle-x", "square-cross", "square-x", "diamond-cross")
-    markerSyms<- c(markerSyms, paste0(markerSyms,"-open"))
     for (sam in 1:length(opInfo)) {
         opInfo[[sam]][["hoverinfo"]] <- "none"
-        #opInfo[[sam]][["marker"]][["symbol"]] <- 'circle'
         opInfo[[sam]][["marker"]][["size"]] <- 10
-        opInfo[[sam]][["hoverinfo"]] <- c("text") #"text",
+        opInfo[[sam]][["hoverinfo"]] <- c("text")
     }
-
     otherPlot[["x"]][["data"]] <- opInfo
-    uniGrp <- unique(fig[["data"]]$GROUPS)
-    markerSyms <- markerSyms[1:length(uniGrp)]
-    
+    return(otherPlot)
+}
+
+
+FormatPlotLabels <- function(fig, otherPlot, uniGrp, markerSyms){
     for (grpLabNam in 1:length(otherPlot[["x"]][["data"]])) {
-      thisLabel <- otherPlot[["x"]][["data"]][[grpLabNam]]$name
-      markerIdx <- which(stringr::str_detect(thisLabel,uniGrp))
-      otherPlot[["x"]][["data"]][[grpLabNam]][["marker"]][["symbol"]] <- markerSyms[markerIdx]
+        thisLabel <- otherPlot[["x"]][["data"]][[grpLabNam]]$name
+        markerIdx <- which(stringr::str_detect(thisLabel, uniGrp))
+        otherPlot[["x"]][["data"]][[grpLabNam]][["marker"]][["symbol"]] <- markerSyms[markerIdx]
     }
-    
     for (grpT in 1:length(uniGrp)) {
         grpNam <- uniGrp[grpT]
         currGrp <- fig[["data"]]$GROUPS == grpNam
         samLabs <- fig[["data"]]$samples
-        samSymShape <- markerSyms[grpT]
-
         for (grpLabNam in 1:length(otherPlot[["x"]][["data"]])) {
             currLabNam <- otherPlot[["x"]][["data"]][[grpLabNam]]$name
             currLabNam <- stringr::str_split_fixed(currLabNam,",",2)[,2]
             currLabNam <- stringr::str_remove_all(currLabNam, "[()]")
-            #message(currLabNam, " and ", grpNam)
             if (currLabNam == grpNam) {
-              hoverinfo <- paste0("Sample: ", samLabs[currGrp] , " (", grpNam, ")", "</br></br>")
-              otherPlot[["x"]][["data"]][[grpLabNam]][["text"]] <- hoverinfo
+                hoverinfo <- paste0("Sample: ", samLabs[currGrp] , " (", grpNam, ")", "</br></br>")
+                otherPlot[["x"]][["data"]][[grpLabNam]][["text"]] <- hoverinfo
             }
         }
     }
-    otherPlot <-
-        otherPlot %>% plotly::layout(legend = list(
-            title = list(text = "<b>Legend</b><br>", font = list(size = 14)),
-            font = list(size = 12)
-        )) 
-      mrg <- list(l = 50, r = 50, b = 100, t = 100, pad = 4)  
-  otherPlot <-
-        otherPlot %>% plotly::layout(margin = mrg)
-
     return(otherPlot)
 }
 
-selectPlots <- function(doPlotly = F, tplots, ty, tps, outDirs) {
-  for (zz in 1:nrow(outDirs)) {
-    invisible(gc())
-    fig <- tplots[[zz]]
-    tabStart <- paste('### Top', tps[ty, 1], outDirs[zz, 3])
-    cat(paste(tabStart, '(Interactive)','\n\n'))
-    gc(verbose = F)
-    op <- gb$makePlotly(fig)
-    supM(print(htmltools::tagList(ggplotly(op))))
-    cat('\n\n')
-    cat(paste(tabStart, '\n\n'))
-    gc(verbose = F)
+FormatPlotlyLegend <- function(otherPlot){
+    mrg <- list(l = 50, r = 50, b = 100, t = 100, pad = 4)
+    otherPlot <- otherPlot %>% plotly::layout(margin = mrg, legend = list(
+        title = list(text = "<b>Legend</b><br>", font = list(size = 14)), font = list(size = 12)
+    ))
+    for(legGroup in 1:length(otherPlot[["x"]][["data"]])){
+        currLegend <- otherPlot[["x"]][["data"]][[legGroup]][["legendgroup"]]
+        newLegend <- stringr::str_split_fixed(currLegend, ",", 2)[,2]
+        newLegend <- stringr::str_remove(newLegend, "[)]")
+        newLegend <- stringr::str_to_title(newLegend)
+        otherPlot[["x"]][["data"]][[legGroup]][["legendgroup"]] <- newLegend
+        otherPlot[["x"]][["data"]][[legGroup]][["name"]] <- newLegend
+    }
+    return(otherPlot)
+}
+
+
+makePlotly <- function(fig) {
+    otherPlot <- NULL
+    otherPlot <- FormatPlotlyLayout(fig)
+    otherPlot <- FormatHoverInfo(otherPlot)
+    uniGrp <- unique(fig[["data"]]$GROUPS)
+    markerSyms <- GetPlotlySymbols(fig, uniGrp)
+    otherPlot <- FormatPlotLabels(fig, otherPlot, uniGrp, markerSyms)
+    otherPlot <- FormatPlotlyLegend(otherPlot)
+    return(otherPlot)
+}
+
+
+GetFlatPlots <- function(fig){
     fig <- fig +
-      theme(
-        legend.direction = "vertical",
-        legend.margin = ggplot2::margin(t = -25),
-        legend.box.margin = ggplot2::margin(0, 0, 0, 0),
-        legend.justification = "right",
-        legend.position = "top"
-      )
-    #fig <- fig + guides(fill = guide_legend(ncol = 1, nrow = 10, byrow = T))
+        theme(
+            legend.direction = "vertical",
+            legend.margin = ggplot2::margin(t = -25),
+            legend.box.margin = ggplot2::margin(0, 0, 0, 0),
+            legend.justification = "right",
+            legend.position = "right"
+        )
+
     leg <- supM(cowplot::get_legend(fig))
-    fig <- fig + theme(legend.position = "none")
-    #par(mfrow=c(2,1))
-    supM(print(fig))
-    grid::grid.newpage()
-    grid::grid.draw(leg)
-    #par(mfrow=c(1,1))
-    
-    cat('\n\n')
-  }
-  return(assign("diagPlot", tplots[[1]]))
+    if(length(leg)>10){
+        fig <- fig + theme(legend.position = "none")
+        supM(print(fig))
+        grid::grid.newpage()
+        grid::grid.draw(leg)
+    }else{
+        fig <- fig +
+            theme(legend.direction = "vertical", legend.margin = ggplot2::margin(t = 0))
+        supM(print(fig))
+    }
+}
+
+
+selectPlots <- function(doPlotly = F, tplots, ty, tps, outDirs) {
+    for (zz in 1:nrow(outDirs)) {
+        invisible(gc())
+        fig <- tplots[[zz]]
+        tabStart <- paste('### Top', tps[ty, 1], outDirs[zz, 3])
+        
+        cat(paste(tabStart, '(Interactive)','\n\n'))
+        gc(verbose = F)
+        op <- makePlotly(fig)
+        supM(print(htmltools::tagList(ggplotly(op))))
+        cat('\n\n')
+        
+        cat(paste(tabStart, '\n\n'))
+        gc(verbose = F)
+        GetFlatPlots(fig)
+        cat('\n\n')
+    }
+    #return(assign("diagPlot", tplots[[1]]))
 }
 
 
@@ -255,6 +294,6 @@ gb$tierBetas <- function(betas, col_sentrix, RGSet, batchCorrect = F, getSuper =
         return(unBetas)
       }
     }
-  }
+}
 
 assign("subsetBetas", subsetBetas)
