@@ -347,6 +347,17 @@ msg_code "cd ${molecDir}${runID} && chmod -R g+rwx ${productionDir}/NGS607/${run
 msg_code "python ${reprtDir}snp_overlap.py -o ${molecDir}${runID}/output/ && python ${reprtDir}generate_html_report.py -o ${molecDir}${runID} -p ${pactRun} -r ${runID} && python3 ${reprtDir}variants_qc.py -rid ${runID} -rdir ${molecDir}${runID}/output/ -pactid ${pactRun}"
 msg_step 3 "#d9d2e9" "Change permissions for group access to the new QC files ouput"
 msg_code "chmod -R g+rwx ${productionDir}/NGS607/${runID}/output/"
+msg_step 4 "#d9d2e9" "If you have MiniConda3 skip to step 5, otherwise wget install, and type \"no\" when prompted if you wish the installer to initialize Miniconda3 by running conda init"
+msg_code "cd ${HOME} && wget https://repo.anaconda.com/miniconda/Miniconda3-py38_4.10.3-Linux-x86_64.sh && bash Miniconda3-py38_4.10.3-Linux-x86_64.sh"
+msg_step 4a "#d9d2e9" "To complete installation, cd into your bin directory, close the console to restart it, and install pip"
+msg_code "cd /gpfs/home/vasudv02/miniconda3/bin/ && ./conda init"
+msg_step 4b "#d9d2e9" "After closing the console, ssh back into BigPurple and use conda to install pip"
+msg_code "ssh ${kerbero}@bigpurple.nyumc.org"
+msg_code "cd molecpathlab/development/NGS_QC_xf/"
+msg_code "conda install pip"
+msg_code "pip install -r requirements.txt"
+msg_step 5 "#d9d2e9" "Go to the QC python directory and generate the QC file"
+msg_code "python molecpathlab/development/NGS_QC_xf/xf_pactqc.py -rdir ${molecDir}${runID}/output/ -pactid ${pactRun} && conda deactivate"
 echo "$BOX2"
 
 # Stage 4 -----------------------
