@@ -148,17 +148,12 @@ batchCorrectBs <- function(betas, targets, batch_col) {
 }
 
 
-RemoveBatchEffect <- function(
-    batch_col = NULL, 
-    betas, 
-    RGSet, 
-    targets, 
-    combatOut){
+RemoveBatchEffect <- function(batch_col = NULL, betas, targets, combatOut) {
     if (file.exists(combatOut)) {
-        betas <- gb$LoadRdatObj(combatOut)
-        return(betas)
+      betas <- gb$LoadRdatObj(combatOut)
+      return(betas)
     }
-    betas <- batchCorrectBs(betas, RGSet, targets, batch_col)
+    betas <- gb$batchCorrectBs(betas, targets, batch_col)
     gb$SaveObj(betas, file.name = combatOut)
     return(betas)
 }
