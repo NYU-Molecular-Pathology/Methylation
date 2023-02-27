@@ -142,8 +142,8 @@ GetExternalIdats <- function(allFi, ssheet, extr.idat){
     basesFound <- stringr::str_split_fixed(basename(allFi),"_",3)[,c(1,2)]
     basesFound <- unique(paste0(basesFound[,1], "_",basesFound[,2]))
     stillMissing <- !(basesNeeded %in% basesFound)
-    toBeFound <- basesNeeded[stillMissing]
-    if(any(toBeFound)){
+    if(any(stillMissing) == T){
+        toBeFound <- basesNeeded[stillMissing]
         message(crayon::bgRed("The following idats are missing:"))
         DataFrameMessage(toBeFound)
         message(crayon::bgGreen("Searching the External folder for more idats..."))
