@@ -143,24 +143,26 @@ GetExternalIdats <- function(allFi, ssheet, extr.idat){
     basesFound <- unique(paste0(basesFound[,1], "_",basesFound[,2]))
     stillMissing <- !(basesNeeded %in% basesFound)
     toBeFound <- basesNeeded[stillMissing]
-    message(crayon::bgRed("The following idats are missing:"))
-    DataFrameMessage(toBeFound)
-    message(crayon::bgGreen("Searching the External folder for more idats..."))
-    otherIdat <- dir(extr.idat, pattern = ".idat", full.names = T, recursive = T)
-    toBeSearch <- paste(toBeFound, collapse = "|")
-    foundIdat <- stringr::str_detect(otherIdat, pattern=toBeSearch)
-    if (any(foundIdat)==F){
-        message(crayon::bgRed("Still missing idat files not in External folder:"))
+    if(any(toBeFound)){
+        message(crayon::bgRed("The following idats are missing:"))
         DataFrameMessage(toBeFound)
-        stopifnot(any(foundIdat)==T)
+        message(crayon::bgGreen("Searching the External folder for more idats..."))
+        otherIdat <- dir(extr.idat, pattern = ".idat", full.names = T, recursive = T)
+        toBeSearch <- paste(toBeFound, collapse = "|")
+        foundIdat <- stringr::str_detect(otherIdat, pattern=toBeSearch)
+        if (any(foundIdat)==F){
+            message(crayon::bgRed("Still missing idat files not in External folder:"))
+            DataFrameMessage(toBeFound)
+            stopifnot(any(foundIdat)==T)
+        }
+        message(crayon::bgGreen("Found extra idats in External folder:")," ", extr.idat)
+        idatsToAdd <- otherIdat[foundIdat]
+        DataFrameMessage(idatsToAdd)
+        toDrop <- basename(idatsToAdd) %in% basename(allFi)
+        idatsToAdd <- idatsToAdd[!toDrop]
+        allFi <- c(allFi, idatsToAdd)
+        stopifnot(nrow(ssheet) * 2 == length(allFi))
     }
-    message(crayon::bgGreen("Found extra idats in External folder:")," ", extr.idat)
-    idatsToAdd <- otherIdat[foundIdat]
-    DataFrameMessage(idatsToAdd)
-    toDrop <- basename(idatsToAdd) %in% basename(allFi)
-    idatsToAdd <- idatsToAdd[!toDrop]
-    allFi <- c(allFi, idatsToAdd)
-    stopifnot(nrow(ssheet) * 2 == length(allFi))
     return(allFi)
 }
 
