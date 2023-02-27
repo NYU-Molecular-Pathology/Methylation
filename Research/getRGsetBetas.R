@@ -263,11 +263,12 @@ getMdsPlot <- function(RGSet, samNames, topN=1000) {
     return(mSetSq.beta)
 }
 
+
 plot.mds <- function(mSetSq.beta, targets, varName, topN) {
     varColorCol <- paste0(varName, "_color")
     myColors <- c(targets[,varColorCol])
     names(myColors) <- targets$Sample_Name
-    plotNam <- paste0("top_", topN, "_msetBeta", ".png")
+    plotNam <- paste0(varName, "_top_", topN, "_msetBeta", ".png")
     outPlotNam <- file.path(getwd(),"figures","mds")
     if(!dir.exists(outPlotNam)){dir.create(outPlotNam, recursive = T)}
     outPlotFi <- file.path(outPlotNam, plotNam)
@@ -287,25 +288,22 @@ plot.mds <- function(mSetSq.beta, targets, varName, topN) {
 
 
 dropGroup <- function(targets, filterCol=NULL, group2rm=NULL) {
-    remov <- ifelse(!is.null(group2rm),
-                    c(targets[,filterCol] == group2rm),
-                    targets[,filterCol] != group2rm)
+    remov <- ifelse(!is.null(group2rm), c(targets[,filterCol] == group2rm), targets[,filterCol] != group2rm)
     return(targets[!remov, ])
 }
 
-dropBadQc <- function(targets, betas, csvFi="samplesheet.csv") {
-  dropping <- targets$Sample_Name %in% colnames(betas)
-    if(table(dropping)[1]>=1){
-  theMissing <- targets[!dropping, ]
-  targets <- targets[dropping, ]
-        }else{   theMissing <- NULL}
 
-  rownames(targets) <- 1:nrow(targets)
-  write.csv(targets,
-            file = csvFi,
-            quote = F,
-            row.names = F)
-  return(theMissing)
+dropBadQc <- function(targets, betas, csvFi="samplesheet.csv") {
+    dropping <- targets$Sample_Name %in% colnames(betas)
+    if(table(dropping)[1]>=1){
+        theMissing <- targets[!dropping, ]
+        targets <- targets[dropping, ]
+    }else{
+        theMissing <- NULL
+    }
+    rownames(targets) <- 1:nrow(targets)
+    write.csv(targets, file = csvFi, quote = F, row.names = F)
+    return(theMissing)
 }
 
 # Matches RGset to any dropped samples of cleaned Beta Values
@@ -330,14 +328,12 @@ checkMdsRds <- function(mbfile, runDir, RGSet, targets) {
 }
 
 
-GetMsetSq <- function(RGSet, targets, varName, mbfile) {
-  baseFi <- paste0(varName, "_", basename(mbfile))
-  mbOutFile <- file.path(getwd(), dirname(mbfile), baseFi)
-  if (file.exists(file.path(mbOutFile))) {
-    mSetSq.beta <- LoadRdatObj(mbOutFile)
+GetMsetSq <- function(RGSet, targets, mbfile) {
+  if (file.exists(mbfile)) {
+    mSetSq.beta <- LoadRdatObj(mbfile)
   } else{
     mSetSq.beta <- gb$supM(gb$getMdsPlot(RGSet, targets$Sample_ID))
-    SaveObj(mSetSq.beta, file = file.path(mbOutFile))
+    SaveObj(mSetSq.beta, file = mbfile)
   }
   return(mSetSq.beta)
 }
