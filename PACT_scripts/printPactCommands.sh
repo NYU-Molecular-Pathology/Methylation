@@ -359,7 +359,7 @@ msg_code "ssh ${kerbero}@bigpurple.nyumc.org"
 msg_code "conda install pip"
 msg_code "pip install -r ${gpfsHome}molecpathlab/development/NGS_QC_xf/requirements.txt"
 msg_step 5 "#d9d2e9" "Go to the QC python directory and generate the QC file"
-msg_code "conda activate && cd ${gpfsHome}molecpathlab/development/NGS_QC_xf/ && python xf_pactqc.py -rdir ${molecDir}${runID}/output -pactid ${pactRun} && conda deactivate"
+msg_code "conda activate && python ${gpfsHome}molecpathlab/development/NGS_QC_xf/xf_pactqc.py -rdir ${molecDir}${runID}/output -pactid ${pactRun} && conda deactivate"
 echo "$BOX2"
 
 # Stage 4 -----------------------
