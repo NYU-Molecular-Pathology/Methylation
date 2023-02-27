@@ -338,6 +338,14 @@ MessageBatches <- function(targets, col_batchEffect) {
   }
 }
 
+MessageArrayMix <- function(targets, col_arrayType) {
+  if (!is.null(col_arrayType)) {
+    cat(paste("## Arrays Type Column Name:", col_arrayType, "\n\n"))
+    cat("Different Arrays:\n")
+    cat(paste(unique(targets[, col_arrayType]), collapse = ",\n"))
+    cat("\n\n")
+  }
+}
 
 PrintSamTypes <- function(shCol){
   samF <- setNames(as.data.frame(table(targets[, shCol]), NULL), c("Sample Type", "Freq"))
