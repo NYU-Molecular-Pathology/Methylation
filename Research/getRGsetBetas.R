@@ -2,6 +2,12 @@ gb <- globalenv(); assign("gb", gb)
 library("utils")
 
 
+PasteCaptureData <- function(objDat) {
+    return(paste0(capture.output(as.data.frame(table(
+        objDat
+    ))), collapse = "\n"))
+}
+
 # FUN: Save object as Rdata file ---------------------------------------------------------------
 SaveObj <- function(object, file.name){
     outfile <- file(file.name, "wb")
@@ -49,6 +55,8 @@ combine.EPIC.450K <- function(targets, gb, batchFilter="EPIC") {
     stopifnot(any(batchFilter %in% targets$Batch) & length(targets$Batch) > 0)
     targets_450k <- subset(targets, targets$Batch != batchFilter)
     targets_EPIC <- subset(targets, targets$Batch == batchFilter)
+    row.names(targets_450k) <- 1:nrow(targets_450k)
+    row.names(targets_EPIC) <- 1:nrow(targets_EPIC)
     CheckDupeArrays(targets_450k, "450K")
     CheckDupeArrays(targets_EPIC, "EPIC")
     message("reading 450K arrays...")
@@ -60,26 +68,33 @@ combine.EPIC.450K <- function(targets, gb, batchFilter="EPIC") {
     return(RGSet)
 }
 
+
+MsgDropping <- function(keep){
+    dropping <- table(keep)["FALSE"] > 0
+    if (!is.na(dropping)) {
+        if (dropping == TRUE) {
+            drpMsg <- PasteCaptureData(table(keep))
+            message("Dropping probes:\n", drpMsg)
+        }
+    }
+}
+
+
 # Remove Low Quality and select probes using annotations
-cleanUpProbes <- function(RGSet, targets, getfunorm=F){
+cleanUpProbes <- function(RGSet, targets, gb, getfunorm=F){
     library("minfi")  
-    td <- 
-    dateFile <- paste(Sys.Date(),"DetPvals.Rdata", sep = "_")
-    detPfile <- paste0("data", .Platform$file.sep, dateFile)
-    if(!file.exists(detPfile)){
+    if(!file.exists(gb$pValsOutFi)){
       detP <- minfi::detectionP(RGSet)
-      gb$SaveObj(detP, file.name = detPfile)
+      gb$SaveObj(detP, file.name = gb$pValsOutFi)
     }else{
-      detP <- gb$LoadRdatObj(detPfile)
+      detP <- gb$LoadRdatObj(gb$pValsOutFi)
     }
     colnames(detP) <- RGSet@colData@listData[["Sample_Name"]]
     keep <- colMeans(detP) < 0.05
     RGSet <- RGSet[, keep]
     targets <- targets[keep,]
     detP <- detP[, keep]
-    dropping <- table(keep)["FALSE"]>0
-    if(!is.na(dropping)){if(dropping==TRUE){message(
-        "Dropping probes: ", paste0(capture.output(as.data.frame(table(keep))), collapse = "\n"))}}
+    MsgDropping(keep)
     mSetSq <- suppressWarnings(preprocessQuantile(RGSet))
     detP <- detP[match(featureNames(mSetSq), rownames(detP)), ]
     keep <- rowSums(detP < 0.01) == ncol(mSetSq)
@@ -238,30 +253,35 @@ GrabMinfiSheet <- function(idatPath, csvPath){
 
 
 
-GetRgsetDat <- function(csvPath = "samplesheet.csv", gb){
+GetRgsetDat <- function(csvPath = "samplesheet.csv", gb) {
     require("minfi")
     gc(verbose = F)
-     if (file.exists(gb$rgOut)) {
+    if (file.exists(gb$rgOut)) {
         RGSet <- gb$LoadRdatObj(gb$rgOut)
         return(RGSet)
-     }
-    if(is.null(gb$idatPath)){gb$idatPath <- getwd()}
+    }
+    if (is.null(gb$idatPath)) {
+        gb$idatPath <- getwd()
+    }
     sheet <- GrabMinfiSheet(gb$idatPath, csvPath)
     if (gb$mergeProbes == T & !is.null(gb$col_arrayType)) {
+        message("Merging 450K and EPIC probes...")
         RGSet <- gb$combine.EPIC.450K(targets = sheet, gb)
         gb$SaveObj(RGSet, file.name = gb$rgOut)
         return(RGSet)
+    } else{
+        RGSet <- minfi::read.metharray.exp(base = gb$idatPath, targets = sheet, verbose = T, force = T)
+        gb$SaveObj(RGSet, file.name = gb$rgOut)
+        return(RGSet)
     }
-    RGSet <- minfi::read.metharray.exp(base = gb$idatPath, targets = sheet, verbose = T, force = T)
-    gb$SaveObj(RGSet, file.name = gb$rgOut)
-    return(RGSet)
+    
 }
 
 
 cleanRawProbes <- function(RGSet, targets, gb) {
   gc(verbose = F)
   if (!file.exists(gb$rawBetaFi)) {
-    betas <- gb$cleanUpProbes(RGSet = RGSet, targets = targets)
+    betas <- gb$cleanUpProbes(RGSet = RGSet, targets = targets, gb)
     SaveObj(betas, file.name = gb$rawBetaFi)
   } else{
     betas <- LoadRdatObj(gb$rawBetaFi)
