@@ -60,11 +60,6 @@ FormatHoverInfo <- function(otherPlot){
 
 
 FormatPlotLabels <- function(fig, otherPlot, uniGrp, markerSyms){
-    for (grpLabNam in 1:length(otherPlot[["x"]][["data"]])) {
-        thisLabel <- otherPlot[["x"]][["data"]][[grpLabNam]]$name
-        markerIdx <- which(stringr::str_detect(thisLabel, uniGrp))
-        otherPlot[["x"]][["data"]][[grpLabNam]][["marker"]][["symbol"]] <- markerSyms[markerIdx]
-    }
     for (grpT in 1:length(uniGrp)) {
         grpNam <- uniGrp[grpT]
         currGrp <- fig[["data"]]$GROUPS == grpNam
@@ -73,6 +68,14 @@ FormatPlotLabels <- function(fig, otherPlot, uniGrp, markerSyms){
             currLabNam <- otherPlot[["x"]][["data"]][[grpLabNam]]$name
             currLabNam <- stringr::str_split_fixed(currLabNam,",",2)[,2]
             currLabNam <- stringr::str_remove_all(currLabNam, "[()]")
+            markerIdx <- which(currLabNam==uniGrp)
+            #      currLabNam <- otherPlot[["x"]][["data"]][[grpLabNam]]$name
+            # currLabNam <- gsub("[()]", "", currLabNam)
+            # currLabNam <- stringr::str_split_fixed(currLabNam,",",2)
+            # newLegend <- stringr::str_to_title(splitLeg[,1])
+            # newSamNam <- stringr::str_to_title(splitLeg[,2])
+            # markerIdx <- which(currLabNam==uniGrp)
+            #otherPlot[["x"]][["data"]][[grpLabNam]][["marker"]][["symbol"]] <- markerSyms[markerIdx]
             if (currLabNam == grpNam) {
                 hoverinfo <- paste0("Sample: ", samLabs[currGrp] , " (", grpNam, ")", "</br></br>")
                 otherPlot[["x"]][["data"]][[grpLabNam]][["text"]] <- hoverinfo
@@ -82,18 +85,23 @@ FormatPlotLabels <- function(fig, otherPlot, uniGrp, markerSyms){
     return(otherPlot)
 }
 
+
 FormatPlotlyLegend <- function(otherPlot){
     mrg <- list(l = 50, r = 50, b = 100, t = 100, pad = 4)
-    otherPlot <- otherPlot %>% plotly::layout(margin = mrg, legend = list(
-        title = list(text = "<b>Legend</b><br>", font = list(size = 14)), font = list(size = 12)
-    ))
+    ttl <- list(text = "<b>Legend</b><br>", font = list(size = 14))
+    otherPlot <- otherPlot %>% plotly::layout(
+      margin = mrg, legend = list(title = ttl, font = list(size = 12))
+      )
     for(legGroup in 1:length(otherPlot[["x"]][["data"]])){
         currLegend <- otherPlot[["x"]][["data"]][[legGroup]][["legendgroup"]]
-        newLegend <- stringr::str_split_fixed(currLegend, ",", 2)[,2]
-        newLegend <- stringr::str_remove(newLegend, "[)]")
-        newLegend <- stringr::str_to_title(newLegend)
-        otherPlot[["x"]][["data"]][[legGroup]][["legendgroup"]] <- newLegend
-        otherPlot[["x"]][["data"]][[legGroup]][["name"]] <- newLegend
+        newLegend <- gsub("[()]", "", currLegend)
+        splitLeg <- stringr::str_split_fixed(newLegend, ",", 2)
+        newLegend <- stringr::str_to_title(splitLeg[,1])
+        newSamNam <- stringr::str_to_title(splitLeg[,2])
+        otherPlot[["x"]][["data"]][[legGroup]][["legendgroup"]] <- 
+          paste0(newLegend, " (", newSamNam, ")")
+        otherPlot[["x"]][["data"]][[legGroup]][["name"]] <- 
+          paste0(newLegend, " (", newSamNam, ")")
     }
     return(otherPlot)
 }
@@ -120,7 +128,6 @@ GetFlatPlots <- function(fig){
             legend.justification = "right",
             legend.position = "right"
         )
-
     leg <- supM(cowplot::get_legend(fig))
     if(length(leg)>10){
         fig <- fig + theme(legend.position = "none")
@@ -143,7 +150,7 @@ selectPlots <- function(doPlotly = F, tplots, ty, tps, outDirs) {
         
         cat(paste(tabStart, '(Interactive)','\n\n'))
         gc(verbose = F)
-        op <- makePlotly(fig)
+        op <- gb$makePlotly(fig)
         supM(print(htmltools::tagList(ggplotly(op))))
         cat('\n\n')
         
@@ -154,6 +161,7 @@ selectPlots <- function(doPlotly = F, tplots, ty, tps, outDirs) {
     }
     #return(assign("diagPlot", tplots[[1]]))
 }
+
 
 
 gb$grabAllBeta <- function(targets1, betas, supervised = F) {
@@ -223,7 +231,8 @@ plotSaver <- function(outDirs,tsne_titles,tps,ty,plotList,custom, names2Label=NU
 }
 
 
-gb$subsetBetas <- function(targFilter,
+
+subsetBetas <- function(targFilter,
                         samGroup,
                         betas,
                         targets,
@@ -246,8 +255,8 @@ gb$subsetBetas <- function(targFilter,
   for (ty in 1:nrow(tps)) {
     gc(verbose = F)
     custom = tps[ty, 1]
-    message("Current Sample Group TSNE: ", custom, "\nAll Target Group Filters: ",paste(unique(targFilter)))
-    
+    message("Current Sample Group TSNE: ", custom, 
+            "\nAll Target Group Filters: ", paste(unique(targFilter)))
     # Filter The Beta Values ---------
     targets1 <- targets[targFilter == custom, ]
     allBetas1 <- gb$grabAllBeta(targets1, betas, supervised)
