@@ -222,13 +222,15 @@ getRgset <- function(rgOut, targets, mergeProbes = F, csvPath = "samplesheet.csv
 }
 
 
+
 GrabMinfiSheet <- function(idatPath, csvPath){
     isPathway <- stringr::str_detect(csvPath, .Platform$file.sep)
     if (isPathway == T) {
+        file.copy(csvPath, idatPath)
         sheet <- minfi::read.metharray.sheet(idatPath, pattern =  basename(csvPath))
     }else{
-      if(!file.exists(file.path(idatPath, csvPath))){file.copy(csvPath, idatPath)}  
-      sheet <- minfi::read.metharray.sheet(idatPath, pattern = csvPath)
+        file.copy(csvPath, idatPath)
+        sheet <- minfi::read.metharray.sheet(idatPath, pattern = csvPath)
     }
     sheet <- gb$CleanUpSheetRows(sheet, gb$idatPath, targets)
     return(sheet)
