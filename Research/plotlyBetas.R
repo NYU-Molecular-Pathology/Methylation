@@ -185,11 +185,9 @@ grabAllBeta <- function(targets1, betas, supervised = F) {
 
 doMultiple <- function(allBetas1, tsne_titles, outDirs, targets1, tps,ty,custom){
   plotN = NULL
-  
   tsneList <- lapply(X = 1:length(allBetas1), FUN = function(X) {
       return(suppressMessages(gb$generateTvals(allBetas1[[X]])))
     })
-  
   plotList <-
     list(foreach::foreach(plotN = 1:length(tsneList), .packages = "foreach") %do%
            {
@@ -200,7 +198,7 @@ doMultiple <- function(allBetas1, tsne_titles, outDirs, targets1, tps,ty,custom)
                saNames = targets1$SampleFilter,
                samGrp = targets1$PointColors,
                colorGrp = targets1$color, #targets1$Type,#
-               symGrp = targets1$Sym_Shape#targets1[, gb$col_shapes]
+               symGrp = targets1$Sym_Shape #targets1[, gb$col_shapes]
              ) #targets1[,col_samGroup]
              ###################### TO CHANGE ########################
              return(tsne_plot)
@@ -208,26 +206,32 @@ doMultiple <- function(allBetas1, tsne_titles, outDirs, targets1, tps,ty,custom)
   return(plotList)
 }
 
-
-plotSaver <- function(outDirs,tsne_titles,tps,ty,plotList,custom, names2Label=NULL) {
-  plotN=NULL
-  options("device.ask.default"=F)
- pltList <- foreach::foreach(plotN = 1:length(plotList),.packages="foreach") %do% {
-    pL<- plotList[[plotN]]
-###################### TO CHANGE ########################
-    gc(verbose=F)
-    return(
-        gb$genTsnePlot(
-      tsne_plot=plotList[[plotN]],
-      titleLabel=tsne_titles[plotN],
-      symbolsLabel = pL$symbol,
-      colorLabel = pL$GROUPS,
-      names2Label = names2Label # any specific sample names to label on the plot
-      ) 
-      ) 
-###################### TO CHANGE ########################
- }
- return(pltList)
+plotSaver <-
+    function(outDirs,
+             tsne_titles,
+             tps,
+             ty,
+             plotList,
+             custom,
+             names2Label = NULL) {
+        plotN = NULL
+        options("device.ask.default" = F)
+        pltList <- foreach::foreach(plotN = 1:length(plotList), .packages = "foreach") %do% {
+          pL <- plotList[[plotN]]
+                ###################### TO CHANGE ########################
+                gc(verbose = F)
+                return(
+                    gb$genTsnePlot(
+                        tsne_plot = plotList[[plotN]],
+                        titleLabel = tsne_titles[plotN],
+                        symbolsLabel = pL$symbol,
+                        colorLabel = pL$GROUPS,
+                        names2Label = names2Label # any specific sample names to label on the plot
+                    )
+                )
+                ###################### TO CHANGE ########################
+        }
+        return(pltList)
 }
 
 
