@@ -3,10 +3,9 @@ library("utils")
 
 
 PasteCaptureData <- function(objDat) {
-    return(paste0(capture.output(as.data.frame(table(
-        objDat
-    ))), collapse = "\n"))
+    return(paste0(capture.output(as.data.frame(objDat)), collapse = "\n"))
 }
+
 
 # FUN: Save object as Rdata file ---------------------------------------------------------------
 SaveObj <- function(object, file.name){
