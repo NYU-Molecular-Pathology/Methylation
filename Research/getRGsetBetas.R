@@ -31,7 +31,7 @@ LoadRdatObj <- function(file.name, msgProg=T){
 
 
 # FUN: Obtain RGSet with Probes common to 450K Array ---------------------------
-combine.EPIC.450K <- function(targets, gb, batchFilter="450k") {
+combine.EPIC.450K <- function(targets, gb, batchFilter="EPIC") {
   targets$Batch <- targets[, gb$col_arrayType]
   stopifnot(any(batchFilter %in% targets$Batch))
   if(length(targets$Batch)>0){
@@ -43,15 +43,15 @@ combine.EPIC.450K <- function(targets, gb, batchFilter="450k") {
         if (!anyDuplicated(targets_450k$Basename) == F) {
             return(print(paste("850K duplicated basenames:", anyDuplicated(targets_850k$Basename))))}
         else{
-            cat("reading 450K arrays...")
+            message("reading 450K arrays...")
             RGSet_450k <- minfi::read.metharray.exp(targets = targets_450k, force = T, verbose = T)
-            cat("reading EPIC arrays...")
+            message("reading EPIC arrays...")
             RGSet_850k <- minfi::read.metharray.exp(targets = targets_850k, force = T, verbose = T)
-            cat("Combining common probes...")
-            RGSet <- minfi::combineArrays(RGSet_450k, RGSet_850k, 
-                                          outType = "IlluminaHumanMethylation450k")
+            message("Combining common probes...")
+            RGSet <- minfi::combineArrays(RGSet_450k, RGSet_850k, outType = "IlluminaHumanMethylation450k")
         }
     }else{
+        message("NO ARRAY BATCHES FOUND")
         RGSet <- minfi::read.metharray.exp(targets = targets, force = T, verbose = T)
     }
     return(RGSet)
