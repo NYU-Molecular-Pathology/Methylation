@@ -103,7 +103,7 @@ getHeatMap <- function(betaRanges, titleValue, ha, geneNamesHeatMap=F, colSplt =
         cluster_columns = T,  ## Cluster the columns
         #cluster_rows = rowcluster,
         #raster_resize_mat = TRUE,
-        show_column_names = F,  ## Show the Column Names (which is sample #)
+        show_column_names = T,  ## Show the Column Names (which is sample #)
         column_names_gp = gpar(fontsize = 12),  ## Column Name Size
         show_row_names = geneNamesHeatMap,  ## Show Row names (which is probes)
         row_names_side = "left",
