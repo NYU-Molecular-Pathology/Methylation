@@ -54,20 +54,23 @@ require("minfi")
 require("ComplexHeatmap")
 #if(!require("GenVisR")){BiocManager::install("GenVisR")}
 
-makeDt <- 
-  function(targets) {
-    dtOpts <-
-      list(
-        columnDefs = list(list(className = 'dt-center', targets = "_all")),
-        scrollX = T,
-        scrollY = T,
-        info = F,
-        pageLength = 20,
-        autoWidth = F,
-        rownames = F,
-        lengthChange = F,
-        searchable = T
+makeDt <- function(targets, gb=NULL) {
+    dtOpts <- list(
+      columnDefs = list(list(className = 'dt-center', targets = "_all")), scrollX = T, scrollY = T,
+      info = F, pageLength = 20, autoWidth = F, rownames = F, lengthChange = F, searchable = T
       )
+    
+    if(!is.null(gb)){
+      colFilter <- c(gb$col_samNames, gb$col_samTypes, gb$col_shapes, "Barcode")
+      if(!is.null(gb$col_arrayType)){
+         colFilter <- c(colFilter, gb$col_arrayType)
+      }
+      if(!is.null(gb$batch_col)){
+         colFilter <- c(colFilter, gb$batch_col)
+      }
+      targets <- targets[, colFilter]
+    }
+    
     theDt <- DT::datatable(
       targets,
       selection = "single",
@@ -75,6 +78,7 @@ makeDt <-
       options = dtOpts,
       class = 'white-space: nowrap'
     )
+    
     return(theDt)
 }
 
