@@ -171,7 +171,7 @@ grabAllBeta <- function(targets1, betas, supervised = F) {
     } else{
         betas1 <- betas[, targets1$SampleFilter] # filtering betas
         if (file.exists(file.path(gb$runDir, gb$unbetaVariance))) {
-            unBets <- gb$LoadRdatObj(gb$unbetaVariance)
+            unBets <- gb$LoadRdatObj(gb$unbetaVariance, msgProg=F)
         } else{
             unBets <- gb$takeTopVariance(betas1, topVar = 1:10000)
             gb$SaveObj(unBets, file = file.path(gb$runDir, gb$unbetaVariance))
