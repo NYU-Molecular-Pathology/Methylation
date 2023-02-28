@@ -109,3 +109,12 @@ ModifyTargetColumns <- function(targets, gb){
 }
 
 
+FilterArrayKind <- function(targets, array_column, arrayToDrop = "450k"){
+    toDrop <- targets[, array_column] != "450k"
+    targets <- targets[toDrop,]
+    row.names(targets) <- 1:nrow(targets)
+    write.csv(targets, "samplesheet.csv", row.names = F, quote = F)
+    return(targets)
+}
+
+
