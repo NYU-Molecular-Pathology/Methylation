@@ -347,8 +347,9 @@ MessageArrayMix <- function(targets, col_arrayType) {
   }
 }
 
+
 PrintSamTypes <- function(shCol){
-  samF <- setNames(as.data.frame(table(targets[, shCol]), NULL), c("Sample Type", "Freq"))
+  samF <- setNames(as.data.frame(table(targets[, shCol]), NULL), c(paste("Sample Type:", shCol), "Freq"))
   return(gb$smallTab(samF))
 }
 
