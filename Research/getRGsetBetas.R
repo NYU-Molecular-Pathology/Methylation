@@ -21,18 +21,20 @@ LoadRdatObj <- function(file.name, msgProg=T){
     library("utils")
     filesize <- file.info(file.name)$size
     chunksize <- ceiling(filesize / 100)
-    pb <- txtProgressBar(min = 0, max = 100, style=3)
+    
     infile <- file(file.name, "rb")
     if(msgProg==T){
-    data <- foreach(it = icount(100), .combine = c) %do% {
-        setTxtProgressBar(pb, it)
-        readBin(infile, "raw", chunksize)
-    }
-    }else{
+        pb <- txtProgressBar(min = 0, max = 100, style=3)
+        data <- foreach(it = icount(100), .combine = c) %do% {
+            setTxtProgressBar(pb, it)
+            readBin(infile, "raw", chunksize)
+        }
+        close(infile)
+        close(pb)
+    } else{
         data <- foreach(it = icount(100), .combine = c) %do% {readBin(infile, "raw", chunksize)}
+        close(infile)
     }
-    close(infile)
-    close(pb)
     return(unserialize(data))
 }
 
