@@ -270,7 +270,7 @@ subsetBetas <- function(targFilter,
         MessageTsneLoop(targets, custom)
         # Filter The Beta Values ---------
         targets1 <- targets[targets$SamGroups == custom, ]
-        allBetas1 <- gb$grabAllBeta(targets1, betas, supervised)
+        allBetas1 <- grabAllBeta(targets1, betas, supervised)
         outDirs <- gb$grabPngNames(tsne_titles)[,]
         
         tplots <- plotList <- NULL
