@@ -494,5 +494,23 @@ LoopPrintHeatMap <- function(unBetas, ha, geneNams, colSplt=3, hm.db = NULL) {
       cat('\n\n')
     }
     return(hm.db)
-  }
+}
+
+
+AnnotateHmVars <- function(targets1, varColumns){
+  ha <- gb$assignColors3(targets1, varColumns)
+  ha <- gb$modifyHaColors(varColumns, targets1, ha)
+  return(ha)
+}
+
+
+# Dropping any unwanted column annotation
+FilterHmAnno <- function(ha, varToPlot){
+  toKeep <- names(ha@anno_list) %in% varToPlot
+  ha@anno_list <- ha@anno_list[toKeep] 
+  ha@height <- grid::unit(1, "mm")
+  return(ha)
+}
+
+
                                            
