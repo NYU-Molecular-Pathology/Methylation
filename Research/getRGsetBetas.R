@@ -151,13 +151,13 @@ batchCorrectBs <- function(betas, targets, batch_col) {
 }
 
 
-RemoveBatchEffect <- function(batch_col = NULL, betas, targets, combatOut) {
-    if (file.exists(combatOut)) {
-      betas <- gb$LoadRdatObj(combatOut)
+RemoveBatchEffect <- function(betas, targets, gb) {
+    if (file.exists(gb$combatOut)) {
+      betas <- gb$LoadRdatObj(gb$combatOut)
       return(betas)
     }
-    betas <- gb$batchCorrectBs(betas, targets, batch_col)
-    gb$SaveObj(betas, file.name = combatOut)
+    betas <- gb$batchCorrectBs(betas, targets, gb$batch_col)
+    gb$SaveObj(betas, file.name = gb$combatOut)
     return(betas)
 }
 
@@ -242,14 +242,18 @@ GetRgsetDat <- function(csvPath = "samplesheet.csv", gb){
 }
 
 
-
-cleanRawProbes <- function(rawBetaDat, RGSet, samNames, targets) {
-    gc(verbose = F)
-    if (!file.exists(rawBetaDat)) {
-        betas <- gb$cleanUpProbes(RGSet=RGSet, targets=targets)
-        SaveObj(betas, file.name = rawBetaDat)
-    } else{betas <- LoadRdatObj(rawBetaDat)}
-    return(betas)
+cleanRawProbes <- function(RGSet, targets, gb) {
+  gc(verbose = F)
+  if (!file.exists(gb$rawBetaFi)) {
+    betas <- gb$cleanUpProbes(RGSet = RGSet, targets = targets)
+    SaveObj(betas, file.name = gb$rawBetaFi)
+  } else{
+    betas <- LoadRdatObj(gb$rawBetaFi)
+  }
+  if (!is.null(gb$batch_col)) {
+    betas <- gb$RemoveBatchEffect(betas, targets, gb)
+  }
+  return(betas)
 }
 
 
