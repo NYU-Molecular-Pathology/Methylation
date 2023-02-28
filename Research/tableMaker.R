@@ -247,7 +247,7 @@ require("ggplot2")
 library("DT")
 
 printMissing <- function(theMissing, gb) {
-  cat("## Poor Quality Dropped Samples:\n\n")
+  cat("## Poor Quality or Dropped Samples:\n\n")
   if (!is.null(theMissing) & nrow(theMissing) > 0) {
     selCols <-
       c("Sample_Name", gb$col_sentrix, gb$col_samTypes, gb$col_samGrp, "Sample_Group")
@@ -377,7 +377,7 @@ GetColorShape <- function(var1Col, var2Col){
 
 
 ShowAnyMissed <- function(gb){
-  cat("## Samples with Missing or Duplicate idat files:\n\n")
+  cat("## Samples Removed from Analysis with Missing or Duplicate idat files:\n\n")
   oldTargs <- gb$sanitizeSheet(gb$inputFi, "oldTargs.csv")
   oldTargs <- oldTargs[!c(oldTargs[,gb$col_samNames] %in% targets[,gb$col_samNames]),]
   if(nrow(oldTargs)>0){
