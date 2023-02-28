@@ -164,17 +164,17 @@ selectPlots <- function(doPlotly = F, tplots, ty, tps, outDirs) {
 
 
 
-gb$grabAllBeta <- function(targets1, betas, supervised = F) {
+grabAllBeta <- function(targets1, betas, supervised = F) {
     if (supervised == T) {
-        allBetas1 <- list(betas[1:100,], betas[1:1000,], betas)
+        supBets <- betas[, targets1$SampleFilter] # filtering betas
+        allBetas1 <- list(supBets[1:100,], supBets[1:1000,], supBets)
     } else{
         betas1 <- betas[, targets1$SampleFilter] # filtering betas
-        
         if (file.exists(file.path(gb$runDir, gb$unbetaVariance))) {
-            unBets <- readRDS(gb$unbetaVariance)
+            unBets <- gb$LoadRdatObj(gb$unbetaVariance)
         } else{
             unBets <- gb$takeTopVariance(betas1, topVar = 1:10000)
-            saveRDS(unBets, file = file.path(gb$runDir, gb$unbetaVariance))
+            gb$SaveObj(unBets, file = file.path(gb$runDir, gb$unbetaVariance))
         }
         unBets <- unBets[, targets1$SampleFilter]
         allBetas1 <- list(unBets[1:100, ], unBets[1:1000, ], unBets)
