@@ -163,8 +163,7 @@ selectPlots <- function(doPlotly = F, tplots, ty, tps, outDirs) {
 }
 
 
-
-grabAllBeta <- function(targets1, betas, supervised = F) {
+gb$grabAllBeta <- grabAllBeta <- function(targets1, betas, supervised = F) {
     if (supervised == T) {
         supBets <- betas[, targets1$SampleFilter] # filtering betas
         allBetas1 <- list(supBets[1:100,], supBets[1:1000,], supBets)
@@ -205,6 +204,7 @@ doMultiple <- function(allBetas1, tsne_titles, outDirs, targets1, tps,ty,custom)
            })[[1]]
   return(plotList)
 }
+
 
 plotSaver <-
     function(outDirs,
