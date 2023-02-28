@@ -63,14 +63,15 @@ combine.EPIC.450K <- function(targets, gb, batchFilter="EPIC") {
 # Remove Low Quality and select probes using annotations
 cleanUpProbes <- function(RGSet, targets, getfunorm=F){
     library("minfi")  
-    detPfile <- "data/DetPvals.Rdata"
+    td <- 
+    dateFile <- paste(Sys.Date(),"DetPvals.Rdata", sep = "_")
+    detPfile <- paste0("data", .Platform$file.sep, dateFile)
     if(!file.exists(detPfile)){
       detP <- minfi::detectionP(RGSet)
       gb$SaveObj(detP, file.name = detPfile)
     }else{
       detP <- gb$LoadRdatObj(detPfile)
     }
-    #detP <- detectionP(RGSet)
     colnames(detP) <- RGSet@colData@listData[["Sample_Name"]]
     keep <- colMeans(detP) < 0.05
     RGSet <- RGSet[, keep]
