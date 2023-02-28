@@ -235,6 +235,7 @@ GrabMinfiSheet <- function(idatPath, csvPath){
 }
 
 
+
 GetRgsetDat <- function(csvPath = "samplesheet.csv", gb){
     require("minfi")
     gc(verbose = F)
@@ -242,9 +243,8 @@ GetRgsetDat <- function(csvPath = "samplesheet.csv", gb){
         RGSet <- gb$LoadRdatObj(gb$rgOut)
         return(RGSet)
      }
-    targets <- as.data.frame(read.csv(csvPath))
     if(is.null(gb$idatPath)){gb$idatPath <- getwd()}
-    sheet <- GrabMinfiSheet(gb$idatPath, gb$csvPath)
+    sheet <- GrabMinfiSheet(gb$idatPath, csvPath)
     if (gb$mergeProbes == T & !is.null(gb$col_arrayType)) {
         RGSet <- gb$combine.EPIC.450K(targets = sheet, gb)
         gb$SaveObj(RGSet, file.name = gb$rgOut)
