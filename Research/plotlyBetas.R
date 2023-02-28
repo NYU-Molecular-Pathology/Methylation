@@ -231,6 +231,13 @@ plotSaver <- function(outDirs,tsne_titles,tps,ty,plotList,custom, names2Label=NU
 }
 
 
+MessageTsneLoop <- function(targets, custom) {
+    message("Current Sample Group TSNE: ",
+            custom,
+            "\nAll Target Group Filters: ",
+            paste(unique(targets$SamGroups)))
+}
+
 
 subsetBetas <- function(targFilter,
                         samGroup,
@@ -243,33 +250,33 @@ subsetBetas <- function(targFilter,
                         supervised = F,
                         names2Label = NULL)
 {
-  tps <- unique(targFilter)
-  targets$SamGroups <- targets$SampleFilter <- NULL
-  targets$SampleFilter <- samNames # creating new column
-  targets$SamGroups <- targets[, colnames(targFilter)]
-  targets$Sym_Shape <- samShapes
-  targets$PointColors <- targets[, samGroup]
-  colorColName <- paste0(samGroup, "_color")
-  targets$color <- targets[, colorColName]
-  ty = NULL
-  for (ty in 1:nrow(tps)) {
-    gc(verbose = F)
-    custom = tps[ty, 1]
-    message("Current Sample Group TSNE: ", custom, 
-            "\nAll Target Group Filters: ", paste(unique(targFilter)))
-    # Filter The Beta Values ---------
-    targets1 <- targets[targFilter == custom, ]
-    allBetas1 <- gb$grabAllBeta(targets1, betas, supervised)
-    outDirs <- gb$grabPngNames(tsne_titles)[,]
     
-    tplots <- plotList <- NULL
-    # Get T-sne Values ---------
-    plotList <-gb$doMultiple(allBetas1, tsne_titles, outDirs, targets1, tps, ty, custom)
-    gc(verbose = F)
-    
-    tplots <- gb$plotSaver(outDirs, tsne_titles, tps, ty, plotList, custom, names2Label)
-    gb$selectPlots(doPlotly, tplots, ty, tps, outDirs)
-  }
+    targets$SamGroups <- targets$SampleFilter <- NULL
+    targets$SampleFilter <- targets[, samNames] # creating new column
+    targets$SamGroups <- targets[, targFilter]
+    targets$Sym_Shape <- targets[, samShapes]
+    targets$PointColors <- targets[, samGroup]
+    colorColName <- paste0(samGroup, "_color")
+    targets$color <- targets[, colorColName]
+    tps <- as.data.frame(unique(targets$SamGroups))
+    ty = NULL
+    for (ty in 1:nrow(tps)) {
+        gc(verbose = F)
+        custom = tps[ty, 1]
+        MessageTsneLoop(targets, custom)
+        # Filter The Beta Values ---------
+        targets1 <- targets[targets$SamGroups == custom, ]
+        allBetas1 <- gb$grabAllBeta(targets1, betas, supervised)
+        outDirs <- gb$grabPngNames(tsne_titles)[,]
+        
+        tplots <- plotList <- NULL
+        # Get T-sne Values ---------
+        plotList <-gb$doMultiple(allBetas1, tsne_titles, outDirs, targets1, tps, ty, custom)
+        gc(verbose = F)
+        
+        tplots <- gb$plotSaver(outDirs, tsne_titles, tps, ty, plotList, custom, names2Label)
+        gb$selectPlots(doPlotly, tplots, ty, tps, outDirs)
+    }
 }
 
 
