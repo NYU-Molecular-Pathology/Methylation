@@ -1,14 +1,16 @@
 gb <- globalenv(); assign("gb", gb)
 library("utils")
 
-# FUN: Save object as Rdata file
+
+# FUN: Save object as Rdata file ---------------------------------------------------------------
 SaveObj <- function(object, file.name){
     outfile <- file(file.name, "wb")
     serialize(object, outfile)
     close(outfile)
 }
 
-# FUN: Load object from Rdata file with progressbar
+
+# FUN: Load object from Rdata file with progressbar ---------------------------------------------
 LoadRdatObj <- function(file.name, msgProg=T){
     library("foreach")
     library("utils")
@@ -29,31 +31,32 @@ LoadRdatObj <- function(file.name, msgProg=T){
     return(unserialize(data))
 }
 
-
-# FUN: Obtain RGSet with Probes common to 450K Array ---------------------------
-combine.EPIC.450K <- function(targets, gb, batchFilter="EPIC") {
-  targets$Batch <- targets[, gb$col_arrayType]
-  stopifnot(any(batchFilter %in% targets$Batch))
-  if(length(targets$Batch)>0){
-        message("Here are your targets$Batch options: ");print(unique(targets$Batch))
-        targets_450k <- subset(targets, targets$Batch != batchFilter)
-        targets_850k <- subset(targets, targets$Batch == batchFilter)
-        if (!anyDuplicated(targets_450k$Basename) == F) {
-            return(print(paste("450K duplicated basenames:", anyDuplicated(targets_450k$Basename))))}
-        if (!anyDuplicated(targets_450k$Basename) == F) {
-            return(print(paste("850K duplicated basenames:", anyDuplicated(targets_850k$Basename))))}
-        else{
-            message("reading 450K arrays...")
-            RGSet_450k <- minfi::read.metharray.exp(targets = targets_450k, force = T, verbose = T)
-            message("reading EPIC arrays...")
-            RGSet_850k <- minfi::read.metharray.exp(targets = targets_850k, force = T, verbose = T)
-            message("Combining common probes...")
-            RGSet <- minfi::combineArrays(RGSet_450k, RGSet_850k, outType = "IlluminaHumanMethylation450k")
-        }
-    }else{
-        message("NO ARRAY BATCHES FOUND")
-        RGSet <- minfi::read.metharray.exp(targets = targets, force = T, verbose = T)
+# FUN: Checks Minfi Targets for Duplicate Arrays ------------------------------------------------
+CheckDupeArrays <- function(arrayBase, arrayType){
+    if (anyDuplicated(arrayBase) != 0) {
+        duped <- paste(anyDuplicated(arrayBase), collapse=" ")
+        message(paste(arrayType, "duplicated basenames:", duped))
+        stopifnot(anyDuplicated(arrayBase) != 0)
     }
+}
+
+
+# FUN: Obtain RGSet with Probes common to 450K Array --------------------------------------------
+combine.EPIC.450K <- function(targets, gb, batchFilter="EPIC") {
+    stopifnot(any(gb$col_arrayType %in% colnames(targets)))
+    targets$Batch <- targets[, gb$col_arrayType]
+    message("Here are your targets$Batch options:\n", paste(unique(targets$Batch), collapse = " & "))
+    stopifnot(any(batchFilter %in% targets$Batch) & length(targets$Batch) > 0)
+    targets_450k <- subset(targets, targets$Batch != batchFilter)
+    targets_EPIC <- subset(targets, targets$Batch == batchFilter)
+    CheckDupeArrays(targets_450k, "450K")
+    CheckDupeArrays(targets_EPIC, "EPIC")
+    message("reading 450K arrays...")
+    RGSet_450k <- minfi::read.metharray.exp(targets = targets_450k, force = T, verbose = T)
+    message("reading EPIC arrays...")
+    RGSet_EPIC <- minfi::read.metharray.exp(targets = targets_EPIC, force = T, verbose = T)
+    message("Combining common probes...")
+    RGSet <- minfi::combineArrays(RGSet_450k, RGSet_EPIC, outType = "IlluminaHumanMethylation450k")
     return(RGSet)
 }
 
@@ -93,6 +96,7 @@ cleanUpProbes <- function(RGSet, targets, getfunorm=F){
     }
 }
 
+
 # Returns topVar beta probes instead of all probes
 takeTopVariance <- function(betas, topVar){
     var_probes <- apply(betas, 1.0, var)
@@ -100,6 +104,7 @@ takeTopVariance <- function(betas, topVar){
     top_var_beta <- betas[select_var, ]
     return(top_var_beta)
 }
+
 
 getSupervise <- function(the_beta, RGSet, topVar=1:10000, cutOff=0.05, dmpTyp = "categorical" ){
     condition <- pData(RGSet)$Type
@@ -115,6 +120,7 @@ getSupervise <- function(the_beta, RGSet, topVar=1:10000, cutOff=0.05, dmpTyp = 
     betas <- as.matrix(betas_df)
     return(betas)
 }
+
 
 # Checks if supervised rds data exists to load, else calculates it 
 loadSupervise <- function(RGSet, betas, supbetaOut, varProbes, col_sentrix="SentrixID_Pos", dmpTyp = "categorical") {
@@ -163,6 +169,7 @@ RemoveBatchEffect <- function(betas, targets, gb) {
 
 
 CleanUpSheetRows <- function(sheet, idatPath, targets){
+    sheet <- as.data.frame(sheet)
     sheet$Barcode <-  targets[,gb$col_sentrix]
     sheet[,gb$col_sentrix] <- NA
     sheet[,gb$col_sentrix] <- sheet$Barcode
@@ -180,8 +187,11 @@ CleanUpSheetRows <- function(sheet, idatPath, targets){
     sheet <- sheet[file.exists(shFiles),]
     toDrop <- anyDuplicated(sheet)
     sheet <- sheet[-toDrop,]
+    sheet <- sheet[!is.na(sheet$Sample_Name), ]
+    stopifnot(nrow(sheet) > 0)
     return(sheet)
 }
+
 
 getRgset <- function(rgOut, targets, mergeProbes = F, csvPath = "samplesheet.csv", idatPath = NULL){
   require("minfi")
@@ -211,28 +221,31 @@ getRgset <- function(rgOut, targets, mergeProbes = F, csvPath = "samplesheet.csv
 }
 
 
-GetRgsetDat <- function(csvPath = "samplesheet.csv", gb){
-    require("minfi")
-    targets <- as.data.frame(read.csv(csvPath))
-    if(is.null(gb$idatPath)){gb$idatPath <- getwd()}
-    gc(verbose = F)
-    if (file.exists(gb$rgOut)) {
-        RGSet <- gb$LoadRdatObj(gb$rgOut)
-        return(RGSet)
-    }
-    sheet <- NULL
+GrabMinfiSheet <- function(idatPath, csvPath){
     isPathway <- stringr::str_detect(csvPath, .Platform$file.sep)
     if (isPathway == T) {
-        sheet <- minfi::read.metharray.sheet(gb$idatPath, pattern =  basename(csvPath))
+        sheet <- minfi::read.metharray.sheet(idatPath, pattern =  basename(csvPath))
     }else{
-      if(!file.exists(file.path(gb$idatPath, csvPath))){file.copy(csvPath, gb$idatPath)}  
-      sheet <- minfi::read.metharray.sheet(gb$idatPath, pattern = csvPath)
+      if(!file.exists(file.path(idatPath, csvPath))){file.copy(csvPath, idatPath)}  
+      sheet <- minfi::read.metharray.sheet(idatPath, pattern = csvPath)
     }
-    sheet <- as.data.frame(sheet)
     sheet <- gb$CleanUpSheetRows(sheet, gb$idatPath, targets)
-    sheet <- sheet[!is.na(sheet$Sample_Name), ]
+    return(sheet)
+}
+
+
+GetRgsetDat <- function(csvPath = "samplesheet.csv", gb){
+    require("minfi")
+    gc(verbose = F)
+     if (file.exists(gb$rgOut)) {
+        RGSet <- gb$LoadRdatObj(gb$rgOut)
+        return(RGSet)
+     }
+    targets <- as.data.frame(read.csv(csvPath))
+    if(is.null(gb$idatPath)){gb$idatPath <- getwd()}
+    sheet <- GrabMinfiSheet(gb$idatPath, gb$csvPath)
     if (gb$mergeProbes == T & !is.null(gb$col_arrayType)) {
-        RGSet <- combine.EPIC.450K(targets = sheet, gb)
+        RGSet <- gb$combine.EPIC.450K(targets = sheet, gb)
         gb$SaveObj(RGSet, file.name = gb$rgOut)
         return(RGSet)
     }
@@ -313,6 +326,7 @@ dropBadQc <- function(targets, betas, csvFi="samplesheet.csv") {
     write.csv(targets, file = csvFi, quote = F, row.names = F)
     return(theMissing)
 }
+
 
 # Matches RGset to any dropped samples of cleaned Beta Values
 cleanRgset <- function(RGSet, col_sentrix, betas) {
