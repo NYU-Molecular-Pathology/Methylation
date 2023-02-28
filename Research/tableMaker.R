@@ -328,33 +328,30 @@ GetSamFreqTab <- function(targets, varCol1, varCol2 = NULL) {
 
 MessageBatches <- function(targets, col_batchEffect) {
   if (!is.null(col_batchEffect)) {
-    cat(paste("Batch Effect Column Name:", col_batchEffect, "\n\n"))
-    cat("Different Batches:\n")
-    cat(paste(unique(targets[, col_batchEffect]), collapse = ",\n"))
+    cat(paste0('#### Batch Effect Column Name: "', col_batchEffect, '" \n\n'))
+    cat("#### Different Batches:\n")
+    cat(paste(unique(targets[, col_batchEffect]), collapse = " & "))
     cat("\n\n")
   }else{
-    cat("No Batch Effect Correction Performed\n\n")
+    cat("#### No Batch Effect Correction Performed\n\n")
   }
 }
 
-
 MessageArrayMix <- function(targets, col_arrayType) {
   if (!is.null(col_arrayType)) {
-    cat(paste("Arrays Type Column Name:", col_arrayType, "\n"))
-    cat("Different Arrays: ")
-    cat(paste(unique(targets[, col_arrayType]), collapse = "& "))
+    cat(paste0('#### Arrays Type Column Name: "', col_arrayType, '" \n\n'))
+    cat("#### Different Arrays: ")
+    cat(paste(unique(targets[, col_arrayType]), collapse = " & "))
     cat("\n\n")
   }else{
     cat("No array probes merged, all microarrays are the same version\n\n")
   }
 }
 
-
 MessageBatchMix <- function(targets, gb){
-  cat("## Sample Batch Correction or Probes Merged\n\n")
-  cat(paste("Samples Batch Corrected:", gb$batchEffect, "\n"))
+  cat(paste("#### Samples Batch Corrected:", gb$batchEffect, "\n\n"))
   gb$MessageBatches(targets, gb$col_batchEffect)
-  cat(paste("Sample 450k Probes Merged:", gb$mergeProbes, "\n"))
+  cat(paste("#### Sample 450k Probes Merged:", gb$mergeProbes, "\n\n"))
   gb$MessageArrayMix(targets, gb$col_arrayType)
 }
 
