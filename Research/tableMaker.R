@@ -242,23 +242,16 @@ require("plotly")
 require("ggplot2")
 library("DT")
 
-printMissing <- function(theMissing) {
+printMissing <- function(theMissing, gb) {
+  cat("## Poor Quality Dropped Samples:\n\n")
   if (!is.null(theMissing) & nrow(theMissing) > 0) {
     selCols <-
-      c(
-        "Sample_Name",
-        gb$col_sentrix,
-        gb$col_samTypes,
-        gb$col_samGrp,
-        "Sample_ID",
-        "Sample_Group"
-      )
+      c("Sample_Name", gb$col_sentrix, gb$col_samTypes, gb$col_samGrp, "Sample_Group")
     return(gb$smallTab(theMissing[, selCols]))
   } else{
     cat("None\n\n")
   }
 }
-
 
 loadHtmlTag <- function(){
     require("tidyverse")
@@ -354,6 +347,7 @@ MessageArrayMix <- function(targets, col_arrayType) {
 
 
 MessageBatchMix <- function(targets, gb){
+  cat("## Sample Batch Correction or Probes Merged\n\n")
   cat(paste("Samples Batch Corrected:", gb$batchEffect, "\n"))
   gb$MessageBatches(targets, gb$col_batchEffect)
   cat(paste("Sample 450k Probes Merged:", gb$mergeProbes, "\n"))
@@ -375,12 +369,14 @@ if(Sys.info()[['sysname']]!="Darwin") {
     Sys.setenv(IMAGEMAGICK_V6_HOME=magickPath)
 } 
 
+
 GetColorShape <- function(var1Col, var2Col){
   return(paste0("Color Labels=", var1Col, " & ", "Shapes=", var2Col))
 }
 
 
 ShowAnyMissed <- function(gb){
+  cat("## Samples with Missing or Duplicate idat files:\n\n")
   oldTargs <- gb$sanitizeSheet(gb$inputFi, "oldTargs.csv")
   oldTargs <- oldTargs[!c(oldTargs[,gb$col_samNames] %in% targets[,gb$col_samNames]),]
   if(nrow(oldTargs)>0){
