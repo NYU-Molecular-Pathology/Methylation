@@ -211,7 +211,8 @@ assignColors3 <- function(targets, varColumns = c("Type", "Origin"), col_vect = 
     return(ha)
   }
 
-addGeneName <- function(annot, oldBeta) {
+addGeneName <- function(RGSet, oldBeta) {
+  annot <- minfi::getAnnotation(RGSet)
   geneName <- annot[rownames(oldBeta), "UCSC_RefGene_Name"]
   rownames(oldBeta) <- paste(geneName, rownames(oldBeta), sep = "_")
   return(oldBeta)
