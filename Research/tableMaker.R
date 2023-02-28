@@ -370,7 +370,7 @@ GetColorShape <- function(var1Col, var2Col){
 ShowAnyMissed <- function(gb){
   oldTargs <- gb$sanitizeSheet(gb$inputFi, "oldTargs.csv")
   oldTargs <- oldTargs[!c(oldTargs[,gb$col_samNames] %in% targets[,gb$col_samNames]),]
-  if(nrows(oldTargs)>0){
+  if(nrow(oldTargs)>0){
     return(gb$smallTab(oldTargs))
   }else{
     return(cat("NONE\n\n"))
