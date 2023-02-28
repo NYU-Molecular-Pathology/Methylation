@@ -362,10 +362,14 @@ GetMsetSq <- function(RGSet, targets, mbfile) {
 }
 
 
-getTargCsv <- function(csvFi = "samplesheet.csv") {
+getTargCsv <- function(csvFi = "samplesheet.csv", betas=NULL, samName_col="Sample_Name") {
   gc(verbose = F)
   targets <- read.csv(csvFi, strip.white = T, row.names = NULL)
   targets <- dfTargets(targets)
+  if(!is.null(betas)){
+      targets <- targets[targets[,samName_col] %in% colnames(betas),]
+  }
+  stopifnot(nrow(targets) > 0)
   return(targets)
 }
 
