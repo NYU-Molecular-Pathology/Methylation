@@ -372,7 +372,7 @@ if(Sys.info()[['sysname']]!="Darwin") {
 
 
 GetColorShape <- function(var1Col, var2Col){
-  return(paste0("Color Labels=", var1Col, " & ", "Shapes=", var2Col))
+  return(paste0("\nColor Labels = ", var1Col, " & ", "Shapes = ", var2Col))
 }
 
 
@@ -386,6 +386,5 @@ ShowAnyMissed <- function(gb){
     return(cat("NONE\n\n"))
   }
 }
-
 
 
