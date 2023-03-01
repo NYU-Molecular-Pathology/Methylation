@@ -266,7 +266,9 @@ ValidateSentrix <- function(targets, gb){
         )
         targets <- FillMissingData2(targets)
     }
+    return(targets)
 }
+
 
 MsgCaptureOut <- function(objDF){
     message(paste0(capture.output(objDF), collapse="\n"))
