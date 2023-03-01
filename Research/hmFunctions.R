@@ -516,4 +516,14 @@ FilterHmAnno <- function(ha, varToPlot){
 }
 
 
+PrintSingleHeatMap <- function(bv, ha, geneNams, colSplt = 3, topvar = 1, hmTitle = "Probe-Specific Beta Values") {
+    cat(paste("###", "Probe-Specific Beta Value HeatMap", topvar, "\n\n"))
+    hm <- getHeatMap(bv, hmTitle, ha, geneNams, colSplt = colSplt)
+    hm
+    cat('\n\n')
+    hmOutPath <- file.path(".", "figures", "heatmaps")
+    if (!dir.exists(hmOutPath)) {dir.create(hmOutPath, recursive = T)}
+    SaveHmPng("hm_custom", "_probes.png", hm, topvar, outDir = hmOutPath)
+}
+                                           
                                            
