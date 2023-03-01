@@ -104,6 +104,9 @@ ModifyTargetColumns <- function(targets, gb){
     )
     }
   targets <- gb$colorTargets(targets, varColumns = gb$selectedVars)
+  if(is.null(gb$col_sentrix)){
+      gb$col_sentrix <-"SentrixID_Pos"
+  }
   targets <- gb$FixBaseName(targets, runDir = gb$idatPath, gb$col_sentrix)
   return(targets)
 }
