@@ -61,13 +61,14 @@ makeDt <- function(targets, gb=NULL) {
       )
     
     if(!is.null(gb)){
-      colFilter <- c(gb$col_samNames, gb$col_samTypes, gb$col_shapes, "Barcode")
+      colFilter <- c(gb$col_samNames, gb$col_samTypes, gb$col_shapes, "SentrixID_Pos")
       if(!is.null(gb$col_arrayType)){
          colFilter <- c(colFilter, gb$col_arrayType)
       }
       if(!is.null(gb$batch_col)){
          colFilter <- c(colFilter, gb$batch_col)
       }
+      colFilter <- unique(colFilter)
       targets <- targets[, colFilter]
     }
     
