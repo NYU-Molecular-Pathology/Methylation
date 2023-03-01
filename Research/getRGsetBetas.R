@@ -82,7 +82,7 @@ MsgDropping <- function(keep){
 
 
 # Remove Low Quality and select probes using annotations
-cleanUpProbes <- function(RGSet, targets, gb, getfunorm=F){
+cleanUpProbes <- function(RGSet, targets, gb, getfunorm = F, getNoob=F){
     library("minfi")  
     if(!file.exists(gb$pValsOutFi)){
       detP <- minfi::detectionP(RGSet)
@@ -96,7 +96,11 @@ cleanUpProbes <- function(RGSet, targets, gb, getfunorm=F){
     targets <- targets[keep,]
     detP <- detP[, keep]
     MsgDropping(keep)
-    mSetSq <- suppressWarnings(preprocessQuantile(RGSet))
+    if(getNoob==T){
+      mSetSq <- suppressWarnings(minfi::preprocessFunnorm(RGSet))
+    }else{
+      mSetSq <- suppressWarnings(minfi::preprocessQuantile(RGSet))
+    }
     detP <- detP[match(featureNames(mSetSq), rownames(detP)), ]
     keep <- rowSums(detP < 0.01) == ncol(mSetSq)
     gset.funnorm <- addSnpInfo(mSetSq[keep, ])
@@ -278,18 +282,21 @@ GetRgsetDat <- function(csvPath = "samplesheet.csv", gb) {
 }
 
 
-cleanRawProbes <- function(RGSet, targets, gb) {
-  gc(verbose = F)
-  if (!file.exists(gb$rawBetaFi)) {
-    betas <- gb$cleanUpProbes(RGSet = RGSet, targets = targets, gb)
-    SaveObj(betas, file.name = gb$rawBetaFi)
-  } else{
-    betas <- LoadRdatObj(gb$rawBetaFi)
-  }
-  if (!is.null(gb$batch_col)) {
-    betas <- gb$RemoveBatchEffect(betas, targets, gb)
-  }
-  return(betas)
+cleanRawProbes <- cleanRawProbes <- function(RGSet, targets, gb) {
+    gc(verbose = F)
+    if (!file.exists(gb$rawBetaFi)) {
+        betas <- gb$cleanUpProbes(RGSet = RGSet,
+                                  targets = targets,
+                                  gb,
+                                  getNoob = gb$getNoob)
+        SaveObj(betas, file.name = gb$rawBetaFi)
+    } else{
+        betas <- LoadRdatObj(gb$rawBetaFi)
+    }
+    if (!is.null(gb$batch_col)) {
+        betas <- gb$RemoveBatchEffect(betas, targets, gb)
+    }
+    return(betas)
 }
 
 
