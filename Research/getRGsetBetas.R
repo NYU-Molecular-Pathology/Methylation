@@ -444,3 +444,16 @@ GetArrayTypes <- function(targets, arrayColumn, outputFi = "annotated_sampleshee
   return(targets)
 }
 
+Get_Unfiltered_Betas <- function(idatPath, samsheet, dataFi="data/unfilteredBetas.Rdata"){
+    if (file.exists(dataFi)) {
+        rawBetas <- gb$LoadRdatObj(dataFi)
+    }else{
+         sheet <- GrabMinfiSheet(gb$idatPath, gb$samsheet)
+    rawRGSet <- minfi::read.metharray.exp(base = idatPath, targets = sheet, verbose = T, force = T)
+    rawBetas <- minfi::getBeta(rawRGSet)
+    colnames(rawBetas) <- sheet[,1]
+    gb$SaveObj(rawBetas, file.name = dataFi)
+    }
+    return(rawBetas)
+}
+
