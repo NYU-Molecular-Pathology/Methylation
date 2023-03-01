@@ -15,8 +15,7 @@ grabPngNames <- function(tsne_titles=NULL, keywrd="Top"){
 
 
 FormatPlotlyLayout <- function(fig){
-    otherPlot <-
-        supM(plotly::ggplotly(fig, dynamicTicks = T, width = 1200, height = 800))
+    otherPlot <- supM(plotly::ggplotly(fig, dynamicTicks = T, width = 1200, height = 800, source="B"))
     otherPlot$x[["layout"]][["annotations"]] <- NULL
     opLayout <- otherPlot[["x"]][["layout"]]
     opLayout[["font"]][["size"]] <- 12
@@ -32,7 +31,7 @@ FormatPlotlyLayout <- function(fig){
 
 GetPlotlySymbols <- function(fig, uniGrp){
     markerSyms <- c(
-        "circle", "square", "diamond", "cross", "X", "triangle-up", "triangle-down", "triangle-left",
+        "circle", "square", "diamond", "triangle-up", "cross", "X", "triangle-down", "triangle-left", 
         "triangle-right", "triangle-ne", "triangle-se", "triangle-sw", "triangle-nw", "pentagon",
         "hexagon", "hexagon2", "octagon", "star", "hexagram", "star-triangle-up", "star-triangle-down",
         "star-square", "star-diamond", "diamond-tall", "diamond-wide", "hourglass", "bowtie", "circle-cross",
@@ -60,27 +59,24 @@ FormatHoverInfo <- function(otherPlot){
 
 
 FormatPlotLabels <- function(fig, otherPlot, uniGrp, markerSyms){
-    for (grpT in 1:length(uniGrp)) {
-        grpNam <- uniGrp[grpT]
-        currGrp <- fig[["data"]]$GROUPS == grpNam
-        samLabs <- fig[["data"]]$samples
-        for (grpLabNam in 1:length(otherPlot[["x"]][["data"]])) {
-            currLabNam <- otherPlot[["x"]][["data"]][[grpLabNam]]$name
-            currLabNam <- stringr::str_split_fixed(currLabNam,",",2)[,2]
-            currLabNam <- stringr::str_remove_all(currLabNam, "[()]")
-            markerIdx <- which(currLabNam==uniGrp)
-            #      currLabNam <- otherPlot[["x"]][["data"]][[grpLabNam]]$name
-            # currLabNam <- gsub("[()]", "", currLabNam)
-            # currLabNam <- stringr::str_split_fixed(currLabNam,",",2)
-            # newLegend <- stringr::str_to_title(splitLeg[,1])
-            # newSamNam <- stringr::str_to_title(splitLeg[,2])
-            # markerIdx <- which(currLabNam==uniGrp)
-            #otherPlot[["x"]][["data"]][[grpLabNam]][["marker"]][["symbol"]] <- markerSyms[markerIdx]
-            if (currLabNam == grpNam) {
-                hoverinfo <- paste0("Sample: ", samLabs[currGrp] , " (", grpNam, ")", "</br></br>")
-                otherPlot[["x"]][["data"]][[grpLabNam]][["text"]] <- hoverinfo
-            }
-        }
+  figDat <- fig[["data"]]
+  figGrp <- paste0("(", figDat$symbol, "," , figDat$GROUPS, ")")
+  samLabs <- figDat$samples
+  for (grpIdx in 1:length(uniGrp)) {
+    grpNam <- uniGrp[grpIdx]
+    currGrp <- figGrp == grpNam
+    currSam <- samLabs[currGrp]
+    newText <- paste(
+      paste("Sample:", samLabs[currGrp]),
+      paste("x:", round(figDat$x[currGrp], 2)),
+      paste("y:", round(figDat$y[currGrp], 2)),
+      paste("Color:", figDat$GROUPS[currGrp]),
+      paste("Symbol:", figDat$symbol[currGrp]),
+      sep = "<br />"
+      )
+    if (grpNam ==  otherPlot[["x"]][["data"]][[grpIdx]]$name){
+      otherPlot[["x"]][["data"]][[grpIdx]]$text <- newText
+    }
     }
     return(otherPlot)
 }
@@ -111,7 +107,8 @@ makePlotly <- function(fig) {
     otherPlot <- NULL
     otherPlot <- FormatPlotlyLayout(fig)
     otherPlot <- FormatHoverInfo(otherPlot)
-    uniGrp <- unique(fig[["data"]]$GROUPS)
+    uniGrp <- unlist(lapply(X = 1:length(otherPlot[["x"]][["data"]]),
+                            FUN = function(X) {return(otherPlot[["x"]][["data"]][[X]]$name)}))
     markerSyms <- GetPlotlySymbols(fig, uniGrp)
     otherPlot <- FormatPlotLabels(fig, otherPlot, uniGrp, markerSyms)
     otherPlot <- FormatPlotlyLegend(otherPlot)
