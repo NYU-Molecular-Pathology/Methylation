@@ -14,7 +14,7 @@ pkgs <- c(
   'DOSE',
   'enrichplot')
 
-librarian::shelf(pkgs, ask=F)
+librarian::shelf(pkgs, ask=F, update_all = F, quiet = F)
 
 library(clusterProfiler); require("clusterProfiler")
 library(pathview)
@@ -52,11 +52,7 @@ writeMeansDmp <- function(topPaths,
                              annot,
                              geneListIn = "Genes_Pathway.csv",
                              pathCsvOut = "signaling_pathway.csv") {
-  genelist <-
-    read.delim(geneListIn,
-               header = T,
-               sep = ",",
-               row.names = NULL)
+  genelist <- read.delim(geneListIn, header = T, sep = ",", row.names = NULL)
   for (geneRow in 1:nrow(topPaths)) {
     rap1 <- genelist[geneRow,]
     beta <- as.data.frame(betas)
@@ -185,24 +181,26 @@ PrintDotBarUpset <- function(kk_final){
     enrichplot::dotplot(kk_final, showCategory=10)
     cat("\n\n")
     cat("### BarPlot \n\n")
-    barplot(kk_final, showCategory=10, beside = T) 
+    barplot(kk_final, showCategory = 10, beside = T) 
     cat("\n\n")
     cat("### Upset Plot \n\n")
     enrichplot::upsetplot(kk_final)
     cat("\n\n")
 }
 
+
 GetHsaPath <- function(topPaths, pathCsvOut){
     endFile <- paste0(topPaths$ID,"_", basename(pathCsvOut))
-    hsaOutDir <- file.path(getwd(), "figures", "pathway")
+    hsaOutDir <- file.path(".", "figures", "pathway")
     if (!dir.exists(hsaOutDir)) {dir.create(hsaOutDir)}
     hsaOutFi <- file.path(hsaOutDir, endFile)
 }
 
+
 LoopHSAfiles <- function(hsaOutFi){
     for (pathFi in hsaOutFi) {
     hsaPath <- stringr::str_split_fixed(basename(pathFi), "_", 2)[[1]]
-    hsaPath <- file.path(getwd(), "figures", "pathway", hsaPath)
+    hsaPath <- file.path(".", "figures", "pathway", hsaPath)
     if (file.exists(pathFi)) {
         suppressMessages(gb$pathview_promoter(pathFi, hsaPath))
         suppressMessages(gb$pathview_body(pathFi, hsaPath))
@@ -211,6 +209,7 @@ LoopHSAfiles <- function(hsaOutFi){
     }
 }
 }
+
 
 LoopSaveHsaPng <- function(pathWayGenes, pathCsvOut){
   endFile <- paste0(pathWayGenes$ID,"_",pathCsvOut)
@@ -231,6 +230,7 @@ LoopSaveHsaPng <- function(pathWayGenes, pathCsvOut){
   }
 }
 
+
 WritePathVals<- function(geneVals, geneListIn){
     # Sort lowest Pvalues and lowest qvalue
     message("Min p-value: ",min(geneVals$pvalue))
@@ -239,5 +239,15 @@ WritePathVals<- function(geneVals, geneListIn){
     pathWayGenes <- as.data.frame(topPaths)
     write.csv(pathWayGenes, file = file.path(".","figures","pathway",geneListIn), row.names = F, quote = F)
     return(pathWayGenes)
+}
+
+
+GetKeggGeneVals <- function(RGSet, targets, nameGrp, gb) {
+    gset.funnorm <- gb$grabGsetFun(gb$gsetFile, RGSet, targets)
+    condition <- minfi::pData(gset.funnorm)$Type == nameGrp
+    gene_char_unique <- gb$getDmpData(gb$ClusfiNam, gset.funnorm, condition)
+    kk_final <- gb$entrz2kegg(gene_char_unique)
+    geneVals <- kk_final@result
+    geneVals <- geneVals[geneVals$qvalue < 0.05, ]
 }
 
