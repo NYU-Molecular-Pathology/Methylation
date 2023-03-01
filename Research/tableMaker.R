@@ -199,40 +199,102 @@ getColors <- function(samTypes) {
 }
 
 
-sanitizeSheet <- function(inputFi, samsheet) {
-    library("magrittr")
-    library("dplyr")
+StandardizeHeaders <- function(targets, samNames, sentrixs){
+    # Create any missing header columns to standardize names
+    targets[,"Barcode"] <- targets[,"Sentrix_ID"] <- targets[,"SentrixID_Pos"] <- NA
+    targets[,"Sample_ID"] <- targets[,"Sample_Name"] <- targets[,"Sample_Group"] <- NA
+    targets[,"Sample_ID"] <- targets[,"Sample_Name"] <- samNames
+    targets[,"Barcode"] <- targets[,"Sentrix_ID"] <- targets[,"SentrixID_Pos"] <- sentrixs
+    return(targets)
+}
+
+
+StripSheetSpaces <- function(samSh, samsheet){
+    colnames(samSh) <- gsub(pattern = " ", replacement = "_", colnames(samSh))
+    samSh <- samSh %>% dplyr::mutate_all(stringr::str_replace_all, " ", "-")
+    write.csv(samSh, samsheet, quote = F, row.names = F)
+    targets <- read.csv(samsheet, strip.white = T)
+    if (class(targets) != "data.frame") {targets <- as.data.frame(targets)}
+    return(targets)
+}
+
+ValidateColumns <- function(targets, gb) {
+    stopifnot(
+        gb$col_samNames %in% colnames(targets) == T &
+            gb$col_samTypes %in% colnames(targets) == T
+    )
+}
+
+SetKeyColumns <- function(targets, col_samTypes, col_samNames, col_other, col_shapes, sam.grp.type=NULL) {
+    targets <- dfTargets(targets)
+    # Creates any new "Type" column
+    targets$Type <- targets[, col_samTypes] 
+    # generates Sample_ID column if doesn't exist
+    targets$Sample_Name <- targets$Sample_ID <- targets[, col_samNames] 
+    targets$Other_Group <- targets$Sample_Group <- targets[, col_other]
+    targets$Sym_Shape <- targets[,col_shapes]
+    targets <- CheckSamNames(targets$Sample_ID, targets)
+    if (!is.null(sam.grp.type)) {
+      targets$Sample_Group <- sam.grp.type
+    }
+    return(targets)
+  }
+
+
+
+ReadSheetType <- function(inputFi){
     if (stringr::str_detect(inputFi, ".xlsx")) {
         samSh <- readxl::read_excel(inputFi)
         samSh <- samSh %>% dplyr::mutate_all(stringr::str_replace_all, ",", "")
     } else{
         samSh <- read.csv(inputFi, strip.white = T)
     }
-    colnames(samSh) <- gsub(pattern = " ", replacement = "_", colnames(samSh))
-    samSh <- samSh %>% dplyr::mutate_all(stringr::str_replace_all, " ", "-")
-    write.csv(samSh, samsheet, quote = F, row.names = F)
-    targets <- read.csv(samsheet, strip.white = T)
-    if (class(targets) != "data.frame") {
-        targets <- as.data.frame(targets)
+    return(samSh)
+}
+
+
+ValidateSentrix <- function(targets, gb){
+    if(is.null(gb$col_sentrix)|!any(gb$col_sentrix %in% colnames(targets))){
+        gb$GetCsvSheet(gb$needFi, gb$samsheet, gb$token, idatPath = gb$idatPath)
+        targets <- gb$SetKeyColumns(
+            targets,
+            gb$col_samTypes,
+            gb$col_samNames,
+            gb$col_other,
+            gb$col_shapes,
+            gb$sam.grp.type
+        )
+        targets <- FillMissingData2(targets)
     }
-    
-    stopifnot(gb$col_samNames %in% colnames(targets) == T & gb$col_samTypes %in% colnames(targets) == T)
-    
-    samNames <- targets[,gb$col_samNames]
-    sentrixs <- targets[,gb$col_sentrix]
-    # Create any missing header columns to standardize names
-    targets[,"Barcode"] <- targets[,"Sentrix_ID"] <- targets[,"SentrixID_Pos"] <- NA
-    targets[,"Sample_ID"] <- targets[,"Sample_Name"] <- targets[,"Sample_Group"] <- NA
-    targets[,"Sample_ID"] <- targets[,"Sample_Name"] <- samNames
-    targets[,"Barcode"] <- targets[,"Sentrix_ID"] <- targets[,"SentrixID_Pos"] <- sentrixs
-    
+}
+
+MsgCaptureOut <- function(objDF){
+    message(paste0(capture.output(objDF), collapse="\n"))
+}
+
+
+ValidateSampleIDs <- function(targets){
     if(any(duplicated(targets$Sample_ID))) {
-       warning("Duplicated sample IDs will be dropped!")
-       message(paste0(capture.output(targets[duplicated(targets$Sample_ID), ]), collapse="\n"))
-       targets <- targets[!duplicated(targets$Sample_ID), ]
-       row.names(targets) <- 1:nrow(targets)
+        warning("Duplicated sample IDs will be dropped!")
+        MsgCaptureOut(targets[duplicated(targets$Sample_ID), ])
+        targets <- targets[!duplicated(targets$Sample_ID), ]
+        row.names(targets) <- 1:nrow(targets)
     }
-    
+    return(targets)
+}
+
+
+sanitizeSheet <- function(inputFi, samsheet, gb) {
+    library("magrittr")
+    library("dplyr")
+    samSh <- ReadSheetType(inputFi)
+    targets <- StripSheetSpaces(samSh, samsheet)
+    ValidateColumns(targets, gb)
+    targets <- ValidateSentrix(targets, gb)
+    targets <- StandardizeHeaders(targets,
+                                  samNames = targets[, gb$col_samNames],
+                                  sentrixs = targets[, gb$col_sentrix])
+    targets <- ValidateSampleIDs(targets)
     return(targets)
 }
 
@@ -379,7 +441,7 @@ GetColorShape <- function(var1Col, var2Col){
 
 ShowAnyMissed <- function(gb){
   cat("## Samples Removed from Analysis with Missing or Duplicate idat files:\n\n")
-  oldTargs <- gb$sanitizeSheet(gb$inputFi, "oldTargs.csv")
+  oldTargs <- sanitizeSheet(gb$inputFi, "oldTargs.csv", gb)
   oldTargs <- oldTargs[!c(oldTargs[,gb$col_samNames] %in% targets[,gb$col_samNames]),]
   if(nrow(oldTargs)>0){
     return(gb$smallTab(oldTargs))
@@ -387,5 +449,6 @@ ShowAnyMissed <- function(gb){
     return(cat("NONE\n\n"))
   }
 }
+
 
 
