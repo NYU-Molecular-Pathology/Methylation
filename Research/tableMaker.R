@@ -464,4 +464,14 @@ ShowAnyMissed <- function(gb){
 }
 
 
+PrintTableLists <- function(ta1, ta2, ...) {
+    cat("\n\n")
+    print(
+        knitr::kable(
+            list(ta1, ta2, ...), format = "html", table.attr = 'class="myTable"') %>%
+            kableExtra::kable_styling(full_width = F)
+        )
+    cat("\n\n")
+}
+
 
