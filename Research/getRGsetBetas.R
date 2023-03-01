@@ -253,8 +253,7 @@ GrabMinfiSheet <- function(idatPath, csvPath){
 }
 
 
-
-GetRgsetDat <- function(csvPath = "samplesheet.csv", gb) {
+GetRgsetDat <- function(csvPath = "samplesheet.csv", gb, getFunNorm=F) {
     require("minfi")
     gc(verbose = F)
     if (file.exists(gb$rgOut)) {
@@ -268,14 +267,19 @@ GetRgsetDat <- function(csvPath = "samplesheet.csv", gb) {
     if (gb$mergeProbes == T & !is.null(gb$col_arrayType)) {
         message("Merging 450K and EPIC probes...")
         RGSet <- gb$combine.EPIC.450K(targets = sheet, gb)
+        if(getFunNorm==T){
+          RGSet <- minfi::preprocessFunnorm(RGSet)
+        }
         gb$SaveObj(RGSet, file.name = gb$rgOut)
         return(RGSet)
     } else{
         RGSet <- minfi::read.metharray.exp(base = gb$idatPath, targets = sheet, verbose = T, force = T)
+        if(getFunNorm==T){
+          RGSet <- minfi::preprocessFunnorm(RGSet)
+        }
         gb$SaveObj(RGSet, file.name = gb$rgOut)
         return(RGSet)
     }
-    
 }
 
 
