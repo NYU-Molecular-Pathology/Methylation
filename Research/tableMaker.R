@@ -419,9 +419,22 @@ MessageBatchMix <- function(targets, gb){
 }
 
 
-PrintSamTypes <- function(shCol){
-  samF <- setNames(as.data.frame(table(targets[, shCol]), NULL), c(paste("Sample Type:", shCol), "Freq"))
+PrintSamTypes <- function(targets, shCol){
+    if(!is.null(shCol)){
+        samF <-
+            setNames(as.data.frame(table(targets[, shCol]), NULL), c(paste("Sample Type:", shCol), "Freq"))
   return(gb$smallTab(samF))
+    }
+}
+
+
+MsgNoobInfo <- function(getNoob) {
+    if (getNoob == T) {
+        cat(
+            "<p>Noob (normal-exponential out-of-band) is a background correction method with dye-bias normalization for Illumina Infinium methylation arrays.</p><br />
+<p>Functional normalization (FunNorm) is a between-array normalization method for the Illumina Infinium HumanMethylation450 platform. It removes unwanted variation by regressing out variability explained by the control probes present on the array.</p>"
+        )
+    }
 }
 
 
