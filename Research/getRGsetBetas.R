@@ -338,15 +338,16 @@ plot.mds <- function(mSetSq.beta, targets, varName, topN) {
 }
 
 
-LoopPlotMds <- function(mSetSq.beta, targets, selectedVars, topN){
-    for(varNum in 1:length(selectedVars)){
+LoopPlotMds <- function(mSetSq.beta, targets, selectedVars, topN) {
+  for (varNum in 1:length(unique(selectedVars))) {
     cat("\n\n")
     cat(paste("# MDS plot of Variable:", selectedVars[varNum]))
-    plot.mds(mSetSq.beta, targets, varName = selectedVars[varNum],  topN)
     cat("\n\n")
-    }
+    mdsFi <- plot.mds(mSetSq.beta, targets, selectedVars[varNum], topN)
+    cat(paste0('\n![', '](', mdsFi[1], ')\n'))
+    cat("\n\n")
+  }
 }
-
 
 dropGroup <- function(targets, filterCol=NULL, group2rm=NULL) {
     remov <- ifelse(!is.null(group2rm), c(targets[,filterCol] == group2rm), targets[,filterCol] != group2rm)
