@@ -282,17 +282,22 @@ GetRgsetDat <- function(csvPath = "samplesheet.csv", gb) {
 }
 
 
-cleanRawProbes <- cleanRawProbes <- function(RGSet, targets, gb) {
+MatchBetas2Targets <- function(targets, betas){
+  targets <- targets[targets[,gb$col_samNames] %in% colnames(betas),]
+  row.names(targets) <- 1:nrow(targets)
+  return(targets)
+}
+
+
+cleanRawProbes <- function(RGSet, targets, gb) {
     gc(verbose = F)
     if (!file.exists(gb$rawBetaFi)) {
-        betas <- gb$cleanUpProbes(RGSet = RGSet,
-                                  targets = targets,
-                                  gb,
-                                  getNoob = gb$getNoob)
+        betas <- gb$cleanUpProbes(RGSet, targets, gb, getNoob = gb$getNoob)
         SaveObj(betas, file.name = gb$rawBetaFi)
     } else{
         betas <- LoadRdatObj(gb$rawBetaFi)
     }
+    targets <- MatchBetas2Targets(targets, betas)
     if (!is.null(gb$batch_col)) {
         betas <- gb$RemoveBatchEffect(betas, targets, gb)
     }
