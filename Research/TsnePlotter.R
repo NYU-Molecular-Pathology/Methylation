@@ -241,3 +241,14 @@ getTopPlot <- function(samNames){
     )
     return(toplot_Histo)
 }
+
+
+GenerateUnsuperTsne <- function(colorVariable, shapeVariable, sampleGrouping = "Sample_Group", targets1, betas){
+    gb$subsetBetas(
+        targFilter = sampleGrouping, samGroup = colorVariable, # Point Colors
+        betas = betas, targets = targets1, samShapes = shapeVariable, 
+        samNames = gb$col_samNames, tsne_titles = gb$tsne_titles[1:3]
+        )
+    invisible(gc(verbose = F))
+}
+
