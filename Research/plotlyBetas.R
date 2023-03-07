@@ -179,7 +179,7 @@ gb$grabAllBeta <- grabAllBeta <- function(targets1, betas, supervised = F) {
 }
 
 
-doMultiple <- function(allBetas1, tsne_titles, outDirs, targets1, tps,ty,custom){
+doMultiple <- function(allBetas1, tsne_titles, targets1){
   plotN = NULL
   tsneList <- lapply(X = 1:length(allBetas1), FUN = function(X) {
       return(suppressMessages(gb$generateTvals(allBetas1[[X]])))
@@ -203,14 +203,7 @@ doMultiple <- function(allBetas1, tsne_titles, outDirs, targets1, tps,ty,custom)
 }
 
 
-plotSaver <-
-    function(outDirs,
-             tsne_titles,
-             tps,
-             ty,
-             plotList,
-             custom,
-             names2Label = NULL) {
+plotSaver <- function(tsne_titles, plotList, names2Label = NULL) {
         plotN = NULL
         options("device.ask.default" = F)
         pltList <- foreach::foreach(plotN = 1:length(plotList), .packages = "foreach") %do% {
@@ -272,10 +265,10 @@ subsetBetas <- function(targFilter,
         
         tplots <- plotList <- NULL
         # Get T-sne Values ---------
-        plotList <-gb$doMultiple(allBetas1, tsne_titles, outDirs, targets1, tps, ty, custom)
+        plotList <-gb$doMultiple(allBetas1, tsne_titles, targets1)
         gc(verbose = F)
-        
-        tplots <- gb$plotSaver(outDirs, tsne_titles, tps, ty, plotList, custom, names2Label)
+      
+        tplots <- gb$plotSaver(tsne_titles, plotList, names2Label)
         gb$selectPlots(doPlotly, tplots, ty, tps, outDirs)
     }
 }
