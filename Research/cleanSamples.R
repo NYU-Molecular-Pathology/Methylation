@@ -122,10 +122,10 @@ FilterArrayKind <- function(targets, array_column, arrayToDrop = "450k"){
 
 
 DropMissingIdats <- function(targets, gb){
-    idatReal <- file.exists(file.path(gb$idatPath, paste0(targets[, gb$col_sentrix], "_Grn.idat")))
+    idatReal <- file.exists(file.path(gb$idatPath, paste0(targets$SentrixID_Pos, "_Grn.idat")))
     targets <- targets[idatReal, ]
     rownames(targets) <- 1:nrow(targets)
-    idatReal <- file.exists(file.path(gb$idatPath, paste0(targets[, gb$col_sentrix], "_Red.idat")))
+    idatReal <- file.exists(file.path(gb$idatPath, paste0(targets$SentrixID_Pos, "_Red.idat")))
     targets <- targets[idatReal, ]
     rownames(targets) <- 1:nrow(targets)
     return(targets)
