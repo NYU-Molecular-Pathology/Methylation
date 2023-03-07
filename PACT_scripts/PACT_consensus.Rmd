@@ -18,6 +18,16 @@ date: "`r format(Sys.time(), '%d %B, %Y')`"
 ```{r setup, include=FALSE}
 gb <- globalenv(); assign("gb", gb)
 devtools::source_url("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/KnitScripts.R")
+
+tryCatch(system("which brew", intern = T),
+         warning = function(ww){
+system('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"')
+               })
+
+hasLatex <- try(suppressWarnings(system("which latex", intern = T)), silent=T)
+if(length(hasLatex)==0){
+    system("brew install latex")
+}
 ```
 
 ```{css, echo=FALSE,code=readLines("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/consensus.css")}
