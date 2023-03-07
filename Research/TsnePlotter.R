@@ -243,7 +243,13 @@ getTopPlot <- function(samNames){
 }
 
 
-GenerateUnsuperTsne <- function(colorVariable, shapeVariable, sampleGrouping = "Sample_Group", targets1, betas){
+GenerateUnsuperTsne <- function(targets1, betas, gb, colorVariable = NULL, shapeVariable = NULL, sampleGrouping = "Sample_Group"){
+    if(is.null(colorVariable)){
+        colorVariable <- gb$col_samTypes
+    }
+    if(is.null(shapeVariable)){
+        shapeVariable <-  gb$col_samGrp
+    }
     gb$subsetBetas(
         targFilter = sampleGrouping, samGroup = colorVariable, # Point Colors
         betas = betas, targets = targets1, samShapes = shapeVariable, 
