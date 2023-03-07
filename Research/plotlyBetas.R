@@ -268,7 +268,7 @@ subsetBetas <- function(targFilter,
         # Filter The Beta Values ---------
         targets1 <- targets[targets$SamGroups == custom, ]
         allBetas1 <- grabAllBeta(targets1, betas, supervised)
-        outDirs <- gb$grabPngNames(tsne_titles)[,]
+        outDirs <- gb$grabPngNames(tsne_titles)
         
         tplots <- plotList <- NULL
         # Get T-sne Values ---------
