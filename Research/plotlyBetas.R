@@ -179,7 +179,7 @@ gb$grabAllBeta <- grabAllBeta <- function(targets1, betas, supervised = F) {
 }
 
 
-doMultiple <- function(allBetas1, tsne_titles, targets1){
+doMultiple <- function(allBetas1, targets1){
   plotN = NULL
   tsneList <- lapply(X = 1:length(allBetas1), FUN = function(X) {
       return(suppressMessages(gb$generateTvals(allBetas1[[X]])))
@@ -208,7 +208,7 @@ plotSaver <- function(tsne_titles, plotList, names2Label = NULL) {
         options("device.ask.default" = F)
         pltList <- foreach::foreach(plotN = 1:length(plotList), .packages = "foreach") %do% {
           pL <- plotList[[plotN]]
-                ###################### TO CHANGE ########################
+                ###################### MODIFY TO CUSTOMIZE ########################
                 gc(verbose = F)
                 return(
                     gb$genTsnePlot(
@@ -219,7 +219,7 @@ plotSaver <- function(tsne_titles, plotList, names2Label = NULL) {
                         names2Label = names2Label # any specific sample names to label on the plot
                     )
                 )
-                ###################### TO CHANGE ########################
+                ###################### MODIFY TO CUSTOMIZE ########################
         }
         return(pltList)
 }
@@ -233,18 +233,8 @@ MessageTsneLoop <- function(targets, custom) {
 }
 
 
-subsetBetas <- function(targFilter,
-                        samGroup,
-                        betas,
-                        targets,
-                        samShapes,
-                        samNames,
-                        tsne_titles,
-                        doPlotly = F,
-                        supervised = F,
-                        names2Label = NULL)
-{
-    
+FormatPlotTargets <- function(targets, samGroup, samShapes, samNames, targFilter){
+    targets <- gb$colorTargets(targets, samGroup)
     targets$SamGroups <- targets$SampleFilter <- NULL
     targets$SampleFilter <- targets[, samNames] # creating new column
     targets$SamGroups <- targets[, targFilter]
@@ -252,6 +242,14 @@ subsetBetas <- function(targFilter,
     targets$PointColors <- targets[, samGroup]
     colorColName <- paste0(samGroup, "_color")
     targets$color <- targets[, colorColName]
+    return(targets)
+}
+
+
+subsetBetas <- function(targFilter, samGroup, betas, targets, samShapes, samNames,
+                        tsne_titles, doPlotly = F, supervised = F, names2Label = NULL)
+{
+    targets <- FormatPlotTargets(targets, samGroup, samShapes, samNames, targFilter)
     tps <- as.data.frame(unique(targets$SamGroups))
     ty = NULL
     for (ty in 1:nrow(tps)) {
@@ -262,12 +260,10 @@ subsetBetas <- function(targFilter,
         targets1 <- targets[targets$SamGroups == custom, ]
         allBetas1 <- grabAllBeta(targets1, betas, supervised)
         outDirs <- gb$grabPngNames(tsne_titles)
-        
         tplots <- plotList <- NULL
         # Get T-sne Values ---------
         plotList <-gb$doMultiple(allBetas1, tsne_titles, targets1)
         gc(verbose = F)
-      
         tplots <- gb$plotSaver(tsne_titles, plotList, names2Label)
         gb$selectPlots(doPlotly, tplots, ty, tps, outDirs)
     }
