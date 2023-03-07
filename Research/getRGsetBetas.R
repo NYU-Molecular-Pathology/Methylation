@@ -434,11 +434,15 @@ MatchRGtargets <- function(RGSet, targets, sampleSheet=NULL){
 
 
 GetArrayTypes <- function(targets, arrayColumn, outputFi = "annotated_samplesheet.csv") {
-  sentrix.ids <- as.character(targets$SentrixID_Pos)
+    if(is.null(arrayColumn)){
+        targets$ArrayType <- NULL
+        arrayColumn <- "ArrayType"
+    }
+    sentrix.ids <- as.character(targets$SentrixID_Pos)
   if (!file.exists(outputFi)) {
     for (i in 1:length(sentrix.ids)) {
       sampleEpic <- sentrix.ids[i]
-      pathEpic <- file.path(idatPath, sampleEpic)
+      pathEpic <- file.path(gb$idatPath, sampleEpic)
       RGsetEpic <- read.metharray(pathEpic, verbose = T, force = T)
       is450K <- RGsetEpic@annotation[["array"]] == "IlluminaHumanMethylation450k"
       if(is450K == T){
