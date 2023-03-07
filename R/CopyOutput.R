@@ -78,7 +78,7 @@ copy.to.clinical <- function(clinOut, runID, runYear) {
     if (!dir.exists(newFolder)) {
         message("Output Folder could not be created, htmls not copied to:\n", newFolder)
     }
-    if (length(dir(path = newFolder, full.names = T)) > 0) {
+    if (length(dir(path = newFolder, pattern=".html", full.names = T)) > 0) {
         SavePrevDir(newFolder)
     }else{
         CopyHtmlFiles(newFolder, runID)

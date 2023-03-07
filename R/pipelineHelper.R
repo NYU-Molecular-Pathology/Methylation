@@ -422,7 +422,14 @@ makeReports.v11b6 <- function(runPath = NULL,
         generateQCreport()
     }
     if(grepl("TEST",runID)){cpReport=F;redcapUp=F;email=F}
-    if(cpReport==T){file.list <- try(gb$copy2outFolder(gb$clinDrv, runID), outFile = "copyLog.txt")}
+    if(cpReport==T){
+        file.list <- try(gb$copy2outFolder(gb$clinDrv, runID), outFile = "copyLog.txt")
+        if(isMC==T){
+            runYear <- paste0("20", stringr::str_split_fixed(runID, "-", 2)[1])
+            gb$copy.to.clinical(clinOut = "/Volumes/molecular/MOLECULAR/MethylationClassifier", runID, runYear)
+            gb$copy.to.clinical(clinOut = "/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/Results", runID, runYear)
+            }
+    }
     if (redcapUp == T) {
         file.list <- dir(pattern = ".html", full.names = T)
         gb$uploadToRedcap(file.list, T)
@@ -518,7 +525,7 @@ GetPriorityCases <- function(selectRDs=NULL, samSheet = "samplesheet.csv", kwd="
     BN00 <- which(stringr::str_detect(csvFi$MP_num, kwd))
     if (length(BN00) > 0) {
       if(is.null(selectRDs)){
-      selectRDs <- c(csvFi$Sample_Name[BN00])  
+      selectRDs <- c(csvFi$Sample_Name[BN00])
       }else{
       selectRDs <- c(selectRDs, csvFi$Sample_Name[BN00])
       }
