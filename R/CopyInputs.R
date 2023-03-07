@@ -147,7 +147,7 @@ CheckIdatsReal <- function(ssheet, allFi) {
 }
 
 
-VerifyIdatFound <- function(foundIdat, otherIdat, toBeFound){
+VerifyIdatFound <- function(foundIdat, otherIdat, toBeFound, extr.idat){
     if (any(foundIdat)==F){
             message(crayon::bgRed("Still missing idat files not in External folder:"))
             DataFrameMessage(toBeFound)
@@ -178,7 +178,7 @@ GetIdats2Add <- function(basesNeeded, stillMissing, extr.idat){
     otherIdat <- dir(extr.idat, pattern = ".idat", full.names = T, recursive = T)
     toBeSearch <- paste(toBeFound, collapse = "|")
     foundIdat <- stringr::str_detect(otherIdat, pattern = toBeSearch)
-    idatsToAdd <- VerifyIdatFound(foundIdat, otherIdat, toBeFound)
+    idatsToAdd <- VerifyIdatFound(foundIdat, otherIdat, toBeFound, extr.idat)
     return(idatsToAdd)
 }
 
