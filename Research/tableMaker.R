@@ -59,7 +59,7 @@ makeDt <- function(targets, gb=NULL) {
       columnDefs = list(list(className = 'dt-center', targets = "_all")), scrollX = T, scrollY = T,
       info = F, pageLength = 20, autoWidth = F, rownames = F, lengthChange = F, searchable = T
       )
-    
+
     if(!is.null(gb)){
       colFilter <- c(gb$col_samNames, gb$col_samTypes, gb$col_shapes, "SentrixID_Pos")
       if(!is.null(gb$col_arrayType)){
@@ -71,7 +71,7 @@ makeDt <- function(targets, gb=NULL) {
       colFilter <- unique(colFilter)
       targets <- targets[, colFilter]
     }
-    
+
     theDt <- DT::datatable(
       targets,
       selection = "single",
@@ -79,7 +79,7 @@ makeDt <- function(targets, gb=NULL) {
       options = dtOpts,
       class = 'white-space: nowrap'
     )
-    
+
     return(theDt)
 }
 
@@ -91,7 +91,7 @@ smallTab <- function(dtObj) {
       full_width = F,
       position = "left"
   )
-    
+
  dtTable <- kableExtra::column_spec(dtTable, 1:ncol(dtObj), width = "4cm")
   return(dtTable)
 }
@@ -150,32 +150,32 @@ colorTargets <- function(targets, varColumns = c("Type","Origin"), col_vect = NU
         targets$Type <- targets[, varColumns[1]]
         varColumns <- c(varColumns, "Type")
       }
-      
+
       if (length(unique(varColumns)) == 1) {
         targets$NewCol <- targets[, varColumns[1]]
         varColumns <- c(varColumns, "NewCol")
       }
     }
-    
+
     CheckColorCount(varColumns, targets, col_vect)
     dat <- targets[, varColumns] # varColumns
     anno_df <- data.frame(dat)
     vars2Color <- as.list(lapply(dat, unique))
     colorValues <- lapply(vars2Color, function(x) {x = (col_vect)[1:(length(x))]})
-    
+
     for (x in 1:length(vars2Color)) {
       for (varNum in 1:length(vars2Color[x])) {
         names(colorValues[x][[1]]) = c(vars2Color[x][[1]])
       }
     }
-    
+
     targets$color <- NULL
     colorColNames <- unlist(lapply(varColumns, paste0, "_color"))
-    
+
     for (colorCol in colorColNames) {
       targets[, colorCol] <- NA
     }
-    
+
     for (colNam in varColumns) {
       newColumnId <- paste0(colNam, "_color")
       for (samNam in names(colorValues[colNam][[1]])) {
@@ -228,9 +228,9 @@ ValidateColumns <- function(targets, gb) {
 SetKeyColumns <- function(targets, col_samTypes, col_samNames, col_other, col_shapes, sam.grp.type=NULL) {
     targets <- dfTargets(targets)
     # Creates any new "Type" column
-    targets$Type <- targets[, col_samTypes] 
+    targets$Type <- targets[, col_samTypes]
     # generates Sample_ID column if doesn't exist
-    targets$Sample_Name <- targets$Sample_ID <- targets[, col_samNames] 
+    targets$Sample_Name <- targets$Sample_ID <- targets[, col_samNames]
     targets$Other_Group <- targets$Sample_Group <- targets[, col_other]
     targets$Sym_Shape <- targets[,col_shapes]
     targets <- CheckSamNames(targets$Sample_ID, targets)
@@ -293,10 +293,9 @@ sanitizeSheet <- function(inputFi, samsheet, gb) {
     targets <- StripSheetSpaces(samSh, samsheet)
     ValidateColumns(targets, gb)
     targets <- ValidateSentrix(targets, gb)
-    targets <- StandardizeHeaders(targets,
-                                  samNames = targets[, gb$col_samNames],
-                                  sentrixs = targets[, gb$col_sentrix])
+    targets <- StandardizeHeaders(targets, samNames = targets[, gb$col_samNames], sentrixs = targets[, gb$col_sentrix])
     targets <- ValidateSampleIDs(targets)
+    write.csv(targets, file = samsheet, quote=F, row.names=F)
     return(targets)
 }
 
@@ -305,7 +304,7 @@ sanitizeSheet <- function(inputFi, samsheet, gb) {
 options(width=1200)
 library("mnp.v11b6")
 library(magrittr) # needs to be run every time you start R and want to use %>%
-library(dplyr)  
+library(dplyr)
 require("tidyverse")
 require("plotly")
 require("ggplot2")
@@ -346,7 +345,7 @@ GetCsvSheet <- function(needFi, samsheet, token, idatPath=NULL, outputFi="sample
     # Using "pullRedcap_manual.R"
     rds <- gb$readInfo(inputSheet = samsheet) # inputSheet can be xlsx or csv
     stopifnot(length(rds)>1 & stringr::str_detect(rds[1],"RD-"))
-    if(gb$needFi==T) { 
+    if(gb$needFi==T) {
       gb$grabRDCopyIdat(rd_numbers=rds, token, copyIdats=T, outputFi=outputFi)
       gb$MoveIdats()
     }else{
@@ -365,7 +364,7 @@ SubSetGroup <- function(strPatt, samPairs){
 
 
 CheckTargetIdats <- function(targets) {
-    stopifnot(gb$col_samNames %in% colnames(targets) == T) 
+    stopifnot(gb$col_samNames %in% colnames(targets) == T)
     stopifnot(gb$col_samTypes %in% colnames(targets) == T)
     if (gb$needFi == T) {
         rds <-gb$readInfo(inputSheet = gb$samsheet) # inputSheet can be xlsx or csv
@@ -386,7 +385,7 @@ GetSamFreqTab <- function(targets, varCol1, varCol2 = NULL) {
   if (!is.null(varCol2)) {
     sampleColumn <- targets[, varCol2]
     t1 <- c(t1, setNames(as.data.frame(table(sampleColumn), row.names = NULL), varColHead))
-  } 
+  }
   return(list(t1))
 }
 
@@ -446,7 +445,7 @@ if(Sys.info()[['sysname']]!="Darwin") {
     Sys.setenv("R_PROFILE"=file.path(Sys.getenv("HOME"), "Rprofile.site"))
     magickPath <- paste0(system("which convert", intern=T))
     Sys.setenv(IMAGEMAGICK_V6_HOME=magickPath)
-} 
+}
 
 
 GetColorShape <- function(var1Col, var2Col){
