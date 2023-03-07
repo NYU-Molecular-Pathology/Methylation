@@ -250,11 +250,18 @@ GenerateUnsuperTsne <- function(targets1, betas, gb, colorVariable = NULL, shape
     if(is.null(shapeVariable)){
         shapeVariable <-  gb$col_samGrp
     }
+    if(gb$supervisedRun == F){
+        tsne_titles = gb$tsne_titles[1:3]
+    }else{
+        tsne_titles = gb$tsne_titles[4:6]
+    }
     gb$subsetBetas(
         targFilter = sampleGrouping, samGroup = colorVariable, # Point Colors
         betas = betas, targets = targets1, samShapes = shapeVariable, 
-        samNames = gb$col_samNames, tsne_titles = gb$tsne_titles[1:3]
+        samNames = gb$col_samNames, tsne_titles = tsne_titles, names2Label=gb$names2Label
         )
     invisible(gc(verbose = F))
 }
+
+
 
