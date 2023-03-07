@@ -15,7 +15,7 @@ CheckSamNames <-  function(samNames, targets){
   if(anyDuplicated(samNames) > 0){
       warning("Sample IDs contain duplicates, assigning unique names\n")
       message(paste0(capture.output(samNames[which(duplicated(samNames))]), collapse="\n"))
-      
+
       samNames <- targets$Sample_ID <- make.unique(samNames, sep="_")
       targets$Sample_Name <- targets$Sample_ID <- samNames
     }
@@ -47,7 +47,7 @@ checkIdats<- function(samsheet, token, needFi=F){
     if(needFi==T) {
       rds <- gb$readInfo(inputSheet = samsheet) # inputSheet can be xlsx or csv
       stopifnot(length(rds)>1 & stringr::str_detect(rds[1],"RD-"))
-      gb$grabRDCopyIdat(rd_numbers=rds, token, copyIdats=T) 
+      gb$grabRDCopyIdat(rd_numbers=rds, token, copyIdats=T)
     }
 }
 
@@ -62,7 +62,7 @@ MoveIdats <- function(pathName=NULL){
     if(!dir.exists(pathName)){dir.create(pathName)}
     idatFiles <- dir(path=getwd(),pattern = ".idat", full.names = T)
     if(length(idatFiles)>0){
-    gb$supM(lapply(idatFiles, function(x){file.rename(from = x, to = file.path(pathName, basename(x)))}))    
+    gb$supM(lapply(idatFiles, function(x){file.rename(from = x, to = file.path(pathName, basename(x)))}))
     }
 }
 
@@ -83,7 +83,7 @@ FillMissingData2 <- function(targets, col_samNames="Sample_Name", originalFi="sa
   targets <- targets[, dupeDrop]
   extraCol <- c("DNA_Number", "RunID", "MP_num", "Date")
   toDrop <- !colnames(targets) %in% extraCol
-  targets <- targets[, toDrop] 
+  targets <- targets[, toDrop]
   write.csv(targets, file="samplesheet.csv", quote=F, row.names=F)
   targets <- read.csv("samplesheet.csv", strip.white=T, row.names=NULL)
   if(class(targets)!="data.frame"){targets <- as.data.frame(targets)}
@@ -120,4 +120,14 @@ FilterArrayKind <- function(targets, array_column, arrayToDrop = "450k"){
     return(targets)
 }
 
+
+DropMissingIdats <- function(targets, gb){
+    idatReal <- file.exists(file.path(gb$idatPath, paste0(targets[, gb$col_sentrix], "_Grn.idat")))
+    targets <- targets[idatReal, ]
+    rownames(targets) <- 1:nrow(targets)
+    idatReal <- file.exists(file.path(gb$idatPath, paste0(targets[, gb$col_sentrix], "_Red.idat")))
+    targets <- targets[idatReal, ]
+    rownames(targets) <- 1:nrow(targets)
+    return(targets)
+}
 
