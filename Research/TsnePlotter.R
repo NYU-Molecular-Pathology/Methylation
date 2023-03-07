@@ -242,26 +242,33 @@ getTopPlot <- function(samNames){
     return(toplot_Histo)
 }
 
-
-GenerateUnsuperTsne <- function(targets1, betas, gb, colorVariable = NULL, shapeVariable = NULL, sampleGrouping = "Sample_Group"){
+GenerateUnsuperTsne <- function(targets1, betas, gb, colorVariable = NULL, shapeVariable = NULL, sampleGrouping = "Sample_Group", isSuper=NULL){
     if(is.null(colorVariable)){
         colorVariable <- gb$col_samTypes
     }
     if(is.null(shapeVariable)){
         shapeVariable <-  gb$col_samGrp
     }
-    if(gb$supervisedRun == F){
+    if(is.null(isSuper)){
+        isSuper <- F
+    }
+    if(isSuper == F){
         tsne_titles = gb$tsne_titles[1:3]
     }else{
         tsne_titles = gb$tsne_titles[4:6]
+        betas <- gb$superbetas
     }
     gb$subsetBetas(
-        targFilter = sampleGrouping, samGroup = colorVariable, # Point Colors
-        betas = betas, targets = targets1, samShapes = shapeVariable, 
-        samNames = gb$col_samNames, tsne_titles = tsne_titles, names2Label=gb$names2Label
-        )
+        targFilter = sampleGrouping,
+        samGroup = colorVariable,
+        betas = betas,
+        targets = targets1,
+        samShapes = shapeVariable,
+        samNames = gb$col_samNames,
+        tsne_titles = tsne_titles,
+        names2Label = gb$names2Label,
+        supervised = isSuper
+    )
     invisible(gc(verbose = F))
 }
-
-
 
