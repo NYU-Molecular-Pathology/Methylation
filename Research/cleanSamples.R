@@ -76,7 +76,7 @@ CheckOriginal <- function(ogSheet) {
     }
 }
 
-FillMissingData2 <- function(targets, col_samNames="Sample_Name", originalFi="samplesheet_og.csv"){
+FillMissingData <- function(targets, col_samNames="Sample_Name", originalFi="samplesheet_og.csv"){
   newTarg <- read.csv(originalFi, strip.white=T, row.names=NULL)
   targets <- merge(newTarg,targets, by=col_samNames, all=F, suffixes = c("",".xyzq"))
   dupeDrop <- grepl(".xyzq", colnames(targets))==F
@@ -97,7 +97,7 @@ ModifyTargetColumns <- function(targets, gb){
     targets <- gb$SetKeyColumns(
       targets, gb$col_samTypes, gb$col_samNames, gb$col_other, gb$col_shapes, gb$sam.grp.type
     )
-    targets <- FillMissingData2(targets)
+    targets <- FillMissingData(targets)
     }else{
     targets <- gb$SetKeyColumns(
       targets, gb$col_samTypes, gb$col_samNames, gb$col_other, gb$col_shapes, gb$sam.grp.type
