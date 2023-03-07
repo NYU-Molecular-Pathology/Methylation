@@ -262,7 +262,7 @@ subsetBetas <- function(targFilter, samGroup, betas, targets, samShapes, samName
         outDirs <- gb$grabPngNames(tsne_titles)
         tplots <- plotList <- NULL
         # Get T-sne Values ---------
-        plotList <-gb$doMultiple(allBetas1, tsne_titles, targets1)
+        plotList <- gb$doMultiple(allBetas1, targets1)
         gc(verbose = F)
         tplots <- gb$plotSaver(tsne_titles, plotList, names2Label)
         gb$selectPlots(doPlotly, tplots, ty, tps, outDirs)
