@@ -83,9 +83,8 @@ gb$GenerateUnsuperTsne(targets1, betas, gb)
 
 ## `r I(as.character(gb$tsneHead2))` {.tabset}
 ```{r, label='TSNE Unsupervised2', echo=FALSE, error=FALSE, fig.keep='all', message=FALSE, warning=FALSE, cache=FALSE, dpi=300, out.height="650px", out.width="3600px", results='asis', fig.path="figures/tsne/"}
-#targets <- gb$colorTargets(targets, gb$sam.grp.type)
 targets1 <- gb$SubsetTargets(targets)
-gb$GenerateUnsuperTsne(targets1, betas, gb, shapeVariable = gb$sam.grp.type)
+gb$GenerateUnsuperTsne(targets1, betas, gb, shapeVariable = "Sample_Group")
 ```
 
 ## All groups Supervised TSNE {.tabset}
