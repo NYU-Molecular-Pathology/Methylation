@@ -1,5 +1,5 @@
 ---
-title:  "Methylation Analysis"
+title: "Methylation Clusters"
 author: "Jonathan Serrano"
 date: "`r format(Sys.time(),'%d %B, %Y')`"
 output:
@@ -14,22 +14,19 @@ editor_options:
   chunk_output_type: console
 ---
 
-```{r setup, include=FALSE, echo=FALSE, message=FALSE, warning=FALSE, cache=FALSE, fig.keep='all', fig.path = "figures/", error=FALSE}
+```{r setup, echo=FALSE, error=FALSE, message=TRUE, warning=FALSE, cache=FALSE, fig.keep='all', fig.path = "figures/", include=FALSE}
 gb <- globalenv(); assign("gb", gb)
 if (!require("devtools")) {install.packages("devtools", dependencies = T, ask = F)}
 gitUrl <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research"
 devtools::source_url(file.path(gitUrl,"SetupMethKnit.R"))
+htmltools::includeCSS(file.path(gitUrl,"ResearchStyle.html"))
 knitr::opts_knit$set(gb$knitOpt); knitr::opts_chunk$set(gb$knitOpt)
 gb$sourceParams(); gb$setKnitDir(gb$runDir); stopifnot(gb$runDir == getwd())
-targets <- gb$sanitizeSheet(gb$inputFi, gb$samsheet) # Drop commas in xlsx sheet
-targets <- gb$ModifyTargetColumns(targets, gb)
-if(is.null(gb$col_sentrix)){gb$col_sentrix <- "SentrixID_Pos"}
+targets <- gb$GenerateTargets(gb)
 ```
-
-<style>.myTable td {padding: 3px}
+<style>.myTable td {padding: 5px}
 .myTable tbody tr:nth-child(odd){background-color: #ADD8E6;}
 table {white-space: nowrap;}</style>
-
 ```{r,label='Project Info', child='./parameters/about.Rmd'}
 ```
 
@@ -42,26 +39,22 @@ gb$makeDt(targets, gb) # Prints out the samplesheet data in an html table
 
 ## Sample Types from Sample Sheet Above
 ```{r, label='Count Unique', out.width='25%', echo=FALSE, include=TRUE, results='asis'}
-gb$PrintSamTypes(targets, gb$col_samTypes)
-if(gb$col_samGrp != gb$col_samTypes){gb$PrintSamTypes(targets, gb$col_samGrp)}
-gb$PrintSamTypes(targets, gb$col_arrayType)
-gb$MsgNoobInfo(gb$getNoob)
+gb$MsgSamFreq(targets, gb)
 ```
 
 ```{r, label='Load RGSet and Betas', include=FALSE, echo=FALSE, message=FALSE}
 RGSet <- gb$GetRgsetDat(csvPath = "samplesheet.csv", gb) 
 targets <- gb$MatchRGtargets(RGSet, targets, gb$samsheet)
 betas <- gb$cleanRawProbes(RGSet, targets, gb)
+targets <- gb$MatchBetas2Targets(targets, betas)
 theMissing <- gb$dropBadQc(targets, betas) # Drop low-quality probe samples (exports csv)
 targets <- gb$getTargCsv(gb$samsheet)
 RGSet <- gb$cleanRgset(RGSet, gb$col_sentrix, betas)
-
-if (gb$supervisedRun == T) {superbetas <- gb$loadSupervise(RGSet, betas, gb$supbetaOut, gb$varProbes)}
-
+gb$superbetas <- gb$loadSupervise(RGSet, betas, gb)
 gb$mSetSq.beta <- gb$GetMsetSq(RGSet, targets, gb$mbfile)
 ```
 
-```{r, label='MDS-plot1', echo=FALSE, warning=FALSE, message=FALSE, fig.height=5, fig.width=6, out.width='90%', dpi=300, fig.keep='all', fig.path = "figures/mds/"}
+```{r, label='MDS-plot1', echo=FALSE, warning=FALSE, message=FALSE, fig.height=5, fig.width=6, out.width='90%', dpi=300, fig.keep='all', fig.path = "figures/mds/", include=TRUE}
 gb$LoopPlotMds(gb$mSetSq.beta, targets, gb$selectedVars, gb$topN)
 ```
 
@@ -71,67 +64,45 @@ gb$ShowAnyMissed(gb)
 gb$MessageBatchMix(targets, gb)
 ```
 
-<p><hr class='solid' size="8" width="90%" color="seagreen"> </hr></p>
+<p><hr style="height:8px;width:90%;color:black;"> </hr></p>
 
 # TSNE Plots
 ```{r, label='ggplotly loader', include=FALSE, cache=FALSE, echo=FALSE}
-library("ggplot2")
-gb$loadHtmlTag()
-set.seed(1234)
+library("ggplot2"); gb$loadHtmlTag(); set.seed(1234)
 ```
 
 # All Groups Unsupervised TSNE 
 
 ## `r I(as.character(gb$tsneHead1))` {.tabset}
 ```{r, label='TSNE Unsupervised1', echo=FALSE, error=FALSE, fig.keep='all', message=FALSE, warning=FALSE, cache=FALSE, dpi=300, out.height="650px", out.width="3600px", results='asis', fig.path="figures/tsne/"}
-targets <- gb$colorTargets(targets, gb$col_samTypes)
 targets1 <- gb$SubsetTargets(targets)
-samShapesCol = gb$col_samTypes
-
-gb$subsetBetas(
-  targFilter = "Sample_Group", samGroup = gb$col_samGrp, # Point Colors
-  betas = betas, targets = targets1, samShapes = samShapesCol, 
-  samNames = gb$col_samNames, tsne_titles = gb$tsne_titles[1:3]
-)
-invisible(gc(verbose = F))
+gb$GenerateUnsuperTsne(targets1, betas, gb)
 ```
 
 # All Groups Unsupervised TSNE (No Shapes) 
 
 ## `r I(as.character(gb$tsneHead2))` {.tabset}
 ```{r, label='TSNE Unsupervised2', echo=FALSE, error=FALSE, fig.keep='all', message=FALSE, warning=FALSE, cache=FALSE, dpi=300, out.height="650px", out.width="3600px", results='asis', fig.path="figures/tsne/"}
-targets <- gb$colorTargets(targets, gb$col_shapes)
+#targets <- gb$colorTargets(targets, gb$sam.grp.type)
 targets1 <- gb$SubsetTargets(targets)
-samShapesCol = "Sample_Group" #samShapes = targets1[, gb$col_samGrp]
-gb$subsetBetas(
-  targFilter = "Sample_Group", samGroup = gb$col_samGrp, # Point Colors
-  betas = betas, targets = targets1, samShapes = samShapesCol,
-  samNames = gb$col_samNames, tsne_titles = gb$tsne_titles[1:3]
-)
-invisible(gc(verbose = F))
+gb$GenerateUnsuperTsne(targets1, betas, gb, shapeVariable = gb$sam.grp.type)
 ```
 
 ## All groups Supervised TSNE {.tabset}
 ```{r, label='TSNE Supervised1', results='asis', fig.keep='all', out.width="1200px", out.height="1000px", dpi=300, echo=FALSE, message=FALSE, warning=FALSE, cache=FALSE, error=TRUE, fig.path = "figures/tsne/"}
 targets1 <- gb$SubsetTargets(targets)
-targets1$Sym_Shape <- gb$sam.grp.type
-samShapes = targets1[, gb$col_samTypes]
-if (gb$supervisedRun == T) {
-    gb$subsetBetas(targFilter = "Sample_Group", samGroup = gb$col_samGrp, # Point Colors
-                   betas = betas, targets = targets1, samShapes = samShapes,
-                   samNames = gb$col_samNames, tsne_titles = gb$tsne_titles[4:6], supervised = T
-                   )
-    invisible(gc(verbose = F))
+if (gb$supervisedRun == T) {gb$GenerateUnsuperTsne(targets1, betas, gb, shapeVariable = gb$sam.grp.type, isSuper=T)
 } else{cat("No supervised analysis output")}
 ```
-<p><hr class="solid"> </hr></p>
+<p><hr style="height:8px;width:90%;color:black;"> </hr></p>
+
 # HeatMaps
 ```{r, label='HM-unsupervised-annotations', include=FALSE, echo=FALSE, class.source="bg-success", results='asis', fig.keep='all', message=FALSE, fig.path = "figures/heatmaps/"}
 gb$LoadHeatMapLibs()
 targets1 <- gb$SubsetTargets(targets)
-betas1 <- betas[ , targets1[,gb$col_samNames]]
+betas1 <- betas[, targets1[,gb$col_samNames]]
 unBetas <- gb$tierBetas(betas1, gb$col_sentrix, RGSet) #unsupervised betas
-unBetas <- gb$addGeneName(RGSet, unBetas, gb$addGenesHm)
+unBetas <- gb$addGeneName(RGSet, unBetas, T)
 ha <- gb$AnnotateHmVars(targets1, gb$selectedVars)
 ha <- gb$FilterHmAnno(ha, gb$selectedVars) # drop any unwanted columns
 ```
@@ -140,46 +111,23 @@ ha <- gb$FilterHmAnno(ha, gb$selectedVars) # drop any unwanted columns
 ```{r, label='Unsupervised-HM-plot', fig.width=18, fig.height=22, dpi=300, echo=FALSE, fig.keep='all', results='asis', class.source = "bg-success", fig.path = "figures/heatmaps/"}
 hm.db <- gb$LoopPrintHeatMap(unBetas, ha, geneNams=gb$addGenesHm, colSplt=3)
 gb$LoopSaveHm(hm.db, gb$varProbes)
-```
-
-# Custom HeatMaps
-
-```{r, label='HM-plot-custom-data', fig.width=18, fig.height=22, dpi=300, echo=FALSE, fig.keep='all', results='asis', class.source = "bg-success", fig.path = "figures/heatmaps/"}
-probeList <- as.data.frame(readxl::read_excel("somefilename.xlsx", sheet = 3, skip = 6))[,"probe"]
-
-rawBetas <- Get_Unfiltered_Betas(gb$idatPath, gb$samsheet)
-
-toKeep <- probeList %in% rownames(rawBetas)
-finalList <- probeList[toKeep]
-probeBetas <- rawBetas[finalList,]
-
-gb$PrintTableLists(
-    ta1 = data.frame(`Probe List Used` = probeList),
-    ta2 = data.frame(`Probes Missing` = probeList[!toKeep])
-)
-```
-
-## Probe-Specific Heatmap (Unsupervised) {.tabset}
-
-```{r, label='Unsupervised-HM-plot-custom', fig.width=18, fig.height=22, dpi=300, echo=FALSE, fig.keep='all', results='asis', class.source = "bg-success", fig.path = "figures/heatmaps/"}
-gb$PrintSingleHeatMap(probeBetas, ha, geneNams=T, colSplt=3)
 if(gb$generateCNVchunk==F){knitr::knit_exit()}
 ```
 
 # Copy Number Plots
-<p><hr class="solid"> </hr></p>
+<p><hr style="height:8px;width:90%;color:black;"> </hr></p>
 ```{r, label='segfile-generation', fig.height=8, fig.width=15, fig.asp=0.75, include=FALSE, echo=FALSE, message=FALSE, fig.path = "figures/cnv/"}
 gb$writeSegTab(gb$segFile, targets, idatPath=file.path(getwd(), "idats"))
 cnData <- gb$grabClusterDat(gb$seg_clust_file, gb$segFile)
 ```
 ## CNV Frequency {.tabset}
-```{r, label='CNV-plots', dpi=300, out.width='100%', fig.height=10, fig.width=16, echo=FALSE, warning=FALSE, class.source="bg-success", cache=FALSE, fig.show='asis', results='asis', error=FALSE, fig.keep='all', include=TRUE, message=FALSE, fig.path = "figures/cnv/"}
+```{r, label='CNV-plots', dpi=300, out.width='100%', fig.height=10, fig.width=16, echo=FALSE, warning=FALSE, fig.show='asis', results='asis', error=FALSE, fig.keep='all', include=TRUE, message=FALSE, fig.path = "figures/cnv/"}
 gb$SaveLoadCnvs(cnData[,1:(ncol(cnData))], plotName = "All", "All")
 gb$GenCNVdataGroupSave(cnData, targets, gb$col_samGroup)
 if(gb$genPathwaychunk == F){knitr::knit_exit()}
 ```
 # Pathway Analysis
-<p><hr class="solid"> </hr></p>
+<p><hr style="height:8px;width:90%;color:black;"> </hr></p>
 ## Cluster Profiler {.tabset}
 Cluster Condition: Tumor Type is `r toString(GroupSubset)` (`r toString(GroupSubset)`` vs All)
 ```{r, label='cluster profile', include=FALSE, echo=FALSE, fig.path = "figures/cluster/"}
