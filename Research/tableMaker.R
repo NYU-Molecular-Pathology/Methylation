@@ -141,51 +141,23 @@ CheckColorCount <- function(varColumns, targets, col_vect) {
 }
 
 
-colorTargets <- function(targets, varColumns = c("Type","Origin"), col_vect = NULL){
-    col_vect <- gb$GetDefaultColors(col_vect)
-    targets <- gb$FixNullNaVars(targets, varColumns)
-    message("Targets Dimnames:\n", paste(dimnames(targets)[[2]], collapse = " | "))
-    if (length(varColumns) <= 1) {
-      if ("Type" %in% varColumns == F) {
-        targets$Type <- targets[, varColumns[1]]
-        varColumns <- c(varColumns, "Type")
-      }
-
-      if (length(unique(varColumns)) == 1) {
-        targets$NewCol <- targets[, varColumns[1]]
-        varColumns <- c(varColumns, "NewCol")
-      }
-    }
-
-    CheckColorCount(varColumns, targets, col_vect)
+GetColorVariables <- function(targets, varColumns, col_vect){
+  CheckColorCount(varColumns, targets, col_vect)
     dat <- targets[, varColumns] # varColumns
     anno_df <- data.frame(dat)
     vars2Color <- as.list(lapply(dat, unique))
     colorValues <- lapply(vars2Color, function(x) {x = (col_vect)[1:(length(x))]})
-
     for (x in 1:length(vars2Color)) {
       for (varNum in 1:length(vars2Color[x])) {
         names(colorValues[x][[1]]) = c(vars2Color[x][[1]])
       }
     }
+    return(colorValues)
+}
 
-    targets$color <- NULL
-    colorColNames <- unlist(lapply(varColumns, paste0, "_color"))
 
-    for (colorCol in colorColNames) {
-      targets[, colorCol] <- NA
-    }
-
-    for (colNam in varColumns) {
-      newColumnId <- paste0(colNam, "_color")
-      for (samNam in names(colorValues[colNam][[1]])) {
-        varToColor <- targets[, colNam] == samNam
-        colorHex <- paste0(colorValues[[colNam]][[samNam]])
-        targets[, newColumnId][varToColor] <- colorHex
-      }
-    }
-    
-     if (length(colorColNames) > 1) {
+FlipColorVector <- function(targets, colorColNames){
+  if (length(colorColNames) > 1) {
       for (varN in 1:length(colorColNames)) {
         if ((varN %% 2) == 0) {
           col2Change <- colorColNames[varN]
@@ -200,10 +172,43 @@ colorTargets <- function(targets, varColumns = c("Type","Origin"), col_vect = NU
           }
         }
       }
+  }
+  return(targets)
+  
+}
+
+colorTargets <- function(targets, varColumns = c("Type","Origin"), col_vect = NULL){
+    col_vect <- gb$GetDefaultColors(col_vect)
+    targets <- gb$FixNullNaVars(targets, varColumns)
+    message("Targets Dimnames:\n", paste(dimnames(targets)[[2]], collapse = " | "))
+    if (length(varColumns) <= 1 & "Type" %in% varColumns == F) {
+      targets$Type <- targets[, varColumns[1]]
+      varColumns <- c(varColumns, "Type")
+    }
+    if (length(unique(varColumns)) == 1) {
+      targets$NewCol <- targets[, varColumns[1]]
+      varColumns <- c(varColumns, "NewCol")
+    }
+    colorColNames <- unlist(lapply(varColumns, paste0, "_color"))
+    colorValues <- GetColorVariables(targets, varColumns, col_vect)
+    targets$color <- NULL
+    
+    for (colorCol in colorColNames) {
+      targets[, colorCol] <- NA
+    }
+    for (colNam in varColumns) {
+      newColumnId <- paste0(colNam, "_color")
+      for (samNam in names(colorValues[colNam][[1]])) {
+        varToColor <- targets[, colNam] == samNam
+        colorHex <- paste0(colorValues[[colNam]][[samNam]])
+        targets[, newColumnId][varToColor] <- colorHex
+      }
     }
     
+    targets <- FlipColorVector(targets, colorColNames)
     return(targets)
 }
+
 
 
 getColors <- function(samTypes) {
