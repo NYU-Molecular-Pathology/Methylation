@@ -139,3 +139,13 @@ DropMissingIdats <- function(targets, gb){
     targets <- as.data.frame(read.csv(gb$samsheet))
     return(targets)
 }
+
+
+GenerateTargets <- function(gb){
+  targets <- gb$sanitizeSheet(gb$inputFi, gb$samsheet, gb) # Drop commas in xlsx sheet
+#  targets <- FillMissingData(targets)
+  targets <- ModifyTargetColumns(targets, gb)
+  targets <- gb$GetArrayTypes(targets, arrayColumn = gb$col_arrayType)
+  targets <- DropMissingIdats(targets, gb)
+}
+
