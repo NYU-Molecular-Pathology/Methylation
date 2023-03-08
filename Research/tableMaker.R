@@ -184,6 +184,24 @@ colorTargets <- function(targets, varColumns = c("Type","Origin"), col_vect = NU
         targets[, newColumnId][varToColor] <- colorHex
       }
     }
+    
+     if (length(colorColNames) > 1) {
+      for (varN in 1:length(colorColNames)) {
+        if ((varN %% 2) == 0) {
+          col2Change <- colorColNames[varN]
+          oldColors2 <- unique(targets[, col2Change])
+          col_vect <- rev(col_vect)
+          newColAssign <- col_vect[1:length(oldColors2)]
+          for (oldColN in 1:length(oldColors2)) {
+            oldCol <- oldColors2[oldColN]
+            newCol <- newColAssign[oldColN]
+            colorSelec <- which(targets[, col2Change] == oldCol)
+            targets[colorSelec, col2Change] <- newCol
+          }
+        }
+      }
+    }
+    
     return(targets)
 }
 
