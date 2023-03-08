@@ -94,15 +94,6 @@ writeDetailTab<-function(segFile, targets) {
   }
 }
 
-saveClusters <- function(seg_clust_file,segFile){
-    detailVals <- as.data.frame(read.csv(segFile, row.names=NULL))[,c("chrom","loc.start","loc.end", "seg.mean","ID")]
-    colnames(detailVals) <- c("chromosome", "start", "end", "segmean", "sample")
-    detailVals$segmean <- (2**(detailVals$segmean))*2
-    write.table(detailVals,file=seg_clust_file,sep = "\t",row.names = F)
-    cnData <- read.delim(seg_clust_file,header = T,sep = "\t",row.names=NULL)
-    return(cnData)
-}
-
 savePlotPdf <- function(cnData, plotName, plotTitle) {
     freqPlot <- suppressMessages(
         GenVisR::cnFreq(
@@ -142,7 +133,7 @@ SilentLoadLib <- function(pkg){
     ))
 }
 
-gb$GetFreqPlot <- function(cnData, plotChr, plotTitle){
+GetFreqPlot <- function(cnData, plotChr, plotTitle){
     plotChr <- unique(cnData$chromosome)
     freqPlot <- GenVisR::cnFreq(
         cnData,
@@ -163,7 +154,7 @@ gb$GetFreqPlot <- function(cnData, plotChr, plotTitle){
     return(freqPlot)
 }
 
-gb$GetFreqData <- function(cnData,plotChr,plotTitle){
+GetFreqData <- function(cnData,plotChr,plotTitle){
     freqDat <-
         suppressMessages(
             GenVisR::cnFreq(
@@ -228,9 +219,24 @@ SaveLoadCnvs <- function(cnData,
     }    
 }
 
+
+SaveClusters <- function(seg_clust_file, segFile){
+  set1Nam<- c("chrom","loc.start","loc.end", "seg.mean","ID")
+  set2Nam<- c("chr","start","end", "value","ID"   )
+    detailVals <- as.data.frame(read.csv(segFile, row.names=NULL))
+    detailVals <- detailVals[,set1Nam]
+    #detailVals <- detailVals[,set2Nam]
+    colnames(detailVals) <- c("chromosome", "start", "end", "segmean", "sample")
+    detailVals$segmean <- (2**(detailVals$segmean))*2
+    write.table(detailVals,file=seg_clust_file,sep = "\t",row.names = F)
+    cnData <- read.delim(seg_clust_file,header = T,sep = "\t",row.names=NULL)
+    return(cnData)
+}
+
+
 grabClusterDat <- function(seg_clust_file,segFile){
      if(!file.exists(seg_clust_file)){
-        cnData <- gb$saveClusters(seg_clust_file,segFile)} else{
+        cnData <- SaveClusters(seg_clust_file,segFile)} else{
         cnData <- read.delim(seg_clust_file,header = T,sep = "\t",row.names=NULL)
         }
     cnData$start <- as.numeric(cnData$start)
@@ -258,6 +264,7 @@ grabGsetBeta <- function(gsetbeta, gset.funnorm) {
   return(gset.funnorm.beta)
 }
 
+
 #colnames(gset.funnorm.beta) <- gset.funnorm$Sample_Group
 getDmpData <- function(ClusfiNam, gset.funnorm, condition){
 if(!file.exists(file.path(getwd(),ClusfiNam))){
@@ -280,6 +287,7 @@ if(!file.exists(file.path(getwd(),ClusfiNam))){
   return(gene_char_unique)
 }
 
+
 ##Convert to entrz ids for kegg enrichment analysis##
 entrz2kegg <- function(gene_char_unique){
   ids <- supM(clusterProfiler::bitr(gene_char_unique$Genes_By_Sample, fromType = "SYMBOL",toType = "ENTREZID",OrgDb = "org.Hs.eg.db"))
@@ -288,6 +296,7 @@ entrz2kegg <- function(gene_char_unique){
   kk_final <- DOSE::setReadable(kk, OrgDb = org.Hs.eg.db::org.Hs.eg.db, keyType = "ENTREZID")
   return(kk_final)
 }
+
 
 # Removes repeated gene names in Manifest annotations
 removeDupeGene <- function(newOvGene) {
@@ -307,6 +316,7 @@ removeDupeGene <- function(newOvGene) {
     }
   return(newOvGene2)
 }
+
 
 writeDetailTab<-function(segFile, targets) {
   samNam <- as.character(targets$Sample_ID)
@@ -341,18 +351,6 @@ writeDetailTab<-function(segFile, targets) {
   }
 }
 
-saveClusters<-function(seg_clust_file,segFile){
-  set1Nam<- c("chrom","loc.start","loc.end", "seg.mean","ID")
-  set2Nam<- c("chr","start","end", "value","ID"   )
-    detailVals <- as.data.frame(read.csv(segFile, row.names=NULL))
-    detailVals <- detailVals[,set1Nam]
-    #detailVals <- detailVals[,set2Nam]
-    colnames(detailVals) <- c("chromosome", "start", "end", "segmean", "sample")
-    detailVals$segmean <- (2**(detailVals$segmean))*2
-    write.table(detailVals,file=seg_clust_file,sep = "\t",row.names = F)
-    cnData <- read.delim(seg_clust_file,header = T,sep = "\t",row.names=NULL)
-    return(cnData)
-}
 
 rmDupeAnnotation <- function(dupeRows) {
     dupeRows2 <- unlist(mclapply(
@@ -366,9 +364,9 @@ rmDupeAnnotation <- function(dupeRows) {
 }
 
 
-GenCNVdataGroupSave <- function(cnData, targets, col_samGroup, plotChr = NULL) {
+GenCNVdataGroupSave <- function(cnData, targets, col_samGrp, plotChr = NULL) {
   cnData$group <- NULL
-  targets$Type <- targets[col_samGroup, ]
+  targets$Type <- targets[col_samGrp, ]
   for (sn in unique(cnData$sample)) {
     selec <- cnData$sample == sn
     cnData$group[selec] <- targets$Type[targets$Sample_Name == sn]
