@@ -128,6 +128,14 @@ DropMissingIdats <- function(targets, gb){
     idatReal <- file.exists(file.path(gb$idatPath, paste0(targets$SentrixID_Pos, "_Red.idat")))
     targets <- targets[idatReal, ]
     rownames(targets) <- 1:nrow(targets)
+    if(length(unique(targets$ArrayType)) > 1){
+      message("Multiple Array types on this sample list!  EPIC and 450K")
+      targets <- FilterArrayKind(targets, gb$col_arrayType)
+    }
+    if(!is.null(gb$col_sentrix)){
+      targets[, gb$col_sentrix] <- targets$SentrixID_Pos
+    }
+    write.csv(targets, gb$samsheet, quote=F, row.names=F)
+    targets <- as.data.frame(read.csv(gb$samsheet))
     return(targets)
 }
-
