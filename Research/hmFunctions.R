@@ -156,6 +156,7 @@ assignColors2 <- function(targets, varColumns = c("Type","Origin"), col_vect = N
 }
 
 modifyHaColors <- function(varColumns, targets, ha) {
+  targets <- gb$colorTargets(targets, varColumns)
   for (vCol in varColumns) {
     colorColName <- paste0(vCol, "_color")
     colours <- unique(targets[, colorColName])
