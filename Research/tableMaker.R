@@ -427,6 +427,7 @@ PrintSamTypes <- function(targets, shCol) {
   }
 }
 
+
 MsgSamFreq <- function(targets, gb){
   plotLi <- gb$PrintSamTypes(targets, gb$col_samTypes)
   if(gb$col_samGrp != gb$col_samTypes){
