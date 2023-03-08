@@ -147,5 +147,6 @@ GenerateTargets <- function(gb){
   targets <- ModifyTargetColumns(targets, gb)
   targets <- gb$GetArrayTypes(targets, arrayColumn = gb$col_arrayType)
   targets <- DropMissingIdats(targets, gb)
+  return(targets)
 }
 
