@@ -482,15 +482,18 @@ makeAbTab <- function(sam,philipsFtp="/Volumes/molecular/Molecular/Philips_SFTP"
     }
 }
 
+
 makeBlankRow <- function(sam, snvDt) {
     nonMutant <- data.frame(matrix(ncol = ncol(snvDt), nrow = 1))
     colnames(nonMutant) <- colnames(snvDt)
     nonMutant[1, ] <- "None"
     nonMutant$Test_Case <- sam
-    makeDT("In-House FrameShifts/INDEL", objDat = nonMutant)
+    snvDt <- rbind(snvDt, nonMutant)
+    return(snvDt)
 }
 
-LoopSampleTabs <-function(params){
+
+LoopSampleTabs <- function(params){
     pactName <- params$pactName
     methData <- gb$GetMethDf(params$pactName)
     qcData <- gb$ReadQcFile(pactName)
@@ -499,23 +502,25 @@ LoopSampleTabs <-function(params){
     snvDt <- read.csv(paste0(pactName, "_desc.csv"))
     outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus"))
     for (sam in samples) {
-        gb$makeNewTab(sam, samList, qcData)
-        if (sam %in% snvDt$Test_Case) {
-            samRows <- snvDt$Test_Case == sam
-            snvTab <- snvDt[samRows & snvDt$Variant == "SNV",]
-            makeDT("In-House FrameShifts/INDEL", objDat = snvTab)
-            cnvTab <- snvDt[samRows & snvDt$Variant == "CNV",]
-            cnvTab <- checkDataDump(sam, cnvTab)
-            makeDT("CNV", cnvTab, pdfFi = sam, outDir=outDir)
-            methCn <- snvDt[samRows & snvDt$Variant == "Methylation",]
-            makeMethTab(sam, methCn, methData)
-        } else{
-            message(sam, " is missing from your Description input File")
-            makeBlankRow(sam, snvDt)
-        }
-        makeAbTab(sam)
-    }
+      gb$makeNewTab(sam, samList, qcData)
+      if (!(sam %in% snvDt$Test_Case)) {
+        message(sam, " is missing from your Description input File:\n",
+                paste0(pactName, "_desc.csv"))
+        message("Adding Sample as a blank row")
+        snvDt <- makeBlankRow(sam, snvDt) 
+      }
+      samRows <- snvDt$Test_Case == sam
+      snvTab <- snvDt[samRows & snvDt$Variant == "SNV",]
+      makeDT("In-House FrameShifts/INDEL", objDat = snvTab)
+      cnvTab <- snvDt[samRows & snvDt$Variant == "CNV",]
+      cnvTab <- checkDataDump(sam, cnvTab)
+      makeDT("CNV", cnvTab, pdfFi = sam, outDir=outDir)
+      methCn <- snvDt[samRows & snvDt$Variant == "Methylation",]
+      makeMethTab(sam, methCn, methData)
+      makeAbTab(sam)
+      }
 }
+
 
 loadHtmlTag <- function(){
     require("tidyverse")
