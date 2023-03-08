@@ -96,7 +96,7 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL,
         shapeVals <- c(19, 17, 15, 7, 8, 9, 1, 3, 4, 5)
         plotSymLen <- 1:length(unique(tsne_plot$symbol))
         if(length(plotSymLen)>10){
-          newVals <-c(1:25, 32:127)
+          newVals <-c(1:25, 33:127)
           shapeVals <- newVals
         }
         sv <- shapeVals[plotSymLen]
