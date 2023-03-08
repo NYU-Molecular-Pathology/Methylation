@@ -181,7 +181,8 @@ colorTargets <- function(targets, varColumns = c("Type","Origin"), col_vect = NU
     col_vect <- gb$GetDefaultColors(col_vect)
     targets <- gb$FixNullNaVars(targets, varColumns)
     message("Targets Dimnames:\n", paste(dimnames(targets)[[2]], collapse = " | "))
-    if (length(varColumns) <= 1 & "Type" %in% varColumns == F) {
+    hasType <- any("Type" %in% varColumns)
+    if (length(varColumns) <= 1 & hasType == F) {
       targets$Type <- targets[, varColumns[1]]
       varColumns <- c(varColumns, "Type")
     }
@@ -208,7 +209,6 @@ colorTargets <- function(targets, varColumns = c("Type","Origin"), col_vect = NU
     targets <- FlipColorVector(targets, colorColNames, col_vect)
     return(targets)
 }
-
 
 
 getColors <- function(samTypes) {
