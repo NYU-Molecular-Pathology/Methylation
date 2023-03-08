@@ -247,7 +247,7 @@ GenerateUnsuperTsne <- function(targets1, betas, gb, colorVariable = NULL, shape
         colorVariable <- gb$col_samTypes
     }
     if(is.null(shapeVariable)){
-        shapeVariable <-  gb$col_samGrp
+        shapeVariable <-  gb$col_shapes
     }
     if(is.null(isSuper)){
         isSuper <- F
