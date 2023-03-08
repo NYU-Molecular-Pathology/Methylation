@@ -156,7 +156,7 @@ GetColorVariables <- function(targets, varColumns, col_vect){
 }
 
 
-FlipColorVector <- function(targets, colorColNames){
+FlipColorVector <- function(targets, colorColNames, col_vect){
   if (length(colorColNames) > 1) {
       for (varN in 1:length(colorColNames)) {
         if ((varN %% 2) == 0) {
@@ -205,7 +205,7 @@ colorTargets <- function(targets, varColumns = c("Type","Origin"), col_vect = NU
       }
     }
     
-    targets <- FlipColorVector(targets, colorColNames)
+    targets <- FlipColorVector(targets, colorColNames, col_vect)
     return(targets)
 }
 
