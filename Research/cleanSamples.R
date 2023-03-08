@@ -147,7 +147,7 @@ GenerateTargets <- function(gb){
   targets <- ModifyTargetColumns(targets, gb)
   targets <- gb$GetArrayTypes(targets, arrayColumn = gb$col_arrayType)
   targets <- DropMissingIdats(targets, gb)
-  targets <- gb$colorTargets(targets, varColumns)
+  targets <- gb$colorTargets(targets, gb$selectedVars)
   write.csv(targets, gb$samsheet, quote=F, row.names=F)
   targets <- as.data.frame(read.csv(gb$samsheet))
   return(targets)
