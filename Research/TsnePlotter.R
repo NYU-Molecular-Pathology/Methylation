@@ -84,6 +84,33 @@ addPlotLabels <- function(groupTsne, tsneData){
     
 }
 
+
+AddPlotSymbols <- function(tsne_plot, groupTsne, symFlags){
+  if(symFlags==F) {
+    symShape <- shapeVals <- shapeLabels <- NULL
+    groupTsne <- groupTsne +
+      geom_point(aes(x, y, color = tsne_plot$GROUPS, shape = symShape), size = 5, alpha = 0.85)
+    return(groupTsne)
+  }else{
+    shapeVals <- c(19, 17, 15, 7, 8, 9, 1, 3, 4, 5)
+    plotSymLen <- 1:length(unique(tsne_plot$symbol))
+    if (length(plotSymLen) > 10) {
+      shapeVals <- c(1:25, 33:127)
+    }
+    sv <- shapeVals[plotSymLen]
+    shapeLabels <- levels(as.factor(tsne_plot$symbol))
+    if (any(is.na(shapeLabels))) {
+      shapeLabels <- colorLabel
+    }
+    symShape <- as.factor(tsne_plot$symbol)
+    groupTsne <- groupTsne +
+      geom_point(aes(x, y, color = tsne_plot$GROUPS, shape = symShape), size = 5, alpha = 0.85) +
+      scale_shape_manual(name = "Sample Type", values = sv, labels = shapeLabels)
+    return(groupTsne)
+    }
+}
+
+
 # FUNCTION: Generates a T-sne plot with or without additional labels
 genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL,
                         symbolsLabel = NULL, colorLabel = NULL, names2Label = NULL)
@@ -92,55 +119,21 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL,
     colours <- unique(tsne_plot$col)
     symFlags <- !is.null(symbolsLabel)
     devAskNewPage(ask=F) #options("device.ask.default"=F)
-    if(symFlags==T) {
-        shapeVals <- c(19, 17, 15, 7, 8, 9, 1, 3, 4, 5)
-        plotSymLen <- 1:length(unique(tsne_plot$symbol))
-        if(length(plotSymLen)>10){
-          newVals <-c(1:25, 33:127)
-          shapeVals <- newVals
-        }
-        sv <- shapeVals[plotSymLen]
-        shapeLabels <-levels(as.factor(tsne_plot$symbol))
-        if (any(is.na(shapeLabels))) {
-            shapeLabels <- colorLabel
-        }
-        symShape <- as.factor(tsne_plot$symbol)
-    } else{
-        symShape <- shapeVals <- shapeLabels <- NULL
-    }
     # Parameters for text & geom_label_repel
     et <- ggplot2::element_text(size = 12)
+    eBlank <- ggplot2::element_blank()
     # Creating Main ggplot Object
-    groupTsne <- ggplot(tsne_plot, aes(x=tsne_plot$x,y=tsne_plot$y,group=tsne_plot$GROUPS)) +
-        geom_point(aes(x, y, color = tsne_plot$GROUPS, shape = symShape), size = 5, alpha = 0.85)
+    groupTsne <- ggplot(tsne_plot, aes(x=tsne_plot$x,y=tsne_plot$y,group=tsne_plot$GROUPS)) 
     # Adding Symbols if provided
-    if (symFlags == T) {
-        groupTsne <- groupTsne + 
-            scale_shape_manual(name = "Sample Type", values = sv, labels = shapeLabels)
-    }
-    # Adding Main Plot Colors and Axis Labels
+    groupTsne <- AddPlotSymbols(tsne_plot, groupTsne, symFlags)
+    # Adding Plot Color, Theme, and Axis Labels
     groupTsne <- groupTsne +
       scale_color_manual(values = colours, name = "Sample Label") +
-      labs(color = colorLabel, size = 5) + theme_bw(base_size = 16) +
-      theme(
-        panel.grid.major = ggplot2::element_blank(),
-        panel.grid.minor = ggplot2::element_blank(),
-        panel.background = ggplot2::element_blank(),
-        text = et
-      ) +
+      labs(color = colorLabel, size = 5, x = "TSNE 1", y = "TSNE 2") + theme_bw(base_size = 16) +
+      theme(panel.grid = eBlank, panel.background = eBlank, text = et, plot.title = et, 
+            legend.text = et, legend.position = "bottom", axis.text = et) +
       ggtitle(label = titleLabel) +
-      theme(
-        plot.title = et,
-        legend.text = et,
-        text = et,
-        legend.position = "bottom",
-        axis.text.y = et,
-        axis.text.x = et
-      ) +
-      guides(fill = guide_legend(title = "Sample Legend")) +
-      labs(x = "TSNE 1", y = "TSNE 2") +
-      guides(fill = guide_legend(ncol = 2, nrow = 30, byrow = TRUE))
-    
+      guides(fill = guide_legend(title = "Sample Legend", ncol = 2, nrow = 30, byrow = TRUE))
     # Below only runs to label sample IDs if label group is provided
     if (!is.null(groupToLabel)) {
         tsneData = subset(tsne_plot, tsne_plot$samples == groupToLabel)
@@ -152,6 +145,7 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL,
     }
     return(groupTsne)
 }
+
 
 gb$tierBetas <- function(betas, col_sentrix, RGSet,
                          batchCorrect = F, getSuper = F, topVar = 1:10000) {
