@@ -92,8 +92,10 @@ FormatPlotlyLegend <- function(otherPlot){
         currLegend <- otherPlot[["x"]][["data"]][[legGroup]][["legendgroup"]]
         newLegend <- gsub("[()]", "", currLegend)
         splitLeg <- stringr::str_split_fixed(newLegend, ",", 2)
-        newLegend <- stringr::str_to_title(splitLeg[,1])
-        newSamNam <- stringr::str_to_title(splitLeg[,2])
+        newLegend <- toupper(splitLeg[,1])
+        newSamNam <- toupper(splitLeg[,2])
+        #newLegend <- stringr::str_to_title(splitLeg[,1])
+        #newSamNam <- stringr::str_to_title(splitLeg[,2])
         otherPlot[["x"]][["data"]][[legGroup]][["legendgroup"]] <- 
           paste0(newLegend, " (", newSamNam, ")")
         otherPlot[["x"]][["data"]][[legGroup]][["name"]] <- 
