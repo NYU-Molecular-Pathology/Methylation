@@ -325,37 +325,31 @@ getMdsPlot <- function(RGSet, samNames, topN=1000) {
 
 plot.mds <- function(mSetSq.beta, targets, varName, topN) {
     varColorCol <- paste0(varName, "_color")
-    myColors <- c(targets[,varColorCol])
-    names(myColors) <- targets$Sample_Name
-    plotNam <- paste0(varName, "_top_", topN, "_msetBeta", ".png")
-    outPlotNam <- file.path(getwd(),"figures","mds")
-    if(!dir.exists(outPlotNam)){dir.create(outPlotNam, recursive = T)}
-    outPlotFi <- file.path(outPlotNam, plotNam)
-    png(filename = outPlotFi, width = 12, height = 8, res = 200, units = "in")
-    limma::plotMDS(
-      mSetSq.beta, top = topN, gene.selection = "common",
-      plot = T, col = myColors, pch=19, labels=colnames(mSetSq.beta),
-      main = paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot")
-    )
+    myColors <- c(targets[, varColorCol])
     names(myColors) <- targets[,varName]
-    legend("topright", legend = c(unique(names(myColors))), 
-           col = paste(as.list(unique(myColors))), pch = 15, cex = 0.8)
-    invisible(dev.off())
-    thepng <- outPlotFi #paste0('./', plotNam)
-    return(knitr::include_graphics(thepng))
+    mds <- limma::plotMDS(mSetSq.beta, top = topN, labels = colnames(mSetSq.beta), 
+                          gene.selection = "common", plot = F)
+    toplot <- data.frame(PCA1 = mds$x, PCA2 = mds$y, Group = factor(names(myColors)))
+    outMDSplot <- 
+      ggplot2::ggplot(toplot, aes(PCA1, PCA2, colour = Group)) + 
+      ggplot2::geom_point(aes(color = Group), size = 5, alpha=0.65) +
+      ggplot2::scale_color_manual(values = myColors) + ggplot2::theme_bw() + 
+      labs(main = paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot"))
+    return(outMDSplot)
 }
 
 
 LoopPlotMds <- function(mSetSq.beta, targets, selectedVars, topN) {
   for (varNum in 1:length(unique(selectedVars))) {
     cat("\n\n")
-    cat(paste("# MDS plot of Variable:", selectedVars[varNum]))
+    cat(paste("## MDS plot of Variable:", selectedVars[varNum]))
     cat("\n\n")
     mdsFi <- plot.mds(mSetSq.beta, targets, selectedVars[varNum], topN)
-    cat(paste0('\n![', '](', mdsFi[1], ')\n'))
+    print(mdsFi)
     cat("\n\n")
   }
 }
+
 
 dropGroup <- function(targets, filterCol=NULL, group2rm=NULL) {
     remov <- ifelse(!is.null(group2rm), c(targets[,filterCol] == group2rm), targets[,filterCol] != group2rm)
