@@ -127,8 +127,9 @@ takeTopVariance <- function(betas, topVar){
 }
 
 
-getSupervise <- function(the_beta, RGSet, topVar=1:10000, cutOff=0.05, dmpTyp = "categorical" ){
-    condition <- pData(RGSet)$Type
+getSupervise <- function(the_beta, RGSet, topVar=1:10000, cutOff=0.05, dmpTyp = "categorical", superVar=NULL){
+    #condition <- pData(RGSet)$Type
+    condition <- pData(RGSet)[, superVar]
     dmp <- dmpFinder(the_beta, pheno = condition, type = dmpTyp)
     dmp <- cbind(dmp, ID = rownames(dmp))
     betas_df <- as.data.frame(the_beta)
@@ -137,33 +138,37 @@ getSupervise <- function(the_beta, RGSet, topVar=1:10000, cutOff=0.05, dmpTyp = 
     dmp <- dmp[dmp$pval < cutOff, ]
     final_sam <- row.names((t(betas_df[row.names(dmp[topVar, ]), ]))) #topVar=1:10000
     betas_df <- betas_df[, colnames(betas_df) %in% final_sam]
-    write.csv(betas_df, "dmp_methylation.csv", quote = F)
+    write.csv(betas_df, paste0(superVar,"_dmp_methylation.csv"), quote = F)
     betas <- as.matrix(betas_df)
     return(betas)
 }
 
-
 # Checks if supervised rds data exists to load, else calculates it 
-loadSupervise <- function(RGSet, betas, gb, col_sentrix="SentrixID_Pos", dmpTyp = "categorical") {
-    if(gb$supervisedRun == F){
-        return(NULL)
+loadSupervise <- function(RGSet, betas, gb, superVar = NULL, dmpTyp = "categorical") {
+    if (gb$supervisedRun == F) {
+      return(NULL)
     }
-    if (!file.exists(supbetaOut)) {
-        rgRows <- RGSet@colData@rownames # ensure poor samples are dropped
-        rgLiDat <- RGSet@colData@listData
-        dropFilter <- rgLiDat[["Sample_ID"]] %in% colnames(betas)
-        samFltr <- rgLiDat[[col_sentrix]][dropFilter]
-        newRg <- RGSet[, rgRows %in% samFltr]
-        topVar = 1:max(varProbes)
-        # supervised dmp top Variance with getSupervise
-        superbetas <- gb$getSupervise(betas, newRg, topVar, dmpTyp = dmpTyp) 
-        SaveObj(superbetas, file.name = supbetaOut)
+    supbetaOutFi <- paste(supbetaOut, superVar , ".Rdata", sep = "_")
+    if (!file.exists(supbetaOutFi)) {
+      rgRows <- RGSet@colData@rownames # ensure poor samples are dropped
+      rgLiDat <- RGSet@colData@listData
+      dropFilter <- rgLiDat[["Sample_ID"]] %in% colnames(betas)
+      samFltr <- rgLiDat[["SentrixID_Pos"]][dropFilter]
+      newRg <- RGSet[, rgRows %in% samFltr]
+      topVar = 1:max(varProbes)
+      # supervised dmp top Variance with getSupervise
+      superbetas <- gb$getSupervise(
+        betas,
+        newRg,
+        topVar,
+        dmpTyp = dmpTyp,
+        superVar = superVar)
+      SaveObj(superbetas, file.name = supbetaOutFi)
     } else{
-        superbetas <- LoadRdatObj(supbetaOut)
+      superbetas <- LoadRdatObj(supbetaOutFi)
     }
     return(superbetas)
 }
-
 
 # COMABAT batch correction between groups
 batchCorrectBs <- function(betas, targets, batch_col) {
