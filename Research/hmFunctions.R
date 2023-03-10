@@ -175,6 +175,7 @@ assignColors3 <- function(targets, varColumns = c("Type", "Origin"), col_vect = 
     message("~~~~Targets Dimnames:\n\n", paste(dimnames(targets)[[2]], collapse = "\n"))
     
     col_vect <- gb$GetDefaultColors(col_vect)
+    targets <- gb$colorTargets(targets, varColumns)
     targets <- gb$FixNullNaVars(targets, varColumns)
     
     if (length(varColumns) <= 1) {
@@ -208,6 +209,18 @@ assignColors3 <- function(targets, varColumns = c("Type", "Origin"), col_vect = 
     
     names(colorValues) <- varColumns
     stopifnot(all(names(colorValues) == names(anno_df)))
+  
+    for(x in names(colorValues)){
+      targCol <- paste0(x, "_color")
+      currColumn <- colorValues[[x]]
+      for(y in names(currColumn)){
+        matchCol <- targets[,targCol]
+        matchSam <- which(targets[,x] == y)[1]
+        newColSub <- matchCol[matchSam]
+        colorValues[[x]][[y]] <- newColSub
+      }
+    }
+  
     ha <- suppressWarnings(gb$getHeatAnno(colorValues, anno_df))
     return(ha)
   }
