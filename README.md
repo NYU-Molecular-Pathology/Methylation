@@ -34,7 +34,7 @@ Download and install the following packages:<br>
 `/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh`<br />
 - [X] **Library Magic, Sqlite and Proj**: `brew install libmagic sqlite proj`<br />
 - [X] **Compilers and Unpackers**: `brew install llvm aspell gdal autoconf automake gcc libgit2 openssl@3 zlib go pandoc`<br />
-- [X] **Additional Libraries**: `brew install texinfo pango cairo open-mpi poppler-qt5 graphviz libopenmpt`<br />
+- [X] **Additional Libraries**: `brew install texinfo pango cairo open-mpi poppler-qt5 graphviz libopenmpt java11`<br />
 
 <details>
 <summary>NOTE</summary>
