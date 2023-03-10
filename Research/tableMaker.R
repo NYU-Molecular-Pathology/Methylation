@@ -445,7 +445,7 @@ MessageBatchMix <- function(targets, gb){
 
 PrintSamTypes <- function(targets, shCol) {
   if (!is.null(shCol)) {
-    samF <- setNames(as.data.frame(table(targets[, shCol]), NULL), c(paste("Sample Type:", shCol), "Freq"))
+    samF <- setNames(as.data.frame(table(targets[, shCol]), NULL), c(paste("Sample Type:", shCol), "Total"))
     return(samF)
   }
 }
@@ -459,9 +459,10 @@ MsgSamFreq <- function(targets, gb){
   if(!is.null(gb$col_arrayType)){
     plotLi <- list(plotLi, "Array Types"= gb$PrintSamTypes(targets, gb$col_arrayType))
   }
-  return(knitr::kable(as.list(plotLi), format = "html", table.attr = 'class="myTable"') %>% 
-           kableExtra::kable_styling(full_width = F)
-         )
+  return(
+      knitr::kable(plotLi, format = "html", table.attr = 'class="myTable"') %>%
+      kableExtra::kable_styling(full_width = F)
+  )
 }
 
 
