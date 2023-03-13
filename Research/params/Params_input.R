@@ -10,21 +10,49 @@ userNam <- paste0(Sys.info()[["user"]])
 runDir <- file.path("","Users", userNam, "Documents", proj.name)
 
 token = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" # REDCap API token string
+inputFi <- file.path(runDir, xlsxFile)
+samsheet <- "samplesheet.csv" # primary sample sheet name/path
+titleMain <- paste("Clustering of", sampleType, ":\nBy Top") # newline if title is too long (\n)
+samSheetDir <- file.path(runDir,"csv","samplesheet.csv")
+inputFi <- file.path(runDir, xlsxFile)
+idatPath <- file.path(runDir,"idats")
+
+# Hard coded Parameters -------------------------------------------------------------------------
 gb$setKnitDir(runDir)
+stopifnot(getwd() == runDir)
+gb$CheckDirCreate("idats")
 
-# Functional Plotting Parameter Flags   -----------------------------------------------
-batchCorrect <- F # Do your samples need to be batch corrected?
-needFi = T # if you need to create a minfi samplesheet and copy idats
-geneNamesHeatMap <- F # Do you want to annotate the gene/probe names on heatmap y-axis?
-supervisedRun <- F
+# Functional Parameter Flags --------------------------------------------------------------------
+F -> mergeProbes  # Do idat files need to be merged 450K + EPIC?
+T -> batchEffect  # Are the idats processed in different facilities?
+F -> getNoob      # Do want to perform NOOB minfi preprocessing?
+T -> needFi           # Do you need to create a minfi samplesheet and copy idat files?
+F -> addGenesHm       # Do you want to annotate the gene/probe names on heatmap y-axis?
+F -> supervisedRun    # Will this run have supervised sample clustering?
+F -> generateCNVchunk # Will CNV analysis be performed?
+F -> genPathwaychunk  # Will Pathway analysis be performed?
+F -> pairWiseSamples  # will perform pairwise analysis
+F -> genPairwise  # Will Pathway analysis be performed?
 
-# CVS sheet column names to subset samples  -----------------------------------------------
-col_samNames <- "record_id" # column containing unique sample IDS
-col_samTypes <- "subgroup" # groupings of sample kinds
-col_samGrp <- col_samGroup <- "tumor_subgroup" # header for sample groups/subtypes
-sam.grp.type <- "Organ"
+# Input worksheet column names to subset samples ------------------------------------------------
+"Institution" ->   col_batchEffect -> batch_col # Institution names column for batched idats
+NULL -> col_arrayType # "ArrayType"
 
-# Additional CVS sheet column names -----------------------------------------------
-col_sentrix <- "SentrixID_Pos" # header name containing the sentrix ID
-col_other <- "Type" # any additional columns you would like to colorize/label in plots
-selectedVars <- c("Type", "Tumor") # vector of names of columns you want to target
+# Variable Columns
+"RD_Number" ->     col_samNames # Column containing unique sample IDS
+"Methylation_Class" -> col_samTypes # Column name in samplesheet grouping sample type COLORS
+"Driver" ->    col_shapes   # Column name for plot point shapes
+"Driver" -> samGroup -> col_samGrp #header for sample groups/subtypes SHAPES
+"All Tumors" ->   sam.grp.type # Grouping of tumors by type if relevant i.e. list specific names or new
+"Sentrix_ID" ->  col_sentrix  # header name containing the sentrix ID
+NULL -> col_other # any additional columns you would like to colorize/label in plots
+
+selectedVars <- c(col_shapes, col_samTypes) # vector of names of columns you want to target
+gb$names2Label <- NULL
+
+# Site-Specific Analysis
+genesInputFi <-  NULL #file.path(runDir,"site-specific_genes.xlsx")
+
+gb$tsneHead1 <- gb$GetColorShape(gb$col_samGrp, gb$col_samTypes)
+gb$tsneHead2 <- gb$GetColorShape(gb$col_samGrp, gb$sam.grp.type)
+gb$tsneHead3 <- gb$GetColorShape(gb$col_samTypes, gb$sam.grp.type)
