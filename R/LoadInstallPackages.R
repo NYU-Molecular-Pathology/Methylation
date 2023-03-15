@@ -1,4 +1,7 @@
 #!/usr/bin/env Rscript
+formals(library)$quietly <- T
+formals(library)$warn.conflicts <- F
+formals(require)$warn.conflicts <- F
 if(!require("devtools")){install.packages("devtools", dependencies=T, ask=F)}
 
 yourHome <- fs::path_home()
