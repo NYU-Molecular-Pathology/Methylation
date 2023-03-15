@@ -8,12 +8,13 @@ gb <- globalenv(); assign("gb", gb)
 LoadHeatMapLibs <- function(){
   suppressPackageStartupMessages(library("ComplexHeatmap"))
   suppressMessages(require("ComplexHeatmap"))
+  ComplexHeatmap::ht_opt(message = FALSE)
   #suppressPackageStartupMessages(library('magick'))
   suppressMessages(require('Cairo'))
   library("grid")
   suppressMessages(require("grid"))
   suppressMessages(options(bitmapType='cairo'))
-  ht_opt$message = FALSE
+  #ht_opt$message = FALSE
 }
 
 
