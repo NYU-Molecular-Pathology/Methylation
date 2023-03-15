@@ -1,6 +1,9 @@
 formals(library)$quietly <- T
 formals(library)$warn.conflicts <- F
 formals(require)$warn.conflicts <- F
+formals(install.packages)$dependencies <- T
+formals(install.packages)$verbose <- T
+formals(install.packages)$ask <- F 
 options("install.packages.compile.from.source" = "No")
 options("install.packages.check.source" = "no")
 
