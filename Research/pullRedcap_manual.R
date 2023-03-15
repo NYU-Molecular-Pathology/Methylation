@@ -1,5 +1,12 @@
 #!/usr/bin/env R
 library("base"); gb <- globalenv(); assign("gb", gb)
+formals(library)$quietly <- T
+formals(library)$warn.conflicts <- F
+formals(require)$warn.conflicts <- F
+formals(install.packages)$dependencies <- T
+formals(install.packages)$verbose <- T
+formals(install.packages)$ask <- F 
+
 args <- commandArgs(T)
 if(!require("devtools")){install.packages("devtools", quiet=T)}
 
