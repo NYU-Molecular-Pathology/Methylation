@@ -1,4 +1,11 @@
 gb <- .GlobalEnv; assign("gb", gb)
+formals(library)$quietly <- T
+formals(library)$warn.conflicts <- F
+formals(require)$warn.conflicts <- F
+formals(install.packages)$dependencies <- T
+formals(install.packages)$verbose <- T
+formals(install.packages)$ask <- F 
+
 
 library("grid")
 if(!require("GenVisR")){BiocManager::install("GenVisR")}
