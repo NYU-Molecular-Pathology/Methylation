@@ -436,7 +436,7 @@ MatchRGtargets <- function(RGSet, targets, sampleSheet=NULL){
 }
 
 
-GetArrayTypes <- function(targets, arrayColumn, outputFi = "annotated_samplesheet.csv") {
+GetArrayTypes <- function(targets, arrayColumn, outputFi = "samplesheet_annotated_epic.csv") {
     if(is.null(arrayColumn)){
         targets$ArrayType <- NULL
         arrayColumn <- "ArrayType"
