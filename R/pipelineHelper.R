@@ -423,11 +423,11 @@ makeReports.v11b6 <- function(runPath = NULL,
     }
     if(grepl("TEST",runID)){cpReport=F;redcapUp=F;email=F}
     if(cpReport==T){
-        file.list <- try(gb$copy2outFolder(gb$clinDrv, runID), outFile = "copyLog.txt")
+        #file.list <- try(gb$copy2outFolder(gb$clinDrv, runID), outFile = "copyLog.txt")
         if(isMC==T){
-            runYear <- paste0("20", stringr::str_split_fixed(runID, "-", 2)[1])
-            gb$copy.to.clinical(clinOut = "/Volumes/molecular/MOLECULAR/MethylationClassifier", runID, runYear)
-            gb$copy.to.clinical(clinOut = "/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/Results", runID, runYear)
+            #runYear <- paste0("20", stringr::str_split_fixed(runID, "-", 2)[1])
+            #gb$copy.to.clinical(clinOut = "/Volumes/molecular/MOLECULAR/MethylationClassifier", runID, runYear)
+            #gb$copy.to.clinical(clinOut = "/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/Results", runID, runYear)
             }
     }
     if (redcapUp == T) {
