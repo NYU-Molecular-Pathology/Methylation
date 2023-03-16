@@ -20,7 +20,7 @@ if(file.exists("samplesheet.csv")){file.remove("samplesheet.csv")}
 
 gb$MakeLocalSampleSheet(runID, token)
 
-selectRDs <- gb$AssignArgs(runID, baseFolder, token, selectRDs, redcapUp, gb)
+selectRDs <- gb$AssignArgs(runID, baseFolder, token=token, selectRDs, redcapUp, gb)
 gb$StartCustomRun(redcapUp=redcapUp)
 
 if(generateSarcReport==T) {
@@ -30,4 +30,4 @@ if(generateSarcReport==T) {
 
 file.list <- dir(getwd(), pattern = ".html", full.names = T)
 print(as.data.frame(file.list))
-gb$ForceUploadToRedcap(file.list, F)
+gb$ForceUploadToRedcap(file.list, token, F)
