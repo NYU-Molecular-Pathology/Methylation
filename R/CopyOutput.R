@@ -499,6 +499,33 @@ CallApiFileForce <- function(rcon, recordName) {
         )
 }
 
+ForceCallApiFile <- function(rcon, recordName, ovwr = T) {
+  recordFi <- paste0(recordName, ".html")
+  message("\n", mkBlue("Importing Record File:"), paste0(" ", recordFi))
+  if (ovwr == F) {
+    writeLogFi(recordName)
+  } else{
+    tryCatch(
+      expr = {
+        suppressWarnings(
+          redcapAPI::importFiles(
+            rcon = rcon,
+            file = file.path(getwd(), recordFi),
+            record = recordName,
+            field = "classifier_pdf",
+            overwrite = ovwr,
+            repeat_instance = 1
+          )
+        )
+      },
+      error = function(e) {
+        message(recordFi, " was not imported to REDCap")
+        message(mkRed(e$message))
+      }
+    )
+  }
+}
+
 
 UploadToRedcapOnly <- function(file.list, token=NULL) {
     msgFunName(cpOutLnk, "UploadToRedcapOnly")
@@ -508,5 +535,15 @@ UploadToRedcapOnly <- function(file.list, token=NULL) {
     htmlLi <- stringr::str_replace_all(basename(file.list), ".html", "")
     message(paste0(capture.output(htmlLi), collapse="\n"))
     for (recordName in htmlLi) {CallApiFileForce(rcon, recordName)}
+}
+
+
+ForceUploadToRedcap <- function(file.list, deskCSV = T) {
+  msgFunName(cpOutLnk, "uploadToRedcap"); message(paste0(capture.output(file.list), collapse="\n"))
+  rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
+  htmlLi <- stringr::str_replace_all(basename(file.list), ".html", "")
+  message(paste0(capture.output(htmlLi), collapse="\n"))
+  for (recordName in htmlLi) {ForceCallApiFile(rcon, recordName, T)}
+  if (deskCSV == T) {try(importDesktopCsv(rcon), outFile = "importDesktopRedcapLog.txt")}
 }
 
