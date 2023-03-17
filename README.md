@@ -37,6 +37,17 @@ Download and install the following packages:<br>
 - [X] **Additional Libraries**: `brew install texinfo pango cairo open-mpi poppler-qt5 graphviz libopenmpt java11`<br />
 - [X] **Additional Library for M1 Mac**: `brew install libffi`<br />
 
+```
+brew install cmake
+brew uninstall glfw
+git clone https://github.com/glfw/glfw.git && \
+cd glfw && \
+cmake -DCMAKE_OSX_ARCHITECTURES=arm64 . && \
+make && \
+sudo make install
+```
+<br />
+
 <details>
 <summary>NOTE</summary>
 - R v4.1 includes compile and Tckl dependencies. brew can install libomp and cairo if needed.
