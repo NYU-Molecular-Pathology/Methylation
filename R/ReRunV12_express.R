@@ -13,8 +13,10 @@ runID <- "MR23-rerun_v12"
 
 if(!length(generateSarcReport)>0){
     generateSarcReport <- F
+}else{
+    sarcRepFlag <- as.character(generateSarcReport)
+    generateSarcReport <- ifelse(sarcRepFlag=="T", T, F)
 }
-
 gb$token <- gb$ApiToken <- token
 
 # Default Variables ---------------------------------------------------------------
