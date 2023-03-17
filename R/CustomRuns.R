@@ -110,20 +110,41 @@ PromptInputCsv <- function(runID) {
         cat("Try pasting the full path again and hit return/Enter: ")
         csvFilePath <- readLines(file("stdin"),1)
         csvFilePath <- as.character(csvFilePath)
-        print(csvFilePath)
+        message(csvFilePath)
+        stopifnot(file.exists(csvFilePath))
     }
-    rd_numbers <- read.csv(file = csvFilePath, header = F, colClasses="character")[,1]
+    rd_numbers <- suppressWarnings(read.csv(file = csvFilePath, header = F, colClasses="character"))[,1]
     rd_numbers <- as.data.frame(rd_numbers)
     message("The following RD-numbers were entered:")
     print(rd_numbers$rd_numbers)
     return(rd_numbers$rd_numbers)
 }
 
-MakeLocalSampleSheet <- function(runID, token){
+
+ParseInputCsvPath <- function(samSheetIn){
+    csvFilePath <- as.character(samSheetIn)
+    if(!file.exists(csvFilePath)){
+        warning("The file ", csvFilePath, " does not exist!")
+        message(csvFilePath)
+        stopifnot(file.exists(csvFilePath))
+    }
+    rd_numbers <- suppressWarnings(read.csv(file = csvFilePath, header = F, colClasses="character"))[,1]
+    rd_numbers <- as.data.frame(rd_numbers)
+    message("The following RD-numbers were entered:")
+    message(paste0(capture.output(rd_numbers), collapse="\n"))
+    return(rd_numbers$rd_numbers)
+}
+
+
+MakeLocalSampleSheet <- function(runID, token, samSheetIn=NULL){
     msgFunName(cpInLnk4,"MakeLocalSampleSheet")
     stopifnot(!is.null(token))
     idatScript <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/pullRedcap_manual.R"
-    rd_numbers <- PromptInputCsv(runID)
+    if(is.null(samSheetIn)){
+        rd_numbers <- PromptInputCsv(runID)
+    }else{
+        rd_numbers <- ParseInputCsvPath(samSheetIn)
+    }
     stopifnot(length(rd_numbers)>=1 & length(rd_numbers)!=0 & stringr::str_detect(rd_numbers[1],"RD-"))
     message("Sourcing: ", idatScript)
     devtools::source_url(idatScript)
