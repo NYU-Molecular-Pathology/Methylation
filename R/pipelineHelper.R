@@ -481,7 +481,13 @@ SetBaseFolder <- function(token, baseFolder, runID){
     gb$methDir <- gb$workFolder <- baseFolder
     gb$setVar("workFolder", baseFolder)
     gb$setVar("ApiToken", token) # assign the ApiToken & print params
-    setwd(file.path(baseFolder, runID))
+  newPathRun <- file.path(baseFolder, runID)
+  pathCdCmd <- paste("cd", newPathRun)
+  message("Changing directory to:", pathCdCmd)
+  system(pathCdCmd)
+  setwd(file.path(baseFolder, runID))
+  message("Current Path")
+  message(newPathRun)
     return(baseFolder)
 }
 
