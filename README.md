@@ -36,6 +36,7 @@ Download and install the following packages:<br>
 - [X] **Compilers and Unpackers**: `brew install llvm aspell gdal autoconf automake gcc libgit2 openssl@3 zlib go pandoc`<br />
 - [X] **Additional Libraries**: `brew install texinfo pango cairo open-mpi poppler-qt5 graphviz libopenmpt java11`<br />
 - [X] **Additional Library for M1 Mac**: `brew install libffi`<br />
+- [X] **Additional OpenGL**: `brew install --from-source glfw3`<br />
 
 ```
 brew install cmake
