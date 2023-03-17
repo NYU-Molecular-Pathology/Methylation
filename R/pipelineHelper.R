@@ -486,8 +486,8 @@ SetBaseFolder <- function(token, baseFolder, runID){
   message("Changing directory to:", pathCdCmd)
   system(pathCdCmd)
   setwd(file.path(baseFolder, runID))
-  message("Current Path")
-  message(newPathRun)
+  message(bkRed("Current Path"))
+  message(getwd())
     return(baseFolder)
 }
 
