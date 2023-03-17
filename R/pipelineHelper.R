@@ -549,7 +549,6 @@ AssignArgs <- function(runID, baseFolder = NULL, token = NULL, selectRDs = NULL,
     gb$defineParams(methDir = baseFolder, baseDir = baseFolder, ApiToken = token)
     gb$setVar("runID", runID)
     if(!is.null(selectRDs)){selectRDs <- stringr::str_split(selectRDs, ",")}
-    selectRDs <- GetPriorityCases(selectRDs) # Prioritizes select RD-numbers and BN cases
     return(selectRDs)
 }
 
