@@ -35,5 +35,6 @@ gb$reportMd <- reportMd <- file.path(fs::path_home(), "report.Rmd")
 # Execute Pipeline Functions ----------------------------------------------------------------------
 gb$PrepareRun(token, baseFolder, runID, runLocal=runLocal) # If running local set runLocal = TRUE
 gb$CheckIdatsCopied()
+selectRDs <- gb$GetPriorityCases(selectRDs) # Prioritizes select RD-numbers and BN cases
 gb$StartRun(selectRDs, emailNotify=T, redcapUp=redcapUp) # Can be changed to default false
 # gb$MakeSarcomaReport()
