@@ -343,9 +343,16 @@ DoRedcapApi <- function(rcon, recordName, runID) {
 }
 
 
+CheckSarcRDnumber <- function(record){
+    isSarc <- ifelse(stringr::str_detect(record, pattern="_sarc"), T, F)
+    if(isSarc==T){
+        record <- stringr::str_split_fixed(record, pattern = "_", 2)[1,1]
+    }
+    return(record)
+}
+
 callApiImport <- function(rcon, recordName, runID) {
     msgFunName(cpOutLnk, "callApiImport")
-
     isEmpty <- checkRedcapRecord(recordName, "subgroup")
     if (isEmpty == '') {
         DoRedcapApi(rcon, recordName, runID)
@@ -384,8 +391,9 @@ uploadToRedcap <- function(file.list, deskCSV = T, runNumb = NULL) {
     htmlLi <- stringr::str_replace_all(basename(file.list), ".html", "")
     message(paste(htmlLi))
     for (recordName in htmlLi) {
-        callApiImport(rcon, recordName, runID)
-        isEmpty <- checkRedcapRecord(recordName) == ''
+        recordName2 <- CheckSarcRDnumber(recordName)
+        callApiImport(rcon, recordName2, runID)
+        isEmpty <- checkRedcapRecord(recordName2) == ''
         callApiFile(rcon, recordName, isEmpty)
     }
     if (deskCSV == T) {
@@ -502,6 +510,7 @@ CallApiFileForce <- function(rcon, recordName) {
 ForceCallApiFile <- function(rcon, recordName, ovwr = T) {
   recordFi <- paste0(recordName, ".html")
   message("\n", mkBlue("Importing Record File:"), paste0(" ", recordFi))
+    recordName <- CheckSarcRDnumber(recordName)
   if (ovwr == F) {
     writeLogFi(recordName)
   } else{
