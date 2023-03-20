@@ -41,6 +41,38 @@ customCNV <- function (Mset, samName= NULL, sex = NULL) {
     }
 }
 
+
+SaveCNVplots <- function(targets, idatPath = NULL) {
+  if (is.null(idatPath)) {
+    idatPath <- getwd()
+  }
+  samplename_data <- as.character(targets$Sample_ID)
+  sentrix.ids <- as.character(targets$SentrixID_Pos)
+  samGroup <- as.character(targets$Type)
+  addCols = NULL
+  for (i in 1:length(sentrix.ids)) {
+    samName <- samplename_data[i]
+    sampleEpic <- sentrix.ids[i]
+    imgName <- paste(samName, sampleEpic, "CNV.png", sep="_")
+    imgPath <- file.path(".", "figures", "cnv")
+    imgFi <- file.path(imgPath, imgName)
+    if (!file.exists(imgFi)) {
+      pathEpic <- file.path(idatPath, sampleEpic)
+      RGsetEpic <- read.metharray(pathEpic, verbose = T, force = T)
+      MsetEpic <- mnp.v11b6::MNPpreprocessIllumina(RGsetEpic, bg.correct = TRUE, normalize = "controls")
+      x <- gb$customCNV(MsetEpic, samName, NULL)
+      slot(x, 'detail', check = FALSE) <- NULL
+      invisible(format(object.size(x), units = 'auto'))
+      png(filename = imgFi, width = 1820, height = 1040)
+      cnvColors <- c("lightblue", "royalblue", "darkblue", "lightgrey", "#ffa19c", "red", "darkred")
+      CNV.genomeplot(x, cols = cnvColors)
+      invisible(dev.off())
+    }
+    knitr::include_graphics(imgName)
+  }
+}
+
+
 # The GDC transforms copy number values into segment mean--equal to log2(copy-number/ 2).
 # https://docs.gdc.cancer.gov/Data/Bioinformatics_Pipelines/CNV_Pipeline/
 writeSegTab <- function(segFile, targets, idatPath= NULL) {
