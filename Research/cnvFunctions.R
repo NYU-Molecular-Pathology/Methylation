@@ -8,7 +8,10 @@ generateSeg <- function(a, b, c) {
     return(x)
 }
 
-customCNV <- function (Mset, sex = NULL) {
+customCNV <- function (Mset, samName= NULL, sex = NULL) {
+  if(is.null(samName)){
+    samName <- colnames(Mset)[1]
+  }
     path <- file.path(path.package("mnp.v11b6"), "ext")
     chiptype <- minfi::annotation(Mset)[[1]]
     if (is.null(sex)) {
@@ -17,7 +20,7 @@ customCNV <- function (Mset, sex = NULL) {
     }
     if (chiptype == "IlluminaHumanMethylationEPIC") {
         load(file.path(path,"conumee_annotation_EPIC_B6.2019-11-29.RData"))
-        cndata <- conumee::CNV.load(Mset)
+        cndata <- conumee::CNV.load(Mset, samName)
         if (sex == "Male") {
             load(file.path(path,"CNanalysis6_conumee_REF_M.2018-09-19.RData"))
             return(generateSeg(cndata, refM_epic, annoEPICxy))
@@ -27,7 +30,7 @@ customCNV <- function (Mset, sex = NULL) {
             }
     } else {
         load(file.path(path,"CNanalysis4_conumee_ANNO.vh20150715.RData"))
-        cndata <- conumee::CNV.load(Mset)
+        cndata <- conumee::CNV.load(Mset, samName)
         if (sex == "Male") {
             load(file.path(path,"CNanalysis4_conumee_REF-M.vh20150715.RData"))
              return(generateSeg(cndata, refM.data, annoXY))
@@ -48,12 +51,13 @@ writeSegTab <- function(segFile, targets, idatPath= NULL) {
       samGroup <-as.character(targets$Type)
       addCols = NULL
       for (i in 1:length(sentrix.ids)) {
+        samName <- samplename_data[i]
         sampleEpic <- sentrix.ids[i]
         pathEpic <- file.path(idatPath, sampleEpic)
         RGsetEpic <- read.metharray(pathEpic, verbose = T, force=T)
         MsetEpic <- mnp.v11b6::MNPpreprocessIllumina(RGsetEpic, bg.correct = TRUE, normalize = "controls")
         if(i==1){addCols <-T}else(addCols <- F)
-        x <- gb$customCNV(MsetEpic)
+        x <- gb$customCNV(MsetEpic, samName)
         q <- CNV.write(x)
         yy <- data.frame(x@detail$ratio)
         colnames(yy) <- paste(samplename_data[i])
