@@ -68,7 +68,7 @@ SaveCNVplots <- function(targets, idatPath = NULL) {
       CNV.genomeplot(x, cols = cnvColors)
       invisible(dev.off())
     }
-    knitr::include_graphics(imgName)
+    knitr::include_graphics(imgFi)
   }
 }
 
