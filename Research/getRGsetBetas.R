@@ -81,15 +81,23 @@ MsgDropping <- function(keep){
 }
 
 
-# Remove Low Quality and select probes using annotations
-cleanUpProbes <- function(RGSet, targets, gb, getfunorm = F, getNoob=F){
+DropSexSnpProbes <- function(detP, mSetSq, sexSnps=T){
+    detP <- detP[match(featureNames(mSetSq), rownames(detP)), ]
+    keep <- rowSums(detP < 0.01) == ncol(mSetSq)
+    gset.funnorm <- addSnpInfo(mSetSq[keep, ])
+    if(sexSnps==T){
+      gset.funnorm <- minfi::dropLociWithSnps(gset.funnorm, snps = c("SBE", "CpG"), maf = 0)
+      annot = minfi::getAnnotation(gset.funnorm)
+      sex_probes = annot$Name[annot$chr %in% c("chrX", "chrY")]
+      gset.funnorm = gset.funnorm[!(rownames(gset.funnorm) %in% sex_probes),]
+      }
+    return(gset.funnorm)
+}
+
+
+cleanUpProbes <- function(RGSet, targets, gb, getfunorm = F, getNoob=F, sexSnps = T){
     library("minfi")  
-    if(!file.exists(gb$pValsOutFi)){
-      detP <- minfi::detectionP(RGSet)
-      gb$SaveObj(detP, file.name = gb$pValsOutFi)
-    }else{
-      detP <- gb$LoadRdatObj(gb$pValsOutFi)
-    }
+    detP <- minfi::detectionP(RGSet)
     colnames(detP) <- RGSet@colData@listData[["Sample_Name"]]
     keep <- colMeans(detP) < 0.05
     RGSet <- RGSet[, keep]
@@ -101,20 +109,13 @@ cleanUpProbes <- function(RGSet, targets, gb, getfunorm = F, getNoob=F){
     }else{
       mSetSq <- suppressWarnings(minfi::preprocessQuantile(RGSet))
     }
-    detP <- detP[match(featureNames(mSetSq), rownames(detP)), ]
-    keep <- rowSums(detP < 0.01) == ncol(mSetSq)
-    gset.funnorm <- addSnpInfo(mSetSq[keep, ])
-    gset.funnorm <- dropLociWithSnps(gset.funnorm,snps=c("SBE","CpG"),maf = 0)#drop loci with snps
-    annot = getAnnotation(gset.funnorm) #getting annotation file
-    sex_probes = annot$Name[annot$chr %in% c("chrX", "chrY")] # dropping sex probes
-    gset.funnorm = gset.funnorm[!(rownames(gset.funnorm) %in% sex_probes),]
+    gset.funnorm <- DropSexSnpProbes(detP, mSetSq, sexSnps)
     if (getfunorm) {
         return(gset.funnorm)
-    } else {
-        betas <- minfi::getBeta(gset.funnorm)
-        colnames(betas) <- RGSet@colData@listData[["Sample_Name"]]
-        return(betas)
-    }
+    } 
+    betas <- minfi::getBeta(gset.funnorm)
+    colnames(betas) <- RGSet@colData@listData[["Sample_Name"]]
+    return(betas)
 }
 
 
