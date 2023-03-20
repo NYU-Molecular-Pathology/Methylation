@@ -243,7 +243,7 @@ WritePathVals<- function(geneVals, geneListIn){
 
 
 GetKeggGeneVals <- function(RGSet, targets, nameGrp, gb) {
-    gset.funnorm <- gb$grabGsetFun(gb$gsetFile, RGSet, targets)
+    gset.funnorm <- gb$grabGsetFun(RGSet, targets, gb)
     condition <- minfi::pData(gset.funnorm)$Type == nameGrp
     gene_char_unique <- gb$getDmpData(gb$ClusfiNam, gset.funnorm, condition)
     kk_final <- gb$entrz2kegg(gene_char_unique)
