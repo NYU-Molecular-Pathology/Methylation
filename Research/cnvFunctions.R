@@ -402,12 +402,11 @@ rmDupeAnnotation <- function(dupeRows) {
 
 GenCNVdataGroupSave <- function(cnData, targets, col_samGrp, plotChr = NULL) {
   cnData$group <- NULL
-  targets$Type <- targets[col_samGrp, ]
+  targets$Type <- targets[, col_samGrp]
   for (sn in unique(cnData$sample)) {
     selec <- cnData$sample == sn
     cnData$group[selec] <- targets$Type[targets$Sample_Name == sn]
   }
-  
   for (samgrp in unique(cnData$group)) {
     plotTitle <- paste0(samgrp)
     cnDat2 <- gb$filterGrp(cnData, samgrp)
