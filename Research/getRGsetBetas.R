@@ -143,8 +143,8 @@ getSupervise <- function(the_beta, RGSet, topVar = 1:10000, cutOff = 0.05, dmpTy
     topDmp <- dmp[topVar, ]
     topProbes <- rownames(topDmp)
     final_sam <- row.names(t(betas_df[row.names(topDmp), ])) #topVar=1:10000
-    betas_df <- betas_df[topProbes, colnames(betas_df) %in% final_sam]
-    dmpOutFi <- paste("top",max(topVar), superVar,"dmp_values.csv", sep = "_")
+    betasDmp <- betas_df[topProbes, colnames(betas_df) %in% final_sam]
+    dmpOutFi <- paste("top", max(topVar), superVar, "dmp_values.csv", sep = "_")
     dmpOutDir <- file.path(".", "figures", "csv")
     if(!dir.exists(dmpOutDir)){dir.create(dmpOutDir)}
     write.csv(topDmp, file.path(dmpOutDir, dmpOutFi) , quote = F)
