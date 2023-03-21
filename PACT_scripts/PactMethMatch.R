@@ -163,6 +163,14 @@ genQuery <- function(dbCol,vals2find){
 queryCases <- function(vals2find, db) {
     i=NULL
     queryList <- foreach::foreach(i=1:ncol(vals2find), .combine="c") %do% {genQuery(i,vals2find)}
+    tsTb <- stringr::str_detect(queryList, "TS|TB")
+    theTScases <- queryList[tsTb]
+    for (x in 1:length(theTScases)) {
+        y <- stringr::str_split_fixed(theTScases[x], "-", 3)[1:2]
+        z <- paste(y,  collapse="-")
+        theTScases[x] <- z
+    }
+    queryList <- c(queryList, theTScases)     
     methQuery <- searchDb(queryList, db)
     return(unique(methQuery))
 }
