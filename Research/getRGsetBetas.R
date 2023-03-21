@@ -128,7 +128,7 @@ takeTopVariance <- function(betas, topVar){
 }
 
 
-getSupervise <- function(the_beta, RGSet, topVar=1:10000, cutOff=0.05, dmpTyp = "categorical", superVar=NULL){
+getSupervise <- function(the_beta, RGSet, topVar = 1:10000, cutOff = 0.05, dmpTyp = "categorical", superVar = NULL){
     condition <- pData(RGSet)[, superVar]
     dmp <- minfi::dmpFinder(the_beta, pheno = condition, type = dmpTyp)
     dmp <- cbind(dmp, ID = rownames(dmp))
@@ -144,8 +144,11 @@ getSupervise <- function(the_beta, RGSet, topVar=1:10000, cutOff=0.05, dmpTyp = 
     topProbes <- rownames(topDmp)
     final_sam <- row.names(t(betas_df[row.names(topDmp), ])) #topVar=1:10000
     betas_df <- betas_df[topProbes, colnames(betas_df) %in% final_sam]
-    write.csv(topDmp, paste("top",max(topVar), superVar,"dmp_values.csv", sep = "_"), quote = F)
-    write.csv(betasDmp, paste0(superVar,"_dmp_betas.csv"), quote = F)
+    dmpOutFi <- paste("top",max(topVar), superVar,"dmp_values.csv", sep = "_")
+    dmpOutDir <- file.path(".", "figures", "csv")
+    if(!dir.exists(dmpOutDir)){dir.create(dmpOutDir)}
+    write.csv(topDmp, file.path(dmpOutDir, dmpOutFi) , quote = F)
+    write.csv(betasDmp, file.path(dmpOutDir,paste0(superVar,"_dmp_betas.csv")), quote = F)
     betasDmp <- as.matrix(betasDmp)
     return(betasDmp)
 }
