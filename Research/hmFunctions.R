@@ -226,15 +226,28 @@ assignColors3 <- function(targets, varColumns = c("Type", "Origin"), col_vect = 
     return(ha)
   }
 
+
 addGeneName <- function(RGSet, oldBeta, geneNameHm=F) {
   if(geneNameHm==F){
     return(oldBeta)
   }
   annot <- minfi::getAnnotation(RGSet)
-  geneName <- annot[rownames(oldBeta), "UCSC_RefGene_Name"]
-  rownames(oldBeta) <- paste(geneName, rownames(oldBeta), sep = "_")
+  geneNameLi <- annot[rownames(oldBeta), "UCSC_RefGene_Name"]
+  for (idx in 1:length(geneNameLi)) {
+    gn <- geneNameLi[idx]
+    if(!is.na(gn)){
+      if (gn != "") {
+        new_gn <- paste(stringr::str_split(gn, ";", simplify = T)[1, ])
+        new_gn <-
+          paste(paste(unique(new_gn)), sep = "_", collapse = "_")
+        new_gn <- paste(new_gn, rownames(oldBeta)[idx], sep = "_")
+        rownames(oldBeta)[idx] <- new_gn
+      }
+    }
+  }
   return(oldBeta)
 }
+
 
 # FUNCTION: Removes duplicated gene annotations from the heatmap rownames if desired after addGeneName is called
 removeDupeAnnot <- function(geneBetas,out.fi="top_variance_genes_list.csv") {
