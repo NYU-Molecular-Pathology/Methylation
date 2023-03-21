@@ -129,24 +129,24 @@ takeTopVariance <- function(betas, topVar){
 
 
 getSupervise <- function(the_beta, RGSet, topVar=1:10000, cutOff=0.05, dmpTyp = "categorical", superVar=NULL){
-    #condition <- pData(RGSet)$Type
     condition <- pData(RGSet)[, superVar]
     dmp <- dmpFinder(the_beta, pheno = condition, type = dmpTyp)
     dmp <- cbind(dmp, ID = rownames(dmp))
     betas_df <- as.data.frame(the_beta)
     qVals <- dmp$qval < cutOff
-     if(any(qVals)){
-    if (table(qVals)[["TRUE"]] >= max(topVar)) {
-      dmp <- dmp[qVals,]
+    if (any(qVals)) {
+      if (table(qVals)[["TRUE"]] >= max(topVar)) {
+        dmp <- dmp[qVals, ]
+      }
     }
-    }
-    dmp <- dmp[dmp$pval < cutOff, ]
+    dmp <- dmp[order(dmp$pval),]
     final_sam <- row.names((t(betas_df[row.names(dmp[topVar, ]), ]))) #topVar=1:10000
     betas_df <- betas_df[, colnames(betas_df) %in% final_sam]
     write.csv(betas_df, paste0(superVar,"_dmp_methylation.csv"), quote = F)
     betas <- as.matrix(betas_df)
     return(betas)
 }
+
 
 # Checks if supervised rds data exists to load, else calculates it 
 loadSupervise <- function(RGSet, betas, gb, superVar = NULL, dmpTyp = "categorical") {
