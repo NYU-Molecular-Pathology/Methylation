@@ -49,6 +49,13 @@ sudo make install
 ```
 <br />
 
+## First Time install
+- Before running the test case the first time, run the Rscript below, all_installer.R to install any pre-requirements:
+```
+https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/all_installer.R
+```
+<br />
+
 <details>
 <summary>NOTE</summary>
 - R v4.1 includes compile and Tckl dependencies. brew can install libomp and cairo if needed.
