@@ -270,26 +270,31 @@ removeDupeAnnot <- function(geneBetas,out.fi="top_variance_genes_list.csv") {
   return(geneBetas)
 }
 
+
 #' grabProbes function that lists probes annotated by matching gene name and gene region
 #' @param your_genes  a character list of genes i.e. from a file c("ALK","ETMR","HDAC")
 #' @param RGSet  the name or path to your minfi RGset data
 #' @param region string vector of gene selections like c("TSS200", "Body") can one gene region "TSS200"
 grabProbes <- function(your_genes, RGSet, region){
-  stopifnot(is.character(your_genes)); listRows=10000
-  bp <- ifelse((length(region)>1), paste(region, collapse="|"), region); annot <- minfi::getAnnotation(RGSet); g=NULL
-  geneAnno <- paste(annot$UCSC_RefGene_Name, annot$UCSC_RefGene_Group, sep = "_")
-  pick <- function(x, fltr){return(do.call(grepl,c(list(pattern=x), fltr)))}
-  z <- foreach::foreach(g = your_genes, .combine = "cbind") %dopar% {
-    fltr <- list(x = geneAnno, ignore.case = T); y <- cbind(rownames(annot)[pick(g, fltr) & pick(bp, fltr)])
-    naFill <- rbind(y, cbind(rep(NA, (listRows - nrow(y)))));colnames(naFill) <- g
-    return(naFill)
-  }
-  naDrops <- lapply(1:ncol(z), function(i){which(!is.na(z[,i]))})
-  cutt <- length(naDrops[[which.max(lapply(naDrops, function(x) sum(lengths(x))))]])
-  return(z[1:cutt,])
+    stopifnot(is.character(your_genes))
+    listRows=10000
+    bp <- ifelse((length(region)>1), paste(region, collapse="|"), region)
+    annot <- minfi::getAnnotation(RGSet)
+    g=NULL
+    geneAnno <- paste(annot$UCSC_RefGene_Name, annot$UCSC_RefGene_Group, sep = "_")
+    pick <- function(x, fltr){return(do.call(grepl,c(list(pattern=x), fltr)))}
+    z <- foreach::foreach(g = your_genes, .combine = "cbind") %dopar% {
+        fltr <- list(x = geneAnno, ignore.case = T)
+        y <- cbind(rownames(annot)[pick(g, fltr) & pick(bp, fltr)])
+        naFill <- rbind(y, cbind(rep(NA, (listRows - nrow(y)))))
+        colnames(naFill) <- g
+        return(naFill)
+    }
+    naDrops <- lapply(1:ncol(z), function(i){which(!is.na(z[,i]))})
+    cutt <- length(naDrops[[which.max(lapply(naDrops, function(x) sum(lengths(x))))]])
+    return(z[1:cutt,])
 }
-                                           
-
+                                          
                                            
 SaveHmPng <- function(fi_prefix, fi_suffix, hm, topvar = "", outDir=NULL) {
   if(is.null(outDir)){outDir <- file.path(".", "figures", "heatmaps")}
@@ -387,18 +392,54 @@ GetProbeAverage <- function(csvColumns, betas, pathwayName){
 #' @param RGSet  the name or path to your minfi RGset data
 #' @param region string vector of gene selections like c("TSS200", "Body") can one gene region "TSS200"
 GetProbesGenes <- function(your_genes, RGSet, region){
-  stopifnot(is.character(your_genes)); listRows=10000
-  bp <- ifelse((length(region)>1), paste(region, collapse="|"), region); annot <- minfi::getAnnotation(RGSet); g=NULL
+  stopifnot(is.character(your_genes))
+  listRows=10000
+  bp <- ifelse((length(region)>1), paste(region, collapse="|"), region)
+  annot <- minfi::getAnnotation(RGSet)
+  g=NULL
   geneAnno <- paste(annot$UCSC_RefGene_Name, annot$UCSC_RefGene_Group, sep = "_")
   pick <- function(x, fltr){return(do.call(grepl,c(list(pattern=x), fltr)))}
   z <- foreach::foreach(g = your_genes, .combine = "cbind") %dopar% {
-    fltr <- list(x = geneAnno, ignore.case = T); y <- cbind(rownames(annot)[pick(g, fltr) & pick(bp, fltr)])
-    naFill <- rbind(y, cbind(rep(NA, (listRows - nrow(y)))));colnames(naFill) <- g
+    fltr <- list(x = geneAnno, ignore.case = T)
+    y <- cbind(rownames(annot)[pick(g, fltr) & pick(bp, fltr)])
+    naFill <- rbind(y, cbind(rep(NA, (listRows - nrow(y)))))
+    colnames(naFill) <- g
     return(naFill)
   }
   naDrops <- lapply(1:ncol(z), function(i){which(!is.na(z[,i]))})
   cutt <- length(naDrops[[which.max(lapply(naDrops, function(x) sum(lengths(x))))]])
   return(z[1:cutt,])
+}
+                                           
+                                           
+AddGeneProbeChrName <- function(RGSet, oldBeta) {
+  annot <- minfi::getAnnotation(RGSet)
+  geneNameLi <- annot[rownames(oldBeta), "UCSC_RefGene_Name"]
+  promotorLi <- annot[rownames(oldBeta), "GencodeBasicV12_Group"]
+  chromoLi <- annot[rownames(oldBeta), "chr"]
+  
+  for(x in 1:length(promotorLi)){
+    theReg <- promotorLi[x]
+    if(theReg!=""){
+      regSplit <- paste(stringr::str_split(theReg, pattern = ";", simplify = T))
+      newReg <- paste(unique(regSplit), sep = ";", collapse = ";")
+      promotorLi[x] <- newReg
+    }
+  }
+  for (idx in 1:length(geneNameLi)) {
+    gn <- geneNameLi[idx]
+    
+    if(!is.na(gn)){
+      if (gn != "") {
+        new_gn <- paste(stringr::str_split(gn, ";", simplify = T)[1, ])
+        new_gn <-
+          paste(paste(unique(new_gn)), sep = ";", collapse = ";")
+        new_gn <- paste(new_gn, rownames(oldBeta)[idx], promotorLi[idx], chromoLi[idx], sep = "_")
+        rownames(oldBeta)[idx] <- new_gn
+      }
+    }
+  }
+  return(oldBeta)
 }
                                            
 GetCsvGeneColumns <- function(pathwayName, z){
