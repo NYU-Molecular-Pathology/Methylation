@@ -162,7 +162,7 @@ makePdfTab <- function(pdfFi, outDir) {
 makeRdTab <- function(rdNumb, sam) {
     cnvFi <- file.path(".","methCNV", paste0(rdNumb, "_cnv.png"))
     altTxt <- paste("![Methylation",rdNumb,sam,"CNV Plot](")
-    cat(paste0(altTxt,cnvFi,"){width=120%}"))
+    cat(paste0(altTxt,cnvFi,"){height=400px}"))
     cat("\n\n")
 }
 
@@ -405,6 +405,7 @@ CopyPdfsPngs <- function(params) {
 # Generates a new Sample Tabbed row in html ------------------------------------
 makeNewTab <- function(sam, samList, qcData){
     currSam <- samList[samList$Test_Number==sam,"Specimen_ID"]
+    cat(' <div class="boxed"> ')
     cat(paste0("\n\n# **", sam, "** {.tabset}","\n\n"))
     cat(paste0("(",currSam[1],")\n\n"))
     currQC <- grepl(paste(currSam, collapse="|"), qcData$Sample)
@@ -562,6 +563,7 @@ LoopSampleTabs <- function(params){
       methCn <- snvDt[samRows & snvDt$Variant == "Methylation",]
       makeMethTab(sam, methCn, methData)
       makeAbTab(sam)
+      cat(' </div> ')
       }
 }
 
