@@ -78,7 +78,38 @@ div.tocify {
     padding-left:0px;
 }
 
-.nav-tabs>li.active>a, .nav-tabs>li.active>a:hover, .nav-tabs>li.active>a:focus {
-    color: #dddddd;
-    background-color: #ADD8E6;
+h1 {
+    color: #fff;
+    background-image: linear-gradient(to right,indigo,indigo,indigo,purple,#fff);
+    border-radius: 18px;
+    padding: 8px;
+    font-size: 24pt;
+    display:flex;
+    border-spacing: 5px
+}
+p {
+    font-size: 16pt;
+    color: darkorange;
+    font-weight: bold;
+}
+
+.nav-tabs > li.active > a, 
+.nav-tabs > li.active > a:focus, 
+.nav-tabs > li.active > a:hover {
+  background-color: #ffd680 !important;
+  color: black !important;
+}
+
+table {white-space: nowrap;padding: 5px}
+
+.boxed {
+    background: rgb(240, 237, 237) !important;
+    border: 3px solid black;
+    padding: 10px;
+    border-radius: 10px;
+    width: auto;
+    display: inline-block;
+    white-space: nowrap;
+    font-size:12 !important;
+    margin: 10px;
 }
