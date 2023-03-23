@@ -233,7 +233,7 @@ MakeRegularTab <- function(tabNam, objDat) {
             makeDefaultDt(objDat)
         }
     } else{
-        cat("\n\nNo additonal Philips results for this case yet\n\n")
+        cat("\n\nNo additonal results for this case yet\n\n")
         cat("\n\n")
     }
 }
@@ -242,15 +242,15 @@ MakeRegularTab <- function(tabNam, objDat) {
 makeDT <- function(tabNam, objDat, pdfFi = NULL, rdNumb = NULL, sam = NULL, outDir=NULL){
     MakeTabColor(tabNam)
     if (!is.null(pdfFi)) {
-        makePdfTab(pdfFi, outDir)
+        return(makePdfTab(pdfFi, outDir))
     }
     if (!is.null(rdNumb)) {
-        makeRdTab(rdNumb, sam)
+        return(makeRdTab(rdNumb, sam))
     }
     if (stringr::str_detect(tabNam, "Info") == T) {
-        makeSpecimenTab(objDat)
+        return(makeSpecimenTab(objDat))
     } else{
-        MakeRegularTab(tabNam, objDat)
+        return(MakeRegularTab(tabNam, objDat))
     }
 }
 
