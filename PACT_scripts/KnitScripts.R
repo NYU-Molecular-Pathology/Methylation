@@ -149,15 +149,36 @@ ReadQcFile <- function(pactName){
     return(qcData)
 }
 
-makePdfTab <- function(pdfFi, outDir) {
+
+makePdfTab <- function(pdfFi, cnvTab, outDir) {
     pdfFi <- file.path(outDir, "cnvpng", paste0(pdfFi, ".png"))
-    cat("<span style='color: red;'>",
+    cat(
+        "<span style='color: red;'>",
         "**Note**: CNV Amplifications are listed first,",
         "followed other Philips CNV abberations in table below this image\n\n"
     )
-    cat(paste0("![CNV Plot](", pdfFi, "){width=100%}"))
+    cat(paste0("![In-house Facets Plot (Above)](", pdfFi, "){width=100%}"))
     cat("\n\n")
+    if (nrow(cnvTab) > 0) {
+        newTa <- knitr::kable(cnvTab, row.names = F, "html")
+        newTa <-
+            kableExtra::kable_styling(
+                newTa,
+                bootstrap_options = c("bordered", "condensed"),
+                full_width = F,
+                position = "left"
+            )
+        newTa <- kableExtra::column_spec(newTa, 1:5, width = "5cm")
+        cat("### Philips Data Dump CNV table:\n\n")
+        print(newTa)
+        cat("\n\n")
+    } else{
+        cat("\n\nNo CNV Amplifications >=5 in Philips data dump for this case\n\n")
+        cat("\n\n")
+    }
+    
 }
+
 
 makeRdTab <- function(rdNumb, sam) {
     cnvFi <- file.path(".","methCNV", paste0(rdNumb, "_cnv.png"))
@@ -207,9 +228,12 @@ CheckTabName <- function(tabNam) {
     if (grepl("Indels|INDEL", tabNam)) {
         cat(
             "<span style='color: red;'>",
-            "**Note** INDEL/Frameshift calls have the following filters:",
+            "INDEL/Frameshift calls have the following filters:",
+            "</span>\n\n",
+             "<span style='color: black;'>",
             "**Tumor freq >= 5%**, **Normal freq <2%**,",
-            " and **Tumor Depth >50**</span> \n\n"
+            " and **Tumor Depth >50**",
+            "</span>\n\n"
         )
     }
 }
@@ -238,11 +262,12 @@ MakeRegularTab <- function(tabNam, objDat) {
     }
 }
 
+
 # Prints out the table tab headings and tab information based on object parameters provided
 makeDT <- function(tabNam, objDat, pdfFi = NULL, rdNumb = NULL, sam = NULL, outDir=NULL){
     MakeTabColor(tabNam)
     if (!is.null(pdfFi)) {
-        return(makePdfTab(pdfFi, outDir))
+        return(makePdfTab(pdfFi, cnvTab=objDat, outDir))
     }
     if (!is.null(rdNumb)) {
         return(makeRdTab(rdNumb, sam))
