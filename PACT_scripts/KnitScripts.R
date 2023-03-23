@@ -1,5 +1,28 @@
 gb <- globalenv(); assign("gb", gb)
 
+CheckBrewLatex <- function() {
+    # Checks if Brew is installed
+    tryCatch(
+        system("which brew", intern = T),
+        warning = function(ww) {
+            system('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"')
+            }
+    )
+    # Checks if Latex is installed
+    tryCatch(
+        system("which latex", intern = T),
+        warning = function(ww) {
+            system("brew install latex")
+            }
+    )
+}
+
+
+if (Sys.info()[['sysname']]=="Darwin") {
+    invisible(CheckBrewLatex())
+}
+
+
 # Librarian shelf loads or installs package from CRAN, BioConductor, & GitHub
 if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 4, quiet=T)}
 pkgs <-
@@ -202,7 +225,7 @@ MakeTabColor <- function(tabNam) {
 }
 
 MakeRegularTab <- function(tabNam, objDat) {
-    if (!is.null(objDat) & tabNam != "Methylation") {
+    if (!is.null(objDat) & stringr::str_detect(tabNam, "Methylation") == F) {
         if (tabNam == "QC") {
             makeQCTab(objDat)
         } else{
@@ -210,7 +233,7 @@ MakeRegularTab <- function(tabNam, objDat) {
             makeDefaultDt(objDat)
         }
     } else{
-        cat("\n\nNo additonal results for this sample yet\n\n")
+        cat("\n\nNo additonal Philips results for this case yet\n\n")
         cat("\n\n")
     }
 }
@@ -393,27 +416,48 @@ makeNewTab <- function(sam, samList, qcData){
     }
 }
 
+
+GetMethMatchInfo <- function(methData, theRd){
+    rdDtRows <- methData[methData$record_id == theRd, ]
+    cat("\n\n")
+    newTa <- knitr::kable(rdDtRows, row.names = F, "html")
+    newTa <- kableExtra::kable_styling(newTa, bootstrap_options = c("bordered","condensed"), full_width = F, position = "left")
+    newTa <- kableExtra::column_spec(newTa, 1:5, width = "5cm")
+    cat("### Methylation Full Report Link:")
+    cat("\n\n")
+    txtLink <- paste0("[", theRd, "](", rdDtRows$`Report Path`, ")")
+    cat(txtLink)
+    cat("\n\n")
+    print(newTa)
+    cat("\n\n")
+}
+
+
 # Generates a new Sample Tabbed row in html  -------------------------------
 makeMethTab <- function(sam, methCn, methData) {
-    methCn <- if(nrow(methCn) == 0){NULL}
-    if (any(sam %in% methData$Test_Number) == TRUE) {
-        currRD <- methData$record_id[methData$Test_Number == sam]
-        if (length(currRD) > 1) {
-            message(
-                sam, " has more than one methylation RD-number: ", paste(currRD, sep=", ")
-            )
-            for (rd in 1:length(currRD)) {
-                rdTab <- paste0("Methylation", rd)
-                makeDT(rdTab, methCn, pdfFi = NULL, currRD[rd], sam)
-            }
-        } else{
-            makeDT("Methylation", methCn, NULL, currRD, sam)
-        }
-    } else{
+    if (nrow(methCn) == 0) {
+        methCn <- NULL
+    }
+    if (any(sam %in% methData$Test_Number) == F) {
         cat("## **No Methylation** \n\n")
         cat("\n\nNo additional data table for this sample tab\n\n")
     }
+    if (any(sam %in% methData$Test_Number) == T) {
+        currRD <- methData$record_id[methData$Test_Number == sam]
+        if (length(currRD) > 1) {
+            message(sam, " has more than one RD-number:\n", paste(currRD, sep = " ", collapse=" "))
+            for (rd in 1:length(currRD)) {
+                rdTab <- paste0("Methylation_", rd)
+                makeDT(rdTab, methCn, pdfFi = NULL, currRD[rd], sam)
+                GetMethMatchInfo(methData, currRD[rd])
+            }
+        } else{
+            makeDT("Methylation", methCn, NULL, currRD, sam)
+            GetMethMatchInfo(methData, currRD)
+        }
+    }
 }
+
 
 # Filters out Philips Abberations Tab -----------------------------
 filterAbberations <- function(snvOut){
