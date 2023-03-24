@@ -114,15 +114,59 @@ FixNullNaVars <- function(targets, varColumns) {
 }
 
 
-GetDefaultColors <- function(col_vect=NULL){
-  if(is.null(col_vect)){col_vect <- pals::glasbey()}
-    col_vect[c(6,4,18)] = c("#eb7d34","#ADD8E6","#5A5A5A") #changing dark forest-black to orange color
-    col_vect_extra <- c("#CCF000", "#0F99FA", "#669999", "#00CCCC", "#660099", "#CC0066", "#000000", "#FFFF00", "#BF2600","#FF9999")
+GetDefaultColors <- function(col_vect = NULL) {
+    if (is.null(col_vect)) {
+        col_vect <- pals::glasbey()
+    }
+    col_vect[c(6, 4, 18)] = c("#eb7d34", "#ADD8E6", "#5A5A5A") #changing dark forest-black to orange color
+
+    col_vect[c(1, 2, 3)] = c("#3C7EE4" "#FF6D6D" "#1D8932")
+    col_vect_extra <-
+        c(
+            "#CCF000",
+            "#0F99FA",
+            "#669999",
+            "#00CCCC",
+            "#660099",
+            "#CC0066",
+            "#ccb2d4",
+            "#FFFF00",
+            "#BF2600",
+            "#FF9999"
+        )
     col_vect <- c(col_vect, col_vect_extra)
-    extraCols<- c(
-        "#5a6d40","#15da78","#deb313","#68f821","#019965","#158b26","#79889d","#1332ba","#795a34","#a746a3","#06d667",
-        "#300ed7","#999a55","#c6123e","#a4ac34","#ff93c7","#a71938","#78ca61","#e4303c","#5d0b75","#2b330b","#cda142",
-        "#6aefa7","#a243c5","#32fe88","#4f4ecd","#3ab8b4","#ac60bb","#bbcbb4","#111789")
+    extraCols <- c(
+        "#5a6d40",
+        "#a8d9d0",
+        "#deb313",
+        "#68f821",
+        "#019965",
+        "#158b26",
+        "#79889d",
+        "#1669a3",
+        "#795a34",
+        "#a746a3",
+        "#06d667",
+        "#300ed7",
+        "#3d4e40",
+        "#c6123e",
+        "#a4ac34",
+        "#ff93c7",
+        "#a71938",
+        "#78ca61",
+        "#e4303c",
+        "#5d0b75",
+        "#2b330b",
+        "#fdbc7c",
+        "#6aefa7",
+        "#a243c5",
+        "#32fe88",
+        "#4f4ecd",
+        "#3ab8b4",
+        "#f8ef8c",
+        "#bbcbb4",
+        "#111789"
+    )
     col_vect <- c(col_vect, extraCols)
     col_vect <- unique(col_vect)
     return(col_vect)
