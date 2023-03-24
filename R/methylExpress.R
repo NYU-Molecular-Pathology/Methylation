@@ -10,7 +10,7 @@ args[4] -> baseFolder # <- NULL
 args[5] -> redcapUp   # <- TRUE
 args[6] -> runLocal   # <- FALSE
 #args[7] -> forcedUpload
-
+forcedUpload <- F
 # Source and Load Functions and Packages --------------------------------------------------------------------------
 LoadGitHubScripts <- function(ghRepo, scriptList){scripts <- file.path(ghRepo, scriptList)
     return(invisible(lapply(scripts, function(i){message("Sourcing: ", i); devtools::source_url(i)})))
