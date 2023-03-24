@@ -134,7 +134,6 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL,
     groupTsne <- AddPlotSymbols(tsne_plot, groupTsne, symFlags)
     # Adding Plot Color, Theme, and Axis Labels
     groupTsne <- groupTsne +
-      scale_color_manual(values = colours, name = "Sample Label") +
       labs(color = colorLabel, size = 5, x = "TSNE 1", y = "TSNE 2") + theme_bw(base_size = 16) +
       theme(panel.grid = eBlank, panel.background = eBlank, text = et, plot.title = et, 
             legend.text = et, legend.position = "bottom", axis.text = et) +
