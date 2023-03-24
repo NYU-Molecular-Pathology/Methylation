@@ -119,8 +119,7 @@ GetDefaultColors <- function(col_vect = NULL) {
         col_vect <- pals::glasbey()
     }
     col_vect[c(6, 4, 18)] = c("#eb7d34", "#ADD8E6", "#5A5A5A") #changing dark forest-black to orange color
-
-    col_vect[c(1, 2, 3)] = c("#3C7EE4" "#FF6D6D" "#1D8932")
+    col_vect[c(1, 2, 3)] = c("#3C7EE4", "#FF6D6D", "#1D8932")
     col_vect_extra <-
         c(
             "#CCF000",
