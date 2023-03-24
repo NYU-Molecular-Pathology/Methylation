@@ -86,13 +86,15 @@ addPlotLabels <- function(groupTsne, tsneData){
 
 
 AddPlotSymbols <- function(tsne_plot, groupTsne, symFlags){
-    uniColors <- tsne_plot[match(unique(tsne_plot$GROUPS), tsne_plot$GROUPS),"col"]
-    if(symFlags==F) {
+  uniColors <- tsne_plot[match(unique(tsne_plot$GROUPS), tsne_plot$GROUPS),"col"]
+  names(uniColors) <- tsne_plot[match(unique(tsne_plot$col), tsne_plot$col),"GROUPS"]
+  if(symFlags==F) {
         symShape <- shapeVals <- shapeLabels <- NULL
+        uniColors <- tsne_plot[match(unique(tsne_plot$GROUPS), tsne_plot$GROUPS),"col"]
         groupTsne <- groupTsne +
-            geom_point(aes(x, y, color = GROUPS), 
-                       fill = scales::alpha(tsne_plot$col, 0.5), stroke = 2,  size = 5) +
-            scale_colour_manual(name ="Sample Group", values = uniColors)
+            geom_point(aes(x, y, color = tsne_plot$GROUPS, fill=GROUPS), 
+                       fill = scales::alpha(tsne_plot$col, 0.5), stroke = 1.5, size = 5) +
+            scale_colour_manual(name = "Sample Groups", values = uniColors)
         return(groupTsne)
     }else{
         shapeVals <- c(21, 22, 23, 24, 8, 9, 1, 3, 4, 5)
@@ -107,8 +109,9 @@ AddPlotSymbols <- function(tsne_plot, groupTsne, symFlags){
         }
         symShape <- as.factor(tsne_plot$symbol)
         groupTsne <- groupTsne +
-            geom_point(aes(x, y,  color = GROUPS, shape = symbol),
-                       fill = scales::alpha(tsne_plot$col, 0.5), stroke = 2, size = 5) +
+            geom_point(
+                aes(x, y, color = GROUPS, shape = symbol, fill=GROUPS),
+                fill = scales::alpha(tsne_plot$col, 0.5), stroke = 1.5, size = 5) +
             scale_colour_manual(name = "Sample Groups", values = uniColors) +
             scale_shape_manual(name = "Sample Types", values = sv)
         return(groupTsne)
