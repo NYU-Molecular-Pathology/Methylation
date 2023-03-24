@@ -86,27 +86,33 @@ addPlotLabels <- function(groupTsne, tsneData){
 
 
 AddPlotSymbols <- function(tsne_plot, groupTsne, symFlags){
-  if(symFlags==F) {
-    symShape <- shapeVals <- shapeLabels <- NULL
-    groupTsne <- groupTsne +
-      geom_point(aes(x, y, color = tsne_plot$GROUPS, shape = symShape), size = 5, alpha = 0.85)
-    return(groupTsne)
-  }else{
-    shapeVals <- c(19, 17, 15, 7, 8, 9, 1, 3, 4, 5)
-    plotSymLen <- 1:length(unique(tsne_plot$symbol))
-    if (length(plotSymLen) > 10) {
-      shapeVals <- c(1:25, 33:127)
-    }
-    sv <- shapeVals[plotSymLen]
-    shapeLabels <- levels(as.factor(tsne_plot$symbol))
-    if (any(is.na(shapeLabels))) {
-      shapeLabels <- colorLabel
-    }
-    symShape <- as.factor(tsne_plot$symbol)
-    groupTsne <- groupTsne +
-      geom_point(aes(x, y, color = tsne_plot$GROUPS, shape = symShape), size = 5, alpha = 0.85) +
-      scale_shape_manual(name = "Sample Type", values = sv, labels = shapeLabels)
-    return(groupTsne)
+    if(symFlags==F) {
+        symShape <- shapeVals <- shapeLabels <- NULL
+        uniColors <- tsne_plot[match(unique(tsne_plot$GROUPS), tsne_plot$GROUPS),"col"]
+        groupTsne <- groupTsne +
+            geom_point(aes(x, y, color = tsne_plot$GROUPS),  stroke = 1,  size = 5) +
+            scale_colour_manual(name ="Sample Group", values=scales::alpha(uniColors, 0.5))
+        return(groupTsne)
+    }else{
+        shapeVals <- c(19, 17, 15, 7, 8, 9, 1, 3, 4, 5)
+        plotSymLen <- 1:length(unique(tsne_plot$symbol))
+        if (length(plotSymLen) > 10) {
+            shapeVals <- c(1:25, 33:127)
+        }
+        sv <- shapeVals[plotSymLen]
+        shapeLabels <- levels(as.factor(tsne_plot$symbol))
+        if (any(is.na(shapeLabels))) {
+            shapeLabels <- colorLabel
+        }
+        symShape <- as.factor(tsne_plot$symbol)
+        uniColors <- tsne_plot[match(unique(tsne_plot$GROUPS), tsne_plot$GROUPS),"col"]
+        groupTsne <- groupTsne +
+            geom_point(
+                aes(x, y,  color = tsne_plot$GROUPS, shape = tsne_plot$symbol),
+                stroke = 1, size = 5) +
+            scale_colour_manual(name ="Sample Group", values=scales::alpha(uniColors, 0.5)) +
+            scale_shape_manual(name = "Sample Type", values = sv, labels = shapeLabels)
+        return(groupTsne)
     }
 }
 
