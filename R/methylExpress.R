@@ -9,7 +9,7 @@ args[3] -> selectRDs  # <- NULL
 args[4] -> baseFolder # <- NULL
 args[5] -> redcapUp   # <- TRUE
 args[6] -> runLocal   # <- FALSE
-args[7] -> forcedUpload
+#args[7] -> forcedUpload
 
 # Source and Load Functions and Packages --------------------------------------------------------------------------
 LoadGitHubScripts <- function(ghRepo, scriptList){scripts <- file.path(ghRepo, scriptList)
@@ -25,7 +25,8 @@ LoadGitHubScripts(file.path(mainHub,"Report-Scripts"), rmdScripts)
 
 # Message and Check Input Args ------------------------------------------------------------------
 gb$CheckInputArg(token, gb); gb$CheckInputArg(runID, gb); gb$CheckInputArg(selectRDs, gb); gb$CheckInputArg(baseFolder, gb)
-gb$CheckInputArg(redcapUp, gb, T); gb$CheckInputArg(runLocal, gb, F); gb$CheckInputArg(forcedUpload, gb, F)
+gb$CheckInputArg(redcapUp, gb, T); gb$CheckInputArg(runLocal, gb, F)
+#gb$CheckInputArg(forcedUpload, gb, F)
 
 # Assign Parameters if Defined -------------------------------------------------------------------
 gb$ApiToken <- gb$token <- token
