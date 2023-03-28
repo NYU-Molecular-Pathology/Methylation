@@ -117,8 +117,20 @@ GetMethDf <- function(pactName) {
     methSheet <- paste0(pactName, "_MethylMatch.xlsx")
     methData <- as.data.frame(readxl::read_excel(methSheet))
     methData <- methData[methData$report_complete == "YES", ]
+    if(any(is.na(methData$Test_Number))){
+      samCsv <- dir(getwd(), "-SampleSheet.csv", full.names = T)
+      wsData <- as.data.frame(read.csv(samCsv, skip = 19))
+      toFix <- which(is.na(methData$Test_Number))
+      qcData <- gb$ReadQcFile(pactName)
+      for(xRow in toFix){
+        nSam <- methData$accession_number[xRow]
+        ngsRow <- which(stringr::str_detect(wsData$Specimen_ID, pattern = nSam))[[1]]
+        methData$Test_Number[xRow] <- wsData$Test_Number[ngsRow]
+      }
+    }
     return(methData)
 }
+
 
 GetSamList <- function(pactName) {
     colFltr <- c("Test_Number","Specimen_ID","Tumor_Content")
