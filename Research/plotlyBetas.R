@@ -14,8 +14,48 @@ grabPngNames <- function(tsne_titles=NULL, keywrd="Top"){
 }
 
 
-FormatPlotlyLayout <- function(fig){
-    otherPlot <- supM(plotly::ggplotly(fig, dynamicTicks = T, width = 1200, height = 800, source="B"))
+FormatLegendText <- function(fig){
+    fig2 <-
+        fig + geom_point(
+            aes(x, y, color = "Shape", shape = factor(symbol)),
+            color = fig$data$col,
+            stroke = 1,
+            size = 5
+        )
+    otherPlot <-
+        gb$supM(
+            plotly::ggplotly(
+                fig2,
+                dynamicTicks = T,
+                width = 1200,
+                height = 800,
+                source = "A",
+                layerData = 1
+            )
+        )
+    for (nSam in 1:length(otherPlot[["x"]][["data"]])) {
+        lgndGrp <- otherPlot[["x"]][["data"]][[nSam]][["legendgroup"]]
+        nlgndGrp <- stringr::str_remove_all(lgndGrp, "[()]")
+        lgndSplt <- stringr::str_split_fixed(nlgndGrp, ",", 2)
+        isShape <- lgndSplt[, 2] == "NA"
+        if (isShape) {
+            nGroupSplit <- stringr::str_split_fixed(nlgndGrp, ",", 2)[1, 1]
+            otherPlot[["x"]][["data"]][[nSam]][["marker"]]$line$color <- 'black'
+            otherPlot[["x"]][["data"]][[nSam]]$visible <- 'legendonly'
+        } else{
+            nGroupSplit <- stringr::str_split_fixed(nlgndGrp, ",", 2)[1, 1]
+            if (otherPlot[["x"]][["data"]][[nSam]][["marker"]][["symbol"]] != "circle") {
+                otherPlot[["x"]][["data"]][[nSam]][["showlegend"]] <- F
+            }
+        }
+        otherPlot[["x"]][["data"]][[nSam]][["name"]] <-
+            otherPlot[["x"]][["data"]][[nSam]][["legendgroup"]] <- nGroupSplit
+    }
+    return(otherPlot)
+}
+
+
+FormatPlotlyLayout <- function(otherPlot) {
     otherPlot$x[["layout"]][["annotations"]] <- NULL
     opLayout <- otherPlot[["x"]][["layout"]]
     opLayout[["font"]][["size"]] <- 12
@@ -25,6 +65,9 @@ FormatPlotlyLayout <- function(fig){
     opLayout[["xaxis"]][["tickfont"]][["size"]] <- 12
     opLayout[["yaxis"]][["tickfont"]][["size"]] <- 12
     otherPlot[["x"]][["layout"]] <- opLayout
+    otherPlot[["x"]][["layout"]][["legend"]][["title"]][["text"]] <- "Sample Color & Shape Legend"
+    pltTtl <- otherPlot[["x"]][["layout"]][["title"]][["text"]]
+    otherPlot[["x"]][["layout"]][["margin"]]$t <- 100
     return(otherPlot)
 }
 
@@ -107,10 +150,11 @@ FormatPlotlyLegend <- function(otherPlot){
 
 makePlotly <- function(fig) {
     otherPlot <- NULL
-    otherPlot <- FormatPlotlyLayout(fig)
+    otherPlot <- FormatLegendText(fig)
+    otherPlot <- FormatPlotlyLayout(otherPlot)
     otherPlot <- FormatHoverInfo(otherPlot)
-    uniGrp <- unlist(lapply(X = 1:length(otherPlot[["x"]][["data"]]),
-                            FUN = function(X) {return(otherPlot[["x"]][["data"]][[X]]$name)}))
+    uniGrp <- unlist(lapply(
+        X = 1:length(otherPlot[["x"]][["data"]]), FUN = function(X) {return(otherPlot[["x"]][["data"]][[X]]$name)}))
     markerSyms <- GetPlotlySymbols(fig, uniGrp)
     otherPlot <- FormatPlotLabels(fig, otherPlot, uniGrp, markerSyms)
     otherPlot <- FormatPlotlyLegend(otherPlot)
