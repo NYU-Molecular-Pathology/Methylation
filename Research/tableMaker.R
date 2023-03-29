@@ -330,7 +330,7 @@ ValidateSentrix <- function(targets, gb){
             gb$col_shapes,
             gb$sam.grp.type
         )
-        targets <- FillMissingData2(targets)
+        targets <- FillMissingData(targets)
     }
     return(targets)
 }
