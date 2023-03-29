@@ -15,38 +15,37 @@ grabPngNames <- function(tsne_titles=NULL, keywrd="Top"){
 
 
 FormatLegendText <- function(fig){
+  #gb$SaveObj(fig, "test_fig.Rdata")
+  #fig <- gb$LoadRdatObj("test_fig.Rdata")
+  #stopifnot(FALSE)
     fig2 <-
         fig + geom_point(
             aes(x, y, color = "Shape", shape = factor(symbol)),
-            color = fig$data$col,
-            stroke = 1,
-            size = 5
-        )
-    otherPlot <-
-        gb$supM(
-            plotly::ggplotly(
-                fig2,
-                dynamicTicks = T,
-                width = 1200,
-                height = 800,
-                source = "A",
-                layerData = 1
-            )
-        )
+            color = fig$data$col, stroke = 2, size = 10)
+    otherPlot <- gb$supM(plotly::ggplotly(
+      fig2, dynamicTicks = T, width = 1200, height = 800, source = "A", layerData = 1))
+    otherPlot[["x"]][["layout"]][["shapes"]][[1]][["line"]][["width"]] <- 1
     for (nSam in 1:length(otherPlot[["x"]][["data"]])) {
         lgndGrp <- otherPlot[["x"]][["data"]][[nSam]][["legendgroup"]]
         nlgndGrp <- stringr::str_remove_all(lgndGrp, "[()]")
         lgndSplt <- stringr::str_split_fixed(nlgndGrp, ",", 2)
         isShape <- lgndSplt[, 2] == "NA"
+        otherPlot[["x"]][["data"]][[nSam]][["marker"]][["opacity"]] <- 0.80
+        otherPlot[["x"]][["data"]][[nSam]][["marker"]][["size"]] <- 18
         if (isShape) {
             nGroupSplit <- stringr::str_split_fixed(nlgndGrp, ",", 2)[1, 1]
-            otherPlot[["x"]][["data"]][[nSam]][["marker"]]$line$color <- 'black'
-            otherPlot[["x"]][["data"]][[nSam]][["marker"]]$line$width <- 1
+            otherPlot[["x"]][["data"]][[nSam]][["marker"]]$line <- list(color = 'black', width = 2)
+            otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]] <- list(width = 2) 
+            otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]][["width"]] <- 2
+            
+            
             otherPlot[["x"]][["data"]][[nSam]]$visible <- 'legendonly'
         } else{
             nGroupSplit <- stringr::str_split_fixed(nlgndGrp, ",", 2)[1, 1]
             if (otherPlot[["x"]][["data"]][[nSam]][["marker"]][["symbol"]] != "circle") {
                 otherPlot[["x"]][["data"]][[nSam]][["showlegend"]] <- F
+                otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]] <- list(width = 2) 
+                otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]][["width"]] <- 2
             }
         }
         otherPlot[["x"]][["data"]][[nSam]][["name"]] <-
@@ -90,11 +89,12 @@ GetPlotlySymbols <- function(fig, uniGrp){
     return(markerSyms)
 }
 
+
 FormatHoverInfo <- function(otherPlot){
     opInfo <- otherPlot[["x"]][["data"]]
     for (sam in 1:length(opInfo)) {
         opInfo[[sam]][["hoverinfo"]] <- "none"
-        opInfo[[sam]][["marker"]][["size"]] <- 10
+        opInfo[[sam]][["marker"]][["size"]] <- 18
         opInfo[[sam]][["hoverinfo"]] <- c("text")
     }
     otherPlot[["x"]][["data"]] <- opInfo
@@ -126,26 +126,19 @@ FormatPlotLabels <- function(fig, otherPlot, uniGrp, markerSyms){
 }
 
 
-FormatPlotlyLegend <- function(otherPlot){
-    mrg <- list(l = 50, r = 50, b = 100, t = 100, pad = 4)
-    ttl <- list(text = "<b>Legend</b><br>", font = list(size = 14))
-    otherPlot <- otherPlot %>% plotly::layout(
-      margin = mrg, legend = list(title = ttl, font = list(size = 12))
-      )
-    for(legGroup in 1:length(otherPlot[["x"]][["data"]])){
-        currLegend <- otherPlot[["x"]][["data"]][[legGroup]][["legendgroup"]]
-        newLegend <- gsub("[()]", "", currLegend)
-        splitLeg <- stringr::str_split_fixed(newLegend, ",", 2)
-        newLegend <- toupper(splitLeg[,1])
-        newSamNam <- toupper(splitLeg[,2])
-        #newLegend <- stringr::str_to_title(splitLeg[,1])
-        #newSamNam <- stringr::str_to_title(splitLeg[,2])
-        otherPlot[["x"]][["data"]][[legGroup]][["legendgroup"]] <- 
-          paste0(newLegend, " (", newSamNam, ")")
-        otherPlot[["x"]][["data"]][[legGroup]][["name"]] <- 
-          paste0(newLegend, " (", newSamNam, ")")
-    }
-    return(otherPlot)
+FormatPlotlyLegend <- function(otherPlot) {
+  mrg <- list(
+    l = 50,
+    r = 50,
+    b = 100,
+    t = 100,
+    pad = 4
+  )
+  ttl <-
+    list(text = "<b>Shapes and Colors Legend</b><br>", font = list(size = 14))
+  lgnd <- list(title = ttl, font = list(size = 14))
+  otherPlot <- otherPlot %>% plotly::layout(margin = mrg, legend = lgnd)
+  return(otherPlot)
 }
 
 
