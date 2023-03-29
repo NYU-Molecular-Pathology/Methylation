@@ -513,10 +513,8 @@ CheckGeneOutput <- function(pathwayName) {
 
 LoopPathwayHeatMap <- function(pathWayGenes, ha){
     doParallel::registerDoParallel(cores=6)
-    cat("# Pathway Gene HeatMaps {.tabset}")
     cat("\n\n")
-    hmOutPath <- getwd() #file.path(getwd(), "figures", "heatmaps")
-    #if(!dir.exists(hmOutPath)){dir.create(hmOutPath, recursive = T)}
+    hmOutPath <- getwd()
     for(pathRow in 1:nrow(pathWayGenes)){
         currPathway <- pathWayGenes[pathRow,]
         pathwayName <- paste0(gsub(" ", "_", currPathway$Description))
@@ -541,9 +539,10 @@ LoopPathwayHeatMap <- function(pathWayGenes, ha){
         knitr::asis_output(hm) 
         cat("\n\n")
         cat("\n\n")
-        saveHmPng(fi_prefix= "hm_genes_", fi_suffix=".png", hm, topvar = paste0(currPathway$Description), outDir = NULL)
+        gb$SaveHmPng(fi_prefix= "hm_genes_", fi_suffix=".png", hm, topvar = paste0(currPathway$Description), outDir = NULL)
     }
 }
+                                           
                                            
 LoopSaveHm <- function(hm.db, varProbes, fi_prefix = "hm_top_", fi_suffix = "_notAnnot.png"){
   for (tn in 1:length(varProbes)) {
