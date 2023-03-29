@@ -41,6 +41,7 @@ FormatLegendText <- function(fig){
         if (isShape) {
             nGroupSplit <- stringr::str_split_fixed(nlgndGrp, ",", 2)[1, 1]
             otherPlot[["x"]][["data"]][[nSam]][["marker"]]$line$color <- 'black'
+            otherPlot[["x"]][["data"]][[nSam]][["marker"]]$line$width <- 1
             otherPlot[["x"]][["data"]][[nSam]]$visible <- 'legendonly'
         } else{
             nGroupSplit <- stringr::str_split_fixed(nlgndGrp, ",", 2)[1, 1]
