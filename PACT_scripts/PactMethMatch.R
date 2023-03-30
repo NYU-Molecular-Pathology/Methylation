@@ -76,9 +76,10 @@ grabAllRecords <- function(flds, rcon){
 }
 
 # Database search function -----
-searchDb <- function(vals, db){
-    v2f <- paste(vals, collapse="|"); i=NULL
-    return(foreach::foreach(i=1:ncol(db), .combine='rbind') %do% {db[grepl(v2f,db[,i]),]})
+searchDb <- function(queryList, db){
+    v2f <- paste(queryList, collapse="|"); i=NULL
+    res <- foreach::foreach(i=1:ncol(db), .combine='rbind') %do% {db[which(grepl(v2f,db[,i])),]}
+    return(res)
 }
 
 # Filters list of possible files in the directory for worksheet
@@ -137,20 +138,28 @@ parseWorksheet <- function(inputFi){
 }
 
 # Import csv Worksheet -----
-getCaseValues <- function(inputSheet, readFlag){
-    if(stringr::str_detect(inputSheet,"/")==T){
-        vals2find <- parseWorksheet(inputSheet)
+getCaseValues <- function(inputSheet, readFlag) {
+    isSamSheet <- stringr::str_detect(inputSheet, "-SampleSheet") == T
+    if (readFlag) {
+        if (isSamSheet == T) {
+            vals2find <- utils::read.csv(inputSheet, skip = 19)[, c(6, 7, 9)]
+            vals2find <- vals2find[!grepl("H20|SERACARE|HAPMAP", vals2find[, 2]),]
+        } else{
+            vals2find <- as.data.frame(read.csv(inputSheet))
+            if (ncol(vals2find) > 1) {
+                vals2find <- unlist(lapply(X = 1:ncol(vals2find), FUN = function(X) {vals2find[, X]}))
+            }
+        }
+        vals2find <- as.data.frame(vals2find)
         return(vals2find)
     }
-    if(readFlag){
-        vals2find <- utils::read.csv(inputSheet, skip=19)[,c(6,7,9)]
-        vals2find <- vals2find[!grepl("H20|SERACARE|HAPMAP", vals2find[,2]),]
-        return(vals2find)
-    }else{
+    if (stringr::str_detect(inputSheet, .Platform$file.sep) == T) {
+        vals2find <- parseWorksheet(inputSheet)
+    } else{
         inputFi <- getFilePath(inputSheet)
         vals2find <- parseWorksheet(inputFi)
-        return(vals2find)
     }
+    return(vals2find)
 }
 
 genQuery <- function(dbCol,vals2find){
@@ -170,7 +179,15 @@ queryCases <- function(vals2find, db) {
         z <- paste(y,  collapse="-")
         theTScases[x] <- z
     }
-    queryList <- c(queryList, theTScases)     
+    queryList <- c(queryList, theTScases)
+    for (val in 1:length(queryList)) {
+        totalDash <- stringr::str_count(queryList[val], "-")
+        if (totalDash > 1) {
+            newValSplit <- stringr::str_split_fixed(queryList[val], "-", 3)
+            newVal <- paste(newValSplit[1, 1], newValSplit[1, 2], sep = "-")
+            queryList[val] <- newVal
+        }
+    }
     methQuery <- searchDb(queryList, db)
     return(unique(methQuery))
 }
@@ -192,24 +209,32 @@ addOutputLinks <- function(output){
     return(output)
 }
 
-modifyOutput <- function(output,vals2find){
-    
-  output$Test_Number <- NA
-    for(i in 1:nrow(output)) {
+
+modifyOutput <- function(output, vals2find) {
+    output$Test_Number <- NA
+    if (length(vals2find$`Test Number`) == 0) {
+        vals2find$`Test Number` <- ""
+    }
+    for (i in 1:nrow(output)) {
         theVal = NA
         for (var in 1:ncol(vals2find)) {
             pat <- vals2find[, var]
-            currRow <- paste(output[i, ])
-            theMatch <- which(pat %in% currRow[currRow != "0" & currRow != "NA"])
+            currRow <- paste(output[i,])
+            theMatch <-
+                which(pat %in% currRow[currRow != "0" & currRow != "NA"])
             if (length(theMatch) > 0) {
                 theVal <- vals2find$`Test Number`[theMatch]
             }
+            output$Test_Number[i] <- theVal
+            if (is.na(theVal)) {
+                warning(paste(output$record_id[i], "is missing NGS Number!"))
+            }
         }
-        output$Test_Number[i] <- theVal
     }
     output <- addOutputLinks(output)
     return(output)
 }
+
 
 addExcelLink <- function(output,fiLn,wb,runId){
     x <- c(output$'Report Link'[fiLn])
@@ -250,25 +275,33 @@ emailFile <- function(runId, outFi, rcon){
 
 # Main workflow to get dataframe
 getOuputData <- function(token, flds, inputSheet, readFlag){
-    apiUrl="https://redcap.nyumc.org/apps/redcap/api/"
+    apiUrl = "https://redcap.nyumc.org/apps/redcap/api/"
     rcon <- redcapAPI::redcapConnection(apiUrl, token)
     vals2find <- getCaseValues(inputSheet, readFlag)
     db <- grabAllRecords(flds, rcon)
     if(nrow(db)==0){
-        message("Your REDCap API connection failed!")
-        message("Check the Database for non-ASCII characters and your API Token: ", token)
+        message("REDCap API connection failed!\n",
+                "Check the Database for non-ASCII characters and verify the API Token: ", token)
         stopifnot(nrow(db)>0)
+    }
+    if(class(vals2find)!="data.frame"){
+        vals2find <- as.data.frame(vals2find)
     }
     if(nrow(vals2find)!=0){
         output <- queryCases(vals2find, db)
     }
-    
     if(nrow(output)==0){
-      warning("No Methylation Cases on this Pact run, generating blank file")
-      output[1,] <- "NONE"
+        warning("No Methylation Cases on this Pact run, generating blank file")
+        output[1,] <- "NONE"
+    }else{
+        rownames(output) <- 1:nrow(output)
     }
-
-    runId <- ifelse(readFlag == T, substr(inputSheet,1,nchar(inputSheet)-4), inputSheet)
+    if(readFlag==T){
+        output <- modifyOutput(output, vals2find)
+        write.csv(output, file="meth_sample_data.csv", quote=F, row.names=F)
+        return(output)
+    }
+    runId <- ifelse(readFlag == T, substr(inputSheet, 1, nchar(inputSheet) - 4), inputSheet)
     output <- modifyOutput(output, vals2find)
     outFi <- createXlFile(runId, output)
     emailFile(runId, outFi, rcon)
@@ -290,7 +323,7 @@ sourceFuns2 <- function(workingPath = NULL) {
     return(gb$defineParams())
 }
 
-msgRDs <- function(rds,token){
+msgRDs <- function(rds, token){
     message("\nRD-numbers with idats:\n")
     message(paste(rds, collapse="\n"))
     assign("rds", rds)
