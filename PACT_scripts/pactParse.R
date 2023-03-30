@@ -64,16 +64,17 @@ loadPacks <- function(){
         }else{libLoad(pk)}}))
 }
 
+
 # FUN: Returns Path to xlsx file ---------------------------------------------------------------
-getExcelPath <- function(inputSheet, pathType=1){
+getExcelPath <- function(inputSheet, pathType = 1){
     if(stringr::str_detect(inputSheet,"/")==T){return(inputSheet)}
     drive = file.path("", "Volumes", "molecular", "MOLECULAR LAB ONLY")
     folder = file.path("NYU PACT Patient Data", "Workbook")
     runyr <- stringr::str_split_fixed(inputSheet, "-", 3)[, 2]
+    yearDir <- paste0("20", runyr)
     ending <-ifelse(pathType==1,".xlsm","_FinalExportedList.xlsx")
-    inputFiPath <- file.path(drive, folder, paste0("20", runyr),
-                             inputSheet,
-                             paste0(inputSheet, ending))
+    xlFi <- paste0(inputSheet, ending)
+    inputFiPath <- file.path(drive, folder, yearDir, inputSheet, xlFi)
     return(inputFiPath)
 }
 
@@ -694,13 +695,21 @@ pushToRedcap <- function(outVals, token=NULL) {
 
 # Gets dataframe and saves as CSV file -----
 writeSampleSheet <- function(inputSheet, token, runID = NULL) {
-    inputFi <- getExcelPath(inputSheet); message("Found file:\n", inputFi)
+    isPath <- stringr::str_detect(inputSheet, .Platform$file.sep) == T
+    if(isPath==F){
+        inputFi <- getExcelPath(inputSheet)
+    }else{
+        inputFi <- inputSheet
+    }
+    message("File path input:\n", inputFi)
     if (file.exists(inputFi)) {
         outVals <- parseExcelFile(inputFi, runID)
     } else {
-        outVals <-  CheckOtherFiles(inputFi, runID)
+        outVals <- CheckOtherFiles(inputFi, runID)
     }
-    if(exists("outVals")){pushToRedcap(outVals, token)}
+    if(exists("outVals")){
+        pushToRedcap(outVals, token)
+    }
 }
 
 loadPacks()
