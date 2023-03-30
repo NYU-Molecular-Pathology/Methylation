@@ -1,4 +1,5 @@
 .myTable td {padding: 5px}
 .myTable tbody tr:nth-child(odd){background-color: #ADD8E6;padding: 3px}
 .myTable col:nth-child(even) {background:#ffffe0; padding: 4px}
-table {white-space: nowrap;padding: 5px}
+table {white-space: nowrap;padding: 5px; align: left}
+.myTable {align: left}
