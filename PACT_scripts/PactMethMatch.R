@@ -265,9 +265,31 @@ postData <- function(rcon, record){
 emailFile <- function(runId, outFi, rcon){
     record = data.frame(record_id = runId, run_number = runId)
     postData(rcon, record)
-    suppressMessages(
-        redcapAPI::importFiles(rcon,file= outFi, runId, field="other_file", repeat_instance=1)
+    isDone <- redcapAPI::exportRecords(rcon, factors=F, records=record$record_id, fields=c("record_id","other_file"))
+    if (is.na(isDone$other_file)) {
+        #rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", gb$token)
+        body <- list(
+            token = rcon$token,
+            content = 'file',
+            action = 'import',
+            record = runId,
+            field = "other_file",
+            file = httr::upload_file(outFi),
+            returnFormat = 'csv'
         )
+        res <-
+            tryCatch(
+                httr::POST(url = rcon$url, body = body, config = rcon$config),
+                error = function(cond){
+                    list(status_code = "200")
+                }
+                )
+        if(res$status_code=="200"){
+            message("REDCap file upload successful: ", outFi)
+        }else{
+            message("REDCap file upload failed: ", outFi)
+        }
+    }
     record$comments <- "pact_sample_list_email"
     postData(rcon, record)
     message(dsh,"\nEmail Notification Created",dsh,"\n")
