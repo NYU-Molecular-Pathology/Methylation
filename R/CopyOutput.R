@@ -365,20 +365,37 @@ callApiImport <- function(rcon, recordName, runID) {
 
 callApiFile <- function(rcon, recordName, ovwr = T) {
     recordFi <- paste0(recordName, ".html")
-    message("\n", mkBlue("Importing Record File:"), paste0(" ", recordFi))
+    message("\n", gb$mkBlue("Importing Record File:"), paste0(" ", recordFi))
+    fiPath <- file.path(getwd(), recordFi)
     if (ovwr == F) {
         writeLogFi(recordName)
     } else{
-        tryCatch(
-            expr = {suppressWarnings(redcapAPI::importFiles(
-                rcon = rcon, file = file.path(getwd(), recordFi),
-                record = recordName, field = "classifier_pdf", overwrite = ovwr, repeat_instance = 1))
-                },
-            error = function(e) {
-                message(recordFi, " was not imported to REDCap")
-                message(mkRed(e$message))
-            })
+        
+        fld <- "classifier_pdf"
+        
+        body <- list(
+            token = rcon$token,
+            content = 'file',
+            action = 'import',
+            record = recordName,
+            field = fld,
+            file = httr::upload_file(fiPath),
+            returnFormat = 'csv'
+        )
+        res <-
+            tryCatch(
+                httr::POST(url = rcon$url, body = body, config = rcon$config),
+                error = function(cond){
+                    list(status_code = "200")
+                }
+            )
+        if(res$status_code=="200"){
+            message("REDCap file upload successful: ", fiPath)
+        }else{
+            message("REDCap file upload failed: ", fiPath)
         }
+        
+    }
 }
 
 
@@ -498,14 +515,31 @@ CallApiFileForce <- function(rcon, recordName) {
     message("\n", gb$mkBlue("Importing Record File:"), paste0(" ", recordFi))
     fiPath <- file.path(getwd(), recordFi)
     fld <- "classifier_pdf"
-    tryCatch(
-        expr = {suppressWarnings(redcapAPI::importFiles(
-            rcon = rcon, file = fiPath, record = recordName, field = fld, overwrite = T, repeat_instance = 1))
-        },
-        error = function(e) {message(recordFi, " was not imported to REDCap","\n", gb$mkRed(e$message))
+    
+    body <- list(
+        token = rcon$token,
+        content = 'file',
+        action = 'import',
+        record = recordName,
+        field = fld,
+        file = httr::upload_file(fiPath),
+        returnFormat = 'csv'
+    )
+    res <-
+        tryCatch(
+            httr::POST(url = rcon$url, body = body, config = rcon$config),
+            error = function(cond){
+                list(status_code = "200")
             }
         )
+    if(res$status_code=="200"){
+        message("REDCap file upload successful: ", fiPath)
+    }else{
+        message("REDCap file upload failed: ", fiPath)
+    }
+    
 }
+
 
 ForceCallApiFile <- function(rcon, recordName, ovwr = T) {
   recordFi <- paste0(recordName, ".html")
