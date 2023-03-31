@@ -220,7 +220,8 @@ CheckImportData <- function(rawCsv) {
 importDesktopCsv <- function(rcon, samsheet = NULL) {
     msgFunName(cpOutLnk, "importDesktopCsv")
     rawCsv <- GetRedcapCsv(samsheet)
-    data <- CheckImportData(rawCsv)
+    data <- rawCsv
+    #data <- CheckImportData(rawCsv)
     if (nrow(data > 0)) {
         cat(redcapAPI::importRecords(rcon, data, "normal", "ids", logfile = "REDCapImportLog.txt"))
     } else{
