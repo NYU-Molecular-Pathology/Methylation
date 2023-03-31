@@ -18,34 +18,36 @@ FormatLegendText <- function(fig){
   #gb$SaveObj(fig, "test_fig.Rdata")
   #fig <- gb$LoadRdatObj("test_fig.Rdata")
   #stopifnot(FALSE)
-    fig2 <-
-        fig + geom_point(
-            aes(x, y, color = "Shape", shape = factor(symbol)),
-            color = fig$data$col, stroke = 2, size = 10)
-    otherPlot <- gb$supM(plotly::ggplotly(
-      fig2, dynamicTicks = T, width = 1200, height = 800, source = "A", layerData = 1))
-    otherPlot[["x"]][["layout"]][["shapes"]][[1]][["line"]][["width"]] <- 1
+  fig2 <- fig + geom_point(aes(x, y, color = "Shape", shape = symbol),
+                           color = fig$data$col, stroke = 2, size = 10)
+  otherPlot <- gb$supM(plotly::ggplotly(
+    fig2, dynamicTicks = T, width = 1200, height = 800, source = "A", layerData = 1)
+    )
+    otherPlot[["x"]][["layout"]][["shapes"]][[1]][["line"]][["width"]] <- 2
     for (nSam in 1:length(otherPlot[["x"]][["data"]])) {
         lgndGrp <- otherPlot[["x"]][["data"]][[nSam]][["legendgroup"]]
         nlgndGrp <- stringr::str_remove_all(lgndGrp, "[()]")
         lgndSplt <- stringr::str_split_fixed(nlgndGrp, ",", 2)
         isShape <- lgndSplt[, 2] == "NA"
-        otherPlot[["x"]][["data"]][[nSam]][["marker"]][["opacity"]] <- 0.80
+        otherPlot[["x"]][["data"]][[nSam]][["marker"]][["opacity"]] <- 1
         otherPlot[["x"]][["data"]][[nSam]][["marker"]][["size"]] <- 18
+        otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]][["width"]] <- 2
+        otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]][["opacity"]] <- 1
         if (isShape) {
             nGroupSplit <- stringr::str_split_fixed(nlgndGrp, ",", 2)[1, 1]
-            otherPlot[["x"]][["data"]][[nSam]][["marker"]]$line <- list(color = 'black', width = 2)
-            otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]] <- list(width = 2) 
-            otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]][["width"]] <- 2
-            
-            
             otherPlot[["x"]][["data"]][[nSam]]$visible <- 'legendonly'
+            otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]][["color"]] <- "grey"
+            otherPlot[["x"]][["data"]][[nSam]][["marker"]][["color"]] <- "darkgrey"
         } else{
             nGroupSplit <- stringr::str_split_fixed(nlgndGrp, ",", 2)[1, 1]
             if (otherPlot[["x"]][["data"]][[nSam]][["marker"]][["symbol"]] != "circle") {
                 otherPlot[["x"]][["data"]][[nSam]][["showlegend"]] <- F
                 otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]] <- list(width = 2) 
-                otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]][["width"]] <- 2
+                fillColor <- otherPlot[["x"]][["data"]][[nSam]][["marker"]][["color"]]
+                colSplit <- stringr::str_split_fixed(fillColor, ",", 4)
+                colSplit[1,4] <- "1)"
+                otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]][["color"]] <- 
+                  paste(colSplit, collapse = ",")
             }
         }
         otherPlot[["x"]][["data"]][[nSam]][["name"]] <-
@@ -104,21 +106,26 @@ FormatHoverInfo <- function(otherPlot){
 
 FormatPlotLabels <- function(fig, otherPlot, uniGrp, markerSyms){
   figDat <- fig[["data"]]
-  figGrp <- paste0("(", figDat$symbol, "," , figDat$GROUPS, ")")
-  samLabs <- figDat$samples
+  #paste0("(", figDat$symbol, "," , figDat$GROUPS, ")")
+  figGrp <- c(unique(figDat$GROUPS), unique(figDat$symbol))
+  opInfo <- otherPlot[["x"]][["data"]]
+  hoverTxt <- stringr::str_split(opInfo[[sam]][["text"]], pattern = "<br />", simplify = T)
   for (grpIdx in 1:length(uniGrp)) {
-    grpNam <- uniGrp[grpIdx]
-    currGrp <- figGrp == grpNam
-    currSam <- samLabs[currGrp]
+    grpNam <- otherPlot$x$data[[grpIdx]]$legendgroup
+    currGrp <- figDat$GROUPS == grpNam
+    if(!any(currGrp)){
+      currGrp <- figDat$symbol == grpNam
+    }
+    currSam <- figDat$samples[currGrp]
     newText <- paste(
-      paste("Sample:", samLabs[currGrp]),
+      paste("Sample:", currSam),
       paste("x:", round(figDat$x[currGrp], 2)),
       paste("y:", round(figDat$y[currGrp], 2)),
       paste("Color:", figDat$GROUPS[currGrp]),
       paste("Symbol:", figDat$symbol[currGrp]),
       sep = "<br />"
       )
-    if (grpNam ==  otherPlot[["x"]][["data"]][[grpIdx]]$name){
+    if (grpNam == otherPlot[["x"]][["data"]][[grpIdx]]$name){
       otherPlot[["x"]][["data"]][[grpIdx]]$text <- newText
     }
     }
