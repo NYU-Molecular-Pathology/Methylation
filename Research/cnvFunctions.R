@@ -310,9 +310,11 @@ grabGsetBeta <- function(gsetbeta, gset.funnorm) {
 }
 
 
-#colnames(gset.funnorm.beta) <- gset.funnorm$Sample_Group
+DedupeUniq <- function(StrObj){
+  return(as.data.frame(unique(unlist(strsplit(as.character(StrObj),';')))))
+}
+
 getDmpData <- function(ClusfiNam, gset.funnorm, condition, gb) {
-  #if (!file.exists(file.path(getwd(), ClusfiNam))) {
     annot = minfi::getAnnotation(gset.funnorm)
     gset.funnorm.beta <- gb$grabGsetBeta(gb$gBetaFile , gset.funnorm)
     dmp <- minfi::dmpFinder(gset.funnorm.beta, pheno = condition, type = "categorical")
@@ -323,19 +325,19 @@ getDmpData <- function(ClusfiNam, gset.funnorm, condition, gb) {
     dmpAnnoSign <- subset(dmpAnnoSign, dmpAnnoSign$pval < 0.05)
     write.csv(dmpAnnoSign, file = ClusfiNam, quote = F)
     theDmpData <- read.csv(ClusfiNam, header = T, sep = ",")
-  #} else{theDmpData <- read.csv(ClusfiNam, header = T, sep = ",")}
-  gene_char_unique1 <- DedupeUniq(theDmpData$GencodeCompV12_Accession)
-  gene_char_unique2 <- DedupeUniq(theDmpData$UCSC_RefGene_Accession)
-  gene_char_unique3 <- DedupeUniq(theDmpData$GencodeCompV12_NAME)
-  gene_char_unique4 <- DedupeUniq(theDmpData$UCSC_RefGene_Name)
-  gene_char_unique3 <- c(gene_char_unique3[, 1], gene_char_unique4[, 1])
-  gene_char_unique <- list(
-    GencodeAccession = gene_char_unique1[, 1],
-    UCSCrefseq = gene_char_unique2[, 1],
-    GeneNames = gene_char_unique3
-  )
+    gene_char_unique1 <- DedupeUniq(theDmpData$GencodeCompV12_Accession)
+    gene_char_unique2 <- DedupeUniq(theDmpData$UCSC_RefGene_Accession)
+    gene_char_unique3 <- DedupeUniq(theDmpData$GencodeCompV12_NAME)
+    gene_char_unique4 <- DedupeUniq(theDmpData$UCSC_RefGene_Name)
+    gene_char_unique3 <- c(gene_char_unique3[, 1], gene_char_unique4[, 1])
+    gene_char_unique <- list(
+        GencodeAccession = gene_char_unique1[, 1],
+        UCSCrefseq = gene_char_unique2[, 1],
+        GeneNames = gene_char_unique3
+        )
   return(gene_char_unique)
 }
+
 
 
 ##Convert to entrz ids for kegg enrichment analysis##
