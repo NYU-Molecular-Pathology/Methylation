@@ -48,11 +48,9 @@ SaveCNVplots <- function(samplename_data, sentrix.ids, i, idatPath = NULL) {
   }
   samName <- samplename_data[i]
   sampleEpic <- sentrix.ids[i]
-  
   imgName <- paste(samName, sampleEpic, "CNV.png", sep = "_")
   imgPath <- file.path(".", "figures", "cnv")
   imgFi <- file.path(imgPath, imgName)
-  
   if (!file.exists(imgFi)) {
     pathEpic <- file.path(idatPath, sampleEpic)
     RGsetEpic <- read.metharray(pathEpic, verbose = T, force = T)
@@ -66,10 +64,10 @@ SaveCNVplots <- function(samplename_data, sentrix.ids, i, idatPath = NULL) {
     invisible(dev.off())
   }
   cat(paste("###", samName, "\n\n"))
-  imgTxt <- paste0("![",samName,"](", imgFi,")")
-  cat(imgTxt)
+  postImg <- paste0("![", samName, "](", imgFi, ")")
   cat("\n\n")
-  return(imgFi)
+  cat(postImg)
+  cat("\n\n")
 }
 
 
