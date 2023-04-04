@@ -313,24 +313,29 @@ grabGsetBeta <- function(gsetbeta, gset.funnorm) {
 
 
 #colnames(gset.funnorm.beta) <- gset.funnorm$Sample_Group
-getDmpData <- function(ClusfiNam, gset.funnorm, condition){
-if(!file.exists(file.path(getwd(),ClusfiNam))){
-  annot = minfi::getAnnotation(gset.funnorm)
-  gset.funnorm.beta <- gb$grabGsetBeta(gBetaFile , gset.funnorm)
-  dmp <- minfi::dmpFinder(gset.funnorm.beta, pheno = condition, type = "categorical")
-  dmp <- cbind(dmp, ID = rownames(dmp))
-  dmp_annot_combined <- cbind(annot[row.names(dmp), ], dmp)
-  dmp_annot_combined_df <- as.data.frame(dmp_annot_combined)
-  dmp_annot_significant <- subset(dmp_annot_combined_df, dmp_annot_combined_df$qval < 0.05)
-  write.csv(dmp_annot_significant,file=ClusfiNam)
-  theDmpData <- read.csv(ClusfiNam,header = T,sep = ",")
-  }else{
-    theDmpData <- read.csv(ClusfiNam,header = T,sep = ",")
-    }
-  gene_char_split <- strsplit(as.character(theDmpData$UCSC_RefGene_Name),';')
-  gene_char_unlist <- unlist(gene_char_split)
-  gene_char_unique <- as.data.frame(unique(gene_char_unlist))
-  colnames(gene_char_unique) <- 'Genes_By_Sample'
+getDmpData <- function(ClusfiNam, gset.funnorm, condition, gb) {
+  #if (!file.exists(file.path(getwd(), ClusfiNam))) {
+    annot = minfi::getAnnotation(gset.funnorm)
+    gset.funnorm.beta <- gb$grabGsetBeta(gb$gBetaFile , gset.funnorm)
+    dmp <- minfi::dmpFinder(gset.funnorm.beta, pheno = condition, type = "categorical")
+    dmp <- cbind(dmp, ID = rownames(dmp))
+    dmp_annot_combined <- cbind(annot[row.names(dmp),], dmp)
+    dmp_annot_combined_df <- as.data.frame(dmp_annot_combined)
+    dmpAnnoSign <- subset(dmp_annot_combined_df, dmp_annot_combined_df$qval < 0.2)
+    dmpAnnoSign <- subset(dmpAnnoSign, dmpAnnoSign$pval < 0.05)
+    write.csv(dmpAnnoSign, file = ClusfiNam, quote = F)
+    theDmpData <- read.csv(ClusfiNam, header = T, sep = ",")
+  #} else{theDmpData <- read.csv(ClusfiNam, header = T, sep = ",")}
+  gene_char_unique1 <- DedupeUniq(theDmpData$GencodeCompV12_Accession)
+  gene_char_unique2 <- DedupeUniq(theDmpData$UCSC_RefGene_Accession)
+  gene_char_unique3 <- DedupeUniq(theDmpData$GencodeCompV12_NAME)
+  gene_char_unique4 <- DedupeUniq(theDmpData$UCSC_RefGene_Name)
+  gene_char_unique3 <- c(gene_char_unique3[, 1], gene_char_unique4[, 1])
+  gene_char_unique <- list(
+    GencodeAccession = gene_char_unique1[, 1],
+    UCSCrefseq = gene_char_unique2[, 1],
+    GeneNames = gene_char_unique3
+  )
   return(gene_char_unique)
 }
 
