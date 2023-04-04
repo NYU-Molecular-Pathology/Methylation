@@ -162,6 +162,42 @@ rmDupeAnno2 <- function(geneBetas,out.fi) {
   return(geneBetas)
 }
 
+GetMappedIds <- function(gene_char_unique){
+   mappedIDs1 <- gb$supM(AnnotationDbi::mapIds(
+       org.Hs.eg.db, keys = gene_char_unique$GeneNames, column = "ENTREZID", keytype = "SYMBOL", multiVals = "filter", fuzzy = T))
+    mappedIDs2 <- gb$supM(AnnotationDbi::mapIds(
+        org.Hs.eg.db, keys = gene_char_unique$UCSCrefseq, column = "ENTREZID", keytype = "REFSEQ", multiVals = "filter", fuzzy = T))
+    mappedIDs <- c(mappedIDs1, mappedIDs2)
+    mappedIDs <- mappedIDs[!is.na(mappedIDs)]
+    mappedIDs <- mappedIDs[!duplicated(mappedIDs)]
+    return(mappedIDs)
+}
+
+entrz2kegg <- function(gene_char_unique) {
+    library("org.Hs.eg.db")
+    library("clusterProfiler")
+    library("enrichplot")
+    if (!require("DOSE")) {
+        remotes::install_github("GuangchuangYu/DOSE")
+    }
+    if (!require("ggstar")) {
+        install.packages("ggstar", ask = F)
+    }
+    requireNamespace("clusterProfiler")
+    requireNamespace("enrichplot")
+    mappedIDs <- GetMappedIds(gene_char_unique)
+    termNames <- gb$supM(AnnotationDbi::mapIds(org.Hs.eg.db, keys = mappedIDs, column = "SYMBOL", 
+                                               keytype = "ENTREZID", multiVals = "filter", fuzzy = T))
+    geneList <- unique(mappedIDs)
+    kk <- clusterProfiler::enrichKEGG(gene = geneList, organism = 'hsa', universe = NULL)
+    cat("\n\n")
+    print(enrichplot::dotplot(kk, title = "Dotplot of Top Pathways", showCategory = 15))
+    cat("\n\n")
+    print(graphics::barplot(kk) + ggplot2::ggtitle("Top KEGG Pathway Adjusted P-Values"))
+    return(kk)
+}
+
+
 PrintPathways <- function(topPaths){
     dtOpts <- list(scrollX = T, scrollY=T, info = F, autoWidth = F,
                    pageLength = 10, rownames=F, lengthChange = T, searchable = T)
