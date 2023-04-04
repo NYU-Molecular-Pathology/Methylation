@@ -511,7 +511,7 @@ CheckGeneOutput <- function(pathwayName) {
     }
 }
 
-LoopPathwayHeatMap <- function(pathWayGenes, ha){
+LoopPathwayHeatMap <- LoopPathwayHeatMap <- function(pathWayGenes, targets){
     doParallel::registerDoParallel(cores=6)
     cat("\n\n")
     hmOutPath <- getwd()
@@ -519,23 +519,31 @@ LoopPathwayHeatMap <- function(pathWayGenes, ha){
         currPathway <- pathWayGenes[pathRow,]
         pathwayName <- paste0(gsub(" ", "_", currPathway$Description))
         message("Looping Pathway Creation for: ", pathwayName)
-        avgExist <- CheckGeneOutput(pathwayName)
+        avgExist <- gb$CheckGeneOutput(pathwayName)
         if(avgExist==F){
             your_genes <- stringr::str_split(currPathway$geneID, pattern = "/")[[1]]
             z <- gb$GetProbesGenes(your_genes, RGSet, region = c('TSS200'))
             csvColumns <- gb$GetCsvGeneColumns(pathwayName, z)
-            avgBetas <- gb$GetProbeAverage(csvColumns, betas,pathwayName)
+            avgBetas <- gb$GetProbeAverage(csvColumns, betas, pathwayName)
         }else{
             avgBetas <- read.csv(avgExist)
         }
         titleValue <- paste("Average Probe Beta Values for", currPathway$Description, "Genes")
         avgBetas <- as.matrix(avgBetas)
         avgBetas <- na.omit(avgBetas)
-        msgTitle <- paste("##", currPathway$Description)
+        msgTitle <- paste("###", paste0(currPathway$Description), "\n\n")
         cat("\n\n")  
         cat(msgTitle)
         cat("\n\n")
-        hm <- gb$GetHeatMapGenes(avgBetas, titleValue, ha, geneNamesHeatMap=T, colSplt=3)
+        colnames(avgBetas) <- gsub(".", "-",  colnames(avgBetas), fixed = TRUE)
+        toKeep <- which(targets[,1] %in% colnames(avgBetas))
+        targets1 <- targets[toKeep,]
+        rownames(targets1) <- 1:nrow(targets1)
+        targets1 <- gb$colorTargets(targets1, varColumns = gb$selectedVars)
+        ha <- gb$AnnotateHmVars(targets1, varColumns = gb$selectedVars)
+        ha <- gb$FilterHmAnno(ha, gb$selectedVars) # drop any unwanted columns
+        ha <- gb$MatchHaLegend(ha, gb$selectedVars, targets1)
+        hm <- gb$GetHeatMapGenes(avgBetas, titleValue, ha, geneNamesHeatMap=T, colSplt=NULL)
         knitr::asis_output(hm) 
         cat("\n\n")
         cat("\n\n")
