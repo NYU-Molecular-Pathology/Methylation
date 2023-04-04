@@ -430,3 +430,13 @@ GenCNVdataGroupSave <- function(cnData, targets, col_samGrp, plotChr = NULL) {
   }
 }
 
+LoopSavePlainCNV <- function(targets) {
+    samplename_data <- as.character(targets$Sample_ID)
+    sentrix.ids <- as.character(targets$SentrixID_Pos)
+    cat("\n\n")
+    for (i in 1:length(sentrix.ids)) {
+        gb$SaveCNVplots(samplename_data, sentrix.ids, i, gb$idatPath)
+        cat("\n\n")
+    }
+}
+
