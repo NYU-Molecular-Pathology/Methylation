@@ -125,6 +125,7 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL,
     {
     require('ggplot2')
     colours <- unique(tsne_plot$col)
+    #options(repr.plot.width = 3, repr.plot.height = 1)
     symFlags <- !is.null(symbolsLabel)
     devAskNewPage(ask=F) #options("device.ask.default"=F)
     # Parameters for text & geom_label_repel
@@ -132,7 +133,6 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL,
     eBlank <- ggplot2::element_blank()
     # Creating Main ggplot Object
     groupTsne <- ggplot(tsne_plot, aes(x=tsne_plot$x, y=tsne_plot$y, group=GROUPS)) 
-    # Adding Symbols if provided
     groupTsne <- AddPlotSymbols(tsne_plot, groupTsne, symFlags)
     # Adding Plot Color, Theme, and Axis Labels
     groupTsne <- groupTsne +
