@@ -15,13 +15,16 @@ pkgs <- c(
   'enrichplot')
 
 librarian::shelf(pkgs, ask=F, update_all = F, quiet = F)
-
 library(clusterProfiler); require("clusterProfiler")
 library(pathview)
 library(org.Hs.eg.db)
 library("DOSE"); require("DOSE")
 library("enrichplot"); require("enrichplot")
-data(geneList)
+#data(geneList)
+
+if(!require("yulab.utils")){
+  remotes::install_github("https://github.com/YuLab-SMU/yulab.utils")
+}
 
 subsetDmp <- function(annot, beta,i) {
   reg1 ="TSS200|TSS1500"
