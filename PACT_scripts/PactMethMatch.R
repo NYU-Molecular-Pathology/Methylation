@@ -124,17 +124,18 @@ getFilePath <- function(inputSheet){
 
 # Parses the input file for the "PhilipsExport" tab
 parseWorksheet <- function(inputFi){
-         message("Reading the file:", inputFi)
-    shNames <- readxl::excel_sheets(inputFi)
-    message("Excel sheet names:")
-    message(paste(shNames, collapse=" "))
-         stopifnot(!is.null(shNames) & length(shNames)>2)
-    sheet2Read <- "PhilipsExport"
-    sh <- which(grepl(sheet2Read,shNames,ignore.case=T))[1]
-    pactShCol <- c("Tumor Specimen ID","Tumor DNA/RNA Number", "MRN", "Test Number")
-    vals2find <-  as.data.frame(readxl::read_excel(inputFi, sheet=shNames[sh], skip=3, col_types ="text")[,pactShCol])
-    vals2find <- vals2find[!is.na(vals2find[,1]),]
-    return(vals2find)
+  sheet2Read <- "PhilipsExport"
+  message("Reading the file:\n", inputFi)
+  shNames <- readxl::excel_sheets(inputFi)
+  message("Excel sheet names:")
+  message(paste(shNames, collapse="\n"))
+  stopifnot(!is.null(shNames) & length(shNames) > 2)
+  sh <- which(grepl(sheet2Read, shNames, ignore.case = T))[1]
+  pactShCol <- c("Tumor Specimen ID","Tumor DNA/RNA Number", "MRN", "Test Number")
+  vals2find <-  suppressMessages(as.data.frame(readxl::read_excel(
+    inputFi, sheet=shNames[sh], skip=3, col_types ="text")[,pactShCol]))
+  vals2find <- vals2find[!is.na(vals2find[,1]),]
+  return(vals2find)
 }
 
 # Import csv Worksheet -----
@@ -210,29 +211,64 @@ addOutputLinks <- function(output){
 }
 
 
+
+FillMissingNGS <- function(output, vals2find){
+  rows2fill <- which(is.na(output$Test_Number))
+  outputRows <- output$accession_number[rows2fill]
+  matchedTs <- which(grepl(paste(outputRows, collapse = "|"),
+                           vals2find$`Tumor Specimen ID`, ignore.case = T))
+  if(length(matchedTs)>0){
+    foundTs <- vals2find$`Tumor Specimen ID`[matchedTs]
+    ngsFound <- vals2find$`Test Number`[matchedTs]
+    foundTs <- stringr::str_split_fixed(foundTs, "-", 3)[,1:2]
+    foundTs <- paste(foundTs[,1], foundTs[,2], sep = "-")
+    matchFound <- which(grepl(paste(foundTs, collapse = "|"),
+                              output$accession_number, ignore.case = T))
+    output[matchFound,"Test_Number"] <- ngsFound
+    rows2fill <- which(is.na(output$Test_Number))
+  }
+  if(length(rows2fill)>0){
+    warning("Some samples still missing NGS Numbers:\n",
+            paste(output$record_id[rows2fill], collapse = "\n"))
+  }
+  return(output)
+
+}
+
+
 modifyOutput <- function(output, vals2find) {
-    output$Test_Number <- NA
-    if (length(vals2find$`Test Number`) == 0) {
-        vals2find$`Test Number` <- ""
+  output$Test_Number <- NA
+  if (length(vals2find$`Test Number`) == 0) {
+    vals2find$`Test Number` <- ""
+  }
+  NGSmissing <- F
+  for (i in 1:nrow(output)) {
+    theVal = NA
+    for (var in 1:ncol(vals2find)) {
+      pat <- vals2find[, var]
+      pat <- unique(pat)
+      currRow <- paste(output[i,])
+      theMatch <- which(pat %in% currRow[currRow != "0" & currRow != "NA"])
+      if (length(theMatch) > 1) {
+        warning(paste("Multiple records found matching pattern:",
+                      paste(theMatch, collapse = " "),"\nPattern:",
+                      paste(pat, collapse = " ")))
+      }
+      if (length(theMatch) > 0) {
+        theVal <- vals2find$`Test Number`[theMatch]
+      }
+      output$Test_Number[i] <- theVal
     }
-    for (i in 1:nrow(output)) {
-        theVal = NA
-        for (var in 1:ncol(vals2find)) {
-            pat <- vals2find[, var]
-            currRow <- paste(output[i,])
-            theMatch <-
-                which(pat %in% currRow[currRow != "0" & currRow != "NA"])
-            if (length(theMatch) > 0) {
-                theVal <- vals2find$`Test Number`[theMatch]
-            }
-            output$Test_Number[i] <- theVal
-            if (is.na(theVal)) {
-                warning(paste(output$record_id[i], "is missing NGS Number!"))
-            }
-        }
+    if (is.na(theVal)) {
+      warning(paste(output$record_id[i], "is missing NGS Number!"))
+      NGSmissing <- T
     }
-    output <- addOutputLinks(output)
-    return(output)
+  }
+  if(NGSmissing==T){
+    output <- FillMissingNGS(output, vals2find)
+  }
+  output <- addOutputLinks(output)
+  return(output)
 }
 
 
@@ -297,37 +333,46 @@ emailFile <- function(runId, outFi, rcon){
 
 # Main workflow to get dataframe
 getOuputData <- function(token, flds, inputSheet, readFlag){
-    apiUrl = "https://redcap.nyumc.org/apps/redcap/api/"
-    rcon <- redcapAPI::redcapConnection(apiUrl, token)
-    vals2find <- getCaseValues(inputSheet, readFlag)
-    db <- grabAllRecords(flds, rcon)
-    if(nrow(db)==0){
-        message("REDCap API connection failed!\n",
-                "Check the Database for non-ASCII characters and verify the API Token: ", token)
-        stopifnot(nrow(db)>0)
-    }
-    if(class(vals2find)!="data.frame"){
-        vals2find <- as.data.frame(vals2find)
-    }
-    if(nrow(vals2find)!=0){
-        output <- queryCases(vals2find, db)
-    }
-    if(nrow(output)==0){
-        warning("No Methylation Cases on this Pact run, generating blank file")
-        output[1,] <- "NONE"
-    }else{
-        rownames(output) <- 1:nrow(output)
-    }
-    if(readFlag==T){
-        output <- modifyOutput(output, vals2find)
-        write.csv(output, file="meth_sample_data.csv", quote=F, row.names=F)
-        return(output)
-    }
-    runId <- ifelse(readFlag == T, substr(inputSheet, 1, nchar(inputSheet) - 4), inputSheet)
+  apiUrl = "https://redcap.nyumc.org/apps/redcap/api/"
+  rcon <- redcapAPI::redcapConnection(apiUrl, token)
+  vals2find <- getCaseValues(inputSheet, readFlag)
+  vals2find <- as.data.frame(vals2find)
+  db <- grabAllRecords(flds, rcon)
+  if(nrow(db)==0){
+    message("REDCap API connection failed!\n",
+            "Check the Database for non-ASCII characters and verify the API Token: ", token)
+    stopifnot(nrow(db)>0)
+  }
+  if(class(vals2find)!="data.frame"){
+    vals2find <- as.data.frame(vals2find)
+  }
+  if(nrow(vals2find)!=0){
+    output <- queryCases(vals2find, db)
+  }
+  if(nrow(output)==0){
+    warning("No Methylation Cases on this Pact run, generating blank file")
+    output[1,] <- "NONE"
+  }else{
+    rownames(output) <- 1:nrow(output)
+  }
+  if(readFlag==T){
     output <- modifyOutput(output, vals2find)
-    outFi <- createXlFile(runId, output)
-    emailFile(runId, outFi, rcon)
+    write.csv(output, file="meth_sample_data.csv", quote=F, row.names=F)
     return(output)
+  }
+  runId <- ifelse(readFlag == T, substr(inputSheet, 1, nchar(inputSheet) - 4), inputSheet)
+  output <- modifyOutput(output, vals2find)
+  toDrop <- is.na(output$Test_Number)
+  if(any(toDrop)){
+    hasNGS <- which(grepl("NGS", output$tm_number))
+    message("NGS Number found in 'tm_number' field of REDCap!")
+    if(length(hasNGS) > 0){
+      output$Test_Number[hasNGS] <- output$tm_number[hasNGS]
+    }
+  }
+  outFi <- createXlFile(runId, output)
+  emailFile(runId, outFi, rcon)
+  return(output)
 }
 
 # FUN: Sets your directory and sources the helper functions
