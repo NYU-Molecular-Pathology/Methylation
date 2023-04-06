@@ -544,7 +544,7 @@ LoopPathwayHeatMap <- function(pathWayGenes, targets){
         ha <- gb$AnnotateHmVars(targets1, varColumns = gb$selectedVars)
         ha <- gb$FilterHmAnno(ha, gb$selectedVars) # drop any unwanted columns
         ha <- gb$MatchHaLegend(ha, gb$selectedVars, targets1)
-        hm <- gb$GetHeatMapGenes(avgBetas, titleValue, ha, geneNamesHeatMap=T, colSplt=NULL)
+        hm <- gb$getHeatMap(avgBetas, titleValue, ha, geneNamesHeatMap = T)
         hm
         cat("\n\n")
         gb$SaveHmPng(fi_prefix= "hm_genes_", fi_suffix=".png", hm, topvar = paste0(currPathway$Description), outDir = NULL)
