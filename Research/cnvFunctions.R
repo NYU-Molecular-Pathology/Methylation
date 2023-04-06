@@ -289,22 +289,24 @@ grabClusterDat <- function(seg_clust_file,segFile){
 
 
 grabGsetFun <- function(RGSet, targets, gb) {
-  if (!file.exists(file.path(getwd(), gb$gsetFile))) {
+  gSetFunData <- file.path(getwd(), gb$gsetFile)
+  if (!file.exists(gSetFunData)) {
     gset.funnorm <- gb$cleanUpProbes(RGSet, targets, gb, getfunorm = T)
-    gb$SaveObj(gset.funnorm, file.name = gb$gsetFile)
-  } else{
-    gset.funnorm <- gb$LoadRdatObj(gb$gsetFile, F)
-  }
+    gb$SaveObj(gset.funnorm, file.name = gSetFunData)
+    } else{
+      gset.funnorm <- gb$LoadRdatObj(gSetFunData, F)
+      }
   return(gset.funnorm)
 }
 
 
 grabGsetBeta <- function(gsetbeta, gset.funnorm) {
-  if (!file.exists(file.path(getwd(), gsetbeta))) {
+    gsetbetaFi <- file.path(getwd(), gsetbeta)
+  if (!file.exists(gsetbetaFi)) {
     gset.funnorm.beta <- supM(minfi::getBeta(gset.funnorm))
-    saveRDS(gset.funnorm.beta, file = gsetbeta)
+    gb$SaveObj(gset.funnorm.beta, file.name = gsetbetaFi)
   } else{
-    gset.funnorm.beta <- readRDS(gsetbeta)
+    gset.funnorm.beta <- gb$LoadRdatObj(gsetbetaFi, F)
   }
   return(gset.funnorm.beta)
 }
