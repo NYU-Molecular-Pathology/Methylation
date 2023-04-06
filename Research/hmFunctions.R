@@ -456,9 +456,9 @@ GetCsvGeneColumns <- function(pathwayName, z){
     return(csvColumns)
 }
 
-GetHeatMapGenes <-function(betaRanges, titleValue, ha, geneNamesHeatMap=F, colSplt = NULL, rwsplt=NULL){
+GetHeatMapGenes2 <-  function(betaRanges, titleValue, ha, geneNamesHeatMap = F, colSplt = NULL, rwsplt = NULL){
   col_fun2 <- circlize::colorRamp2(c(0, 0.25, 0.5, 0.75, 1), c("darkblue","deepskyblue", "white", "tomato","red"))  
-  titleOfPlot <- paste("Heatmap of",titleValue,sep = " ")
+  titleOfPlot <- paste("Heatmap of", titleValue, sep = " ")
     hmTopNumbers <- ComplexHeatmap::Heatmap(
         betaRanges,
         col = gb$col_fun2,  ## Define the color scale
@@ -511,7 +511,8 @@ CheckGeneOutput <- function(pathwayName) {
     }
 }
 
-LoopPathwayHeatMap <- LoopPathwayHeatMap <- function(pathWayGenes, targets){
+
+LoopPathwayHeatMap <- function(pathWayGenes, targets){
     doParallel::registerDoParallel(cores=6)
     cat("\n\n")
     hmOutPath <- getwd()
@@ -543,7 +544,7 @@ LoopPathwayHeatMap <- LoopPathwayHeatMap <- function(pathWayGenes, targets){
         ha <- gb$AnnotateHmVars(targets1, varColumns = gb$selectedVars)
         ha <- gb$FilterHmAnno(ha, gb$selectedVars) # drop any unwanted columns
         ha <- gb$MatchHaLegend(ha, gb$selectedVars, targets1)
-        hm <- gb$GetHeatMapGenes(avgBetas, titleValue, ha, geneNamesHeatMap=T, colSplt=NULL)
+        hm <- gb$GetHeatMapGenes2(avgBetas, titleValue, ha, geneNamesHeatMap=T, colSplt=NULL)
         knitr::asis_output(hm) 
         cat("\n\n")
         cat("\n\n")
