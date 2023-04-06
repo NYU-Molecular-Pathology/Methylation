@@ -277,7 +277,7 @@ SaveClusters <- function(seg_clust_file, segFile){
 }
 
 
-grabClusterDat <- function(seg_clust_file,segFile){
+grabClusterDat <- function(seg_clust_file, segFile){
      if(!file.exists(seg_clust_file)){
         cnData <- SaveClusters(seg_clust_file,segFile)} else{
         cnData <- read.delim(seg_clust_file,header = T,sep = "\t",row.names=NULL)
