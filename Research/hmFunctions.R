@@ -456,7 +456,7 @@ GetCsvGeneColumns <- function(pathwayName, z){
     return(csvColumns)
 }
 
-GetHeatMapGenes2 <-  function(betaRanges, titleValue, ha, geneNamesHeatMap = F, colSplt = NULL, rwsplt = NULL){
+GetHeatMapGenes <-  function(betaRanges, titleValue, ha, geneNamesHeatMap = F, colSplt = NULL, rwsplt = NULL){
   col_fun2 <- circlize::colorRamp2(c(0, 0.25, 0.5, 0.75, 1), c("darkblue","deepskyblue", "white", "tomato","red"))  
   titleOfPlot <- paste("Heatmap of", titleValue, sep = " ")
     hmTopNumbers <- ComplexHeatmap::Heatmap(
