@@ -167,14 +167,67 @@ rmDupeAnno2 <- function(geneBetas,out.fi) {
 
 GetMappedIds <- function(gene_char_unique){
    mappedIDs1 <- gb$supM(AnnotationDbi::mapIds(
-       org.Hs.eg.db, keys = gene_char_unique$GeneNames, column = "ENTREZID", keytype = "SYMBOL", multiVals = "filter", fuzzy = T))
+       org.Hs.eg.db, keys = gene_char_unique$GeneNames, 
+       column = "ENTREZID", keytype = "SYMBOL",
+       multiVals = "filter", fuzzy = T))
     mappedIDs2 <- gb$supM(AnnotationDbi::mapIds(
-        org.Hs.eg.db, keys = gene_char_unique$UCSCrefseq, column = "ENTREZID", keytype = "REFSEQ", multiVals = "filter", fuzzy = T))
+        org.Hs.eg.db, keys = gene_char_unique$UCSCrefseq, 
+        column = "ENTREZID", keytype = "REFSEQ",
+        multiVals = "filter", fuzzy = T))
     mappedIDs <- c(mappedIDs1, mappedIDs2)
     mappedIDs <- mappedIDs[!is.na(mappedIDs)]
     mappedIDs <- mappedIDs[!duplicated(mappedIDs)]
+    mappedIDs <- unique(mappedIDs)
     return(mappedIDs)
 }
+
+
+PrintKkDotPlots <- function(termNames){
+  edo <- DOSE::enrichNCG(names(termNames))
+    ncgTtl <- "Dotplot of NCG Enriched Pathways qValue < 0.2 & pValue < 0.05"
+    totalQ <- length(which(edo@result$qvalue < 0.2 & edo@result$pvalue < 0.05))
+    if(totalQ < 15){
+      message("Too few edo@result$qvalue < 0.2 trying 0.8")
+      edo <- DOSE::enrichNCG(names(termNames), qvalueCutoff = 0.8, pvalueCutoff = 0.15)
+      ncgTtl <- "Dotplot of NCG Enriched Pathways qValue < 0.8 & pValue < 0.15"
+    }
+    cat("\n\n")
+    print(enrichplot::dotplot(edo, title = ncgTtl))
+    totalQ <- length(which(edo@result$qvalue < 0.8 & edo@result$pvalue < 0.15))
+    if(totalQ < 15){
+      message("Too few edo@result$qvalue < 0.8 & pValue < 0.15 trying all 1.0")
+      edo <- DOSE::enrichNCG(names(termNames), qvalueCutoff = 1, pvalueCutoff = 1)
+      ncgTtl <- "Dotplot of NCG Enriched Pathways qValue < 1 & pValue < 1"
+    }
+    cat("\n\n")
+    print(enrichplot::dotplot(edo, title = ncgTtl))
+    kkTtl <- "Dotplot of Top KEGG Pathways qValue < 0.2 pValue < 0.05"
+    kk <- clusterProfiler::enrichKEGG(gene = names(termNames), organism = 'hsa', universe = NULL)
+    totalQ <- length(which(kk@result$qvalue < 0.2 & kk@result$pvalue < 0.05))
+    if(totalQ < 15){
+      message("Too few edo@result$qvalue < 0.2 trying 0.8 and pvalue 0.15")
+      kk <- clusterProfiler::enrichKEGG(gene = names(termNames), organism = 'hsa', universe = NULL,
+                                        qvalueCutoff = 0.8, pvalueCutoff = 0.15)
+      kkTtl <- "Dotplot of Top KEGG Pathways qValue < 0.8 & pValue < 0.15"
+    }
+    cat("\n\n")
+    print(enrichplot::dotplot(kk, title = kkTtl, showCategory = 15))
+    
+    totalQ <- length(which(kk@result$qvalue < 0.8 & kk@result$pvalue < 0.15))
+    if(totalQ < 15){
+      message("Too few kk@result$qvalue < 0.8 & pValue < 0.15 trying all 1.0")
+      kk <- clusterProfiler::enrichKEGG(gene = names(termNames), organism = 'hsa', universe = NULL,
+                                        qvalueCutoff = 1, pvalueCutoff = 1)
+      kkTtl <- "Dotplot of Top KEGG Pathways qValue < 1 & pValue < 1"
+    }
+    cat("\n\n")
+    print(enrichplot::dotplot(kk, title = kkTtl, showCategory = 15))
+    
+    cat("\n\n")
+    print(graphics::barplot(kk) + ggplot2::ggtitle(kkTtl))
+    return(kk)
+}
+
 
 entrz2kegg <- function(gene_char_unique) {
     library("org.Hs.eg.db")
@@ -183,6 +236,7 @@ entrz2kegg <- function(gene_char_unique) {
     if (!require("DOSE")) {
         remotes::install_github("GuangchuangYu/DOSE")
     }
+    library("DOSE")
     if (!require("ggstar")) {
         install.packages("ggstar", ask = F)
     }
@@ -191,46 +245,30 @@ entrz2kegg <- function(gene_char_unique) {
     mappedIDs <- GetMappedIds(gene_char_unique)
     termNames <- gb$supM(AnnotationDbi::mapIds(org.Hs.eg.db, keys = mappedIDs, column = "SYMBOL", 
                                                keytype = "ENTREZID", multiVals = "filter", fuzzy = T))
-    geneList <- unique(mappedIDs)
-    kk <- clusterProfiler::enrichKEGG(gene = geneList, organism = 'hsa', universe = NULL)
-    cat("\n\n")
-    print(enrichplot::dotplot(kk, title = "Dotplot of Top Pathways", showCategory = 15))
-    cat("\n\n")
-    print(graphics::barplot(kk) + ggplot2::ggtitle("Top KEGG Pathway Adjusted P-Values"))
+    
+    kk <- PrintKkDotPlots(termNames)
     return(kk)
 }
 
-
-PrintPathways <- function(topPaths) {
-    cat("\n\n")
-    dtOpts <- list(
-        scrollX = T,
-        scrollY = T,
-        info = F,
-        autoWidth = F,
-        pageLength = 10,
-        rownames = F,
-        lengthChange = T,
-        searchable = T
-    )
-    for (pthwy in topPaths$Description) {
+PrintPathways <- function(topPaths){
+    dtOpts <- list(scrollX = T, scrollY=T, info = F, autoWidth = F,
+                   pageLength = 10, rownames=F, lengthChange = T, searchable = T)
+    allDtTabs <- NULL
+    for(pthwy in topPaths$Description) {
         pgenes <- gb$splitByPathway(pthwy, topPaths)
-        cat(paste0("### **", colnames(pgenes), "** \n\n"))
-        dtTab <- htmltools::tagList(
-            DT::datatable(
-                pgenes,
-                rownames = F,
-                options = dtOpts,
-                height = "120%",
-                width = "100%"
+        #cat(paste0("### **", colnames(pgenes),"** \n\n"))
+        dtTab <- htmltools::tagList(DT::datatable(
+            pgenes, rownames = F, options=dtOpts, height = "120%", width="100%")
             )
-        )
-        cat("\n\n")
-        print(dtTab)
-        cat("\n\n")
+        #cat("\n\n")
+        if(is.null(allDtTabs)){
+          allDtTabs <- dtTab
+        }else{
+          allDtTabs <- c(allDtTabs, dtTab)
+        }
     }
+    return(allDtTabs)
 }
-
 
 PrintDotBarUpset <- function(kk_final){
     cat("### DotPlot \n\n")
