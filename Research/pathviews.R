@@ -182,73 +182,62 @@ GetMappedIds <- function(gene_char_unique){
 }
 
 
-PrintKkDotPlots <- function(termNames){
-  edo <- DOSE::enrichNCG(names(termNames))
-    ncgTtl <- "Dotplot of NCG Enriched Pathways qValue < 0.2 & pValue < 0.05"
-    totalQ <- length(which(edo@result$qvalue < 0.2 & edo@result$pvalue < 0.05))
-    if(totalQ < 15){
-      message("Too few edo@result$qvalue < 0.2 trying 0.8")
-      edo <- DOSE::enrichNCG(names(termNames), qvalueCutoff = 0.8, pvalueCutoff = 0.15)
-      ncgTtl <- "Dotplot of NCG Enriched Pathways qValue < 0.8 & pValue < 0.15"
-    }
-    cat("\n\n")
-    print(enrichplot::dotplot(edo, title = ncgTtl))
-    totalQ <- length(which(edo@result$qvalue < 0.8 & edo@result$pvalue < 0.15))
-    if(totalQ < 15){
-      message("Too few edo@result$qvalue < 0.8 & pValue < 0.15 trying all 1.0")
-      edo <- DOSE::enrichNCG(names(termNames), qvalueCutoff = 1, pvalueCutoff = 1)
-      ncgTtl <- "Dotplot of NCG Enriched Pathways qValue < 1 & pValue < 1"
-    }
-    cat("\n\n")
-    print(enrichplot::dotplot(edo, title = ncgTtl))
-    kkTtl <- "Dotplot of Top KEGG Pathways qValue < 0.2 pValue < 0.05"
-    kk <- clusterProfiler::enrichKEGG(gene = names(termNames), organism = 'hsa', universe = NULL)
-    totalQ <- length(which(kk@result$qvalue < 0.2 & kk@result$pvalue < 0.05))
-    if(totalQ < 15){
-      message("Too few edo@result$qvalue < 0.2 trying 0.8 and pvalue 0.15")
+GetkkDotPlot <- function(termNames, enrichType="NCG", qVa=0.2, pVa=0.05){
+    kkTtl <- paste("Dotplot of Top", enrichType, "Enriched Pathways qValue <", qVa ,"& pValue <", pVa )
+    if(enrichType == "NCG"){
+      kk <- DOSE::enrichNCG(names(termNames), qvalueCutoff = qVa, pvalueCutoff = pVa)
+    }else{
       kk <- clusterProfiler::enrichKEGG(gene = names(termNames), organism = 'hsa', universe = NULL,
-                                        qvalueCutoff = 0.8, pvalueCutoff = 0.15)
-      kkTtl <- "Dotplot of Top KEGG Pathways qValue < 0.8 & pValue < 0.15"
+                                        qvalueCutoff = qVa, pvalueCutoff = pVa)
     }
-    cat("\n\n")
-    print(enrichplot::dotplot(kk, title = kkTtl, showCategory = 15))
-    
-    totalQ <- length(which(kk@result$qvalue < 0.8 & kk@result$pvalue < 0.15))
-    if(totalQ < 15){
-      message("Too few kk@result$qvalue < 0.8 & pValue < 0.15 trying all 1.0")
-      kk <- clusterProfiler::enrichKEGG(gene = names(termNames), organism = 'hsa', universe = NULL,
-                                        qvalueCutoff = 1, pvalueCutoff = 1)
-      kkTtl <- "Dotplot of Top KEGG Pathways qValue < 1 & pValue < 1"
-    }
-    cat("\n\n")
-    print(enrichplot::dotplot(kk, title = kkTtl, showCategory = 15))
-    
-    cat("\n\n")
-    print(graphics::barplot(kk) + ggplot2::ggtitle(kkTtl))
-    return(kk)
+    totalQ <- length(which(kk@result$qvalue < qVa & kk@result$pvalue < pVa))
+    if(totalQ < 10){
+      warning(paste("Too few results with kk@result$qvalue <", qVa, "& pvalue", pVa))
+      newQval = qVa + 0.1
+      newPval = pVa + 0.1
+      if(newPval > 1 | newQval > 1){
+        cat("\n\n")
+        print(enrichplot::dotplot(kk, title = kkTtl))
+        return(kk)
+      }
+      message(paste("Trying higher p and q values:", newQval, "&", newPval))
+      GetkkDotPlot(termNames, enrichType, qVa = newQval, pVa = newPval)
+      }else{
+        cat("\n\n")
+        cat(paste("###", "Dotplot of Top", enrichType, "Enriched Pathways"))
+        print(enrichplot::dotplot(kk, title = kkTtl)+theme(text=element_text(size=20)))
+        cat("\n\n")
+        cat(paste("###", "BarPlot of Top", enrichType, "Enriched Pathways"))
+        print(graphics::barplot(kk) + theme(text=element_text(size=20)) + ggplot2::ggtitle(kkTtl))
+        cat("\n\n")
+        return(kk)
+        }
 }
 
+PrintKkDotPlots <-function(termNames){
+  edo <- GetkkDotPlot(termNames, enrichType = "NCG", qVa= 0.2, pVa = 0.05)
+  kk <- GetkkDotPlot(termNames, enrichType = "KEGG", qVa= 0.2, pVa = 0.05)
+  return(list("edo" = edo, "kk" = kk))
+}
 
 entrz2kegg <- function(gene_char_unique) {
+    if (!require("ggstar")) {install.packages("ggstar", ask = F)}
     library("org.Hs.eg.db")
     library("clusterProfiler")
     library("enrichplot")
-    if (!require("DOSE")) {
-        remotes::install_github("GuangchuangYu/DOSE")
-    }
+    if (!require("DOSE")) {remotes::install_github("GuangchuangYu/DOSE")}
     library("DOSE")
-    if (!require("ggstar")) {
-        install.packages("ggstar", ask = F)
-    }
     requireNamespace("clusterProfiler")
     requireNamespace("enrichplot")
     mappedIDs <- GetMappedIds(gene_char_unique)
-    termNames <- gb$supM(AnnotationDbi::mapIds(org.Hs.eg.db, keys = mappedIDs, column = "SYMBOL", 
-                                               keytype = "ENTREZID", multiVals = "filter", fuzzy = T))
-    
+    termNames <- gb$supM(
+      AnnotationDbi::mapIds(org.Hs.eg.db, keys = mappedIDs, column = "SYMBOL", 
+                            keytype = "ENTREZID", multiVals = "filter", fuzzy = T)
+      )
     kk <- PrintKkDotPlots(termNames)
     return(kk)
 }
+
 
 PrintPathways <- function(topPaths){
     dtOpts <- list(scrollX = T, scrollY=T, info = F, autoWidth = F,
@@ -340,12 +329,26 @@ WritePathVals <- function(geneVals, geneListIn){
 }
 
 
-GetKeggGeneVals <- function(RGSet, targets, nameGrp, gb) {
+GetKeggGeneVals <- function(RGSet, targets, nameGrp=NULL, gb) {
+    if(is.null(nameGrp)){
+      nameGrp <- unique(targets[,gb$col_samGrp])[1]
+    }
+  
     gset.funnorm <- gb$grabGsetFun(RGSet, targets, gb)
-    condition <- minfi::pData(gset.funnorm)$Type == nameGrp
-    gene_char_unique <- gb$getDmpData(gb$ClusfiNam, gset.funnorm, condition)
-    kk_final <- gb$entrz2kegg(gene_char_unique)
+    condition <- minfi::pData(gset.funnorm)[,gb$col_samGrp] == nameGrp
+    gene_char_unique <- gb$getDmpData(gb$ClusfiNam, gset.funnorm, condition, gb)
+    
+    kkData <- gb$entrz2kegg(gene_char_unique)
+    kk_final <- DOSE::setReadable(kkData$kk, OrgDb = org.Hs.eg.db::org.Hs.eg.db, keyType = "ENTREZID")
+    
     geneVals <- kk_final@result
-    geneVals <- geneVals[geneVals$qvalue < 0.05, ]
+    
+    cat("\n\n")
+    if (any(geneVals$pvalue < 0.05)) {
+        geneVals <- geneVals[geneVals$pvalue < 0.05, ]
+    } else{
+        cat("# No P-values below 0.05! \n\n")
+    }
+    return(list("geneVals" = geneVals, "kkData" = kkData))
 }
 
