@@ -627,4 +627,16 @@ MatchHaLegend <- function(ha, selectedVars, targets1){
   return(ha)
 }
                                            
+GetHeatMapData <- function(targets, betas, RGSet, gb, varToFilter = NULL){
+    targets1 <- gb$SubsetTargets(targets, varToFilter)
+    betas1 <- betas[, targets1[, gb$col_samNames]]
+    unBetas <- gb$tierBetas(betas1, gb$col_sentrix, RGSet) # unsupervised betas
+    unBetas <- gb$addGeneName(RGSet, unBetas, gb$addGenesHm)
+    ha <- gb$AnnotateHmVars(targets1, varColumns = gb$selectedVars)
+    ha <- gb$FilterHmAnno(ha, gb$selectedVars) # drop any unwanted columns
+    ha <- gb$MatchHaLegend(ha, gb$selectedVars, targets1)
+    hmPlotData <- list("unBetas" = unBetas, "ha" = ha)
+    return(hmPlotData)
+}
                                            
+
