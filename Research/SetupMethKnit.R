@@ -1,10 +1,19 @@
 gb <- globalenv(); assign("gb", gb)
+formals(library)$quietly <- T
+formals(library)$warn.conflicts <- F
+formals(require)$warn.conflicts <- F
+formals(install.packages)$dependencies <- T
+formals(install.packages)$verbose <- T
+formals(install.packages)$ask <- F 
+
 # TODO: add args to load Differential + parrallel envir
 if(!require("devtools", warn.conflicts = F)){install.packages("devtools", dependencies=T)}
 # https://bookdown.org/yihui/rmarkdown-cookbook/custom-knit.html
 supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
 supPk <- function(sobj){return(suppressPackageStartupMessages(sobj))}
 supSrt <- function(pk){return(suppressPackageStartupMessages(suppressWarnings(pk)))}
+
+
 
 if(Sys.info()[['sysname']]=="Linux") {
     if(!require("rprofile")){devtools::install_github("csgillespie/rprofile", dependencies = T)}
