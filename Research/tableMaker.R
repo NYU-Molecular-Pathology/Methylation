@@ -377,7 +377,7 @@ require("ggplot2")
 library("DT")
 
 printMissing <- function(theMissing, gb) {
-  cat("## Poor Quality or Dropped Samples:\n\n")
+  cat("#### Poor Quality or Dropped Samples:\n\n")
   if (!is.null(theMissing) & nrow(theMissing) > 0) {
     selCols <-
       c("Sample_Name", gb$col_sentrix, gb$col_samTypes, gb$col_samGrp, "Sample_Group")
