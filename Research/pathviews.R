@@ -196,7 +196,7 @@ GetMappedIds <- function(gene_char_unique){
 }
 
 GetkkDotPlot <- function(termNames, enrichType="NCG", qVa=0.2, pVa=0.05){
-    kkTtl <- paste("Dotplot of Top", enrichType, 
+    kkTtl <- paste("Top", enrichType, 
                    "Enriched Pathways qValue <", qVa ,"& pValue <", pVa )
     if(enrichType == "NCG"){
       kk <- DOSE::enrichNCG(names(termNames), qvalueCutoff = qVa, pvalueCutoff = pVa)
@@ -218,11 +218,11 @@ GetkkDotPlot <- function(termNames, enrichType="NCG", qVa=0.2, pVa=0.05){
       GetkkDotPlot(termNames, enrichType, qVa = newQval, pVa = newPval)
       }else{
         cat("\n\n")
-        cat(paste("###", "Dotplot", enrichType, "Enriched Paths", "\n\n"))
-        print(enrichplot::dotplot(kk, title = kkTtl) + theme(axis.text.x = element_text(angle = 90), text = element_text(size = 10)))
+        cat(paste("###", "Dotplot", enrichType, "Enriched Paths"))
+        print(enrichplot::dotplot(kk, title = kkTtl) + theme(text = element_text(size = 12)))
         cat("\n\n")
-        cat(paste("###", "BarPlot", enrichType, "Enriched Paths", "\n\n"))
-        print(graphics::barplot(kk) + ggplot2::ggtitle(kkTtl) + theme(axis.text.x = element_text(angle = 90), text=element_text(size=10)))
+        cat(paste("###", "BarPlot", enrichType, "Enriched Paths"))
+        print(graphics::barplot(kk) + ggplot2::ggtitle(kkTtl) + theme(text=element_text(size=12)))
         cat("\n\n")
         return(kk)
         }
