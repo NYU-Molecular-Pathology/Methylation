@@ -218,15 +218,16 @@ GetkkDotPlot <- function(termNames, enrichType="NCG", qVa=0.2, pVa=0.05){
       GetkkDotPlot(termNames, enrichType, qVa = newQval, pVa = newPval)
       }else{
         cat("\n\n")
-        cat(paste("###", "Dotplot", enrichType, "Enriched Paths"))
+        cat(paste("###", "Dotplot", enrichType, "Enriched Paths", "\n\n"))
         print(enrichplot::dotplot(kk, title = kkTtl) + theme(text = element_text(size = 12)))
         cat("\n\n")
-        cat(paste("###", "BarPlot", enrichType, "Enriched Paths"))
+        cat(paste("###", "BarPlot", enrichType, "Enriched Paths", "\n\n"))
         print(graphics::barplot(kk) + ggplot2::ggtitle(kkTtl) + theme(text=element_text(size=12)))
         cat("\n\n")
         return(kk)
         }
 }
+
 
 PrintKkDotPlots <-function(termNames){
   edo <- GetkkDotPlot(termNames, enrichType = "NCG", qVa= 0.2, pVa = 0.05)
