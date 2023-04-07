@@ -267,7 +267,8 @@ PrintPathways <- function(pathWayGenes){
         print(htmltools::tagList(dtTab))
         cat("\n\n")
     }
-  cat("#")
+    # cat("\n\n")
+    cat("#")
 }
 
 PrintDotBarUpset <- function(kk_final){
@@ -325,9 +326,13 @@ LoopSaveHsaPng <- function(pathWayGenes, pathCsvOut){
 }
 
 
-WritePathVals <- function(geneVals, geneListIn){
+WritePathVals <-  function(geneVals, geneListIn){
     # Sort lowest Pvalues and lowest qvalue
     message("Min p-value: ", min(geneVals$pvalue))
+    cat("\n\n")
+    print(htmltools::tagList(DT::datatable(geneVals[order(geneVals$pvalue), 1:ncol(geneVals)], 
+                                           options = list(rownames=F))))
+    cat("\n\n")
     topPaths <- geneVals[order(geneVals$qvalue),]
     if(nrow(topPaths) >=10){
       topPaths <- topPaths[1:10,] # take top 5 pathways
@@ -362,4 +367,15 @@ GetKeggGeneVals <- function(RGSet, targets, nameGrp=NULL, gb) {
     }
     return(list("geneVals" = geneVals, "kkData" = kkData))
 }
+
+# Get the current figure size in pixels:
+# get_w <- function() {
+#   with(knitr::opts_current$get(c("fig.width", "dpi", "fig.retina")),
+#        fig.width*dpi/fig.retina)
+# }
+
+# get_h <- function() {
+#   with(knitr::opts_current$get(c("fig.height", "dpi", "fig.retina")),
+#        fig.height*dpi/fig.retina)
+# }
 
