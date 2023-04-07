@@ -387,7 +387,7 @@ GetProbeAverage <- function(csvColumns, betas, pathwayName){
     outDir <- file.path(getwd(), "data")
     outFile <- paste(pathwayName, "avgBetas_per_gene.csv" , sep = "_")
     outPath <- file.path(outDir, outFile)
-    write.csv(avgBetas, file = outPath, row.names=F, na="")
+    write.csv(avgBetas, file = outPath, row.names=T, na="")
     return(avgBetas)
 }
 
@@ -505,7 +505,8 @@ GetHeatMapGenes <-  function(betaRanges, titleValue, ha, geneNamesHeatMap = F, c
 }
 
 CheckGeneOutput <- function(pathwayName) {
-    outDir <- file.path(getwd(), "data")
+    outDir <- file.path(getwd(), "data", "csv")
+    if(!dir.exists(outDir)){dir.create(outDir)}
     outFile <- paste(pathwayName, "avgBetas_per_gene.csv" , sep = "_")
     outPath <- file.path(outDir, outFile)
     if(file.exists(outPath)){
