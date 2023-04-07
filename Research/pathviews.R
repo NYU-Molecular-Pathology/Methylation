@@ -254,24 +254,20 @@ entrz2kegg <- function(gene_char_unique) {
 }
 
 
-PrintPathways <- function(topPaths){
+PrintPathways <- function(pathWayGenes){
     dtOpts <- list(scrollX = T, scrollY=T, info = F, autoWidth = F,
                    pageLength = 10, rownames=F, lengthChange = T, searchable = T)
-    allDtTabs <- NULL
-    for(pthwy in topPaths$Description) {
-        pgenes <- gb$splitByPathway(pthwy, topPaths)
-        #cat(paste0("### **", colnames(pgenes),"** \n\n"))
+    cat("\n\n")
+    for(pthwy in pathWayGenes$Description) {
+        pgenes <- gb$splitByPathway(pthwy, pathWayGenes)
+        cat(paste0("### **", colnames(pgenes),"** \n\n"))
         dtTab <- htmltools::tagList(DT::datatable(
             pgenes, rownames = F, options=dtOpts, height = "120%", width="100%")
             )
-        #cat("\n\n")
-        if(is.null(allDtTabs)){
-          allDtTabs <- dtTab
-        }else{
-          allDtTabs <- c(allDtTabs, dtTab)
-        }
+        print(htmltools::tagList(dtTab))
+        cat("\n\n")
     }
-    return(allDtTabs)
+  cat("#")
 }
 
 PrintDotBarUpset <- function(kk_final){
