@@ -1,7 +1,11 @@
-#' getHeatAnno returns a heatmap annotation object where you input the list of variables you would like
-#'
-#' @param colorValues the variable name paired with color for each sample by variable
-#' @param anno_df the dataframe that ou are annotating, these are the filtered columns of the varColumns
+#!/usr/bin/env Rscript
+## ---------------------------
+## Script name: hmFunctions.R
+## Purpose: source of global scripts for methylation heatmap analysis
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2023
+## ---------------------------
+
 gb <- globalenv(); assign("gb", gb)
 
 # FUN: Loads required libraries into the environment
@@ -275,6 +279,7 @@ removeDupeAnnot <- function(geneBetas,out.fi="top_variance_genes_list.csv") {
 #' @param your_genes  a character list of genes i.e. from a file c("ALK","ETMR","HDAC")
 #' @param RGSet  the name or path to your minfi RGset data
 #' @param region string vector of gene selections like c("TSS200", "Body") can one gene region "TSS200"
+# FUNCTION: lists probes annotated by matching gene name and gene region
 grabProbes <- function(your_genes, RGSet, region){
     stopifnot(is.character(your_genes))
     listRows=10000
@@ -294,7 +299,6 @@ grabProbes <- function(your_genes, RGSet, region){
     cutt <- length(naDrops[[which.max(lapply(naDrops, function(x) sum(lengths(x))))]])
     return(z[1:cutt,])
 }
-                                          
                                            
 SaveHmPng <- function(fi_prefix, fi_suffix, hm, topvar = "", outDir=NULL) {
   if(is.null(outDir)){outDir <- file.path(".", "figures", "heatmaps")}
@@ -410,8 +414,8 @@ GetProbesGenes <- function(your_genes, RGSet, region){
   cutt <- length(naDrops[[which.max(lapply(naDrops, function(x) sum(lengths(x))))]])
   return(z[1:cutt,])
 }
-                                           
-                                           
+
+
 AddGeneProbeChrName <- function(RGSet, oldBeta) {
   annot <- minfi::getAnnotation(RGSet)
   geneNameLi <- annot[rownames(oldBeta), "UCSC_RefGene_Name"]
@@ -510,6 +514,50 @@ CheckGeneOutput <- function(pathwayName) {
         return(FALSE)    
     }
 }
+                                           
+
+GetAvgGeneHeatMap <- function(betaRanges, titleValue, ha, geneNamesHeatMap=T, colSplt = NULL, rwsplt=NULL){
+  col_fun2 <- circlize::colorRamp2(c(0, 0.25, 0.5, 0.75, 1), 
+                                   c("darkblue","deepskyblue", "white", "tomato","red"))  
+  titleOfPlot <- paste("Heatmap of",titleValue,sep = " ")
+  hm_width <- ifelse(ncol(betaRanges)<=45, ncol(betaRanges)*unit(1, "cm"), unit(45, "cm"))
+  hm_ht <- ifelse(nrow(betaRanges)*3<=50, nrow(betaRanges)*unit(3, "cm"), unit(50, "cm"))
+    hmTopNumbers <- ComplexHeatmap::Heatmap(
+        betaRanges,
+        col = gb$col_fun2,  ## Define the color scale
+        cluster_columns = T,  ## Cluster the columns
+        cluster_rows = T,
+        show_column_names = T,  ## Show the Column Names (which is sample #)
+        column_names_gp = gpar(fontsize = 12),  ## Column Name Size
+        show_row_names = geneNamesHeatMap,  ## Show Row names (which is probes)
+        row_names_side = "left",
+        row_title_side = "left",
+        row_names_gp = gpar(fontsize = 18, fontface = "bold"),
+        row_title_gp = gpar(fontsize = 13, fontface = "bold"),
+        show_row_dend = F,
+        show_column_dend = T,
+        use_raster=T,
+        show_heatmap_legend = T,
+        top_annotation = ha,
+        column_title = titleOfPlot,
+        column_title_gp = gpar(fontsize = 14,fontface = "bold"),
+        raster_device = "CairoPNG",
+        raster_quality = 3,
+        heatmap_legend_param = list(
+            title = "Beta Value",
+            labels_gp = gpar( fontsize = 14),
+            title_gp = gpar(fontsize = 14, fontface = "bold"),
+            legend_direction = "vertical",
+            heatmap_legend_side = "right", annotation_legend_side = "right",
+            legend_height =  unit(2.5, "in")
+        ),
+        column_split = colSplt,
+        row_split= rwsplt,
+        heatmap_width = unit(hm_width, "cm"),
+        heatmap_height = unit(hm_ht, "cm")
+    )
+    return(gb$drawHeatMap(hmTopNumbers))
+}
 
 
 LoopPathwayHeatMap <- function(pathWayGenes, targets){
@@ -544,7 +592,7 @@ LoopPathwayHeatMap <- function(pathWayGenes, targets){
         ha <- gb$AnnotateHmVars(targets1, varColumns = gb$selectedVars)
         ha <- gb$FilterHmAnno(ha, gb$selectedVars) # drop any unwanted columns
         ha <- gb$MatchHaLegend(ha, gb$selectedVars, targets1)
-        hm <- gb$getHeatMap(avgBetas, titleValue, ha, geneNamesHeatMap = T)
+        hm <- gb$GetAvgGeneHeatMap(avgBetas, titleValue, ha, geneNamesHeatMap = T)
         hm
         cat("\n\n")
         gb$SaveHmPng(fi_prefix= "hm_genes_", fi_suffix=".png", hm, topvar = paste0(currPathway$Description), outDir = NULL)
