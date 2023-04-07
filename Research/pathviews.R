@@ -1,4 +1,18 @@
+#!/usr/bin/env Rscript
+## ---------------------------
+## Script name: pathviews.R
+## Purpose: source of global scripts imported for research methylation pathview analysis
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2023
+## ---------------------------
+
 gb <- globalenv(); assign("gb", gb)
+formals(library)$quietly <- T
+formals(library)$warn.conflicts <- F
+formals(require)$warn.conflicts <- F
+formals(install.packages)$dependencies <- T
+formals(install.packages)$verbose <- T
+formals(install.packages)$ask <- F 
 if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 4, quiet=T)}
 
 # Setting US CRAN REPO
