@@ -199,7 +199,7 @@ GetkkDotPlot <- function(termNames, enrichType="NCG", qVa=0.2, pVa=0.05){
     kkTtl <- paste("Top", enrichType, 
                    "Enriched Pathways qValue <", qVa ,"& pValue <", pVa )
     if(enrichType == "NCG"){
-      kk <- DOSE::enrichNCG(names(termNames), qvalueCutoff = qVa, pvalueCutoff = pVa)
+      kk <- DOSE::enrichNCG(names(termNames), qvalueCutoff = qVa, pvalueCutoff = pVa, universe = NULL)
     }else{
       kk <- clusterProfiler::enrichKEGG(gene = names(termNames), organism = 'hsa', universe = NULL,
                                         qvalueCutoff = qVa, pvalueCutoff = pVa)
