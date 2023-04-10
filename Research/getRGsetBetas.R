@@ -130,6 +130,7 @@ takeTopVariance <- function(betas, topVar){
 
 getSupervise <- function(the_beta, RGSet, topVar = 1:10000, cutOff = 0.05, dmpTyp = "categorical", superVar = NULL){
     condition <- pData(RGSet)[, superVar]
+    stopifnot(length(condition) == nrow(the_beta))
     dmp <- minfi::dmpFinder(the_beta, pheno = condition, type = dmpTyp)
     dmp <- cbind(dmp, ID = rownames(dmp))
     betas_df <- as.data.frame(the_beta)
@@ -159,14 +160,18 @@ loadSupervise <- function(RGSet, betas, gb, superVar = NULL, dmpTyp = "categoric
     if (gb$supervisedRun == F) {
       return(NULL)
     }
-    supbetaOutFi <- paste(supbetaOut, superVar , ".Rdata", sep = "_")
+    supbetaOutFi <- paste(gb$supbetaOut, superVar , ".Rdata", sep = "_")
     if (!file.exists(supbetaOutFi)) {
       rgRows <- RGSet@colData@rownames # ensure poor samples are dropped
       rgLiDat <- RGSet@colData@listData
-      dropFilter <- rgLiDat[["Sample_ID"]] %in% colnames(betas)
+      if(any(is.na(rgLiDat[["Sample_ID"]]))){
+          dropFilter <- rgLiDat[["Sample_Name"]] %in% colnames(betas)    
+      }else{
+          dropFilter <- rgLiDat[["Sample_ID"]] %in% colnames(betas)    
+      }
       samFltr <- rgLiDat[["SentrixID_Pos"]][dropFilter]
       newRg <- RGSet[, rgRows %in% samFltr]
-      topVar = 1:max(varProbes)
+      topVar = 1:max(gb$varProbes)
       # supervised dmp top Variance with getSupervise
       superbetas <- gb$getSupervise(
         betas,
