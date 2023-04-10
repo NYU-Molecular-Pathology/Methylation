@@ -160,7 +160,7 @@ loadSupervise <- function(RGSet, betas, gb, superVar = NULL, dmpTyp = "categoric
     if (gb$supervisedRun == F) {
       return(NULL)
     }
-    supbetaOutFi <- paste(gb$supbetaOut, superVar , ".Rdata", sep = "_")
+    supbetaOutFi <- file.path(gb$runDir, paste(gb$supbetaOut, superVar , ".Rdata", sep = "_"))
     if (!file.exists(supbetaOutFi)) {
       rgRows <- RGSet@colData@rownames # ensure poor samples are dropped
       rgLiDat <- RGSet@colData@listData
