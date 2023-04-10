@@ -130,7 +130,7 @@ takeTopVariance <- function(betas, topVar){
 
 getSupervise <- function(the_beta, RGSet, topVar = 1:10000, cutOff = 0.05, dmpTyp = "categorical", superVar = NULL){
     condition <- pData(RGSet)[, superVar]
-    stopifnot(length(condition) == nrow(the_beta))
+    stopifnot(length(condition) == ncol(the_beta))
     dmp <- minfi::dmpFinder(the_beta, pheno = condition, type = dmpTyp)
     dmp <- cbind(dmp, ID = rownames(dmp))
     betas_df <- as.data.frame(the_beta)
@@ -165,6 +165,7 @@ loadSupervise <- function(RGSet, betas, gb, superVar = NULL, dmpTyp = "categoric
       rgRows <- RGSet@colData@rownames # ensure poor samples are dropped
       rgLiDat <- RGSet@colData@listData
       if(any(is.na(rgLiDat[["Sample_ID"]]))){
+          rgLiDat[["Sample_ID"]] <- rgLiDat[["Sample_Name"]]
           dropFilter <- rgLiDat[["Sample_Name"]] %in% colnames(betas)    
       }else{
           dropFilter <- rgLiDat[["Sample_ID"]] %in% colnames(betas)    
