@@ -504,7 +504,7 @@ MsgSamFreq <- function(targets, gb){
   }
   return(
       knitr::kable(plotLi, format = "html", table.attr = 'class="myTable"') %>%
-      kableExtra::kable_styling(full_width = F, bootstrap_options = "bordered")
+      kableExtra::kable_styling(full_width = F, bootstrap_options = "bordered", position = "left")
   )
 }
 
