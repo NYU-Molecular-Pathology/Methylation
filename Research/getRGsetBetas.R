@@ -271,6 +271,13 @@ GrabMinfiSheet <- function(idatPath, csvPath){
         file.copy(csvPath, idatPath, overwrite = T)
         sheet <- minfi::read.metharray.sheet(idatPath, pattern = csvPath)
     }
+    if(any(duplicated(sheet$Sample_Name))){
+        message("DUPLICATE SAMPLES DROPPED")
+        message(paste0(capture.output(sheet[duplicated(sheet$Sample_Name),]), collapse="\n"))
+        toKeep <- !duplicated(sheet$Sample_Name)
+        sheet <- sheet[toKeep,]
+        rownames(sheet) <- 1:nrow(sheet)
+    }
     sheet <- gb$CleanUpSheetRows(sheet, gb$idatPath, targets)
     return(sheet)
 }
