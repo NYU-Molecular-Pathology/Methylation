@@ -6,3 +6,6 @@ table {white-space: nowrap;padding: 5px; margin-left:0px}
 h4 {
     color: darkgreen;
 }
+hr {
+    border:3px solid gray
+}
