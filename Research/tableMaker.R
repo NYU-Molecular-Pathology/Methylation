@@ -478,11 +478,15 @@ MessageArrayMix <- function(targets, col_arrayType) {
   }
 }
 
+
 MessageBatchMix <- function(targets, gb){
-  cat(paste("#### Samples Batch Corrected:", gb$batchEffect, "\n\n"))
-  gb$MessageBatches(targets, gb$col_batchEffect)
-  cat(paste("#### Sample 450k Probes Merged:", gb$mergeProbes, "\n\n"))
-  gb$MessageArrayMix(targets, gb$col_arrayType)
+    cat('# Data Quality and Analysis Parameters\n\n<hr style="border:4px solid darkgreen">\n\n')
+    knitr::opts_chunk$set(out.width='50%')
+    cat(paste("#### Samples Batch Corrected:", gb$batchEffect, "\n\n"))
+    gb$MessageBatches(targets, gb$col_batchEffect)
+    cat(paste("#### Sample 450k Probes Merged:", gb$mergeProbes, "\n\n"))
+    gb$MessageArrayMix(targets, gb$col_arrayType)
+    return(gb$printMissing(theMissing, gb))
 }
 
 
