@@ -1,4 +1,5 @@
-gb <- globalenv(); assign("gb", gb)
+gb <- globalenv() 
+assign("gb", gb)
 supM <- function(objTing){return(suppressMessages(suppressWarnings(objTing)))}
 assign(x = "supM", value = supM, envir = .GlobalEnv)
 
@@ -39,7 +40,7 @@ optsLi <- list(
         quiet = TRUE,
         verbose = FALSE,
         progress = TRUE
-    )
+)
 
 chunkOpts <- list(error = FALSE, echo = FALSE, message = FALSE, warning = FALSE, self.contained = TRUE, comment = '')
 
@@ -76,10 +77,9 @@ knitr::opts_chunk$set(chunkOpts)
 supM(library(verbose=F, warn.conflicts = F, quietly = T, package="ggplot2"))
 }
 
-
 LoadReportPkgs(pkgs, optsLi, chunkOpts)
 
-GetSexMsetBa <- function(RGset, FFPE=NULL){
+GetSexMsetBa <- function(RGset, FFPE = NULL) {
         is450k <- RGset@annotation[[1]] == "IlluminaHumanMethylation450k"
     if (is450k) {
         library(verbose=F, warn.conflicts = F, quietly = T, package = "IlluminaHumanMethylation450kmanifest")
@@ -108,8 +108,8 @@ GetSexMsetBa <- function(RGset, FFPE=NULL){
 }
 
 
-SpecialMNPpredict6 <- function (betas, calibrate = TRUE, type = "response", MCF = FALSE) {
-    betas <- betas[match(rownames(mnp.v11b6::rf.pred$importance), rownames(betas)), drop = FALSE]
+SpecialMNPpredict6 <- function (betas, calibrate = T, type = "response", MCF = F) {
+    betas <- betas[match(rownames(mnp.v11b6::rf.pred$importance), rownames(betas)), drop = F]
     if (calibrate) {
         pred <- stats::predict(mnp.v11b6::rf.pred, t(betas), type = "prob")
         pred2 <- matrix(stats::predict(mnp.v11b6::calfit, newx = pred, type = "response", 
@@ -119,10 +119,9 @@ SpecialMNPpredict6 <- function (betas, calibrate = TRUE, type = "response", MCF 
         rownames(pred2) <- rownames(pred)
         out <- pred2
         if (MCF) {
-            pred3 <- lapply(cgroups, function(x) rowSums(pred2[,x, drop = FALSE]))
+            pred3 <- lapply(cgroups, function(x) rowSums(pred2[,x, drop = F]))
             pred3 <- do.call(cbind, pred3)
-            pred2 <- pred2[, -which(colnames(pred2) %in% unlist(cgroups)), 
-                drop = FALSE]
+            pred2 <- pred2[, -which(colnames(pred2) %in% unlist(cgroups)), drop = F]
             pred2 <- cbind(pred3, pred2)
             out <- pred2
         }
@@ -183,8 +182,7 @@ GetFamilyProb <- function(is450k, Mset_ba, Mset){
                             
 
 GetMnpV11Prob <- function(Mset_ba) {
-  probs <-
-    tryCatch(
+  probs <- tryCatch(
       expr = {
         probs <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob')
         return(probs)
@@ -204,14 +202,18 @@ LoadMnpManifest <- function(is450k){
    if(is450k==T){
       library(verbose = F, warn.conflicts = F, quietly = T, package = "IlluminaHumanMethylation450kmanifest")
       library(verbose = F, warn.conflicts = F, quietly = T, package = "mnp.v11b4")
-      try(unloadNamespace("mnp.v11b6"), silent = T); try(detach_package("mnp.v11b6"), silent = T)
-      invisible(loadNamespace("mnp.v11b4")); invisible(requireNamespace("mnp.v11b4"))
+      try(unloadNamespace("mnp.v11b6"), silent = T)
+      try(detach_package("mnp.v11b6"), silent = T)
+      invisible(loadNamespace("mnp.v11b4")) 
+      invisible(requireNamespace("mnp.v11b4"))
       require(warn.conflicts = F, quietly = T, package = "mnp.v11b4")
     }else{
       library(verbose = F, warn.conflicts = F, quietly = T, package = "IlluminaHumanMethylationEPICmanifest")
       library(verbose = F, warn.conflicts = F, quietly = T, package = "mnp.v11b6")
-      try(unloadNamespace("mnp.v11b4"), silent = T); try(detach_package("mnp.v11b4"), silent = T)
-      invisible(loadNamespace("mnp.v11b6")); invisible(requireNamespace("mnp.v11b6"))
+      try(unloadNamespace("mnp.v11b4"), silent = T)
+      try(detach_package("mnp.v11b4"), silent = T)
+      invisible(loadNamespace("mnp.v11b6"))
+      invisible(requireNamespace("mnp.v11b6"))
       require(warn.conflicts = F, quietly = T, package = "mnp.v11b6")
     }
 }
@@ -235,15 +237,15 @@ GetFamScore <- function(out_class_family){
 }
 
 
-GetOutFamily <- function(is450k, Mset_ba, Mset){
+GetOutFamily <- function(is450k, Mset_ba, Mset) {
     probs_mcf <- GetFamilyProb(is450k, Mset_ba, Mset)
     oo_mcf <- order(probs_mcf, decreasing = T)
     eps <- 1e-3
     out_class_family <- probs_mcf[oo_mcf[1:5]]
     out_class_family <- cbind(
-        round(pmax(pmin(out_class_family, 1 - eps), eps),3),
-        colnames(probs_mcf)[oo_mcf][1:5]
-        )
+            round(pmax(pmin(out_class_family, 1 - eps), eps),3),
+            colnames(probs_mcf)[oo_mcf][1:5]
+    )
     colnames(out_class_family) <- c("Class Score","Methylation Family")
     out_class_family <- as.data.frame(out_class_family)
     famVal <- GetFamScore(out_class_family)
@@ -258,7 +260,7 @@ detach_package <- function(pkg, character.only = FALSE) {
     search_item <- paste("package", pkg, sep = ":")
     while (search_item %in% search()){
         base::detach(search_item, unload = TRUE, character.only = TRUE)
-        }
+    }
 }
 
 
@@ -294,7 +296,7 @@ GetProbData <- function(is450k, Mset_ba, Mset) {
 }
 
 
-GetOutScore <- function(out){
+GetOutScore <- function(out) {
     out_score <- as.numeric(paste0(out$`Subgroup Score`[1]))
     subVal_int <- NULL
     if (is.null(out_score)|is.na(out_score)) {
@@ -312,7 +314,7 @@ GetOutScore <- function(out){
 }
 
 
-GetOutClass <- function(msetDat){
+GetOutClass <- function(msetDat) {
     library(verbose=F, warn.conflicts = F, quietly = T, package= "knitr")
     library(verbose=F, warn.conflicts = F, quietly = T, package= "kableExtra")  
     Mset_ba <- msetDat$Mset_ba
@@ -341,7 +343,7 @@ GetOutClass <- function(msetDat){
 }
 
 
-GetV12score <- function(RGset, FFPE=NULL){
+GetV12score <- function(RGset, FFPE = NULL) {
     library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v12b6")
     library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylationEPICmanifest")
 #    load("/Volumes/CBioinformatics/Methylation/mnp_v12_R-package/mnp.v12b6/R/sysdata.rda")
@@ -362,7 +364,7 @@ GetV12score <- function(RGset, FFPE=NULL){
 
 PrintScoreTable <- function(outV12, dat) {
     btso = c("bordered")
-    kgb <- c("striped",font_size = 14, bootstrap_options = btso, position = "left")
+    kgb <- c("striped", font_size = 14, bootstrap_options = btso, position = "left")
     txtc = "text-align:center;"
     be = c(booktabs = T, escape = F, linesep = "")
     outTable12 <- outV12 %>% mutate_all(as.character) %>% knitr::kable("html", be, align = 'clc') %>%
@@ -413,9 +415,9 @@ FormatSuppInfo <- function(suppinfo){
     return(suppinfo)
 }
 
+                           
 GetSuppInfo <- function(dat, RGset, msetDat) {
-    suppinfo <-
-        c(
+    suppinfo <- c(
             paste(dat$sampleID),
             paste(dat$run_id),
             paste(dat$tech),
@@ -425,11 +427,12 @@ GetSuppInfo <- function(dat, RGset, msetDat) {
             minfi::annotation(RGset)[[1]],
             msetDat$FFPE,
             msetDat$sex
-        )
+    )
     suppinfo <- FormatSuppInfo(suppinfo)
     return(suppinfo)
 }
 
+                           
 GetCNVTables <- function(dra){
     gainDf <- t(data.frame(Gains = c(rownames(dra[(dra$Gain == T),]))))
     lossDf <- t(data.frame(Loss = c(rownames(dra[(dra$Loss == T),]))))
@@ -443,7 +446,6 @@ GetCNVTables <- function(dra){
     	kableExtra::kable_styling(kgb, full_width = F, position="left") %>%
     	kableExtra::row_spec(row = 1, extra_css = extra_css1) %>%
         kableExtra::column_spec(column = 1, background = "palegreen", extra_css = txtc)
-
     lossTab <-
     	lossDf %>% knitr::kable("html", kgh, align = 'clc') %>%
     	kableExtra::kable_styling(kgb, full_width = F, position="left") %>%
@@ -476,7 +478,7 @@ GetMgmtPlot <- function(Mset_raw){
     plotmgmt[1,2:5] <- newVals
     mgmtPlot <- plotmgmt %>% mutate_all(as.character) %>%
         knitr::kable("html", be, align = 'clc') %>%
-        kableExtra::kable_styling(kgb, full_width = F, position="left")
+        kableExtra::kable_styling(kgb, full_width = F, position = "left")
     return(list("mgmtVal" = plotmgmt, "mgmtPlot" = mgmtPlot))
 }
 
@@ -508,7 +510,7 @@ GetClassProbTables <- function(outList){
     	kableExtra::row_spec(row=0,font_size=16,background="rgb(135,174,237)", color="black") %>%
     	kableExtra::row_spec(row=1,extra_css=xtraCss3)
 
-    return(list("famTable"=famTable,"grpTable"=grpTable))
+    return(list("famTable" = famTable, "grpTable" = grpTable))
 }
                       
 
