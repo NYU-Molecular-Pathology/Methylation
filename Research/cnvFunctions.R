@@ -430,6 +430,7 @@ GenCNVdataGroupSave <- function(cnData, targets, col_samGrp, plotChr = NULL) {
     cnDat2 <- gb$filterGrp(cnData, samgrp)
     gb$SaveLoadCnvs(cnDat2, plotName = plotTitle, plotTitle, plotChr=plotChr)
   }
+    cat('\n\n')
 }
 
 LoopSavePlainCNV <- function(targets) {
