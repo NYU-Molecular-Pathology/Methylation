@@ -258,6 +258,8 @@ PrintPathways <- function(pathWayGenes){
     dtOpts <- list(scrollX = T, scrollY=T, info = F, autoWidth = F,
                    pageLength = 10, rownames=F, lengthChange = T, searchable = T)
     cat("\n\n")
+    cat("## Top Pathways Genes List Tables {.tabset}")
+    cat("\n\n")
     for(pthwy in pathWayGenes$Description) {
         pgenes <- gb$splitByPathway(pthwy, pathWayGenes)
         cat(paste0("### **", colnames(pgenes),"** \n\n"))
@@ -267,7 +269,6 @@ PrintPathways <- function(pathWayGenes){
         print(htmltools::tagList(dtTab))
         cat("\n\n")
     }
-    # cat("\n\n")
     cat("#")
 }
 
@@ -326,21 +327,24 @@ LoopSaveHsaPng <- function(pathWayGenes, pathCsvOut){
 }
 
 
-WritePathVals <-  function(geneVals, geneListIn){
+WritePathVals <- function(geneVals, geneListIn){
     # Sort lowest Pvalues and lowest qvalue
     message("Min p-value: ", min(geneVals$pvalue))
     cat("\n\n")
-    print(htmltools::tagList(DT::datatable(geneVals[order(geneVals$pvalue), 1:ncol(geneVals)], 
-                                           options = list(rownames=F))))
+    print(htmltools::tagList(DT::datatable(
+        geneVals[order(geneVals$pvalue), 1:ncol(geneVals)], options = list(rownames=F))))
     cat("\n\n")
     topPaths <- geneVals[order(geneVals$qvalue),]
     if(nrow(topPaths) >=10){
-      topPaths <- topPaths[1:10,] # take top 5 pathways
+      topPaths <- topPaths[1:10,] # take top 10 pathways
     }
     pathWayGenes <- as.data.frame(topPaths)
     pathOutFi <- file.path(getwd(),"figures","pathway", geneListIn)
     if(!dir.exists(dirname(pathOutFi))){dir.create(dirname(pathOutFi))}
     write.csv(pathWayGenes, file = pathOutFi, row.names = F, quote = F)
+    cat("\n\n")
+    cat("## HeatMaps of Genes In Pathways {.tabset}")
+    cat("\n\n")
     return(pathWayGenes)
 }
 
