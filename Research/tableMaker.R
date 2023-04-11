@@ -573,3 +573,8 @@ PrintPathHeader <- function(GroupSubset){
 }
 
 
+GetCatHeader <- function(tsneHead){
+    cat('\n\n')
+    cat(paste('##', tsneHead, '{.tabset}', '\n\n'))
+}
+
