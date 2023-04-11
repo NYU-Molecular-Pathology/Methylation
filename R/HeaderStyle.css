@@ -16,4 +16,11 @@ h1.title {
     padding: 5px;
     border-spacing: 5px;
 }
+
+p.ncgnote::after {
+    color:#000000;
+    font-size:16px;
+    content:'*NCG* is: Enrichment analysis based on the Network of Cancer Genes database (http://ncg.kcl.ac.uk/)</br>*KEGG* is: Kyoto Encyclopedia of Genes and Genomes, a database resource for understanding high-level functions and utilities of the biological system from molecular-level information (https://www.genome.jp/kegg/)</br>'
+}
+
 </style>
