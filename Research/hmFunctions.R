@@ -533,7 +533,7 @@ GetAvgGeneHeatMap <- function(betaRanges, titleValue, ha, geneNamesHeatMap=T, co
         show_row_names = geneNamesHeatMap,  ## Show Row names (which is probes)
         row_names_side = "left",
         row_title_side = "left",
-        row_names_gp = gpar(fontsize = 18, fontface = "bold"),
+        row_names_gp = gpar(fontsize = 12, fontface = "bold"),
         row_title_gp = gpar(fontsize = 13, fontface = "bold"),
         show_row_dend = F,
         show_column_dend = T,
@@ -541,7 +541,7 @@ GetAvgGeneHeatMap <- function(betaRanges, titleValue, ha, geneNamesHeatMap=T, co
         show_heatmap_legend = T,
         top_annotation = ha,
         column_title = titleOfPlot,
-        column_title_gp = gpar(fontsize = 14,fontface = "bold"),
+        column_title_gp = gpar(fontsize = 12,fontface = "bold"),
         raster_device = "CairoPNG",
         raster_quality = 3,
         heatmap_legend_param = list(
