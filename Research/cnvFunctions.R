@@ -434,6 +434,8 @@ GenCNVdataGroupSave <- function(cnData, targets, col_samGrp, plotChr = NULL) {
 }
 
 LoopSavePlainCNV <- function(targets) {
+    cat("\n\n")
+    cat('## Sample CNV Plots {.tabset}')
     samplename_data <- as.character(targets$Sample_ID)
     sentrix.ids <- as.character(targets$SentrixID_Pos)
     cat("\n\n")
@@ -442,4 +444,6 @@ LoopSavePlainCNV <- function(targets) {
         cat("\n\n")
     }
 }
+
+
 
