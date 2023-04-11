@@ -555,4 +555,17 @@ PrintTableLists <- function(ta1, ta2, ...) {
     cat("\n\n")
 }
 
+PrintPathHeader <- function(GroupSubset){
+    cat("\n\n")
+    cat("# Pathway Analysis")
+    cat("\n\n")
+    cat("<hr>")
+    cat("\n\n")
+    cat(paste("Cluster Condition: Tumor Type is", GroupSubset, "vs All\n\n"))
+    cat('<p class="ncgnote"></p>')
+    cat("\n\n")
+    cat("## Cluster Profiler {.tabset}")
+    cat("\n\n")
+}
+
 
