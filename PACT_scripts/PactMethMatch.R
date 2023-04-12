@@ -221,7 +221,11 @@ FillMissingNGS <- function(output, vals2find){
     foundTs <- vals2find$`Tumor Specimen ID`[matchedTs]
     ngsFound <- vals2find$`Test Number`[matchedTs]
     foundTs <- stringr::str_split_fixed(foundTs, "-", 3)[,1:2]
+      if(length(foundTs)>0){
+               if(ncol(foundTs)>1){
     foundTs <- paste(foundTs[,1], foundTs[,2], sep = "-")
+                        }
+    }
     matchFound <- which(grepl(paste(foundTs, collapse = "|"),
                               output$accession_number, ignore.case = T))
     output[matchFound,"Test_Number"] <- ngsFound
