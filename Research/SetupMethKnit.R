@@ -116,9 +116,9 @@ options(knitr.package.verbose = TRUE)
 gb$tempOpts <- list(
 heatmaps = list(
     echo = FALSE,
-    fig.width = 18,
-    fig.height = 22,
-    dpi = 350,
+    fig.width = 8,
+    fig.height = 11,
+    dpi = 300,
     fig.width='80%',
     fig.keep = 'all',
     results = 'asis',
@@ -128,9 +128,9 @@ heatmaps = list(
 tnsePlot = list(
     echo = FALSE,
     error = FALSE,
-    dpi = 350,
+    dpi = 300,
     out.height = "650px",
-    out.width = "3650px",
+    out.width = "3850px",
     results = 'asis',
     fig.path = "figures/tsne/",
     fig.keep = 'all'
@@ -162,10 +162,10 @@ cnvplots = list(
 ,
 mdsPlot = list(
     echo = FALSE,
-    fig.height = 7,
+    fig.height = 8,
     fig.width = 12,
     out.width = '100%',
-    dpi = 350,
+    dpi = 300,
     fig.keep = 'all',
     include = TRUE
 )
