@@ -119,6 +119,7 @@ heatmaps = list(
     fig.width = 18,
     fig.height = 22,
     dpi = 350,
+    fig.width='80%',
     fig.keep = 'all',
     results = 'asis',
     fig.path = "figures/heatmaps/"
