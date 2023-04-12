@@ -112,3 +112,60 @@ GetRunDirPath <- function(projectName){
 #Sys.setenv('R_MAX_VSIZE'=32000000000)
 set.seed(1234)
 options(knitr.package.verbose = TRUE)
+
+gb$tempOpts <- list(
+heatmaps = list(
+    echo = FALSE,
+    fig.width = 18,
+    fig.height = 22,
+    dpi = 350,
+    fig.keep = 'all',
+    results = 'asis',
+    fig.path = "figures/heatmaps/"
+),
+
+tnsePlot = list(
+    echo = FALSE,
+    error = FALSE,
+    dpi = 350,
+    out.height = "650px",
+    out.width = "3650px",
+    results = 'asis',
+    fig.path = "figures/tsne/",
+    fig.keep = 'all'
+)
+,
+samcnv = list(
+    echo = FALSE,
+    fig.height = 8,
+    fig.width = 15,
+    fig.asp = 0.75,
+    fig.keep = 'all',
+    fig.path = "figures/cnv/",
+    results = 'asis',
+    include = TRUE
+)
+,
+cnvplots = list(
+    echo = FALSE,
+    fig.keep = 'all',
+    fig.path = 'figures/cnv/',
+    fig.show = 'asis',
+    results = 'asis',
+    fig.height = 10,
+    fig.width = 16,
+    dpi = 300,
+    include = TRUE,
+    out.width = '100%'
+)
+,
+mdsPlot = list(
+    echo = FALSE,
+    fig.height = 7,
+    fig.width = 12,
+    out.width = '100%',
+    dpi = 350,
+    fig.keep = 'all',
+    include = TRUE
+)
+)
