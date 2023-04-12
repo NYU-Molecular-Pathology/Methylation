@@ -222,11 +222,11 @@ FillMissingNGS <- function(output, vals2find){
     foundTs <- vals2find$`Tumor Specimen ID`[matchedTs]
     ngsFound <- vals2find$`Test Number`[matchedTs]
     if(length(foundTs)==1){
-    skipCols = T
+    skipCols <- T
       }
     foundTs <- stringr::str_split_fixed(foundTs, "-", 3)[,1:2]
     if(length(foundTs)>0){
-      if(skipCols=F){
+      if(skipCols == F){
         foundTs <- paste(foundTs[,1], foundTs[,2], sep = "-")
       }else{
         foundTs <- paste(foundTs[1], foundTs[2], sep = "-")
