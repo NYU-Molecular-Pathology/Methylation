@@ -80,7 +80,7 @@ div.tocify {
 
 h1 {
     color: #fff;
-    background-image: linear-gradient(to right,indigo,indigo,indigo,purple,#fff);
+    background-image: linear-gradient(to right,indigo,indigo,#431c53,#6500B0,purple,#D396FF);
     border-radius: 18px;
     padding: 8px;
     font-size: 24pt;
