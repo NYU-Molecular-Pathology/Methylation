@@ -271,5 +271,6 @@ GenerateUnsuperTsne <- function(targets1, betas, gb, colorVariable = NULL, shape
         supervised = isSuper
     )
     invisible(gc(verbose = F))
+    cat("\n\n")
 }
 
