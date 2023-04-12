@@ -181,7 +181,7 @@ makePdfTab <- function(pdfFi, cnvTab, outDir) {
                 position = "left"
             )
         newTa <- kableExtra::column_spec(newTa, 1:5, width = "5cm")
-        cat("### Philips Data Dump CNV table:\n\n")
+        cat("#### Philips Data Dump CNV table:\n\n")
         print(newTa)
         cat("\n\n")
     } else{
@@ -461,7 +461,7 @@ GetMethMatchInfo <- function(methData, theRd){
     newTa <- knitr::kable(rdDtRows, row.names = F, "html")
     newTa <- kableExtra::kable_styling(newTa, bootstrap_options = c("bordered","condensed"), full_width = F, position = "left")
     newTa <- kableExtra::column_spec(newTa, 1:5, width = "5cm")
-    cat("### Methylation Full Report Link:")
+    cat("#### Methylation Full Report Link:")
     cat("\n\n")
     txtLink <- paste0("[", theRd, "](", rdDtRows$`Report Path`, ")")
     cat(txtLink)
