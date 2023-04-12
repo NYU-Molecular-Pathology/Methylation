@@ -213,7 +213,7 @@ addOutputLinks <- function(output){
 
 
 FillMissingNGS <- function(output, vals2find){
- skipCols = F
+  skipCols = F
   rows2fill <- which(is.na(output$Test_Number))
   outputRows <- output$accession_number[rows2fill]
   matchedTs <- which(grepl(paste(outputRows, collapse = "|"),
@@ -222,17 +222,16 @@ FillMissingNGS <- function(output, vals2find){
     foundTs <- vals2find$`Tumor Specimen ID`[matchedTs]
     ngsFound <- vals2find$`Test Number`[matchedTs]
     if(length(foundTs)==1){
-    skipCols <- T
+    skipCols = T
       }
     foundTs <- stringr::str_split_fixed(foundTs, "-", 3)[,1:2]
     if(length(foundTs)>0){
-      if(skipCols == F){
+      if(skipCols==F){
         foundTs <- paste(foundTs[,1], foundTs[,2], sep = "-")
       }else{
         foundTs <- paste(foundTs[1], foundTs[2], sep = "-")
       }
       }
-    }
     matchFound <- which(grepl(paste(foundTs, collapse = "|"),
                               output$accession_number, ignore.case = T))
     output[matchFound,"Test_Number"] <- ngsFound
@@ -243,7 +242,6 @@ FillMissingNGS <- function(output, vals2find){
             paste(output$record_id[rows2fill], collapse = "\n"))
   }
   return(output)
-
 }
 
 
