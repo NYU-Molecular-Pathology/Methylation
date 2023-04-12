@@ -13,8 +13,6 @@ supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
 supPk <- function(sobj){return(suppressPackageStartupMessages(sobj))}
 supSrt <- function(pk){return(suppressPackageStartupMessages(suppressWarnings(pk)))}
 
-
-
 if(Sys.info()[['sysname']]=="Linux") {
     if(!require("rprofile")){devtools::install_github("csgillespie/rprofile", dependencies = T)}
     rprofile::set_startup_options(show.signif.stars = FALSE, useFancyQuotes = FALSE, Ncpus = parallel::detectCores()-2)
@@ -90,19 +88,16 @@ library("magrittr")
 library("dplyr")
 require("minfi")
 
-
 setKnitDir <- function(runDir) {
     syscmd <- paste("cd", runDir)
     system(syscmd); setwd(runDir)
     knitr::opts_knit$set(root.dir = runDir)
 }
 
-
 CheckDirCreate <- function(pathLocation){
     dataOutDir <- file.path(getwd(), pathLocation)
     if (!dir.exists(dataOutDir)) {dir.create(dataOutDir)}
 }
-
 
 GetRunDirPath <- function(projectName){
     userNam <- paste0(Sys.info()[["user"]])
@@ -114,7 +109,6 @@ GetRunDirPath <- function(projectName){
     return(runDir)
 }
 
-
 #Sys.setenv('R_MAX_VSIZE'=32000000000)
 set.seed(1234)
-
+options(knitr.package.verbose = TRUE)
