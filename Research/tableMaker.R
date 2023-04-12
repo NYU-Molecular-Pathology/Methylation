@@ -572,9 +572,15 @@ PrintPathHeader <- function(GroupSubset){
     cat("\n\n")
 }
 
-
-GetCatHeader <- function(tsneHead){
+GetCatHeader <- function(tsneHead, tbset=T){
     cat('\n\n')
-    cat(paste('##', tsneHead, '{.tabset}', '\n\n'))
+    if(tbset==T){
+        cat(paste('##', tsneHead, '{.tabset}', '\n\n'))
+    }else{
+        cat(paste('#', tsneHead, '\n\n'))
+    }
+    
 }
+
+
 
