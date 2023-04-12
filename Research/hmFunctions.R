@@ -597,7 +597,9 @@ LoopPathwayHeatMap <- function(pathWayGenes, targets){
         hm
         cat("\n\n")
         gb$SaveHmPng(fi_prefix= "hm_genes_", fi_suffix=".png", hm, topvar = paste0(currPathway$Description), outDir = NULL)
+        cat("\n\n")
     }
+  cat("\n\n")
 }
                                            
                                            
