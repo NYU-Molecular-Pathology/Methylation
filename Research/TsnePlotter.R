@@ -79,9 +79,7 @@ addPlotLabels <- function(groupTsne, tsneData){
         color = "black", label.size = 1.0, size = 3,
         label.padding = unit(0.5, "lines"), label.r = unit(0.5, "lines"),
         force = 8, show.legend = F)
-    
     return(groupTsne)
-    
 }
 
 
@@ -129,14 +127,14 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL,
     symFlags <- !is.null(symbolsLabel)
     devAskNewPage(ask=F) #options("device.ask.default"=F)
     # Parameters for text & geom_label_repel
-    et <- ggplot2::element_text(size = 12)
+    et <- ggplot2::element_text(size = 11)
     eBlank <- ggplot2::element_blank()
     # Creating Main ggplot Object
     groupTsne <- ggplot(tsne_plot, aes(x=tsne_plot$x, y=tsne_plot$y, group=GROUPS)) 
     groupTsne <- AddPlotSymbols(tsne_plot, groupTsne, symFlags)
     # Adding Plot Color, Theme, and Axis Labels
     groupTsne <- groupTsne +
-      labs(color = colorLabel, size = 5, x = "TSNE 1", y = "TSNE 2") + theme_bw(base_size = 16) +
+      labs(color = colorLabel, size = 5, x = "TSNE 1", y = "TSNE 2") + theme_bw(base_size = 12) +
       theme(panel.grid = eBlank, panel.background = eBlank, text = et, plot.title = et, 
             legend.text = et, legend.position = "bottom", axis.text = et) +
       ggtitle(label = titleLabel) +
