@@ -68,7 +68,8 @@ if(!require("minfiData")){BiocManager::install("minfiData", update=F, ask=F, dep
 if(!require("maxprobes")){ devtools::install_github("markgene/maxprobes", dependencies = T)}
 if(!require("cnv.methyl")){devtools::install_github("https://github.com/ijcBIT/cnv.methyl.git", dependencies = T)}
 
-knitOpt <- list(
+SetKnitOpts <- function(){
+    knitOpt <- list(
     echo = FALSE,
     message = FALSE,
     warning = FALSE,
@@ -81,6 +82,25 @@ knitOpt <- list(
     results = 'asis',
     fig.path = "figures/"
 )
+    return(knitr::opts_knit$set(knitOpt))    
+}
+
+SetChunkOpts <- function(){
+    knitOpt <- list(
+    echo = FALSE,
+    message = FALSE,
+    warning = FALSE,
+    cache = FALSE,
+    error = TRUE,
+    rows.print = 15,
+    fig.keep = "all",
+    fig.show = "asis",
+    class.source = "bg-success",
+    results = 'asis',
+    fig.path = "figures/"
+)
+    return(knitr::opts_chunk$set(knitOpt))
+}
 
 try(animation::ani.options(autobrowse = FALSE), silent=T)
 options(width = 3500)
@@ -113,7 +133,8 @@ GetRunDirPath <- function(projectName){
 set.seed(1234)
 options(knitr.package.verbose = TRUE)
 
-gb$tempOpts <- list(
+GrabKnitTemplates <- function(){
+    tempOpts <- list(
 heatmaps = list(
     echo = FALSE,
     fig.width = 8,
@@ -171,3 +192,6 @@ mdsPlot = list(
     include = TRUE
 )
 )
+return(invisible(lapply(X = names(tempOpts),FUN=function(X){knitr::opts_template$set(tempOpts[[X]])})))
+}
+
