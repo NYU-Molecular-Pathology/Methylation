@@ -83,7 +83,7 @@ knitOpt <- list(
 )
 
 try(animation::ani.options(autobrowse = FALSE), silent=T)
-options(width = 1500)
+options(width = 3500)
 library("magrittr")
 library("dplyr")
 require("minfi")
@@ -120,17 +120,17 @@ heatmaps = list(
     fig.height = 11,
     dpi = 300,
     fig.width='80%',
-    fig.keep = 'all',
     results = 'asis',
+    fig.keep = 'all',
     fig.path = "figures/heatmaps/"
-),
-
+)
+,
 tnsePlot = list(
     echo = FALSE,
     error = FALSE,
     dpi = 300,
-    out.height = 4, #"650px",
-    out.width = 5, #"3650px",
+    out.height = '480px', #"650px",
+    out.width = '960px', #"3650px",
     results = 'asis',
     fig.width='90%',
     fig.path = "figures/tsne/",
@@ -139,11 +139,11 @@ tnsePlot = list(
 ,
 samcnv = list(
     echo = FALSE,
+    fig.keep = 'all',
+    fig.path = "figures/cnv/",
     fig.height = 8,
     fig.width = 15,
     fig.asp = 0.75,
-    fig.keep = 'all',
-    fig.path = "figures/cnv/",
     results = 'asis',
     include = TRUE
 )
@@ -156,15 +156,15 @@ cnvplots = list(
     results = 'asis',
     fig.height = 10,
     fig.width = 16,
+    out.width = '100%',
     dpi = 300,
-    include = TRUE,
-    out.width = '100%'
+    include = TRUE
 )
 ,
 mdsPlot = list(
     echo = FALSE,
-    fig.height = 6,
-    fig.width = 12,
+    fig.height = '2066px', #8,
+    fig.width = '2952px', #12,
     out.width = '100%',
     dpi = 300,
     fig.keep = 'all',
