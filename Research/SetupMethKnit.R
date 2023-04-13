@@ -137,9 +137,9 @@ GrabKnitTemplates <- function(){
     tempOpts <- list(
 heatmaps = list(
     echo = FALSE,
-    fig.width = 17,
+    fig.width = 18,
     fig.height = 22,
-    dpi = 300,
+    dpi = 350,
     fig.width='80%',
     results = 'asis',
     fig.keep = 'all',
@@ -149,9 +149,9 @@ heatmaps = list(
 tnsePlot = list(
     echo = FALSE,
     error = FALSE,
-    dpi = 300,
-    out.height = '480px', #"650px",
-    out.width = '960px', #"3650px",
+    dpi = 350,
+    out.height = "600px",
+    out.width = "3650px",
     results = 'asis',
     fig.width='90%',
     fig.path = "figures/tsne/",
@@ -178,22 +178,22 @@ cnvplots = list(
     fig.height = 10,
     fig.width = 16,
     out.width = '100%',
-    dpi = 300,
+    dpi = 350,
     include = TRUE
 )
 ,
 mdsPlot = list(
     echo = FALSE,
     fig.height = '2066px', #8,
-    fig.width = '2952px', #12,
+    fig.width = '3650px', #12,
     out.width = '100%',
-    dpi = 300,
+    dpi = 350,
     fig.keep = 'all',
     include = TRUE
 )
 ,
 clustProf = list(
-echo=FALSE, fig.path = "figures/cluster/", dpi=300, fig.height=5, fig.width=8, out.width='800px', include=TRUE
+echo=FALSE, fig.path = "figures/cluster/", dpi=350, fig.height=5, fig.width=8, out.width='800px', include=TRUE
 )
 )
 return(invisible(lapply(X = names(tempOpts),FUN=function(X){knitr::opts_template$set(tempOpts[[X]])})))
