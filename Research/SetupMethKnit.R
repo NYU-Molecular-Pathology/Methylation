@@ -140,6 +140,7 @@ heatmaps = list(
     fig.width = 18,
     fig.height = 22,
     dpi = 350,
+    fig.asp = 1.0,
     fig.width='80%',
     results = 'asis',
     fig.keep = 'all',
