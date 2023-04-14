@@ -151,10 +151,10 @@ tnsePlot = list(
     echo = FALSE,
     error = FALSE,
     dpi = 350,
-    out.height = "600px",
+    out.height = "700px",
     out.width = "3650px",
     results = 'asis',
-    fig.width='90%',
+    fig.width='100%',
     fig.path = "figures/tsne/",
     fig.keep = 'all'
 )
