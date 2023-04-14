@@ -1,3 +1,12 @@
+#!/usr/bin/env Rscript
+## ---------------------------
+## Script name: TsneFunctions.R
+## Purpose: source of global scripts imported for  methylation Report.Rmd t-sne plotting
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2023
+## ---------------------------
+
+
 getScores <- function(Mset=NULL){
     if(!is.null(Mset)){
         betas <- minfi::getBeta(Mset)
