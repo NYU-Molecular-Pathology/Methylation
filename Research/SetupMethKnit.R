@@ -78,6 +78,7 @@ SetKnitOpts <- function(){
     rows.print = 15,
     fig.keep = "all",
     fig.show = "asis",
+    out.width = '100%',
     class.source = "bg-success",
     results = 'asis',
     fig.path = "figures/"
@@ -95,6 +96,7 @@ SetChunkOpts <- function(){
     rows.print = 15,
     fig.keep = "all",
     fig.show = "asis",
+    out.width = '100%',
     class.source = "bg-success",
     results = 'asis',
     fig.path = "figures/"
@@ -103,7 +105,7 @@ SetChunkOpts <- function(){
 }
 
 try(animation::ani.options(autobrowse = FALSE), silent=T)
-options(width = 3500)
+#options(width = 3500)
 library("magrittr")
 library("dplyr")
 require("minfi")
