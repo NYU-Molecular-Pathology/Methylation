@@ -8,6 +8,7 @@ gb <- globalenv(); assign("gb", gb)
 # DEBUG & TEST ---------------------------------------------------------
 # if(!require("minfiDataEPIC")){BiocManager::install("minfiDataEPIC")}
 # RGset <- minfiDataEPIC::RGsetEPIC
+# RGset <- RGset[,1]
 
 GetBRCA_data <- function(ratioSet, RGset, brcaProbes){
     #Output is DF with sample information, betas for relevant BRCA loci
@@ -49,9 +50,10 @@ GetBRCA_data <- function(ratioSet, RGset, brcaProbes){
 
 renderBRCA_plot <- function(beta.matrix, clin.res, brca="BRCA1") {
     clinVals <- as.data.frame(t(clin.res[2:5]))
-    col_vect <- c('#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe')
+    col_vect <- c('#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
+                  '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe')
     col_vect <- col_vect[1:nrow(clin.res)]
-    Probe.Names = paste(colnames(clinVals), brca, "probe", sep = ".")
+    Probe.Names = paste(colnames(clinVals))
     names(Probe.Names) <- col_vect
     df <-
         data.frame(
@@ -64,8 +66,9 @@ renderBRCA_plot <- function(beta.matrix, clin.res, brca="BRCA1") {
         geom_bar(aes(fill = Probe.Names),stat = 'identity', width = 0.05, color="black") +
         scale_fill_manual("legend", values = names(Probe.Names)) +
         geom_line(density, mapping = aes(x = x, y = y), color="black") +
-        xlab('Beta Values') + ylab('Density') + theme(panel.background = element_blank()) +
-        guides(fill=guide_legend(title="BRCA Probes"))
+        geom_vline(xintercept = 0.5, color="red", linetype = 2) +
+        xlab('Beta Values') + ylab('Density') + theme_bw() +
+        guides(fill=guide_legend(title=paste(brca, "Probes")))
     return(suppressWarnings(fig))
 }
 

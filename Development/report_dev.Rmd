@@ -83,6 +83,21 @@ knitr::asis_output(mlh1Pred$mlhP)
 gb$TryREDCap(gb=globalenv())
 ```
 </div><hr class="hr.dashed">
+
+### BRCA Loci Status
+<div>
+```{r, label='MLH1 Prediction', fig.align="left", fig.asp=0.8, fig.width=5, results='asis'}
+devtools::source_url("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/Report-Scripts/BRCA_Functions.R")
+gb$brcaLoci <- brcaLoci <- gb$BRCAstatus(RGset)
+print(brcaLoci$brcaPlot1)
+knitr::asis_output(brcaLoci$mlhP)
+cat("\n\n")
+gb$brcaLoci2 <- brcaLoci2 <- gb$BRCAstatus(RGset, "BRCA2")
+print(brcaLoci2$brcaPlot1)
+knitr::asis_output(brcaLoci2$mlhP)
+```
+</div><hr class="hr.dashed">
+
 ### UniD Prediction
 ```{r, label='UniD predict', message=FALSE, results='hide'}
 gb$predU <- NULL
