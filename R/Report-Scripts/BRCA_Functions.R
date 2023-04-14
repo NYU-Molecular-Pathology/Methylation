@@ -79,7 +79,7 @@ indicate hypermethylation. Color bars show probe beta values on the x-axis.  Bar
 
 getBRCA_table <- function(clin.res, brca) {
     title.string = c(
-        "BRCA Methylation Status" = clin.res$m.reslt[1],
+        "BRCA Total Probe Loci" = paste(nrow(clin.res)),
         "Total Methylated Loci" = length(which(clin.res$BRCA.pos.loci))
     )
     title.string <- as.data.frame(title.string)
@@ -121,10 +121,11 @@ BRCAstatus <- function(RGset, brca="BRCA1") {
     par(mar = c(5, 6, 4, 1) + .1)
     beta.matrix = getBeta(ratioSet)
     brcaPlot1 <- renderBRCA_plot(beta.matrix, clin.res, brca)
-    mlhP <- getBRCA_table(clin.res, brca)
+    brcaTab <- getBRCA_table(clin.res, brca)
     return(list(
         "brcaPlot1" = brcaPlot1,
-        "mlhP" = gb$drawPlotTab(mlhP),
+        "brcaTab" = gb$drawPlotTab(brcaTab),
         "theValue" = clin.res
     ))
 }
+

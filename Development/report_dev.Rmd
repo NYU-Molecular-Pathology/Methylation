@@ -90,11 +90,11 @@ gb$TryREDCap(gb=globalenv())
 devtools::source_url("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/Report-Scripts/BRCA_Functions.R")
 gb$brcaLoci <- brcaLoci <- gb$BRCAstatus(RGset)
 print(brcaLoci$brcaPlot1)
-knitr::asis_output(brcaLoci$mlhP)
+knitr::asis_output(brcaLoci$brcaTab)
 cat("\n\n")
 gb$brcaLoci2 <- brcaLoci2 <- gb$BRCAstatus(RGset, "BRCA2")
 print(brcaLoci2$brcaPlot1)
-knitr::asis_output(brcaLoci2$mlhP)
+knitr::asis_output(brcaLoci2$brcaTab)
 ```
 </div><hr class="hr.dashed">
 
