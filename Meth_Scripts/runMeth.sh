@@ -1,6 +1,7 @@
 #!/bin/bash
 
-methAPI='XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' # RedCap API Token
+# RedCap API Token: Saved Locally (Hardcoded)
+methAPI='XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' 
 
 # INPUT ARGS: if args are empty assign NULL as default below
 methRun=${1-NULL}  # methylation run id e.g. 22-MGDM17
@@ -15,13 +16,13 @@ GITHUBMAIN="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylatio
 
 # Hardcoded Terminal Color Variables ---------------------------------------------------------------------------
 # tput changes the console text output display
-BG_BLUE="$(tput setab 4)" # makes text background blue
-BG_CYAN="$(tput setab 6)" # makes text background cyan
-BG_MAG="$(tput setab 5)"  # makes text background magenta
-BG_GRN="$(tput setab 2)"  # makes text background green
-BG_RED="$(tput setab 1)"  # makes text background green
-bold=$(tput bold)         # makes text bold
-normal=$(tput sgr0)       # resets default text
+BG_BLU="$(tput setab 4)" # makes text background blue
+BG_CYA="$(tput setab 6)" # makes text background cyan
+BG_MAG="$(tput setab 5)" # makes text background magenta
+BG_GRN="$(tput setab 2)" # makes text background green
+BG_RED="$(tput setab 1)" # makes text background green
+bold=$(tput bold)        # makes text bold
+normal=$(tput sgr0)      # resets default text
 
 cd $HOME
 
@@ -50,11 +51,11 @@ if [ -z "$redcapUp" ]; then
 fi
 
 echo "~~~~~~~~~~~~~~~~~~~~~Parameters passed to RScript~~~~~~~~~~~~~~~~~~~~~"
-echo "${BG_BLUE}methAPI:${normal} $methAPI"
-echo "${BG_CYAN}(arg1) methRun:${normal} $methRun"
+echo "${BG_BLU}methAPI:${normal} $methAPI"
+echo "${BG_CYA}(arg1) methRun:${normal} $methRun"
 echo "${BG_MAG}(arg2) PRIORITY samples:${normal} $PRIORITY"
 echo "${BG_GRN}(arg3) Custom runPath:${normal} $runPath"
-echo "${BG_BLUE}(arg4) To upload redcapUp:${normal} $redcapUp"
+echo "${BG_BLU}(arg4) To upload redcapUp:${normal} $redcapUp"
 printf "\nCurl files downloaded:\n"
 
 message_curl() {
@@ -67,7 +68,7 @@ message_curl() {
 check_directory() {
    CURRDIR=$1
    if [ ! -d "$CURRDIR" ]; then
-      printf "Creating new Directory:\n$CURRDIR"
+      printf "\nCreating new Directory:\n$CURRDIR"
       mkdir -p "$CURRDIR"
    fi
 }
@@ -77,8 +78,8 @@ message_curl ${GITHUBLINK} "Methyl_QC.Rmd"
 message_curl ${GITHUBMAIN} "methylExpress.R"
 
 printf "\nExecuting Rscript with parameters input:\n"
-color_params="${BG_MAG}$methAPI${normal} ${BG_CYAN}$methRun${normal} ${BG_GRN}$PRIORITY${normal} ${BG_BLUE}$runPath${normal} ${BG_MAG}$redcapUp${normal} ${BG_GRN}$runLocal${normal}\n"
-printf "${BG_BLUE}${bold}Rscript --verbose $HOME/methylExpress.R${normal} $color_params"
+color_params="${BG_MAG}$methAPI${normal} ${BG_CYA}$methRun${normal} ${BG_GRN}$PRIORITY${normal} ${BG_BLU}$runPath${normal} ${BG_MAG}$redcapUp${normal} ${BG_GRN}$runLocal${normal}\n"
+printf "${BG_BLU}${bold}Rscript --verbose $HOME/methylExpress.R${normal} $color_params"
 Rscript --verbose $HOME/methylExpress.R $methAPI $methRun $PRIORITY $runPath $redcapUp $runLocal
 
 if [ -n "$runPath" ]; then
@@ -95,12 +96,13 @@ echo "${BG_GRN}MOLECDIR:${normal} $MOLECDIR"
 echo "${BG_GRN}LOCALDIR:${normal} $LOCALDIR"
 
 check_directory "$LOCALDIR"
-printf "\nRsyncing files:\n"
+printf "\n${BG_BLU}Rsyncing files:${normal}\n"
 rsync -vrthP --include '*.html' --exclude '*' "${runPath}" "$LOCALDIR"
-#check_directory "$MOLECDIR"
-#chmod +rwx "$LOCALDIR"
-#cd "$MOLECDIR"
-printf "${BG_GRN}cp -RvX ${LOCALDIR} ${MOLECDIR}${normal}"
-#rsync -vrthP --include '*.html' "${LOCALDIR}/" "$PWD"
+
+printf "\nExecuting copy command:\n"
+printf "${BG_GRN}cp -RvX ${LOCALDIR} ${MOLECDIR}${normal}\n"
+
+printf "${BG_BLU}Copying files to Z-drive from HOME:${normal}\n"
 cp -RvX "$LOCALDIR" "$MOLECDIR"
+
 echo "METHYLATION RUN ENDED"
