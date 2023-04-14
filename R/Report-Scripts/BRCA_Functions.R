@@ -68,7 +68,12 @@ renderBRCA_plot <- function(beta.matrix, clin.res, brca="BRCA1") {
         geom_line(density, mapping = aes(x = x, y = y), color="black") +
         geom_vline(xintercept = 0.5, color="red", linetype = 2) +
         xlab('Beta Values') + ylab('Density') + theme_bw() +
-        guides(fill=guide_legend(title=paste(brca, "Probes")))
+        guides(fill=guide_legend(title=paste(brca, "Probes"))) +
+        labs(caption = "The black line shows overall beta value density for the sample between 0 to 1.
+Beta values close to zero < 0.5 indicate low methylation for that probe loci. Betas closer to 1.0 > 0.5
+indicate hypermethylation. Color bars show probe beta values on the x-axis.  Bar height is irrelevant.") +
+        theme(plot.caption = element_text(size=9, face="italic", color="blue", hjust = 0),
+              plot.caption.position = 'plot' )
     return(suppressWarnings(fig))
 }
 
