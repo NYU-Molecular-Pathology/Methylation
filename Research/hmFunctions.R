@@ -578,7 +578,7 @@ LoopPathwayHeatMap <- function(pathWayGenes, targets){
             csvColumns <- gb$GetCsvGeneColumns(pathwayName, z)
             avgBetas <- gb$GetProbeAverage(csvColumns, betas, pathwayName)
         }else{
-            avgBetas <- read.csv(avgExist)
+              avgBetas <- read.csv(avgExist, quote = F, row.names = T)
         }
         titleValue <- paste("Average Probe Beta Values for", currPathway$Description, "Genes")
         avgBetas <- as.matrix(avgBetas)
