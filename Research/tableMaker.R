@@ -480,6 +480,7 @@ MessageArrayMix <- function(targets, col_arrayType) {
 
 
 MessageBatchMix <- function(targets, gb){
+    cat("\n\n")
     cat('# Data Quality and Analysis Parameters\n\n<hr style="border:4px solid darkgreen">\n\n')
     knitr::opts_chunk$set(out.width='50%')
     cat(paste("#### Samples Batch Corrected:", gb$batchEffect, "\n\n"))
@@ -538,6 +539,7 @@ GetColorShape <- function(var1Col, var2Col){
 
 
 ShowAnyMissed <- function(gb){
+  cat("\n\n")
   cat("#### Samples Removed from Analysis with Missing or Duplicate idat files:\n\n")
   oldTargs <- sanitizeSheet(gb$inputFi, "oldTargs.csv", gb)
   oldTargs <- oldTargs[!c(oldTargs[,gb$col_samNames] %in% targets[,gb$col_samNames]),]
