@@ -4,7 +4,9 @@
 ## Copyright (c) NYULH Jonathan Serrano, 2023
 ## ---------------------------
 gb <- globalenv(); assign("gb", gb)
-
+# DEBUG & TEST ---------------------------------------------------------
+# if(!require("minfiDataEPIC")){BiocManager::install("minfiDataEPIC")}
+# RGset <- minfiDataEPIC::RGsetEPIC
 
 GetBRCA_data <- function(ratioSet, RGset, brcaProbes){
     #Output is DF with sample information, betas for relevant BRCA loci
