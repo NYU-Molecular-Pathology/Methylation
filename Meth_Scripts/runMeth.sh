@@ -61,7 +61,7 @@ message_curl() {
    linkname=$1
    filename=$2
    printf "${BG_GRN}$HOME/$filename${normal}\n"
-   curl -# -L $linkname$filename >$HOME/$filename
+   curl -k -# -L $linkname$filename >$HOME/$filename
 }
 
 check_directory() {
@@ -88,17 +88,19 @@ fi
 
 LOCALDIR="$HOME/${methRun}"
 RUNYEAR=${methRun%%-*}
-MOLECDIR="/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/Results/20${RUNYEAR}/${methRun}/"
+MOLECDIR="/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/Results/20${RUNYEAR}"
 
 echo "${BG_GRN}runPath:${normal} $runPath"
 echo "${BG_GRN}MOLECDIR:${normal} $MOLECDIR"
 echo "${BG_GRN}LOCALDIR:${normal} $LOCALDIR"
 
 check_directory "$LOCALDIR"
-
 printf "\nRsyncing files:\n"
 rsync -vrthP --include '*.html' --exclude '*' "${runPath}" "$LOCALDIR"
-check_directory "$MOLECDIR"
-rsync -vrthP --include '*.html' --exclude '*' "${LOCALDIR}/" "$MOLECDIR"
-
+#check_directory "$MOLECDIR"
+#chmod +rwx "$LOCALDIR"
+#cd "$MOLECDIR"
+printf "${BG_GRN}cp -RvX ${LOCALDIR} ${MOLECDIR}${normal}"
+#rsync -vrthP --include '*.html' "${LOCALDIR}/" "$PWD"
+cp -RvX "$LOCALDIR" "$MOLECDIR"
 echo "METHYLATION RUN ENDED"
