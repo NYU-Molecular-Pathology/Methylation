@@ -185,8 +185,8 @@ cnvplots = list(
 ,
 mdsPlot = list(
     echo = FALSE,
-    fig.height = '2066px', #8,
-    fig.width = '3650px', #12,
+    fig.height = 6, #8,
+    fig.width = 10, #12,
     out.width = '100%',
     dpi = 350,
     fig.keep = 'all',
