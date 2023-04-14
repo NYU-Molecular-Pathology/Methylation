@@ -4,7 +4,7 @@ if(!require("devtools")){install.packages("devtools", quiet=T)}
 
 # Parameters Input trailing commandline -------------------------------------------------------
 args[1] -> token      # <- NULL
-args[2] -> runID      # <- 21-MGDM_TEST
+args[2] -> runID      # <- "21-MGDM_TEST"
 args[3] -> selectRDs  # <- NULL
 args[4] -> baseFolder # <- NULL
 args[5] -> redcapUp   # <- TRUE
@@ -13,7 +13,7 @@ args[6] -> runLocal   # <- FALSE
 forcedUpload <- F
 # Source and Load Functions and Packages --------------------------------------------------------------------------
 LoadGitHubScripts <- function(ghRepo, scriptList){scripts <- file.path(ghRepo, scriptList)
-    return(invisible(lapply(scripts, function(i){message("Sourcing: ", i); devtools::source_url(i)})))
+    return(invisible(lapply(scripts, function(i){message("Sourcing: ", i); invisible(devtools::source_url(i))})))
 }
 
 # Source GitHub Scripts --------------------------------------------------------------------------
@@ -21,7 +21,7 @@ mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation
 scriptList <- c("LoadInstallPackages.R", "SetRunParams.R", "MakeSampleSheet.R", "CopyInputs.R", "CopyOutput.R", "pipelineHelper.R", "CustomRuns.R")
 rmdScripts <- c("ClassTables.R", "MLH1_Functions.R", "PipeLineU.R", "RedcapOutput.R", "TsneFunctions.R", "cnvggplotly.R")
 LoadGitHubScripts(mainHub, scriptList)
-LoadGitHubScripts(file.path(mainHub,"Report-Scripts"), rmdScripts)
+invisible(suppressWarnings(LoadGitHubScripts(file.path(mainHub,"Report-Scripts"), rmdScripts)))
 
 # Message and Check Input Args ------------------------------------------------------------------
 gb$CheckInputArg(token, gb); gb$CheckInputArg(runID, gb); gb$CheckInputArg(selectRDs, gb); gb$CheckInputArg(baseFolder, gb)
