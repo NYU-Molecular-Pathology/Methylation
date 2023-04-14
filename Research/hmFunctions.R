@@ -102,6 +102,7 @@ calc_ht_size = function(ht, unit = "inch") {
 getHeatMap <- function(betaRanges, titleValue, ha, geneNamesHeatMap=F, colSplt = NULL, rwsplt=NULL){
   col_fun2 <- circlize::colorRamp2(c(0, 0.25, 0.5, 0.75, 1), c("darkblue","deepskyblue", "white", "tomato","red"))  
   titleOfPlot <- paste("Heatmap of",titleValue,sep = " ")
+  try(knitr::opts_chunk$set(out.width='100%'), silent=T)
     hmTopNumbers <- ComplexHeatmap::Heatmap(
         betaRanges,
         col = gb$col_fun2,  ## Define the color scale
