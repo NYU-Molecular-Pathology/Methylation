@@ -139,10 +139,9 @@ GrabKnitTemplates <- function(){
     tempOpts <- list(
 heatmaps = list(
     echo = FALSE,
-    fig.width = 8.5,
-    fig.height = 11,
+    fig.width = 18, fig.height = 22,
     dpi = 350,
-    fig.asp = 1.0,
+    fig.asp = 0.8,
     out.width='100%',
     results = 'asis',
     fig.keep = 'all',
@@ -157,7 +156,7 @@ tnsePlot = list(
     fig.height=2.7,
     fig.width=4,
     fig.keep = 'all',
-    out.width = '100%',
+    out.height="650px", out.width="3650px",
     fig.path = "figures/tsne/"
 )
 ,
