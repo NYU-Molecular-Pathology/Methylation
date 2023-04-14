@@ -565,6 +565,7 @@ GetAvgGeneHeatMap <- function(betaRanges, titleValue, ha, geneNamesHeatMap=T, co
 LoopPathwayHeatMap <- function(pathWayGenes, targets){
     doParallel::registerDoParallel(cores=6)
     cat("\n\n")
+    try(knitr::opts_chunk$set(out.width='100%'), silent=T)
     hmOutPath <- getwd()
     for(pathRow in 1:nrow(pathWayGenes)){
         currPathway <- pathWayGenes[pathRow,]
@@ -611,6 +612,7 @@ LoopSaveHm <- function(hm.db, varProbes, fi_prefix = "hm_top_", fi_suffix = "_no
       if(!dir.exists(hmOutPath)){dir.create(hmOutPath, recursive = T)}
       SaveHmPng(fi_prefix, fi_suffix, hm, topvar = varProbes[tn], outDir = hmOutPath)
   }
+  cat("\n\n")
 }
                                            
 
