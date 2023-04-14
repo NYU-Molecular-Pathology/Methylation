@@ -137,9 +137,9 @@ GrabKnitTemplates <- function(){
     tempOpts <- list(
 heatmaps = list(
     echo = FALSE,
-    fig.width = 11,
-    fig.height = 9,
-    dpi = 300,
+    fig.width = 8.5,
+    fig.height = 11,
+    dpi = 350,
     fig.asp = 1.0,
     out.width='100%',
     results = 'asis',
