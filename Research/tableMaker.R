@@ -575,13 +575,13 @@ PrintPathHeader <- function(GroupSubset){
 }
 
 GetCatHeader <- function(tsneHead, tbset=T){
+    knitr::opts_chunk$set(out.width='100%')
     cat('\n\n')
     if(tbset==T){
         cat(paste('##', tsneHead, '{.tabset}', '\n\n'))
     }else{
         cat(paste('#', tsneHead, '\n\n'))
     }
-    
 }
 
 
