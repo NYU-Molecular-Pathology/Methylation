@@ -385,7 +385,7 @@ GetProbeAverage <- function(csvColumns, betas, pathwayName){
             avgBetas[geneNam,sampleNam] <- probeAvg
         }
     }
-    outDir <- file.path(getwd(), "data")
+    outDir <- file.path(getwd(), "csv")
     outFile <- paste(pathwayName, "avgBetas_per_gene.csv" , sep = "_")
     outPath <- file.path(outDir, outFile)
     write.csv(avgBetas, file = outPath, row.names=T, na="")
