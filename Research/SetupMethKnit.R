@@ -137,11 +137,11 @@ GrabKnitTemplates <- function(){
     tempOpts <- list(
 heatmaps = list(
     echo = FALSE,
-    fig.width = 18,
-    fig.height = 22,
-    dpi = 350,
+    fig.width = 11,
+    fig.height = 9,
+    dpi = 300,
     fig.asp = 1.0,
-    fig.width='80%',
+    out.width='100%',
     results = 'asis',
     fig.keep = 'all',
     fig.path = "figures/heatmaps/"
@@ -151,35 +151,35 @@ tnsePlot = list(
     echo = FALSE,
     error = FALSE,
     dpi = 350,
-    out.height = "700px",
-    out.width = "3650px",
+    out.width = '100%',
     results = 'asis',
-    fig.width='100%',
-    fig.path = "figures/tsne/",
-    fig.keep = 'all'
+    fig.height=2.7,
+    fig.width=4,
+    fig.keep = 'all',
+    fig.path = "figures/tsne/"
 )
 ,
 samcnv = list(
     echo = FALSE,
     fig.keep = 'all',
-    fig.path = "figures/cnv/",
     fig.height = 8,
     fig.width = 15,
     fig.asp = 0.75,
     results = 'asis',
+    fig.path = "figures/cnv/",
     include = TRUE
 )
 ,
 cnvplots = list(
     echo = FALSE,
     fig.keep = 'all',
-    fig.path = 'figures/cnv/',
     fig.show = 'asis',
     results = 'asis',
     fig.height = 10,
     fig.width = 16,
     out.width = '100%',
     dpi = 350,
+    fig.path = 'figures/cnv/',
     include = TRUE
 )
 ,
@@ -193,9 +193,7 @@ mdsPlot = list(
     include = TRUE
 )
 ,
-clustProf = list(
-echo=FALSE, fig.path = "figures/cluster/", dpi=350, fig.height=5, fig.width=8, out.width='800px', include=TRUE
-)
+clustProf = list(echo=FALSE, dpi=350, fig.height=5, fig.width=8, out.width='800px', fig.path = "figures/cluster/", include=TRUE)
 )
 return(invisible(lapply(X = names(tempOpts),FUN=function(X){knitr::opts_template$set(tempOpts[[X]])})))
 }
