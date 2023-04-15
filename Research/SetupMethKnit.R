@@ -186,15 +186,15 @@ cnvplots = list(
 ,
 mdsPlot = list(
     echo = FALSE,
-    fig.height = 6, #8,
-    fig.width = 10, #12,
+    fig.height = 8,
+    fig.width = 12,
     out.width = '100%',
     dpi = 350,
     fig.keep = 'all',
     include = TRUE
 )
 ,
-clustProf = list(echo=FALSE, dpi=350, fig.height=5, fig.width=8, out.width='800px', fig.path = "figures/cluster/", include=TRUE)
+clustProf = list(echo=FALSE, dpi=350, fig.height=7, fig.width=9, out.width='800px', fig.path = "figures/cluster/", include=TRUE)
 )
 return(invisible(lapply(X = names(tempOpts),FUN=function(X){knitr::opts_template$set(tempOpts[[X]])})))
 }
