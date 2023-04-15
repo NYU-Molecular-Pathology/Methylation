@@ -181,7 +181,7 @@ GetFlatPlots <- function(fig){
     }else{
         fig <- fig +
             theme(legend.direction = "vertical", legend.margin = ggplot2::margin(t = 0))
-            options(repr.plot.width=12, repr.plot.height=8)
+            options(repr.plot.width=18, repr.plot.height=12, repr.plot.res=350)
         supM(print(fig))
     }
 }
