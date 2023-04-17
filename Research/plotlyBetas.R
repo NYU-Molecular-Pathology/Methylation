@@ -164,6 +164,7 @@ makePlotly <- function(fig) {
 
 
 GetFlatPlots <- function(fig){
+    options(repr.plot.width=19, repr.plot.height=12, repr.plot.res=350)
     fig <- fig +
         theme(
             legend.direction = "vertical",
@@ -181,7 +182,7 @@ GetFlatPlots <- function(fig){
     }else{
         fig <- fig +
             theme(legend.direction = "vertical", legend.margin = ggplot2::margin(t = 0))
-            options(repr.plot.width=18, repr.plot.height=12, repr.plot.res=350)
+            options(repr.plot.width=19, repr.plot.height=12, repr.plot.res=350)
         supM(print(fig))
     }
 }
@@ -201,6 +202,7 @@ selectPlots <- function(doPlotly = F, tplots, ty, tps, outDirs) {
         
         cat(paste(tabStart, '\n\n'))
         gc(verbose = F)
+        options(repr.plot.width=19, repr.plot.height=12, repr.plot.res=350)
         GetFlatPlots(fig)
         cat('\n\n')
     }
