@@ -171,7 +171,7 @@ GetFlatPlots <- function(fig){
             legend.margin = ggplot2::margin(t = -25),
             legend.box.margin = ggplot2::margin(0, 0, 0, 0),
             legend.justification = "right",
-            legend.position = "right"
+            legend.position = "bottom"
         )
     leg <- supM(cowplot::get_legend(fig))
     if(length(leg)>10){
