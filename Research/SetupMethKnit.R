@@ -4,7 +4,7 @@ formals(library)$warn.conflicts <- F
 formals(require)$warn.conflicts <- F
 formals(install.packages)$dependencies <- T
 formals(install.packages)$verbose <- T
-formals(install.packages)$ask <- F 
+formals(install.packages)$ask <- F
 
 # TODO: add args to load Differential + parrallel envir
 if(!require("devtools", warn.conflicts = F)){install.packages("devtools", dependencies=T)}
@@ -83,7 +83,7 @@ SetKnitOpts <- function(){
     results = 'asis',
     fig.path = "figures/"
 )
-    return(knitr::opts_knit$set(knitOpt))    
+    return(knitr::opts_knit$set(knitOpt))
 }
 
 SetChunkOpts <- function(){
@@ -137,6 +137,16 @@ options(knitr.package.verbose = TRUE)
 
 GrabKnitTemplates <- function(){
     tempOpts <- list(
+mdsPlot = list(
+            echo = FALSE,
+            fig.height = 6,
+            fig.width = 12,
+            out.width = '100%',
+            dpi = 350,
+            fig.keep = 'all',
+            include = TRUE
+        )
+        ,
 heatmaps = list(
     echo = FALSE,
     fig.width = 18, fig.height = 22,
@@ -181,16 +191,6 @@ cnvplots = list(
     out.width = '100%',
     dpi = 350,
     fig.path = 'figures/cnv/',
-    include = TRUE
-)
-,
-mdsPlot = list(
-    echo = FALSE,
-    fig.height = 8,
-    fig.width = 12,
-    out.width = '100%',
-    dpi = 350,
-    fig.keep = 'all',
     include = TRUE
 )
 ,
