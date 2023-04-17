@@ -78,7 +78,14 @@ grabAllRecords <- function(flds, rcon){
 # Database search function -----
 searchDb <- function(queryList, db){
     v2f <- paste(queryList, collapse="|"); i=NULL
-    res <- foreach::foreach(i=1:ncol(db), .combine='rbind') %do% {db[which(grepl(v2f,db[,i])),]}
+    res <- foreach::foreach(i=colnames(db), .combine='rbind') %do% {
+      ngsMatch <- which(grepl(v2f,db[,i]))
+      if(length(ngsMatch) > 0) {
+        message("Match found in ", i, " column")
+        message(paste(db[ngsMatch,i], sep=" ", collapse=" "))
+        db[ngsMatch,]
+      }
+      }
     return(res)
 }
 
@@ -173,7 +180,7 @@ genQuery <- function(dbCol,vals2find){
 queryCases <- function(vals2find, db) {
     i=NULL
     queryList <- foreach::foreach(i=1:ncol(vals2find), .combine="c") %do% {genQuery(i,vals2find)}
-    tsTb <- stringr::str_detect(queryList, "TS|TB")
+    tsTb <- stringr::str_detect(queryList, "TS|TB|TC")
     theTScases <- queryList[tsTb]
     for (x in 1:length(theTScases)) {
         y <- stringr::str_split_fixed(theTScases[x], "-", 3)[1:2]
@@ -181,14 +188,14 @@ queryCases <- function(vals2find, db) {
         theTScases[x] <- z
     }
     queryList <- c(queryList, theTScases)
-    for (val in 1:length(queryList)) {
-        totalDash <- stringr::str_count(queryList[val], "-")
-        if (totalDash > 1) {
-            newValSplit <- stringr::str_split_fixed(queryList[val], "-", 3)
-            newVal <- paste(newValSplit[1, 1], newValSplit[1, 2], sep = "-")
-            queryList[val] <- newVal
-        }
-    }
+    # for (val in 1:length(queryList)) {
+    #     totalDash <- stringr::str_count(queryList[val], "-")
+    #     if (totalDash > 2) {
+    #         newValSplit <- stringr::str_split_fixed(queryList[val], "-", 3)
+    #         newVal <- paste(newValSplit[1, 1], newValSplit[1, 2], sep = "-")
+    #         queryList[val] <- newVal
+    #     }
+    # }
     methQuery <- searchDb(queryList, db)
     return(unique(methQuery))
 }
