@@ -123,7 +123,7 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL,
     {
     require('ggplot2')
     colours <- unique(tsne_plot$col)
-    #options(repr.plot.width = 3, repr.plot.height = 1)
+    options(repr.plot.width=19, repr.plot.height=12, repr.plot.res=350)
     symFlags <- !is.null(symbolsLabel)
     devAskNewPage(ask=F) #options("device.ask.default"=F)
     # Parameters for text & geom_label_repel
