@@ -4,8 +4,6 @@ setDirectory<-function(foldr) {
     if (dir.exists(foldr)) {system(bsDir);setwd(foldr);assign("runDir", foldr)} else{warning(mm2)}
 }
 
-#knitr::opts_chunk$set(fig.width=15, fig.height=10)
-
 if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 4, quiet=T)}
 
 # Load/install Packages
@@ -561,11 +559,14 @@ PrintTableLists <- function(ta1, ta2, ...) {
     cat("\n\n")
 }
 
-PrintPathHeader <- function(GroupSubset){
+
+PrintPathHeader <-function(GroupSubset){
     cat("\n\n")
     cat("# Pathway Analysis")
     cat("\n\n")
-    cat("<hr>")
+    cat('<button class="btn btn-primary" data-toggle="collapse" data-target="#pathways">Show/Hide</button>')
+    cat("\n\n")
+    cat('::: {#pathways .collapse style="width:100%; height:auto; margin: 0px;"}')
     cat("\n\n")
     cat(paste("Cluster Condition: Tumor Type is", GroupSubset, "vs All\n\n"))
     cat('<p class="ncgnote"></p>')
@@ -573,6 +574,7 @@ PrintPathHeader <- function(GroupSubset){
     cat("## Cluster Profiler {.tabset}")
     cat("\n\n")
 }
+
 
 GetCatHeader <- function(tsneHead, tbset=T){
     knitr::opts_chunk$set(out.width='100%')
