@@ -608,3 +608,32 @@ MessageBatchMix <- function(targets, gb){
     return(gb$printMissing(theMissing, gb))
 }
 
+ShowKnitProgress <- function() {
+  library("knitr")
+  library("knitrProgressBar")
+  library("progressr")
+  opts_knit$set(progress = TRUE, verbose = TRUE)
+  opts_hooks$set(
+    log = function(options) {
+      parsed <- parse(text = options$code, keep.source = FALSE)
+      newCode <- sapply(as.character(parsed), function(x) {
+        return(c('writeLog(sprintf("%s - format(Sys.time(), "%Y-%m-%d %H:%M:%S")), sep = NULL)',
+                 sprintf("writeLog('%s')", x), x)
+              )
+      })
+      options$code = as.vector(newCode)
+      return(options)
+    }
+  )
+  
+  options(
+    knitr.progress.fun = function(total, labels) {
+      p <- progressr::progressor(total, on_exit = FALSE)
+      list(
+        update = function(i) p(sprintf("chunk: %s", labels[i])),
+        done = function() p(type = "finish")
+      )
+    }
+  )
+}
+
