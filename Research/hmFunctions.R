@@ -372,7 +372,8 @@ GetEmptyDf <- function(csvColumns,betas){
     rownames(avgBetas) <- colnames(csvColumns)
     return(avgBetas)
 }
-                                           
+
+
 GetProbeAverage <- function(csvColumns, betas, pathwayName){
     avgBetas <- GetEmptyDf(csvColumns,betas)
     for (geneCol in 1:ncol(csvColumns)) {
@@ -386,11 +387,14 @@ GetProbeAverage <- function(csvColumns, betas, pathwayName){
         }
     }
     outDir <- file.path(getwd(), "csv")
+    pathwayName <- paste(stringr::str_split(pathwayName, " ", simplify = T), collapse="_")
     outFile <- paste(pathwayName, "avgBetas_per_gene.csv" , sep = "_")
     outPath <- file.path(outDir, outFile)
-    write.csv(avgBetas, file = outPath, row.names=T, na="")
+    avgBetas$X <- rownames(avgBetas)
+    write.csv(avgBetas, file = outPath, row.names=F, na="", quote=F)
     return(avgBetas)
 }
+
 
 #' grabProbes function that lists probes annotated by matching gene name and gene region
 #' @param your_genes  a character list of genes i.e. from a file c("ALK","ETMR","HDAC")
@@ -505,9 +509,11 @@ GetHeatMapGenes <-  function(betaRanges, titleValue, ha, geneNamesHeatMap = F, c
     return(gb$drawHeatMap(hmTopNumbers))
 }
 
+
 CheckGeneOutput <- function(pathwayName) {
-    outDir <- file.path(getwd(), "data", "csv")
+    outDir <- file.path(getwd(), "csv")
     if(!dir.exists(outDir)){dir.create(outDir)}
+    pathwayName <- paste(stringr::str_split(pathwayName, " ", simplify = T), collapse="_")
     outFile <- paste(pathwayName, "avgBetas_per_gene.csv" , sep = "_")
     outPath <- file.path(outDir, outFile)
     if(file.exists(outPath)){
@@ -562,23 +568,26 @@ GetAvgGeneHeatMap <- function(betaRanges, titleValue, ha, geneNamesHeatMap=T, co
 }
 
 
-LoopPathwayHeatMap <- function(pathWayGenes, targets){
-    doParallel::registerDoParallel(cores=6)
+LoopPathwayHeatMap <- function(pathWayGenes, RGSet, betas, targets){
+    #doParallel::registerDoParallel(cores=6)
     cat("\n\n")
-    try(knitr::opts_chunk$set(out.width='100%'), silent=T)
     hmOutPath <- getwd()
     for(pathRow in 1:nrow(pathWayGenes)){
         currPathway <- pathWayGenes[pathRow,]
         pathwayName <- paste0(gsub(" ", "_", currPathway$Description))
         message("Looping Pathway Creation for: ", pathwayName)
         avgExist <- gb$CheckGeneOutput(pathwayName)
+        avgBetas <- NULL
         if(avgExist==F){
             your_genes <- stringr::str_split(currPathway$geneID, pattern = "/")[[1]]
             z <- gb$GetProbesGenes(your_genes, RGSet, region = c('TSS200'))
             csvColumns <- gb$GetCsvGeneColumns(pathwayName, z)
             avgBetas <- gb$GetProbeAverage(csvColumns, betas, pathwayName)
         }else{
-              avgBetas <- read.csv(avgExist, quote = F, row.names = T)
+            avgBetas <- read.csv(avgExist)
+            rwNm <- which(colnames(avgBetas)=="X")
+            row.names(avgBetas) <- avgBetas[, rwNm]
+            avgBetas <- avgBetas[, -rwNm]
         }
         titleValue <- paste("Average Probe Beta Values for", currPathway$Description, "Genes")
         avgBetas <- as.matrix(avgBetas)
@@ -591,6 +600,9 @@ LoopPathwayHeatMap <- function(pathWayGenes, targets){
         toKeep <- which(targets[,1] %in% colnames(avgBetas))
         targets1 <- targets[toKeep,]
         rownames(targets1) <- 1:nrow(targets1)
+        rownames(targets1) <- targets1[,1]
+        targets1 <- targets1[colnames(avgBetas),]
+        rownames(targets1) <- 1:nrow(targets1)
         targets1 <- gb$colorTargets(targets1, varColumns = gb$selectedVars)
         ha <- gb$AnnotateHmVars(targets1, varColumns = gb$selectedVars)
         ha <- gb$FilterHmAnno(ha, gb$selectedVars) # drop any unwanted columns
@@ -598,7 +610,8 @@ LoopPathwayHeatMap <- function(pathWayGenes, targets){
         hm <- gb$GetAvgGeneHeatMap(avgBetas, titleValue, ha, geneNamesHeatMap = T)
         hm
         cat("\n\n")
-        gb$SaveHmPng(fi_prefix= "hm_genes_", fi_suffix=".png", hm, topvar = paste0(currPathway$Description), outDir = NULL)
+        gb$SaveHmPng(fi_prefix= "hm_genes_", fi_suffix=".png", hm, 
+                     topvar = paste0(currPathway$Description), outDir = NULL)
         cat("\n\n")
     }
   cat("\n\n")
