@@ -585,4 +585,24 @@ GetCatHeader <- function(tsneHead, tbset=T){
 }
 
 
+MakeHideButton <- function(btnName){
+    cat("\n\n")
+    cat(paste0('<button class="btn btn-primary" data-toggle="collapse" data-target="#',
+               btnName,'">Show/Hide</button>'))
+    cat("\n\n")
+    cat(paste0('::: {#', btnName,' .collapse style="width:100%; height:auto; margin: 0px;"}'))
+    cat("\n\n")
+}
+
+MessageBatchMix <- function(targets, gb){
+    cat("\n\n")
+    cat('# Data Quality and Analysis Parameters\n\n')
+    MakeHideButton("BatchMix")
+    knitr::opts_chunk$set(out.width='50%')
+    cat(paste("#### Samples Batch Corrected:", gb$batchEffect, "\n\n"))
+    gb$MessageBatches(targets, gb$col_batchEffect)
+    cat(paste("#### Sample 450k Probes Merged:", gb$mergeProbes, "\n\n"))
+    gb$MessageArrayMix(targets, gb$col_arrayType)
+    return(gb$printMissing(theMissing, gb))
+}
 
