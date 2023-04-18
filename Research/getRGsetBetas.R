@@ -382,6 +382,9 @@ LoopPlotMds <- function(mSetSq.beta, targets, selectedVars, topN) {
     print(mdsFi)
     cat("\n\n")
   }
+    cat("\n\n")
+    cat(":::")
+    cat("\n\n")
 }
 
 
