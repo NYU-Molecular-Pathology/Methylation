@@ -52,6 +52,13 @@ require("minfi")
 require("ComplexHeatmap")
 #if(!require("GenVisR")){BiocManager::install("GenVisR")}
 
+EndDiv <- function(){
+    cat("\n\n")
+    cat(":::")
+    cat("\n\n")
+}
+
+
 makeDt <- function(targets, gb=NULL) {
     dtOpts <- list(
       columnDefs = list(list(className = 'dt-center', targets = "_all")), scrollX = T, scrollY = T,
