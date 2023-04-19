@@ -88,6 +88,29 @@ drawHeatMap <- function(yourHeatMap) {
     )
 }
 
+GetHmDimensions <- function(hmTopNumbers){
+    hm_out_wt <- hmTopNumbers@matrix_param[["width"]]
+    hm_out_ht <- hmTopNumbers@matrix_param[["height"]]
+    
+    hm_out_wt <- round(grid::convertUnit(hm_out_wt, "in"), 1)
+    hm_out_ht <- round(grid::convertUnit(hm_out_ht, "in"), 1)
+    
+    hm_out_wt <- as.numeric(hm_out_wt) + 7
+    hm_out_ht <- as.numeric(hm_out_ht) + 4
+    
+    message(paste("Height is:", hm_out_ht, "Width is:", hm_out_wt))
+     knitr::opts_chunk$set(
+            fig.width = as.numeric(hm_width),
+            fig.height = as.numeric(hm_ht),
+            dpi=350, out.width = '100%')
+    return(
+        knitr::opts_current$set(
+            fig.width = as.numeric(hm_width),
+            fig.height = as.numeric(hm_ht),
+            dpi=350, out.width = '100%')
+        )
+}
+
 calc_ht_size = function(ht, unit = "inch") {
     pdf(NULL)
     ht = draw(ht)
@@ -140,7 +163,6 @@ getHeatMap <- function(betaRanges, titleValue, ha, geneNamesHeatMap=F, colSplt =
         heatmap_height = unit(20, "in")
     )
     #size = gb$calc_ht_size(hmTopNumbers)
-    #size
     return(gb$drawHeatMap(hmTopNumbers))
 }
 
