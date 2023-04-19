@@ -546,14 +546,16 @@ CheckGeneOutput <- function(pathwayName) {
 }
                                            
 
-GetAvgGeneHeatMap <- function(betaRanges, titleValue, ha, geneNamesHeatMap=T, colSplt = NULL, rwsplt=NULL){
+GetAvgGeneHeatMap <- function(avgBetas, titleValue, ha, geneNamesHeatMap=T, colSplt = NULL, rwsplt=NULL){
   col_fun2 <- circlize::colorRamp2(c(0, 0.25, 0.5, 0.75, 1), 
                                    c("darkblue","deepskyblue", "white", "tomato","red"))  
-  titleOfPlot <- paste("Heatmap of",titleValue,sep = " ")
-  hm_width <- ifelse(ncol(betaRanges)<=45, ncol(betaRanges)*unit(1, "cm"), unit(45, "cm"))
-  hm_ht <- ifelse(nrow(betaRanges)*3<=50, nrow(betaRanges)*unit(3, "cm"), unit(50, "cm"))
+  titleOfPlot <- paste("Heatmap of", titleValue)
+   toLabRows <- ifelse(nrow(avgBetas)<=50, T, F)
+   if(geneNamesHeatMap == T){
+     geneNamesHeatMap <- toLabRows
+   }
     hmTopNumbers <- ComplexHeatmap::Heatmap(
-        betaRanges,
+        avgBetas,
         col = gb$col_fun2,  ## Define the color scale
         cluster_columns = T,  ## Cluster the columns
         cluster_rows = T,
@@ -566,6 +568,8 @@ GetAvgGeneHeatMap <- function(betaRanges, titleValue, ha, geneNamesHeatMap=T, co
         row_title_gp = gpar(fontsize = 12, fontface = "bold"),
         show_row_dend = F,
         show_column_dend = T,
+        width = ncol(avgBetas)*unit(5, "mm"),
+        height = nrow(avgBetas)*unit(3, "mm"),
         use_raster=T,
         show_heatmap_legend = T,
         top_annotation = ha,
@@ -581,13 +585,15 @@ GetAvgGeneHeatMap <- function(betaRanges, titleValue, ha, geneNamesHeatMap=T, co
             heatmap_legend_side = "right", annotation_legend_side = "right",
             legend_height =  unit(2.5, "in")
         ),
+        #heatmap_width = unit(hm_width, "cm"),
+        #heatmap_height = unit(hm_ht, "cm"),
         column_split = colSplt,
-        row_split= rwsplt,
-        heatmap_width = unit(hm_width, "cm"),
-        heatmap_height = unit(hm_ht, "cm")
+        row_split = rwsplt
     )
+    GetHmDimensions(hmTopNumbers)
     return(gb$drawHeatMap(hmTopNumbers))
 }
+
 
 
 LoopPathwayHeatMap <- function(pathWayGenes, RGSet, betas, targets){
