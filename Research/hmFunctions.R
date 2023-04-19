@@ -88,17 +88,18 @@ drawHeatMap <- function(yourHeatMap) {
     )
 }
 
+
 GetHmDimensions <- function(hmTopNumbers){
-    hm_out_wt <- hmTopNumbers@matrix_param[["width"]]
-    hm_out_ht <- hmTopNumbers@matrix_param[["height"]]
+    hm_width <- hmTopNumbers@matrix_param[["width"]]
+    hm_ht <- hmTopNumbers@matrix_param[["height"]]
     
-    hm_out_wt <- round(grid::convertUnit(hm_out_wt, "in"), 1)
-    hm_out_ht <- round(grid::convertUnit(hm_out_ht, "in"), 1)
+    hm_width <- round(grid::convertUnit(hm_width, "in"), 1)
+    hm_ht <- round(grid::convertUnit(hm_ht, "in"), 1)
     
-    hm_out_wt <- as.numeric(hm_out_wt) + 7
-    hm_out_ht <- as.numeric(hm_out_ht) + 4
+    hm_width <- as.numeric(hm_width) + 7
+    hm_ht <- as.numeric(hm_ht) + 4
     
-    message(paste("Height is:", hm_out_ht, "Width is:", hm_out_wt))
+    message(paste("Height is:", hm_ht, "Width is:", hm_width))
      knitr::opts_chunk$set(
             fig.width = as.numeric(hm_width),
             fig.height = as.numeric(hm_ht),
@@ -110,6 +111,7 @@ GetHmDimensions <- function(hmTopNumbers){
             dpi=350, out.width = '100%')
         )
 }
+
 
 calc_ht_size = function(ht, unit = "inch") {
     pdf(NULL)
