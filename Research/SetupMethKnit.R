@@ -5,7 +5,6 @@ formals(require)$warn.conflicts <- F
 formals(install.packages)$dependencies <- T
 formals(install.packages)$verbose <- T
 formals(install.packages)$ask <- F
-
 # TODO: add args to load Differential + parrallel envir
 if(!require("devtools", warn.conflicts = F)){install.packages("devtools", dependencies=T)}
 # https://bookdown.org/yihui/rmarkdown-cookbook/custom-knit.html
@@ -190,8 +189,8 @@ cnvplots = list(
     fig.keep = 'all',
     fig.show = 'asis',
     results = 'asis',
-    fig.height = 10,
-    fig.width = 16,
+    fig.height = 8, #10,
+    fig.width = 15, #16,
     out.width = '100%',
     dpi = 350,
     fig.path = 'figures/cnv/',
