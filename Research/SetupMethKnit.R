@@ -71,7 +71,7 @@ if(!require("cnv.methyl")){devtools::install_github("https://github.com/ijcBIT/c
 SetKnitOpts <- function(){
     knitOpt <- list(
     echo = FALSE,
-    message = FALSE,
+    message = TRUE,
     warning = FALSE,
     cache = FALSE,
     error = TRUE,
@@ -81,7 +81,9 @@ SetKnitOpts <- function(){
     out.width = '100%',
     class.source = "bg-success",
     results = 'asis',
-    fig.path = "figures/"
+    fig.path = "figures/",
+    opts.label = TRUE,
+    progress = TRUE, verbose = TRUE
 )
     return(knitr::opts_knit$set(knitOpt))
 }
@@ -89,7 +91,7 @@ SetKnitOpts <- function(){
 SetChunkOpts <- function(){
     knitOpt <- list(
     echo = FALSE,
-    message = FALSE,
+    message = TRUE,
     warning = FALSE,
     cache = FALSE,
     error = TRUE,
@@ -99,7 +101,9 @@ SetChunkOpts <- function(){
     out.width = '100%',
     class.source = "bg-success",
     results = 'asis',
-    fig.path = "figures/"
+    fig.path = "figures/",
+    opts.label = TRUE,
+    progress = TRUE, verbose = TRUE
 )
     return(knitr::opts_chunk$set(knitOpt))
 }
