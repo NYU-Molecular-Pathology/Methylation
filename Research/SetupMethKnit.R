@@ -70,7 +70,7 @@ if(!require("cnv.methyl")){devtools::install_github("https://github.com/ijcBIT/c
 SetKnitOpts <- function(){
     knitOpt <- list(
     echo = FALSE,
-    message = TRUE,
+    message = FALSE,
     warning = FALSE,
     cache = FALSE,
     error = TRUE,
@@ -90,7 +90,7 @@ SetKnitOpts <- function(){
 SetChunkOpts <- function(){
     knitOpt <- list(
     echo = FALSE,
-    message = TRUE,
+    message = FALSE,
     warning = FALSE,
     cache = FALSE,
     error = TRUE,
