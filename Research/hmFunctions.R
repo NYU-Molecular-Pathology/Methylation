@@ -97,18 +97,18 @@ GetHmDimensions <- function(hmTopNumbers){
     hm_ht <- round(grid::convertUnit(hm_ht, "in"), 1)
     
     hm_width <- as.numeric(hm_width) + 7
-    hm_ht <- as.numeric(hm_ht) + 4
+    hm_ht <- as.numeric(hm_ht) + 10
+    hm_asp <- hm_ht/hm_width
     
     message(paste("Height is:", hm_ht, "Width is:", hm_width))
      knitr::opts_chunk$set(
             fig.width = as.numeric(hm_width),
             fig.height = as.numeric(hm_ht),
-            dpi=350, out.width = '100%')
+            dpi=350, out.width = '100%', fig.asp = hm_asp)
     return(
         knitr::opts_current$set(
-            fig.width = as.numeric(hm_width),
-            fig.height = as.numeric(hm_ht),
-            dpi=350, out.width = '100%')
+            fig.width = as.numeric(hm_width), fig.height = as.numeric(hm_ht),
+            dpi=350, out.width = '100%', fig.asp = hm_asp)
         )
 }
 
