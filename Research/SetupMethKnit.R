@@ -196,6 +196,14 @@ cnvplots = list(
 ,
 clustProf = list(echo=FALSE, dpi=350, fig.height=7, fig.width=9, out.width='800px', fig.path = "figures/cluster/", include=TRUE)
 )
-return(invisible(lapply(X = names(tempOpts),FUN=function(X){knitr::opts_template$set(tempOpts[[X]])})))
+#return(invisible(lapply(X = names(tempOpts),FUN=function(X){knitr::opts_template$set(tempOpts[[X]])})))
+return(knitr::opts_template$set(
+    cnvplots = tempOpts[["cnvplots"]],
+    mdsPlot = tempOpts[["mdsPlot"]],
+    heatmaps = tempOpts[["heatmaps"]],
+    tnsePlot = tempOpts[["tnsePlot"]],
+    samcnv = tempOpts[["samcnv"]],
+    clustProf = tempOpts[["clustProf"]]
+))
 }
 
