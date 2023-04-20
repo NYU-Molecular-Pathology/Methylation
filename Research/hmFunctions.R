@@ -572,14 +572,15 @@ GetAvgGeneHeatMap <- function(avgBetas, titleValue, ha, geneNamesHeatMap=T, colS
         show_row_dend = F,
         show_column_dend = T,
         width = ncol(avgBetas)*unit(5, "mm"),
-        height = nrow(avgBetas)*unit(3, "mm"),
+        height = nrow(avgBetas)*unit(2, "mm"),
         use_raster=T,
         show_heatmap_legend = T,
         top_annotation = ha,
         column_title = titleOfPlot,
         column_title_gp = gpar(fontsize = 12,fontface = "bold"),
         raster_device = "CairoPNG",
-        raster_quality = 2,
+        raster_quality = 1,
+        raster_resize_mat = TRUE,
         heatmap_legend_param = list(
             title = "Beta Value",
             labels_gp = gpar( fontsize = 14),
@@ -596,7 +597,6 @@ GetAvgGeneHeatMap <- function(avgBetas, titleValue, ha, geneNamesHeatMap=T, colS
     GetHmDimensions(hmTopNumbers)
     return(gb$drawHeatMap(hmTopNumbers))
 }
-
 
 
 LoopPathwayHeatMap <- function(pathWayGenes, RGSet, betas, targets){
@@ -627,6 +627,9 @@ LoopPathwayHeatMap <- function(pathWayGenes, RGSet, betas, targets){
         cat("\n\n")  
         cat(msgTitle)
         cat("\n\n")
+        outDir <- file.path(".", "figures", "heatmaps")
+        imgFile <- file.path(outDir, paste0("hm_genes_", paste0(currPathway$Description),".png"))
+        if(!file.exists(imgFile)){
         colnames(avgBetas) <- gsub(".", "-",  colnames(avgBetas), fixed = TRUE)
         toKeep <- which(targets[,1] %in% colnames(avgBetas))
         targets1 <- targets[toKeep,]
@@ -643,11 +646,16 @@ LoopPathwayHeatMap <- function(pathWayGenes, RGSet, betas, targets){
         cat("\n\n")
         gb$SaveHmPng(fi_prefix= "hm_genes_", fi_suffix=".png", hm, 
                      topvar = paste0(currPathway$Description), outDir = NULL)
+        }
+        cat("\n\n")
+        imgCat<- paste0("![Pathway](", imgFile, ")")
+        cat(imgCat)
+        cat("\n\n")
         cat("\n\n")
     }
   cat("\n\n")
 }
-                                           
+
                                            
 LoopSaveHm <- function(hm.db, varProbes, fi_prefix = "hm_top_", fi_suffix = "_notAnnot.png"){
   for (tn in 1:length(varProbes)) {
