@@ -189,7 +189,7 @@ GetFlatPlots <- function(fig){
 
 
 selectPlots <- function(doPlotly = F, tplots, ty, tps, outDirs) {
-    for (zz in 1:length(outDirs)) {
+    for (zz in 1:nrow(outDirs)) {
         invisible(gc())
         fig <- tplots[[zz]]
         tabStart <- paste('### Top', tps[ty, 1], outDirs[zz, 3])
