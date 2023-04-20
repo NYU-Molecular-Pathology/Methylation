@@ -15,12 +15,12 @@ grabPngNames <- function(tsne_titles=NULL, keywrd="Top"){
 
 
 FormatLegendText <- function(fig){
-  #gb$SaveObj(fig, "test_fig.Rdata")
-  #fig <- gb$LoadRdatObj("test_fig.Rdata")
-  #stopifnot(FALSE)
-  fig2 <- fig + geom_point(aes(x, y, color = "Shape", shape = symbol), color = fig$data$col, stroke = 2, size = 10)
-  otherPlot <- gb$supM(plotly::ggplotly(
-      fig2, dynamicTicks = T, width = 1200, height = 800, source = "A", layerData = 1))
+    #gb$SaveObj(fig, "test_fig.Rdata")
+    #fig <- gb$LoadRdatObj("test_fig.Rdata")
+    #stopifnot(FALSE)
+    fig2 <- fig + geom_point(aes(fig$data$x, fig$data$y, color = "Shape", shape = fig$data$symbol), color = fig$data$col, stroke = 2, size = 10)
+    otherPlot <- gb$supM(plotly::ggplotly(
+        fig2, dynamicTicks = T, width = 1200, height = 800, source = "A", layerData = 1))
     figGrps <- paste(fig$data$GROUPS, fig$data$symbol, sep = ",") #fig$data$x, fig$data$y,
     otherPlot[["x"]][["layout"]][["shapes"]][[1]][["line"]][["width"]] <- 2
     for (nSam in 1:length(otherPlot[["x"]][["data"]])) {
