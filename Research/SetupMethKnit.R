@@ -166,10 +166,10 @@ tnsePlot = list(
     error = FALSE,
     dpi = 350,
     results = 'asis',
-    fig.height=2.7,
-    fig.width=4,
+    fig.height=10,
+    fig.width=7,
     fig.keep = 'all',
-    out.height="650px", out.width="3650px",
+    out.height="2400px", out.width="3650px",
     fig.path = "figures/tsne/"
 )
 ,
