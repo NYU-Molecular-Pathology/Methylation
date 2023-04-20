@@ -188,7 +188,8 @@ fixBaseName <- function(targets, runDir, col_sentrix) {
   return(targets)
 }
 
-FixBaseName <- function(targets, runDir, col_sentrix) {
+FixBaseName <- function(targets, runDir=NULL, col_sentrix) {
+    if(is.null(runDir)){runDir <- file.path(getwd(), "idats")}
   if(class(targets)!="data.frame"){targets <- as.data.frame(targets)}
   stopifnot(col_sentrix %in% colnames(targets))
   senCol <- min(which(grepl(col_sentrix, colnames(targets)) == T))
