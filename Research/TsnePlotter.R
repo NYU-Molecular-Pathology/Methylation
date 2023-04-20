@@ -177,28 +177,6 @@ gb$tierBetas <- function(betas, col_sentrix, RGSet,
     }
 }
 
-gb$selectPlots <- function(doPlotly=F,tplots,ty,tps,outDirs){
-  if (doPlotly == F) {
-      for (zz in 1:nrow(outDirs)) {
-        xx <- paste('###', tps[ty, 1], outDirs[zz, 3], '\n\n')
-        cat(xx)
-        fig <- tplots[[zz]]
-        supM(print(fig))
-        cat('\n\n')
-      }
-    } else{
-      for(zz in 1:length(tplots))  {
-        xx <- paste('###', tps[ty, 1], outDirs[zz, 3], '\n\n')
-        cat(xx)
-        fig <- tplots[[zz]]
-        op <- gb$makePlotly(fig)
-        supM(print(htmltools::tagList(ggplotly(op))))
-        cat('\n\n')
-      }
-    }
-  return(assign("diagPlot",tplots[[1]]))
-}
-
 doMultiple <- function(allBetas1,tsne_titles, outDirs, targets1, tps,ty,custom){
   plotN = NULL
   
