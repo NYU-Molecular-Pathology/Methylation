@@ -216,6 +216,8 @@ RemoveBatchEffect <- function(betas, targets, gb) {
 
 CleanUpSheetRows <- function(sheet, idatPath, targets){
     sheet <- as.data.frame(sheet)
+    rownames(targets) <- targets[,1]
+    targets <- targets[sheet$Sample_Name,]
     sheet$Barcode <-  targets[,gb$col_sentrix]
     sheet[,gb$col_sentrix] <- NA
     sheet[,gb$col_sentrix] <- sheet$Barcode
