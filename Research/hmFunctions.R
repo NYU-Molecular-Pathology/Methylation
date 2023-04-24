@@ -415,7 +415,7 @@ GetProbeAverage <- function(csvColumns, betas, pathwayName){
     pathwayName <- paste(stringr::str_split(pathwayName, " ", simplify = T), collapse="_")
     outFile <- paste(pathwayName, "avgBetas_per_gene.csv" , sep = "_")
     outPath <- file.path(outDir, outFile)
-    avgBetas$X <- rownames(avgBetas)
+    avgBetas$XXX <- rownames(avgBetas)
     write.csv(avgBetas, file = outPath, row.names=F, na="", quote=F)
     return(avgBetas)
 }
@@ -425,13 +425,14 @@ GetProbeAverage <- function(csvColumns, betas, pathwayName){
 #' @param your_genes  a character list of genes i.e. from a file c("ALK","ETMR","HDAC")
 #' @param RGSet  the name or path to your minfi RGset data
 #' @param region string vector of gene selections like c("TSS200", "Body") can one gene region "TSS200"
-GetProbesGenes <- function(your_genes, RGSet, region){
+GetProbesGenes <- function(your_genes, RGSet, region="Island"){
   stopifnot(is.character(your_genes))
-  listRows=10000
+  doParallel::registerDoParallel(cores=6)
+  listRows=15000
   bp <- ifelse((length(region)>1), paste(region, collapse="|"), region)
   annot <- minfi::getAnnotation(RGSet)
   g=NULL
-  geneAnno <- paste(annot$UCSC_RefGene_Name, annot$UCSC_RefGene_Group, sep = "_")
+  geneAnno <- paste(annot$UCSC_RefGene_Name, annot@listData[["Relation_to_Island"]], sep = "_") #annot$UCSC_RefGene_Group
   pick <- function(x, fltr){return(do.call(grepl,c(list(pattern=x), fltr)))}
   z <- foreach::foreach(g = your_genes, .combine = "cbind") %dopar% {
     fltr <- list(x = geneAnno, ignore.case = T)
@@ -547,7 +548,28 @@ CheckGeneOutput <- function(pathwayName) {
         return(FALSE)    
     }
 }
-                                           
+
+CatImg <- function(subTitle, imgFile){
+    cat("\n\n")
+    imgCat <- paste0("![", subTitle, "](", imgFile, ")")
+    cat(imgCat)
+    cat("\n\n")
+    cat("\n\n")
+}
+
+GetAvgBetaAnno <- function(targets, avgBetas, selVars){
+    toKeep <- which(targets[, 1] %in% colnames(avgBetas))
+    targets1 <- targets[toKeep, ]
+    rownames(targets1) <- 1:nrow(targets1)
+    rownames(targets1) <- targets1[, 1]
+    targets1 <- targets1[colnames(avgBetas), ]
+    rownames(targets1) <- 1:nrow(targets1)
+    targets1 <- gb$colorTargets(targets1, varColumns = selVars)
+    ha <- gb$AnnotateHmVars(targets1, varColumns = selVars)
+    ha <- gb$FilterHmAnno(ha, selVars) # drop any unwanted columns
+    ha <- gb$MatchHaLegend(ha, selVars, targets1)
+    return(ha)
+}
 
 GetAvgGeneHeatMap <- function(avgBetas, titleValue, ha, geneNamesHeatMap=T, colSplt = NULL, rwsplt=NULL){
   col_fun2 <- circlize::colorRamp2(c(0, 0.25, 0.5, 0.75, 1), 
@@ -557,11 +579,12 @@ GetAvgGeneHeatMap <- function(avgBetas, titleValue, ha, geneNamesHeatMap=T, colS
    if(geneNamesHeatMap == T){
      geneNamesHeatMap <- toLabRows
    }
+   rowTall <- ifelse(toLabRows==T, 5, 2)
     hmTopNumbers <- ComplexHeatmap::Heatmap(
         avgBetas,
         col = gb$col_fun2,  ## Define the color scale
         cluster_columns = T,  ## Cluster the columns
-        cluster_rows = T,
+        cluster_rows = cluster::diana,
         show_column_names = T,  ## Show the Column Names (which is sample #)
         column_names_gp = gpar(fontsize = 12),  ## Column Name Size
         show_row_names = geneNamesHeatMap,  ## Show Row names (which is probes)
@@ -572,7 +595,7 @@ GetAvgGeneHeatMap <- function(avgBetas, titleValue, ha, geneNamesHeatMap=T, colS
         show_row_dend = F,
         show_column_dend = T,
         width = ncol(avgBetas)*unit(5, "mm"),
-        height = nrow(avgBetas)*unit(2, "mm"),
+        height = nrow(avgBetas)*unit(rowTall, "mm"),
         use_raster=T,
         show_heatmap_legend = T,
         top_annotation = ha,
@@ -599,60 +622,66 @@ GetAvgGeneHeatMap <- function(avgBetas, titleValue, ha, geneNamesHeatMap=T, colS
 }
 
 
-LoopPathwayHeatMap <- function(pathWayGenes, RGSet, betas, targets){
-    #doParallel::registerDoParallel(cores=6)
+LoopPathwayHeatMap <- function(pathWayGenes, RGSet, betas, targets) {
+  cat("\n\n")
+  cat("\n\n")
+  cat("## HeatMaps of Genes In Pathways {.tabset}")
+  cat("\n\n")
+  hmOutPath <- getwd()
+  for (pathRow in 1:nrow(pathWayGenes)) {
+    currPathway <- pathWayGenes[pathRow, ]
+    pathwayName <- paste0(gsub(" ", "_", currPathway$Description))
+    message("Looping Pathway Creation for: ", pathwayName)
+    avgExist <- gb$CheckGeneOutput(pathwayName)
+    avgBetas <- NULL
+    if (avgExist == F) {
+      your_genes <- stringr::str_split(currPathway$geneID, pattern = "/")[[1]]
+      z <- gb$GetProbesGenes(your_genes, RGSet, region = c("Island"))
+      csvColumns <- gb$GetCsvGeneColumns(pathwayName, z)
+      avgBetas <- gb$GetProbeAverage(csvColumns, betas, pathwayName)
+    } else{
+      avgBetas <- read.csv(avgExist)
+    }
+    rwNm = NULL
+    rwNm <- which(colnames(avgBetas) == "XXX")
+    row.names(avgBetas) <- avgBetas[, rwNm]
+    avgBetas <- avgBetas[, -rwNm]
+    titleValue <- paste("Average Probe Beta Values for", currPathway$Description, "Genes")
+    avgBetas <- as.matrix(avgBetas)
+    avgBetas <- na.omit(avgBetas)
+    msgTitle <- paste("###", paste0(currPathway$Description), "\n\n")
     cat("\n\n")
-    hmOutPath <- getwd()
-    for(pathRow in 1:nrow(pathWayGenes)){
-        currPathway <- pathWayGenes[pathRow,]
-        pathwayName <- paste0(gsub(" ", "_", currPathway$Description))
-        message("Looping Pathway Creation for: ", pathwayName)
-        avgExist <- gb$CheckGeneOutput(pathwayName)
-        avgBetas <- NULL
-        if(avgExist==F){
-            your_genes <- stringr::str_split(currPathway$geneID, pattern = "/")[[1]]
-            z <- gb$GetProbesGenes(your_genes, RGSet, region = c('TSS200'))
-            csvColumns <- gb$GetCsvGeneColumns(pathwayName, z)
-            avgBetas <- gb$GetProbeAverage(csvColumns, betas, pathwayName)
-        }else{
-            avgBetas <- read.csv(avgExist)
-            rwNm <- which(colnames(avgBetas)=="X")
-            row.names(avgBetas) <- avgBetas[, rwNm]
-            avgBetas <- avgBetas[, -rwNm]
-        }
-        titleValue <- paste("Average Probe Beta Values for", currPathway$Description, "Genes")
-        avgBetas <- as.matrix(avgBetas)
-        avgBetas <- na.omit(avgBetas)
-        msgTitle <- paste("###", paste0(currPathway$Description), "\n\n")
-        cat("\n\n")  
-        cat(msgTitle)
-        cat("\n\n")
-        outDir <- file.path(".", "figures", "heatmaps")
-        imgFile <- file.path(outDir, paste0("hm_genes_", paste0(currPathway$Description),".png"))
-        if(!file.exists(imgFile)){
+    cat(msgTitle)
+    cat("\n\n")
+    outDir <- file.path(".", "figures", "heatmaps")
+    imgFile <- file.path(outDir, paste0("hm_genes_", pathwayName, ".png"))
+    if (!file.exists(imgFile)) {
+      colnames(avgBetas) <- gsub(".", "-",  colnames(avgBetas), fixed = TRUE)
+      ha <- GetAvgBetaAnno(targets, avgBetas, gb$selectedVars)
+      hm <- gb$GetAvgGeneHeatMap(avgBetas, titleValue, ha, geneNamesHeatMap = T)
+      hm
+      cat("\n\n")
+      gb$SaveHmPng(fi_prefix = "hm_genes_", fi_suffix = ".png", hm, topvar = pathwayName, outDir = NULL)
+    }
+    CatImg(paste0(currPathway$Description), imgFile)
+    if (nrow(avgBetas) >= 50) {
+      imgFile2 <- file.path(outDir, paste0("hm_genes_top_50_", pathwayName, ".png"))
+      msgTitle2 <- paste("###", paste0(currPathway$Description), "Top 50", "\n\n")
+      cat("\n\n")
+      cat(msgTitle2)
+      cat("\n\n")
+      if (!file.exists(imgFile2)) {
+        avgBetas2 <- gb$takeTopVariance(avgBetas, 1:50)
         colnames(avgBetas) <- gsub(".", "-",  colnames(avgBetas), fixed = TRUE)
-        toKeep <- which(targets[,1] %in% colnames(avgBetas))
-        targets1 <- targets[toKeep,]
-        rownames(targets1) <- 1:nrow(targets1)
-        rownames(targets1) <- targets1[,1]
-        targets1 <- targets1[colnames(avgBetas),]
-        rownames(targets1) <- 1:nrow(targets1)
-        targets1 <- gb$colorTargets(targets1, varColumns = gb$selectedVars)
-        ha <- gb$AnnotateHmVars(targets1, varColumns = gb$selectedVars)
-        ha <- gb$FilterHmAnno(ha, gb$selectedVars) # drop any unwanted columns
-        ha <- gb$MatchHaLegend(ha, gb$selectedVars, targets1)
-        hm <- gb$GetAvgGeneHeatMap(avgBetas, titleValue, ha, geneNamesHeatMap = T)
+        ha <- GetAvgBetaAnno(targets, avgBetas, gb$selectedVars)
+        hm <- gb$GetAvgGeneHeatMap(avgBetas2, titleValue, ha, geneNamesHeatMap = T)
         hm
         cat("\n\n")
-        gb$SaveHmPng(fi_prefix= "hm_genes_", fi_suffix=".png", hm, 
-                     topvar = paste0(currPathway$Description), outDir = NULL)
-        }
-        cat("\n\n")
-        imgCat<- paste0("![Pathway](", imgFile, ")")
-        cat(imgCat)
-        cat("\n\n")
-        cat("\n\n")
+        gb$SaveHmPng(fi_prefix = "hm_genes_top_50_", fi_suffix = ".png", hm, topvar = pathwayName, outDir = NULL)
+      }
+      CatImg(paste0(currPathway$Description), imgFile2)
     }
+  }
   cat("\n\n")
 }
 
