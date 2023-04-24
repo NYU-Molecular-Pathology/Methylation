@@ -11,7 +11,7 @@ if(!require("devtools", warn.conflicts = F)){install.packages("devtools", depend
 supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
 supPk <- function(sobj){return(suppressPackageStartupMessages(sobj))}
 supSrt <- function(pk){return(suppressPackageStartupMessages(suppressWarnings(pk)))}
-
+if(!require("knitrProgressBar")){devtools::install_github("rmflight/knitrProgressBar")}
 if(Sys.info()[['sysname']]=="Linux") {
     if(!require("rprofile")){devtools::install_github("csgillespie/rprofile", dependencies = T)}
     rprofile::set_startup_options(show.signif.stars = FALSE, useFancyQuotes = FALSE, Ncpus = parallel::detectCores()-2)
