@@ -126,15 +126,17 @@ calc_ht_size = function(ht, unit = "inch") {
 }
 
 getHeatMap <- function(betaRanges, titleValue, ha, geneNamesHeatMap=F, colSplt = NULL, rwsplt=NULL){
-  col_fun2 <- circlize::colorRamp2(c(0, 0.25, 0.5, 0.75, 1), c("darkblue","deepskyblue", "white", "tomato","red"))  
-  titleOfPlot <- paste("Heatmap of",titleValue,sep = " ")
-  try(knitr::opts_chunk$set(out.width='100%'), silent=T)
+    col_fun2 <- circlize::colorRamp2(c(0, 0.25, 0.5, 0.75, 1), c("darkblue","deepskyblue", "white", "tomato","red"))  
+    titleOfPlot <- paste("Heatmap of", titleValue, sep = " ")
+    toLabRows <- ifelse(nrow(betaRanges)<=60, T, F)
+    geneNamesHeatMap <- ifelse(geneNamesHeatMap == T, toLabRows, F)
+    rowTall <- ifelse(toLabRows==T, 5, 2)
+    try(knitr::opts_chunk$set(out.width='100%'), silent=T)
     hmTopNumbers <- ComplexHeatmap::Heatmap(
         betaRanges,
         col = gb$col_fun2,  ## Define the color scale
         cluster_columns = T,  ## Cluster the columns
-        #cluster_rows = rowcluster,
-        #raster_resize_mat = TRUE,
+        cluster_rows = cluster::diana,
         show_column_names = T,  ## Show the Column Names (which is sample #)
         column_names_gp = gpar(fontsize = 12),  ## Column Name Size
         show_row_names = geneNamesHeatMap,  ## Show Row names (which is probes)
@@ -144,27 +146,30 @@ getHeatMap <- function(betaRanges, titleValue, ha, geneNamesHeatMap=F, colSplt =
         row_title_gp = gpar(fontsize = 12, fontface = "bold"),
         show_row_dend = F,
         show_column_dend = T,
+        width = ncol(betaRanges)*unit(5, "mm"),
+        height = nrow(betaRanges)*unit(rowTall, "mm"),
         use_raster=T,
         show_heatmap_legend = T,
         top_annotation = ha,
         column_title = titleOfPlot,
-        column_title_gp = gpar(fontsize = 14,fontface = "bold"),
+        column_title_gp = gpar(fontsize = 12,fontface = "bold"),
         raster_device = "CairoPNG",
-        raster_quality = 3,
+        raster_quality = 1,
+        raster_resize_mat = TRUE,
         heatmap_legend_param = list(
             title = "Beta Value",
-            #legend_height = unit(5, "in"),
-            labels_gp = gpar( fontsize = 12),
-            title_gp = gpar(fontsize = 12, fontface = "bold"),
+            labels_gp = gpar( fontsize = 14),
+            title_gp = gpar(fontsize = 14, fontface = "bold"),
             legend_direction = "vertical",
             heatmap_legend_side = "right", annotation_legend_side = "right",
             legend_height =  unit(2.5, "in")
         ),
+        #heatmap_width = unit(hm_width, "cm"),
+        #heatmap_height = unit(hm_ht, "cm"),
         column_split = colSplt,
-        row_split= rwsplt,
-        heatmap_width = unit(10, "in"),
-        heatmap_height = unit(20, "in")
+        row_split = rwsplt
     )
+    GetHmDimensions(hmTopNumbers)
     #size = gb$calc_ht_size(hmTopNumbers)
     return(gb$drawHeatMap(hmTopNumbers))
 }
