@@ -125,12 +125,16 @@ calc_ht_size = function(ht, unit = "inch") {
     c(w, h)
 }
 
-getHeatMap <- function(betaRanges, titleValue, ha, geneNamesHeatMap=F, colSplt = NULL, rwsplt=NULL){
+getHeatMap <- function(betaRanges, titleValue, ha, geneNams=F, colSplt = NULL, rwsplt=NULL){
     col_fun2 <- circlize::colorRamp2(c(0, 0.25, 0.5, 0.75, 1), c("darkblue","deepskyblue", "white", "tomato","red"))  
     titleOfPlot <- paste("Heatmap of", titleValue, sep = " ")
     toLabRows <- ifelse(nrow(betaRanges)<=60, T, F)
-    geneNamesHeatMap <- ifelse(geneNamesHeatMap == T, toLabRows, F)
+    geneNams <- ifelse(geneNams == T, toLabRows, F)
     rowTall <- ifelse(toLabRows==T, 5, 2)
+    shrinkRows <- ifelse(nrow(betaRanges)>=900, T, F)
+    if(shrinkRows == T){
+        rowTall <- 0.5
+    }
     try(knitr::opts_chunk$set(out.width='100%'), silent=T)
     hmTopNumbers <- ComplexHeatmap::Heatmap(
         betaRanges,
@@ -139,7 +143,7 @@ getHeatMap <- function(betaRanges, titleValue, ha, geneNamesHeatMap=F, colSplt =
         cluster_rows = cluster::diana,
         show_column_names = T,  ## Show the Column Names (which is sample #)
         column_names_gp = gpar(fontsize = 12),  ## Column Name Size
-        show_row_names = geneNamesHeatMap,  ## Show Row names (which is probes)
+        show_row_names = geneNams,  ## Show Row names (which is probes)
         row_names_side = "left",
         row_title_side = "left",
         row_names_gp = gpar(fontsize = 10),
@@ -334,7 +338,7 @@ grabProbes <- function(your_genes, RGSet, region){
 SaveHmPng <- function(fi_prefix, fi_suffix, hm, topvar = "", outDir=NULL) {
   if(is.null(outDir)){outDir <- file.path(".", "figures", "heatmaps")}
   if(!dir.exists(outDir)){dir.create(outDir)}
-  imgFile <- file.path(outDir, paste0(fi_prefix, topvar, fi_suffix))
+  imgFile <- file.path(outDir, paste0(fi_prefix, "_", topvar, "_", fi_suffix, ".png"))
   wd <- as.numeric(hm@ht_list_param[["width"]]) + 5
   ht <- as.numeric(hm@ht_list_param[["height"]]) + 5
   png(
@@ -346,7 +350,7 @@ SaveHmPng <- function(fi_prefix, fi_suffix, hm, topvar = "", outDir=NULL) {
   )
   ComplexHeatmap::draw(hm)
   invisible(dev.off())
-}                                
+}                               
 
                                            
 # FUN: Alternate heatmap function                                           
@@ -691,7 +695,7 @@ LoopPathwayHeatMap <- function(pathWayGenes, RGSet, betas, targets) {
 }
 
                                            
-LoopSaveHm <- function(hm.db, varProbes, fi_prefix = "hm_top_", fi_suffix = "_notAnnot.png"){
+LoopSaveHm <- function(hm.db, varProbes, fi_prefix = "hm_top", fi_suffix = "notAnnot"){
   for (tn in 1:length(varProbes)) {
       hm <- hm.db[[tn]]
       hmOutPath <- file.path(".", "figures", "heatmaps")
