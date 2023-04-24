@@ -297,8 +297,7 @@ FormatPlotTargets <- function(targets, samGroup, samShapes, samNames, targFilter
 
 
 subsetBetas <- function(targFilter, samGroup, betas, targets, samShapes, samNames,
-                        tsne_titles, doPlotly = F, supervised = F, names2Label = NULL)
-{
+                        tsne_titles, doPlotly = F, supervised = F, names2Label = NULL){
     targets <- FormatPlotTargets(targets, samGroup, samShapes, samNames, targFilter)
     tps <- as.data.frame(unique(targets$SamGroups))
     ty = NULL
