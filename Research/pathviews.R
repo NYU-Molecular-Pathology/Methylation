@@ -196,7 +196,8 @@ GetMappedIds <- function(gene_char_unique){
 }
 
 GetkkDotPlot <- function(termNames, enrichType="NCG", qVa=0.2, pVa=0.05){
-    kkTtl <- paste("Top", enrichType, 
+  data(geneList, package="DOSE")  
+  kkTtl <- paste("Top", enrichType, 
                    "Enriched Pathways qValue <", qVa ,"& pValue <", pVa )
     if(enrichType == "NCG"){
       kk <- DOSE::enrichNCG(names(termNames), qvalueCutoff = qVa, pvalueCutoff = pVa, universe = NULL)
@@ -219,21 +220,24 @@ GetkkDotPlot <- function(termNames, enrichType="NCG", qVa=0.2, pVa=0.05){
       }else{
         cat("\n\n")
         cat(paste("###", "Dotplot", enrichType, "Enriched Paths", "\n\n"))
-        print(enrichplot::dotplot(kk, title = kkTtl) + theme(text = element_text(size = 12)))
+        try(print(enrichplot::dotplot(kk, title = kkTtl, showCategory=10) +
+                    theme(text = element_text(size = 12))), silent=T)
         cat("\n\n")
         cat(paste("###", "BarPlot", enrichType, "Enriched Paths", "\n\n"))
-        print(graphics::barplot(kk) + ggplot2::ggtitle(kkTtl) + theme(text=element_text(size=12)))
+        try(print(graphics::barplot(kk) + ggplot2::ggtitle(kkTtl) +
+                    theme(text=element_text(size=12))), silent = T)
         cat("\n\n")
         return(kk)
         }
 }
 
 
-PrintKkDotPlots <-function(termNames){
+PrintKkDotPlots <- function(termNames){
   edo <- GetkkDotPlot(termNames, enrichType = "NCG", qVa= 0.2, pVa = 0.05)
   kk <- GetkkDotPlot(termNames, enrichType = "KEGG", qVa= 0.2, pVa = 0.05)
   return(list("edo" = edo, "kk" = kk))
 }
+
 
 entrz2kegg <- function(gene_char_unique) {
     if (!require("ggstar")) {install.packages("ggstar", ask = F)}
@@ -245,6 +249,7 @@ entrz2kegg <- function(gene_char_unique) {
     requireNamespace("clusterProfiler")
     requireNamespace("enrichplot")
     mappedIDs <- GetMappedIds(gene_char_unique)
+    mappedIDs <- unique(mappedIDs)
     termNames <- gb$supM(
       AnnotationDbi::mapIds(org.Hs.eg.db, keys = mappedIDs, column = "SYMBOL", 
                             keytype = "ENTREZID", multiVals = "filter", fuzzy = T)
@@ -327,42 +332,39 @@ LoopSaveHsaPng <- function(pathWayGenes, pathCsvOut){
 }
 
 
-WritePathVals <- function(geneVals, geneListIn){
+WritePathVals <- function(geneVals, geneListIn, pathNum=c(1:35)){
     # Sort lowest Pvalues and lowest qvalue
     message("Min p-value: ", min(geneVals$pvalue))
     cat("\n\n")
-    print(htmltools::tagList(DT::datatable(
-        geneVals[order(geneVals$pvalue), 1:ncol(geneVals)], options = list(rownames=F))))
+    print(htmltools::tagList(DT::datatable(geneVals[order(geneVals$pvalue), 1:ncol(geneVals)], options = list(rownames=F))))
     cat("\n\n")
     topPaths <- geneVals[order(geneVals$qvalue),]
     if(nrow(topPaths) >=10){
-      topPaths <- topPaths[1:10,] # take top 10 pathways
+      topPaths <- topPaths[pathNum,] # take top 10 pathways
     }
     pathWayGenes <- as.data.frame(topPaths)
     pathOutFi <- file.path(getwd(),"figures","pathway", geneListIn)
     if(!dir.exists(dirname(pathOutFi))){dir.create(dirname(pathOutFi))}
     write.csv(pathWayGenes, file = pathOutFi, row.names = F, quote = F)
-    cat("\n\n")
-    cat("## HeatMaps of Genes In Pathways {.tabset}")
-    cat("\n\n")
     return(pathWayGenes)
 }
-
 
 GetKeggGeneVals <- function(RGSet, targets, nameGrp=NULL, gb) {
     if(is.null(nameGrp)){
       nameGrp <- unique(targets[,gb$col_samGrp])[1]
     }
-  
-    gset.funnorm <- gb$grabGsetFun(RGSet, targets, gb)
-    condition <- minfi::pData(gset.funnorm)[,gb$col_samGrp] == nameGrp
-    gene_char_unique <- gb$getDmpData(gb$ClusfiNam, gset.funnorm, condition, gb)
-    
+    allUniqueGenes <- file.path(getwd(), "data", "gene_char_unique.rds")
+    if(!file.exists(allUniqueGenes)){
+      gset.funnorm <- gb$grabGsetFun(RGSet, targets, gb)
+      condition <- minfi::pData(gset.funnorm)[,gb$col_samGrp] == nameGrp
+      gene_char_unique <- gb$getDmpData(gb$ClusfiNam, gset.funnorm, condition, gb)  
+      saveRDS(gene_char_unique, allUniqueGenes)
+    }else{
+      gene_char_unique <- readRDS(allUniqueGenes)
+    }
     kkData <- gb$entrz2kegg(gene_char_unique)
     kk_final <- DOSE::setReadable(kkData$kk, OrgDb = org.Hs.eg.db::org.Hs.eg.db, keyType = "ENTREZID")
-    
     geneVals <- kk_final@result
-    
     cat("\n\n")
     if (any(geneVals$pvalue < 0.05)) {
         geneVals <- geneVals[geneVals$pvalue < 0.05, ]
@@ -371,6 +373,7 @@ GetKeggGeneVals <- function(RGSet, targets, nameGrp=NULL, gb) {
     }
     return(list("geneVals" = geneVals, "kkData" = kkData))
 }
+
 
 # Get the current figure size in pixels:
 # get_w <- function() {
