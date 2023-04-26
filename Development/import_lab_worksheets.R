@@ -1,16 +1,25 @@
-## Read Excel Worksheets
-## Jonathan Serrano
-## April 20, 2021
+#!/usr/bin/env Rscript
+## ---------------------------
+## Script name: import_lab_worksheets.R
+## Purpose: Read and Import all Excel Worksheets into REDCap
+## Author: Jonathan Serrano
+## Created: April 20, 2021
+## Copyright (c) NYULH Jonathan Serrano, 2023
+## ---------------------------
 
 api.tkn = "8XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" # REDCap API token
-ws.type = NULL # Default is NULL, options are "DNA" "RNA" "PACT" "FUSION" all will upload if NULL
-doAll = T # Set to TRUE to import all worksheets from this month
-allMths <- F # Set to TRUE to import all worksheets from the input year
-td = Sys.Date() #Sys.Date() # today's date is default can be a manual date "2022-01-26"
-#td = "2022-01-26"
+NULL -> ws.type     # Default is NULL "DNA" "RNA" "PACT" "FUSION" will upload if NULL
+T ->    doAll       # Set TRUE to import all worksheets from current month of td
+F ->    allMths     # Set TRUE to import all worksheets from the input year
+td <-   Sys.Date()  # default Sys.Date() td (today's date) can be a string ie "2022-01-26"
 
+formals(library)$quietly <- T
+formals(library)$warn.conflicts <- F
+formals(require)$warn.conflicts <- F
+formals(install.packages)$dependencies <- T
+formals(install.packages)$verbose <- T
+formals(install.packages)$ask <- F
 options("install.packages.compile.from.source" = "never")
-doPkgs <- c("doSNOW", "doParallel", "doMPI","magrittr","dplyr")
 
 rqPk <- function(pk) {if (!require(pk, character.only = T)) {
     install.packages(pk, warn.conflicts = F, ask = F, dependencies = T, Ncpus = 5)
@@ -39,7 +48,7 @@ check.packages <- function(pkgs = NULL) {
       "tidyverse"
     )
   }
-    if (!require("easypackages")) {install.packages("easypackages", dependencies = T, verbose = T, upgrade = "always")}
+    if (!requireNamespace("easypackages", quietly = T)) {install.packages("easypackages", dependencies = T, verbose = T, upgrade = "always")}
     tryCatch(
         expr = {easypackages::libraries(pkgs)},
         warning = function(cond) {
@@ -55,8 +64,8 @@ Sys.setenv(R_ENABLE_JIT = T)
 compiler::enableJIT(3)
 rqPk("devtools")
 rqPk("pacman")
-pacman::p_load(doPkgs)
-
+if(!requireNamespace("Rmpi", quietly = T)){install.packages("Rmpi",type="source")}
+do.call(pacman::p_load, list("doSNOW", "doParallel","doMPI","magrittr","dplyr"))
 
 mountMsg <- function(msg) {
   if (msg == 1) {cat(crayon:::bgBlue("\nChecking files... "))}
@@ -75,12 +84,12 @@ Check.File.Paths <- function(ws.type, ws) {
   cat(" ", folder.found)
   if (folder.found) {
     mountMsg(1)
-
   } else {
     mountMsg(2)
   }
   stopifnot(folder.found)
 }
+
 
 removePattern <- function(file.list,file.patterns=NULL) {
   if(is.null(file.patterns)){
@@ -237,8 +246,7 @@ read.fusion.ws <- function(run.fis, ws) {
         ) %dopar% {
             return(clean.fusion(run.fis, ws, mgfs))
         }
-    drpSam <-
-        !grepl(paste(cntrls, collapse = "|"), dat.io[, 2], ignore.case = T)
+    drpSam <- !grepl(paste(cntrls, collapse = "|"), dat.io[, 2], ignore.case = T)
     return(dat.io[drpSam, c(2, 3, 1, 4, 5)])
 }
 
@@ -612,6 +620,7 @@ if(allMths==T){
 }else{
     SheetsIntoRedcap(api.tkn, ws.type, doAll, td)
 }
+
 
 # # cronR Job start --------------------------------------------------
 # if(!require("cronR")){install.packages("cronR")};library("cronR")
