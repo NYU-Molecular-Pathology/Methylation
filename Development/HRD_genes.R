@@ -40,9 +40,28 @@ myLoad <- champ.load(RGsetEPIC)
 myNorm <- champ.norm(myLoad)
 
 # Calculate Log R Ratio (LRR) and B Allele Frequency (BAF)
-lrr <- myNorm$lrr
-baf <- myNorm$baf
+# Preprocess the data using preprocessNoob from minfi package
+noob_data <- minfi::preprocessNoob(RGset)
 
+# Custom function to calculate Log R Ratio (LRR)
+calculateLRR <- function(Mset) {
+  green <- minfi::getGreen(Mset)
+  red <- minfi::getRed(Mset)
+  lrr <- log2(green + red)
+  return(lrr)
+}
+
+# Custom function to calculate B Allele Frequency (BAF)
+calculateBAF <- function(Mset) {
+  green <- minfi::getGreen(Mset)
+  red <- minfi::getRed(Mset)
+  baf <- green / (green + red)
+  return(baf)
+}
+
+# Calculate LRR and BAF values
+lrr <- calculateLRR(noob_data)
+baf <- calculateBAF(noob_data)
 
 # Extract the CNV values for the specific genes
 cnv_values_list <- list()
