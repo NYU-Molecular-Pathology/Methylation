@@ -1,8 +1,22 @@
+import subprocess
+import sys
 import os
 import numpy as np
 import pandas as pd
-from methylprep import process
-import methylcheck
+
+
+def install(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
+def check_and_install(package):
+    try:
+        __import__(package)
+    except ImportError:
+        install(package)
+
+
+check_and_install("methylprep")
+check_and_install("methylcheck")
 
 def calculate_lrr_baf_tumor_purity(idat_path):
     # Process the .idat files using methylprep
