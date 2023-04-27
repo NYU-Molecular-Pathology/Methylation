@@ -1,0 +1,63 @@
+
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+  install.packages("BiocManager")
+}
+
+BiocManager::install("conumee")
+BiocManager::install("minfi")
+BiocManager::install("minfiDataEPIC")
+BiocManager::install("org.Hs.eg.db")
+BiocManager::install("TxDb.Hsapiens.UCSC.hg19.knownGene")
+BiocManager::install("ChAMP")
+BiocManager::install("minfiDataEPIC")
+
+library(ChAMP)
+library(minfiDataEPIC)
+library(conumee)
+library(minfi)
+library(minfiDataEPIC)
+library(org.Hs.eg.db)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+
+# Load the example data "RGsetEPIC"
+data("RGsetEPIC")
+
+# Define gene list and cytobands
+genes <- c("BRCA1", "BRCA2", "ATM", "RAD51C")
+gene_symbols <- org.Hs.eg.db::select(org.Hs.eg.db, keys=genes, columns=c("SYMBOL", "TXCHROM", "TXSTART", "TXEND"), keytype="SYMBOL")
+cyto_bands <- TxDb.Hsapiens.UCSC.hg19.knownGene::get_cytoband(TxDb.Hsapiens.UCSC.hg19.knownGene)
+
+# Preprocess the data and calculate CNV values
+MsetEPIC <- minfi::preprocessIllumina(RGsetEPIC, bg.correct = TRUE, normalize = "controls")
+beta_values <- minfi::getBeta(MsetEPIC)
+
+
+# Load the example data "RGsetEPIC"
+data("RGsetEPIC")
+
+# Preprocess the data using ChAMP package
+myLoad <- champ.load(RGsetEPIC)
+myNorm <- champ.norm(myLoad)
+
+# Calculate Log R Ratio (LRR) and B Allele Frequency (BAF)
+lrr <- myNorm$lrr
+baf <- myNorm$baf
+
+
+# Extract the CNV values for the specific genes
+cnv_values_list <- list()
+
+for (gene in gene_symbols$SYMBOL) {
+  gene_info <- gene_symbols[gene_symbols$SYMBOL == gene, ]
+  chromosome <- as.numeric(gsub("chr", "", gene_info$TXCHROM))
+  start <- gene_info$TXSTART
+  end <- gene_info$TXEND
+  
+  gene_cnv_values <- cnv_data[chromosome, start:end, , drop = FALSE]
+  cnv_values_list[[gene]] <- gene_cnv_values
+}
+
+output_file <- "cnv_values_genes.csv"
+cnv_values_df <- do.call(cbind, cnv_values_list)
+write.csv(cnv_values_df, output_file, row.names = FALSE)
+
