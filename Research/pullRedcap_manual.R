@@ -1,4 +1,11 @@
 #!/usr/bin/env R
+## ---------------------------
+## Script name: pullRedcap_manual.R
+## Purpose: source of global scripts imported for copying idat files to cwd and create minfi samplesheet.csv
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2023
+## ---------------------------
+
 library("base"); gb <- globalenv(); assign("gb", gb)
 formals(library)$quietly <- T
 formals(library)$warn.conflicts <- F
@@ -8,7 +15,7 @@ formals(install.packages)$verbose <- T
 formals(install.packages)$ask <- F 
 
 args <- commandArgs(T)
-if(!require("devtools")){install.packages("devtools", quiet=T)}
+if(!requireNamespace(quietly=T, "devtools")){install.packages("devtools", quiet=T)}
 
 # Input Arguments ------------------------------------------
 try(args[1] -> token)
@@ -29,7 +36,7 @@ flds = c("record_id","b_number","tm_number","accession_number","block","diagnosi
          "organ","tissue_comments","run_number", "nyu_mrn")
 
 # Load redcapAPI Package -----
-if(suppressWarnings(!require("redcapAPI"))){
+if(suppressWarnings(!requireNamespace(quietly=T, "redcapAPI"))){
     params=list('nutterb/redcapAPI', dependencies=T, upgrade="always", type="source")
     do.call(devtools::install_github,c(params))
 }
@@ -57,19 +64,19 @@ loadPacks <- function(){
     rlis["CRAN"] = "http://cran.us.r-project.org"
     options(repos = rlis)
     if (Sys.info()[['sysname']]=="Darwin") {
-             bothType <- "both"         
+        bothType <- "both"
     }else{
-             bothType <- "source"    
+        bothType <- "source"
     }
     invisible(lapply(pkgs, function(pk){
-        if(suppressWarnings(!require(pk, character.only=T))){
+        if(suppressWarnings(!requireNamespace(quietly=T, pk, character.only=T))){
             install.packages(pk,dependencies=T, verbose=T, repos="http://cran.us.r-project.org", type=bothType)
         }}))
-    if(!require("redcapAPI")){install.packages("redcapAPI", dependencies = T, type=bothType,ask=F)}
-    if(!require("remotes")){install.packages("remotes", dependencies=T)}
+    if(!requireNamespace(quietly=T, "redcapAPI")){install.packages("redcapAPI", dependencies = T, type=bothType,ask=F)}
+    if(!requireNamespace(quietly=T, "remotes")){install.packages("remotes", dependencies=T)}
     library("redcapAPI")
     library(dplyr)
-    require('foreach')
+    requireNamespace(quietly=T, 'foreach')
 }
 
 # API Call functions -----
@@ -103,7 +110,7 @@ sourceFuns <- function(workingPath = NULL) {
 readInfo <- function(inputSheet) {
     # Detect if file is xlsx or csv
     readFlag <- endsWith(inputSheet,".csv")==T
-    
+
     if (readFlag == T) {
         message("FileType is .csv, executing read.delim...")
         rds <- read.delim(inputSheet, sep=",", colClasses=character(), row.names=NULL)[,1]
@@ -138,14 +145,14 @@ makeSampleSheet <- function(df, samplesheet_ID, bn = NULL, outputFi="samplesheet
     )
     samplesheet_csv <- samplesheet_csv[!is.na(samplesheet_csv$SentrixID_Pos),]
     toDrop <- stringr::str_detect(samplesheet_csv$SentrixID_Pos, "DUPLICATE")
-         if(any(toDrop)==T){
-                  message("Dropping duplicated samples!!")
-                  otherCsv <- samplesheet_csv[toDrop,]
-                  message(paste0(capture.output(otherCsv), collapse="\n"))
-                  write.csv(otherCsv, file = "duplicated_samples.csv", quote = F,row.names = F)
-         }
+    if(any(toDrop)==T){
+        message("Dropping duplicated samples!!")
+        otherCsv <- samplesheet_csv[toDrop,]
+        message(paste0(capture.output(otherCsv), collapse="\n"))
+        write.csv(otherCsv, file = "duplicated_samples.csv", quote = F,row.names = F)
+    }
     toKeep <- stringr::str_detect(samplesheet_csv$SentrixID_Pos, "DUPLICATE", T)
-    samplesheet_csv <- samplesheet_csv[toKeep,]     
+    samplesheet_csv <- samplesheet_csv[toKeep,]
     write.csv(samplesheet_csv, file = outputFi, quote = F,row.names = F)
 }
 
@@ -170,31 +177,31 @@ grabRDCopyIdat <- function(rd_numbers, token, copyIdats=T, outputFi="samplesheet
 }
 
 fillMissingDat <- function(targets, col_samNames="Sample_Name", originalFi="samplesheet_og.csv"){
-  newTarg <- read.csv(originalFi, strip.white=T, row.names=NULL)
-  targets <- merge(newTarg,targets, by=col_samNames, all=F, suffixes = c("",".xyzq"))
-  dupeDrop <- grepl(".xyzq", colnames(targets))==F
-  targets <- targets[,dupeDrop]
-  write.csv(targets, file="samplesheet.csv", quote=F, row.names=F)
-  targets <- read.csv("samplesheet.csv", strip.white=T, row.names=NULL)
-  if(class(targets)!="data.frame"){targets <- as.data.frame(targets)}
-  return(targets)
+    newTarg <- read.csv(originalFi, strip.white=T, row.names=NULL)
+    targets <- merge(newTarg,targets, by=col_samNames, all=F, suffixes = c("",".xyzq"))
+    dupeDrop <- grepl(".xyzq", colnames(targets))==F
+    targets <- targets[,dupeDrop]
+    write.csv(targets, file="samplesheet.csv", quote=F, row.names=F)
+    targets <- read.csv("samplesheet.csv", strip.white=T, row.names=NULL)
+    if(class(targets)!="data.frame"){targets <- as.data.frame(targets)}
+    return(targets)
 }
 
 fixBaseName <- function(targets, runDir, col_sentrix) {
-  if(class(targets)!="data.frame"){targets <- as.data.frame(targets)}
-  stopifnot(col_sentrix %in% colnames(targets))
-  senCol <- min(which(grepl(col_sentrix, colnames(targets)) == T))
-  targets$Basename <- file.path(runDir, targets[, senCol]) # writes path to idat files
-  return(targets)
+    if(class(targets)!="data.frame"){targets <- as.data.frame(targets)}
+    stopifnot(col_sentrix %in% colnames(targets))
+    senCol <- min(which(grepl(col_sentrix, colnames(targets)) == T))
+    targets$Basename <- file.path(runDir, targets[, senCol]) # writes path to idat files
+    return(targets)
 }
 
 FixBaseName <- function(targets, runDir=NULL, col_sentrix) {
     if(is.null(runDir)){runDir <- file.path(getwd(), "idats")}
-  if(class(targets)!="data.frame"){targets <- as.data.frame(targets)}
-  stopifnot(col_sentrix %in% colnames(targets))
-  senCol <- min(which(grepl(col_sentrix, colnames(targets)) == T))
-  targets$Basename <- file.path(runDir, targets[, senCol]) # writes path to idat files
-  return(targets)
+    if(class(targets)!="data.frame"){targets <- as.data.frame(targets)}
+    stopifnot(col_sentrix %in% colnames(targets))
+    senCol <- min(which(grepl(col_sentrix, colnames(targets)) == T))
+    targets$Basename <- file.path(runDir, targets[, senCol]) # writes path to idat files
+    return(targets)
 }
 
 # Search REDCap Worksheets for MRN Match for output -------------------------------------
@@ -203,10 +210,10 @@ if (Sys.info()[['sysname']]=="Darwin") {checkMounts()}
 sourceFuns()
 
 if(length(inputSheet) >0 & length(token)>0){
-         if(!is.na(inputSheet) & !is.na(token)){
-                  rds <- readInfo(inputSheet)
-                  grabRDCopyIdat(rd_numbers=rds, token=token)
-         }
+    if(!is.na(inputSheet) & !is.na(token)){
+        rds <- readInfo(inputSheet)
+        grabRDCopyIdat(rd_numbers=rds, token=token)
+    }
 }
 
 # Example Use
