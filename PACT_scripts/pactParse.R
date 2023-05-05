@@ -1,6 +1,14 @@
 #!/usr/bin/env Rscript
+## ---------------------------
+## Script name: pactParse.R
+## Purpose: source of global scripts and generate PACT -SampleSheet.csv file
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2023
+## ---------------------------
+
 library("base"); args <- commandArgs(TRUE); gb <- globalenv(); assign("gb", gb)
-dsh<-"\n================"; dsh2<-"\n==========================\n"
+dsh<-"\n================" 
+dsh2<-"\n==========================\n"
 
 # Main arguments input in comandline (Uncomment to Debug or run Locally) -----------------------
 args[1] -> token        #<- '8XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' = APITOKEN
@@ -36,7 +44,7 @@ GetPhilipsColumns <- function() {
         "MRN", "Test Name", "Tumor Specimen ID", "Normal Specimen ID", "Test Number",
         "Epic Order Number", "Diagnosis for interpretation", "Tumor DNA/RNA Number",
         "Normal DNA/RNA Number","Tumor Percentage"
-        )
+    )
     return(filterColumns)
 }
 
@@ -103,17 +111,17 @@ sanitizeSheet <- function(mainSheet){
         MsgDF(mainSheet$Tumor_Type[spacedTxt])
     }
     mainSheet$Tumor_Type <- gsub(" ", "-", mainSheet$Tumor_Type)
-
+    
     MsgChangesMade(mainSheet)
     MsgChangesMade(mainSheet, " ")
     MsgChangesMade(mainSheet, "[\r\n]")
-
+    
     for(i in 1:ncol(mainSheet)){
         mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub("[\r\n]", "", x) })
         mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub(",", "", x) })
         mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub(" ", "", x) })
     }
-
+    
     mainSheet$Paired_Normal[mainSheet$Paired_Normal==0|is.na(mainSheet$Paired_Normal)] <-""
     mainSheet$Tumor_Type[mainSheet$Tumor_Type==0] <- "NA"
     mainSheet[,1:16] <- sapply(mainSheet[,1:16], function(x) { gsub("\\\\", "-", x) })
@@ -182,7 +190,7 @@ WriteFileHeader <- function(inputFi){
         "AdapterSequenceRead1",
         "AdapterSequenceRead2"
     )
-
+    
     header2 <- c(
         "",
         "4",
@@ -204,7 +212,7 @@ WriteFileHeader <- function(inputFi){
     )
     theHeader <- cbind(header1,header2)
     return(theHeader)
-
+    
 }
 
 
@@ -253,13 +261,13 @@ AddSampleIndexes <- function(pairedList, rawSheetData, philipsExport){
     mainSheet <- data.frame(matrix("", nrow = nrow(pairedList), ncol = 0))
     mainSheet$Sample_Name <- mainSheet$Sample_ID <- paste(pairedList[, 1])
     mainSheet$Paired_Normal <- ""
-
+    
     if(length(mainSheet$Paired_Normal[sheetTumors])!=length(paste(mainSheet$Sample_ID[sheetNormals]))){
         suppressWarnings(mainSheet$Paired_Normal[sheetTumors] <- paste(mainSheet$Sample_ID[sheetNormals]))
         theSampleIdEx <- paste(mainSheet$Sample_ID[sheetNormals])
         extraIndex <- which(theSampleIdEx %in% mainSheet$Paired_Normal[sheetTumors] == F)
         message(crayon::bgRed(paste(length(extraIndex),
-                "Samples are extra normals and will need to be added manually:")))
+                                    "Samples are extra normals and will need to be added manually:")))
         thenNext <- theSampleIdEx[extraIndex]
         MsgDF(thenNext)
         newNormList <- paste(mainSheet$Sample_ID[sheetNormals])[-extraIndex]
@@ -272,10 +280,10 @@ AddSampleIndexes <- function(pairedList, rawSheetData, philipsExport){
             mainSheet <- mainSheet[-missingTumorNorm,]
             rownames(mainSheet) <- 1:nrow(mainSheet)
         }
-        }else{
-            mainSheet$Paired_Normal[sheetTumors] <- paste(mainSheet$Sample_ID[sheetNormals])
+    }else{
+        mainSheet$Paired_Normal[sheetTumors] <- paste(mainSheet$Sample_ID[sheetNormals])
     }
-
+    
     mainSheet$I7_Index_ID <- paste(rawSheetData$I7_Index_ID)
     mainSheet$index <- paste(rawSheetData$index)
     mainSheet$Specimen_ID <- paste(rawSheetData$`Accession#`)
@@ -347,14 +355,14 @@ CheckMissingPairs <- function(ngsNumbers, philipsT, philipsN){
         message(crayon::bgRed("Some samples are missing tumor/normal pairs:"))
         message(ngsNumbers[missingPair],"\nPhilips Normal: ", philipsN[missingPair], "\nPhilips Tumor: ", philipsT[missingPair])
     }
-
+    
     if(any(is.na(philipsN)|philipsN==0)){
         philipsN[is.na(philipsN)] <- 0
         missingPair <- which(philipsN==0)
         message(crayon::bgRed("Some samples are missing tumor/normal pairs:"))
         message(ngsNumbers[missingPair],"\nPhilips Normal: ", philipsN[missingPair], "\nPhilips Tumor: ", philipsT[missingPair])
     }
-
+    
     if(any(philipsN %in% philipsT)){
         theDupe <- which(philipsN %in% philipsT ==T)
         message(crayon::bgRed("Some Philips samples have the same tumor/normal accession number:"))
@@ -402,7 +410,7 @@ CheckTotalIndexes <- function(tumorSam, normalSam, ngsNumbers, sheetType = "Phil
         }
         message("Extra ", length(which(totalDrop==F)), " cases...")
     }
-
+    
 }
 
 GetIndexMatch <- function(rawSheetData, philipsExport){
@@ -411,15 +419,15 @@ GetIndexMatch <- function(rawSheetData, philipsExport){
     philipsN <- c(philipsExport$`Normal Specimen ID`)
     philipsT <- c(philipsExport$`Tumor Specimen ID`)
     ngsNumbers <- philipsExport$`Test Number`
-
+    
     CheckMissingPairs(ngsNumbers, philipsT, philipsN)
-
+    
     philipsIdxT <- CheckDupesMatch(philipsT, accessions)
     philipsIdxN <- CheckDupesMatch(philipsN, accessions)
-
+    
     wetLabIdxT <- CheckDupesMatch(accessions, philipsT)
     wetLabIdxN <- CheckDupesMatch(accessions, philipsN)
-
+    
     if(length(philipsIdxT) != length(philipsIdxN)){
         message("Total Tumors: ", length(philipsIdxT))
         message("Total Normals: ", length(philipsIdxN))
@@ -441,7 +449,7 @@ GetIndexMatch <- function(rawSheetData, philipsExport){
         }
         message("Extra ", length(which(totalDrop==F)), " cases...")
     }
-
+    
     if(length(wetLabIdxT) != length(wetLabIdxN)){
         message("Total Tumors: ", length(wetLabIdxT))
         message("Total Normals: ", length(wetLabIdxN))
@@ -462,16 +470,16 @@ GetIndexMatch <- function(rawSheetData, philipsExport){
             wetLabIdxN <- c(wetLabIdxN, rep(0,totalAdd))
             message("Extra ", length(which(totalDrop==F)), " cases...")
         }
-
+        
     }
-
+    
     idx <- data.frame(
         philipsT = philipsIdxT,
         philipsN = philipsIdxN,
         wetLabT = wetLabIdxT,
         wetLabN = wetLabIdxN
     )
-
+    
     return(idx)
 }
 
@@ -590,10 +598,12 @@ GetRawSamplesheet <- function(inputFi){
 }
 
 WriteMainSheet <- function(mainSheet, sheetHead){
-    outFile <- file.path("~","Desktop",paste(mainSheet[1,"Run_Number"],"SampleSheet.csv",sep="-"))
+    xlRunId <- mainSheet[1, "Run_Number"]
+    runIdFi <- paste(xlRunId,  "SampleSheet.csv", sep = "-")
+    outFile <- file.path(fs::path_home(), "Desktop", runIdFi)
     write.table(sheetHead, sep=",", file=outFile, row.names=F, col.names=F, quote=F)
     message("Writing file output: ", outFile)
-    suppressWarnings(write.table(mainSheet,sep=",", file=outFile, row.names=F, col.names=T, append=T,quote=F))
+    suppressWarnings(write.table(mainSheet, sep=",", file=outFile, row.names=F, col.names=T, append=T, quote=F))
     return(outFile)
 }
 
@@ -674,8 +684,40 @@ emailNotify <- function(record, rcon){
     record$pact_csv_email <- "pact_csv_email"
     datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
     PostRedcapCurl(rcon, datarecord)
-    message("\n",dsh2,"Email Notification Created",dsh2)
+    message("\n", dsh2, "Email Notification Created", dsh2)
 }
+
+
+callApiFileCsv <- function(rcon, recordName, fiPath, ovwr = T) {
+    message("\n", gb$mkBlue("Importing Record File:"), paste0(" ", fiPath))
+    if (ovwr == F) {
+        writeLogFi(recordName)
+    } else{
+        fld <- "pact_csv_sheet"
+        body <- list(
+            token = rcon$token,
+            content = 'file',
+            action = 'import',
+            record = recordName,
+            field = fld,
+            file = httr::upload_file(fiPath),
+            returnFormat = 'csv'
+        )
+        res <-
+            tryCatch(
+                httr::POST(url = rcon$url, body = body, config = rcon$config),
+                error = function(cond){
+                    list(status_code = "200")
+                }
+            )
+        if(res$status_code=="200"){
+            message("REDCap file upload successful: ", fiPath)
+        }else{
+            message("REDCap file upload failed: ", fiPath)
+        }
+    }
+}
+
 
 # Connect to REDCap and send email attachments of csv file ----
 pushToRedcap <- function(outVals, token=NULL) {
@@ -686,6 +728,7 @@ pushToRedcap <- function(outVals, token=NULL) {
     record = data.frame(record_id = runID, pact_run_number = runID)
     datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox = T)
     PostRedcapCurl(rcon, datarecord, retcon='nothing')
+    callApiFileCsv(rcon, runID, outFile, ovwr = T)
     tryCatch(
         redcapAPI::importFiles(rcon = rcon, file = outFile, record = runID, field = "pact_csv_sheet", repeat_instance = 1),
         error=function(e){message("REDCap file upload error failed:\n", e)}
