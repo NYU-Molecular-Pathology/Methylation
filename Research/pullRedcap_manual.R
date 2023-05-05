@@ -15,7 +15,7 @@ formals(install.packages)$verbose <- T
 formals(install.packages)$ask <- F 
 
 args <- commandArgs(T)
-if(!requireNamespace(quietly=T, "devtools")){install.packages("devtools", quiet=T)}
+if(!require(quietly=T, "devtools")){install.packages("devtools", quiet=T)}
 
 # Input Arguments ------------------------------------------
 try(args[1] -> token)
