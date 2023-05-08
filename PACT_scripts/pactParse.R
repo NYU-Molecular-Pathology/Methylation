@@ -90,6 +90,9 @@ getExcelPath <- function(inputSheet, pathType = 1){
 MsgChangesMade <- function(mainSheet, ptrn=","){
     for(i in 1:ncol(mainSheet)){
         theRows <- mainSheet[,i]
+        if(any(is.na(theRows))){
+            theRows[which(is.na(theRows))] <- ""
+        }
         theMatch <- stringr::str_detect(theRows, pattern=ptrn)
         if(any(theMatch)){
             theCommas <- which(theMatch==T)
