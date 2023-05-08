@@ -692,7 +692,7 @@ emailNotify <- function(record, rcon){
 
 
 callApiFileCsv <- function(rcon, recordName, fiPath, ovwr = T) {
-    message("\n", gb$mkBlue("Importing Record File:"), paste0(" ", fiPath))
+
     if (ovwr == F) {
         writeLogFi(recordName)
     } else{
