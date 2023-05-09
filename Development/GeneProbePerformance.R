@@ -5,7 +5,7 @@
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH 2023
 ## ---------------------------
-
+setwd("/Volumes/CBioinformatics/Methylation/Clinical_Runs/Probe_performance")
 # Load or Install required packages
 LibLoad <- function(pkg) {
     libOpt <-
@@ -43,11 +43,14 @@ pkgLoad <- unlist(lapply(pkgLis, CheckCran))
 bioLoad <- unlist(lapply(bioPkg, BioCinst))
 stopifnot(all(pkgLoad) & all(bioLoad))
 
-GetIslandProbes <- function(anno, geneName) {
-    gene_probes <-
-        anno[grepl(anno$UCSC_RefGene_Name, pattern = geneName), ]
-    island_probes <-
-        as.data.frame(gene_probes[gene_probes$Relation_to_Island == "Island", ])
+GetIslandProbes <- function(anno, geneName, minProbes = 4) {
+    gene_probes <- anno[grepl(anno$UCSC_RefGene_Name, pattern = geneName), ]
+    islandRegions <- gene_probes$Relation_to_Island == "Island"
+    island_probes <- as.data.frame(gene_probes[islandRegions, ])
+    if(nrow(island_probes) < minProbes){
+        annoRegions <- gene_probes@listData[["GencodeCompV12_Group"]]!=""
+        island_probes <- as.data.frame(gene_probes[annoRegions, ])
+    }
     shortName <-
         lapply(lapply(
             stringr::str_split(island_probes$UCSC_RefGene_Name, ";", simplify = F),
@@ -62,12 +65,16 @@ GetIslandProbes <- function(anno, geneName) {
         ))
     island_probes <- island_probes[toKeep, ]
     shortName <- shortName[toKeep]
-    island_probes$UCSC_RefGene_Name <-
-        unlist(lapply(shortName, paste, collapse = ";"))
+    island_probes$UCSC_RefGene_Name <- unlist(lapply(shortName, paste, collapse = ";"))
+    message("")
     message(paste(geneName, "probes found:"))
     island_probes <-
         island_probes[, c("chr", "pos", "UCSC_RefGene_Name", "Relation_to_Island")]
+    csvFiName <- paste0(geneName, "_probes_used.csv")
+    csvPath <- file.path(getwd(), "ProbesCSV")
+    if(!dir.exists(csvPath)){dir.create(csvPath)}
     message(paste0(capture.output(island_probes), collapse = "\n"))
+    write.csv(island_probes, file=file.path(csvPath, csvFiName), quote=F, row.names=T)
     return(island_probes)
 }
 
@@ -261,8 +268,7 @@ PlotIslandProbes <- function(beta_values, anno, geneName = "BRCA1") {
     plot_beta_values_distributions(beta_values, specific_probes, geneName)
 }
 
-# rgset <- minfiDataEPIC::RGsetEPIC
-# setwd("/Volumes/CBioinformatics/Methylation/Clinical_Runs/Probe_performance")
+#rgset <- minfiDataEPIC::RGsetEPIC
 targets <- as.data.frame(read.csv(file.path(getwd(), "samplesheet.csv")))
 rgset <- minfi::read.metharray.exp(getwd(), targets, verbose = T, force = T)
 mset <- minfi::preprocessRaw(rgset)
