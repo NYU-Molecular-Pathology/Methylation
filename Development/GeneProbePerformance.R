@@ -280,12 +280,13 @@ myGenes <- c("BRCA1", "BRCA2", "ATM", "RAD51C")
 for (gn in myGenes) {
     PlotIslandProbes(beta_values, anno, gn)
 }
-row_not_all_na <- function(row) {
-  return(any(!is.na(row)))
-}
 
-# Apply the custom function to each row of the data.frame
-row_not_all_na_vec <- apply(df, 1, row_not_all_na)
+# Filter rows with any non-NA value
+filtered_df <- df %>% 
+  filter_all(any_vars(!is.na(.)))
 
 # Get the row names of rows where not all values are NA
-row_names_not_all_na <- row.names(df)[row_not_all_na_vec]
+row_names_not_all_na <- row.names(filtered_df)
+
+# Print the row names
+print(row_names_not_all_na)
