@@ -67,6 +67,10 @@ GetIslandProbes <- function(anno, geneName, minProbes = 4) {
     shortName <- shortName[toKeep]
     island_probes$UCSC_RefGene_Name <- unlist(lapply(shortName, paste, collapse = ";"))
     message("")
+    island_probes <- island_probes %>%
+  mutate(UCSC_RefGene_Name = map(UCSC_RefGene_Name, ~ sort(unique(str_split(.x, ";"))))) %>%
+  filter(any(UCSC_RefGene_Name == geneName))
+shortName <- pull(island_probes, UCSC_RefGene_Name)
     message(paste(geneName, "probes found:"))
     island_probes <-
         island_probes[, c("chr", "pos", "UCSC_RefGene_Name", "Relation_to_Island")]
@@ -290,3 +294,14 @@ row_names_not_all_na <- row.names(filtered_df)
 
 # Print the row names
 print(row_names_not_all_na)
+
+island_probes <- island_probes %>%
+  rowwise() %>%
+  filter(any(sort(unique(str_split(UCSC_RefGene_Name, ";", simplify = F))) == geneName)) %>%
+  mutate(UCSC_RefGene_Name = paste(sort(unique(str_split(UCSC_RefGene_Name, ";", simplify = F))), collapse = ";"))
+  
+  island_probes <- island_probes %>%
+  mutate(UCSC_RefGene_Name = str_split(UCSC_RefGene_Name, ";", simplify = F) %>%
+           map(~ sort(unique(.x)))) %>%
+  filter(map_lgl(UCSC_RefGene_Name, ~ any(.x == geneName))) %>%
+  mutate(UCSC_RefGene_Name = map_chr(UCSC_RefGene_Name, ~ paste(.x, collapse = ";")))
