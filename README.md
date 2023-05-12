@@ -25,7 +25,7 @@ Download and install the following packages:<br>
 - [X] **Gfortran** from GitHub use dmg installer: https://github.com/fxcoudert/gfortran-for-macOS/releases/tag/11.2-bigsur-intel <br />
 - [X] **RStudio 1.4 or later**: https://www.rstudio.com/products/rstudio/download/#download<br />
 - [X] **XQuartz**: https://www.xquartz.org/<br />
-- [X] **LaTeX** for Mac: https://www.tug.org/mactex/mactex-download.html<br />
+- [X] **LaTeX** for Mac: https://www.tug.org/mactex/mactex-download.html [Direct DL](https://mirror.ctan.org/systems/mac/mactex/MacTeX.pkg)<br />
 - [X] **Pandoc**: https://pandoc.org/installing.html<br />
 - [X] **XCode command line tools** for Mac OS: `xcode-select --install`<br>
 - [X] **Java 8 JDK**: https://www.oracle.com/java/technologies/downloads/#java8-mac
