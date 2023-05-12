@@ -142,6 +142,9 @@ MakeLocalSampleSheet <-  function(runID, token, samSheetIn=NULL, rd_numbers=NULL
   idatScript <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/pullRedcap_manual.R"
   if(!is.null(rd_numbers)){
     rd_numbers <- rd_numbers
+  if(length(rd_numbers)==1){
+      rd_numbers <- c(rd_numbers, rd_numbers)
+    }
   }else{
     if(is.null(samSheetIn)){
       rd_numbers <- PromptInputCsv(runID)
