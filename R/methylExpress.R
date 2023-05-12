@@ -1,4 +1,11 @@
 #!/usr/bin/env Rscript
+## ---------------------------
+## Script name: methylExpress.R
+## Purpose: Source global scripts for executing Clinical methylation pipeline
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2023
+## ---------------------------
+
 library("base"); gb <- globalenv(); assign("gb", gb); args <- commandArgs(TRUE)
 if(!require("devtools")){install.packages("devtools", quiet=T)}
 
