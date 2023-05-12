@@ -136,19 +136,26 @@ ParseInputCsvPath <- function(samSheetIn){
 }
 
 
-MakeLocalSampleSheet <- function(runID, token, samSheetIn=NULL){
-    msgFunName(cpInLnk4,"MakeLocalSampleSheet")
-    stopifnot(!is.null(token))
-    idatScript <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/pullRedcap_manual.R"
+MakeLocalSampleSheet <-  function(runID, token, samSheetIn=NULL, rd_numbers=NULL){
+  msgFunName(cpInLnk4,"MakeLocalSampleSheet")
+  stopifnot(!is.null(token))
+  idatScript <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/pullRedcap_manual.R"
+  if(!is.null(rd_numbers)){
+    rd_numbers <- rd_numbers
+  }else{
     if(is.null(samSheetIn)){
-        rd_numbers <- PromptInputCsv(runID)
+      rd_numbers <- PromptInputCsv(runID)
     }else{
-        rd_numbers <- ParseInputCsvPath(samSheetIn)
+      rd_numbers <- ParseInputCsvPath(samSheetIn)
     }
-    stopifnot(length(rd_numbers)>=1 & length(rd_numbers)!=0 & stringr::str_detect(rd_numbers[1],"RD-"))
-    message("Sourcing: ", idatScript)
-    devtools::source_url(idatScript)
-    gb$grabRDCopyIdat(rd_numbers, token, copyIdats=T, outputFi="samplesheet.csv")
+  }
+  stopifnot(
+    length(rd_numbers) >= 1 &
+      length(rd_numbers) != 0 & stringr::str_detect(rd_numbers[1], "RD-")
+  )
+  message("Sourcing: ", idatScript)
+  devtools::source_url(idatScript)
+  gb$grabRDCopyIdat(rd_numbers, token, copyIdats=T, outputFi="samplesheet.csv")
 }
 
 
