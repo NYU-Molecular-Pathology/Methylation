@@ -24,7 +24,7 @@ CheckCran <- function(pkg) {
     return(LibLoad(pkg))
 }
 
-pkgLis <- c("utils", "grDevices", "stringr", "BiocManager", "ggplot2", "BiocParallel",
+pkgLis <- c("utils", "grDevices", "stringr", "BiocManager", "ggplot2", "BiocParallel", "reshape",
             "pals", "gridExtra", "fitdistrplus", "ggh4x", "dplyr", "purrr")
 bioPkg <- c("minfi", "IlluminaHumanMethylationEPICanno.ilm10b4.hg19")
 pkgLoad <- unlist(lapply(pkgLis, CheckCran))
@@ -55,10 +55,13 @@ NameFromBaseName <- function(basenames) {
 
 ReadMethParallel <- function(targets, verbose = TRUE, ...) {
     nworkers <- BiocParallel::bpworkers(BiocParallel::bpparam())
-    if (nworkers <= 1)
+    if (nworkers <= 1) {
         stop("Did you registered a biocparallel back-end?")
+    }
     y <- rep(1, ceiling(nrow(targets)/nworkers))
-    for (i in 2:nworkers) y <- c(y, rep(i, ceiling(nrow(targets)/nworkers)))
+    for (i in 2:nworkers) {
+        y <- c(y, rep(i, ceiling(nrow(targets) / nworkers)))
+    }
     y <- y[1:nrow(targets)]
     jobs <- split(targets, y)
 
@@ -76,16 +79,19 @@ ReadMethParallel <- function(targets, verbose = TRUE, ...) {
     }
     message("Combining the RGsets to one big RGset...")
     rgSet <- res[[1]]
+
     for (i in 2:length(res)) {
-        rgSet <- combine(rgSet, res[[i]])
+        rgSet <- BiocGenerics::combine(rgSet, res[[i]])
     }
+
     message("DONE!")
     return(rgSet)
 }
 
 
 # FUN: Create sample sheet if an Illumina one isn't available
-CreateSheetFromIdats <- function(path, recursive = F, delim = "_") {
+CreateSheetFromIdats <- function(idatPath, recursive = F, delim = "_") {
+    pathEnd = substr(idatPath, nchar(idatPath), nchar(idatPath))
     basenames=CreateBasenames(path, recursive)
     if (length(basenames) == 0) {
         warning("No idat files found.")
