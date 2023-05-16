@@ -1,4 +1,11 @@
 #!/bin/bash
+## ---------------------------
+## Script name: printPactCommands.sh
+## Purpose: Print out all the copiable commands used for executing the PACT pipeline
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2023
+## ---------------------------
+
 runID=${1-NULL}   # if arg $1 is empty assign NULL as default else i.e. 123456_NB501073_0212_AHT3V7BGXK
 pactRun=${2-NULL} # if arg $2 is empty assign NULL as default else i.e. PACT-21-28
 DEFAULTVALUE="/Volumes/CBioinformatics/jonathan/pact/consensus/"
@@ -398,7 +405,7 @@ msg_step 2 "#bae1ff" "From here, copy the .cnv.plot.pdf facets and QC from the Z
 msg_code "cp /Volumes/molecular/Molecular/REDCap/cnv_facets/${pactRun}/*.pdf ~/Desktop/${runID}-SampleSheet.csv ~/Desktop/${pactRun}_MethylMatch.xlsx ./"
 msg_code "cp /Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/${pactRun}-Somatic_Variants.html /Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/${pactRun}.html /Volumes/molecular/Molecular/REDCap/cnv_facets/${pactRun}/${pactRun}-QC.tsv ./"
 msg_step 3 "#bae1ff" "Use the Evernote Guide to save the Somatic Variants as a .csv file to the downloads folder: ${HOME}/Downloads/export_mytable_MM_DD_${currYear}.csv"
-msg_code "open ${evernoteLink} && open ${consensusDir}${pactRun}_consensus/${pactRun}-Somatic_Variants.html"
+msg_code "open ${consensusDir}${pactRun}_consensus/${pactRun}-Somatic_Variants.html && open ${evernoteLink}"
 msg_step 4 "#bae1ff" "Once you have exported the csv file from Somatic variants html, download run the R script:"
 msg_code "cd ${HOME} && curl -# -L ${pactGithub}/MakeIndelList.R >${HOME}/MakeIndelList.R && chmod +rwx ${HOME}/MakeIndelList.R"
 msg_code "RScript --verbose ${HOME}/MakeIndelList.R ${pactRun}"
