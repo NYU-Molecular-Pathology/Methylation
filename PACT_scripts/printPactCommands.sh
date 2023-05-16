@@ -412,7 +412,8 @@ msg_code "RScript --verbose ${HOME}/MakeIndelList.R ${pactRun}"
 msg_step 5 "#bae1ff" "Copy the CSV file output by the Rscript from the desktop to your working directory then knit the rMarkdown file"
 msg_code "cp ${HOME}/Desktop/${pactRun}_desc.csv ${consensusDir}${pactRun}_consensus/"
 msg_code "cd ${consensusDir}${pactRun}_consensus/ && Rscript --verbose -e \"rmarkdown::render('${consensusDir}${pactRun}_consensus/${pactRun}_consensus.Rmd', params=list(pactName='${pactRun}', userName='${kerbero}'))\""
-msg_step 6 "#bae1ff" "Once the CNV concensus html file is created, copy it to the output folder and email everyone the file is ready"
+msg_step 6 "#bae1ff" "Once the CNV concensus html is created, copy it to the output folder and email to notify the file is ready"
+msg_code "open ${consensusDir}${pactRun}_consensus/${pactRun}_consensus.html"
 msg_code "cp ${consensusDir}${pactRun}_consensus/${pactRun}_consensus.html \"/Volumes${outputDir}${currYear}/${pactRun}/\""
 msg_code "Hi all,
 The methylation CNV consensus is copied here:
