@@ -391,7 +391,7 @@ echo "$BOX2"
 
 # Stage 5 -----------------------
 msg_stage 5 "Methylation and Philips CNV Consensus Report"
-msg_step 1 "#bae1ff" "Create a new directory for your PACT consensus in the local terminal and curl the template RMD file from GitHub"
+msg_step 1 "#bae1ff" "Exit BigPurple and in the LOCAL terminal, create a new directory for your PACT consensus in CBioinformatics drive and curl the template RMD file from GitHub"
 msg_code "mkdir -p \"${consensusDir}${pactRun}_consensus\" && cd \"${consensusDir}${pactRun}_consensus\""
 msg_code "curl -# -L ${pactGithub}/PACT_consensus.Rmd >${consensusDir}${pactRun}_consensus/${pactRun}_consensus.Rmd"
 msg_step 2 "#bae1ff" "From here, copy the .cnv.plot.pdf facets and QC from the Z-drive, and MethylMatch.xlsx from the Desktop"
