@@ -25,13 +25,31 @@ CheckSamNames <-  function(samNames, targets){
 
 SetKeyColumns <- function(targets, col_samTypes, col_samNames, col_other, col_shapes, sam.grp.type=NULL) {
     targets <- dfTargets(targets)
-    targets$Type <- targets[, col_samTypes] # Creates any new "Type" column
-    targets$Sample_Name <- targets$Sample_ID <- targets[, col_samNames] # generates Sample_ID column if doesn't exist
-    targets$Other_Group <- targets$Sample_Group <- targets[, col_other]
-    targets$Sym_Shape <- targets[,col_shapes]
+    if(is.null(col_samTypes)){
+        targets$Type <- "A"
+    }else{
+        targets$Type <- targets[, col_samTypes] # Creates any new "Type" column
+    }
+    if(is.null(col_samNames)){
+        targets$Sample_Name <- targets$Sample_ID <-  targets[, 1]
+    }else{
+        targets$Sample_Name <- targets$Sample_ID <- targets[, col_samNames]
+    }
+    if(is.null(col_other)){
+        targets$Other_Group <- targets$Sample_Group <- "B"
+    }else{
+        targets$Other_Group <- targets$Sample_Group <- targets[, col_other]
+    }
+    if(is.null(col_shapes)){
+        targets$Sym_Shape <- "C"
+    }else{
+        targets$Sym_Shape <- targets[,col_shapes]
+    }
     targets <- CheckSamNames(targets$Sample_ID, targets)
-    if (!is.null(sam.grp.type)) {
-      targets$Sample_Group <- sam.grp.type
+    if (is.null(sam.grp.type)) {
+      targets$Sample_Group <- "D"
+    }else{
+      targets$Sample_Group <- sam.grp.type  
     }
     return(targets)
   }
