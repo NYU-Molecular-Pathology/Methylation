@@ -296,23 +296,6 @@ ValidateColumns <- function(targets, gb) {
     )
 }
 
-SetKeyColumns <- function(targets, col_samTypes, col_samNames, col_other, col_shapes, sam.grp.type=NULL) {
-    targets <- dfTargets(targets)
-    # Creates any new "Type" column
-    targets$Type <- targets[, col_samTypes]
-    # generates Sample_ID column if doesn't exist
-    targets$Sample_Name <- targets$Sample_ID <- targets[, col_samNames]
-    targets$Other_Group <- targets$Sample_Group <- targets[, col_other]
-    targets$Sym_Shape <- targets[,col_shapes]
-    targets <- CheckSamNames(targets$Sample_ID, targets)
-    if (!is.null(sam.grp.type)) {
-      targets$Sample_Group <- sam.grp.type
-    }
-    return(targets)
-  }
-
-
-
 ReadSheetType <- function(inputFi){
     if (stringr::str_detect(inputFi, ".xlsx")) {
         samSh <- readxl::read_excel(inputFi)
