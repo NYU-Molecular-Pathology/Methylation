@@ -109,24 +109,40 @@ FillMissingData <- function(targets, col_samNames="Sample_Name", originalFi="sam
 }
 
 
-ModifyTargetColumns <- function(targets, gb){
-  if (gb$needFi == T) {
-    gb$GetCsvSheet(gb$needFi, gb$samsheet, gb$token, idatPath = gb$idatPath)
-    targets <- gb$SetKeyColumns(
-      targets, gb$col_samTypes, gb$col_samNames, gb$col_other, gb$col_shapes, gb$sam.grp.type
-    )
-    targets <- FillMissingData(targets)
-    }else{
-    targets <- gb$SetKeyColumns(
-      targets, gb$col_samTypes, gb$col_samNames, gb$col_other, gb$col_shapes, gb$sam.grp.type
-    )
+ModifyTargetColumns <- function(targets, gb) {
+    if (gb$needFi == T) {
+        gb$GetCsvSheet(gb$needFi, gb$samsheet, gb$token, idatPath = gb$idatPath)
+        targets <- gb$SetKeyColumns(
+            targets,
+            gb$col_samTypes,
+            gb$col_samNames,
+            gb$col_other,
+            gb$col_shapes,
+            gb$sam.grp.type
+        )
+        targets <- FillMissingData(targets)
+    } else{
+        targets <- gb$SetKeyColumns(
+            targets,
+            gb$col_samTypes,
+            gb$col_samNames,
+            gb$col_other,
+            gb$col_shapes,
+            gb$sam.grp.type
+        )
     }
-  targets <- gb$colorTargets(targets, varColumns = gb$selectedVars)
-  if(is.null(gb$col_sentrix)){
-      gb$col_sentrix <-"SentrixID_Pos"
-  }
-  targets <- gb$FixBaseName(targets, runDir = gb$idatPath, gb$col_sentrix)
-  return(targets)
+    
+    if(is.null(gb$selectedVars)){
+        gb$selectedVars <- "Type"
+    }
+    
+    targets <- gb$colorTargets(targets, varColumns = gb$selectedVars)
+    if (is.null(gb$col_sentrix)) {
+        gb$col_sentrix <- "SentrixID_Pos"
+    }
+    targets <-
+        gb$FixBaseName(targets, runDir = gb$idatPath, gb$col_sentrix)
+    return(targets)
 }
 
 
