@@ -370,8 +370,14 @@ msg_code "conda activate && python ${gpfsHome}molecpathlab/development/NGS_QC_xf
 msg_code "chmod -R g+rwx ${productionDir}/NGS607/${runID}/output/"
 echo "$BOX2"
 
+BAMSDIR="/molecpathlab/production/NGS607/230510_NB501073_0276_AHWC3CBGXN/output/alignments/recalibrated"
+
 # Stage 4 -----------------------
 msg_stage 4 "Copy the QC files and Output data to the Molecular Z-drive"
+msg_step 0 "#baffc9" "Create the output BAM directory and copy calibrated:"
+msg_code "mkdir -p \"/gpfs/data/clinpathlab/external/${pactRun}\""
+msg_code "rsync -vrthP ${BAMSDIR}/*.dd.ra.rc.bam \"/gpfs/data/clinpathlab/external/${pactRun}/\""
+msg_code "chmod -R g+rwx \"/gpfs/data/clinpathlab/external/${pactRun}\""
 msg_step 1 "#baffc9" "Go to the data mover node within BigPurple and mount the molecular drive"
 msg_code "ssh ${kerbero}@dmn-0002"
 msg_code "mount /mnt/${kerbero}/molecular"
