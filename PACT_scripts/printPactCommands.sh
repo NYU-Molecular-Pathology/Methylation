@@ -370,7 +370,7 @@ msg_code "conda activate && python ${gpfsHome}molecpathlab/development/NGS_QC_xf
 msg_code "chmod -R g+rwx ${productionDir}/NGS607/${runID}/output/"
 echo "$BOX2"
 
-BAMSDIR="/molecpathlab/production/NGS607/230510_NB501073_0276_AHWC3CBGXN/output/alignments/recalibrated"
+BAMSDIR="/molecpathlab/production/NGS607/${runID}/output/alignments/recalibrated"
 
 # Stage 4 -----------------------
 msg_stage 4 "Copy the QC files and Output data to the Molecular Z-drive"
