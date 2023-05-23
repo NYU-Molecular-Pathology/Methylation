@@ -425,7 +425,7 @@ GetMethCnv <- function(params, methDir){
     }
 }
 
-# Checks if the facets pdfs have been converted to png
+# Checks if the facets pdfs have been converted to png ------------------------------------
 CopyPdfsPngs <- function(params) {
     outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus"))
     samList <- gb$GetSamList(params$pactName)
@@ -439,12 +439,25 @@ CopyPdfsPngs <- function(params) {
     }
 }
 
-# Generates a new Sample Tabbed row in html ------------------------------------
-makeNewTab <- function(sam, samList, qcData){
+# Generates the link to the BAM file based on PACT run ------------------------------------
+makeBamLink <- function(sam, pactID){
+    samsheet <- list.files(".", "-SampleSheet.csv", T)[1]
+    samCSVfi <- as.data.frame(read.csv(samsheet, skip = 19))
+    allNames <- samCSVfi[,1]
+    rowNGS <- which(samCSVfi$Test_Number == sam)
+    bamFiNam <- paste0(allNames[rowNGS], ".dd.ra.rc.bam")
+    bamFiUrl <- file.path("https://genome.med.nyu.edu/external/clinpathlab", pactID, bamFiNam)
+    cat(paste0("```\nIGV Load from URL: ", bamFiUrl, "\n```\n\n"))
+}
+
+
+# Generates a new Sample Tabbed row in html ------------------------------------------------
+makeNewTab <- function(sam, samList, qcData, pactID){
     currSam <- samList[samList$Test_Number==sam,"Specimen_ID"]
     cat(' <div class="boxed"> ')
     cat(paste0("\n\n# **", sam, "** {.tabset}","\n\n"))
-    cat(paste0("(",currSam[1],")\n\n"))
+    cat(paste0("(", currSam[1], ")\n\n"))
+    makeBamLink(sam, pactID)
     currQC <- grepl(paste(currSam, collapse="|"), qcData$Sample)
     qcTab <- qcData[currQC,2:ncol(qcData)]
     if (nrow(qcTab) == 0) {
@@ -584,7 +597,7 @@ LoopSampleTabs <- function(params){
     snvDt <- read.csv(paste0(pactName, "_desc.csv"))
     outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus"))
     for (sam in samples) {
-      gb$makeNewTab(sam, samList, qcData)
+      makeNewTab(sam, samList, qcData, params$pactName)
       if (!(sam %in% snvDt$Test_Case)) {
         message(sam, " is missing from your Description input File:\n",
                 paste0(pactName, "_desc.csv"))
