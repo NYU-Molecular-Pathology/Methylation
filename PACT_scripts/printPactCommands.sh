@@ -370,7 +370,7 @@ msg_code "conda activate && python ${gpfsHome}molecpathlab/development/NGS_QC_xf
 msg_code "chmod -R g+rwx ${productionDir}/NGS607/${runID}/output/"
 echo "$BOX2"
 
-BAMSDIR="/molecpathlab/production/NGS607/${runID}/output/alignments/recalibrated"
+BAMSDIR="/gpfs/data/molecpathlab/production/NGS607/${runID}/output/alignments/recalibrated"
 
 # Stage 4 -----------------------
 msg_stage 4 "Copy the QC files and Output data to the Molecular Z-drive"
@@ -388,7 +388,7 @@ msg_code "mkdir -p \"${zdrive}/NGS607/${currYear}/${runID}/output/alignments\" \
 msg_code "chmod -R g+rwx \"/mnt/${kerbero}${outputDir}${currYear}/${pactRun}\" && chmod -R g+rwx ${gpfsHome}molecpathlab/production/NGS607/${runID}/output"
 msg_step 3 "#baffc9" "Once created, rsync the files from BigPurple to /MOLECULAR/NGS607/"
 msg_white "<b>Copy Alignments and Annotations then theClinical Folder and .tsv files:</b>"
-msg_code "rsync -vrthP ${rsyncDir}/alignments/${FG_GRN}deduplicated${normal} ${zdrive}/NGS607/${currYear}/${runID}/output/${FG_GRN}alignments/${normal} && rsync -vrthP ${rsyncDir}/${FG_GRN}annotations${normal} ${zdrive}/NGS607/${currYear}/${runID}/output/${FG_GRN}annotations/${normal} && rsync -vrthP ${rsyncDir}/${FG_GRN}clinical${normal} ${zdrive}/NGS607/${currYear}/${runID}/output/ && rsync -vrthP ${rsyncDir}/${FG_GRN}*.tsv${normal} ${zdrive}/NGS607/${currYear}/${runID}/"
+msg_code "rsync -vrthP ${rsyncDir}/alignments/${FG_GRN}recalibrated${normal} ${zdrive}/NGS607/${currYear}/${runID}/output/${FG_GRN}alignments/${normal} && rsync -vrthP ${rsyncDir}/${FG_GRN}annotations${normal} ${zdrive}/NGS607/${currYear}/${runID}/output/${FG_GRN}annotations/${normal} && rsync -vrthP ${rsyncDir}/${FG_GRN}clinical${normal} ${zdrive}/NGS607/${currYear}/${runID}/output/ && rsync -vrthP ${rsyncDir}/${FG_GRN}*.tsv${normal} ${zdrive}/NGS607/${currYear}/${runID}/"
 msg_step 4 "#baffc9" "Next, go to /MOLECULAR LAB ONLY/NYU PACT Patient Data/ on the Z-drive and copy the remaining clinical output files, PDF facets, and QC tsv "
 msg_code "cd \"/mnt/${kerbero}${outputDir}${currYear}/${pactRun}/\" && rsync -vrthP ${rsyncDir}/${FG_GRN}clinical/${normal} ./"
 msg_code "rsync -vrthP ${productionDir}/NGS607/${runID}/output/cnv/FACETS/*.pdf ${productionDir}/NGS607/${runID}/${pactRun}-QC.tsv ${zdrive}/REDCap/cnv_facets/${pactRun}/"
