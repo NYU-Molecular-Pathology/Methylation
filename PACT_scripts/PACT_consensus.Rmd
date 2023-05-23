@@ -23,7 +23,7 @@ gb$bamURL <- file.path("https://genome.med.nyu.edu/external/clinpathlab", params
 
 ```{css, echo=FALSE,code=readLines("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/consensus.css")}
 ```
-#### **All BAM files are located in**: [`r gb$bamURL`](`r gb$bamURL`)
+#### **Sign in with Kerberos to view all BAM files in**: [`r gb$bamURL`](`r gb$bamURL`)
 ```{r, label='Input Parameters', echo=FALSE, message=TRUE, warning=FALSE, error=FALSE, include=FALSE}
 philipsFtp <- "/Volumes/molecular/Molecular/Philips_SFTP" # Philips datadump path
 methDir <- "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
