@@ -18,11 +18,12 @@ date: "`r format(Sys.time(), '%d %B, %Y')`"
 ```{r setup, include=FALSE}
 gb <- globalenv(); assign("gb", gb)
 devtools::source_url("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/KnitScripts.R")
+gb$bamURL <- file.path("https://genome.med.nyu.edu/external/clinpathlab", params$pactName)
 ```
 
 ```{css, echo=FALSE,code=readLines("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/consensus.css")}
 ```
-
+#### **All BAM files are located in**: [`r gb$bamURL`](`r gb$bamURL`)
 ```{r, label='Input Parameters', echo=FALSE, message=TRUE, warning=FALSE, error=FALSE, include=FALSE}
 philipsFtp <- "/Volumes/molecular/Molecular/Philips_SFTP" # Philips datadump path
 methDir <- "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
