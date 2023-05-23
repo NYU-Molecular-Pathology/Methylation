@@ -562,18 +562,21 @@ printDiagInfo <- function(diagCsv){
 }
 
 # Makes Abberations Tab ------------------------------
-makeAbTab <- function(sam,philipsFtp="/Volumes/molecular/Molecular/Philips_SFTP") {
+makeAbTab <- function(sam, philipsFtp="/Volumes/molecular/Molecular/Philips_SFTP") {
     dumpDir <- file.path(getwd(), "zipfiles", sam)
     snvCsv <- file.path(dumpDir, "aberration_snv.csv")
     samCsv <- file.path(dumpDir, "specimen.csv")
     diagCsv <- file.path(dumpDir, "diagnosticorder.csv")
-    if (file.exists(snvCsv) & file.exists(samCsv)) {
-        printSnvs(snvCsv)
-        printSpecInfo(samCsv)
-        printDiagInfo(diagCsv)
+    if (file.exists(snvCsv) | file.exists(samCsv) | file.exists(diagCsv)) {
+        eTxt = "\n\n## Failed to parse Philips csv"
+        tryCatch(printSnvs(snvCsv), error=function(e){cat(paste(eTxt, "SNV", "\n", snvCsv,"\n\n"))})
+        tryCatch(printSpecInfo(samCsv), error=function(e){cat(paste(eTxt, "Sample", samCsv,"\n\n"))})
+        tryCatch(printDiagInfo(diagCsv), error=function(e){cat(paste(eTxt, "Diag", diagCsv,"\n\n"))})
     } else{
-        warning("Data dump directory not found: ",
-                file.path(philipsFtp, paste0(sam, ".zip")))
+        zipFiN <- file.path(philipsFtp, paste0(sam, ".zip"))
+        cat("\n\n## **No Philips Data Dump**\n\n")
+        cat("Data dump not found:\n")
+        cat(paste0(zipFiN, "\n\n"))
     }
 }
 
