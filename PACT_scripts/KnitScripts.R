@@ -561,17 +561,23 @@ printDiagInfo <- function(diagCsv){
     cat("\n\n")
 }
 
-# Makes Abberations Tab ------------------------------
-makeAbTab <- function(sam, philipsFtp="/Volumes/molecular/Molecular/Philips_SFTP") {
+# Renders error when csv file fails to be parsed ------------------------------------------------------------
+PrintParseErr <- function(csvPath, tabTxt){
+    eTxt = "\n\n## **Failed to read Philips CSV File"
+    snvErr = paste(eTxt, tabTxt, "**\n`", csvPath,"`\n\n")
+    return(cat(snvErr))
+}
+
+# Makes Abberations Tab ------------------------------------------------------------
+makeAbTab <-  function(sam, philipsFtp="/Volumes/molecular/Molecular/Philips_SFTP") {
     dumpDir <- file.path(getwd(), "zipfiles", sam)
     snvCsv <- file.path(dumpDir, "aberration_snv.csv")
     samCsv <- file.path(dumpDir, "specimen.csv")
     diagCsv <- file.path(dumpDir, "diagnosticorder.csv")
     if (file.exists(snvCsv) | file.exists(samCsv) | file.exists(diagCsv)) {
-        eTxt = "\n\n## Failed to parse Philips csv"
-        tryCatch(printSnvs(snvCsv), error=function(e){cat(paste(eTxt, "SNV", "\n", snvCsv,"\n\n"))})
-        tryCatch(printSpecInfo(samCsv), error=function(e){cat(paste(eTxt, "Sample", samCsv,"\n\n"))})
-        tryCatch(printDiagInfo(diagCsv), error=function(e){cat(paste(eTxt, "Diag", diagCsv,"\n\n"))})
+        tryCatch(printSnvs(snvCsv), error=function(e){PrintParseErr(snvCsv, "SNV")})
+        tryCatch(printSpecInfo(samCsv), error=function(e){PrintParseErr(samCsv, "Sample")})
+        tryCatch(printDiagInfo(diagCsv), error=function(e){PrintParseErr(diagCsv, "Diagnostics")})
     } else{
         zipFiN <- file.path(philipsFtp, paste0(sam, ".zip"))
         cat("\n\n## **No Philips Data Dump**\n\n")
