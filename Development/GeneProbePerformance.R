@@ -290,3 +290,17 @@ plot_beta_values <- function(Mset, best_probes, sample_groups) {
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     labs(x = "Probe", y = "Beta Value", color = "Sample Group")
 }
+
+# Main function
+main <- function() {
+  # Provide path to the folder containing the .idat files
+  idat_files_path <- "path/to/your/idat/files/folder"
+
+  Mset <- read_and_preprocess_data(idat_files_path)
+  best_probes <- identify_best_probes(Mset, gene_list)
+
+  # Define sample groups
+  sample_groups <- c(rep("A", 12), rep("B", 8), rep("C", 9))
+
+  plot_beta_values(Mset, best_probes, sample_groups)
+}
