@@ -260,3 +260,33 @@ anno <- minfi::getAnnotation(rgset)
 for (gn in myGenes) {
     PlotIslandProbes(beta_values, anno, gn)
 }
+
+# function to plot beta values 
+plot_beta_values <- function(Mset, best_probes, sample_groups) {
+  beta_values <- getBeta(Mset)
+  data <- data.frame(Probe = rep(best_probes, each = length(sample_groups)),
+                     Beta_Value = beta_values[best_probes, ],
+                     Sample_Group = rep(sample_groups, times = length(best_probes)))
+
+  ggplot(data, aes(x = Probe, y = Beta_Value, color = Sample_Group)) +
+    geom_point() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    labs(x = "Probe", y = "Beta Value", color = "Sample Group")
+}
+
+# With a line added:
+
+plot_beta_values <- function(Mset, best_probes, sample_groups) {
+  beta_values <- getBeta(Mset)
+  data <- data.frame(Sample = rep(1:nrow(Mset), each = length(best_probes)),
+                     Probe = rep(best_probes, each = nrow(Mset)),
+                     Beta_Value = c(beta_values[best_probes, ]),
+                     Sample_Group = rep(sample_groups, times = length(best_probes)))
+
+  ggplot(data, aes(x = Probe, y = Beta_Value, group = Sample, color = Sample_Group)) +
+    geom_point() +
+    geom_line() +
+    scale_color_manual(values = c("A" = "red", "B" = "blue", "C" = "green")) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    labs(x = "Probe", y = "Beta Value", color = "Sample Group")
+}
