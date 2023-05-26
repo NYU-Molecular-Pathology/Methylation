@@ -66,7 +66,7 @@ CopyHtmlFiles <- function(newFolder, runID) {
         return(message(mkRed("No html reports to copy found!"), "\n"))
     }
     fi2copy <- Copy2TempDir(fi2copy, runID)
-    fs::file_copy(fi2copy, newFolder, overwrite = T)
+    #fs::file_copy(fi2copy, newFolder, overwrite = T)
 }
 
 
