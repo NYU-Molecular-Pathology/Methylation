@@ -10,7 +10,7 @@ inputSheet <- args[2]
 
 # Displays the Input args -----
 message(dsh,"Parameters input",dsh2)
-message("token: ",token)
+message("token: ", token)
 message("inputSheet: ", inputSheet,"\n")
 
 stopifnot(!is.na(token))
@@ -472,34 +472,71 @@ makeCNV <- function(myDt, asPNG = T) {
 }
 
 
-CheckIfPngExists <- function(rds,
-                             outFolder = "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG") {
+CheckIfPngExists <- function(
+    rds,
+    outFolder = "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG") {
     outpng <- paste0(rds, "_cnv.png")
     outFiles <- file.path(outFolder, outpng)
     finished <- file.exists(outFiles)
     if (any(finished)) {
-        message(
-            crayon::bgGreen("The following samples are completed and will be skipped:"),
-            "\n",
+        message(crayon::bgGreen(
+          "The following samples are completed and will be skipped:"), "\n",
             paste(capture.output(outFiles[finished]), collapse = '\n')
-        )
+          )
         rds <- rds[!finished]
     }
     return(rds)
 }
 
 
+gb$SaveConumeePACT <-  function(x, sampleImg, doXY=F){
+  chrAll <- paste0("chr", 1:22)
+  if(doXY==T){
+    chrAll <- "all"
+  }
+  message("Saving file to:\n", sampleImg)
+  png(filename = sampleImg, width = 1820, height = 1040, res=150)
+  conumee::CNV.genomeplot(x, chr = chrAll)
+  invisible(dev.off())
+}
+
+
+gb$SaveCNVplotsPACT <- function(samplename_data, sentrix.ids, i, idatPath = NULL, chrNum=NULL, doXY=F) {
+  if (is.null(idatPath)) {
+    idatPath <- getwd()
+  }
+  samName <- samplename_data[i]
+  sampleEpic <- sentrix.ids[i]
+  sampleImg <- file.path(fs::path_home(), "Desktop", paste0(samName, "_cnv.png"))
+  pathEpic <- file.path(idatPath, sampleEpic)
+  RGsetEpic <- read.metharray(pathEpic, verbose = T, force = T)
+  MsetEpic <- mnp.v11b6::MNPpreprocessIllumina(
+    RGsetEpic, bg.correct = T, normalize = "controls")
+  x <- gb$customCNV(MsetEpic, samName, NULL)
+  slot(x, 'detail', check = FALSE) <- NULL
+  invisible(format(object.size(x), units = 'auto'))
+  gb$SaveConumeePACT(x, sampleImg, F)
+}
+
+LoopSavePlainCNV3 <- function(targets) {
+  samplename_data <- as.character(targets[,1])
+  sentrix.ids <- as.character(targets$SentrixID_Pos)
+  for (i in 1:length(sentrix.ids)) {
+    gb$SaveCNVplotsPACT(samplename_data, sentrix.ids, i)
+  }
+}
+
+
 TryCnvMaker <- function(myDt) {
     tryCatch(
         expr = {
-          gb$LoopSavePlainCNV2(myDt)
+          gb$LoopSavePlainCNV3(myDt)
             #gb$makeCNV(myDt)
         },
         error = function(e) {
             message("The following error occured:\n", e)
             message("\n\nTry checking the troubleshooting section on GitHub:\n")
-            message(
-                "https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/PACT_scripts/README.md\n"
+            message("https://github.com/NYU-Molecular-Pathology/Methylation/PACT_scripts/README.md\n"
             )
         },
         finally = {
