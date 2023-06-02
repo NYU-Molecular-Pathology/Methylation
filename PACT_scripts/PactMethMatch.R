@@ -397,11 +397,12 @@ sourceFuns2 <- function(workingPath = NULL) {
     script.list <- c("R/SetRunParams.R","R/CopyInputs.R","PACT_scripts/generateCNV.R", "Research/cnvFunctions.R")
     if (is.null(workingPath)) {workingPath = getwd()}
     scripts <- paste0(mainHub, script.list)
-    invisible(lapply(scripts, function(i){suppressPackageStartupMessages(devtools::source_url(i))}))
+    invisible(lapply(scripts, function(i){
+      suppressPackageStartupMessages(devtools::source_url(i))}))
     supM(library("sest"))
     supM(library("mnp.v11b6"))
-    supM(require("plotly"))
-    require("htmlwidgets")
+    #supM(require("plotly"))
+    #require("htmlwidgets")
     gb$setDirectory(workingPath)
     return(gb$defineParams())
 }
@@ -441,7 +442,7 @@ msgCreated <- function(mySentrix){
 loopCNV <- function(mySentrix, asPNG){
     for (sam in rownames(mySentrix)) {
         sampleName <- mySentrix[sam, 1]
-        fn = file.path("~", "Desktop", paste0(sampleName, "_cnv.png"))
+        fn = file.path(fs::path_home(), "Desktop", paste0(sampleName, "_cnv.png"))
         if (file.exists(fn)) {
             message("\nFile already exists, skipping:", fn, "\n")
         } else{
@@ -459,10 +460,12 @@ loopCNV <- function(mySentrix, asPNG){
     }
 }
 
+
 makeCNV <- function(myDt, asPNG = T) {
     mySentrix <- myDt[myDt[, "SentrixID_Pos"] %like% "_R0", ]
     if (nrow(mySentrix) > 0) {
-        loopCNV(mySentrix, asPNG)
+        #loopCNV(mySentrix, asPNG)
+        gb$LoopSavePlainCNV3(myDt)
         } else{
             message("The RD-number(s) do not have idat files in REDCap:/n")
             print(myDt)
@@ -530,8 +533,7 @@ LoopSavePlainCNV3 <- function(targets) {
 TryCnvMaker <- function(myDt) {
     tryCatch(
         expr = {
-          gb$LoopSavePlainCNV3(myDt)
-            #gb$makeCNV(myDt)
+          gb$makeCNV(myDt)
         },
         error = function(e) {
             message("The following error occured:\n", e)
