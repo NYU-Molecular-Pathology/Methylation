@@ -450,3 +450,62 @@ LoopSavePlainCNV <- function(targets) {
 
 
 
+SaveChromoCNV <- function(sampleImg, x, chrNum) {
+    imgName <- paste(sampleImg, "CNV",chrNum, ".png", sep = "_")
+    imgFi <- file.path(".", "figures", "cnv", imgName)
+    png(filename = imgFi, width = 1820, height = 1040, res=150)
+    #cnvColors <- c("lightblue", "royalblue", "darkblue", "lightgrey", "#ffa19c", "red", "darkred")
+    conumee::CNV.genomeplot(x, chr = chrNum)
+    invisible(dev.off())
+}
+
+SaveAllChromoCNV <- function(x, sampleImg, doXY=F){
+    chrAll <- paste0("chr", 1:22)
+    if(doXY==T){
+        chrAll <- "all"
+    }
+    imgName <- paste(sampleImg, "CNV_AllChr.png", sep = "_")
+    imgFi <- file.path(".", "figures", "cnv", imgName)
+    png(filename = imgFi, width = 1820, height = 1040, res=150)
+    #cnvColors <- c("lightblue", "royalblue", "darkblue", "lightgrey", "#ffa19c", "red", "darkred")
+    conumee::CNV.genomeplot(x, chr = chrAll)
+    invisible(dev.off()) 
+}
+
+# https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/Research/cnvFunctions.R
+SaveCNVplotsCustom <- function(samplename_data, sentrix.ids, i, idatPath = NULL, chrNum=NULL, doXY=F) {
+    if (is.null(idatPath)) {
+        idatPath <- getwd()
+    }
+    samName <- samplename_data[i]
+    sampleEpic <- sentrix.ids[i]
+    sampleImg <- paste(samName, sampleEpic, sep = "_")
+    if(!file.exists(sampleImg)){
+        pathEpic <- file.path(idatPath, sampleEpic)
+        RGsetEpic <- read.metharray(pathEpic, verbose = T, force = T)
+        MsetEpic <- mnp.v11b6::MNPpreprocessIllumina(RGsetEpic, bg.correct = TRUE, normalize = "controls")
+        x <- gb$customCNV(MsetEpic, samName, NULL)
+        slot(x, 'detail', check = FALSE) <- NULL
+        invisible(format(object.size(x), units = 'auto'))
+        if(!is.null(chrNum)){
+            for(nChromo in chrNum){
+                SaveChromoCNV(sampleImg, x, chrNum= paste("chr", nChromo)) 
+            }
+        }
+        SaveAllChromoCNV(x, sampleImg, doXY)
+    }
+}
+
+
+LoopSavePlainCNV2 <- function(targets) {
+    cat("\n\n")
+    cat('## Sample CNV Plots {.tabset}')
+    samplename_data <- as.character(targets[,1])
+    sentrix.ids <- as.character(targets$SentrixID_Pos)
+    cat("\n\n")
+    for (i in 1:length(sentrix.ids)) {
+        SaveCNVplotsCustom(samplename_data, sentrix.ids, i, gb$idatPath)
+        cat("\n\n")
+    }
+}
+
