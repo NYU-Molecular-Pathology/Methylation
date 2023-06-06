@@ -384,8 +384,8 @@ GetFixedDf <- function(sheetNamePath, runPath){
 }
 
 
-GrabTargetsDf <- function(runPath, fixerrors){
-    targets <- minfi::read.metharray.sheet(runPath, "samplesheet.csv")
+GrabTargetsDf <- function(runPath, fixerrors, samSheet = "samplesheet.csv"){
+    targets <- minfi::read.metharray.sheet(runPath, samSheet, verbose=F)
     basePaths <- file.path(runPath, fixerrors$SentrixID_Pos)
     targets$basenames <- basePaths # path/to/idat/files
     return(targets)
