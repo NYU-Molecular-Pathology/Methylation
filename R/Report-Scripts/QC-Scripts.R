@@ -98,91 +98,78 @@ makeLabels <- function(totNum, xName, yName, plotName, thePlot) {
         labs(label = "", color = "") +
         guides(colour = guide_legend(
             title = "Samples",
-            override.aes = list(fill = NA, shape = 19),
-            byrow = TRUE, ncol = 9)
+            override.aes = list(shape = 19),
+            byrow = TRUE, ncol = 9), fill = guide_legend(show.legend = F)
             ) + coord_cartesian(clip = 'off')
+    legendLabel <- legendLabel + theme(legend.position="none")
     return(legendLabel)
 }
+
+
 ## Generate Plots for Probes --------------------------------------
 plotParams <- function(totNum, dParam, xincept, yincept) {
     dParam = dParam$final_data
     dParam$Sample_Name = paste(dParam$Sample_Name, dParam$MP_num, sep = "\n")
     plot.colours <- glasbey()[1:(length(dParam$x))]
     thePlot <-
-        ggplot(
-            dParam,
+        ggplot(dParam, aes(x = dParam[, 2], y = dParam[, 3],
+                           color = dParam$Sample_Name, label = dParam$Sample_Name
+                           ), show.legend = F) +
+        scale_color_manual(values = plot.colours) +
+        geom_point(shape = 19, size = 5, alpha = 0.8) +
+        theme_bw() +
+        scale_fill_manual(values = plot.colours) +
+        guides(fill = guide_legend(show.legend = F))
+    if (yincept == 0){
+        thePlot <- thePlot + ggrepel::geom_label_repel(
             aes(
+                label = dParam$Sample_Name,
+                size = 4,
                 x = dParam[, 2],
                 y = dParam[, 3],
-                color = dParam$Sample_Name,
-                label = dParam$Sample_Name
-            ),
-            show.legend = F
-        ) +
-        scale_color_manual(values = plot.colours) +
-        geom_point(shape = 19,
-                   size = 5,
-                   alpha = 0.8) +
-        guides(color = guide_legend(nrow = totNum)) + theme_bw() +
-        guides(color = guide_legend(ncol = 8)) +
-        scale_fill_manual(values = plot.colours)
-
-  if (yincept == 0){
-      thePlot <- thePlot + ggrepel::geom_label_repel(
-          aes(
-              label = dParam$Sample_Name,
-              size = 3,
-              fill = dParam$Sample_Name,
-              colour = scales::alpha(c("black"), 1.0)
-          ),
-          fontface = 'bold',
-          colour = scales::alpha(c("black"), 1.0),
-          alpha = 0.50,
-          show.legend = F,
-          segment.alpha = 0.30,
-          segment.size = 0.75,
-          direction = "both",
-          max.overlaps = Inf,
-          min.segment.length = 0.015,
-          color = "black",
-          label.size = 0.4,
-          size = 3,
-          nudge_x = ifelse(thePlot$data$x > mean(thePlot$data$x), -0.15, 0),
-          nudge_y = ifelse(thePlot$data$y > mean(thePlot$data$y), -0.05, 0),
-          point.padding = unit(0.25, "lines"),
-          label.r = unit(0.5, "lines"),
-          force = 12,
-          max.iter = 10000
-      )
-
-      thePlot <- thePlot +
-          geom_vline(xintercept = xincept, linetype = 'dashed', colour = "red") +
-          coord_cartesian(clip="off") +
-          expand_limits(x=min(dParam[,2]), y=max(dParam[,3])*0.25) +
-          guides(fill = guide_legend(show.legend = F)) +
-          theme(legend.position = "none") +
-          scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) +
-          scale_y_continuous(breaks = scales::pretty_breaks(n = 10))
+                show.legend = F,
+                fill = dParam$Sample_Name,
+                colour = scales::alpha(c("black"), 1.0), inherit.aes = F, legend=F 
+                ),
+            fontface = 'bold',
+            colour = scales::alpha(c("black"), 1.0),
+            alpha = 0.50,
+            show.legend = F,
+            segment.alpha = 0.30,
+            segment.size = 0.75,
+            direction = "both",
+            max.overlaps = Inf,
+            min.segment.length = 0.015,
+            color = "black",
+            label.size = 0.4,
+            size = 4,
+            nudge_x = ifelse(thePlot$data$x > mean(thePlot$data$x), -0.15, 0),
+            nudge_y = ifelse(thePlot$data$y > mean(thePlot$data$y), -0.05, 0),
+            point.padding = unit(0.25, "lines"),
+            label.r = unit(0.5, "lines"),
+            force = 12,
+            max.iter = 10000) + theme(legend.position="none")
+        thePlot <- thePlot +
+            geom_vline(xintercept = xincept, linetype = 'dashed', colour = "red", inherit.aes = F) +
+            coord_cartesian(clip="off") +
+            expand_limits(x = min(dParam[,2]), y = max(dParam[,3])*0.25) + 
+            guides(fill = guide_legend(show.legend = F)) +
+            theme(legend.position = "none") +
+            scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) +
+            scale_y_continuous(breaks = scales::pretty_breaks(n = 10)) +
+            guides(fill = guide_legend(show.legend = F))
     }
-  if (yincept != 0) {
-      samlab <- c(str_replace(dParam$Sample_Name, c("\n"), "_"))
-      thePlot <- thePlot +
-          geom_hline(yintercept = yincept,
-                     linetype = 'dashed',
-                     colour = "red") +
-          annotate(
-              "text",
-              x = dParam[, 2],
-              y = (dParam[, 3]) - 0.007,
-              label = samlab,
-              angle = 90,
-              size = 3
-          ) +
-          scale_x_continuous(breaks = scales::pretty_breaks()) +
-          guides(fill = guide_legend(show.legend = F)) +
-          theme(legend.position = "none")
-      }
-  return(thePlot)
+    if (yincept != 0) {
+        samlab <- c(str_replace(dParam$Sample_Name, c("\n"), "_"))
+        thePlot <- thePlot +
+            geom_hline(yintercept = yincept, linetype = 'dashed', colour = "red", inherit.aes = F) +
+            annotate("text", x = dParam[, 2], y = 0.5, label = samlab, angle = 90, size = 4) +
+            scale_x_continuous(breaks = scales::pretty_breaks()) +
+            guides(fill = guide_legend(show.legend = F)) +
+            theme(legend.position = "none") + ylim(0.00, 1.00)
+        }
+    thePlot <- thePlot + theme(legend.position = "none")
+    return(thePlot)
 }
 
 
