@@ -404,7 +404,7 @@ getOuputData <- function(token, flds, inputSheet, readFlag){
 # FUN: Sets your directory and sources the helper functions
 sourceFuns2 <- function(workingPath = NULL) {
     mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
-    script.list <- c("R/SetRunParams.R","R/CopyInputs.R","PACT_scripts/generateCNV.R")
+    script.list <- c("R/SetRunParams.R","R/CopyInputs.R","PACT_scripts/generateCNV.R", "Research/cnvFunctions.R")
     if (is.null(workingPath)) {workingPath = getwd()}
     scripts <- paste0(mainHub, script.list)
     invisible(lapply(scripts, function(i){suppressPackageStartupMessages(devtools::source_url(i))}))
@@ -435,7 +435,7 @@ grabRDs1 <- function(rd_numbers, token){
 }
 
 msgCreated <- function(mySentrix){
-    pngFiles <- paste0(file.path("~","Desktop",mySentrix[, 1]),"_cnv.png")
+    pngFiles <- paste0(file.path(fs::path_home(),"Desktop",mySentrix[, 1]),"_cnv.png")
     cnvMade <- file.exists(pngFiles)
     if(any(cnvMade==F)){
         message("The following failed to be created:")
@@ -532,10 +532,10 @@ GreenMsg <- function(strMsg){
 QueCnvMaker <- function(output, token) {
     rds <- output$record_id[output$report_complete == "YES"]
     if (all(!is.null(rds)) == T & all(!is.na(rds)) == T & length(rds) > 0) {
-        sourceFuns2()
         msgRDs(rds, token)
         rds <- CheckIfPngExists(rds)
         if (length(rds) > 0) {
+            sourceFuns2()
             grabRDs1(rds, token)
             myDt <- GetSampleList(rds)
             TryCnvMaker(myDt)
