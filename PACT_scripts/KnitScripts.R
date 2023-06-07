@@ -309,11 +309,13 @@ parsePhilipsCn <- function(cnvInfo, sam, cnvTab){
     return(cnvTab[order(cnvTab$Mutation.Type),])
 }
 
+
 parseCNV <- function(outPath, sam, cnvTab){
     cnvFi = file.path(outPath, sam, "aberration_cnv.csv")
     if(!file.exists(cnvFi)){
-        warning("File does not exist:\n", cnvFi, "\nSkipping Philips...")
-        return(cnvTab)
+      warning("File does not exist:\n", cnvFi, "\nSkipping Philips...")
+      cnvTab$Gene <- "No Philips Data Dump CSV file availible, check ISPM for CNV"
+      return(cnvTab)
     }
     cnvInfo <- as.data.frame(readr::read_csv(
         cnvFi, col_types = readr::cols(.default = readr::col_character())
@@ -323,6 +325,7 @@ parseCNV <- function(outPath, sam, cnvTab){
     }
     return(cnvTab)
 }
+
 
 getDumpFiles <- function(outPath, sam,
                          cnvTab,
