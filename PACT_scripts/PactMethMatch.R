@@ -10,7 +10,7 @@ inputSheet <- args[2]
 
 # Displays the Input args -----
 message(dsh,"Parameters input",dsh2)
-message("token: ", token)
+message("token: ",token)
 message("inputSheet: ", inputSheet,"\n")
 
 stopifnot(!is.na(token))
@@ -78,14 +78,25 @@ grabAllRecords <- function(flds, rcon){
 # Database search function -----
 searchDb <- function(queryList, db){
     v2f <- paste(queryList, collapse="|"); i=NULL
-    res <- foreach::foreach(i=colnames(db), .combine='rbind') %do% {
-      ngsMatch <- which(grepl(v2f,db[,i]))
-      if(length(ngsMatch) > 0) {
-        message("Match found in ", i, " column")
-        message(paste(db[ngsMatch,i], sep=" ", collapse=" "))
-        db[ngsMatch,]
+    res <- NULL
+    for (idx in 1:length(queryList)) {
+      item <- queryList[idx]
+      ngsNumber = paste(names(item)[1])
+      for (i in colnames(db)) {
+        ngsMatch <- which(grepl(item, db[,i]))
+        if(length(ngsMatch) > 0) {
+          message("Match found for ",item, " (", db[ngsMatch,i], ") for ",
+                  ngsNumber," in:\n", '"', i,'"', " column")
+          dbMatch <- db[ngsMatch,]
+          dbMatch$Test_Number <- names(item)
+          if(is.null(res)){
+            res <- dbMatch
+          }else{
+            res <- rbind(res, dbMatch)
+          }
+          }
       }
-      }
+    }
     return(res)
 }
 
@@ -138,7 +149,7 @@ parseWorksheet <- function(inputFi){
   message(paste(shNames, collapse="\n"))
   stopifnot(!is.null(shNames) & length(shNames) > 2)
   sh <- which(grepl(sheet2Read, shNames, ignore.case = T))[1]
-  pactShCol <- c("Tumor Specimen ID","Tumor DNA/RNA Number", "MRN", "Test Number")
+  pactShCol <- c("Tumor Specimen ID", "Normal Specimen ID", "Tumor DNA/RNA Number", "MRN", "Test Number")
   vals2find <-  suppressMessages(as.data.frame(readxl::read_excel(
     inputFi, sheet=shNames[sh], skip=3, col_types ="text")[,pactShCol]))
   vals2find <- vals2find[!is.na(vals2find[,1]),]
@@ -172,8 +183,10 @@ getCaseValues <- function(inputSheet, readFlag) {
 
 genQuery <- function(dbCol,vals2find){
     currCol <- vals2find[, dbCol]
-    q1 <- currCol[currCol != 0 & !is.na(currCol) & currCol != ""]
-    return(unique(q1))
+    toKeep <- which(currCol != 0 & !is.na(currCol) & currCol != "")
+    q1 <- currCol[toKeep]
+    names(q1) <- vals2find$`Test Number`[toKeep]
+    return(q1)
 }
 
 # Get Methylation and Molecular Samples list ----
@@ -188,14 +201,7 @@ queryCases <- function(vals2find, db) {
         theTScases[x] <- z
     }
     queryList <- c(queryList, theTScases)
-    # for (val in 1:length(queryList)) {
-    #     totalDash <- stringr::str_count(queryList[val], "-")
-    #     if (totalDash > 2) {
-    #         newValSplit <- stringr::str_split_fixed(queryList[val], "-", 3)
-    #         newVal <- paste(newValSplit[1, 1], newValSplit[1, 2], sep = "-")
-    #         queryList[val] <- newVal
-    #     }
-    # }
+    queryList <- queryList[!duplicated(queryList)]
     methQuery <- searchDb(queryList, db)
     return(unique(methQuery))
 }
@@ -253,33 +259,38 @@ FillMissingNGS <- function(output, vals2find){
 
 
 modifyOutput <- function(output, vals2find) {
-  output$Test_Number <- NA
+  #output$Test_Number <- NA
   if (length(vals2find$`Test Number`) == 0) {
     vals2find$`Test Number` <- ""
   }
   NGSmissing <- F
-  for (i in 1:nrow(output)) {
-    theVal = NA
-    for (var in 1:ncol(vals2find)) {
-      pat <- vals2find[, var]
-      pat <- unique(pat)
-      currRow <- paste(output[i,])
-      theMatch <- which(pat %in% currRow[currRow != "0" & currRow != "NA"])
-      if (length(theMatch) > 1) {
-        warning(paste("Multiple records found matching pattern:",
-                      paste(theMatch, collapse = " "),"\nPattern:",
-                      paste(pat, collapse = " ")))
-      }
-      if (length(theMatch) > 0) {
-        theVal <- vals2find$`Test Number`[theMatch]
-      }
-      output$Test_Number[i] <- theVal
-    }
-    if (is.na(theVal)) {
-      warning(paste(output$record_id[i], "is missing NGS Number!"))
-      NGSmissing <- T
-    }
+  if(all(output$Test_Number %in% vals2find$`Test Number`)){
+    message("All NGS Found")
+  }else{
+    message("Not all NGS do not have methylation")
   }
+  # for (i in 1:nrow(output)) {
+  #   theVal = NA
+  #   for (var in 1:ncol(vals2find)) {
+  #     pat <- vals2find[, var]
+  #     pat <- unique(pat)
+  #     currRow <- paste(output[i,])
+  #     theMatch <- which(pat %in% currRow[currRow != "0" & currRow != "NA"])
+  #     if (length(theMatch) > 1) {
+  #       warning(paste("Multiple records found matching pattern:",
+  #                     paste(theMatch, collapse = " "),"\nPattern:",
+  #                     paste(pat, collapse = " ")))
+  #     }
+  #     if (length(theMatch) > 0) {
+  #       theVal <- vals2find$`Test Number`[theMatch]
+  #     }
+  #     output$Test_Number[i] <- theVal
+  #   }
+  #   if (is.na(theVal)) {
+  #     warning(paste(output$record_id[i], "is missing NGS Number!"))
+  #     NGSmissing <- T
+  #   }
+  # }
   if(NGSmissing==T){
     output <- FillMissingNGS(output, vals2find)
   }
@@ -352,7 +363,6 @@ getOuputData <- function(token, flds, inputSheet, readFlag){
   apiUrl = "https://redcap.nyumc.org/apps/redcap/api/"
   rcon <- redcapAPI::redcapConnection(apiUrl, token)
   vals2find <- getCaseValues(inputSheet, readFlag)
-  vals2find <- as.data.frame(vals2find)
   db <- grabAllRecords(flds, rcon)
   if(nrow(db)==0){
     message("REDCap API connection failed!\n",
@@ -394,15 +404,14 @@ getOuputData <- function(token, flds, inputSheet, readFlag){
 # FUN: Sets your directory and sources the helper functions
 sourceFuns2 <- function(workingPath = NULL) {
     mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
-    script.list <- c("R/SetRunParams.R","R/CopyInputs.R","PACT_scripts/generateCNV.R", "Research/cnvFunctions.R")
+    script.list <- c("R/SetRunParams.R","R/CopyInputs.R","PACT_scripts/generateCNV.R")
     if (is.null(workingPath)) {workingPath = getwd()}
     scripts <- paste0(mainHub, script.list)
-    invisible(lapply(scripts, function(i){
-      suppressPackageStartupMessages(devtools::source_url(i))}))
+    invisible(lapply(scripts, function(i){suppressPackageStartupMessages(devtools::source_url(i))}))
     supM(library("sest"))
     supM(library("mnp.v11b6"))
-    #supM(require("plotly"))
-    #require("htmlwidgets")
+    supM(require("plotly"))
+    require("htmlwidgets")
     gb$setDirectory(workingPath)
     return(gb$defineParams())
 }
@@ -442,7 +451,7 @@ msgCreated <- function(mySentrix){
 loopCNV <- function(mySentrix, asPNG){
     for (sam in rownames(mySentrix)) {
         sampleName <- mySentrix[sam, 1]
-        fn = file.path(fs::path_home(), "Desktop", paste0(sampleName, "_cnv.png"))
+        fn = file.path("~", "Desktop", paste0(sampleName, "_cnv.png"))
         if (file.exists(fn)) {
             message("\nFile already exists, skipping:", fn, "\n")
         } else{
@@ -460,12 +469,10 @@ loopCNV <- function(mySentrix, asPNG){
     }
 }
 
-
 makeCNV <- function(myDt, asPNG = T) {
     mySentrix <- myDt[myDt[, "SentrixID_Pos"] %like% "_R0", ]
     if (nrow(mySentrix) > 0) {
-        #loopCNV(mySentrix, asPNG)
-        gb$LoopSavePlainCNV3(myDt)
+        loopCNV(mySentrix, asPNG)
         } else{
             message("The RD-number(s) do not have idat files in REDCap:/n")
             print(myDt)
@@ -475,70 +482,33 @@ makeCNV <- function(myDt, asPNG = T) {
 }
 
 
-CheckIfPngExists <- function(
-    rds,
-    outFolder = "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG") {
+CheckIfPngExists <- function(rds,
+                             outFolder = "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG") {
     outpng <- paste0(rds, "_cnv.png")
     outFiles <- file.path(outFolder, outpng)
     finished <- file.exists(outFiles)
     if (any(finished)) {
-        message(crayon::bgGreen(
-          "The following samples are completed and will be skipped:"), "\n",
+        message(
+            crayon::bgGreen("The following samples are completed and will be skipped:"),
+            "\n",
             paste(capture.output(outFiles[finished]), collapse = '\n')
-          )
+        )
         rds <- rds[!finished]
     }
     return(rds)
 }
 
 
-gb$SaveConumeePACT <-  function(x, sampleImg, doXY=F){
-  chrAll <- paste0("chr", 1:22)
-  if(doXY==T){
-    chrAll <- "all"
-  }
-  message("Saving file to:\n", sampleImg)
-  png(filename = sampleImg, width = 1820, height = 1040, res=150)
-  conumee::CNV.genomeplot(x, chr = chrAll)
-  invisible(dev.off())
-}
-
-
-gb$SaveCNVplotsPACT <- function(samplename_data, sentrix.ids, i, idatPath = NULL, chrNum=NULL, doXY=F) {
-  if (is.null(idatPath)) {
-    idatPath <- getwd()
-  }
-  samName <- samplename_data[i]
-  sampleEpic <- sentrix.ids[i]
-  sampleImg <- file.path(fs::path_home(), "Desktop", paste0(samName, "_cnv.png"))
-  pathEpic <- file.path(idatPath, sampleEpic)
-  RGsetEpic <- read.metharray(pathEpic, verbose = T, force = T)
-  MsetEpic <- mnp.v11b6::MNPpreprocessIllumina(
-    RGsetEpic, bg.correct = T, normalize = "controls")
-  x <- gb$customCNV(MsetEpic, samName, NULL)
-  slot(x, 'detail', check = FALSE) <- NULL
-  invisible(format(object.size(x), units = 'auto'))
-  gb$SaveConumeePACT(x, sampleImg, F)
-}
-
-LoopSavePlainCNV3 <- function(targets) {
-  samplename_data <- as.character(targets[,1])
-  sentrix.ids <- as.character(targets$SentrixID_Pos)
-  for (i in 1:length(sentrix.ids)) {
-    gb$SaveCNVplotsPACT(samplename_data, sentrix.ids, i)
-  }
-}
-
-
 TryCnvMaker <- function(myDt) {
     tryCatch(
         expr = {
-          gb$makeCNV(myDt)
+            gb$makeCNV(myDt)
         },
         error = function(e) {
             message("The following error occured:\n", e)
             message("\n\nTry checking the troubleshooting section on GitHub:\n")
-            message("https://github.com/NYU-Molecular-Pathology/Methylation/PACT_scripts/README.md\n"
+            message(
+                "https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/PACT_scripts/README.md\n"
             )
         },
         finally = {
@@ -588,4 +558,3 @@ output <- getOuputData(token, flds, inputSheet, readFlag)
 if(output[1,1]!="NONE"){
   QueCnvMaker(output, token)
 }
-
