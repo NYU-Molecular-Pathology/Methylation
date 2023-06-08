@@ -247,6 +247,13 @@ colorTargets <- function(targets, varColumns = c("Type","Origin"), col_vect = NU
     }
     for (colNam in varColumns) {
       newColumnId <- paste0(colNam, "_color")
+        varNameColVals <- names(colorValues[colNam][[1]])
+        blankVals <- varNameColVals==""
+        if(any(blankVals)){
+            varNameColVals[blankVals] <- "NONE"
+            names(colorValues[colNam][[1]])[names(colorValues[colNam][[1]])==""] <- "NONE"
+        }
+        
       for (samNam in names(colorValues[colNam][[1]])) {
         varToColor <- targets[, colNam] == samNam
         colorHex <- paste0(colorValues[[colNam]][[samNam]])
