@@ -114,6 +114,10 @@ FixNullNaVars <- function(targets, varColumns) {
     if (any(is.na(targets[, variable]))) {
       targets[is.na(targets[, variable]), variable] <- "NONE"
     }
+    if (any(targets[, variable] == "")) {
+        toFix <- targets[, variable] == ""
+        targets[toFix, variable] <- "NONE"
+    }
   }
   return(targets)
 }
