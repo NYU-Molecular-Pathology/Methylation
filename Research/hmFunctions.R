@@ -783,4 +783,10 @@ GetHeatMapData <- function(targets, betas, RGSet, gb, varToFilter = NULL){
     return(hmPlotData)
 }
                                            
-
+SubsetTargets <- function(targets, varToFilter = NULL){
+  if(is.null(varToFilter)){return(targets)}
+  targets1 <- targets[varToFilter,] # exclude of targets are subsetted
+  rownames(targets1) <- 1:nrow(targets1) # ensures rows are chronological
+  return(targets1)
+}
+                                           
