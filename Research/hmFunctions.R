@@ -750,25 +750,25 @@ PrintSingleHeatMap <- function(bv, ha, geneNams, colSplt = 3, topvar = 1, hmTitl
                                            
 MatchHaLegend <- function(ha, selectedVars, targets1){
     for (x in gb$selectedVars) {
-    colorCol <- paste0(x, "_color")
-    varColor <- unique(targets1[, colorCol])
-    varTypes <- unique(targets1[, x])
-    varList <- NULL
-    for (y in 1:length(varColor)){
-        colorIdx <- which(targets[,colorCol] == varColor[y])[1]
-        newColor <- targets[colorIdx,x]
-        if(!is.null(varList)){
-            varList <- c(varList, newColor)
-        }else{
-            varList <- newColor
+        colorCol <- paste0(x, "_color")
+        varColor <- unique(targets1[, colorCol])
+        varTypes <- unique(targets1[, x])
+        varList <- NULL
+        for (y in 1:length(varColor)){
+            colorIdx <- which(targets1[,colorCol] == varColor[y])[1]
+            newColor <- targets1[colorIdx,x]
+            if(!is.null(varList)){
+                varList <- c(varList, newColor)
+            }else{
+                varList <- newColor
+            }
         }
+        names(varColor) <- varList
+        ha@anno_list[[x]]@color_mapping@colors <- varColor
+        ha@anno_list[[x]]@color_mapping@levels <- names(varColor)
+        ha@anno_list[[x]]@color_mapping@full_col <- varColor
     }
-    names(varColor) <- varList
-    ha@anno_list[[x]]@color_mapping@colors <- varColor
-    ha@anno_list[[x]]@color_mapping@levels <- names(varColor)
-    ha@anno_list[[x]]@color_mapping@full_col <- varColor
-}
-  return(ha)
+    return(ha)
 }
                                            
 GetHeatMapData <- function(targets, betas, RGSet, gb, varToFilter = NULL){
