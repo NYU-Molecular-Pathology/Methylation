@@ -83,6 +83,7 @@ drawHeatMap <- function(yourHeatMap) {
             ht_gap = unit(3, "cm"),
             heatmap_legend_side = "left",
             annotation_legend_side = "left",
+            column_title_gp=grid::gpar(fontsize=10),
             padding = unit(c(20, 20, 20, 20), "mm")
         )
     )
@@ -580,15 +581,19 @@ GetAvgBetaAnno <- function(targets, avgBetas, selVars){
     return(ha)
 }
 
-GetAvgGeneHeatMap <- function(avgBetas, titleValue, ha, geneNamesHeatMap=T, colSplt = NULL, rwsplt=NULL){
-  col_fun2 <- circlize::colorRamp2(c(0, 0.25, 0.5, 0.75, 1), 
-                                   c("darkblue","deepskyblue", "white", "tomato","red"))  
-  titleOfPlot <- paste("Heatmap of", titleValue)
-   toLabRows <- ifelse(nrow(avgBetas)<=50, T, F)
-   if(geneNamesHeatMap == T){
-     geneNamesHeatMap <- toLabRows
-   }
-   rowTall <- ifelse(toLabRows==T, 5, 2)
+GetAvgGeneHeatMap <- <- function(avgBetas, titleValue, ha, geneNamesHeatMap=T, colSplt = NULL, rwsplt=NULL){
+    col_fun2 <- circlize::colorRamp2(c(0, 0.25, 0.5, 0.75, 1),
+                                     c("darkblue","deepskyblue", "white", "tomato","red"))
+    titleOfPlot <- paste("Heatmap of", titleValue)
+    toLabRows <- ifelse(nrow(avgBetas)<=50, T, F)
+    if(geneNamesHeatMap == T){
+        geneNamesHeatMap <- toLabRows
+    }
+    colTall <- ncol(avgBetas)*unit(5, "mm")
+    if(ncol(avgBetas)*5 <= 20){
+        colTall <- colTall + unit(45, "mm")
+    }
+    rowTall <- ifelse(toLabRows==T, 5, 2)
     hmTopNumbers <- ComplexHeatmap::Heatmap(
         avgBetas,
         col = gb$col_fun2,  ## Define the color scale
@@ -603,13 +608,13 @@ GetAvgGeneHeatMap <- function(avgBetas, titleValue, ha, geneNamesHeatMap=T, colS
         row_title_gp = gpar(fontsize = 12, fontface = "bold"),
         show_row_dend = F,
         show_column_dend = T,
-        width = ncol(avgBetas)*unit(5, "mm"),
+        width = colTall,
         height = nrow(avgBetas)*unit(rowTall, "mm"),
         use_raster=T,
         show_heatmap_legend = T,
         top_annotation = ha,
         column_title = titleOfPlot,
-        column_title_gp = gpar(fontsize = 12,fontface = "bold"),
+        column_title_gp = gpar(fontsize = 10, fontface = "bold"),
         raster_device = "CairoPNG",
         raster_quality = 1,
         raster_resize_mat = TRUE,
@@ -619,10 +624,8 @@ GetAvgGeneHeatMap <- function(avgBetas, titleValue, ha, geneNamesHeatMap=T, colS
             title_gp = gpar(fontsize = 14, fontface = "bold"),
             legend_direction = "vertical",
             heatmap_legend_side = "right", annotation_legend_side = "right",
-            legend_height =  unit(2.5, "in")
+            legend_height =  unit(1, "in")
         ),
-        #heatmap_width = unit(hm_width, "cm"),
-        #heatmap_height = unit(hm_ht, "cm"),
         column_split = colSplt,
         row_split = rwsplt
     )
