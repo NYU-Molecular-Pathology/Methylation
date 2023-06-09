@@ -110,9 +110,9 @@ GetClusterPlot <- function(msetDat, dat){
         x = ~ Tsne_1,
         y = ~ Tsne_2,
         color = ~ methclass,
-        colors = me.col,
+        colors = ggplot2::alpha(me.col, 0.75),
         opacity = 0.9,
-        marker = list(size = 5),
+        marker = list(size = 5, line=list(width=1.5, color='DarkSlateGrey')),
         font = f2
     )
     # Modify Plotly ---------------------------------------
