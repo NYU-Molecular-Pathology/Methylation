@@ -93,24 +93,19 @@ drawHeatMap <- function(yourHeatMap) {
 GetHmDimensions <- GetHmDimensions <- function(hmTopNumbers){
     hm_width <- hmTopNumbers@matrix_param[["width"]]
     hm_ht <- hmTopNumbers@matrix_param[["height"]]
-    
     hm_width <- round(grid::convertUnit(hm_width, "inches"), 1)
     hm_ht <- round(grid::convertUnit(hm_ht, "inches"), 1)
-    
     hm_width <- as.numeric(hm_width) + 5
     hm_ht <- as.numeric(hm_ht) + 3
     hm_asp <- hm_ht/hm_width
-    
     message(paste("Height is:", hm_ht, "Width is:", hm_width))
-    
     knitr::opts_chunk$set(fig.dim=NULL,
             fig.width = hm_width, fig.height = hm_ht,
             dpi=350, out.width = '100%', fig.asp = hm_asp)
     return(
         knitr::opts_current$set(fig.dim=NULL,
             fig.width = hm_width, fig.height = hm_ht,
-            dpi=350, out.width = '100%', fig.asp = hm_asp
-            )
+            dpi=350, out.width = '100%', fig.asp = hm_asp)
           )
 }
 
