@@ -581,7 +581,7 @@ GetAvgBetaAnno <- function(targets, avgBetas, selVars){
     return(ha)
 }
 
-GetAvgGeneHeatMap <- <- function(avgBetas, titleValue, ha, geneNamesHeatMap=T, colSplt = NULL, rwsplt=NULL){
+GetAvgGeneHeatMap <- function(avgBetas, titleValue, ha, geneNamesHeatMap=T, colSplt = NULL, rwsplt=NULL){
     col_fun2 <- circlize::colorRamp2(c(0, 0.25, 0.5, 0.75, 1),
                                      c("darkblue","deepskyblue", "white", "tomato","red"))
     titleOfPlot <- paste("Heatmap of", titleValue)
