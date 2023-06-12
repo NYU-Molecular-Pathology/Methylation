@@ -489,7 +489,7 @@ AddGeneProbeChrName <- function(RGSet, oldBeta) {
                                            
 GetCsvGeneColumns <- function(pathwayName, z){
     outFile1 <- paste(pathwayName,"genes_columns_withMissing.csv", sep = "_")
-    outDir <- file.path(getwd(),"data")
+    outDir <- file.path(getwd(),"csv")
     if(!dir.exists(outDir)){dir.create(outDir, recursive = T)}
     write.csv(z, file = file.path(outDir, outFile1), row.names=F, na="")
     z <- as.data.frame(z)
@@ -567,17 +567,17 @@ CatImg <- function(subTitle, imgFile){
     cat("\n\n")
 }
 
-GetAvgBetaAnno <- function(targets, avgBetas, selVars){
+GetAvgBetaAnno <- function(targets, avgBetas, selectedVars){
     toKeep <- which(targets[, 1] %in% colnames(avgBetas))
     targets1 <- targets[toKeep, ]
     rownames(targets1) <- 1:nrow(targets1)
     rownames(targets1) <- targets1[, 1]
     targets1 <- targets1[colnames(avgBetas), ]
     rownames(targets1) <- 1:nrow(targets1)
-    targets1 <- gb$colorTargets(targets1, varColumns = selVars)
-    ha <- gb$AnnotateHmVars(targets1, varColumns = selVars)
-    ha <- gb$FilterHmAnno(ha, selVars) # drop any unwanted columns
-    ha <- gb$MatchHaLegend(ha, selVars, targets1)
+    targets1 <- gb$colorTargets(targets1, varColumns = selectedVars)
+    ha <- gb$AnnotateHmVars(targets1, varColumns = selectedVars)
+    ha <- gb$FilterHmAnno(ha, selectedVars) # drop any unwanted columns
+    ha <- gb$MatchHaLegend(ha, selectedVars, targets1)
     return(ha)
 }
 
@@ -773,11 +773,11 @@ MatchHaLegend <- function(ha, selectedVars, targets1){
     return(ha)
 }
                                            
-GetHeatMapData <- function(targets, betas, RGSet, gb, varToFilter = NULL){
+GetHeatMapData <- function(targets, betas, RGSet, gb, getAll=F, varToFilter = NULL){
     targets1 <- gb$SubsetTargets(targets, varToFilter)
     betas1 <- betas[, targets1[, gb$col_samNames]]
-    unBetas <- gb$tierBetas(betas1, gb$col_sentrix, RGSet) # unsupervised betas
-    unBetas <- gb$addGeneName(RGSet, unBetas, gb$addGenesHm)
+    unBetas <- gb$tierBetas(betas1, gb$col_sentrix, RGSet, getAll=T) # unsupervised betas
+    #unBetas <- gb$addGeneName(RGSet, unBetas, gb$addGenesHm)
     ha <- gb$AnnotateHmVars(targets1, varColumns = gb$selectedVars)
     ha <- gb$FilterHmAnno(ha, gb$selectedVars) # drop any unwanted columns
     ha <- gb$MatchHaLegend(ha, gb$selectedVars, targets1)
