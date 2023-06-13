@@ -1,10 +1,13 @@
 gb <- globalenv(); assign("gb", gb)
 require("ggplot2")
+
+
 printPlotTab <- function(thePlot, theTabName){
   cat(theTabName)
   plot.new()
   return(supM(print(thePlot)))
 }
+
 
 grabPngNames <- function(tsne_titles=NULL, keywrd="Top"){
   outDirs <- stringr::str_split_fixed(tsne_titles, " ", 16)
@@ -359,34 +362,6 @@ takeTopVariance <- function(betas, topVar = 1:10000){
     top_var_beta <- sorted_betas[topVar, ] # top_variable_beta[1:10000,]
     return(top_var_beta)
 }
-
-
-gb$tierBetas <- function(betas, col_sentrix, RGSet, batchCorrect = F, getSuper = F, topVar = 1:10000, getAll=F) {
-    rgLiDat <- RGSet@colData@listData
-
-    selectSams <- rgLiDat[[col_sentrix]][rgLiDat[["Sample_ID"]] %in% colnames(betas)]
-    newRgset <- RGSet[, RGSet@colData@rownames %in% selectSams]
-
-    if (batchCorrect == T & getSuper == T) {
-        superbetas <- gb$batchCorrectBs(betas, newRgset, gb$batchCol)
-        return(superbetas)
-    }
-    if (batchCorrect == T & getSuper == F){
-        unBetas <- gb$batchCorrectBs(betas, newRgset , gb$batchCol)
-        return(unBetas)
-    }
-    if (getSuper == T) {
-        superbetas <- gb$getSupervise(betas, newRgset, topVar)
-        return(superbetas)
-    }
-    if(getAll==T){
-        return(betas)
-    } else{
-        unBetas <- gb$takeTopVariance(betas, topVar)
-        return(unBetas)
-    }
-}
-
 
 SubsetTargets <- function(targets, varToFilter = NULL){
   if(is.null(varToFilter)){return(targets)}
