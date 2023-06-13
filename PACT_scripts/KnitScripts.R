@@ -327,15 +327,14 @@ parseCNV <- function(outPath, sam, cnvTab){
 }
 
 
-getDumpFiles <- function(outPath, sam,
-                         cnvTab,
-                         philipsFtp = "/Volumes/molecular/Molecular/Philips_SFTP") {
+getDumpFiles <- function(
+    outPath, sam, cnvTab, philipsFtp = "/Volumes/molecular/Molecular/Philips_SFTP")
+{
     samZip <- paste0(sam, ".zip")
     dumpDir <- file.path(philipsFtp, samZip)
     destDir <- file.path(outPath, paste0(basename(samZip)))
     if (file.exists(dumpDir) & !file.exists(destDir)) {
-        try(fs::file_copy(path = dumpDir, new_path = destDir),
-            silent = T)
+        try(fs::file_copy(path = dumpDir, new_path = destDir), silent = T)
         unzip(zipfile = destDir, exdir = outPath)
     }
     cnvTab <- parseCNV(outPath, sam, cnvTab)
@@ -344,9 +343,13 @@ getDumpFiles <- function(outPath, sam,
 
 # Appends any additional cnv abberations from data dump
 checkDataDump <- function(sam, cnvTab) {
+    if(nrow(cnvTab) == 0){
+        cnvTab <- as.data.frame(matrix(nrow=1, ncol=length(cnvTab), dimnames=list(1, names(cnvTab))))
+        cnvTab$Test_Case <- sam
+    }
     outPath <- file.path(getwd(), "zipfiles")
     if (!dir.exists(outPath)) {dir.create(outPath)}
-    cnvTab<- getDumpFiles(outPath, sam , cnvTab)
+    cnvTab <- getDumpFiles(outPath, sam , cnvTab)
     drpCol <- which(stringr::str_detect(colnames(cnvTab), "In."))
     cnvTab <- cnvTab[,-drpCol]
     return(cnvTab)
