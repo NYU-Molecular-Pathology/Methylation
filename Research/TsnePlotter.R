@@ -152,28 +152,28 @@ genTsnePlot <- function(tsne_plot, titleLabel, groupToLabel = NULL,
 }
 
 
-gb$tierBetas <- function(betas, col_sentrix, RGSet,
-                         batchCorrect = F, getSuper = F, topVar = 1:10000) {
-    rgLiDat <- RGSet@colData@listData
-    selectSams <- rgLiDat[[col_sentrix]][rgLiDat[["Sample_ID"]] %in% colnames(betas)]
-    rgColRows <- RGSet@colData@rownames
-    newRgset <- RGSet[, rgColRows %in% selectSams]
-    if (batchCorrect == T) {
-      if (getSuper == T) {
-        superbetas <- gb$batchCorrectBs(betas, newRgset, topVar, T)
+tierBetas <- function(betas, col_sentrix, RGSet, batchCorrect = F, getSuper = F, topVar = 1:10000, getAll=F) {
+    rgLi <- RGSet@colData@listData
+    selectSams <- rgLi[[col_sentrix]][rgLi[["Sample_ID"]] %in% colnames(betas)]
+    newRg <- RGSet[, RGSet@colData@rownames %in% selectSams]
+    
+    if (batchCorrect == T & getSuper == T) {
+        superbetas <- gb$batchCorrectBs(betas, newRg, gb$batchCol)
         return(superbetas)
-      } else{
-        unBetas <- gb$batchCorrectBs(betas, newRgset , topVar)
+    }
+    if (batchCorrect == T & getSuper == F){
+        unBetas <- gb$batchCorrectBs(betas, newRg , gb$batchCol)
         return(unBetas)
-      }
-    } else{
-      if (getSuper == T) {
-        superbetas <- gb$getSupervise(betas, newRgset, topVar)
+    }
+    if (getSuper == T) {
+        superbetas <- gb$getSupervise(betas, newRg, topVar)
         return(superbetas)
-      } else{
+    }
+    if(getAll==T){
+        return(betas)
+    } else{
         unBetas <- gb$takeTopVariance(betas, topVar)
         return(unBetas)
-      }
     }
 }
 
