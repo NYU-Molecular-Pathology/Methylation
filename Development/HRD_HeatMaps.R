@@ -5,6 +5,7 @@
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2023
 ## ---------------------------
+
 gb <- globalenv(); assign("gb", gb)
 
 # Load or Install required packages
@@ -27,6 +28,7 @@ CheckCran <- function(pkg) {
 pkgLis <- c("utils", "grDevices", "stringr", "BiocManager", "ggplot2",
             "pals", "gridExtra", "fitdistrplus", "ggh4x", "dplyr", "purrr")
 bioPkg <- c("minfi", "IlluminaHumanMethylationEPICanno.ilm10b4.hg19", "BiocParallel", "Biobase")
+
 pkgLoad <- unlist(lapply(pkgLis, CheckCran))
 bioLoad <- unlist(lapply(bioPkg, BioCinst))
 stopifnot(all(pkgLoad) & all(bioLoad))
@@ -34,7 +36,9 @@ stopifnot(all(pkgLoad) & all(bioLoad))
 mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research"
 script.list <- c("tableMaker.R", "TsnePlotter.R", "getRGsetBetas.R", "hmFunctions.R")
 scripts <- file.path(mainHub, script.list)
+
 invisible(lapply(scripts, function(i){suppressPackageStartupMessages(devtools::source_url(i))}))
+
 gb$LoadHeatMapLibs()
 library("tidyverse")
 require("tidyverse")
@@ -305,13 +309,14 @@ CreateSheetFromIdats <- function(idatPath, recursive = F, delim = "_") {
         dat$sentrix_col <- temp[,2]
         dat <- dat[,-sentrixpos]
     }
-
     slidecol <- grep("^[0-9]{9}[0-9]*$", as.character(unlist(dat[1,])))
+    
     if (length(slidecol) == 1) {
         colnames(dat)[slidecol] <- "Slide"
     }
-
+    
     idcol <- which(apply(dat, 2, function(x) all(!duplicated(x))))
+    
     if(length(idcol) >= 1) {
         Sample_Name <- dat[,idcol[1]]
         dat <- dat[,-idcol[1],drop=F]
@@ -473,7 +478,7 @@ GetProbesPlotData <- function(myGenes, msetAnno, targets) {
 }
 
 
-# organInfo <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs/Probe_performance/raw_organs_data.csv"
+# organInfo <- file.path(getwd(), "raw_organs_data.csv")
 # targx <- as.data.frame(read.csv(organInfo))
 # targy <- as.data.frame(read.csv(file.path(getwd(), "samplesheet_og.csv")))
 # targets <- base::merge(targx, targy, by.x="Sample_Name", all=T)
