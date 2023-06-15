@@ -232,7 +232,9 @@ FlipColorVector <- function(targets, colorColNames, col_vect){
 colorTargets <- function(targets, varColumns = c("Type","Origin"), col_vect = NULL){
     col_vect <- gb$GetDefaultColors(col_vect)
     targets <- gb$FixNullNaVars(targets, varColumns)
-    message("Targets Dimnames:\n", paste(dimnames(targets)[[2]], collapse = " | "))
+    
+    #message("\nTargets Dimnames:\n", paste(dimnames(targets)[[2]], collapse = " | "))
+    
     hasType <- any("Type" %in% varColumns)
     if (length(varColumns) <= 1 & hasType == F) {
       targets$Type <- targets[, varColumns[1]]
