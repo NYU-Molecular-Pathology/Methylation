@@ -25,8 +25,7 @@ CheckCran <- function(pkg) {
     return(LibLoad(pkg))
 }
 
-pkgLis <- c("utils", "grDevices", "stringr", "BiocManager", "ggplot2",
-            "pals", "gridExtra", "fitdistrplus", "ggh4x", "dplyr", "purrr")
+pkgLis <- c("utils", "grDevices", "stringr", "BiocManager", "ggplot2", "pals", "gridExtra", "fitdistrplus", "ggh4x", "dplyr", "purrr")
 bioPkg <- c("minfi", "IlluminaHumanMethylationEPICanno.ilm10b4.hg19", "BiocParallel", "Biobase")
 
 pkgLoad <- unlist(lapply(pkgLis, CheckCran))
@@ -162,37 +161,22 @@ PlotBetaDist <- function(betasMat, island_probes, geneName) {
     SaveDistPNG(geneName, plot2, "Probe_distributions")
 }
 
+
 SaveBoxPlot <- function(thePlot, ggTable, tbl1, tbl2 = NULL, geneName) {
     imgName <- paste(geneName, "probes_CNV.png", sep = "_")
     imgPath <- file.path(getwd(), "BetaBoxplots")
+    
     if (!dir.exists(imgPath)) {
         dir.create(imgPath)
     }
+    
     message(paste0("\nSaving file:\n"), file.path(imgPath, imgName))
-    png(
-        file.path(imgPath, imgName),
-        width = 17,
-        height = 10,
-        units = "in",
-        res = 300
-    )
+    png(file.path(imgPath, imgName), width = 17, height = 10, units = "in", res = 300)
+    
     if (ncol(ggTable) > 10) {
-        gridExtra::grid.arrange(
-            thePlot,
-            tbl1,
-            tbl2,
-            nrow = 3,
-            as.table = T,
-            heights = c(5, 1, 1)
-        )
+        gridExtra::grid.arrange(thePlot, tbl1, tbl2, nrow = 3, as.table = T, heights = c(5, 1, 1))
     } else{
-        gridExtra::grid.arrange(
-            thePlot,
-            tbl1,
-            nrow = 2,
-            as.table = T,
-            heights = c(5, 1)
-        )
+        gridExtra::grid.arrange(thePlot, tbl1, nrow = 2, as.table = T, heights = c(5, 1))
     }
     invisible(dev.off())
 }
