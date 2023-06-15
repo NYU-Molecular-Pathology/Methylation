@@ -772,6 +772,11 @@ MatchHaLegend <- function(ha, selectedVars, targets1){
 }
                                            
 GetHeatMapData <- function(targets, betas, RGSet, gb, getAll=F, varToFilter = NULL){
+
+    gb$MsgNullVar(gb, "col_sentrix", "The Sentrix IDs for the samples", '"Sentrix_Pos"')
+    gb$MsgNullVar(gb ,"col_samNames", "The unique sample names or IDs", '"RD_number"')
+    gb$MsgNullVar(gb, "selectedVars", "The Phenotype or Metadata for the samples", 'c("Cell_type", "Tissue_Type")')
+
     RGSet@colData@listData$Sample_ID <- RGSet@colData@listData[[gb$col_samNames]]
     targets1 <- gb$SubsetTargets(targets, varToFilter)
     betas1 <- betas[, targets1[, gb$col_samNames]]
