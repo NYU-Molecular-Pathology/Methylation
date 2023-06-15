@@ -611,6 +611,17 @@ MessageBatchMix <- function(targets, gb){
     return(gb$printMissing(theMissing, gb))
 }
 
+MsgNullVar <- function(gb, colTxt, strTxt, varTxt) {
+    if(is.null(gb[[colTxt]])){
+        errMsg <- paste0(
+            "\n>> The variable ", colTxt,' cannot be NULL', "\n",
+            'Assign "', colTxt, '" to the name of column(s) in your targets/samplesheet dataframe that contains:\n',
+            strTxt, '. For example, gb$', colTxt, ' <- ', varTxt
+        )
+        stop(errMsg)
+    }
+}
+
 ShowKnitProgress <- function() {
   library("knitr")
   library("knitrProgressBar")
