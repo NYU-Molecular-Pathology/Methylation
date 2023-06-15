@@ -772,6 +772,7 @@ MatchHaLegend <- function(ha, selectedVars, targets1){
 }
                                            
 GetHeatMapData <- function(targets, betas, RGSet, gb, getAll=F, varToFilter = NULL){
+    RGSet@colData@listData$Sample_ID <- RGSet@colData@listData[[gb$col_samNames]]
     targets1 <- gb$SubsetTargets(targets, varToFilter)
     betas1 <- betas[, targets1[, gb$col_samNames]]
     unBetas <- gb$tierBetas(betas1, gb$col_sentrix, RGSet, getAll=T) # unsupervised betas
