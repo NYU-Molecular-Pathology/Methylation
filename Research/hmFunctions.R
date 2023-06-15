@@ -208,7 +208,7 @@ modifyHaColors <- function(varColumns, targets, ha) {
 }
 
 assignColors3 <- function(targets, varColumns = c("Type", "Origin"), col_vect = NULL, manualNames = NULL) {
-    message("~~~~Targets Dimnames:\n\n", paste(dimnames(targets)[[2]], collapse = "\n"))
+    message("\n~~~~Targets Dimnames:\n", paste(dimnames(targets)[[2]], collapse = "\n"))
     
     col_vect <- gb$GetDefaultColors(col_vect)
     targets <- gb$colorTargets(targets, varColumns)
