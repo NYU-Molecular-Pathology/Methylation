@@ -109,6 +109,27 @@ FillMissingData <- function(targets, col_samNames="Sample_Name", originalFi="sam
 }
 
 
+FixNullNaVars <- function(targets, varColumns) {
+  if(all(varColumns %in% dimnames(targets)[[2]])==F){
+    message("The column names you provided are not found in targets columns: ", paste(varColumns, collapse = ", "))
+    stopifnot(all(varColumns %in% dimnames(targets)[[2]]))
+    }
+  for (variable in varColumns) {
+    if (any(is.null(targets[, variable]))) {
+      targets[is.null(targets[, variable]), variable] <- "NONE"
+    }
+    if (any(is.na(targets[, variable]))) {
+      targets[is.na(targets[, variable]), variable] <- "NONE"
+    }
+    if (any(targets[, variable] == "")) {
+        toFix <- targets[, variable] == ""
+        targets[toFix, variable] <- "NONE"
+    }
+  }
+  return(targets)
+}
+
+
 ModifyTargetColumns <- function(targets, gb) {
     if (gb$needFi == T) {
         gb$GetCsvSheet(gb$needFi, gb$samsheet, gb$token, idatPath = gb$idatPath)
@@ -135,7 +156,7 @@ ModifyTargetColumns <- function(targets, gb) {
     if(is.null(gb$selectedVars)){
         gb$selectedVars <- "Type"
     }
-    
+    targets <- gb$FixNullNaVars(targets, selectedVars)
     targets <- gb$colorTargets(targets, varColumns = gb$selectedVars)
     if (is.null(gb$col_sentrix)) {
         gb$col_sentrix <- "SentrixID_Pos"
