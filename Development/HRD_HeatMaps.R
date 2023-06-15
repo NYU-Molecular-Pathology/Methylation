@@ -5,6 +5,39 @@
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2023
 ## ---------------------------
+gb <- globalenv(); assign("gb", gb)
+
+# Load or Install required packages
+LibLoad <- function(pkg){
+    libOpt <- list(pkg, quietly = T, logical.return = T, warn.conflicts = F)
+    suppressPackageStartupMessages(suppressWarnings(do.call(library, libOpt)))
+}
+CheckReq <- function(pkg){
+    return(suppressWarnings(!require(pkg, character.only = T, warn.conflicts = F)))
+}
+BioCinst <- function(pkg) {
+    if (CheckReq(pkg)) {do.call(BiocManager::install, list(pkg, update = F, ask = F))}
+    return(LibLoad(pkg))
+}
+CheckCran <- function(pkg) {
+    if(CheckReq(pkg)){do.call(install.packages, list(pkg, dependencies=T))}
+    return(LibLoad(pkg))
+}
+
+pkgLis <- c("utils", "grDevices", "stringr", "BiocManager", "ggplot2",
+            "pals", "gridExtra", "fitdistrplus", "ggh4x", "dplyr", "purrr")
+bioPkg <- c("minfi", "IlluminaHumanMethylationEPICanno.ilm10b4.hg19", "BiocParallel", "Biobase")
+pkgLoad <- unlist(lapply(pkgLis, CheckCran))
+bioLoad <- unlist(lapply(bioPkg, BioCinst))
+stopifnot(all(pkgLoad) & all(bioLoad))
+
+mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research"
+script.list <- c("tableMaker.R", "TsnePlotter.R", "getRGsetBetas.R", "hmFunctions.R")
+scripts <- file.path(mainHub, script.list)
+invisible(lapply(scripts, function(i){suppressPackageStartupMessages(devtools::source_url(i))}))
+gb$LoadHeatMapLibs()
+library("tidyverse")
+require("tidyverse")
 
 
 GrabSnpProbes <- function(anno){
