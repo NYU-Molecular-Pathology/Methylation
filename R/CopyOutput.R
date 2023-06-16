@@ -331,13 +331,14 @@ DoRedcapApi <- function(rcon, recordName, runID) {
     logfi = paste0(recordName, "_redcapLog.txt")
     tryCatch(
         expr = {
-            cat(redcapAPI::importRecords(
+            redcapAPI::importRecords(
                 rcon, data, overwriteBehavior = "normal",
-                returnContent = "ids", logfile = logfi), sep = "\n\n"
-                )
+                returnContent = "ids", logfile = logfi)
             },
         error = function(e) {
             rdMsg <- paste(data$record_id, "failed import data to REDCap:")
+            message(mkRed("DATA:"),"\n")
+            message(paste0(capture.output(data), collapse="\n"))
             message(mkRed(rdMsg), "\n", e$message)
             }
         )
