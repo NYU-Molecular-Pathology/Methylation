@@ -25,26 +25,26 @@
 # }
 
 getScores <- function(Mset=NULL){
-    if(!is.null(Mset)){
-        betas <- minfi::getBeta(Mset)
-        ex_indices <- vapply(names(mnp.v11b6::refset.center), function(x) !x %in% rownames(Mset), logical(1))
-        
-        if (any(ex_indices)) {
-            refset_center_adj <- mnp.v11b6::refset.center[!ex_indices]
-            pcaloadings_adj <- mnp.v11b6::pcaloadings[-ex_indices, ]
-        } else {
-            refset_center_adj <- mnp.v11b6::refset.center
-            pcaloadings_adj <- mnp.v11b6::pcaloadings
-        }
-
-        betas_adj <- betas[match(names(refset_center_adj), rownames(betas)), ]
-        betas_adj <- betas_adj - refset_center_adj
-        sc <- pcaloadings_adj %*% t(as.matrix(betas_adj, ncol = 1))
-        scores <- rbind(mnp.v11b6::pcascores, t(sc))
-        return(scores)
-    }else{
-        stopifnot("Mset is NULL in getScores()" = !is.null(Mset))
+    if(is.null(Mset)){
+        stop("Mset is NULL in getScores()")
     }
+    
+    betas <- minfi::getBeta(Mset)
+    ex_indices <- which(!names(mnp.v11b6::refset.center) %in% rownames(Mset))
+    
+    if(length(ex_indices) > 0){
+        refset_center_adj <- mnp.v11b6::refset.center[-ex_indices]
+        pcaloadings_adj <- mnp.v11b6::pcaloadings[-ex_indices, ]
+    }else{
+        refset_center_adj <- mnp.v11b6::refset.center
+        pcaloadings_adj <- mnp.v11b6::pcaloadings
+    }
+    
+    betas_adj <- betas[match(names(refset_center_adj), rownames(betas)), ]
+    sc <- (betas_adj - refset_center_adj) %*% pcaloadings_adj
+    scores <- cbind(mnp.v11b6::pcascores, sc)
+    
+    return(scores)
 }
 
 
