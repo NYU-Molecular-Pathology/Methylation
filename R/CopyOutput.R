@@ -47,6 +47,7 @@ SavePrevDir <- function(newFolder) {
 
 
 Copy2TempDir <- function(fi2copy, runID){
+     msgFunName(cpOutLnk, "Copy2TempDir")
     tempDir <- file.path(fs::path_home(), runID)
     if (!dir.exists(tempDir)) {dir.create(tempDir)}
     fs::file_copy(fi2copy, tempDir, overwrite = T)
@@ -88,7 +89,8 @@ copy.to.clinical <- function(clinOut, runID, runYear) {
 
 # Checks if field is already filled in REDCap returns boolean
 checkRedcapRecord <- function(recordName, fieldName = 'classifier_pdf') {
-        url = gb$apiLink
+      msgFunName(cpOutLnk, "checkRedcapRecord")    
+    url = gb$apiLink
         formData <- list(
             "token" = gb$ApiToken,
             content = 'record',
@@ -178,6 +180,7 @@ loopRedcapImport <- function(data) {
 
 
 GetRedcapCsv <- function(samsheet) {
+    msgFunName(cpOutLnk, "GetRedcapCsv")
     if (is.null(samsheet)) {
         samsheet <- dir(path = getwd(), full.names = T, "_Redcap.csv", recursive = F)
     }
@@ -326,6 +329,7 @@ importRedcapStart <- function(nfldr) {
 
 
 DoRedcapApi <- function(rcon, recordName, runID) {
+    msgFunName(cpOutLnk, "DoRedcapApi")
     message(mkBlue("Importing Record:"))
     data = data.frame(record_id = recordName, run_number = runID)
     logfi = paste0(recordName, "_redcapLog.txt")
