@@ -80,3 +80,27 @@ output_file <- "cnv_values_genes.csv"
 cnv_values_df <- do.call(cbind, cnv_values_list)
 write.csv(cnv_values_df, output_file, row.names = FALSE)
 
+#### Simplified
+
+library(conumee)
+library(minfi)
+library(org.Hs.eg.db)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+
+genes <- c("BRCA1", "BRCA2", "ATM", "RAD51C")
+gene_symbols <- org.Hs.eg.db::select(org.Hs.eg.db, keys = genes, columns = c("SYMBOL", "TXCHROM", "TXSTART", "TXEND"), keytype = "SYMBOL")
+cyto_bands <- TxDb.Hsapiens.UCSC.hg19.knownGene::get_cytoband(TxDb.Hsapiens.UCSC.hg19.knownGene)
+
+cnv_values_list <- lapply(gene_symbols$SYMBOL, function(gene) {
+  gene_info <- gene_symbols[gene_symbols$SYMBOL == gene, ]
+  chromosome <- as.numeric(gsub("chr", "", gene_info$TXCHROM))
+  start <- gene_info$TXSTART
+  end <- gene_info$TXEND
+  cnv_data[chromosome, start:end, , drop = FALSE]
+})
+
+output_file <- "cnv_values_genes.csv"
+cnv_values_df <- do.call(cbind, cnv_values_list)
+write.csv(cnv_values_df, output_file, row.names = FALSE)
+
+
