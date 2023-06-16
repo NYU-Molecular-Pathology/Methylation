@@ -548,6 +548,7 @@ CallApiFileForce <- function(rcon, recordName) {
 
 
 ForceCallApiFile <- function(rcon, recordName, ovwr = T) {
+    msgFunName(cpOutLnk, "ForceCallApiFile")
   recordFi <- paste0(recordName, ".html")
   message("\n", mkBlue("Importing Record File:"), paste0(" ", recordFi))
     recordName <- CheckSarcRDnumber(recordName)
@@ -588,7 +589,8 @@ UploadToRedcapOnly <- function(file.list, token=NULL) {
 
 
 ForceUploadToRedcap <- function(file.list, token=NULL, deskCSV = T) {
-  stopifnot(!is.null(token))
+  msgFunName(cpOutLnk, "ForceUploadToRedcap")
+    stopifnot(!is.null(token))
   msgFunName(cpOutLnk, "uploadToRedcap"); message(paste0(capture.output(file.list), collapse="\n"))
   rcon <- redcapAPI::redcapConnection(apiLink, token)
   htmlLi <- stringr::str_replace_all(basename(file.list), ".html", "")
