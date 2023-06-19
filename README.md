@@ -152,13 +152,16 @@ You can then check the output to confirm each html report was generated in the o
 # ⚠️ Troubleshooting
 <details>
 <summary>Pipeline Installation Issues</summary>
-If you have issues with package installation or dependencies:<br />
+ 1. If you have issues with package installation or dependencies:<br />
 Make sure compilers are installed by opening Xcode.app or executing `sudo xcode-select --install`<br>
-Then, execute the all_installer.R script by copy and pasting the raw contents of the script below into Rstudio before running runmeth.sh again<br />
-https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/all_installer.R<br />
-To resolve any problems during automation, you can open methylExpress.R in RStudio which is downladed by runmeth.sh to your home directory.<br />
-Try to run `sudo xcode-select -s /Library/Developer/CommandLineTools` and `brew install gdal proj` then install the package **rgdal** in Rstudio.<br />
-Download the libraries below from their sources:<br />
+ <br>
+ 2. Then, execute the all_installer.R script by copy and pasting the raw contents of the script below into Rstudio before running runmeth.sh again: https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/all_installer.R<br />
+<br>
+ 3. To resolve any problems during automation, you can open methylExpress.R in RStudio which is downladed by runmeth.sh to your home directory.<br />
+<br>
+ 4. Try to run `sudo xcode-select -s /Library/Developer/CommandLineTools` and `brew install gdal proj` then install the package **rgdal** in Rstudio.<br />
+ <br>
+ 5. Download the libraries below from their sources:<br />
  (a) sqlite-autoconf-3330000.tar.gz from "https://www.sqlite.org/download.html".<br />
  (b) tiff-4.1.0.tar.gz from "https://download.osgeo.org/libtiff/"<br />
  (c) proj-7.2.0.tar.gz from "https://proj.org/download.html#current-release"<br />
@@ -166,12 +169,11 @@ Download the libraries below from their sources:<br />
  (e) geos-3.8.1.tar.bz2 from "https://trac.osgeo.org/geos"<br />
  (f) gdal-3.2.0.tar.gz from "https://gdal.org/download.html"<br />
 
-
 </details>
 
 <details>
 <summary>REDCap errors</summary>
-Once your run completes check in your run directory if there is any *upload_log.tsv* file or *redcaperrors.txt*.  If these files exist, they may note any files or data which would have been over-written in the database.  Check with the wet lab if any RD-numbers were duplicated or previously used for the samples listed in the upload_log.tsv file. <br>
+Once your run completes check in your run directory if there is any *upload_log.tsv* file or *redcaperrors.txt*.  If these files exist, they may note any files or data which would have been over-written in the database.  Check with the wet lab if any RD-numbers were duplicated or previously used for the samples listed in the upload_log.tsv file. Make sure your API token is not NULL and that REDCap is not down for maintenence here: https://redcap.nyumc.org/apps/redcap/<br>
 </details>
 
 <details>
@@ -184,8 +186,16 @@ Once your run completes check in your run directory if there is any *upload_log.
 </details>
 
 <details>
+<summary>Issues with installing or running packages</summary>
+ 1. If you are getting compiler errors or all_installer.R fails, try installing additional system dependencies with brew and restart your R session: https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Development/brewFix.sh<br />
+ <br>
+ 2. If you still have errors with compiling or installing a package, try removing you MakeVars directory in: <br/>
+ `rm -rf $HOME/.R/Makevars`<br/>
+</details>
+
+<details>
 <summary>Fix wet lab worksheet</summary>
- 1. In your current working directory or in the path /Volumes/CBioinformatics/Methylation/Clinical_Runs/22-MGDM##, open the RUNID.xlsm file<br />
+ 1. In your run path /Volumes/CBioinformatics/Methylation/Clinical_Runs/22-MGDM##, open the RUNID.xlsm file<br />
  2. On the Review ribbon, click unprotect worksheet and unprotect tab<br />
  3. Right-click the "worksheet" tab at the bottom and unhide... raw_labels tab<br />
  4. If any "#ref" errors either drag the formula down to correct or type "=" and select the cell in the first tab "worksheet" and press return.<br />
