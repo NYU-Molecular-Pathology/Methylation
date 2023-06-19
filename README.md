@@ -72,12 +72,12 @@ cifs://research-cifs.nyumc.org/Research/snudem01lab/snudem01labspace
 cifs://shares-cifs.nyumc.org/apps/acc_pathology/molecular
 ```
 # ⚡️ Quickstart
- 1. Download the shell script to your home folder or another directory:
+#### 1. Download the shell script to your home folder or another directory:
   + You can download [runMeth.sh](https://github.com/NYU-Molecular-Pathology/Methylation/blob/32c3b043bd2fd27de4106bc56b8d4f13ac42d48d/Meth_Scripts/runMeth.sh) in this repo under Methylation/Meth_Scripts/ or use curl/wget:
  ```
  curl -# -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Meth_Scripts/runMeth.sh >$HOME/runMeth.sh
  ```
- 2. Open the shell script, paste your REDCap API token in the **methAPI** field on line 3, and save it.</br>  
+#### 2. Open the shell script, paste your REDCap API token in the **methAPI** field on line 3, and save it.</br>  
  You can use `nano $HOME/runMeth.sh` </br>
  ```bash
  methAPI="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"  #Paste your API Token here
@@ -85,7 +85,7 @@ cifs://shares-cifs.nyumc.org/apps/acc_pathology/molecular
   + Note: Your API Token can be found in "All Samples DataBase" on the left-side panel in REDCap: https://redcap.nyumc.org/apps/redcap/redcap_v13.1.35/API/project_api.php?pid=24752 </br>
  (if the link breaks, modify the URL to match REDCap Version i.e. /redcap/**redcap_v13.1.35**/) </br>
  
- 3. Add permissions to the script to be executable:
+#### 3. Add permissions to the script to be executable:
  ```ruby
  chmod +rwx $HOME/runMeth.sh
  ```
