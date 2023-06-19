@@ -21,19 +21,19 @@
 
 ## 💻 Essential Downloads
 Download and install the following packages:<br>
-- [X] **R 4.2 or higher** from CRAN: https://cran.r-project.org/bin/macosx/ (use -arm64.pkg for M1 Chip Macs & -x86_64.pkg for Intel Chip Macs) <br />
-- [X] **Gfortran** from GitHub use dmg installer: https://github.com/fxcoudert/gfortran-for-macOS/releases/tag/11.2-bigsur-intel <br />
+Use **ARM** (-arm64.pkg) package downloads for *M1/M2 Macs* & **Intel** (-x86_64.pkg) for older non-Apple Silicon Chip Based Macs) <br>
+- [X] **R 4.2 or higher**: https://cran.r-project.org/bin/macosx/ <br />
+- [X] **Gfortran** from GitHub use dmg installer: https://github.com/fxcoudert/gfortran-for-macOS/releases/ <br />
 - [X] **RStudio 2023.06.0+421 or later**: https://www.rstudio.com/products/rstudio/download/#download<br />
 - [X] **XQuartz**: https://www.xquartz.org/<br />
 - [X] **LaTeX** for Mac: https://www.tug.org/mactex/mactex-download.html [Direct DL](https://mirror.ctan.org/systems/mac/mactex/MacTeX.pkg)<br />
 - [X] **Pandoc**: https://pandoc.org/installing.html<br />
 - [X] **XCode command line tools** for Mac OS: in iTerm or Terminal enter `xcode-select --install`<br>
 - [X] **Java 8 JDK**: https://www.oracle.com/java/technologies/downloads/#java8-mac (Intel Macs) or [Java for M1/M2 Macs](https://www.azul.com/downloads/?version=java-8-lts&os=macos&architecture=arm-64-bit&package=jdk)
-- [X] **Homebrew**: https://brew.sh/ you can install using the following line in terminal:<br />
-`/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`<br />
+- [X] **Homebrew**: https://brew.sh/ <br />
 - [X] **Library Magic, Sqlite and Proj**: `brew install libmagic sqlite proj`<br />
-- [X] **Compilers and Unpackers**: `brew install llvm aspell gdal autoconf automake gcc libgit2 openssl@3 zlib go pandoc git libffi`<br />
-- [X] **Additional Libraries**: `brew install texinfo pango cairo open-mpi poppler-qt5 graphviz libopenmpt java11`<br />
+- [X] **Compilers+**: `brew install llvm aspell gdal autoconf automake gcc libgit2 openssl@3 zlib go pandoc git libffi`<br />
+- [X] **Additional Libraries**: `brew install texinfo pango cairo open-mpi poppler-qt5 graphviz libopenmpt java11 libomp`<br />
 
 ## 𓇲 Additional Steps for Apple Silicon Macs Only
 - [X] **Additional OpenGL**: `brew install --from-source glfw3`<br />
@@ -44,20 +44,20 @@ cmake -DCMAKE_OSX_ARCHITECTURES=arm64 . && \
 make && \
 sudo make install
 ```
-<br />
 
-## First Time install
-- Before running the test case the first time, run the Rscript below, `all_installer.R` to install any pre-requirements.<br />
-For better debugging, paste the raw code from the URL into RStudio and run:<br />
-https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/all_installer.R <br />
-
-<details>
 <summary>NOTE</summary>
-- R versions 4.2+ include compile and Tckl dependencies. brew can install libomp and cairo if needed.
-- After downloading R & RStudio unlocked the
-[System Preferences Privacy & Security Panel](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/Notes/SystemPermissions.md) before installing packages.
-</details>
 
+You may need to unlock permissions before installing packages in the Mac's **System Preferences Privacy & Security Panel**:<br>
+https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/Notes/SystemPermissions.md 
+
+___
+
+# ❗First Time Running Classifier Pre-install packages
+- After you have installed all the required system dependencies above in Essential Downloads above, you must install all the R packages needed to install and run the classifiers.
+- Before running the classifier for the first time run the Rscript below, `all_installer.R`, to install any R-package dependencies.  The script only needs to be run the first time installing the classifier on new systems.<br />
+- For better debugging, paste the raw code from the URL into RStudio:<br />
+https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/all_installer.R <br />
+___
 
 ## 🌐 Network Drive Mount Paths
 - To install & run the pipeline, it is critical to mount the following network smb shared drives:
@@ -78,26 +78,17 @@ cifs://shares-cifs.nyumc.org/apps/acc_pathology/molecular
  curl -# -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Meth_Scripts/runMeth.sh >$HOME/runMeth.sh
  ```
  2. Open the shell script, paste your REDCap API token in the **methAPI** field on line 3, and save it.</br>  
- You can use `nano $HOME/runMeth.sh` Your API Token can be found in "All Samples DataBase" on the left-side panel in REDCap [here](https://redcap.nyumc.org/apps/redcap/redcap_v13.1.35/API/project_api.php?pid=24752) (if the link is broken, modify url to match REDCap Version i.e. /redcap/redcap_v13.1.35/)
+ You can use `nano $HOME/runMeth.sh` </br>
  ```bash
  methAPI="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"  #Paste your API Token here
  ```
+  + Note: Your API Token can be found in "All Samples DataBase" on the left-side panel in REDCap: https://redcap.nyumc.org/apps/redcap/redcap_v13.1.35/API/project_api.php?pid=24752 </br>
+ (if the link breaks, modify the URL to match REDCap Version i.e. /redcap/**redcap_v13.1.35**/) </br>
+ 
  3. Add permissions to the script to be executable:
  ```ruby
  chmod +rwx $HOME/runMeth.sh
  ```
-To test the pipeline from your terminal, simply execute the following command:<br />
-```ruby
-$HOME/runMeth.sh 21-MGDM_TEST
-```
-or if you have not saved the runMeth.sh script locally:
-```ruby
-/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST
-```
-You can then check the output to confirm each html report was generated in the output directory:
-```ruby
-/Volumes/CBioinformatics/Methylation/Clinical_Runs/23-MGDM20
-```
 
  + If install of any packages fail, be sure to check the troubleshooting section at the bottom of this page
 ___
@@ -123,21 +114,16 @@ To run the Clinical or Research Methylation pipeline, simply use the locally sto
 - You can copy runMeth.sh and create an alias or symlink to execute more easily.  For example:<br>
 `alias runmeth='bash $HOME/runMeth.sh'` or `echo "alias runmeth='bash $HOME/runMeth.sh'" >> ~/.bashrc`
 ---
-### 🤖 runmeth.sh parameters
+### 🤖 runMeth.sh parameters
 The shell script takes the following positional arguments:<br>
 ```R
 methAPI='XXXXXXXX' # (hardcoded) Your REDCap API Token
-methRun=${1-NULL}  # (required argument) methylation run id e.g. 22-MGDM17 @Default is NULL
-PRIORITY=${2-NULL} # (optional) string list of prioritized RD-numbers to run
-runPath=${3-NULL}  # (optional) any directory to copy/run the idat files if not Clinical_Runs
-redcapUp=${4-NULL} # (optional) character "T" or "F": Flag to upload REDCap data or not
+methRun=${1-NULL}  # methylation run id e.g. 22-MGDM17
+PRIORITY=${2-NULL} # string of prioritized RD-numbers
+runPath=${3-NULL}  # any custom directory to copy/run the idat files
+redcapUp=${4-NULL} # to upload to redcap or not if server down single char i.e. "T" or "F"
+runLocal=${5-NULL} # If the run directory should be executed without shared drives locally i.e. "T" or "F"
 ```
-**First, runmeth.sh downloads methylExpress.R and other files using curl:**
-```ruby
-curl -o methylExpress.R -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/methylExpress.R
-```
-**Next, runmeth.sh passes the values input as args to methylExpress.R:**<br>
-`Rscript --verbose methylExpress.R` **`$methAPI` `$methRun` `$PRIORITY` `$runPath`**
 ___
 
 ### 🧮 Passing Arguments to R
@@ -150,10 +136,18 @@ The four positional arguments from *runmeth.sh* are passed to the Rscript *methy
 Alternatively, instead of passing the RunID to runmeth.sh, you can source and download this repository and then locally edit args in [methylExpress.R](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/R/methylExpress.R) to run manually.
 
 # 🧪 Run the Test Case
-After installation, you can use the following run command to test the pipeline.<br>
+After installation, test the pipeline from your terminal, by executing the test case:<br />
+```ruby
+$HOME/runMeth.sh 21-MGDM_TEST
+```
+or if you have not saved the runMeth.sh script locally:
 ```ruby
 /Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST
 ```
+You can then check the output to confirm each html report was generated in the output directory: <br/>
+`/Volumes/CBioinformatics/Methylation/Clinical_Runs/21-MGDM_TEST`
+
+**NOTE**: When running the test case (*21-MGDM_TEST*) you may notice an **error** with the upload log as these reports would already exist in REDCap. It is normal for the test case html files to **fail uploading** since the REDCap database already contains the data and files for the test run, 21-MGDM_TEST.
 
 # ⚠️ Troubleshooting
 <details>
@@ -178,21 +172,22 @@ Download the libraries below from their sources:<br />
 <details>
 <summary>REDCap errors</summary>
 Once your run completes check in your run directory if there is any *upload_log.tsv* file or *redcaperrors.txt*.  If these files exist, they may note any files or data which would have been over-written in the database.  Check with the wet lab if any RD-numbers were duplicated or previously used for the samples listed in the upload_log.tsv file. <br>
-**NOTE** When running the test case run *21-MGDM_TEST* you may notice an error with the upload log as these reports would already exist in REDCap.  It is normal for the test case to fail uploading since the REDCap database already contains the data and files for the test run.
 </details>
 
 <details>
 <summary>How to upload manually to REDCap</summary>
-1. Login with your kerberos ID to https://redcap.nyumc.org/
-2. On the left-hand sidebar scroll all the way down the Reports Bookmarks until you see the folder: >>>>CURRENT Runs~~~~~ and 3) >>>>>CLINICAL Current Run
-3. Here, you can click on the RD-number of choice and then select "Upload html file" under the methylation menue
-4. Optionally, you can also select "Add / Edit Records" menu in the left sidebar and find your RD-number in the "Search query" field
+ 1. Login with your kerberos ID to https://redcap.nyumc.org/<br />
+ 2. On the left-hand sidebar scroll all the way down the Reports Bookmarks until you see the folders:<br />
+ `>>>>CURRENT Runs~~~~~ and 3) >>>>>CLINICAL Current Run`<br />
+ 3. Here, you can click on the RD-number of choice and then select "Upload html file" under the methylation menue<br />
+ 4. Optionally, you can also select "Add / Edit Records" menu in the left sidebar and find your RD-number in the "Search query" field<br />
 </details>
 
 <details>
 <summary>Fix wet lab worksheet</summary>
-1. In your current working directory or in the path /Volumes/CBioinformatics/Methylation/Clinical_Runs/22-MGDM##, open the RUNID.xlsm file
-2. On the Review ribbon, click unprotect worksheet and unprotect tab
-3. Right-click the "worksheet" tab at the bottom and unhide... raw_labels tab
-4. If any "#ref" errors either drag the formula down to correct or type "=" and select the cell in the first tab "worksheet" and press return.  For example "=worksheet!B25" references cell B25 in the tab named "worksheet"
+ 1. In your current working directory or in the path /Volumes/CBioinformatics/Methylation/Clinical_Runs/22-MGDM##, open the RUNID.xlsm file<br />
+ 2. On the Review ribbon, click unprotect worksheet and unprotect tab<br />
+ 3. Right-click the "worksheet" tab at the bottom and unhide... raw_labels tab<br />
+ 4. If any "#ref" errors either drag the formula down to correct or type "=" and select the cell in the first tab "worksheet" and press return.<br />
+ For example "=worksheet!B25" references cell B25 in the tab named "worksheet"
 </details>
