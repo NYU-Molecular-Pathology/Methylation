@@ -21,28 +21,25 @@
 
 ## 💻 Essential Downloads
 Download and install the following packages:<br>
-- [X] **R 4.1 or higher** from CRAN: https://cran.r-project.org/bin/macosx/<br />
+- [X] **R 4.2 or higher** from CRAN: https://cran.r-project.org/bin/macosx/ (use -arm64.pkg for M1 Chip Macs & -x86_64.pkg for Intel Chip Macs) <br />
 - [X] **Gfortran** from GitHub use dmg installer: https://github.com/fxcoudert/gfortran-for-macOS/releases/tag/11.2-bigsur-intel <br />
-- [X] **RStudio 1.4 or later**: https://www.rstudio.com/products/rstudio/download/#download<br />
+- [X] **RStudio 2023.06.0+421 or later**: https://www.rstudio.com/products/rstudio/download/#download<br />
 - [X] **XQuartz**: https://www.xquartz.org/<br />
 - [X] **LaTeX** for Mac: https://www.tug.org/mactex/mactex-download.html [Direct DL](https://mirror.ctan.org/systems/mac/mactex/MacTeX.pkg)<br />
 - [X] **Pandoc**: https://pandoc.org/installing.html<br />
-- [X] **XCode command line tools** for Mac OS: `xcode-select --install`<br>
-- [X] **Java 8 JDK**: https://www.oracle.com/java/technologies/downloads/#java8-mac
-- [X] **Rswitch**: https://rud.is/rswitch/<br />
+- [X] **XCode command line tools** for Mac OS: in iTerm or Terminal enter `xcode-select --install`<br>
+- [X] **Java 8 JDK**: https://www.oracle.com/java/technologies/downloads/#java8-mac (Intel Macs) or [Java for M1/M2 Macs](https://www.azul.com/downloads/?version=java-8-lts&os=macos&architecture=arm-64-bit&package=jdk)
 - [X] **Homebrew**: https://brew.sh/ you can install using the following line in terminal:<br />
-`/bin/bash -c $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh`<br />
+`/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`<br />
 - [X] **Library Magic, Sqlite and Proj**: `brew install libmagic sqlite proj`<br />
-- [X] **Compilers and Unpackers**: `brew install llvm aspell gdal autoconf automake gcc libgit2 openssl@3 zlib go pandoc`<br />
+- [X] **Compilers and Unpackers**: `brew install llvm aspell gdal autoconf automake gcc libgit2 openssl@3 zlib go pandoc git libffi`<br />
 - [X] **Additional Libraries**: `brew install texinfo pango cairo open-mpi poppler-qt5 graphviz libopenmpt java11`<br />
-- [X] **Additional Library for M1 Mac**: `brew install libffi`<br />
-- [X] **Additional OpenGL**: `brew install --from-source glfw3`<br />
 
+## 𓇲 Additional Steps for Apple Silicon Macs Only
+- [X] **Additional OpenGL**: `brew install --from-source glfw3`<br />
 ```
-brew install cmake
-brew uninstall glfw
-git clone https://github.com/glfw/glfw.git && \
-cd glfw && \
+brew install cmake && brew uninstall glfw
+git clone https://github.com/glfw/glfw.git && cd glfw && \
 cmake -DCMAKE_OSX_ARCHITECTURES=arm64 . && \
 make && \
 sudo make install
@@ -50,15 +47,13 @@ sudo make install
 <br />
 
 ## First Time install
-- Before running the test case the first time, run the Rscript below, all_installer.R to install any pre-requirements:
-```
-https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/all_installer.R
-```
-<br />
+- Before running the test case the first time, run the Rscript below, `all_installer.R` to install any pre-requirements.<br />
+For better debugging, paste the raw code from the URL into RStudio and run:<br />
+https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/all_installer.R <br />
 
 <details>
 <summary>NOTE</summary>
-- R v4.1 includes compile and Tckl dependencies. brew can install libomp and cairo if needed.
+- R versions 4.2+ include compile and Tckl dependencies. brew can install libomp and cairo if needed.
 - After downloading R & RStudio unlocked the
 [System Preferences Privacy & Security Panel](https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/Notes/SystemPermissions.md) before installing packages.
 </details>
@@ -82,20 +77,28 @@ cifs://shares-cifs.nyumc.org/apps/acc_pathology/molecular
  ```
  curl -# -L https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Meth_Scripts/runMeth.sh >$HOME/runMeth.sh
  ```
- 2. Open the shell script, paste your REDCap API token in the **methAPI** field, and save it.</br>  
- You can use `nano $HOME/runMeth.sh`
+ 2. Open the shell script, paste your REDCap API token in the **methAPI** field on line 3, and save it.</br>  
+ You can use `nano $HOME/runMeth.sh` Your API Token can be found in "All Samples DataBase" on the left-side panel in REDCap [here](https://redcap.nyumc.org/apps/redcap/redcap_v13.1.35/API/project_api.php?pid=24752) (if the link is broken, modify url to match REDCap Version i.e. /redcap/redcap_v13.1.35/)
  ```bash
- #!/bin/bash
  methAPI="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"  #Paste your API Token here
  ```
  3. Add permissions to the script to be executable:
  ```ruby
  chmod +rwx $HOME/runMeth.sh
  ```
-To install the pipeline from your terminal, simply execute the following command:<br />
+To test the pipeline from your terminal, simply execute the following command:<br />
 ```ruby
 $HOME/runMeth.sh 21-MGDM_TEST
 ```
+or if you have not saved the runMeth.sh script locally:
+```ruby
+/Volumes/CBioinformatics/Methylation/runMeth.sh 21-MGDM_TEST
+```
+You can then check the output to confirm each html report was generated in the output directory:
+```ruby
+/Volumes/CBioinformatics/Methylation/Clinical_Runs/23-MGDM20
+```
+
  + If install of any packages fail, be sure to check the troubleshooting section at the bottom of this page
 ___
 ### Input Paths
