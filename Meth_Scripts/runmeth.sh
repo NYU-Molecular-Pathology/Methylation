@@ -75,6 +75,7 @@ checkSystem "latex"
 checkSystem "pdflatex"
 checkSystem "xquartz"
 checkSystem "brew"
+checkSystem "pandoc"
 checkSystem "go"
 
 # CHECK: Prints instruction if methRun parameter is empty ------------------------------------------------------
