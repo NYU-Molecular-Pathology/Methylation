@@ -213,8 +213,6 @@ GetExternalIdats <- function(allFi, ssheet, extr.idat){
 }
 
 
-
-
 # FUN: Returns a list of idat files that exist on Molecular and Snuderl lab drives -
 get.idats <- function(csvNam = "samplesheet.csv", runDir=NULL){
     msgFunName(cpInLnk, "get.idats")
@@ -224,13 +222,19 @@ get.idats <- function(csvNam = "samplesheet.csv", runDir=NULL){
     WarnMounts(rsch.idat)
     WarnMounts(clin.idat)
     if (is.null(runDir)){runDir <- getwd()}
-    if (!file.exists(csvNam)) {message("Cannot find your sheet named:", csvNam); stopifnot(file.exists(csvNam))}
+    if (!file.exists(csvNam)) {
+        message("Cannot find your sheet named:", csvNam)
+        stopifnot(file.exists(csvNam))
+    }
+    ssheet = read.csv(csvNam, strip.white = T)
     allFi <- getAllFiles(idatDir = c(rsch.idat, clin.idat), csvNam = csvNam)
     allFi = allFi[file.exists(allFi)]
-    ssheet = read.csv(csvNam, strip.white = T)
+    if (length(allFi) == 0) {
+        allFi <- GetExternalIdats(allFi, ssheet, extr.idat)
+    }
     if (!length(allFi) > 0) {
         warning(crayon::bgRed("No .idat files found!"))
-        message("Check worksheet for barcode if found in the folder path:")
+        message("Check worksheet for typos and if the barcode folder exists in the search path(s):")
         message(rsch.idat, "\nor\n", clin.idat)
         stopifnot(length(allFi) > 0)
     }
@@ -245,7 +249,6 @@ get.idats <- function(csvNam = "samplesheet.csv", runDir=NULL){
         copyBaseIdats(allFi[!(bcds %in% cur.idat)])
     }
 }
-
 
 # FUN: Copies samplesheet to Desktop folder
 moveSampleSheet <- function(methDir = NULL, runID = NULL, deskDir=NULL) {
