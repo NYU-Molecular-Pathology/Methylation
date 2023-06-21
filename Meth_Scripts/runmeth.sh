@@ -27,27 +27,59 @@ BG_MAG="$(tput setab 5)" # makes text background magenta
 BG_GRN="$(tput setab 2)" # makes text background green
 BG_RED="$(tput setab 1)" # makes text background green
 bold=$(tput bold)        # makes text bold
-normal=$(tput sgr0)      # resets default text
+NORMAL=$(tput sgr0)      # resets default text
 
-cd $HOME
+cd "$HOME"
 
 # FUNCTION: EXIT when any command fails ------------------------------------------------------------------------
+error_handled=false
+
+# Function to exit when any command fails
 trap_error() {
-   LSTCMD=$1
-   EXCODE=$2
-   if [ $EXCODE -ne 0 ]; then
-      printf "\n${BG_RED}ERROR on LAST COMMAND${normal}:\n${LSTCMD}\n"
-      echo "Command filed with exit code $EXCODE."
+   local last_command=$1
+   local exit_code=$2
+   local line_no=$3
+
+   if [[ $exit_code -ne 0 && $error_handled == false ]]; then
+      printf "\n%sERROR on LAST COMMAND%s:\n%s\n" "${BG_RED}" "${NORMAL}" "${last_command}"
+      printf "Command failed at line %s with exit code %s.\n" "${line_no}" "${exit_code}"
+      error_handled=true
    fi
 }
 
-set -e
-trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
-trap 'trap_error "${last_command}" $?' EXIT
+# Enable strict mode
+set -Eeuo pipefail
+
+trap 'last_command=$BASH_COMMAND; last_line=$LINENO' DEBUG
+trap 'trap_error "${BASH_COMMAND}" $? "${LINENO}"' ERR EXIT
+
+R_LOCAL="/usr/local/bin/R"
+R_CURR="$(which R)"
+
+if [[ "$R_CURR" != "$R_LOCAL" ]]; then
+   printf "\n%sYour system is not using R located in:%s $R_LOCAL" "${BG_RED}" "${NORMAL}"
+   printf "\nInstead R is located in: $R_CURR"
+   exit 0
+fi
+
+function checkSystem {
+   APPNAME="$1"
+   if ! command -v "$APPNAME" &> /dev/null; then
+      printf "\n${BG_RED}You did not install $APPNAME!${NORMAL} Stopping script\n"
+      exit 0
+   fi
+
+}
+
+checkSystem "latex"
+checkSystem "pdflatex"
+checkSystem "xquartz"
+checkSystem "brew"
+checkSystem "go"
 
 # CHECK: Prints instruction if methRun parameter is empty ------------------------------------------------------
 if [ -z "$methRun" ]; then
-   echo "You did not provide a Methylation Run ID name. Ex. '21-MGDM30'"
+   echo "${BG_RED}You did not provide a Methylation Run ID name${NORMAL}. Ex. '21-MGDM30'"
    exit 1
 fi
 
@@ -57,19 +89,19 @@ fi
 
 # SANITY CHECK: Prints parameters ------------------------------------------------------------------------------
 echo "~~~~~~~~~~~~~~~~~~~~~Parameters passed to RScript~~~~~~~~~~~~~~~~~~~~~"
-echo "${BG_BLU}methAPI:${normal} $methAPI"
-echo "${BG_CYA}(arg1) methRun:${normal} $methRun"
-echo "${BG_MAG}(arg2) PRIORITY samples:${normal} $PRIORITY"
-echo "${BG_GRN}(arg3) Custom runPath:${normal} $runPath"
-echo "${BG_BLU}(arg4) To upload redcapUp:${normal} $redcapUp"
+echo "${BG_BLU}methAPI:${NORMAL} $methAPI"
+echo "${BG_CYA}(arg1) methRun:${NORMAL} $methRun"
+echo "${BG_MAG}(arg2) PRIORITY samples:${NORMAL} $PRIORITY"
+echo "${BG_GRN}(arg3) Custom runPath:${NORMAL} $runPath"
+echo "${BG_BLU}(arg4) To upload redcapUp:${NORMAL} $redcapUp"
 printf "\nCurl files downloaded:\n"
 
 # FUNCTIONS: Curl download and mkdir if not exists -------------------------------------------------------------
 message_curl() {
    linkname=$1
    filename=$2
-   printf "${BG_GRN}$HOME/$filename${normal}\n"
-   curl -k -# -L $linkname$filename >$HOME/$filename
+   printf "${BG_GRN}$HOME/$filename${NORMAL}\n"
+   curl -k -# -L "$linkname$filename" >"$HOME/$filename"
 }
 
 check_directory() {
@@ -85,11 +117,11 @@ message_curl ${GITHUBLINK} "Methyl_QC.Rmd"
 message_curl ${GITHUBMAIN} "methylExpress.R"
 
 printf "\nExecuting Rscript with parameters input:\n"
-color_params="${BG_MAG}$methAPI${normal} ${BG_CYA}$methRun${normal} ${BG_GRN}$PRIORITY${normal} ${BG_BLU}$runPath${normal} ${BG_MAG}$redcapUp${normal} ${BG_GRN}$runLocal${normal}\n"
-printf "${BG_BLU}${bold}Rscript --verbose $HOME/methylExpress.R${normal} $color_params"
+color_params="${BG_MAG}$methAPI${NORMAL} ${BG_CYA}$methRun${NORMAL} ${BG_GRN}$PRIORITY${NORMAL} ${BG_BLU}$runPath${NORMAL} ${BG_MAG}$redcapUp${NORMAL} ${BG_GRN}$runLocal${NORMAL}\n"
+printf "${BG_BLU}${bold}Rscript --verbose $HOME/methylExpress.R${NORMAL} $color_params"
 
 # EXECUTE: Main command using user input  ----------------------------------------------------------------------
-Rscript --verbose $HOME/methylExpress.R $methAPI $methRun $PRIORITY $runPath $redcapUp $runLocal
+Rscript --verbose "$HOME/methylExpress.R" $methAPI $methRun $PRIORITY $runPath $redcapUp $runLocal
 
 # ASSIGN: Default output paths ---------------------------------------------------------------------------------
 if [ -n "$runPath" ]; then
@@ -100,22 +132,24 @@ fi
 LOCALDIR="$HOME/${methRun}"
 RUNYEAR=${methRun%%-*}
 MOLECDIR="/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/Results/20${RUNYEAR}"
+MOLECOUT="/Volumes/molecular/Molecular/MethylationClassifier/20${RUNYEAR}"
 
 # SANITY CHECK: Prints output directories ----------------------------------------------------------------------
-echo "${BG_GRN}runPath:${normal} $runPath"
-echo "${BG_GRN}MOLECDIR:${normal} $MOLECDIR"
-echo "${BG_GRN}LOCALDIR:${normal} $LOCALDIR"
+echo "${BG_GRN}runPath:${NORMAL} $runPath"
+echo "${BG_GRN}MOLECDIR:${NORMAL} $MOLECDIR"
+echo "${BG_GRN}LOCALDIR:${NORMAL} $LOCALDIR"
 
 # EXECUTE: Rsync html to HOME directory then cp from HOME to Z-Drive -------------------------------------------
 check_directory "$LOCALDIR"
 
-printf "\n${BG_BLU}Rsyncing files:${normal}\n"
+printf "\n${BG_BLU}Rsyncing files:${NORMAL}\n"
 rsync -vrthP --include '*.html' --exclude '*' "${runPath}" "$LOCALDIR"
 
 printf "\nExecuting copy command:\n"
-printf "${BG_GRN}cp -RvX ${LOCALDIR} ${MOLECDIR}${normal}\n"
+printf "${BG_GRN}cp -RvX ${LOCALDIR} ${MOLECDIR}${NORMAL}\n"
 
-printf "${BG_BLU}Copying files to Z-drive from HOME:${normal}\n"
-cp -RvX "$LOCALDIR" "$MOLECDIR"
+printf "${BG_BLU}Copying files to Z-drive from HOME:${NORMAL}\n"
+cp -RvfX "$LOCALDIR" "$MOLECDIR"
+cp -RvfX "$LOCALDIR" "$MOLECOUT"
 
-echo "METHYLATION RUN ENDED"
+echo "METHYLATION RUN COMPLETE"
