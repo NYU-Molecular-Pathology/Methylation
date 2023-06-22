@@ -77,9 +77,12 @@ getDefaults <- function() {
     )
     moVol = "/Volumes/molecular"
     rsVol = "/Volumes/snudem01labspace"
+    if(is.null(gb$ApiToken)){
+       gb$ApiToken <- gb$token
+    }
     defaultParams <- data.frame(
         mnp.pk.loc = paste0(file.path(cbVol, "classifiers/mnp.v11b6")),
-        ApiToken = "",
+        ApiToken = gb$ApiToken,
         methDir = paste0(file.path(cbVol, "Clinical_Runs")),
         clinDrv = paste0(file.path(moVol, "MOLECULAR LAB ONLY/NYU-METHYLATION")),
         rschOut = paste0(file.path(rsVol, "FINAL_PDF_Reports_Brain")),
