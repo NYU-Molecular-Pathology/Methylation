@@ -82,8 +82,7 @@ cifs://shares-cifs.nyumc.org/apps/acc_pathology/molecular
  ```bash
  methAPI="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"  #Paste your API Token here
  ```
-  + Note: Your API Token can be found in "All Samples DataBase" on the left-side panel in REDCap: https://redcap.nyumc.org/apps/redcap/redcap_v13.1.35/API/project_api.php?pid=24752 </br>
- (if the link breaks, modify the URL to match REDCap Version i.e. /redcap/**redcap_v13.1.35**/) </br>
+  + Note: Your API Token can be found in "All Samples DataBase" on the left-side panel called "API" in REDCap.  Explained [here](https://redcap.nyumc.org/apps/redcap/api/help/?content=tokens)
  
 #### 3. Add permissions to the script to be executable:
  ```ruby
@@ -147,7 +146,12 @@ or if you have not saved the runMeth.sh script locally:
 You can then check the output to confirm each html report was generated in the output directory: <br/>
 `/Volumes/CBioinformatics/Methylation/Clinical_Runs/21-MGDM_TEST`
 
-**NOTE**: When running the test case (*21-MGDM_TEST*) you may notice an **error** with the upload log as these reports would already exist in REDCap. It is normal for the test case html files to **fail uploading** since the REDCap database already contains the data and files for the test run, 21-MGDM_TEST.
+**NOTE**: When running the test case (*21-MGDM_TEST*) you may notice an **error** with the upload log as these reports would already exist in REDCap. It is normal for the test case html files to **fail uploading** since the REDCap database already contains the data and files for the test run, 21-MGDM_TEST.<br>
+<br>
+
+## To run the Sarcoma Classifier or re-Run Individual Samples
+View the [Custom Run ReadMe](https://github.com/NYU-Molecular-Pathology/Methylation/blob/880aa8f8482677f4041bceefa4daf65ad7b4dbc8/R/CustomRuns/ReadMe.md) here:
+https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/R/CustomRuns/ReadMe.md 
 
 # ⚠️ Troubleshooting
 <details>
@@ -173,7 +177,19 @@ Make sure compilers are installed by opening Xcode.app or executing `sudo xcode-
 
 <details>
 <summary>REDCap errors</summary>
-Once your run completes check in your run directory if there is any *upload_log.tsv* file or *redcaperrors.txt*.  If these files exist, they may note any files or data which would have been over-written in the database.  Check with the wet lab if any RD-numbers were duplicated or previously used for the samples listed in the upload_log.tsv file. Make sure your API token is not NULL and that REDCap is not down for maintenence here: https://redcap.nyumc.org/apps/redcap/<br>
+ 1. Once your run completes check in your run directory if there is any *upload_log.tsv* file or *redcaperrors.txt*.  If these files exist, they may note any files or data which would have been over-written in the database.
+ 2. Check with the wet lab if any RD-numbers were duplicated or previously used for the samples listed in the upload_log.tsv file.
+ 3. Make sure your API token is not NULL and that REDCap is not down for maintenence here: https://redcap.nyumc.org/apps/redcap/<br>
+ 4. Check if any of the urls in the notification or API calls have been broken by a new version of REDCap. For Example, the link: https://redcap.nyumc.org/apps/redcap/redcap_v13.1.35/API/project_api.php?pid=24752 if broken, modify the URL to match REDCap Version i.e. /redcap/**redcap_v13.2.57**/) </br>
+ Additional resources are here: https://redcap.nyumc.org/apps/redcap/index.php?action=help&newwin=1
+</details>
+
+<details>
+<summary>REDCap Email Notification issues</summary>
+The automatic email notifications are located on the left-side panel called "Alerts & Notifications".  If you need to change an output path in the email or change the year in the email, click on edit for Alert #1:Research Run Complete or Alert #2:Clinical Run Complete.<br>  
+View the "Applications Overview" video here: https://redcap.nyumc.org/apps/redcap/index.php?action=training <br>
+A detailed guide for Alerts is availible here: https://www.ctsi.ufl.edu/wordpress/files/2019/06/REDCap-Alerts-Notifications-User-Guide.pdf <br>
+Additional resources are here: https://redcap.nyumc.org/apps/redcap/index.php?action=help&newwin=1 <br>
 </details>
 
 <details>
