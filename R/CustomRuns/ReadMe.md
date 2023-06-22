@@ -43,3 +43,12 @@ After downloading, be sure to replace the placeholder ("XXXX") with your REDCap 
 <br>
 To run methylExpress_custom.R with the API token and runPath pre-configured, you can use the file in the Shared Drive:<br>
 `/Volumes/CBioinformatics/Methylation/Clinical_Runs/Custom_ReRun/methylExpress_custom.R`
+
+## Demo
+You can test the script by:
+1. Download [methylExpress_custom.R](https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/methylExpress_custom.R) and set the API token.
+2. Set `rd_numbers = NULL`
+3. Download the demo csv file here: https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/R/CustomRuns/Demo/demo_input.csv
+4. Assign `rd_csv` to the path where you saved demo_input.csv (i.e., `rd_csv = "/path/to/downloads/folder/demo_input.csv"`)
+5. Modify `runFolder` if you want to copy idats and run in a different directory, then execute the script.
+
