@@ -46,9 +46,10 @@ To run methylExpress_custom.R with the API token and runPath pre-configured, you
 
 ## Demo
 You can test the script by:
-1. Download [methylExpress_custom.R](https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/methylExpress_custom.R) and set the API token.
-2. Set `rd_numbers = NULL`
-3. Download the demo csv file here: https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/R/CustomRuns/Demo/demo_input.csv
-4. Assign `rd_csv` to the path where you saved demo_input.csv (i.e., `rd_csv = "/path/to/downloads/folder/demo_input.csv"`)
-5. Modify `runFolder` if you want to copy idats and run in a different directory, then execute the script.
+1. Be sure you have all the classifier [requirements](https://github.com/NYU-Molecular-Pathology/Methylation/blob/5696d877690d3165fcb489f53fd53fa023214058/README.md) and dependencies installed first with [all_installer.R](https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/all_installer.R)
+2. Download [methylExpress_custom.R](https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/methylExpress_custom.R), and open it in Rstudio, setting the [REDCap API token](https://redcap.nyumc.org/apps/redcap/api/help/?content=tokens).
+3. Set `rd_numbers = NULL`
+4. Download the demo csv file here: https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/R/CustomRuns/Demo/demo_input.csv
+5. Assign `rd_csv` to the path where you saved demo_input.csv (i.e., `rd_csv = "/path/to/downloads/folder/demo_input.csv"`)
+6. Modify `runFolder` if you want to copy idats and run in a different directory, then execute the script.
 
