@@ -589,13 +589,13 @@ UploadToRedcapOnly <- function(file.list, token=NULL) {
 
 
 ForceUploadToRedcap <- function(file.list, token=NULL, deskCSV = T) {
-  msgFunName(cpOutLnk, "ForceUploadToRedcap")
+    msgFunName(cpOutLnk, "ForceUploadToRedcap")
     stopifnot(!is.null(token))
-  msgFunName(cpOutLnk, "uploadToRedcap"); message(paste0(capture.output(file.list), collapse="\n"))
-  rcon <- redcapAPI::redcapConnection(apiLink, token)
-  htmlLi <- stringr::str_replace_all(basename(file.list), ".html", "")
-  message(paste0(capture.output(htmlLi), collapse="\n"))
-  for (recordName in htmlLi) {ForceCallApiFile(rcon, recordName, T)}
-  if (deskCSV == T) {try(importDesktopCsv(rcon), outFile = "importDesktopRedcapLog.txt")}
+    msgFunName(cpOutLnk, "uploadToRedcap"); message(paste0(capture.output(file.list), collapse="\n"))
+    rcon <- redcapAPI::redcapConnection(apiLink, token)
+    htmlLi <- stringr::str_replace_all(basename(file.list), ".html", "")
+    message(paste0(capture.output(htmlLi), collapse="\n"))
+    for (recordName in htmlLi) {ForceCallApiFile(rcon, recordName, T)}
+    if (deskCSV == T) {try(importDesktopCsv(rcon), outFile = "importDesktopRedcapLog.txt")}
 }
 
