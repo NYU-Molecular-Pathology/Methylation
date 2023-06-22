@@ -160,15 +160,15 @@ MakeLocalSampleSheet <-  function(runID, token, samSheetIn=NULL, rd_numbers=NULL
       length(rd_numbers) != 0 &
       stringr::str_detect(rd_numbers[1], "RD-")
   )
-    if(!is.null(samSheetIn) & !is.null(rd_numbers)) {
-        stop(
-            paste(
-                "You cannot list both rd_numbers and an rd_csv file!",
-                "\nOnly one variable can be taken as input, one of these should be NULL:",
-                "\nrd_csv:", samSheetIn, "\nrd_numbers:", rd_numbers
-                )
-            )
-    }
+    # if(!is.null(samSheetIn) & !is.null(rd_numbers)) {
+    #     stop(
+    #         paste(
+    #             "You cannot list both rd_numbers and an rd_csv file!",
+    #             "\nOnly one variable can be taken as input, one of these should be NULL:",
+    #             "\nrd_csv:", samSheetIn, "\nrd_numbers:", rd_numbers
+    #             )
+    #         )
+    # }
   message("Sourcing: ", idatScript)
   devtools::source_url(idatScript)
   gb$token <- gb$ApiToken <- token <- token2
