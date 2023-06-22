@@ -135,10 +135,11 @@ ParseInputCsvPath <- function(samSheetIn){
     return(rd_numbers$rd_numbers)
 }
 
-
+# Deletes existing samplesheet in current directory and generates new one with RD-number input
 MakeLocalSampleSheet <-  function(runID, token, samSheetIn=NULL, rd_numbers=NULL){
   msgFunName(cpInLnk4,"MakeLocalSampleSheet")
   stopifnot(!is.null(token))
+  ifelse(file.exists("samplesheet.csv"), file.remove("samplesheet.csv"), cat("\nCreating new SampleSheet\n"))
   token2 <- token
   idatScript <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/pullRedcap_manual.R"
   if(!is.null(rd_numbers)){
@@ -159,6 +160,7 @@ MakeLocalSampleSheet <-  function(runID, token, samSheetIn=NULL, rd_numbers=NULL
   )
   message("Sourcing: ", idatScript)
   devtools::source_url(idatScript)
+  gb$token <- gb$ApiToken <- token <- token2
   gb$grabRDCopyIdat(rd_numbers, token2, copyIdats=T, outputFi="samplesheet.csv")
 }
 
