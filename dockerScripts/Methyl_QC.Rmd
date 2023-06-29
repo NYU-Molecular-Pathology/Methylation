@@ -192,6 +192,8 @@ summarName <- paste("Classifier Report Summary for", runID) # summary table head
 redCsv <- file.path(fs::path_home(),"Desktop",runID, paste0(runID,"_Redcap.csv"))
 if(!file.exists(redCsv)){knitr::knit_exit()}
 mnpOutTb <- as.data.frame(read.csv(redCsv, strip.white = T))
+mnpOutTb <- unique(mnpOutTb)
+stopifnot(nrow(mnpOutTb) > 1)
 knitr::asis_output(gb$GetSummaryTab(mnpOutTb))
 ```
 <footer><p>Page 7 of 8</p></footer></div><hr class="solid">
