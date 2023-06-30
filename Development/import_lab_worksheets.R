@@ -7,12 +7,11 @@
 ## Copyright (c) NYULH Jonathan Serrano, 2023
 ## ---------------------------
 
-api.tkn = "8XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" # REDCap API token
-NULL -> ws.type     # Default is NULL "DNA" "RNA" "PACT" "FUSION" will upload if NULL
-T ->    doAll       # Set TRUE to import all worksheets from current month of td
-F ->    allMths     # Set TRUE to import all worksheets from the input year
-td <-   Sys.Date()  # default Sys.Date() td (today's date) can be a string ie "2022-01-26"
-
+apiToken = "8XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" # REDCap API token
+ws.type = NULL # Default is NULL "DNA" "RNA" "PACT" "FUSION" will upload if NULL
+doAll = T # Set to TRUE to import all worksheets from this month
+allMths <- T # Set to TRUE to import all worksheets from the input year
+td = Sys.Date() #Sys.Date() # today's date is default can be a string date "2022-01-26"
 
 formals(library)$quietly <- T
 formals(library)$warn.conflicts <- F
@@ -21,69 +20,46 @@ formals(install.packages)$dependencies <- T
 formals(install.packages)$verbose <- T
 formals(install.packages)$ask <- F
 options("install.packages.compile.from.source" = "never")
+options("install.packages.compile.from.source" = "never")
 
 rqPk <- function(pk) {
-  if (!require(pk, character.only = T)) {
+  if (!requireNamespace(pk, quietly = TRUE)) {
     install.packages(
       pk,
-      warn.conflicts = F,
-      ask = F,
-      dependencies = T,
+      warn.conflicts = FALSE,
+      ask = FALSE,
+      dependencies = TRUE,
       Ncpus = 5
     )
-  } else{
-    library(
-      pk,
-      warn.conflicts = F,
-      mask.ok = T,
-      character.only = T,
-      quietly = T
-    )
   }
+  library(pk, warn.conflicts = FALSE, mask.ok = TRUE, quietly = TRUE, character.only = TRUE)
 }
 
 check.packages <- function(pkgs = NULL) {
   if (is.null(pkgs)) {
     pkgs <- c(
-      "readxl",
-      "stringi",
-      "readr",
-      "parallel",
-      "RCurl",
-      "foreach",
-      "redcapAPI",
-      "doParallel",
-      "tidyr",
-      "chron",
-      "crayon",
-      "compiler",
-      "purrr",
-      "tidyverse",
-      "cronR",
-      "plyr",
-      "tidyverse"
+      "readxl", "stringi", "readr", "parallel", "RCurl", "foreach",
+      "redcapAPI", "doParallel", "tidyr", "chron", "crayon", "compiler",
+      "purrr", "tidyverse", "cronR", "plyr", "doSNOW", "doParallel",
+      "doMPI", "magrittr", "dplyr"
     )
   }
 
-  if (!require("easypackages")) {
-    install.packages(
-      "easypackages",
-      dependencies = T,
-      verbose = T,
-      upgrade = "never"
-    )
-  }
-
-  tryCatch(
-    easypackages::libraries(pkgs),
-    warning = function(cond) {
-      missed <- !pkgs %in% rownames(installed.packages())
-      if (any(missed)) {
-        easypackages::install_packages(pkgs[missed])
-      }
-    }
-  )
+  # Ensure 'purrr' is installed before calling purrr::walk
+  rqPk("purrr")
+  purrr::walk(pkgs, rqPk)
 }
+
+check.packages()
+
+Sys.setenv(R_ENABLE_JIT = TRUE)
+compiler::enableJIT(3)
+rqPk("devtools")
+rqPk("pacman")
+if (!requireNamespace("Rmpi", quietly = TRUE)) {
+  install.packages("Rmpi", type = "source")
+}
+doParallel::registerDoParallel(parallel::detectCores() - 2)
 
 
 mountMsg <- function(msg) {
@@ -253,14 +229,11 @@ get.sheet.path <- function(ws.type, td) {
   }
 }
 
-CleanFusion <- function(run.fis, ws, mgfs) {
-  keywds <- c(".r_and_d_results.txt" = "",
-              "/var/www/analysis/" = "")
-  qsFix <- c("/" = " ",
-             "_S" = " S",
-             "-Q2" = " Q2")
+CleanFusion <- function(file.list, fiNum, mgfs) {
+  keywds <- c(".r_and_d_results.txt" = "", "/var/www/analysis/" = "")
+  qsFix <- c("/" = " ", "_S" = " S", "-Q2" = " Q2")
   dataRead <- read.table(
-    run.fis[ws],
+    file.list[fiNum],
     sep = "\t",
     header = F,
     row.names = NULL,
@@ -268,29 +241,28 @@ CleanFusion <- function(run.fis, ws, mgfs) {
   )
   finam <- as.list(dataRead[1, ][-1])
   finam <- stringr::str_replace_all(finam, keywds)
-  finam <-
-    stringr::str_split_fixed(stringr::str_replace_all(finam, qsFix), " ", 4)
+  finam <- stringr::str_split_fixed(stringr::str_replace_all(finam, qsFix), " ", 4)
   colnames(finam) <- set.headers("FUSION")
   finam <- as.data.frame(finam)
-  finam$fs_batch <- mgfs[ws]
+  finam$fs_batch <- mgfs[fiNum]
+  finam$file_name <- file.list[fiNum]
   return(finam)
 }
 
-ReadFusionWs <- function(run.fis, ws) {
+ReadFusionWs <- function(file.list, worksheet) {
   cntrls <- c("NTC-H2O", "SERASEQ-125ng", "NC-IVS0035")
   mgfs <-
-    stringr::str_split_fixed((stringr::str_replace_all(run.fis, ws, "")), "/", 3)[, 2]
+    stringr::str_split_fixed((stringr::str_replace_all(file.list, worksheet, "")), "/", 3)[, 2]
   dat.io <-
     foreach::foreach(
-      ws = 1:length(run.fis),
+      fiNum = 1:length(file.list),
       .combine = "rbind",
       .packages = c("readxl", "foreach", "doParallel")
     ) %dopar% {
-      return(CleanFusion(run.fis, ws, mgfs))
+      return(CleanFusion(file.list, fiNum, mgfs))
     }
-  drpSam <-
-    !grepl(paste(cntrls, collapse = "|"), dat.io[, 2], ignore.case = T)
-  return(dat.io[drpSam, c(2, 3, 1, 4, 5)])
+  drpSam <- !grepl(paste(cntrls, collapse = "|"), dat.io[, 2], ignore.case = T)
+  return(dat.io[drpSam, ])
 }
 
 msgTime <- function(modTime, accessTime) {
@@ -332,7 +304,6 @@ get.mod.time <- function(file.list) {
       }
       fiTime <- msgTime(minusTi(recentFi, 1), minusTi(recentFi, 2))
       if (any(fiTime)) {
-        print(recentFi[fiTime])
         return(recentFi[fiTime])
       } else {
         return(NULL)
@@ -365,26 +336,29 @@ gtd <- function(file.list) {
 }
 
 
-grab.fusion.ws <- function(ws, td) {
-  run.fld <- list.dirs(path = ws,
+GetFusionPath <- function(worksheet, td, doAll=F) {
+  run.fld <- list.dirs(path = worksheet,
                        full.names = T,
                        recursive = F)
-  run.fld <- run.fld[which.max(file.mtime(run.fld))]
+  if(doAll==F){
+    run.fld <- run.fld[which.max(file.mtime(run.fld))]
+  }
   frl <- list.dirs(run.fld, full.names = T, recursive = F)
   run.fld <- file.path(frl, "summaries")
   run.fis <- dir(run.fld, full.names = T)
-  file.list <-
-    run.fis[grepl("Summary.r_and_d_results.txt", run.fis)]
-  file.list <- grab.today(file.list)
-  #file.list <-gmt(run.fis)
-  if (length(file.list) > 0) {
-    print(file.list)
-    dat.io <- ReadFusionWs(file.list, ws)
-    dat.io[, 1] <- make.unique(paste0(dat.io[, 1]), sep = "_")
-    return(dat.io)
-  } else {
+  file.list <- run.fis[grepl("Summary.r_and_d_results.txt", run.fis)]
+
+  if(doAll == F){
+    file.list <- grab.today(file.list)
+  }
+
+  if (length(file.list) == 0) {
     return(NULL)
   }
+  print(file.list)
+  dat.io <- ReadFusionWs(file.list, worksheet)
+  dat.io[, "record_id"] <- make.unique(paste0(dat.io[, "record_id"]), sep = "_")
+  return(dat.io)
 }
 
 
@@ -394,43 +368,29 @@ grab.recent <- function(ws.type, td = NULL, doAll = F) {
     td <- as.Date(td)
     doAll <- T
   }
-  ws <- get.sheet.path(ws.type, td)
+  worksheet <- get.sheet.path(ws.type, td)
   fend = ifelse(grepl("PACT", ws.type) == F, "*.xlsm", "*.xlsm")
-  Check.File.Paths(ws.type, ws)
+  Check.File.Paths(ws.type, worksheet)
   if (ws.type == "FUSION") {
-    return(grab.fusion.ws(ws, td))
-  } else
-    if (ws.type == "PACT") {
-      file.list <- list.dirs(ws)
-      file.list <-
-        dir(
-          file.list,
-          pattern = fend,
-          full.names = T,
-          recursive = T
-        )
-      file.patterns = c("VAL", "PM", "dist", "Test", "-TumorLibraries", "-TIPSTEST")
-      file.list <- removePattern(file.list, file.patterns)[-1]
-      #xlFiles <- file.path(file.list, paste0(basename(file.list), ".xlsm"))
-      #file.list<- grab.today(xlFiles[file.exists(xlFiles)])
-      return(file.list)
-    } else {
-      file.list <- dir(ws, pattern = fend, full.names = T)
-      if (!length(file.list) > 0) {
-        ws <- dir(
-          ws,
-          full.names = T,
-          recursive = T,
-          include.dirs = T
-        )
-
-        file.list <- dir(ws, pattern = fend, full.names = T)
-      }
-    }
-  if (doAll == T) {
-    return(removePattern(file.list))
+    dat.io <- GetFusionPath(worksheet, td, doAll)
+    return(dat.io)
   }
+
+  if (ws.type == "PACT") {
+    file.list <- list.dirs(ws)
+    file.list <- dir(file.list, pattern = fend, full.names = T, recursive = T)
+    file.patterns = c("VAL", "PM", "dist", "Test", "-TumorLibraries", "-TIPSTEST")
+    file.list <- removePattern(file.list, file.patterns)[-1]
+    #xlFiles <- file.path(file.list, paste0(basename(file.list), ".xlsm"))
+    #file.list<- grab.today(xlFiles[file.exists(xlFiles)])
+    return(file.list)
+    }
+
+  file.list <- dir(worksheet, full.names = T, recursive = T, include.dirs = T)
   file.list <- removePattern(file.list)
+  if (doAll == T) {
+    return(file.list)
+  }
   recentMod <- grab.today(file.list)
   if (is.null(recentMod)) {
     return(recentMod)
@@ -440,346 +400,409 @@ grab.recent <- function(ws.type, td = NULL, doAll = F) {
   }
 }
 
+# Filter non-OLD, broken, or duplicate files
+filter_files <- function(file.list){
+  nameFlags <- c('Old', 'OLD', 'old', 'NOTUSED', 'initial', 'Copy', 'copy',
+                 'philip', 'Philip', '\\$', '\\~')
+  nameFlags <- paste(nameFlags, collapse = "|")
+  file.list <- unique(file.list[str_detect(file.list, nameFlags, negate = T)])
+  toKeep <- endsWith(file.list, ".xlsm")
+  file.list <- file.list[toKeep]
+  return(file.list)
+}
 
-parse.ws <- function(file.list, naHeader, xl.range, ws.type) {
-  toDrop <- stringr::str_detect(file.list, "Old|OLD|old", negate = T)
-  file.list <- file.list[toDrop]
-  shNam <- switch(
-    ws.type,
+# Get sheet name
+get_sheet_name <- function(file.list, type){
+  switch(
+    type,
     "METH" = rep(3, length(file.list)),
-    "PACT" = substr(basename(file.list), 1, nchar(basename(file.list)) - 5),
+    "PACT" = rep("PhilipsExport", length(file.list)),
     rep("INFO_ENTRY", length(file.list))
   )
-  ws = NULL
-  if (ws.type == "METH") {
-    dataRead <- 1:length(file.list) %>%
-      purrr::map_df(function(i) {
-        return((
-          readxl::read_excel(file.list[i], shNam[i], xl.range, naHeader, "text") %>%
-            dplyr::filter(rd_number != 0 &
-                            rd_number != "MP-20-##")
-        )[, -4])
-      })
-    return(dataRead)
-  }
-  docsRead <-
-    foreach::foreach(
-      ws = 1:length(file.list),
-      .combine = "rbind",
-      .packages = c("readxl", "foreach", "doParallel")
-    ) %dopar% {
-      dataRead <- tryCatch(
-        expr = {
-          tst <-
-            as.data.frame(readxl::read_excel(
-              file.list[ws],
-              sheet = 1,
-              col_types = "text",
-              skip = 5
-            ))
-          dropIdx <- which(tst$Test_Number == 0)[1]
-          return(tst[1:dropIdx, ])
-        },
-        error = function(cond) {
-          msg <-
-            crayon::bgYellow(paste0("File was missing the sheet named: ", shNam[ws]))
-          cat(msg)
-          cat(" reading Sheet1 instead")
-          tst <-
-            as.data.frame(readxl::read_excel(file.list[ws], 1, xl.range, T, "text"))
-          dropIdx <- which(is.na(tst$I7_Index_ID))[1] - 2
-          return(tst[1:dropIdx, ])
-        }
-      )
-      doc <- as.data.frame(dataRead[!is.na(dataRead[, 2]), ])
-      if (nrow(doc) > 0) {
-        doc$fileName <- paste0(file.list[ws])
-        doc
+}
+
+# Process excel file
+process_excel_file <- function(file, shNam, xl.range){
+  return(read_excel(file, sheet = shNam[1], col_types = "text", skip = 0))
+}
+
+# Message on error
+process_error <- function(file, shNam, xl.range){
+  cat(bgYellow(paste0("File was missing the sheet named: ", shNam)), " reading Sheet1 instead")
+  return(read_excel(file, 1, xl.range, TRUE, "text"))
+}
+
+# Process METH files
+process_meth_files <- function(file.list, shNam, xl.range, naHeader) {
+  map_dfr(
+    1:length(file.list),
+      ~read_excel(file.list[.], shNam[.], xl.range, naHeader, "text") %>%
+      filter(rd_number != 0 & rd_number != "MP-20-##") %>%
+      select(-4)
+  )
+}
+
+# Process docs
+process_docs <- function(file.list, shNam, xl.range){
+  alldataRead <- foreach(ws = 1:length(file.list)) %dopar% {
+
+    dataRead <- tryCatch(
+      expr = process_excel_file(file.list[ws], shNam[1], xl.range),
+      error = process_error(file.list[ws], shNam[1], xl.range)
+    )
+
+    toKeep <- !is.na(dataRead[,2])
+    dataRead <- dataRead[toKeep,]
+
+    if (nrow(dataRead) > 0 & ncol(dataRead) >= 19) {
+
+      if(any(stringr::str_detect(colnames(dataRead), "Sticker|sticker"))) {
+        dataRead <- dataRead[, 2:ncol(dataRead)]
+        dataRead$fileName <- file.list[ws]
+        return(as.data.frame(dataRead))
+      }
+
+      if("Patient Name" %in% colnames(dataRead)){
+        dataRead <- dataRead[,1:25]
+        dataRead$fileName <- file.list[ws]
+        return(as.data.frame(dataRead))
       }
     }
-  return(docsRead)
+  }
+
+  boundData <- as.data.frame(dplyr::bind_rows(alldataRead))
+  return(boundData)
 }
 
 
-# This function filters columns for input and auto-correct typos in the data
-CleanOutput <- function(files.read, ws.type) {
-  autocorrect <-
-    c(
-      " " = "-",
-      "NGS2" = "NGS-2",
-      "RD2" = "RD-2",
-      "RD1" = "RD-1",
-      "NGS1" = "NGS-1"
-    )
-  illegals <-
-    c(
-      "/" = " ",
-      "\\+" = "",
-      "&" = " ",
-      "#" = "",
-      "\\\\"  = " ",
-      "<" = "",
-      ">" = ""
-    )
-  spaceFix <- c("\\," = "", "  " = " ")
-  cntrls <- c("NTC" = "",
-              "SC" = "",
-              "NC" = "")
-  if (grepl("PACT", toupper(ws.type)) == T) {
-    files.read[, 6] <-
-      stringr::str_replace_all(trimws(files.read[, 6]), cntrls)
-
-    dat.io <-
-      as.data.frame(files.read[c(files.read[, 6] != ""),]) #c(6:10, 13:15, ncol(files.read))
-    dat.io <- dat.io[, c(4:6, 16, 17)]
+parse.ws <- function(file.list, xl.range, ws.type) {
+  naHeader <- set.headers(toupper(ws.type))
+  file.list <- filter_files(file.list)
+  if(length(file.list)==0){
+    return(NULL)
   }
+  message(paste0(capture.output(file.list), collapse="\n"))
+  shNam <- get_sheet_name(file.list, type = ws.type)
   if (ws.type == "METH") {
-    dat.io <-
-      as.data.frame(files.read[!is.na(files.read[, 2]), c(2, 3, 1, 4, ncol(files.read))])
-  } else {
-    dat.io <-
-      as.data.frame(files.read[!is.na(files.read[, 2]), c(2, 3, 7:9, ncol(files.read))])
-    dat.io[, 5] <-
-      toupper(stringr::str_replace_all(trimws(dat.io[, 5]), spaceFix))
+    files.read <- process_meth_files(file.list, shNam, xl.range, naHeader)
+  }else{
+    files.read <- process_docs(file.list, shNam, xl.range)
   }
-  dat.io[, 1] <-
-    toupper(stringr::str_replace_all(trimws(dat.io[, 1]), autocorrect))
+  return(files.read)
+}
+
+
+# Function to replace specific strings in data
+replace_in_data <- function(data, replacements){
+  data[is.na(data)] <- ""
+  toupper(stringr::str_replace_all(trimws(data), replacements))
+}
+
+# Function to correct typos in the data
+autocorrect_typos <- function(data){
+  autocorrect <- c(" " = "-", "NGS2" = "NGS-2", "RD2" = "RD-2", "RD1" = "RD-1", "NGS1" = "NGS-1")
+  replace_in_data(data, autocorrect)
+}
+
+# Function to remove illegal characters
+remove_illegals <- function(data){
+  illegals <- c("/" = " ", "\\+" = "", "&" = " ", "#" = "num", "\\\\"  = " ", "<" = "", ">" = "", "\\*"="")
+  make.unique(as.character(replace_in_data(paste0(data), illegals)), sep = "_")
+}
+
+GetColumnPatterns <- function(ws.type){
+  dnaRnaPatt <- c("Accession", "DNA", "RNA", "Container", "Source", "Product", "by", "Block",
+               "Tumor", "Comment", "Test", "fileName")
+  methPat <- ""
+  pactPat <- c('Patient', 'Gender', 'Assignee', 'MRN', 'Specimen', 'DNA', 'RNA',
+               'Test\\sNumber', 'Diagnosis', 'Epic', 'Percentage', 'Type', 'Site', "fileName")
+
+  pattern <- switch(
+    ws.type,
+    "METH" = methPat,
+    "PACT" = pactPat,
+    dnaRnaPatt
+  )
+
+  return(paste(pattern, collapse = "|"))
+}
+
+GetNewColNames <- function(ws.type){
+  dnaColumns <- c(
+    "accession_number", "b_number", "container", "sample_source", "products",
+    "processing_tech", "block_number", "tumor_percent", "comments", "tests", "file_name"
+  )
+  rnaColumns <- c(
+    "accession_number", "rna_number", "container", "sample_source", "products",
+    "processing_tech", "block_number", "tumor_percent", "comments", "file_name", "tests"
+  )
+
+  methColumns <- ""
+  defaultCols <- ""
+  pactColumns <- c("philips_patient_name", "philips_gender", "philips_assignee",
+                   "philips_mrn", "philips_tumor_specimen_id", "philips_normal_specimen_id",
+                   "philips_test_number", "philips_diagnosis", "philips_epic_order",
+                   "philips_diagnosis_interp", "philips_tumor_dna_num",
+                   "philips_normal_dna_num", "philips_tumor_percent", "philips_tumor_type",
+                   "philips_normal_type", "philips_tumor_site", "philips_normal_site", "file_name")
+
+  newColNames <- switch(
+    ws.type,
+    "DNA" = dnaColumns,
+    "RNA" = rnaColumns,
+    "METH" = methPattern,
+    "PACT" = pactColumns,
+    defaltPatt
+  )
+
+  return(newColNames)
+}
+
+
+CleanOutput <- function(files.read, ws.type) {
+  # Corrections and removals
+  spaceFix <- c("\\," = "", "\\." =";", "  " = " ")
+  cntrls <- c("NTC" = "", "SC" = "", "NC" = "")
+  allCols <- colnames(files.read)
+
+  pattern <- GetColumnPatterns(ws.type)
+  dat.io <- files.read[, allCols[stringr::str_detect(allCols, pattern)]]
+  colnames(dat.io) <- GetNewColNames(ws.type)
+
+  for(n in 1:ncol(dat.io)){
+    dat.io[, n] <- replace_in_data(dat.io[, n], spaceFix)
+  }
+
+  dat.io[, 1] <- autocorrect_typos(dat.io[, 1])
   dat.io <- dat.io[dat.io[, 1] != 0, ]
-  #make.unique(as.character(stringr::str_replace_all(paste0(dat.io[, 1]), illegals)), sep = "_")
-  dat.io[, 1] <-
-    make.unique(as.character(stringr::str_replace_all(paste0(dat.io[, 1]), illegals)), sep = "_")
-  dat.io[, 4] <-
-    paste0(stringr::str_replace_all(paste0(dat.io[, 4]), illegals)) #tumor_percent number
-  dat.io[, ncol(dat.io)] <-
-    paste0(stringr::str_replace_all(paste0(dat.io[, ncol(dat.io)]), illegals)) #tumor_percent number
+  dat.io[, 1] <- remove_illegals(dat.io[, 1])
+
   return(as.data.frame(dat.io))
 }
 
 xL2csv <- function(file.list, xl.range, ws.type) {
   message("\nReading Worksheets...")
+
   if (length(file.list) > 0) {
-    print(file.list)
-    files.read <-
-      parse.ws(file.list, set.headers(toupper(ws.type)), xl.range, ws.type)
-    return(CleanOutput(files.read, ws.type))
-  } else {
-    warning("File not readable, no files to import")
-  }
+    files.read <- parse.ws(file.list, xl.range, ws.type)
+    dat.io <- CleanOutput(files.read, ws.type)
+    return(dat.io)
+    } else {
+      warning("File not readable, no files to import")
+    }
 }
 
 pullRedcap <- function(dat.io, rcon, col2swap) {
-  fl <- c("record_id", col2swap)
-  bqCurr <-
-    redcapAPI::exportRecords(
+  bqCurr <- redcapAPI::exportRecordsTyped(
       rcon,
-      fields = fl,
+      fields = c("record_id", col2swap),
       survey = F,
-      form_complete_auto = F
+      form_complete_auto = F,
+      dag=F
     )
-  bqCurr <- as.data.frame(bqCurr)
   rownames(bqCurr) <- bqCurr[, 1]
-  bqCurr <- bqCurr[dat.io[, 1],]
-  return(bqCurr)
+  return(bqCurr[dat.io[, 1], ])
 }
 
-combBQ <- local(function(dat.io, bqCurr, rcrd, col2swap) {
-  datSwap = NULL
-  theRecord <- paste0(bqCurr[rcrd, col2swap])
+
+CombineBQs <- function(dat.io, bqCurr, rcrd, col2swap) {
+  theRecord <- bqCurr[rcrd, col2swap]
+
   if (is.na(theRecord)) {
-    datSwap = paste0(dat.io[rcrd, 2]) # if current B/Q is empty paste new
-  } else {
-    alreadyIn <- grepl(paste0(dat.io[rcrd, 2]), paste0(bqCurr[rcrd, 2]))
-    if (alreadyIn == T & is.na(bqCurr[rcrd, 2])) {
-      datSwap = paste0(dat.io[rcrd, 2]) # check if B/Q is already in record
-    } else {
-      if (!is.na(dat.io[rcrd, 2]) & alreadyIn == F) {
-        datSwap = paste(bqCurr[rcrd, 2], dat.io[rcrd, 2])
-      } else {
-        datSwap = paste0(bqCurr[rcrd, 2])
-      } # if the new B/Q is not <NA>
-    }
+    return(dat.io[rcrd, 2])
   }
-  return(datSwap)
-})
+
+  alreadyIn <- grepl(dat.io[rcrd, 2], bqCurr[rcrd, 2])
+  if (alreadyIn & is.na(bqCurr[rcrd, 2])) {
+    return(dat.io[rcrd, 2])
+  }
+
+  if (!is.na(dat.io[rcrd, 2]) & !alreadyIn) {
+    return(paste(bqCurr[rcrd, 2], dat.io[rcrd, 2]))
+  }
+
+  bqCurr[rcrd, 2]
+}
 
 DropAllNAvals <- function(dat.io) {
-  if (length(names(table(dat.io == "NA"))) > 1) {
-    idx <- which(dat.io == "NA", arr.ind = TRUE)
-    if (length(idx) > 0) {
-      dat.io[idx] <- ""
-    }
-    idx <- which(is.na(dat.io), arr.ind = TRUE)
-    if (length(idx) > 0) {
-      dat.io[idx] <- ""
-    }
+  idx <- which(dat.io == "NA" | is.na(dat.io), arr.ind = TRUE)
+  if (length(idx) > 0) {
+    dat.io[idx] <- ""
   }
-  #if (length(names(table(is.na(dat.io)))) > 1) {dat.io[is.na(dat.io)] <- ""}
   return(dat.io)
 }
 
 Check4Dupes <- function(rcon, dat.io, block = NULL) {
-  #if(block){col2swap = "block"
-  if (!is.null(dat.io) & nrow(dat.io) > 0) {
-    dat.io <- DropAllNAvals(dat.io)
-    col2swap <-
-      ifelse(any(grepl("b_number", colnames(dat.io)) == T), "b_number", "rna_number")
-    bqCurr <- pullRedcap(dat.io, rcon, col2swap)
-    if (!is.null(bqCurr) & nrow(bqCurr) > 0) {
-      rcd = NULL
-      bqSwap <-
-        foreach::foreach(
-          rcd = 1:nrow(bqCurr),
-          .combine = "rbind",
-          .packages = c("readxl", "foreach", "doParallel")
-        ) %dopar% {
-          combBQ(dat.io, bqCurr, rcd, col2swap)
-        }
-      bqSwap <- paste(bqSwap)
-      bqSwap <- gsub("NA ", "", bqSwap)
-      dat.io[, 2] <- bqSwap
-    }
+  if (!is.null(dat.io) | nrow(dat.io) == 0) {
+    return(dat.io)
   }
+
+  dat.io <- DropAllNAvals(dat.io)
+
+  if(!any(c("b_number","dna_number", "rna_number") %in% colnames(dat.io))){
+    return(dat.io)
+  }
+
+  col2swap <- ifelse(any(grepl("b_number", colnames(dat.io))), "b_number", "rna_number")
+  bqCurr <- pullRedcap(dat.io, rcon, col2swap)
+
+  if (!is.null(bqCurr) & nrow(bqCurr) > 0) {
+    bqSwap <- foreach::foreach(rcd = 1:nrow(bqCurr), .combine = "rbind") %dopar% {
+      CombineBQs(dat.io, bqCurr, rcd, col2swap)
+    }
+    bqSwap <- gsub("NA ", "", paste(bqSwap))
+    dat.io[, col2swap] <- bqSwap
+  }
+
   return(as.data.frame(dat.io))
 }
 
-MsgIoImp <- function(dat.io = NULL,
-                     ws.type = NULL,
-                     rez = NULL) {
-  if (!is.null(rez)) {
-    message("Imported Records:")
-    cat(rez, sep = "\n")
+MsgImport <- function(dat.io = NULL, ws.type = NULL, rez = NULL) {
+  if (!is.null(rez)){
+    message("Imported Records:", paste(rez, sep = "\n"))
   }
-  if (is.null(dat.io) & !is.null(ws.type)) {
-    cat(crayon::bgGreen(paste(ws.type, ": Import is up-to-date\n")))
-  }
-  if (length(dat.io) > 0 & !is.null(ws.type)) {
-    io_name <-
-      paste(format(Sys.Date(), "%b%d"), ws.type, "sheets.csv", sep = "_")
-    message("\nSaving CSV: ", io_name, "\n")
-    dat.io <- DropAllNAvals(dat.io)
-    readr::write_csv(dat.io,
-                     file.path("~/Desktop", io_name),
-                     na = "",
-                     quote = "none")
+  if (!is.null(ws.type)) {
+    io_name <- if (!is.null(dat.io) && length(dat.io) > 0) {
+      wbNam <- paste(stringr::str_split(dat.io$file_name[1], "/")[[1]][6:7], collapse = "_")
+      extraNm <- stringr::str_replace_all(wbNam, " ", "_")
+      csvFi = paste(format(Sys.Date(), "%b%d"), ws.type, extraNm, "sheets.csv", sep = "_")
+      output = file.path(fs::path_home(),"Desktop", csvFi)
+      readr::write_csv(dat.io, output, na = "", quote = "none")
+      paste0("Saved CSV: ", output)
+      } else {
+        paste0(ws.type, ": Import is up-to-date")
+      }
+    message(crayon::bgGreen(io_name))
   }
 }
 
-pushRedcap <- function(dat, rcon) {
-  result <- RCurl::postForm(
-    uri = rcon$url,
-    token = rcon$token,
-    content = 'record',
-    format = 'json',
-    overwriteBehavior = 'normal',
-    forceAutoNumber = 'false',
-    data = dat,
-    returnContent = 'ids',
-    type = 'flat',
-    returnFormat = 'csv'
-  )
-  MsgIoImp(NULL, NULL, rez = result)
+
+pushRedcap <- function(raw_data_csv, rcon) {
+  message("\nRecords importing...\n")
+  redcapAPI::importRecords(rcon, raw_data_csv)
 }
 
-csv2redcap <- function(dat.io, api.tkn, ws.type) {
-  ur = "https://redcap.nyumc.org/apps/redcap/api/"
-  rcon <- redcapAPI::redcapConnection(ur, api.tkn)
-  if (is.null(dat.io)) {
-    return(NULL)
-  }
+CleanAndSaveData <- function(dat.io){
+  rownames(dat.io) <- 1:nrow(dat.io)
   dat.io <- Check4Dupes(rcon, dat.io)
-  MsgIoImp(dat.io, ws.type, NULL)
-  dat.io <- dat.io[, !names(dat.io) %in% "fileName"]
   dat.io <- DropAllNAvals(dat.io)
-  if (ws.type == "METH") {
-    dat.io <- dat.io[, 1:3]
-  }
-  if (ws.type == "PACT") {
-    colnames(dat.io) <-
-      c("record_id",
-        "accession_number",
-        "b_number",
-        "organ",
-        "comments_pact")
-  }
-  pushRedcap(jsonlite::toJSON(dat.io), rcon)
+  MsgImport(dat.io, ws.type = ws.type)
+  return(dat.io)
 }
 
-FsGrab <- function(wst, tk) {
-  dat.io <- grab.recent(wst, td) #Sys.Date()
-  csv2redcap(dat.io, tk, wst)
+csv2redcap <- function(dat.io, apiToken, ws.type) {
+  rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", apiToken)
+
+  if (is.null(dat.io)) {return(NULL)}
+
+  raw_data_csv <- CleanAndSaveData(dat.io)
+
+  if (ws.type == "METH") {
+    raw_data_csv <- raw_data_csv[, 1:3]
+  }
+
+  if (ws.type == "PACT") {
+    recordID <- paste(raw_data_csv$philips_tumor_specimen_id,
+                      raw_data_csv$philips_tumor_dna_num, sep = "_")
+    raw_data_csv$record_id <- recordID
+  }
+
+  if (ws.type == "DNA") {
+    raw_data_csv$record_id <-
+      paste(raw_data_csv$accession_number, raw_data_csv$b_number, sep = "_")
+  }
+
+  if (ws.type == "RNA") {
+    raw_data_csv$record_id <-
+      paste(raw_data_csv$accession_number, raw_data_csv$rna_number, sep = "_")
+  }
+
+
+  dupes <- duplicated(raw_data_csv$record_id)
+  if(any(dupes)){
+    raw_data_csv <- raw_data_csv[!dupes,]
+  }
+
+  pushRedcap(raw_data_csv, rcon)
+}
+
+FsGrab <- function(ws.type, apiToken, td, doAll) {
+  dat.io <- grab.recent(ws.type, td, doAll)
+  csv2redcap(dat.io, apiToken, ws.type)
   return(NULL)
 }
 
-AutomateFunCalls <- function(ws.type = "DNA", api.tkn = NULL, td = NULL, doAll = F) {
+
+AutomateFunCalls <- function(ws.type = "DNA", apiToken = NULL,
+                             td = NULL, doAll = F) {
     xl.range <- switch(
       ws.type,
       "PACT" = "W7:AM41",
       "MYLO" = "B7:E42",
       "METH" = "A2:E97",
-      "FUSION" = FsGrab(ws.type, api.tkn),
+      "FUSION" = FsGrab(ws.type, apiToken, td, doAll),
       "A2:J86"
     )
     if (!is.null(xl.range)) {
       file.list <- grab.recent(ws.type, td, doAll)
       if (!is.null(file.list) & length(file.list) > 0) {
         dat.io <- xL2csv(file.list, xl.range, ws.type)
-        if (!is.null(dat.io) &
-            !is.null(api.tkn) & length(dat.io) > 0) {
-          csv2redcap(dat.io, api.tkn, ws.type)
+        gc(verbose = F)
+        if (!is.null(dat.io) & !is.null(apiToken) & length(dat.io) > 0) {
+          csv2redcap(dat.io, apiToken, ws.type)
         }
       }
+      MsgImport(NULL, ws.type, NULL)
     }
-    MsgIoImp(NULL, ws.type, NULL)
+}
+
+
+SheetsIntoRedcap <- function(apiToken = NULL, ws.type = NULL, doAll = F, td) {
+  if (is.null(apiToken)) {
+    stop("apiToken is NULL")
+  }
+  if (is.null(ws.type)) {
+    ws.type <- c("DNA", "RNA", "PACT", "FUSION")
+  }
+  lapply(ws.type, AutomateFunCalls, apiToken = apiToken, td = td, doAll = doAll)
+  #AutomateFunCalls("PACT", apiToken, td, doAll)
+}
+
+DoWholeYear <- function(yr = "2021", ws.type, apiToken) {
+  if(ws.type == "PACT" | ws.type == "FUSION"){
+    td <- paste(yr, "01", "01", sep = "-")
+    return(
+      SheetsIntoRedcap(apiToken, ws.type, doAll=T, td)
+      )
   }
 
-SheetsIntoRedcap <- function(
-    api.tkn = NULL,
-    ws.type = NULL,
-    doAll = F,
-    td) {
-    if (is.null(api.tkn)) {
-      warning("apitoken was NULL")
-    }
-    doParallel::registerDoParallel(parallel::detectCores() - 2)
-    if (is.null(ws.type)) {
-      ws.type <- c("DNA", "RNA")
-    }
-    AutomateFunCalls(ws.type[1], api.tkn, td, doAll)
-    if (!is.na(ws.type[2])) {
-      AutomateFunCalls(ws.type[2], api.tkn, td, doAll)
-      AutomateFunCalls("PACT", api.tkn, td, doAll)
-      AutomateFunCalls("FUSION", api.tkn, td, doAll)
-      AutomateFunCalls("METH", api.tkn, td, doAll)
-    }
+  monthLi <- sprintf("%02d", 1:12)
+  thisYear = as.character(format(as.Date(Sys.Date()), "%Y"))
+  # Filter up to current month if current year
+  if(yr == thisYear){
+    thisMonth = as.numeric(format(Sys.Date(), "%m"))
+    monthLi <- monthLi[1:thisMonth]
   }
-
-DoWholeYear <- function(yr = "2021") {
-  mnLi <- c(paste0("0", 1:9), "11", "12")
-  for (mnth in mnLi) {
+  for (mnth in monthLi) {
     td <- paste(yr, mnth, "01", sep = "-")
-    assign("td", td)
-    SheetsIntoRedcap(api.tkn, ws.type, doAll, td)
+    SheetsIntoRedcap(apiToken, ws.type, doAll=T, td)
   }
 }
-
-check.packages()
-Sys.setenv(R_ENABLE_JIT = T)
-compiler::enableJIT(3)
-rqPk("devtools")
-rqPk("pacman")
-if (!requireNamespace("Rmpi", quietly = T)) {
-  install.packages("Rmpi", type = "source")
-}
-pkgLis <- list("doSNOW", "doParallel", "doMPI", "magrittr", "dplyr")
-do.call(pacman::p_load, pkgLis)
 
 gmt <- compiler::cmpfun(get.mod.time)
 grab.today <- compiler::cmpfun(gtd)
 
-
 if (allMths == T) {
-  td <- as.character(format(as.Date(td), "%Y"))
-  DoWholeYear(td)
+  yr <- as.character(format(as.Date(td), "%Y"))
+  DoWholeYear(yr, ws.type, apiToken)
 } else{
-  SheetsIntoRedcap(api.tkn, ws.type, doAll, td)
+  SheetsIntoRedcap(apiToken, ws.type, doAll, td)
 }
+
+
+# # cronR Job start --------------------------------------------------
+# if(!require("cronR")){install.packages("cronR")};library("cronR")
+# scriptPath <- "/Volumes/CBioinformatics/jonathan/Rprojects/Methylation-scripts/import_lab_worksheets.R"
+# cmd <- cronR::cron_rscript(scriptPath)
+# cronR::cron_add(cmd, frequency = "*/5 * * * *", days_of_week=c(1:6))
+# cronR::cron_njobs(); cronR::cron_ls()
