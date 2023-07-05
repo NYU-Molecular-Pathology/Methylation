@@ -548,10 +548,14 @@ CallApiFileForce <- function(rcon, recordName) {
 
 
 ForceCallApiFile <- function(rcon, recordName, ovwr = T) {
-    msgFunName(cpOutLnk, "ForceCallApiFile")
+  msgFunName(cpOutLnk, "ForceCallApiFile")
+  uploadField = "classifier_pdf"
+  if(stringr::str_detect(recordName, "_sarc")){
+    uploadField = "classifier_pdf_other"
+  }
   recordFi <- paste0(recordName, ".html")
   message("\n", mkBlue("Importing Record File:"), paste0(" ", recordFi))
-    recordName <- CheckSarcRDnumber(recordName)
+  recordName <- CheckSarcRDnumber(recordName)
   if (ovwr == F) {
     writeLogFi(recordName)
   } else{
@@ -562,7 +566,7 @@ ForceCallApiFile <- function(rcon, recordName, ovwr = T) {
             rcon = rcon,
             file = file.path(getwd(), recordFi),
             record = recordName,
-            field = "classifier_pdf",
+            field = uploadField,
             overwrite = ovwr,
             repeat_instance = 1
           )
