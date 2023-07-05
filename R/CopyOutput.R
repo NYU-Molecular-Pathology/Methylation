@@ -595,6 +595,7 @@ UploadToRedcapOnly <- function(file.list, token=NULL) {
 ForceUploadToRedcap <- function(file.list, token=NULL, deskCSV = T) {
     msgFunName(cpOutLnk, "ForceUploadToRedcap")
     stopifnot(!is.null(token))
+    print(as.data.frame(file.list))
     msgFunName(cpOutLnk, "uploadToRedcap"); message(paste0(capture.output(file.list), collapse="\n"))
     rcon <- redcapAPI::redcapConnection(apiLink, token)
     htmlLi <- stringr::str_replace_all(basename(file.list), ".html", "")
