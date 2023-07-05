@@ -45,7 +45,6 @@ if(suppressWarnings(!require(quietly=T, "redcapAPI"))){
 if(length(copyToFolder)==0){
     copyToFolder <- getwd()
 }
-
 if(is.na(copyToFolder) | is.null(copyToFolder)){
     copyToFolder <- getwd()
 }
