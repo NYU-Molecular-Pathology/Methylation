@@ -20,6 +20,7 @@ if(!require(quietly=T, "devtools")){install.packages("devtools", quiet=T)}
 # Input Arguments ------------------------------------------
 try(args[1] -> token)
 try(args[2] -> inputSheet)
+try(args[3] -> copyToFolder)
 
 dsh="\n================"
 dsh2="================\n"
@@ -40,6 +41,12 @@ if(suppressWarnings(!require(quietly=T, "redcapAPI"))){
     params=list('nutterb/redcapAPI', dependencies=T, upgrade="always", type="source")
     do.call(devtools::install_github,c(params))
 }
+
+if(is.na(copyToFolder) | is.null(copyToFolder)){
+    copyToFolder <- getwd()
+}
+
+setwd(copyToFolder)
 
 supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
 
@@ -335,4 +342,6 @@ if(length(inputSheet) >0 & length(token)>0){
 
 # Example Use
 #rds <- readInfo(inputSheet="~/Desktop/MySampleSheet.xlsx")
+# OR
+#rds <- c("RD-22-123", "RD-21-345", "RD-20-678")
 #grabRDCopyIdat(rd_numbers=rds, token=token)
