@@ -22,7 +22,7 @@
 ## 💻 Essential Downloads
 Download and install the following packages:<br>
 Use **ARM** (-arm64.pkg) package downloads for *M1/M2 Macs* & **Intel** (-x86_64.pkg) for older non-Apple Silicon Chip Based Macs) <br>
-- [X] **R 4.2 or higher**: https://cran.r-project.org/bin/macosx/ <br />
+- [X] **R 4.3 or higher**: https://cran.r-project.org/bin/macosx/ <br />
 - [X] **Gfortran** from GitHub use dmg installer: https://github.com/fxcoudert/gfortran-for-macOS/releases/ <br />
 - [X] **RStudio 2023.06.0+421 or later**: https://www.rstudio.com/products/rstudio/download/#download<br />
 - [X] **XQuartz**: https://www.xquartz.org/<br />
