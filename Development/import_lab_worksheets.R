@@ -581,33 +581,25 @@ process_error <- function(currFi, shNam, xl.range){
 
 
 ProcessMyloDoc <- function(fileList) {
-  doSNOW::registerDoSNOW(snow::makeCluster(2))
-  pb <- utils::txtProgressBar(max = length(fileList), style = 3)
-  progress <- function(n) {utils::setTxtProgressBar(pb, n)}
-  opts <- list(progress = progress)
 
-  allReadData <-
-      foreach(
-          ws = 1:length(fileList),
-          .options.snow = opts,
-          .errorhandling = "pass",
-          .verbose = T
-      ) %dopar% {
-          return(process_mylo_fi(fiPath = fileList[ws]))
-      }
-  return(allReadData)
+  allReadData <- pbmcapply::pbmclapply(X = 1:length(fileList), function(ws){
+    fiPath = fileList[ws]
+    dataRead <- process_mylo_fi(fiPath)
+    if(is.null(dataRead)){
+      return(NULL)
+    }
+    return(dataRead)
+  })
+
+  files.read <- unique(as.data.frame(dplyr::bind_rows(allReadData)))
+
+  return(files.read)
 }
 
 
 
 # Process docs
 process_docs <- function(fileList, shNam, xl.range){
-
-    if(xl.range == "B7:E42"){
-        allReadData <- ProcessMyloDoc(fileList)
-        files.read <- unique(as.data.frame(dplyr::bind_rows(allReadData)))
-        return(allReadData)
-    }
 
     allReadData <- pbmcapply::pbmclapply(X = 1:length(fileList), function(ws){
             currFi = fileList[ws]
@@ -644,11 +636,17 @@ ParseWorkbook <- function(fileList, xl.range, ws.type) {
   message(paste0(capture.output(fileList), collapse="\n"))
   shNam <- get_sheet_name(fileList, type = ws.type)
 
+  if (ws.type == "MYLO"){
+    files.read <- ProcessMyloDoc(fileList)
+    return(files.read)
+  }
+
   if (ws.type == "METH") {
     files.read <- process_meth_files(fileList, shNam, xl.range, naHeader)
-  }else{
-    files.read <- process_docs(fileList, shNam, xl.range)
+    return(files.read)
   }
+
+  files.read <- process_docs(fileList, shNam, xl.range)
 
   if (ws.type == "PACT") {
       #shNam <- stringr::str_remove_all(basename(fileList), ".xlsm")
@@ -744,6 +742,8 @@ CleanOutput <- function(files.read, ws.type) {
                            "block_number", "tumor_percent", "comments", "file_name")
       }
       colnames(dat.io) <- newColnames
+  }else{
+    dat.io <- files.read
   }
 
   for(n in 1:ncol(dat.io)){
@@ -760,15 +760,15 @@ CleanOutput <- function(files.read, ws.type) {
 
 Excel2csv <- function(fileList, xl.range, ws.type) {
     message("\nReading Worksheets...")
-    if (length(fileList) > 0) {
-        fileList <- filter_files(fileList)
-        files.read <- ParseWorkbook(fileList, xl.range, ws.type)
-        dat.io <- CleanOutput(files.read, ws.type)
-        dat.io <- as.data.frame(dat.io)
-        return(dat.io)
-    } else {
-        warning("File not readable, no files to import")
+    if (length(fileList) == 0) {
+      warning("File not readable, no files to import")
+      return(NULL)
     }
+    fileList <- filter_files(fileList)
+    files.read <- ParseWorkbook(fileList, xl.range, ws.type)
+    dat.io <- CleanOutput(files.read, ws.type)
+    dat.io <- as.data.frame(dat.io)
+    return(dat.io)
 }
 
 
@@ -889,6 +889,28 @@ CleanAndSaveData <- function(dat.io, rcon){
 }
 
 
+MakeMyloRecords <- function(raw_data_csv) {
+    raw_data_csv$record_id <- raw_data_csv$accession_number
+    rnaVals <- raw_data_csv$rna_number!=""
+    dnaVals <- raw_data_csv$b_number!=""
+    raw_data_csv$record_id[rnaVals] <-
+      paste(raw_data_csv$record_id[rnaVals], raw_data_csv$rna_number[rnaVals], sep="_")
+    raw_data_csv$record_id[dnaVals] <-
+      paste(raw_data_csv$record_id[dnaVals], raw_data_csv$b_number[dnaVals], sep="_")
+    return(raw_data_csv)
+}
+
+
+MakePactRecords <- function(raw_data_csv) {
+    recordID <- paste(raw_data_csv$philips_tumor_specimen_id,
+                      raw_data_csv$philips_tumor_dna_num, sep = "_")
+    raw_data_csv$record_id <- recordID
+    runNames <- paste(stringr::str_split_fixed(basename(raw_data_csv$file_name), ";", 2)[,1])
+    raw_data_csv$pact_run_number <- runNames
+    return(raw_data_csv)
+}
+
+
 csv2redcap <- function(dat.io, apiToken, ws.type) {
   rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", apiToken)
 
@@ -901,23 +923,11 @@ csv2redcap <- function(dat.io, apiToken, ws.type) {
   }
 
   if (ws.type == "MYLO") {
-      raw_data_csv$record_id <- raw_data_csv$accession_number
-      rnaVals <- raw_data_csv$rna_number!=""
-      dnaVals <- raw_data_csv$b_number!=""
-
-      raw_data_csv$record_id[rnaVals] <-
-          paste(raw_data_csv$record_id[rnaVals], raw_data_csv$rna_number[rnaVals], sep="_")
-
-      raw_data_csv$record_id[dnaVals] <-
-          paste(raw_data_csv$record_id[dnaVals], raw_data_csv$b_number[dnaVals], sep="_")
+    raw_data_csv <- MakeMyloRecords(raw_data_csv)
   }
 
   if (ws.type == "PACT") {
-    recordID <- paste(raw_data_csv$philips_tumor_specimen_id,
-                      raw_data_csv$philips_tumor_dna_num, sep = "_")
-    raw_data_csv$record_id <- recordID
-    runNames <- paste(stringr::str_split_fixed(basename(raw_data_csv$file_name), ";", 2)[,1])
-    raw_data_csv$pact_run_number <- runNames
+    raw_data_csv <- MakePactRecords(raw_data_csv)
   }
 
   if (ws.type == "DNA") {
@@ -1009,7 +1019,7 @@ GetAllMonths <- function(yr) {
 }
 
 DoWholeYear <- function(yr = "2021", ws.type = NULL, apiToken) {
-    if(ws.type == "PACT" | ws.type == "FUSION" | ws.type == "METH"){
+    if(ws.type == "PACT" | ws.type == "FUSION" | ws.type == "METH" | ws.type == "MYLO"){
         SheetsIntoRedcap(apiToken, ws.type, doAll=T, td=paste(yr, "01", "01", sep = "-"))
     }else{
         monthLi <- GetAllMonths(yr)
@@ -1022,21 +1032,21 @@ DoWholeYear <- function(yr = "2021", ws.type = NULL, apiToken) {
 }
 
 if (allMths == T) {
-    if(is.null(ws.type)){
-      allTypes <- c("DNA", "RNA", "PACT", "FUSION", "MYLO", "METH")
+  if (is.null(ws.type)) {
+    allTypes <- c("DNA", "RNA", "PACT", "FUSION", "MYLO", "METH")
+  }
+  yr <- as.character(format(as.Date(td), "%Y"))
+  if (length(allTypes) > 1) {
+    for (nSheet in allTypes) {
+      ws.type <- nSheet
+      assign("ws.type", nSheet, envir = .GlobalEnv)
+      DoWholeYear(yr, ws.type, apiToken)
     }
-    yr <- as.character(format(as.Date(td), "%Y"))
-    if(length(allTypes)>1){
-      for(nSheet in allTypes){
-        ws.type <- nSheet
-        assign("ws.type", nSheet, envir = .GlobalEnv)
-        DoWholeYear(yr, ws.type, apiToken)
-      }
-    }else{
-        DoWholeYear(yr, ws.type, apiToken)
-    }
+  } else{
+    DoWholeYear(yr, ws.type, apiToken)
+  }
 } else{
-    SheetsIntoRedcap(apiToken, ws.type, doAll, td)
+  SheetsIntoRedcap(apiToken, ws.type, doAll, td)
 }
 
 # # cronR Job start --------------------------------------------------
