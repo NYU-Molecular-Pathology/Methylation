@@ -62,6 +62,7 @@ if [[ "$R_CURR" != "$R_LOCAL" ]]; then
    exit 0
 fi
 
+# Check if system requirements installed
 function checkSystem {
    APPNAME="$1"
    if ! command -v "$APPNAME" &> /dev/null; then
@@ -77,6 +78,8 @@ checkSystem "xquartz"
 checkSystem "brew"
 checkSystem "pandoc"
 checkSystem "go"
+
+#BackupDir=$(find /Library/Frameworks/R.framework/Versions -maxdepth 1 -type d -name '*4.3*' -print -quit)
 
 # CHECK: Prints instruction if methRun parameter is empty ------------------------------------------------------
 if [ -z "$methRun" ]; then
@@ -136,21 +139,27 @@ MOLECDIR="/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/Results/20${RUNY
 MOLECOUT="/Volumes/molecular/Molecular/MethylationClassifier/20${RUNYEAR}"
 
 # SANITY CHECK: Prints output directories ----------------------------------------------------------------------
-echo "${BG_GRN}runPath:${NORMAL} $runPath"
+echo ""
+echo "----Output Directories----"
+echo "${BG_GRN}runPath:${NORMAL}  $runPath"
 echo "${BG_GRN}MOLECDIR:${NORMAL} $MOLECDIR"
 echo "${BG_GRN}LOCALDIR:${NORMAL} $LOCALDIR"
 
 # EXECUTE: Rsync html to HOME directory then cp from HOME to Z-Drive -------------------------------------------
 check_directory "$LOCALDIR"
 
-printf "\n${BG_BLU}Rsyncing files:${NORMAL}\n"
+printf "\nRsyncing ${methRun} html files to Home directory:\n"
+printf "${BG_GRN}rsync -vrthP --include '*.html' --exclude '*' '${runPath}' '$LOCALDIR'${NORMAL}\n"
+
 rsync -vrthP --include '*.html' --exclude '*' "${runPath}" "$LOCALDIR"
 
-printf "\nExecuting copy command:\n"
-printf "${BG_GRN}cp -RvX ${LOCALDIR} ${MOLECDIR}${NORMAL}\n"
+printf "\n${BG_BLU}Ensure output files are copied from your HOME to Z-drive:${NORMAL}\n"
+printf "${BG_RED}cp -RvfX '${LOCALDIR}' '${MOLECDIR}'${NORMAL}\n"
+printf "${BG_RED}cp -RvfX '${LOCALDIR}' '${MOLECOUT}'${NORMAL}\n"
 
-printf "${BG_BLU}Copying files to Z-drive from HOME:${NORMAL}\n"
 cp -RvfX "$LOCALDIR" "$MOLECDIR"
 cp -RvfX "$LOCALDIR" "$MOLECOUT"
 
-echo "METHYLATION RUN COMPLETE"
+printf "\n${BG_BLU}Verify files are copied here:${NORMAL}\n${MOLECDIR}\n"
+
+printf "\n${BG_GRN}METHYLATION RUN ${methRun} COMPLETE${NORMAL}\n"
