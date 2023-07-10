@@ -242,12 +242,14 @@ readInfo <- function(inputSheet) {
         rds <- read.delim(inputSheet, sep=",", colClasses=character(), row.names=NULL)[,1]
     } else{
         message("FileType is .xlsx, executing readxl::read_excel...")
-        rds <- readxl::read_excel(inputSheet, sheet = 1)[, 1]
+        rds <- readxl::read_excel(inputSheet, col_names = F, sheet = 1)[, 1]     
     }
-    if(typeof(rds)!="character"){
-        warning('Converting RD-numbers to class "character", your readxl or read.delim package should not output typeof == "list". Update your version of the `tibble` package in the future!')
+         
+    if ( typeof(rds) != "character" ) {
+        warning('Converting RD-numbers to class "character", your readxl should not output typeof == "list". Update your version of the `tibble` package in the future!')
         rds <- as.data.frame(rds)[,1]
     }
+
     rds <- rds[!is.na(rds)]
     return(rds)
 }
