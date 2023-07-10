@@ -72,12 +72,16 @@ function checkSystem {
 
 }
 
-checkSystem "latex"
-checkSystem "pdflatex"
-checkSystem "xquartz"
-checkSystem "brew"
-checkSystem "pandoc"
-checkSystem "go"
+unameOut="$(uname -s)"
+
+if [[ "$unameOut" == "Darwin" ]]; then
+   checkSystem "latex"
+   checkSystem "pdflatex"
+   checkSystem "xquartz"
+   checkSystem "brew"
+   checkSystem "pandoc"
+   checkSystem "go"
+fi
 
 #BackupDir=$(find /Library/Frameworks/R.framework/Versions -maxdepth 1 -type d -name '*4.3*' -print -quit)
 
