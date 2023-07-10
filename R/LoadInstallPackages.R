@@ -9,7 +9,8 @@ yourHome <- fs::path_home()
 cbioLn <- switch (
     Sys.info()[['sysname']],
     "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
-    "Linux" = file.path(yourHome,"molecpathlab/production/Methylation/classifiers")
+    "Linux" = "/Volumes/CBioinformatics/Methylation/classifiers"
+    #"Linux" = file.path(yourHome,"molecpathlab/production/Methylation/classifiers")
     #"/private_pkgs/classifiers" # docker
 )
 
