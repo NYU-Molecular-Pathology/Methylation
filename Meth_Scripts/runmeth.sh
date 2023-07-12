@@ -72,6 +72,7 @@ function checkSystem {
 
 }
 
+
 unameOut="$(uname -s)"
 
 if [[ "$unameOut" == "Darwin" ]]; then
@@ -161,9 +162,11 @@ printf "\n${BG_BLU}Ensure output files are copied from your HOME to Z-drive:${NO
 printf "${BG_RED}cp -RvfX '${LOCALDIR}' '${MOLECDIR}'${NORMAL}\n"
 printf "${BG_RED}cp -RvfX '${LOCALDIR}' '${MOLECOUT}'${NORMAL}\n"
 
-cp -RvfX "$LOCALDIR" "$MOLECDIR"
-cp -RvfX "$LOCALDIR" "$MOLECOUT"
+cp -RvX "$LOCALDIR" "$MOLECDIR"
+cp -RvX "$LOCALDIR" "$MOLECOUT"
 
 printf "\n${BG_BLU}Verify files are copied here:${NORMAL}\n${MOLECDIR}\n"
+
+open "${MOLECOUT}"
 
 printf "\n${BG_GRN}METHYLATION RUN ${methRun} COMPLETE${NORMAL}\n"
