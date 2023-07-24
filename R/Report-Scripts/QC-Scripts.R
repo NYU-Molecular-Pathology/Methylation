@@ -105,12 +105,26 @@ makeLabels <- function(totNum, xName, yName, plotName, thePlot) {
     return(legendLabel)
 }
 
+## Replace any NA Values in the plot with fail values
+ReplaceNAorNull <- function(dParam, xincept, yincept){
+    if(any(is.na(dParam$x))){
+        dParam$x[is.na(dParam$x)] <- xincept - 1
+    }
+    if(any(is.na(dParam$y))){
+        dParam$y[is.na(dParam$y)] <- yincept - 1
+    }
+    return(dParam)
+}
+
 
 ## Generate Plots for Probes --------------------------------------
 plotParams <- function(totNum, dParam, xincept, yincept) {
     dParam = dParam$final_data
+    dParam <- ReplaceNAorNull(dParam, xincept, yincept)
     dParam$Sample_Name = paste(dParam$Sample_Name, dParam$MP_num, sep = "\n")
     plot.colours <- glasbey()[1:(length(dParam$x))]
+    
+    
     thePlot <-
         ggplot(dParam, aes(x = dParam[, 2], y = dParam[, 3],
                            color = dParam$Sample_Name, label = dParam$Sample_Name
@@ -125,6 +139,8 @@ plotParams <- function(totNum, dParam, xincept, yincept) {
             aes(
                 label = dParam$Sample_Name,
                 size = 4,
+                label.padding = 0.15,
+                label.size = 0.15,
                 x = dParam[, 2],
                 y = dParam[, 3],
                 show.legend = F,
