@@ -496,13 +496,11 @@ CopyPdfsPngs <- function(params) {
 
 CheckHotspots <- function(params){
     outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus"))
-    hsDir <- file.path(outDir,"hotspots") # output copy of methylation png files
-    if(!dir.exists(hsDir)){dir.create(hsDir)}
-    hotspot_tsv <- list.files(path=hsDir, pattern="*_Hotspots.tsv", full.names=T)
-    if(length(hotspot_tsv)>0){
+    hotspot_tsv <- file.path(outDir, paste0(params$pactName,"_Hotspots.tsv"))
+    if(file.exists(hotspot_tsv)){
         message("Hotspots exist")
     }else{
-        message("Hotspots Missing")
+        message("Hotspots Missing:\n", hotspot_tsv)
     }
 }
 
@@ -667,7 +665,7 @@ makeBlankRow <- function(sam, snvDt) {
 
 GrabHotspots <- function(params){
     outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus"))
-    hsTsv <- file.path(outDir,"hotspots", paste0(params$pactName, "_Hotspots.tsv"))
+    hsTsv <- file.path(outDir, paste0(params$pactName, "_Hotspots.tsv"))
     if(file.exists(hsTsv)){
         hsDat <- as.data.frame(read.csv(hsTsv, sep='\t'))
     }else{
