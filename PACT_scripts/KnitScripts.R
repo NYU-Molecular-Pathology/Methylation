@@ -203,10 +203,30 @@ makeSpecimenTab <- function(objDat) {
     newTa <- knitr::kable(objDat, row.names = F, "html")
     newTa <- kableExtra::kable_styling(
         newTa, bootstrap_options = c("condensed"), full_width = T, position = "left")
-    newTa <- kableExtra::column_spec(newTa, 1:5, width = "2cm")
+    if(ncol(objDat) > 3){
+    newTa <- kableExtra::column_spec(newTa, 1:5, width = "2cm")    
+    }else{
+        newTa <- kableExtra::column_spec(newTa, 1:ncol(objDat), width = "1cm")    
+    }
     print(newTa)
     cat("\n\n")
 }
+
+
+PrintHotspotTable <- function(objDat) {
+    cat(
+        "<span style='color: red;'>",
+        "**Note**: The Hotspot calls below are from the unfiltered VCF files</span>\n\n"
+    )
+    rows_with_yes <- apply(objDat, 1, function(row) {any(grepl("YES", row))})
+    newTa <- knitr::kable(objDat, row.names = F, "html")
+    newTa <- kableExtra::kable_styling(newTa, bootstrap_options = c("condensed"), 
+                                       full_width = T, position = "left")
+    newTa <- kableExtra::row_spec(newTa, which(rows_with_yes), background = "#64a463")
+    print(newTa)
+    cat("\n\n")
+}
+
 
 makeQCTab <- function(objDat){
     qcHeader <- c(
@@ -289,6 +309,34 @@ makeDT <- function(tabNam, objDat, pdfFi = NULL, rdNumb = NULL, sam = NULL, outD
     } else{
         return(MakeRegularTab(tabNam, objDat))
     }
+}
+
+
+makeDT <- function(tabNam, objDat, pdfFi = NULL, rdNumb = NULL, sam = NULL, outDir=NULL){
+    MakeTabColor(tabNam)
+    if (!is.null(pdfFi)) {
+        return(makePdfTab(pdfFi, cnvTab=objDat, outDir))
+    }
+    if (!is.null(rdNumb)) {
+        return(makeRdTab(rdNumb, sam))
+    }
+    if (stringr::str_detect(tabNam, "Hotspots") == T) {
+        return(PrintHotspotTable(objDat))
+    }
+    if (stringr::str_detect(tabNam, "Info") == T) {
+        return(makeSpecimenTab(objDat))
+    } else{
+        return(MakeRegularTab(tabNam, objDat))
+    }
+}
+
+
+MakeHStab <- function(sam, hsDat, samList, outDir){
+    ngsRows <- samList$Test_Number == sam
+    ts_number <- samList$Specimen_ID[samList$Tumor_Content!=0 & ngsRows]
+    hotspot_tsv <- file.path(outDir, 'hotspots', paste0(ts_number, "_Hotspots.tsv"))
+    hsMain <- hsDat[hsDat$Test_Number == sam,]
+    makeDT(tabNam = "Hotspots", objDat = hsMain, NULL, NULL, sam)
 }
 
 # Parses the philips CNV abberations export from Philips dump csv file
@@ -444,6 +492,20 @@ CopyPdfsPngs <- function(params) {
         try(fs::file_move(pdfList, pdfDir), silent = T)
     }
 }
+
+
+CheckHotspots <- function(params){
+    outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus"))
+    hsDir <- file.path(outDir,"hotspots") # output copy of methylation png files
+    if(!dir.exists(hsDir)){dir.create(hsDir)}
+    hotspot_tsv <- list.files(path=hsDir, pattern="*_Hotspots.tsv", full.names=T)
+    if(length(hotspot_tsv)>0){
+        message("Hotspots exist")
+    }else{
+        message("Hotspots Missing")
+    }
+}
+
 
 # Generates the link to the BAM file based on PACT run ------------------------------------
 makeBamLink <- function(sam, pactID){
@@ -603,12 +665,26 @@ makeBlankRow <- function(sam, snvDt) {
 }
 
 
+GrabHotspots <- function(params){
+    outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus"))
+    hsTsv <- file.path(outDir,"hotspots", paste0(params$pactName, "_Hotspots.tsv"))
+    if(file.exists(hsTsv)){
+        hsDat <- as.data.frame(read.csv(hsTsv, sep='\t'))
+    }else{
+        message("No file found here:", hsTsv)
+        hsDat <- NULL
+    }
+    return(hsDat)
+}
+
+
 LoopSampleTabs <- function(params){
     pactName <- params$pactName
     methData <- gb$GetMethDf(params$pactName)
     qcData <- gb$ReadQcFile(pactName)
     samList <- gb$GetSamList(pactName)
     samples <- gb$GrabSamples(samList)
+    hsDat <- gb$GrabHotspots(params)
     snvDt <- read.csv(paste0(pactName, "_desc.csv"))
     outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus"))
     for (sam in samples) {
@@ -622,12 +698,16 @@ LoopSampleTabs <- function(params){
       samRows <- snvDt$Test_Case == sam
       snvTab <- snvDt[samRows & snvDt$Variant == "SNV",]
       makeDT("In-House FrameShifts/INDEL", objDat = snvTab)
-      cnvTab <- snvDt[samRows & snvDt$Variant == "CNV",]
-      cnvTab <- checkDataDump(sam, cnvTab)
+      cnvSam <- snvDt[samRows & snvDt$Variant == "CNV",]
+      cnvTab <- checkDataDump(sam, cnvSam)
       makeDT("CNV", cnvTab, pdfFi = sam, outDir=outDir)
       methCn <- snvDt[samRows & snvDt$Variant == "Methylation",]
       makeMethTab(sam, methCn, methData)
       makeAbTab(sam)
+      if(!is.null(hsDat)){
+          MakeHStab(sam, hsDat, samList, outDir)
+      }
+      cat("\n\n")
       cat(' </div> ')
       }
 }
