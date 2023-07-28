@@ -298,6 +298,24 @@ AddSampleIndexes <- function(pairedList, rawSheetData, philipsExport){
 }
 
 
+FixDuplicateControls <- function(control_sams) {
+    replace_first_char <- function(string, number) {
+        substr(string, 1, 1) <- as.character(number)
+        return(string)
+    }
+    
+    for (unique_string in unique(control_sams)) {
+        indices <- which(control_sams == unique_string)
+        if (length(indices) > 1) {
+            control_sams[indices] <- mapply(
+                replace_first_char, control_sams[indices], rev(seq_along(indices) - 1))
+        }
+    }
+    
+    return(control_sams)
+}
+
+
 BindUnpairedRows <- function(rawSheetData, pairedList, runID) {
 
     accessions <- rawSheetData$`Accession#`
@@ -314,24 +332,45 @@ BindUnpairedRows <- function(rawSheetData, pairedList, runID) {
         message(crayon::bgGreen("No additional paired sample rows to bind to sample sheet"))
         NULL
     } else {
-        message("Binding additional rows/filler:", "\n",
+        message("Binding additional rows/filler:",
+                "\n",
                 paste(accessions[rowsMissing], collapse = "\n"))
-
+        
         sapply(seq_along(accessions[rowsMissing]), function(i) {
-            paste0(0, "_", runID, "_", accessions[rowsMissing][i], "_", rawSheetData$`DNA #`[rowsMissing][i])
+            paste0(0,
+                   "_",
+                   runID,
+                   "_",
+                   accessions[rowsMissing][i],
+                   "_",
+                   rawSheetData$`DNA #`[rowsMissing][i])
         })
     }
     control_acc <- rawSheetData$Test_Number[controls]
     controlRows <- sapply(seq_along(controls), function(i) {
-        paste0(control_acc[i], "_", runID, "_", accessions[controls][i], "_", rawSheetData$`DNA #`[controls][i])
+        paste0(control_acc[i],
+               "_",
+               runID,
+               "_",
+               accessions[controls][i],
+               "_",
+               rawSheetData$`DNA #`[controls][i])
     })
     message(crayon::bgBlue("Binding controls:"),"\n", paste(controlRows, collapse = "\n"))
+    
+    if(any(duplicated(controlRows))){
+        message("Fixing duplicated controls:\n",
+                paste(controlRows[duplicated(controlRows)], sep="\n"))
+        controlRows <- FixDuplicateControls(controlRows)
+        message(crayon::bgBlue("New control names:"),"\n", paste(controlRows, collapse = "\n"))
+    }
 
     pairedList <- data.frame("Sample_ID" = c(pairedList, newRows, controlRows))
     rownames(pairedList) <- seq_len(nrow(pairedList))
 
     return(pairedList)
 }
+
 
 GetPairedList <- function(philipsExport, runID){
     pairedList <- paste(unlist(lapply(X = 1:length(philipsExport$`Tumor Specimen ID`), function(acc) {
