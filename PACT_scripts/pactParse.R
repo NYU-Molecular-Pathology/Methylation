@@ -7,7 +7,7 @@
 ## ---------------------------
 
 library("base"); args <- commandArgs(TRUE); gb <- globalenv(); assign("gb", gb)
-dsh<-"\n================" 
+dsh<-"\n================"
 dsh2<-"\n==========================\n"
 
 # Main arguments input in comandline (Uncomment to Debug or run Locally) -----------------------
@@ -114,24 +114,24 @@ sanitizeSheet <- function(mainSheet){
         MsgDF(mainSheet$Tumor_Type[spacedTxt])
     }
     mainSheet$Tumor_Type <- gsub(" ", "-", mainSheet$Tumor_Type)
-    
+
     MsgChangesMade(mainSheet)
     MsgChangesMade(mainSheet, " ")
     MsgChangesMade(mainSheet, "[\r\n]")
-    
+
     for(i in 1:ncol(mainSheet)){
         mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub("[\r\n]", "", x) })
         mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub(",", "", x) })
         mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub(" ", "", x) })
     }
-    
+
     mainSheet$Paired_Normal[mainSheet$Paired_Normal==0|is.na(mainSheet$Paired_Normal)] <-""
     mainSheet$Tumor_Type[mainSheet$Tumor_Type==0] <- "NA"
     mainSheet[,1:16] <- sapply(mainSheet[,1:16], function(x) { gsub("\\\\", "-", x) })
     controlNames <- "NTC_H20|SC_SERACARE|NC_HAPMAP"
     controlSamples <- grepl(pattern=controlNames, mainSheet$Sample_Name)
     if(table(controlSamples)[['TRUE']]!=3){
-        warning("There are not 3 control samples, either NTC_H20, SC_SERACARE, or NC_HAPMAP is missing or added")
+        warning("There are not 3 control samples, either NTC_H20, SC_SERACARE, or NC_HAPMAP is missing or there are extra controls added in this run")
     }else{
         controlIndexes <- which(controlSamples==T)
         mainSheet[controlIndexes,'Paired_Normal'] <- ""
@@ -193,7 +193,7 @@ WriteFileHeader <- function(inputFi){
         "AdapterSequenceRead1",
         "AdapterSequenceRead2"
     )
-    
+
     header2 <- c(
         "",
         "4",
@@ -215,7 +215,7 @@ WriteFileHeader <- function(inputFi){
     )
     theHeader <- cbind(header1,header2)
     return(theHeader)
-    
+
 }
 
 
@@ -264,7 +264,7 @@ AddSampleIndexes <- function(pairedList, rawSheetData, philipsExport){
     mainSheet <- data.frame(matrix("", nrow = nrow(pairedList), ncol = 0))
     mainSheet$Sample_Name <- mainSheet$Sample_ID <- paste(pairedList[, 1])
     mainSheet$Paired_Normal <- ""
-    
+
     if(length(mainSheet$Paired_Normal[sheetTumors])!=length(paste(mainSheet$Sample_ID[sheetNormals]))){
         suppressWarnings(mainSheet$Paired_Normal[sheetTumors] <- paste(mainSheet$Sample_ID[sheetNormals]))
         theSampleIdEx <- paste(mainSheet$Sample_ID[sheetNormals])
@@ -286,7 +286,9 @@ AddSampleIndexes <- function(pairedList, rawSheetData, philipsExport){
     }else{
         mainSheet$Paired_Normal[sheetTumors] <- paste(mainSheet$Sample_ID[sheetNormals])
     }
-    
+    if (length(rawSheetData$I7_Index_ID) != nrow(mainSheet)){
+
+    }
     mainSheet$I7_Index_ID <- paste(rawSheetData$I7_Index_ID)
     mainSheet$index <- paste(rawSheetData$index)
     mainSheet$Specimen_ID <- paste(rawSheetData$`Accession#`)
@@ -296,32 +298,38 @@ AddSampleIndexes <- function(pairedList, rawSheetData, philipsExport){
 }
 
 
-BindUnpairedRows <- function(rawSheetData, pairedList, runID){
+BindUnpairedRows <- function(rawSheetData, pairedList, runID) {
+
     accessions <- rawSheetData$`Accession#`
-    controls <- which(rawSheetData$`Type & Tissue` == "Control")
-    rowsMissing <- !unlist(lapply(accessions[-controls], function(x){any(grepl(x , pairedList))}))
-    doubleBars <- unlist(lapply(pairedList, function(X){stringr::str_detect(X, pattern = "__")}))
+    controls <- which(str_detect(rawSheetData$`Type & Tissue`, pattern =  "Control"))
+    rowsMissing <- !vapply(accessions[-controls], function(x) any(str_detect(pairedList, x)), logical(1))
+    doubleBars <- vapply(pairedList, function(X) str_detect(X, pattern = "__"), logical(1))
+
     if(any(doubleBars)){
         message(crayon::bgRed("The following rows are missing data:"),"\n",
-                paste0(capture.output(pairedList[doubleBars]), collapse = "\n"))
+                paste(pairedList[doubleBars], collapse = "\n"))
     }
-    accToBind <- accessions[rowsMissing]
-    if(length(accToBind)==0) {
+
+    newRows <- if(length(accessions[rowsMissing]) == 0) {
         message(crayon::bgGreen("No additional paired sample rows to bind to sample sheet"))
-        newRows <- NULL
-    } else{
-        message("Binding rows:", "\n", paste0(capture.output(accToBind), collapse = "\n"))
-        newRows <- unlist(lapply(1:length(accToBind), function(acc){
-            return(paste(0, runID, accToBind[acc], rawSheetData$`DNA #`[acc], sep = "_"))
-        }))
+        NULL
+    } else {
+        message("Binding additional rows/filler:", "\n",
+                paste(accessions[rowsMissing], collapse = "\n"))
+
+        sapply(seq_along(accessions[rowsMissing]), function(i) {
+            paste0(0, "_", runID, "_", accessions[rowsMissing][i], "_", rawSheetData$`DNA #`[rowsMissing][i])
+        })
     }
-    controlRows <- unlist(lapply(1:length(accessions[controls]), function(acc) {
-        dnaNum <- which(accessions == accessions[controls][acc])
-        return(paste(0, runID, accessions[controls][acc], rawSheetData$`DNA #`[dnaNum], sep = "_"))
-    }))
-    message(crayon::bgBlue("Binding controls:"),"\n", paste0(capture.output(controlRows), collapse = "\n"))
-    pairedList <- data.frame("Sample_ID"=unlist(c(pairedList, newRows, controlRows)))
-    rownames(pairedList) <- 1:nrow(pairedList)
+    control_acc <- rawSheetData$Test_Number[controls]
+    controlRows <- sapply(seq_along(controls), function(i) {
+        paste0(control_acc[i], "_", runID, "_", accessions[controls][i], "_", rawSheetData$`DNA #`[controls][i])
+    })
+    message(crayon::bgBlue("Binding controls:"),"\n", paste(controlRows, collapse = "\n"))
+
+    pairedList <- data.frame("Sample_ID" = c(pairedList, newRows, controlRows))
+    rownames(pairedList) <- seq_len(nrow(pairedList))
+
     return(pairedList)
 }
 
@@ -358,14 +366,14 @@ CheckMissingPairs <- function(ngsNumbers, philipsT, philipsN){
         message(crayon::bgRed("Some samples are missing tumor/normal pairs:"))
         message(ngsNumbers[missingPair],"\nPhilips Normal: ", philipsN[missingPair], "\nPhilips Tumor: ", philipsT[missingPair])
     }
-    
+
     if(any(is.na(philipsN)|philipsN==0)){
         philipsN[is.na(philipsN)] <- 0
         missingPair <- which(philipsN==0)
         message(crayon::bgRed("Some samples are missing tumor/normal pairs:"))
         message(ngsNumbers[missingPair],"\nPhilips Normal: ", philipsN[missingPair], "\nPhilips Tumor: ", philipsT[missingPair])
     }
-    
+
     if(any(philipsN %in% philipsT)){
         theDupe <- which(philipsN %in% philipsT ==T)
         message(crayon::bgRed("Some Philips samples have the same tumor/normal accession number:"))
@@ -413,7 +421,7 @@ CheckTotalIndexes <- function(tumorSam, normalSam, ngsNumbers, sheetType = "Phil
         }
         message("Extra ", length(which(totalDrop==F)), " cases...")
     }
-    
+
 }
 
 GetIndexMatch <- function(rawSheetData, philipsExport){
@@ -422,15 +430,15 @@ GetIndexMatch <- function(rawSheetData, philipsExport){
     philipsN <- c(philipsExport$`Normal Specimen ID`)
     philipsT <- c(philipsExport$`Tumor Specimen ID`)
     ngsNumbers <- philipsExport$`Test Number`
-    
+
     CheckMissingPairs(ngsNumbers, philipsT, philipsN)
-    
+
     philipsIdxT <- CheckDupesMatch(philipsT, accessions)
     philipsIdxN <- CheckDupesMatch(philipsN, accessions)
-    
+
     wetLabIdxT <- CheckDupesMatch(accessions, philipsT)
     wetLabIdxN <- CheckDupesMatch(accessions, philipsN)
-    
+
     if(length(philipsIdxT) != length(philipsIdxN)){
         message("Total Tumors: ", length(philipsIdxT))
         message("Total Normals: ", length(philipsIdxN))
@@ -452,7 +460,7 @@ GetIndexMatch <- function(rawSheetData, philipsExport){
         }
         message("Extra ", length(which(totalDrop==F)), " cases...")
     }
-    
+
     if(length(wetLabIdxT) != length(wetLabIdxN)){
         message("Total Tumors: ", length(wetLabIdxT))
         message("Total Normals: ", length(wetLabIdxN))
@@ -473,16 +481,16 @@ GetIndexMatch <- function(rawSheetData, philipsExport){
             wetLabIdxN <- c(wetLabIdxN, rep(0,totalAdd))
             message("Extra ", length(which(totalDrop==F)), " cases...")
         }
-        
+
     }
-    
+
     idx <- data.frame(
         philipsT = philipsIdxT,
         philipsN = philipsIdxN,
         wetLabT = wetLabIdxT,
         wetLabN = wetLabIdxN
     )
-    
+
     return(idx)
 }
 
