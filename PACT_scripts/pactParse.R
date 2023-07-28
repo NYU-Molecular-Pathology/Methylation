@@ -131,7 +131,7 @@ sanitizeSheet <- function(mainSheet){
     controlNames <- "NTC_H20|SC_SERACARE|NC_HAPMAP"
     controlSamples <- grepl(pattern=controlNames, mainSheet$Sample_Name)
     if(table(controlSamples)[['TRUE']]!=3){
-        warning("There are not 3 control samples, either NTC_H20, SC_SERACARE, or NC_HAPMAP is missing or there are extra controls added in this run")
+        warning("There are not 3 control samples, either NTC_H20, SC_SERACARE, or NC_HAPMAP is missing OR there are extra controls added in this run")
     }else{
         controlIndexes <- which(controlSamples==T)
         mainSheet[controlIndexes,'Paired_Normal'] <- ""
@@ -613,7 +613,7 @@ WriteMainSheet <- function(mainSheet, sheetHead){
     runIdFi <- paste(xlRunId,  "SampleSheet.csv", sep = "-")
     outFile <- file.path(fs::path_home(), "Desktop", runIdFi)
     write.table(sheetHead, sep=",", file=outFile, row.names=F, col.names=F, quote=F)
-    message("Writing file output: ", outFile)
+    message("Writing file output, check your samplesheet here: ", outFile)
     suppressWarnings(write.table(mainSheet, sep=",", file=outFile, row.names=F, col.names=T, append=T, quote=F))
     return(outFile)
 }
