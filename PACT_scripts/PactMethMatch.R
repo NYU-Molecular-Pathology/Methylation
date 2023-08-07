@@ -501,22 +501,28 @@ gb$SaveConumeePACT <-  function(x, sampleImg, doXY=F){
 }
 
 
-gb$SaveCNVplotsPACT <- function(samplename_data, sentrix.ids, i, idatPath = NULL, chrNum=NULL, doXY=F) {
-  if (is.null(idatPath)) {
-    idatPath <- getwd()
-  }
-  samName <- samplename_data[i]
-  sampleEpic <- sentrix.ids[i]
-  sampleImg <- file.path(fs::path_home(), "Desktop", paste0(samName, "_cnv.png"))
-  pathEpic <- file.path(idatPath, sampleEpic)
-  RGsetEpic <- read.metharray(pathEpic, verbose = T, force = T)
-  MsetEpic <- mnp.v11b6::MNPpreprocessIllumina(
-    RGsetEpic, bg.correct = T, normalize = "controls")
-  x <- gb$customCNV(MsetEpic, samName, NULL)
-  slot(x, 'detail', check = FALSE) <- NULL
-  invisible(format(object.size(x), units = 'auto'))
-  gb$SaveConumeePACT(x, sampleImg, F)
+gb$SaveCNVplotsPACT <- function(samplename_data, sentrix.ids, i, idatPath = NULL, chrNum = NULL, doXY = F) {
+    if (is.null(idatPath)) {
+        idatPath <- getwd()
+    }
+    samName <- samplename_data[i]
+    sampleEpic <- sentrix.ids[i]
+    sampleImg <- file.path(fs::path_home(), "Desktop", paste0(samName, "_cnv.png"))
+    pathEpic <- file.path(idatPath, sampleEpic)
+    RGsetEpic <- read.metharray(pathEpic, verbose = T, force = T)
+    if(RGsetEpic@annotation[['array']] == "IlluminaHumanMethylation450k"){
+        library("mnp.v11b4")
+        MsetEpic <- mnp.v11b4::MNPpreprocessIllumina(RGsetEpic, bg.correct = T, normalize = "controls")
+    }else{
+        library("mnp.v11b6")
+        MsetEpic <- mnp.v11b6::MNPpreprocessIllumina(RGsetEpic, bg.correct = T, normalize = "controls")
+    }
+    x <- gb$customCNV(MsetEpic, samName, NULL)
+    slot(x, 'detail', check = FALSE) <- NULL
+    invisible(format(object.size(x), units = 'auto'))
+    gb$SaveConumeePACT(x, sampleImg, F)
 }
+
 
 LoopSavePlainCNV3 <- function(targets) {
   samplename_data <- as.character(targets[,1])
