@@ -8,17 +8,19 @@ generateSeg <- function(a, b, c) {
     return(x)
 }
 
-customCNV <- function (Mset, samName= NULL, sex = NULL) {
-  if(is.null(samName)){
-    samName <- colnames(Mset)[1]
-  }
-    path <- file.path(path.package("mnp.v11b6"), "ext")
-    chiptype <- minfi::annotation(Mset)[[1]]
-    if (is.null(sex)) {
-        Rset <- minfi::ratioConvert(Mset, what = "both", keepCN = TRUE)
-        sex <- ifelse(MNPgetSex(Rset)$predictedSex == "M", "Male", "Female")
+
+customCNV <- function (Mset, samName = NULL, sex = NULL) {
+    if(is.null(samName)){
+        samName <- colnames(Mset)[1]
     }
+    chiptype <- minfi::annotation(Mset)[[1]]
+    Rset <- minfi::ratioConvert(Mset, what = "both", keepCN = TRUE)
     if (chiptype == "IlluminaHumanMethylationEPIC") {
+        require("mnp.v11b6")
+        if (is.null(sex)) {
+            sex <- ifelse(mnp.v11b6::MNPgetSex(Rset)$predictedSex == "M", "Male", "Female")
+        }
+        path <- file.path(path.package("mnp.v11b6"), "ext")
         load(file.path(path,"conumee_annotation_EPIC_B6.2019-11-29.RData"))
         cndata <- conumee::CNV.load(Mset, samName)
         if (sex == "Male") {
@@ -27,16 +29,21 @@ customCNV <- function (Mset, samName= NULL, sex = NULL) {
         } else {
             load(file.path(path,"CNanalysis6_conumee_REF_F.2018-09-19.RData"))
             return(generateSeg(cndata, refF_epic, annoEPICxy))
-            }
+        }
     } else {
+        require("mnp.v11b4")
+        if (is.null(sex)) {
+            sex <- ifelse(mnp.v11b4::MNPgetSex(Rset)$predictedSex == "M", "Male", "Female")
+        }
+        path <- file.path(path.package("mnp.v11b4"), "ext")
         load(file.path(path,"CNanalysis4_conumee_ANNO.vh20150715.RData"))
         cndata <- conumee::CNV.load(Mset, samName)
         if (sex == "Male") {
             load(file.path(path,"CNanalysis4_conumee_REF-M.vh20150715.RData"))
-             return(generateSeg(cndata, refM.data, annoXY))
+            return(generateSeg(cndata, refM.data, annoXY))
         } else {
             load(file.path(path,"CNanalysis4_conumee_REF-F.vh20150715.RData"))
-             return(generateSeg(cndata, refF.data, annoXY))
+            return(generateSeg(cndata, refF.data, annoXY))
         }
     }
 }
