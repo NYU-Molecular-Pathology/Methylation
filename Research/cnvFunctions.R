@@ -9,7 +9,7 @@ generateSeg <- function(a, b, c) {
 }
 
 
-customCNV <- function (Mset, samName = NULL, sex = NULL) {
+customCNV <- function (Mset, samName = NULL, sex = NULL, customAnno = NULL) {
     if(is.null(samName)){
         samName <- colnames(Mset)[1]
     }
@@ -25,9 +25,15 @@ customCNV <- function (Mset, samName = NULL, sex = NULL) {
         cndata <- conumee::CNV.load(Mset, samName)
         if (sex == "Male") {
             load(file.path(path,"CNanalysis6_conumee_REF_M.2018-09-19.RData"))
+            if(!is.null(customAnno)){
+                return(generateSeg(cndata, refM_epic, customAnno))
+            }
             return(generateSeg(cndata, refM_epic, annoEPICxy))
         } else {
             load(file.path(path,"CNanalysis6_conumee_REF_F.2018-09-19.RData"))
+            if(!is.null(customAnno)){
+                return(generateSeg(cndata, refF_epic, customAnno))
+            }
             return(generateSeg(cndata, refF_epic, annoEPICxy))
         }
     } else {
@@ -40,9 +46,15 @@ customCNV <- function (Mset, samName = NULL, sex = NULL) {
         cndata <- conumee::CNV.load(Mset, samName)
         if (sex == "Male") {
             load(file.path(path,"CNanalysis4_conumee_REF-M.vh20150715.RData"))
+            if(!is.null(customAnno)){
+                return(generateSeg(cndata, refM.data, customAnno))
+            }
             return(generateSeg(cndata, refM.data, annoXY))
         } else {
             load(file.path(path,"CNanalysis4_conumee_REF-F.vh20150715.RData"))
+            if(!is.null(customAnno)){
+                return(generateSeg(cndata, refF_epic, customAnno))
+            }
             return(generateSeg(cndata, refF.data, annoXY))
         }
     }
