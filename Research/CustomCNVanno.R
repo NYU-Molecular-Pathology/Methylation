@@ -252,10 +252,10 @@ MakeCustomAnno <- function (bin_minprobes = 15,
         values(object@detail)$thick <- IRanges::resize(IRanges::ranges(object@detail), fix = "center", 1e+06)
     }
     message("creating bins")
-    anno.tile <- conumee::CNV.create_bins(hg19.anno = object@genome, bin_minsize = bin_minsize, hg19.gap = object@gap, hg19.exclude = object@exclude)
+    anno.tile <- conumee:::CNV.create_bins(hg19.anno = object@genome, bin_minsize = bin_minsize, hg19.gap = object@gap, hg19.exclude = object@exclude)
     message(" - ", length(anno.tile), " bins created")
     message("merging bins")
-    object@bins <-  conumee::CNV.merge_bins(
+    object@bins <-  conumee:::CNV.merge_bins(
         hg19.anno = object@genome,
         hg19.tile = anno.tile,
         bin_minprobes = bin_minprobes,
