@@ -98,7 +98,8 @@ DropSexSnpProbes <- function(detP, mSetSq, sexSnps=T){
 cleanUpProbes <- function(RGSet, targets, gb, getfunorm = F, getNoob=F, sexSnps = T){
     library("minfi")  
     detP <- minfi::detectionP(RGSet)
-    colnames(detP) <- RGSet@colData@listData[["Sample_Name"]]
+    samNameCol <- colnames(targets)[1]
+    colnames(detP) <- RGSet@colData@listData[[samNameCol]]
     keep <- colMeans(detP) < 0.05
     RGSet <- RGSet[, keep]
     targets <- targets[keep,]
@@ -114,7 +115,7 @@ cleanUpProbes <- function(RGSet, targets, gb, getfunorm = F, getNoob=F, sexSnps 
         return(gset.funnorm)
     } 
     betas <- minfi::getBeta(gset.funnorm)
-    colnames(betas) <- RGSet@colData@listData[["Sample_Name"]]
+    colnames(betas) <- RGSet@colData@listData[[samNameCol]]
     return(betas)
 }
 
