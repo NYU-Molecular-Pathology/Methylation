@@ -218,8 +218,18 @@ RemoveBatchEffect <- function(betas, targets, gb) {
 CleanUpSheetRows <- function(sheet, idatPath, targets){
     sheet <- as.data.frame(sheet)
     rownames(targets) <- targets[,1]
-    targets <- targets[sheet$Sample_Name,]
-    sheet$Barcode <-  targets[,gb$col_sentrix]
+    if(is.null(gb$col_sentrix)){
+        gb$col_sentrix <- "SentrixID_Pos"
+    }
+    if(is.null(gb$col_samNames)){
+        if(!any(stringr::str_detect(colnames(targets),"Sample_Name"))){
+            targets$Sample_Name <- targets[,1]
+        }
+        gb$col_samNames <- "Sample_Name"
+    }
+    sheetNames <- sheet[,1]
+    targets <- targets[sheetNames,]
+    sheet$Barcode <- targets[, gb$col_sentrix]
     sheet[,gb$col_sentrix] <- NA
     sheet[,gb$col_sentrix] <- sheet$Barcode
     splitSentrix <- stringr::str_split_fixed(sheet$Barcode, "_", 2)
@@ -229,10 +239,10 @@ CleanUpSheetRows <- function(sheet, idatPath, targets){
     sheet$Sample_Name <- targets[, gb$col_samNames]
     shFiles <- c(paste0(sheet$Basename, "_Grn.idat"), paste0(sheet$Basename, "_Red.idat"))
     if(any(!file.exists(shFiles))){
-      warning("Some idat files are missing and samples will be dropped!")
-      message("The following cases are missing:")
-      message(paste0(capture.output(sheet[!file.exists(shFiles),]), collapse="\n"))
-      }
+        warning("Some idat files are missing and samples will be dropped!")
+        message("The following cases are missing:")
+        message(paste0(capture.output(sheet[!file.exists(shFiles),]), collapse="\n"))
+    }
     sheet <- sheet[file.exists(shFiles),]
     toDrop <- anyDuplicated(sheet)
     sheet <- sheet[-toDrop,]
@@ -242,33 +252,33 @@ CleanUpSheetRows <- function(sheet, idatPath, targets){
 }
 
 
-getRgset <- function(rgOut, targets, mergeProbes = F, csvPath = "samplesheet.csv", idatPath = NULL){
-  require("minfi")
-  if(is.null(idatPath)){idatPath <- getwd()}
+getRgset <- function(rgOut = NULL, targets=NULL, mergeProbes = F, csvPath = "samplesheet.csv", idatPath = NULL){
+    require("minfi")
+    if(is.null(targets)){targets <- as.data.frame(read.csv("samplesheet.csv"))}
+    if(is.null(rgOut)){rgOut <- paste0(format(Sys.Date(),"%b%d"), "_RGset.Rdata")}
+    if(is.null(idatPath)){idatPath <- getwd()}
     gc(verbose = F)
     if (file.exists(rgOut)) {
-      RGSet <- gb$LoadRdatObj(rgOut)
-      }else{
+        RGSet <- gb$LoadRdatObj(rgOut)
+    }else{
         if (mergeProbes == T & !is.null(targets$Batch)) {
             RGSet <- gb$combine.EPIC.450K(targets = targets)
         } else{
-          sheet <- NULL
-          isPathway <- stringr::str_detect(csvPath, .Platform$file.sep)
-          if (isPathway == T) {
-              sheet <- minfi::read.metharray.sheet(dirname(csvPath), pattern = basename(csvPath))
-          }else{
-              sheet <- minfi::read.metharray.sheet(getwd(), pattern = csvPath)
-          }
-          sheet <- as.data.frame(sheet)
-          sheet <- CleanUpSheetRows(sheet, idatPath, targets)
-          sheet <- sheet[!is.na(sheet$Sample_Name),]
-          RGSet <- minfi::read.metharray.exp(base = idatPath, targets = sheet, verbose = T, force = T)
-          }
+            sheet <- NULL
+            isPathway <- stringr::str_detect(csvPath, .Platform$file.sep)
+            if (isPathway == T) {
+                sheet <- minfi::read.metharray.sheet(dirname(csvPath), pattern = basename(csvPath))
+            }else{
+                sheet <- minfi::read.metharray.sheet(getwd(), pattern = csvPath)
+            }
+            sheet <- CleanUpSheetRows(as.data.frame(sheet), idatPath, targets)
+            sheet <- sheet[!is.na(sheet$Sample_Name),]
+            RGSet <- minfi::read.metharray.exp(base = idatPath, targets = sheet, verbose = T, force = T)
+        }
         gb$SaveObj(RGSet, file.name = rgOut)
-      }
+    }
     return(RGSet)
 }
-
 
 
 GrabMinfiSheet <- function(idatPath, csvPath){
