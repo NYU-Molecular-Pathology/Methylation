@@ -101,60 +101,48 @@ SetPrintGrid <- function(sentrix.ids) {
 
 # The GDC transforms copy number values into segment mean--equal to log2(copy-number/ 2).
 # https://docs.gdc.cancer.gov/Data/Bioinformatics_Pipelines/CNV_Pipeline/
-writeSegTab <- function(segFile, targets, idatPath= NULL) {
+writeSegTab <- function(segFile = NULL, targets = NULL, idatPath = NULL, custom_anno = NULL) {
+    if(is.null(segFile)){segFile <- paste0(format(Sys.Date(),"%b%d"), "segmentsFile.csv")}
     if(is.null(idatPath)){idatPath <- getwd()}
-  if (!file.exists(segFile)) {
-      samplename_data <- as.character(targets$Sample_ID)
-      sentrix.ids <- as.character(targets$SentrixID_Pos)
-      samGroup <-as.character(targets$Type)
-      addCols = NULL
-      for (i in 1:length(sentrix.ids)) {
+    if(is.null(targets)){targets <- as.data.frame(read.csv("samplesheet.csv"))}
+    if (file.exists(segFile)) {
+        return(message("Segments File already exists! Skipping creation:", segFile))
+    }
+    samplename_data <- as.character(targets[,1])
+    stopifnot(any(stringr::str_detect(colnames(targets),"SentrixID_Pos")))
+    sentrix.ids <- as.character(targets$SentrixID_Pos)
+    if(!any(stringr::str_detect(colnames(targets),"Type"))){
+        targets$Type <- "Sample_Group_1"
+    }
+    samGroup <- as.character(targets$Type)
+    addCols = NULL
+    for (i in 1:length(sentrix.ids)) {
         samName <- samplename_data[i]
         sampleEpic <- sentrix.ids[i]
         pathEpic <- file.path(idatPath, sampleEpic)
-        RGsetEpic <- read.metharray(pathEpic, verbose = T, force=T)
-        MsetEpic <- mnp.v11b6::MNPpreprocessIllumina(RGsetEpic, bg.correct = TRUE, normalize = "controls")
-        if(i==1){addCols <-T}else(addCols <- F)
-        x <- gb$customCNV(MsetEpic, samName)
-        q <- CNV.write(x)
+        RGsetEpic <- minfi::read.metharray(pathEpic, verbose = T, force = T)
+        arrayType <- ifelse(RGsetEpic@annotation[["array"]] == "IlluminaHumanMethylationEPIC", "EPIC", "450k")
+
+        if(arrayType == "EPIC"){
+            require("mnp.v11b6")
+            Mset <- mnp.v11b6::MNPpreprocessIllumina(RGsetEpic, bg.correct = TRUE, normalize = "controls")
+        }else{
+            require("mnp.v11b4")
+            Mset <- mnp.v11b4::MNPpreprocessIllumina(RGsetEpic, bg.correct = TRUE, normalize = "controls")
+        }
+        addCols <- ifelse(i==1, T, F)
+        x <- gb$customCNV(Mset, samName, customAnno = custom_anno)
+        q <- conumee::CNV.write(x)
         yy <- data.frame(x@detail$ratio)
         colnames(yy) <- paste(samplename_data[i])
         q$ID <- paste(samplename_data[i])
         q$group <- paste(samGroup[i])
         write.table(q, file = segFile, append = T, quote=F, sep=",", col.names=addCols, row.names=F)
     }
-  }
+
 }
 
-writeDetailTab<-function(segFile, targets) {
-  samNam <- as.character(targets$Sample_ID)
-  sentrix.ids <- as.character(targets$SentrixID_Pos)
-  samGroup <-as.character(targets$Type)
-  if (!file.exists(segFile)) {
-    addCols = NULL
-    for (i in 1:length(sentrix.ids)) {
-      sampleEpic <- sentrix.ids[i]
-        pathEpic <- file.path(getwd(), sampleEpic)
-        RGsetEpic <- read.metharray(pathEpic, verbose = T, force=T)
-        MsetEpic <- mnp.v11b6::MNPpreprocessIllumina(RGsetEpic, bg.correct = TRUE, normalize = "controls")
-        if(i==1){addCols <-T}else(addCols <- F)
-        
-        x <- gb$customCNV(MsetEpic)
-        q <- CNV.write(x, what='detail')
-        q$sample <- paste(samNam[i])
-        zz <- CNV.write(x, what='probes')
-        #Chromosome  Start    End    Feature 204776850101_R02C01
-        colnames(zz) <- c("Chromosome", "Start", "End", "Probe", "Value")
-        q$ID <- paste(samNam[i])
-        q$group <- paste(samGroup[i])
-        zz$ID <- paste(samNam[i])
-        zz$group <- paste(samGroup[i])
-        probeFi <- paste(samNam[i],"probeFile.csv",sep = "_")
-        write.table(q, file = segFile, append = T, quote=F, sep=",", col.names=addCols, row.names=F)
-        write.table(zz, file = probeFi, append = F, quote=F, sep=",", col.names=T, row.names=F)
-    }
-  }
-}
+
 
 savePlotPdf <- function(cnData, plotName, plotTitle) {
     freqPlot <- suppressMessages(
@@ -391,7 +379,7 @@ removeDupeGene <- function(newOvGene) {
 }
 
 
-writeDetailTab<-function(segFile, targets) {
+writeDetailTab <- function(segFile, targets) {
   samNam <- as.character(targets$Sample_ID)
   sentrix.ids <- as.character(targets$SentrixID_Pos)
   samGroup <-as.character(targets$Type)
