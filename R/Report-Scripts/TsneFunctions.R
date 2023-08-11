@@ -66,10 +66,10 @@ getScore_cache = compiler::cmpfun(getScores)
 tsne_cache = compiler::cmpfun(MNPtsne2) #tsne_cache <- local(MNPtsne.cmpfun())
 
 
-GetClusterPlot <- function(msetDat, dat){
+GetClusterPlot <-  function(msetDat, dat){
     sampleID <- dat$sampleID
     Mset_ba <- msetDat$Mset_ba
-    is450k <- Mset_ba@annotation[["array"]]=="IlluminaHumanMethylationEPIC"
+    is450k <- Mset_ba@annotation[["array"]]=="IlluminaHumanMethylation450k"
     me.col <- c(
         "#1F78B4","#2980BA","#3388C1","#3D91C8","#4799CF","hotpink","hotpink","hotpink","hotpink",
         "hotpink","hotpink","#58D68D","#8FCDC0","#96D1B3","#9ED5A7","#A6D99B","#AEDD8F","#A9DB82",
@@ -86,10 +86,16 @@ GetClusterPlot <- function(msetDat, dat){
         )
     set.seed(12345)
 
-    res<-NULL
+    res <- NULL
     if(is450k==TRUE){
-        res=mnp.v11b4::MNPtsne(Mset_ba)
+        gb$refset.center <- mnp.v11b4::refset.center
+        gb$pcaloadings <- mnp.v11b4::pcaloadings
+        gb$pcascores <- mnp.v11b4::pcascores
+        res <- mnp.v11b4::MNPtsne(Mset_ba)
     } else {
+        gb$refset.center <- mnp.v11b6::refset.center
+        gb$pcaloadings <- mnp.v11b6::pcaloadings
+        gb$pcascores <- mnp.v11b6::pcascores
         scores <- getScore_cache(Mset_ba)
         res <- tsne_cache(scores)
     }
