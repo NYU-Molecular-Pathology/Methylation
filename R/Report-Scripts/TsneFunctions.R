@@ -6,24 +6,6 @@
 ## Copyright (c) NYULH Jonathan Serrano, 2023
 ## ---------------------------
 
-
-# getScores <- function(Mset=NULL){
-#     if(!is.null(Mset)){
-#         betas <- minfi::getBeta(Mset)
-#         ex <- which(!names(mnp.v11b6::refset.center) %in% rownames(Mset))
-#         if (length(ex) > 0)
-#             refset.center <- mnp.v11b6::refset.center[-ex]
-#         betas <- betas[match(names(refset.center), rownames(betas)), ]
-#         betas <- betas - refset.center
-#         betas <- t(as.matrix(betas, ncol = 1))
-#         if (length(ex) > 0)
-#             pcaloadings <- mnp.v11b6::pcaloadings[-ex, ]
-#         sc <- betas %*% pcaloadings
-#         scores <- rbind(mnp.v11b6::pcascores, sc)
-#         return(scores)#na.exclude
-#     }
-# }
-
 getScores <- function(Mset=NULL){
     if(is.null(Mset)){
         stop("Mset is NULL in getScores()")
