@@ -19,29 +19,29 @@ customCNV <- function (Mset, samName = NULL, sex = NULL, customAnno = NULL) {
 
     if (chiptype == "IlluminaHumanMethylationEPIC") {
         require("mnp.v11b6")
-        
+
         if (is.null(sex)) {
             sex <- ifelse(mnp.v11b6::MNPgetSex(Rset)$predictedSex == "M", "Male", "Female")
         }
-        
+
         path <- file.path(path.package("mnp.v11b6"), "ext")
         load(file.path(path,"conumee_annotation_EPIC_B6.2019-11-29.RData"), envir = gb)
         load(file.path(path,"CNanalysis6_conumee_REF_M.2018-09-19.RData"), envir = gb)
         load(file.path(path,"CNanalysis6_conumee_REF_F.2018-09-19.RData"), envir = gb)
-        sexRefData <- ifelse(sex == "Male", gb$refM_epic,  gb$refF_epic)
+        sexRefData <- if(sex == "Male"){gb$refM_epic} else{gb$refF_epic}
         mainAnno <- gb$annoEPICxy
     } else {
         require("mnp.v11b4")
-        
+
         if (is.null(sex)) {
             sex <- ifelse(mnp.v11b4::MNPgetSex(Rset)$predictedSex == "M", "Male", "Female")
         }
-        
+
         path <- file.path(path.package("mnp.v11b4"), "ext")
         load(file.path(path,"CNanalysis4_conumee_ANNO.vh20150715.RData"), envir = gb)
         load(file.path(path,"CNanalysis4_conumee_REF-M.vh20150715.RData"), envir = gb)
         load(file.path(path,"CNanalysis4_conumee_REF-F.vh20150715.RData"), envir = gb)
-        sexRefData <- ifelse(sex == "Male", gb$refM.data,  gb$refF.data)
+        sexRefData <- if(sex == "Male"){gb$refM.data}else{gb$refF.data}
         mainAnno <- gb$annoXY
     }
 
