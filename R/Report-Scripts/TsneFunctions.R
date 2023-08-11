@@ -48,21 +48,35 @@ getScores <- function(Mset=NULL){
 }
 
 
-MNPtsne2 <- function(scores = NULL) {
-    if (!is.null(scores)) {
-        Rtsne::Rtsne(
-            scores,
-            dims = 3,
-            pca = F,
-            max_iter = 1500,
-            theta = 0,
-            perplexity = 30,
-            is_distance = F
-        )
+MNPtsne2 <- function (Mset) {
+    betas <- minfi::getBeta(Mset)
+    ex <- which(!names(mnp.v11b6::refset.center) %in% rownames(Mset))
+    if (length(ex) > 0) {
+        refset.center <- mnp.v11b6::refset.center[-ex]
+    }else{
+        refset.center <- mnp.v11b6::refset.center
     }
+    
+    betas <- betas[fastmatch::fmatch(names(mnp.v11b6::refset.center), rownames(betas)), 
+    ]
+    betas <- betas - mnp.v11b6::refset.center
+    betas <- t(as.matrix(betas, ncol = 1))
+    if (length(ex) > 0) {
+        pcaloadings <- mnp.v11b6::pcaloadings[-ex, ]
+    }else{
+        pcaloadings <- mnp.v11b6::pcaloadings
+    }
+    
+    sc <- betas %*% pcaloadings
+    scores <- rbind(mnp.v11b6::pcascores, sc)
+    res <- Rtsne::Rtsne(scores, dims = 3, pca = F, max_iter = 1500, 
+                        theta = 0, num_threads = 4)
+    return(res)
 }
+
+
 set.seed(seed = 12345)
-getScore_cache = compiler::cmpfun(getScores)
+#getScore_cache = compiler::cmpfun(getScores)
 tsne_cache = compiler::cmpfun(MNPtsne2) #tsne_cache <- local(MNPtsne.cmpfun())
 
 
@@ -93,11 +107,8 @@ GetClusterPlot <-  function(msetDat, dat){
         gb$pcascores <- mnp.v11b4::pcascores
         res <- mnp.v11b4::MNPtsne(Mset_ba)
     } else {
-        gb$refset.center <- mnp.v11b6::refset.center
-        gb$pcaloadings <- mnp.v11b6::pcaloadings
-        gb$pcascores <- mnp.v11b6::pcascores
-        scores <- getScore_cache(Mset_ba)
-        res <- tsne_cache(scores)
+        #scores <- getScore_cache(Mset_ba)
+        res <- tsne_cache(Mset_ba)
     }
     # Plot point Values ---------------------------------------
     Tsne_1 <- res$Y[,1]
