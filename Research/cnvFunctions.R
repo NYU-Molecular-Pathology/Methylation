@@ -93,48 +93,78 @@ SetPrintGrid <- function(sentrix.ids) {
 }
 
 # The GDC transforms copy number values into segment mean--equal to log2(copy-number/ 2).
+# Any copy number gain from 10 and above is an amplification
 # https://docs.gdc.cancer.gov/Data/Bioinformatics_Pipelines/CNV_Pipeline/
+GetGeneCopyNumb <- function(cnv_data){
+    cnvGeneRatio <- data.frame(cnv_data@detail$ratio)
+    colnames(cnvGeneRatio) <- "log2_ratio"
+    cnvGeneRatio$Gene <- rownames(cnvGeneRatio)
+    cnvGeneRatio$CopyNumber <- round((2**(cnvGeneRatio[,1]))*2, 0)
+    cnvGeneRatio$GainLoss <- "NONE"
+    cnvGeneRatio$GainLoss[cnvGeneRatio$CopyNumber > 2 ] <- "Gain"
+    cnvGeneRatio$GainLoss[cnvGeneRatio$CopyNumber <= 1] <- "Loss"
+    cnvGeneRatio$GainLoss[cnvGeneRatio$CopyNumber >= 10 ] <- "Amplification"
+    cnvGeneRatio <- cnvGeneRatio[, c("Gene", "log2_ratio", "CopyNumber", "GainLoss")]
+    return(cnvGeneRatio)
+}
+
+
 writeSegTab <- function(segFile = NULL, targets = NULL, idatPath = NULL, custom_anno = NULL) {
-    if(is.null(segFile)){segFile <- paste0(format(Sys.Date(),"%b%d"), "segmentsFile.csv")}
+    if(is.null(segFile)){segFile <- paste0(format(Sys.Date(),"%b%d"), "_segmentVals.csv")}
     if(is.null(idatPath)){idatPath <- getwd()}
     if(is.null(targets)){targets <- as.data.frame(read.csv("samplesheet.csv"))}
-    if (file.exists(segFile)) {
-        return(message("Segments File already exists! Skipping creation:", segFile))
-    }
+
     samplename_data <- as.character(targets[,1])
     stopifnot(any(stringr::str_detect(colnames(targets),"SentrixID_Pos")))
     sentrix.ids <- as.character(targets$SentrixID_Pos)
+
     if(!any(stringr::str_detect(colnames(targets),"Type"))){
         targets$Type <- "Sample_Group_1"
     }
+
     samGroup <- as.character(targets$Type)
-    addCols = NULL
+
+    segPath <- file.path(getwd(), "CNV_segments")
+    if(!dir.exists(segPath)){dir.create(segPath)}
+
     for (i in 1:length(sentrix.ids)) {
+
         samName <- samplename_data[i]
         sampleEpic <- sentrix.ids[i]
         pathEpic <- file.path(idatPath, sampleEpic)
-        RGsetEpic <- minfi::read.metharray(pathEpic, verbose = T, force = T)
-        arrayType <- ifelse(RGsetEpic@annotation[["array"]] == "IlluminaHumanMethylationEPIC", "EPIC", "450k")
 
-        if(arrayType == "EPIC"){
+        segFileSam <- paste0(samName, "_", segFile)
+        geneFiName <- paste("genes", samName, segFile, sep = "_")
+        currFi <- file.path(segPath, segFileSam)
+        geneFi <- file.path(segPath, geneFiName)
+
+        if (file.exists(currFi) & file.exists(geneFi)) {
+            message("Files already exist! Skipping:\n", currFi, "\n", geneFi)
+            next
+        }
+
+        rgSet <- minfi::read.metharray(pathEpic, verbose = T, force = T)
+
+        if(rgSet@annotation[["array"]] == "IlluminaHumanMethylationEPIC"){
             require("mnp.v11b6")
-            Mset <- mnp.v11b6::MNPpreprocessIllumina(RGsetEpic, bg.correct = TRUE, normalize = "controls")
+            Mset <- mnp.v11b6::MNPpreprocessIllumina(rgSet, normalize = "controls")
         }else{
             require("mnp.v11b4")
-            Mset <- mnp.v11b4::MNPpreprocessIllumina(RGsetEpic, bg.correct = TRUE, normalize = "controls")
+            Mset <- mnp.v11b4::MNPpreprocessIllumina(rgSet, normalize = "controls")
         }
-        addCols <- ifelse(i==1, T, F)
-        x <- gb$customCNV(Mset, samName, customAnno = custom_anno)
-        q <- conumee::CNV.write(x)
-        yy <- data.frame(x@detail$ratio)
-        colnames(yy) <- paste(samplename_data[i])
-        q$ID <- paste(samplename_data[i])
-        q$group <- paste(samGroup[i])
-        write.table(q, file = segFile, append = T, quote=F, sep=",", col.names=addCols, row.names=F)
+
+        cnv_data <- gb$customCNV(Mset, samName, customAnno = custom_anno)
+
+        cnvObjOut <- conumee::CNV.write(cnv_data)
+        cnvObjOut$ID <- paste(samName)
+        cnvObjOut$group <- paste(samGroup[i])
+
+        cnvGeneRatio <- GetGeneCopyNumb(cnv_data)
+        
+        write.table(cnvObjOut, file = currFi, quote=F, sep=",", row.names=F)
+        write.table(cnvGeneRatio, file = geneFi, quote=F, sep=",", row.names=F)
     }
-
 }
-
 
 
 savePlotPdf <- function(cnData, plotName, plotTitle) {
@@ -270,7 +300,7 @@ SaveClusters <- function(seg_clust_file, segFile){
     detailVals <- detailVals[,set1Nam]
     #detailVals <- detailVals[,set2Nam]
     colnames(detailVals) <- c("chromosome", "start", "end", "segmean", "sample")
-    detailVals$segmean <- (2**(detailVals$segmean))*2
+    detailVals$CopyNumber <- round((2**(detailVals$segmean))*2, 0)
     write.table(detailVals,file=seg_clust_file,sep = "\t",row.names = F)
     cnData <- read.delim(seg_clust_file,header = T,sep = "\t",row.names=NULL)
     return(cnData)
