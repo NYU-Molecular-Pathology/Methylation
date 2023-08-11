@@ -40,8 +40,8 @@ getScores <- function(Mset=NULL){
         pcaloadings_adj <- mnp.v11b6::pcaloadings
     }
     
-    betas_adj <- betas[match(names(refset_center_adj), rownames(betas)), ]
-    sc <- (betas_adj - refset_center_adj) %*% pcaloadings_adj
+    betas_adj <- betas[match(names(mnp.v11b6::refset_center_adj), rownames(betas)), ]
+    sc <- (betas_adj - mnp.v11b6::refset_center_adj) %*% mnp.v11b6::pcaloadings_adj
     scores <- cbind(mnp.v11b6::pcascores, sc)
     
     return(scores)
