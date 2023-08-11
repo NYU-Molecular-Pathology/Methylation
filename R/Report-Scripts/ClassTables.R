@@ -146,11 +146,22 @@ SpecialMNPpredict6 <- function (betas, calibrate = T, type = "response", MCF = F
 
 GetFamilyProb <- function(is450k, Mset_ba, Mset){
     if(is450k == T){
-        library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylation450kmanifest")
+      library(
+        verbose = F,
+        warn.conflicts = F,
+        quietly = T,
+        package = "IlluminaHumanMethylation450kmanifest"
+      )
         library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b4")
-        probs_mcf <- tryCatch(
+      loadNamespace("mnp.v11b4")
+      gb$rf.pred <- mnp.v11b4::rf.pred
+      gb$calfit <- mnp.v11b4::calfit
+      gb$refset.center <- mnp.v11b4::refset.center
+      gb$reflist <- mnp.v11b4::reflist
+      betas <- minfi::getBeta(Mset_ba[, 1])  
+      probs_mcf <- tryCatch(
           expr = {
-            probs_mcf <- mnp.v11b4::MNPpredict(Mset_ba[, 1], type = 'prob', MCF = TRUE)
+            probs_mcf <- mnp.v11b4::MNPpredict_betas(betas, type = 'prob', MCF = TRUE)
             return(probs_mcf)
         },
         error = function(e) {
@@ -164,6 +175,11 @@ GetFamilyProb <- function(is450k, Mset_ba, Mset){
     }else{
       library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylationEPICmanifest")
       library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b6")
+      loadNamespace("mnp.v11b6")
+      gb$rf.pred <- mnp.v11b6::rf.pred
+      gb$calfit <- mnp.v11b6::calfit
+      gb$refset.center <- mnp.v11b6::refset.center
+      gb$reflist <- mnp.v11b6::reflist
       probs_mcf <- tryCatch(
         expr = {
           probs_mcf <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob', MCF = TRUE)
@@ -321,9 +337,11 @@ GetOutClass <- function(msetDat) {
     Mset <- msetDat$Mset
     is450k <- Mset_ba@annotation[["array"]] != "IlluminaHumanMethylationEPIC"
     if(is450k==T){
-        library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b4", mask.ok = T)
+      try(unloadNamespace("mnp.v11b6"),T)
+      library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b4", mask.ok = T)
         requireNamespace("mnp.v11b4", quietly = T)
     }else{
+        try(unloadNamespace("mnp.v11b4"),T)
         library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b6", mask.ok = T)
         requireNamespace("mnp.v11b6", quietly = T)
     }
@@ -333,7 +351,12 @@ GetOutClass <- function(msetDat) {
     out <- probs[oo[1:5]]
     out <- cbind(round(pmax(pmin(out,1 - eps),eps),3),colnames(probs)[oo][1:5])
     colnames(out) <- c("Subgroup Score","Methylation Subgroup")
-    idx <- match(colnames(probs)[oo][1], mnp.v11b6::reflist[,2])
+    
+    if(is450k==T){
+      idx <- match(colnames(probs)[oo][1], mnp.v11b4::reflist[,4])
+    }else{
+      idx <- match(colnames(probs)[oo][1], mnp.v11b6::reflist[,2])
+    }
     stopifnot(!is.na(idx))
     out <- as.data.frame(out)
     subVal_int <- GetOutScore(out)
@@ -341,7 +364,6 @@ GetOutClass <- function(msetDat) {
     out_class_family <- GetOutFamily(is450k, Mset_ba, Mset)
     return(list("out"=out,"idx"=idx, "out_class_family"=out_class_family))
 }
-
 
 GetV12score <- function(RGset, FFPE = NULL) {
     library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v12b6")
