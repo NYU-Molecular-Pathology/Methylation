@@ -59,7 +59,7 @@ MNPtsne2 <- function (Mset) {
 
 set.seed(seed = 12345)
 #getScore_cache = compiler::cmpfun(getScores)
-tsne_cache = compiler::cmpfun(MNPtsne2) #tsne_cache <- local(MNPtsne.cmpfun())
+#tsne_cache = compiler::cmpfun(MNPtsne2) #tsne_cache <- local(MNPtsne.cmpfun())
 
 
 GetClusterPlot <-  function(msetDat, dat){
@@ -89,8 +89,10 @@ GetClusterPlot <-  function(msetDat, dat){
         gb$pcascores <- mnp.v11b4::pcascores
         res <- mnp.v11b4::MNPtsne(Mset_ba)
     } else {
-        #scores <- getScore_cache(Mset_ba)
-        res <- tsne_cache(Mset_ba)
+        gb$refset.center <- mnp.v11b6::refset.center
+        gb$pcaloadings <- mnp.v11b6::pcaloadings
+        gb$pcascores <- mnp.v11b6::pcascores
+        res <- mnp.v11b6::MNPtsne(Mset_ba)
     }
     # Plot point Values ---------------------------------------
     Tsne_1 <- res$Y[,1]
