@@ -54,9 +54,7 @@ LoadReportPkgs <- function(pkgs, optsLi, chunkOpts){
     if(!require("devtools")){install.packages("devtools", dependencies=T)}
     if (!requireNamespace("BiocManager", quietly = TRUE)) {install.packages("BiocManager", dependencies = T)}
     if(!requireNamespace("UniD", quietly = TRUE)) {
-        install.packages(
-            "/Volumes/CBioinformatics/Methylation/UniD", type = "source", dependencies = T, repo = NULL
-            )
+        install.packages("/Volumes/CBioinformatics/Methylation/UniD", type = "source", dependencies = T, repo = NULL)
     }
     librarian::shelf(pkgs, ask=F, verbose=F, warn.conflicts = F, quietly = T)
     require("needs", quietly = T, warn.conflicts=F)
@@ -192,7 +190,7 @@ GetFamilyProb <- function(is450k, Mset_ba, Mset){
             probs_mcf <- SpecialMNPpredict6(betas, type = 'prob', MCF = TRUE)
             return(probs_mcf)
             }
-      )
+         )
       }
 }
                             
