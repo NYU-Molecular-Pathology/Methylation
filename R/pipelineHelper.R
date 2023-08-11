@@ -408,10 +408,10 @@ makeReports.v11b6 <- function(runPath = NULL,
     data <- read.csv(sheetName, strip.white=T)
     runID <- paste0(data$RunID[1])
 
-    if(file.exists(predictionPath)){
-        message("\nLoading data...\n",predictionPath,"\n")
-        load(predictionPath)
-    }
+    # if(file.exists(predictionPath)){
+    #     message("\nLoading data...\n",predictionPath,"\n")
+    #     load(predictionPath)
+    # }
 
     isMC = sjmisc::str_contains(runID, "MGDM")|sjmisc::str_contains(runID, "MC")
     if(isMC==T){CreateRedcapRecord(runID,"control")}
