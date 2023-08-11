@@ -30,19 +30,24 @@ UniD_dataqc <- function (loading, detP.cut = 0.05, bc.cut = 3, arrayType) {
     return(Beta.raw)
 }
 
-UniD_loadData <-  function (sampleID, run_id=NULL) {
+UniD_loadData <- function (sampleID, run_id=NULL) {
     if(grepl("control", sampleID)==T){sampleID <- "control"}
-    if(is.null(run_id)){run_id <- basename(getwd())}
-    samSh <- paste0(run_id,"_samplesheet.csv")
+    if(is.null(run_id)|is.na(run_id)){run_id <- "NONE"}
+    if(run_id == "NONE"){
+      samSh <- "samplesheet.csv"
+    }else{
+      samSh <- paste0(run_id, "_samplesheet.csv")
+    }
+    
     inFile <- file.path(fs::path_home(),"Desktop", run_id, samSh)
     if(file.exists(inFile)){
         targets <- read.csv(inFile, strip.white = T)
     }else{
         message("Target samplesheet not found: ", inFile)
         samSh <- paste0("samplesheet.csv")
-        inFile <- file.path(fs::path_home(),"Desktop", samSh)
-        message("Trying to find: ", inFile)
-        targets <- read.csv(inFile, strip.white = T)
+        inFile2 <- file.path(getwd(), samSh)
+        message("Trying to find: ", inFile2)
+        targets <- read.csv(inFile2, strip.white = T)
     }
     targRow <- targets[,1]==sampleID
     rgSet <- minfi::read.metharray.exp(targets = targets[targRow,], extended = T, force=T)
@@ -57,7 +62,7 @@ UniD_loadData <-  function (sampleID, run_id=NULL) {
                      
 PipelineU <- function(sampleID = "NONE", RGset, run_id = NULL) {
     is450k<-RGset@annotation[[1]] == "IlluminaHumanMethylation450k"
-    if(is.null(run_id)){run_id <- "NONE"}
+    if(is.null(run_id) | is.na(run_id)){run_id <- "NONE"}
     loading <- suppressWarnings(UniD_loadData(sampleID, run_id))
     outDir <- "."
     arrayType <- ifelse(is450k == F, "EPIC", "450k")
