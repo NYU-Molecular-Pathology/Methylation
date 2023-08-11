@@ -353,7 +353,13 @@ GetOutClass <- function(msetDat) {
     colnames(out) <- c("Subgroup Score","Methylation Subgroup")
     
     if(is450k==T){
-      idx <- match(colnames(probs)[oo][1], mnp.v11b4::reflist[,4])
+        colToMatch <- colnames(probs)[oo][1]
+        idx <- match(colToMatch, mnp.v11b4::reflist[, 4])
+      if(is.na(idx)){
+        colToMatch <- stringr::str_replace_all(colToMatch, "_", "")
+        newList <- stringr::str_replace_all( mnp.v11b4::reflist[, 4], "_", "")
+        idx <- match(colToMatch, newList)
+       }
     }else{
       idx <- match(colnames(probs)[oo][1], mnp.v11b6::reflist[,2])
     }
