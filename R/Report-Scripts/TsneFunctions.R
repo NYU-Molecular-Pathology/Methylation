@@ -38,21 +38,19 @@ MNPtsne2 <- function (Mset) {
     }else{
         refset.center <- mnp.v11b6::refset.center
     }
-    
-    betas <- betas[fastmatch::fmatch(names(mnp.v11b6::refset.center), rownames(betas)), 
-    ]
+    betas <- betas[match(names(mnp.v11b6::refset.center), rownames(betas)), ]
     betas <- betas - mnp.v11b6::refset.center
     betas <- t(as.matrix(betas, ncol = 1))
+    
     if (length(ex) > 0) {
-        pcaloadings <- mnp.v11b6::pcaloadings[-ex, ]
+        pcaloadings2 <- mnp.v11b6::pcaloadings[-ex, ]
     }else{
-        pcaloadings <- mnp.v11b6::pcaloadings
+        pcaloadings2 <- mnp.v11b6::pcaloadings
     }
     
-    sc <- betas %*% pcaloadings
+    sc <- betas %*% pcaloadings2
     scores <- rbind(mnp.v11b6::pcascores, sc)
-    res <- Rtsne::Rtsne(scores, dims = 3, pca = F, max_iter = 1500, 
-                        theta = 0, num_threads = 4)
+    res <- Rtsne::Rtsne(scores, dims = 3, pca = F, max_iter = 1500, theta = 0, num_threads = 4)
     return(res)
 }
 
