@@ -30,7 +30,8 @@ pkgs <- c(
     "biomaRt",
     "ggplot2",
     "plotly",
-    "tictoc"
+    "tictoc",
+    "tidyr"
 )
 
 unlist(lapply(pkgs, librarian::shelf))
@@ -258,4 +259,24 @@ MakeCustomAnno <- function (bin_minprobes = 15,
     )
     message(" - ", length(object@bins), " bins remaining")
     return(object)
+}
+
+
+merge_and_filter_genes <- function(input_directory, gene1 = "MTAP", gene2 = "CDKN2A/B") {
+    csv_files <- grep("^genes_", list.files(input_directory, pattern = "\\.csv$"), value = T)
+
+    if(!file.exists("all_gene_segments.csv")){
+        all_gene_data <- do.call(rbind, lapply(
+            file.path(input_directory, csv_files), read.csv, stringsAsFactors = F))
+        write.csv(all_gene_data, file = "all_gene_segments.csv", row.names = FALSE)
+    }else{
+        all_gene_data <- as.data.frame(read.csv("all_gene_segments.csv"))
+    }
+
+
+    filtered_gene_data <- all_gene_data[all_gene_data$Gene %in% c(gene1, gene2), ]
+    outFi = paste(gene1, gene2, "filtered.csv", sep = "_")
+    outFi <- stringr::str_replace_all(outFi, .Platform$file.sep, "")
+    write.csv(filtered_gene_data, file = outFi, row.names = FALSE)
+    return(outFi)
 }
