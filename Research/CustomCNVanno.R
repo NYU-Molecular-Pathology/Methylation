@@ -29,7 +29,8 @@ pkgs <- c(
     "AnnotationDbi",
     "biomaRt",
     "ggplot2",
-    "plotly"
+    "plotly",
+    "tictoc"
 )
 
 unlist(lapply(pkgs, librarian::shelf))
@@ -91,26 +92,19 @@ GetGenesListRange <- function(grangesDF){
 }
 
 
-GetMnpAnno <- function (Mset) {
-    chiptype <- minfi::annotation(Mset)[[1]]
-    if (chiptype == "IlluminaHumanMethylationEPIC") {
+GetMnpAnno <- function (chiptype, gb) {
+    if (chiptype == "EPIC") {
         require("mnp.v11b6")
         path <- file.path(path.package("mnp.v11b6"), "ext")
-        return(load(
-            file.path(
-                path,
-                "IlluminaArrayDBconumee_annotation_EPIC_B4.2017-06-07.RData"
+        return(
+            load(file.path(path, "IlluminaArrayDBconumee_annotation_EPIC_B4.2017-06-07.RData"), envir = gb)
             )
-        ))
     } else {
         require("mnp.v11b4")
         path <- file.path(path.package("mnp.v11b4"), "ext")
-        return(load(
-            file.path(
-                path,
-                "IlluminaArrayDBconumee_annotation_EPIC_B4.2017-06-07.RData"
+        return(
+            load(file.path(path, "IlluminaArrayDBconumee_annotation_EPIC_B4.2017-06-07.RData", envir = gb))
             )
-        ))
     }
 }
 
