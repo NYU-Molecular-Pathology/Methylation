@@ -95,7 +95,7 @@ SetPrintGrid <- function(sentrix.ids) {
 # The GDC transforms copy number values into segment mean--equal to log2(copy-number/ 2).
 # Any copy number gain from 10 and above is an amplification
 # https://docs.gdc.cancer.gov/Data/Bioinformatics_Pipelines/CNV_Pipeline/
-GetGeneCopyNumb <- function(cnv_data){
+GetGeneCopyNumb <- function(cnv_data, samName){
     cnvGeneRatio <- data.frame(cnv_data@detail$ratio)
     colnames(cnvGeneRatio) <- "log2_ratio"
     cnvGeneRatio$Gene <- rownames(cnvGeneRatio)
@@ -104,10 +104,19 @@ GetGeneCopyNumb <- function(cnv_data){
     cnvGeneRatio$GainLoss[cnvGeneRatio$CopyNumber > 2 ] <- "Gain"
     cnvGeneRatio$GainLoss[cnvGeneRatio$CopyNumber <= 1] <- "Loss"
     cnvGeneRatio$GainLoss[cnvGeneRatio$CopyNumber >= 10 ] <- "Amplification"
-    cnvGeneRatio <- cnvGeneRatio[, c("Gene", "log2_ratio", "CopyNumber", "GainLoss")]
+    cnvGeneRatio$ID <- samName
+    cnvGeneRatio <- cnvGeneRatio[, c("ID", "Gene", "log2_ratio", "CopyNumber", "GainLoss")]
     return(cnvGeneRatio)
 }
 
+
+SaveHtmlCnv <- function(samName, cnvPath, cnv_data) {
+    htmlFi <- paste(samName, "cnv.html", sep = "_")
+    htmlOut <- file.path(cnvPath, htmlFi)
+    plotObj <- suppressMessages(mnp.v11b6::MNPcnvggplotly(cnv_data, getTables = F))
+    suppressWarnings(htmlwidgets::saveWidget(plotObj, htmlFi, selfcontained = T))
+    file.rename(htmlFi, htmlOut)
+}
 
 writeSegTab <- function(segFile = NULL, targets = NULL, idatPath = NULL, custom_anno = NULL) {
     if(is.null(segFile)){segFile <- paste0(format(Sys.Date(),"%b%d"), "_segmentVals.csv")}
@@ -125,8 +134,9 @@ writeSegTab <- function(segFile = NULL, targets = NULL, idatPath = NULL, custom_
     samGroup <- as.character(targets$Type)
 
     segPath <- file.path(getwd(), "CNV_segments")
+    cnvPath <- file.path(getwd(), "CNV_plots")
     if(!dir.exists(segPath)){dir.create(segPath)}
-
+    if(!dir.exists(cnvPath)){dir.create(cnvPath)}
     for (i in 1:length(sentrix.ids)) {
 
         samName <- samplename_data[i]
@@ -159,10 +169,11 @@ writeSegTab <- function(segFile = NULL, targets = NULL, idatPath = NULL, custom_
         cnvObjOut$ID <- paste(samName)
         cnvObjOut$group <- paste(samGroup[i])
 
-        cnvGeneRatio <- GetGeneCopyNumb(cnv_data)
-        
+        cnvGeneRatio <- GetGeneCopyNumb(cnv_data, samName)
+
         write.table(cnvObjOut, file = currFi, quote=F, sep=",", row.names=F)
         write.table(cnvGeneRatio, file = geneFi, quote=F, sep=",", row.names=F)
+        SaveHtmlCnv(samName, cnvPath, cnv_data)
     }
 }
 
