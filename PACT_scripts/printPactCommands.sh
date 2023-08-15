@@ -23,16 +23,16 @@ BOX1=' <div class="boxed"> '
 BOX2=' </div> '
 currYear=$(date +'%Y')
 #currYear=$(date +"%Y") #date2022
-evernoteLink='https://www.evernote.com/shard/s331/sh/5416e425-83c7-5aeb-0683-6667fb3d6f8e/07ef3e8f603ecdff3afe5da18f0204f2'
+#evernoteLink='https://www.evernote.com/shard/s331/sh/5416e425-83c7-5aeb-0683-6667fb3d6f8e/07ef3e8f603ecdff3afe5da18f0204f2'
 consensusDir='/Volumes/CBioinformatics/jonathan/pact/consensus/'
 productionDir="/gpfs/data/molecpathlab/production"
 outputDir="/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics/"
-reprtDir="/gpfs/data/molecpathlab/bin/QC_reprot/"
+#reprtDir="/gpfs/data/molecpathlab/bin/QC_reprot/"
 pactGithub="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts"
 
 SHEETDIR="${productionDir}/samplesheets/LG-PACT/${runID}"
 DEMUXDIR="${productionDir}/Demultiplexing/${runID}"
-molecDir="${productionDir}/NGS607/"
+#molecDir="${productionDir}/NGS607/"
 
 echo "
 <link href='https://fonts.googleapis.com/css?family=Allerta Stencil' rel='stylesheet'>
@@ -264,7 +264,7 @@ print_toc() {
     liststart="<li><a href=\"#stage-${stepNumb}\">"
     echo "${liststart}${stepString}</a></li>"
 }
-lastTwo=${pactRun: -2}
+#lastTwo=${pactRun: -2}
 runMid=${pactRun:5:2}
 pactRun="${FG_RED}${pactRun}${normal}"
 kerbero="${FG_CYA}${kerbero}${normal}"
@@ -333,8 +333,7 @@ msg_code "chmod -R g+rwx ${DEMUXDIR}/output"
 msg_step 3 "#ffffba" "Return to the Demux directory, execute the pass and upload *make* commands to upload to Philips, then deploy the in-house pipeline"
 msg_code "cd $DEMUXDIR"
 msg_note "NOTE:" "If you have any filler or validation cases make sure they are not uploaded to pgm by moving the fastq files out of the directory"
-msg_code "make passed && make uploads"
-msg_code "make deploy-NGS607"
+msg_code "make passed && make uploads && make deploy-NGS607"
 msg_code "cd ${productionDir}/NGS607/${runID}"
 msg_step 4 "#ffffba" "Update and then submit the slurm job and check your squeue logs"
 msg_code "make update && make submit"
@@ -348,33 +347,33 @@ msg_note "Reminder:" "Check Philips ISPM to ensure uploads are not pending or mi
 echo "$BOX2"
 
 # Stage 3 -----------------------
-msg_stage 3 "Generate QC"
-msg_step 1 "#d9d2e9" "After NextFlow emails you the pipeline completed successfully, return to BigPurple and generate the QC"
-msg_code "ssh ${kerbero}@bigpurple.nyumc.org"
-msg_step 2 "#d9d2e9" "Go to the run production directory, edit permissions, and then execute the Python Automations"
-msg_code "module load python/cpu/3.8.11 && cd ${molecDir}${runID} && mkdir -p ${productionDir}/NGS607/${runID}/output/clinical/ && chmod -R g+rwx ${productionDir}/NGS607/${runID}/output/"
-msg_code "python ${reprtDir}snp_overlap.py -o ${molecDir}${runID}/output/ && python ${reprtDir}generate_html_report.py -o ${molecDir}${runID} -p ${pactRun} -r ${runID} && python3 ${reprtDir}variants_qc.py -rid ${runID} -rdir ${molecDir}${runID}/output/ -pactid ${pactRun}"
-msg_code "python /gpfs/data/molecpathlab/bin/QC_reprot/detect_hotspots.py -rid ${runID} -pactid ${pactRun}"
-msg_step 3 "#d9d2e9" "Change permissions for group access to the new QC files ouput"
-msg_code "chmod -R g+rwx ${productionDir}/NGS607/${runID}/output/"
-msg_note "If this step breaks, try re-installing miniconda and the requirements.txt with the outlined commands in step 4"
-msg_step 4 "#a980ff" "If you have MiniConda3 skip to step 5, otherwise install it and type \"no\" when prompted if you wish the installer to initialize Miniconda3 by running conda init"
-msg_code "cd /gpfs/home/${kerbero} && wget https://repo.anaconda.com/miniconda/Miniconda3-py38_4.10.3-Linux-x86_64.sh && bash Miniconda3-py38_4.10.3-Linux-x86_64.sh"
-msg_step 4a "#a980ff" "To complete installation, cd into your bin directory, then CLOSE the terminal window (exit BigPurple) to restart it"
-msg_code "cd ${gpfsHome}miniconda3/bin/ && ./conda init"
-msg_step 4b "#a980ff" "After closing the console, ssh back into BigPurple and use conda to install pip"
-msg_code "ssh ${kerbero}@bigpurple.nyumc.org"
-msg_code "conda install pip"
-msg_code "pip install -r ${gpfsHome}molecpathlab/development/NGS_QC_xf/requirements.txt"
-msg_step 5 "#d9d2e9" "Go to the QC python directory and generate the QC file"
-msg_code "conda activate && python ${gpfsHome}molecpathlab/development/NGS_QC_xf/xf_pactqc.py -rdir ${molecDir}${runID}/output -pactid ${pactRun} && conda deactivate"
-msg_code "chmod -R g+rwx ${productionDir}/NGS607/${runID}/output/"
-echo "$BOX2"
+# msg_stage 3 "Generate QC"
+# msg_step 1 "#d9d2e9" "After NextFlow emails you the pipeline completed successfully, return to BigPurple and generate the QC"
+# msg_code "ssh ${kerbero}@bigpurple.nyumc.org"
+# msg_step 2 "#d9d2e9" "Go to the run production directory, edit permissions, and then execute the Python Automations"
+# msg_code "module load python/cpu/3.8.11 && cd ${molecDir}${runID} && mkdir -p ${productionDir}/NGS607/${runID}/output/clinical/ && chmod -R g+rwx ${productionDir}/NGS607/${runID}/output/"
+# msg_code "python ${reprtDir}snp_overlap.py -o ${molecDir}${runID}/output/ && python ${reprtDir}generate_html_report.py -o ${molecDir}${runID} -p ${pactRun} -r ${runID} && python3 ${reprtDir}variants_qc.py -rid ${runID} -rdir ${molecDir}${runID}/output/ -pactid ${pactRun}"
+# msg_code "python /gpfs/data/molecpathlab/bin/QC_reprot/detect_hotspots.py -rid ${runID} -pactid ${pactRun}"
+# msg_step 3 "#d9d2e9" "Change permissions for group access to the new QC files ouput"
+# msg_code "chmod -R g+rwx ${productionDir}/NGS607/${runID}/output/"
+# msg_note "If this step breaks, try re-installing miniconda and the requirements.txt with the outlined commands in step 4"
+# msg_step 4 "#a980ff" "If you have MiniConda3 skip to step 5, otherwise install it and type \"no\" when prompted if you wish the installer to initialize Miniconda3 by running conda init"
+# msg_code "cd /gpfs/home/${kerbero} && wget https://repo.anaconda.com/miniconda/Miniconda3-py38_4.10.3-Linux-x86_64.sh && bash Miniconda3-py38_4.10.3-Linux-x86_64.sh"
+# msg_step 4a "#a980ff" "To complete installation, cd into your bin directory, then CLOSE the terminal window (exit BigPurple) to restart it"
+# msg_code "cd ${gpfsHome}miniconda3/bin/ && ./conda init"
+# msg_step 4b "#a980ff" "After closing the console, ssh back into BigPurple and use conda to install pip"
+# msg_code "ssh ${kerbero}@bigpurple.nyumc.org"
+# msg_code "conda install pip"
+# msg_code "pip install -r ${gpfsHome}molecpathlab/development/NGS_QC_xf/requirements.txt"
+# msg_step 5 "#d9d2e9" "Go to the QC python directory and generate the QC file"
+# msg_code "conda activate && python ${gpfsHome}molecpathlab/development/NGS_QC_xf/xf_pactqc.py -rdir ${molecDir}${runID}/output -pactid ${pactRun} && conda deactivate"
+# msg_code "chmod -R g+rwx ${productionDir}/NGS607/${runID}/output/"
+# echo "$BOX2"
 
 BAMSDIR="/gpfs/data/molecpathlab/production/NGS607/${runID}/output/alignments/recalibrated"
 
-# Stage 4 -----------------------
-msg_stage 4 "Copy the QC files and Output data to the Molecular Z-drive"
+# Stage 3 -----------------------
+msg_stage 3 "Copy the QC files and Output data to the Molecular Z-drive"
 msg_step 0 "#baffc9" "Create the output BAM directory and copy calibrated:"
 msg_code "mkdir -p \"/gpfs/data/clinpathlab/external/${pactRun}\""
 msg_code "rsync -vrthP ${BAMSDIR}/*.dd.ra.rc.bam \"/gpfs/data/clinpathlab/external/${pactRun}/\" && rsync -vrthP ${BAMSDIR}/*.dd.ra.rc.bam.bai \"/gpfs/data/clinpathlab/external/${pactRun}/\""
@@ -403,26 +402,24 @@ smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/MOLECULAR LAB ONLY/NYU 
 "
 echo "$BOX2"
 
-# Stage 5 -----------------------
-msg_stage 5 "Methylation and Philips CNV Consensus Report"
+# Stage 4 -----------------------
+msg_stage 4 "Methylation and Philips CNV Consensus Report"
 msg_step 0 "#bae1ff" "Exit BigPurple and in the LOCAL terminal, create a new directory for your PACT consensus in CBioinformatics drive and curl the template RMD file from GitHub"
 msg_code "mkdir -p \"${consensusDir}${pactRun}_consensus\" && cd \"${consensusDir}${pactRun}_consensus\""
 msg_code "curl -# -L ${pactGithub}/PACT_consensus.Rmd >${consensusDir}${pactRun}_consensus/${pactRun}_consensus.Rmd"
 msg_step 1 "#bae1ff" "Re-generate the latest MethylMatch data for concensus if there was a new run last Friday"
 msg_code "/Volumes/CBioinformatics/PACT/getMethylMatch.sh ${pactRun} ${runID}"
 msg_step 2 "#bae1ff" "From the concensus directory, copy the .cnv.plot.pdf facets and QC from the Z-drive, and MethylMatch.xlsx from the Desktop"
-msg_code "cd \"${consensusDir}${pactRun}_consensus\""
-msg_code "cp /Volumes/molecular/Molecular/REDCap/cnv_facets/${pactRun}/*.pdf ~/Desktop/${runID}-SampleSheet.csv ~/Desktop/${pactRun}_MethylMatch.xlsx ./"
-msg_code "cp /Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/${pactRun}-Somatic_Variants.html /Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/${pactRun}.html /Volumes/molecular/Molecular/REDCap/cnv_facets/${pactRun}/${pactRun}-QC.tsv /Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/${pactRun}_Hotspots.tsv ./"
-msg_step 3 "#bae1ff" "Use the Evernote Guide to save the Somatic Variants as a .csv file to the downloads folder: ${HOME}/Downloads/export_mytable_MM_DD_${currYear}.csv"
-msg_code "open ${consensusDir}${pactRun}_consensus/${pactRun}-Somatic_Variants.html && open ${evernoteLink}"
-msg_step 4 "#bae1ff" "Once you have exported the csv file from Somatic variants html, download run the R script:"
+msg_code "cd \"${consensusDir}${pactRun}_consensus\" && cp /Volumes/molecular/Molecular/REDCap/cnv_facets/${pactRun}/*.pdf ~/Desktop/${runID}-SampleSheet.csv ~/Desktop/${pactRun}_MethylMatch.xlsx /Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/${pactRun}-Somatic_Variants.html /Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/${pactRun}.html /Volumes/molecular/Molecular/REDCap/cnv_facets/${pactRun}/${pactRun}-QC.tsv /Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/${pactRun}_Hotspots.tsv ./"
+# msg_step 3 "#bae1ff" "Use the Evernote Guide to save the Somatic Variants as a .csv file to the downloads folder: ${HOME}/Downloads/export_mytable_MM_DD_${currYear}.csv"
+# msg_code "open ${consensusDir}${pactRun}_consensus/${pactRun}-Somatic_Variants.html && open ${evernoteLink}"
+msg_step 3 "#bae1ff" "Download and run the R script to save the ${pactRun}_desc.csv file"
 msg_code "cd ${HOME} && curl -# -L ${pactGithub}/MakeIndelList.R >${HOME}/MakeIndelList.R && chmod +rwx ${HOME}/MakeIndelList.R"
 msg_code "RScript --verbose ${HOME}/MakeIndelList.R ${pactRun}"
-msg_step 5 "#bae1ff" "Copy the CSV file output by the Rscript from the desktop to your working directory then knit the rMarkdown file"
-msg_code "cp ${HOME}/Desktop/${pactRun}_desc.csv ${consensusDir}${pactRun}_consensus/"
+msg_step 4 "#bae1ff" "Knit the rMarkdown file in your consensus directory"
+#msg_code "cp ${HOME}/Desktop/${pactRun}_desc.csv ${consensusDir}${pactRun}_consensus/"
 msg_code "cd ${consensusDir}${pactRun}_consensus/ && Rscript --verbose -e \"rmarkdown::render('${consensusDir}${pactRun}_consensus/${pactRun}_consensus.Rmd', params=list(pactName='${pactRun}', userName='${kerbero}'))\""
-msg_step 6 "#bae1ff" "Once the CNV concensus html is created, copy it to the output folder and email to notify the file is ready"
+msg_step 5 "#bae1ff" "Once the CNV concensus html is created, copy it to the output folder and email to notify the file is ready"
 msg_code "open ${consensusDir}${pactRun}_consensus/${pactRun}_consensus.html"
 msg_code "cp ${consensusDir}${pactRun}_consensus/${pactRun}_consensus.html \"/Volumes${outputDir}${currYear}/${pactRun}/\""
 msg_code "Hi all,
