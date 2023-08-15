@@ -172,7 +172,7 @@ makePdfTab <- function(pdfFi, cnvTab, outDir) {
     cat(paste0("![In-house Facets Plot (Above)](", pdfFi, "){width=100%}"))
     cat("\n\n")
     if (nrow(cnvTab) > 0) {
-        newTa <- knitr::kable(cnvTab, row.names = F, "html")
+        newTa <- knitr::kable(cnvTab, row.names = F, "html", align="c")
         newTa <-
             kableExtra::kable_styling(
                 newTa,
@@ -180,7 +180,7 @@ makePdfTab <- function(pdfFi, cnvTab, outDir) {
                 full_width = F,
                 position = "left"
             )
-        newTa <- kableExtra::column_spec(newTa, 1:5, width = "5cm")
+        newTa <- kableExtra::column_spec(newTa, 1:5, width = "3cm")
         cat("#### Philips Data Dump CNV table:\n\n")
         print(newTa)
         cat("\n\n")
@@ -398,8 +398,12 @@ checkDataDump <- function(sam, cnvTab) {
     outPath <- file.path(getwd(), "zipfiles")
     if (!dir.exists(outPath)) {dir.create(outPath)}
     cnvTab <- getDumpFiles(outPath, sam , cnvTab)
-    drpCol <- which(stringr::str_detect(colnames(cnvTab), "In."))
+    drpCol <- which(stringr::str_detect(colnames(cnvTab), "In.|IGV"))
     cnvTab <- cnvTab[,-drpCol]
+    names(cnvTab)[names(cnvTab) == 'Comments'] <- 'Copy Number'
+    names(cnvTab)[names(cnvTab) == 'Other'] <- 'Chromosome'
+    cnvTab$`Copy Number` <- as.numeric(cnvTab$`Copy Number`)
+    cnvTab <- cnvTab[!is.na(cnvTab$Test_Case),]
     return(cnvTab)
 }
 
