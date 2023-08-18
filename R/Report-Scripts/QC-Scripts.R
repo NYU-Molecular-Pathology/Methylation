@@ -15,7 +15,6 @@ supM <- function(pk){return(suppressPackageStartupMessages(suppressWarnings(pk))
 
 # Setting US CRAN REPO
 options(repos = c(getOption("repos"), CRAN = "http://cran.us.r-project.org"))
-options(repos = c(getOption("repos"), BioC = "https://bioconductor.org"))
 
 pkgs <-
     c(
