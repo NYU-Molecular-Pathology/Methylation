@@ -1,3 +1,11 @@
+#!/usr/bin/env Rscript
+## ---------------------------
+## Script name: QC-Scripts.R
+## Purpose: source of global scripts imported for QC methylation analysis
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2023
+## ---------------------------
+
 gb <- globalenv(); assign("gb", gb)
 options("install.packages.compile.from.source" = "No")
 options("install.packages.check.source" = "no")
@@ -6,9 +14,8 @@ options(warn = -1)
 supM <- function(pk){return(suppressPackageStartupMessages(suppressWarnings(pk)))}
 
 # Setting US CRAN REPO
-rlis = getOption("repos")
-rlis["CRAN"] = "http://cran.us.r-project.org"
-options(repos = rlis)
+options(repos = c(getOption("repos"), CRAN = "http://cran.us.r-project.org"))
+options(repos = c(getOption("repos"), BioC = "https://bioconductor.og"))
 
 pkgs <-
     c(
@@ -187,7 +194,6 @@ plotParams <- function(totNum, dParam, xincept, yincept) {
     thePlot <- thePlot + theme(legend.position = "none")
     return(thePlot)
 }
-
 
 
 ## Get Plot Specific Probes --------------------------------------
