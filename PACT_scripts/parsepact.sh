@@ -99,5 +99,6 @@ Rscript PactMethMatch.R $methAPI "$pactID"
 
 # EXE 3: HTML commands Generation --------------------------------------------------------------------
 message_curl ${GITHUBLINK} "printPactCommands.sh"
+message_curl ${GITHUBLINK} "make_consensus.sh"
 message_print "Saving Html File" "$HOME/printPactCommands.sh $runID ${pactID} NULL ${kerbero} >$HOME/${pactID}.html && open $HOME/${pactID}.html"
 $HOME/printPactCommands.sh $runID ${pactID} NULL ${kerbero} >$HOME/${pactID}.html && open $HOME/${pactID}.html
