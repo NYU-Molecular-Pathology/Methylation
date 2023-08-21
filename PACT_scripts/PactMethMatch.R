@@ -71,7 +71,7 @@ loadPacks <- function(){
 grabAllRecords <- function(flds, rcon){
     message("Pulling REDCap data...")
     params = list(rcon, fields=flds, labels=F, dates = F, survey = F, dag = F, factors=F, form_complete_auto=F)
-    dbCols <- do.call(redcapAPI::exportRecords, c(params))
+    dbCols <- do.call(redcapAPI::exportRecordsTyped, c(params))
     return(as.data.frame(dbCols))
 }
 
@@ -328,7 +328,7 @@ postData <- function(rcon, record){
 emailFile <- function(runId, outFi, rcon){
     record = data.frame(record_id = runId, run_number = runId)
     postData(rcon, record)
-    isDone <- redcapAPI::exportRecords(rcon, factors=F, records=record$record_id, fields=c("record_id","other_file"))
+    isDone <- redcapAPI::exportRecordsTyped(rcon, factors=F, records=record$record_id, fields=c("record_id","other_file"))
     if (is.na(isDone$other_file)) {
         #rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", gb$token)
         body <- list(
