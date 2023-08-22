@@ -637,7 +637,7 @@ GrabRunNumber <- function(inputFi){
     }
     rawSheetData <- GetExcelData(inputFi, sh, shRange="A6:X200", cm=T)
     runID_row <- which(rawSheetData$`DNA #`=="Run ID:")
-    runID_col <- which(stringr::str_detect(paste(rawSheetData[runID_row, ]),"NB551709|NB501073"))
+    runID_col <- which(stringr::str_detect(paste(rawSheetData[runID_row, ]),"NB551709|NB501073|VH01471"))
     run_number <- try(paste(rawSheetData[runID_row, runID_col]), silent=T)
     if(length(run_number) == 0){
         message(crayon::bgRed('Keyword "Run ID:" not found in SampleSheet, defaulting to script input RUNID'))
