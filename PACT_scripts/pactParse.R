@@ -628,17 +628,31 @@ GetPhilipsData <- function(inputFi){
     return(philipsExport)
 }
 
+
 GrabRunNumber <- function(inputFi){
     shNames <- readxl::excel_sheets(inputFi)
     sh <- which(grepl("PACT-", shNames, ignore.case = T))[1]
+    if(is.na(sh)){
+        sh = 1
+    }
     rawSheetData <- GetExcelData(inputFi, sh, shRange="A6:X200", cm=T)
-    run_number <- try(rawSheetData[which(rawSheetData$`DNA #`=="Run ID:"), 8], silent=T)
-    return(run_number)
+    runID_row <- which(rawSheetData$`DNA #`=="Run ID:")
+    runID_col <- which(stringr::str_detect(paste(rawSheetData[runID_row, ]),"NB551709|NB501073"))
+    run_number <- try(paste(rawSheetData[runID_row, runID_col]), silent=T)
+    if(length(run_number) == 0){
+        message(crayon::bgRed('Keyword "Run ID:" not found in SampleSheet, defaulting to script input RUNID'))
+        run_number <- ""
+    }
+    return(run_number[1])
 }
 
 GetRawSamplesheet <- function(inputFi){
     shNames <- readxl::excel_sheets(inputFi)
     sh <- which(grepl("PACT-", shNames, ignore.case = T))[1]
+    if(is.na(sh)){
+        message(crayon::bgRed('Did not detect "PACT" in Excel sheetnames, defaulting to reading sheet 1'))
+        sh = 1
+    }
     msgRd <- paste0('Reading Excel Sheet named \"', shNames[sh],'\" from file:')
     message(crayon::bgGreen(msgRd),'\n',inputFi)
     rawSheetData <- GetExcelData(inputFi, sh, shRange="A6:X200", cm=T)
@@ -659,6 +673,12 @@ WriteMainSheet <- function(mainSheet, sheetHead){
 
 AltParseFormat <- function(inputFi, runID){
     rawSheetData <- GetRawSamplesheet(inputFi)
+    sheetRunID <- GrabRunNumber(inputFi)
+    if(sheetRunID != runID){
+        message(crayon::bgRed("SampleSheet and Input RUNID do not match!"))
+        message("Samplesheet RunID: ",'"', crayon::bgRed(sheetRunID),'"')
+        message("Your input RunID: ", crayon::bgGreen(runID))
+    }
     philipsExport <- GetPhilipsData(inputFi)
     pact_run <- stringr::str_split_fixed(base::basename(inputFi), ".xls", 2)[1,1]
     mainSheet <- BuildMainSheet(philipsExport, rawSheetData, runID, pact_run)
