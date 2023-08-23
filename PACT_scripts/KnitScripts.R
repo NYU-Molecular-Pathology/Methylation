@@ -216,15 +216,36 @@ makeSpecimenTab <- function(objDat) {
 PrintHotspotTable <- function(objDat) {
     cat(
         "<span style='color: red;'>",
-        "**Note**: The Hotspot calls below are from the unfiltered VCF files</span>\n\n"
+        "**Note**: The Hotspot calls below are from the unfiltered VCF files.  Any called (YES) will be listed first</span>\n\n"
     )
-    rows_with_yes <- apply(objDat, 1, function(row) {any(grepl("YES", row))})
-    newTa <- knitr::kable(objDat, row.names = F, "html")
-    newTa <- kableExtra::kable_styling(newTa, bootstrap_options = c("condensed"), 
-                                       full_width = T, position = "left")
-    newTa <- kableExtra::row_spec(newTa, which(rows_with_yes), background = "#64a463")
-    print(newTa)
-    cat("\n\n")
+
+# Reorder the data frame so that rows with "YES" are at the top
+rows_with_yes <- rowSums(objDat[, c("Strelka", "LoFreqSomatic", "Mutect")] == "YES") > 0
+sorted_objDat <- objDat[order(-rows_with_yes),]
+dtOpts <- list(
+        scrollX = T, scrollY=T, info = F, autoWidth = F, pageLength = 25,
+        lengthChange = T, searchable = T
+    )
+
+datTab <- DT::datatable(
+    sorted_objDat,
+    style = "bootstrap",
+    rownames = FALSE,
+    options = dtOpts,
+    height = "120%",
+    width = "120%"
+)
+
+# Apply the color to cells with "YES" in the specified columns
+for (col in c("Strelka", "LoFreqSomatic", "Mutect")) {
+    datTab <- datTab %>%
+      formatStyle(col, backgroundColor = styleEqual("YES", "#64a463"), target = 'cell')
+}
+
+dtTab <- htmltools::tagList(datTab)
+
+print(dtTab)
+cat("\n\n")
 }
 
 
