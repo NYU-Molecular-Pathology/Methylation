@@ -576,10 +576,13 @@ startLoadingAll <- function() {
     }
 
     installAll(classPacks, srcInst)
-    checkClassifier(mnpV4)
-    checkClassifier(mnpV6)
-    checkClassifier(mnpV12)
-    checkClassifier(srcV12)
+    
+    if(Sys.info()[['sysname']]=="Darwin") {
+        checkClassifier(mnpV4)
+        checkClassifier(mnpV6)
+        checkClassifier(mnpV12)
+        checkClassifier(srcV12)
+    }
     
     uniDpkgs <- c("lumi","ade4","methylumi","mlr")
     librarian::shelf(uniDpkgs, ask=F, update_all = F, quiet = F)
@@ -595,7 +598,6 @@ startLoadingAll <- function() {
         try(install.packages(uniDpath, type = "source", dependencies = T, repo = NULL), silent = T)
     }
 
-#    try(closeAllConnections(), silent = T)
 }
 
 startLoadingAll()
