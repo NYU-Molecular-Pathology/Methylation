@@ -6,15 +6,25 @@ CheckBrewLatex <- function() {
         system("which brew", intern = T),
         warning = function(ww) {
             system('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"')
-            }
+        }
     )
     # Checks if Latex is installed
     tryCatch(
         system("which latex", intern = T),
         warning = function(ww) {
             system("brew install latex")
-            }
+        }
     )
+    
+    tryCatch(
+        system("which pdflatex", intern = T),
+        warning = function(ww) {
+            system("brew install pdflatex")
+        }
+    )
+    
+    try(system("which pdflatex", intern = T), T)
+    try(system("which latex", intern = T), T)
 }
 
 
