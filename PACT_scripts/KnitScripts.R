@@ -67,7 +67,48 @@ pkgs <-
         "crayon",
         "devtools"
     )
-librarian::shelf(pkgs, ask=F)
+
+pdfToolsPkgs <-
+    c(
+        'Rcpp',
+        'qpdf',
+        'askpass',
+        'curl',
+        'sys',
+        'rappdirs',
+        'digest',
+        'brio',
+        'callr',
+        'cli',
+        'desc',
+        'ellipsis',
+        'evaluate',
+        'jsonlite',
+        'lifecycle',
+        'pkgload',
+        'praise',
+        'processx',
+        'ps',
+        'R6',
+        'rlang',
+        'waldo',
+        'withr',
+        'rprojroot',
+        'glue',
+        'fs',
+        'diffobj',
+        'fansi',
+        'rematch2',
+        'pillar',
+        'pkgconfig',
+        'vctrs',
+        'utf8',
+        'png',
+        'testthat'
+    )
+
+librarian::shelf(pkgs, ask=F, update_all = F, quiet = F, dependencies=T)
+librarian::shelf(pdfToolsPkgs, ask=F, update_all = F, quiet = F, dependencies=T)
 
 library("kableExtra")
 
