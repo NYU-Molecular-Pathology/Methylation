@@ -328,8 +328,8 @@ postData <- function(rcon, record){
 emailFile <- function(runId, outFi, rcon){
     record = data.frame(record_id = runId, run_number = runId)
     postData(rcon, record)
-    isDone <- redcapAPI::exportRecordsTyped(rcon, factors=F, records=record$record_id, fields=c("record_id","other_file"))
-    if (is.na(isDone$other_file)) {
+    isDone <- redcapAPI::exportRecordsTyped(rcon, factors=F, records=record$record_id, fields=c("record_id", "other_file"))
+    if (length(isDone$other_file) == 0) {
         #rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", gb$token)
         body <- list(
             token = rcon$token,
