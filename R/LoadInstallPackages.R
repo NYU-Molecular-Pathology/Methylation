@@ -26,7 +26,10 @@ if (Sys.info()[['sysname']]=="Darwin") {
 if (Sys.info()[['sysname']]=="Darwin") {
     typeSrc <- "binary"
 } else{
+    if(!require("conflicted")){install.packages("conflicted", dependencies=T, ask=F)}
     typeSrc <- "source"
+    conflicted::conflict_prefer("%in%", "dplyr", "base")
+    conflicted::conflict_prefer("filter", "dplyr", "base")
 }
 
 uniDpath <- file.path(cbioLn, "UniD")
