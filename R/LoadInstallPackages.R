@@ -30,7 +30,14 @@ if (Sys.info()[['sysname']]=="Darwin") {
     typeSrc <- "source"
     conflicted::conflict_prefer("%in%", "dplyr", "base")
     conflicted::conflict_prefer("filter", "dplyr", "base")
-    conflicts_prefer(base::`:`)
+    conflicted::conflicts_prefer(base::`:`)
+    conflicted::conflicts_prefer(bit::clone)
+    conflicted::conflicts_prefer(Biostrings::complement)
+    conflicted::conflicts_prefer(arrow::type)
+    conflicted::conflicts_prefer(broom::bootstrap)
+    conflicted::conflicts_prefer(checkmate::anyMissing)
+    conflicted::conflicts_prefer(circlize::degree)
+    conflicted::conflicts_prefer(Biostrings::collapse)
 }
 
 uniDpath <- file.path(cbioLn, "UniD")
