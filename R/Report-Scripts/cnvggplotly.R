@@ -29,13 +29,60 @@ MNPcnv450kNew <- function(Mset, sex = NULL, ...) {
     return(x)
 }
 
+
+MNPcnv16new <-  function (Mset, sex = NULL, ...){
+    path <- paste(path.package("mnp.v11b6"), "/ext/", sep = "")
+    chiptype <- annotation(Mset)[1]
+    if (is.null(sex)) {
+        Rset <- ratioConvert(Mset, what = "both", keepCN = TRUE)
+        sex <- ifelse(MNPgetSex(Rset)$predictedSex == "M", "Male",
+                      "Female")
+    }else{
+        sex <- R.utils::capitalize(sex)
+    }
+    if (chiptype == "IlluminaHumanMethylationEPIC") {
+        load(paste(path, "conumee_annotation_EPIC_B6.2019-11-29.RData", sep = "/"))
+        cndata <- conumee::CNV.load(Mset)
+        if (sex == "Male") {
+            load(paste(path, "CNanalysis6_conumee_REF_M.2018-09-19.RData",
+                       sep = "/"))
+            x <- conumee::CNV.fit(cndata, refM_epic, annoEPICxy)
+        }else{
+            load(paste(path, "CNanalysis6_conumee_REF_F.2018-09-19.RData", sep = "/"))
+            x <- conumee::CNV.fit(cndata, refF_epic, annoEPICxy)
+        }
+        x <- conumee::CNV.bin(x)
+        x <- conumee::CNV.detail(x)
+        x <- conumee::CNV.segment(x)
+    }
+    else {
+        load(paste(path, "CNanalysis4_conumee_ANNO.vh20150715.RData",
+                   sep = "/"))
+        cndata <- conumee::CNV.load(Mset)
+        if (sex == "Male") {
+            load(paste(path, "CNanalysis4_conumee_REF-M.vh20150715.RData",
+                       sep = "/"))
+            x <- conumee::CNV.fit(cndata, refM.data, annoXY)
+        }else{
+            load(paste(path, "CNanalysis4_conumee_REF-F.vh20150715.RData",
+                       sep = "/"))
+            x <- conumee::CNV.fit(cndata, refF.data, annoXY)
+        }
+        x <- conumee::CNV.bin(x)
+        x <- conumee::CNV.detail(x)
+        x <- conumee::CNV.segment(x)
+    }
+    return(x)
+}
+
+
 GetCNxx <- function(Mset, sex, sampleID) {
     is450k <-  Mset@annotation[["array"]] != "IlluminaHumanMethylationEPIC"
     if (is450k == TRUE) {
         load(paste(path.package('mnp.v11b4'),'/ext/ovgenes.RData',sep=''))
         xx <- MNPcnv450kNew(Mset, sex = sex, main = sampleID)
     } else {
-        xx <- supM(mnp.v11b6::MNPcnv(Mset, sex = sex, main = sampleID))
+        xx <- supM(MNPcnv16new(Mset, sex = sex, main = sampleID))
     }
     return(xx)
 }
@@ -198,4 +245,3 @@ MNPciplot_mgmt <- function(Mset, sample = 1) {
         layout(autosize = T, width = 500, height = 200)
     return(theBarPlot)
 }
-
