@@ -56,7 +56,7 @@ GetOvAnnot <- function() {
                 if (!file.exists("newOvGenes.rds")) {
                     utils::download.file(githubURL, file.path(getwd(), "newOvGenes.rds"), method = "libcurl")
                 }
-                newOvGenes <- readRDS("newOvGenes.rds")
+                newOvGenes <- readRDS(file.path(getwd(), "newOvGenes.rds"))
             }
         )
     } else{
