@@ -321,7 +321,7 @@ make_knit_report <- function(dat, genCn, reportMd) {
   if (genCn) {
     generate_cnv_png(RGsetEpic, dat$sampleID)
   }
-  msg_run_up(dat$sampleID, dat$run_id, dat$senLi)
+  msgRunUp(dat$sampleID, dat$run_id, dat$senLi)
   message("Knitting report: ", reportMd)
   params <- list(
     token = gb$ApiToken, 
