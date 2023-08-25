@@ -317,23 +317,23 @@ getRunList <- function(data, samList){
 }
 
 make_knit_report <- function(dat, genCn, reportMd) {
-  rg_set_epic <- get_rgset(getwd(), dat$sen_li)
+  RGsetEpic <- getRGset(getwd(), dat$senLi)
   if (genCn) {
-    generate_cnv_png(rg_set_epic, dat$sample_id)
+    generate_cnv_png(RGsetEpic, dat$sampleID)
   }
-  msg_run_up(dat$sample_id, dat$run_id, dat$sen_li)
+  msg_run_up(dat$sampleID, dat$run_id, dat$senLi)
   message("Knitting report: ", reportMd)
   params <- list(
     token = gb$ApiToken, 
-    run_data = dat, 
-    rg_set_epic = rg_set_epic, 
-    knit_dir = getwd(), 
+    rundata  = dat, 
+    RGsetEpic = RGsetEpic, 
+    knitDir = getwd(), 
     envir = gb
   )
   rmarkdown::render(
     reportMd,
     output_format = "html_document",
-    dat$out_fi,
+    dat$outfi,
     getwd(),
     clean = TRUE,
     quiet = FALSE,
@@ -344,7 +344,7 @@ make_knit_report <- function(dat, genCn, reportMd) {
 
 handle_knit_error <- function(e, dat, params) {
   beepr::beep(1)
-  message(bkRed("Report Generation Failed:"), "\n", dat$out_fi)
+  message(bkRed("Report Generation Failed:"), "\n", dat$outfi)
   message("The following error returned:\n", e)
   tb <- traceback(e, max.lines = 1e6)
   writeLines(tb, "error_log.txt")
