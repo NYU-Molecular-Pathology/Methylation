@@ -316,9 +316,9 @@ getRunList <- function(data, samList){
     return(toRun)
 }
 
-make_knit_report <- function(dat, gen_cn, reportMd) {
+make_knit_report <- function(dat, genCn, reportMd) {
   rg_set_epic <- get_rgset(getwd(), dat$sen_li)
-  if (gen_cn) {
+  if (genCn) {
     generate_cnv_png(rg_set_epic, dat$sample_id)
   }
   msg_run_up(dat$sample_id, dat$run_id, dat$sen_li)
@@ -355,15 +355,15 @@ handle_knit_error <- function(e, dat, params) {
   )
 }
 
-do_report <- function(data = NULL, gen_cn = FALSE) {
-  msgFunName(pipe_lnk, "do_report")
+do_report <- function(data = NULL, genCn = FALSE) {
+  msgFunName(pipeLnk, "do_report")
   msgParams("data")
 
   if (!is.null(data)) {
-    dat <- get_run_data(data)
+    dat <- getRunData(data)
     message(paste0(capture.output(dat), collapse = "\n"))
     tryCatch(
-      expr = make_knit_report(dat, gen_cn, reportMd),
+      expr = make_knit_report(dat, genCn, reportMd),
       error = function(e) handle_knit_error(e, dat, params),
       finally = message("\nRunning next sample\n")
     )
