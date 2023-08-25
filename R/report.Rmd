@@ -14,6 +14,7 @@ params:
     rundata: NULL
     RGsetEpic: NULL
     knitDir: "NONE"
+    envir : NULL
 ---
 
 ```{r set-options, echo=FALSE, cache=FALSE , message=FALSE, warning=FALSE}
@@ -22,6 +23,7 @@ dat <- params$rundata; assign("dat", params$rundata, envir=gb)
 saveRDS(params, file=file.path(fs::path_home(), "params.rds")) # Debug params <- readRDS("params.rds")
 gitPath = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/Report-Scripts"
 htmltools::includeCSS(file.path(gitPath,"SarcStyle.html"))
+capture_env_hook <- function(before, options, envir) {if (before) {assign("chunk_env", environment(), envir = envir)}}
 gb$RGset <- RGset <- params$RGsetEpic[, 1]
 gb$msetDat <- gb$GetSexMsetBa(RGset, FFPE=NULL)
 knitr::asis_output(gb$SuppInfoTable(dat, RGset, gb$msetDat))
@@ -45,6 +47,7 @@ knitr::asis_output(gb$PrintScoreTable(outV12, gb$dat))
 ### TSNE Clustering Version 11 Classifier (Interactive)
 ```{r, label='TSNE Cluster', fig.height=7, fig.width=13, out.width ='90%'}
 gb$supM(gb$GetClusterPlot(gb$msetDat, gb$dat))
+knitr::knit_hooks$set(capture_env = capture_env_hook)
 ```
 <hr class="solid">
 ### Copy Number Variation Profile Version 11 Classifier (Interactive)
