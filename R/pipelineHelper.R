@@ -327,7 +327,7 @@ make_knit_report <- function(dat, reportMd, params_init) {
 }
 
 handle_knit_error <- function(e, dat, params) {
-  beepr::beep(1)
+  try(beepr::beep(1), T)
   message(bkRed("Report Generation Failed:"), "\n", dat$outfi)
   message("The following error returned:\n", e)
   tb <- traceback(e, max.lines = 1e6)
@@ -371,8 +371,7 @@ do_report <- function(data = NULL, genCn = FALSE) {
     
     tryCatch(
         expr = make_knit_report(dat, reportMd, params_init),
-        error = function(e)
-            handle_knit_error(e, dat, params_init),
+        error = function(e){handle_knit_error(e, dat, params_init)},
         finally = message("\nRunning next sample\n")
     )   
 }
@@ -456,7 +455,7 @@ makeReports.v11b6 <- function(runPath = NULL,
         gb$uploadToRedcap(file.list, T)
     }
     if(email==T){launchEmailNotify(runID)}
-    beepr::beep(5)
+    try(beepr::beep(5), T)
     tidyUpFiles(runID)
 }
 
