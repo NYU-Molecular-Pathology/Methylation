@@ -20,7 +20,7 @@ params:
 ```{r set-options, echo=FALSE, cache=FALSE , message=FALSE, warning=FALSE}
 gb <- globalenv(); assign("gb", gb)
 dat <- params$rundata; assign("dat", params$rundata, envir=gb)
-saveRDS(params, file=file.path(fs::path_home(), "params.rds")) # Debug params <- readRDS("params.rds")
+#saveRDS(params, file=file.path(fs::path_home(), "params.rds")) # Debug params <- readRDS("params.rds")
 gitPath = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/Report-Scripts"
 htmltools::includeCSS(file.path(gitPath,"SarcStyle.html"))
 capture_env_hook <- function(before, options, envir) {if (before) {assign("chunk_env", environment(), envir = .GlobalEnv)}}
