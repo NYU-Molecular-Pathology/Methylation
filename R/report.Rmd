@@ -23,7 +23,7 @@ dat <- params$rundata; assign("dat", params$rundata, envir=gb)
 saveRDS(params, file=file.path(fs::path_home(), "params.rds")) # Debug params <- readRDS("params.rds")
 gitPath = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/Report-Scripts"
 htmltools::includeCSS(file.path(gitPath,"SarcStyle.html"))
-capture_env_hook <- function(before, options, envir) {if (before) {assign("chunk_env", environment(), envir = envir)}}
+capture_env_hook <- function(before, options, envir) {if (before) {assign("chunk_env", environment(), envir = .GlobalEnv)}}
 gb$RGset <- RGset <- params$RGsetEpic[, 1]
 gb$msetDat <- gb$GetSexMsetBa(RGset, FFPE=NULL)
 knitr::asis_output(gb$SuppInfoTable(dat, RGset, gb$msetDat))
