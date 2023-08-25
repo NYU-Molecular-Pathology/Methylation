@@ -316,29 +316,13 @@ getRunList <- function(data, samList){
     return(toRun)
 }
 
-make_knit_report <- function(dat, genCn, reportMd) {
-  RGsetEpic <- getRGset(getwd(), dat$senLi)
-  if (genCn) {
-    generate_cnv_png(RGsetEpic, dat$sampleID)
-  }
-  msgRunUp(dat$sampleID, dat$run_id, dat$senLi)
-  message("Knitting report: ", reportMd)
-  params <- list(
-    token = gb$ApiToken, 
-    rundata  = dat, 
-    RGsetEpic = RGsetEpic, 
-    knitDir = getwd(), 
-    envir = gb
-  )
+make_knit_report <- function(dat, reportMd, params_init) {
   rmarkdown::render(
-    reportMd,
-    output_format = "html_document",
-    dat$outfi,
-    getwd(),
-    clean = TRUE,
-    quiet = FALSE,
+    reportMd, output_format = "html_document",
+    dat$outfi, getwd(),
+    clean = TRUE, quiet = FALSE,
     output_options = list(self_contained = TRUE, clean_supporting = TRUE),
-    params = params
+    params = params_init
   )
 }
 
@@ -356,22 +340,42 @@ handle_knit_error <- function(e, dat, params) {
 }
 
 do_report <- function(data = NULL, genCn = FALSE) {
-  msgFunName(pipeLnk, "do_report")
-  msgParams("data")
-
-  if (!is.null(data)) {
+    msgFunName(pipeLnk, "do_report")
+    msgParams("data")
+    
+    if (is.null(data)) {
+        message(bkRed("Data is NULL, check your SampleSheet.csv"))
+        stopifnot(!is.null(data))
+    }
+    
     dat <- getRunData(data)
-    message(paste0(capture.output(dat), collapse = "\n"))
-    tryCatch(
-      expr = make_knit_report(dat, genCn, reportMd),
-      error = function(e) handle_knit_error(e, dat, params),
-      finally = message("\nRunning next sample\n")
+    
+    RGsetEpic <- getRGset(getwd(), dat$senLi)
+    
+    if (genCn == T) {
+        generate_cnv_png(RGsetEpic, dat$sampleID)
+    }
+    
+    msgRunUp(dat$sampleID, dat$run_id, dat$senLi)
+    message("Knitting report: ", reportMd)
+    
+    params_init <- list(
+        token = gb$ApiToken,
+        rundata  = dat,
+        RGsetEpic = RGsetEpic,
+        knitDir = getwd(),
+        envir = .GlobalEnv
     )
-  } else {
-    message(bkRed("Data is NULL, check your SampleSheet.csv"))
-  }
+    
+    message(paste0(capture.output(dat), collapse = "\n"))
+    
+    tryCatch(
+        expr = make_knit_report(dat, reportMd, params_init),
+        error = function(e)
+            handle_knit_error(e, dat, params_init),
+        finally = message("\nRunning next sample\n")
+    )   
 }
-
 
 # FUN: Iterates over each sample in the csv file to generate a report
 loopRender <- function(samList = NULL, data, redcapUp = T){
