@@ -316,13 +316,13 @@ getRunList <- function(data, samList){
     return(toRun)
 }
 
-make_knit_report <- function(dat, gen_cn, report_md) {
+make_knit_report <- function(dat, gen_cn, reportMd) {
   rg_set_epic <- get_rgset(getwd(), dat$sen_li)
   if (gen_cn) {
     generate_cnv_png(rg_set_epic, dat$sample_id)
   }
   msg_run_up(dat$sample_id, dat$run_id, dat$sen_li)
-  message("Knitting report: ", report_md)
+  message("Knitting report: ", reportMd)
   params <- list(
     token = gb$ApiToken, 
     run_data = dat, 
@@ -331,7 +331,7 @@ make_knit_report <- function(dat, gen_cn, report_md) {
     envir = gb
   )
   rmarkdown::render(
-    report_md,
+    reportMd,
     output_format = "html_document",
     dat$out_fi,
     getwd(),
@@ -344,7 +344,7 @@ make_knit_report <- function(dat, gen_cn, report_md) {
 
 handle_knit_error <- function(e, dat, params) {
   beepr::beep(1)
-  message(bk_red("Report Generation Failed:"), "\n", dat$out_fi)
+  message(bkRed("Report Generation Failed:"), "\n", dat$out_fi)
   message("The following error returned:\n", e)
   tb <- traceback(e, max.lines = 1e6)
   writeLines(tb, "error_log.txt")
@@ -356,19 +356,19 @@ handle_knit_error <- function(e, dat, params) {
 }
 
 do_report <- function(data = NULL, gen_cn = FALSE) {
-  msg_fun_name(pipe_lnk, "do_report")
-  msg_params("data")
+  msgFunName(pipe_lnk, "do_report")
+  msgParams("data")
 
   if (!is.null(data)) {
     dat <- get_run_data(data)
     message(paste0(capture.output(dat), collapse = "\n"))
     tryCatch(
-      expr = make_knit_report(dat, gen_cn, report_md),
+      expr = make_knit_report(dat, gen_cn, reportMd),
       error = function(e) handle_knit_error(e, dat, params),
       finally = message("\nRunning next sample\n")
     )
   } else {
-    message(bk_red("Data is NULL, check your SampleSheet.csv"))
+    message(bkRed("Data is NULL, check your SampleSheet.csv"))
   }
 }
 
