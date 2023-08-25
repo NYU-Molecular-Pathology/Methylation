@@ -317,43 +317,38 @@ getRunList <- function(data, samList){
 }
 
 do_report <-  function(data = NULL, genCn=F) {
-  msgFunName(pipeLnk,"do_report")
-  msgParams("data")
-  #data = data[1, ]
-  if(!is.null(data)){
-    dat <- getRunData(data)
-    message(paste0(capture.output(dat), collapse="\n"))
-    RGsetEpic <- getRGset(getwd(), dat$senLi)
-    RGset <- RGsetEpic[,1]
-    if(genCn==T){generateCNVpng(RGsetEpic,dat$sampleID)}
-    msgRunUp(dat$sampleID, dat$run_id, dat$senLi)
-    message("Knitting report: ", reportMd)
-    tryCatch(
-      expr = {
-        rmarkdown::render(
-          reportMd,
-          output_format = "html_document",
-          dat$outFi,
-          getwd(),
-          clean = TRUE,
-          quiet = FALSE,
-          output_options = list(self_contained=T, clean_supporting=T),
-          params = list(
-            token = gb$ApiToken,
-            rundata = dat,
-            RGsetEpic = RGsetEpic,
-            knitDir = getwd()
-          )
+    msgFunName(pipeLnk,"do_report")
+    msgParams("data")
+    #data = data[1, ]
+    if(!is.null(data)){
+        dat <- getRunData(data)
+        message(paste0(capture.output(dat), collapse="\n"))
+        RGsetEpic <- getRGset(getwd(), dat$senLi)
+        RGset <- RGsetEpic[,1]
+        if(genCn==T){generateCNVpng(RGsetEpic,dat$sampleID)}
+        msgRunUp(dat$sampleID, dat$run_id, dat$senLi)
+        message("Knitting report: ", reportMd)
+        params <- list(token = gb$ApiToken, rundata = dat, RGsetEpic = RGsetEpic, knitDir = getwd(), envir = gb)
+        tryCatch(
+            expr = {
+                rmarkdown::render(
+                    reportMd, output_format = "html_document", dat$outFi, getwd(), clean = TRUE, quiet = FALSE,
+                    output_options = list(self_contained=T, clean_supporting=T),
+                    params = params
+                )
+            },
+            error=function(e){
+                beepr::beep(1)
+                message(bkRed("Report Generation Failed:"),"\n", dat$outFi)
+                message("The following error returned:\n", e)
+                tb <- traceback(e, max.lines = 1e6)
+                writeLines(tb, "error_log.txt")
+                saveRDS(params, file.path(fs::path_home(), "params.rds"))
+                saveRDS(gb$chunk_env, file.path(fs::path_home(), "chunk_env.rds"))
+                stopifnot("Report generation failed! Check error_log.txt, params.rds, and chunk_env.rds for details." = FALSE)
+            }, finally=message("\nRunning next sample\n")
         )
-      },
-      error=function(e){
-        beepr::beep(1)
-        message(bkRed("Report Generation Failed:"),"\n", dat$outFi)
-        message("The following error returned:\n", e)
-        stopifnot("Report Generation Failed"=FALSE)
-      }, finally=message("\nRunning next sample\n")
-    )
-  } else {message(bkRed("Data is NULL, check your SampleSheet.csv"))}
+    } else {message(bkRed("Data is NULL, check your SampleSheet.csv"))}
 }
 
 # FUN: Iterates over each sample in the csv file to generate a report
