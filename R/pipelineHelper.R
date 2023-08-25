@@ -331,7 +331,7 @@ handle_knit_error <- function(e, dat, params) {
   try(beepr::beep(1), silent = TRUE)
   message("Report generation failed for:", "\n", dat$outfi, "\nThe following error returned:\n", e)
   home_path <- Sys.getenv("HOME")
-  writeLines(traceback(e), file.path(home_path, "error_log.txt"))
+  writeLines(traceback(), file.path(home_path, "error_log.txt"))
   saveRDS(params, file.path(home_path, "params.rds"))
   saveRDS(gb$chunk_env, file.path(home_path, "chunk_env.rds"))
   message("Saving logs to:", home_path)
