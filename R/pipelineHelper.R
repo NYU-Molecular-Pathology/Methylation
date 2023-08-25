@@ -326,18 +326,17 @@ make_knit_report <- function(dat, reportMd, params_init) {
   )
 }
 
+
 handle_knit_error <- function(e, dat, params) {
-  try(beepr::beep(1), T)
-  message(bkRed("Report Generation Failed:"), "\n", dat$outfi)
-  message("The following error returned:\n", e)
-  tb <- traceback(e, max.lines = 1e6)
-  writeLines(tb, "error_log.txt")
-  saveRDS(params, file.path(fs::path_home(), "params.rds"))
-  saveRDS(gb$chunk_env, file.path(fs::path_home(), "chunk_env.rds"))
-  stopifnot(
-    "Report generation failed! Check error_log.txt, params.rds, and chunk_env.rds for details." = FALSE
-  )
+  try(beepr::beep(1), silent = TRUE)
+  message("Report generation failed for:", "\n", dat$outfi, "\nThe following error returned:\n", e)
+  home_path <- Sys.getenv("HOME")
+  writeLines(traceback(e, max.lines = 1e6), file.path(home_path, "error_log.txt"))
+  saveRDS(params, file.path(home_path, "params.rds"))
+  saveRDS(gb$chunk_env, file.path(home_path, "chunk_env.rds"))
+  stop("Check error_log.txt, params.rds, and chunk_env.rds for details.")
 }
+
 
 do_report <- function(data = NULL, genCn = FALSE) {
     msgFunName(pipeLnk, "do_report")
