@@ -334,6 +334,7 @@ handle_knit_error <- function(e, dat, params) {
   writeLines(traceback(e, max.lines = 1e6), file.path(home_path, "error_log.txt"))
   saveRDS(params, file.path(home_path, "params.rds"))
   saveRDS(gb$chunk_env, file.path(home_path, "chunk_env.rds"))
+  message("Saving logs to:", home_path)
   stop("Check error_log.txt, params.rds, and chunk_env.rds for details.")
 }
 
