@@ -47,7 +47,6 @@ knitr::asis_output(gb$PrintScoreTable(outV12, gb$dat))
 ### TSNE Clustering Version 11 Classifier (Interactive)
 ```{r, label='TSNE Cluster', fig.height=7, fig.width=13, out.width ='90%'}
 gb$supM(gb$GetClusterPlot(gb$msetDat, gb$dat))
-knitr::knit_hooks$set(capture_env = capture_env_hook)
 ```
 <hr class="solid">
 ### Copy Number Variation Profile Version 11 Classifier (Interactive)
