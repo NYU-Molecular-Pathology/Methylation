@@ -123,7 +123,7 @@ generateQCreport <- function(runID=NULL) {
         rmarkdown::render(
             rmdToKnit,
             output_file = outQCpath,
-            quiet = F,
+            quiet = TRUE,
             params = list(runID = runID, baseDir = file.path(fs::path_home(), "Desktop", runID), knitDir=getwd())
         )
         qcCache <- stringr::str_replace_all(string = rmdToKnit, ".Rmd", "_cache")
@@ -321,7 +321,7 @@ make_knit_report <- function(dat, reportMd, params_init) {
     input = reportMd, output_format = "html_document",
     output_file = file.path(getwd(), paste0(dat$outFi)), 
     output_dir = getwd(), knit_root_dir = getwd(),
-    clean = TRUE, quiet = FALSE,
+    clean = TRUE, quiet = TRUE,
     output_options = list(self_contained = TRUE, clean_supporting = TRUE),
     params = params_init
   )
