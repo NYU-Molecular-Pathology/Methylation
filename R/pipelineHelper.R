@@ -316,14 +316,14 @@ getRunList <- function(data, samList){
     return(toRun)
 }
 
-make_knit_report <- function(dat, reportMd, params) {
+make_knit_report <- function(dat, reportMd, params_init) {
   rmarkdown::render(
     input = reportMd, output_format = "html_document",
     output_file = file.path(getwd(), paste0(dat$outFi)), 
     output_dir = getwd(), knit_root_dir = getwd(),
     clean = TRUE, quiet = FALSE,
     output_options = list(self_contained = TRUE, clean_supporting = TRUE),
-    params = params
+    params = params_init
   )
 }
 
