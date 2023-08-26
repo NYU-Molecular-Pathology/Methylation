@@ -14,16 +14,14 @@ params:
     rundata: NULL
     RGsetEpic: NULL
     knitDir: "NONE"
-    envir : NULL
 ---
 
 ```{r set-options, echo=FALSE, cache=FALSE , message=FALSE, warning=FALSE}
 gb <- globalenv(); assign("gb", gb)
-dat <- params$rundata; assign("dat", params$rundata, envir=gb)
 #saveRDS(params, file=file.path(fs::path_home(), "params.rds")) # Debug params <- readRDS("params.rds")
+dat <- params$rundata; assign("dat", params$rundata, envir=gb)
 gitPath = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/Report-Scripts"
 htmltools::includeCSS(file.path(gitPath,"SarcStyle.html"))
-capture_env_hook <- function(before, options, envir) {if (before) {assign("chunk_env", environment(), envir = gb)}}
 gb$RGset <- RGset <- params$RGsetEpic[, 1]
 gb$msetDat <- gb$GetSexMsetBa(RGset, FFPE=NULL)
 knitr::asis_output(gb$SuppInfoTable(dat, RGset, gb$msetDat))
