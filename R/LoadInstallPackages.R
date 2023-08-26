@@ -18,7 +18,7 @@ if (Sys.info()[['sysname']]=="Darwin") {
     Sys.setenv(SQLITE3_LIBS = "/opt/homebrew/opt/sqlite/lib")
 } else{
     options(BioC_mirror = "https://packagemanager.rstudio.com/bioconductor")
-    options(repos = c(CRAN = "https://packagemanager.rstudio.com/cran/__linux__/jammy/latest")
+    options(repos = c(CRAN = "https://packagemanager.rstudio.com/cran/__linux__/jammy/latest"))
 }
 
 if (Sys.info()[['sysname']]=="Darwin") {
