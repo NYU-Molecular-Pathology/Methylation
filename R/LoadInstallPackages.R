@@ -16,28 +16,15 @@ cbioLn <- switch (
 if (Sys.info()[['sysname']]=="Darwin") {
     Sys.setenv(PROJ_LIBS = "/opt/homebrew/opt/proj/lib")
     Sys.setenv(SQLITE3_LIBS = "/opt/homebrew/opt/sqlite/lib")
-} 
-
-#else{
-    #options(BioC_mirror = "https://packagemanager.rstudio.com/bioconductor")
-    #options(repos = c(CRAN = "https://packagemanager.rstudio.com/cran/__linux__/focal/latest")
-#}
+} else{
+    options(BioC_mirror = "https://packagemanager.rstudio.com/bioconductor")
+    options(repos = c(CRAN = "https://packagemanager.rstudio.com/cran/__linux__/jammy/latest")
+}
 
 if (Sys.info()[['sysname']]=="Darwin") {
     typeSrc <- "binary"
 } else{
-    if(!require("conflicted")){install.packages("conflicted", dependencies=T, ask=F)}
     typeSrc <- "source"
-    # conflicted::conflict_prefer("%in%", "dplyr", "base")
-    # conflicted::conflict_prefer("filter", "dplyr", "base")
-    # conflicted::conflicts_prefer(base::`:`)
-    # conflicted::conflicts_prefer(bit::clone)
-    # conflicted::conflicts_prefer(Biostrings::complement)
-    # conflicted::conflicts_prefer(arrow::type)
-    # conflicted::conflicts_prefer(broom::bootstrap)
-    # conflicted::conflicts_prefer(checkmate::anyMissing)
-    # conflicted::conflicts_prefer(circlize::degree)
-    # conflicted::conflicts_prefer(Biostrings::collapse)
 }
 
 uniDpath <- file.path(cbioLn, "UniD")
@@ -47,7 +34,6 @@ mnpV4 <- data.frame(mnpVers = "mnp.v11b4", mnpPath = "mnp.v11b4", mnpNumb = "0.1
 mnpV6 <- data.frame(mnpVers = "mnp.v11b6", mnpPath = "mnp.v11b6", mnpNumb = "0.1.140")
 mnpV12 <- data.frame(mnpVers = "mnp.v12b6", mnpPath = "mnp.v12b6", mnpNumb = "0.1.132")
 srcV12 <- data.frame(mnpVers = "sarc.v12b6", mnpPath = "sarc.v12b6", mnpNumb = "0.1.129")
-
 
 # Custom Classifier packages:
 classPacks <- c(
@@ -60,10 +46,10 @@ classPacks <- c(
 cranPkgs <- c(
     'devtools',
     'remotes',
-    'sjmisc',
-    'stringi',
-    'digest',
-    'RCurl',
+    #'sjmisc',
+    #'stringi',
+    #'digest',
+    #'RCurl',
     'rlang',
     'parallel',
     'grid',
@@ -90,7 +76,7 @@ cranPkgs <- c(
     'ade4',
     "MASS",
     "R.utils",
-    "optparse",
+    #"optparse",
     "targets",
     "usethis",
     "webshot",
@@ -105,7 +91,7 @@ cranPkgs <- c(
     "tinytex",
     "future.apply",
     "Rcpp",
-    "httpuv",
+    #"httpuv",
     "shiny"
 )
 
@@ -122,7 +108,7 @@ gHubPkgs <- data.frame(
 
 # BioConductor Packages ----
 biocPkgs <- c(
-    'HDF5Array', 'rngtools', 'bumphunter','GEOquery', 'minfi', 'lumi',
+    'HDF5Array', 'bumphunter','GEOquery', 'minfi', 'lumi', #'rngtools',
     'methylumi', 'randomForest', 'glmnet','IlluminaHumanMethylation450kmanifest',
     'IlluminaHumanMethylation450kanno.ilmn12.hg19', 'IlluminaHumanMethylationEPICmanifest', 'Rtsne',
     'IlluminaHumanMethylationEPICanno.ilm10b2.hg19', 'IlluminaHumanMethylationEPICanno.ilm10b4.hg19',
@@ -426,8 +412,8 @@ loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bcPks=biocP
                 "ggrepel",
                 "Polychrome",
                 "tinytex",
-                "gridExtra",
-                "rmarkdown",
+                #"gridExtra",
+                #"rmarkdown",
                 "tinytex",
                 "BiocParallel",
                 'grid',
