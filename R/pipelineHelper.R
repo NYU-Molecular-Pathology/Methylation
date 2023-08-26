@@ -318,8 +318,8 @@ getRunList <- function(data, samList){
 
 make_knit_report <- function(dat, reportMd, params_init) {
   rmarkdown::render(
-    reportMd, output_format = "html_document",
-    output_file = dat$outfi, output_dir = getwd(), knit_root_dir = getwd(),
+    input = reportMd, output_format = "html_document",
+    output_file = file.path(getwd(), paste0(dat$outfi)), output_dir = getwd(), knit_root_dir = getwd(),
     clean = TRUE, quiet = FALSE,
     output_options = list(self_contained = TRUE, clean_supporting = TRUE),
     params = params_init
@@ -367,10 +367,9 @@ do_report <- function(data = NULL, genCn = FALSE) {
         token = gb$ApiToken,
         rundata  = dat,
         RGsetEpic = RGsetEpic,
-        knitDir = getwd(),
-        envir = .GlobalEnv
+        knitDir = getwd()
     )
-    
+  
     message(paste0(capture.output(dat), collapse = "\n"))
     
     tryCatch(
