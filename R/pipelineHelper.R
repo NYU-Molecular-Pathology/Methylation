@@ -319,7 +319,7 @@ getRunList <- function(data, samList){
 make_knit_report <- function(dat, reportMd, params) {
   rmarkdown::render(
     input = reportMd, output_format = "html_document",
-    output_file = file.path(getwd(), paste0(dat$outfi)), 
+    output_file = file.path(getwd(), paste0(dat$outFi)), 
     output_dir = getwd(), knit_root_dir = getwd(),
     clean = TRUE, quiet = FALSE,
     output_options = list(self_contained = TRUE, clean_supporting = TRUE),
@@ -330,7 +330,7 @@ make_knit_report <- function(dat, reportMd, params) {
 
 handle_knit_error <- function(e, dat, params) {
   try(beepr::beep(1), silent = TRUE)
-  message("Report generation failed for:", "\n", dat$outfi, "\nThe following error returned:\n", e)
+  message("Report generation failed for:", "\n", dat$outFi, "\nThe following error returned:\n", e)
   home_path <- Sys.getenv("HOME")
   tb <- capture.output(traceback())
   if(length(tb) > 0) {
