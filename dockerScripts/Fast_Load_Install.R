@@ -1,5 +1,4 @@
 # Initialize
-options(pkgType = "binary") # Prefer binary installation
 library(parallel)
 no_cores <- detectCores(logical = FALSE)
 formals(library)$quietly <- TRUE
@@ -54,9 +53,6 @@ install_load_github <- function(pkg, repo) {
     })
 }
 
-# ... Rest of the code remains the same
-
-
 # Bioconductor packages
 bioc_packages <- c('HDF5Array', 'bumphunter', 'GEOquery', 'minfi', 'lumi', 'rngtools', 'methylumi', 'randomForest', 'glmnet','IlluminaHumanMethylation450kmanifest', 'IlluminaHumanMethylation450kanno.ilmn12.hg19', 'IlluminaHumanMethylationEPICmanifest', 'Rtsne', 'IlluminaHumanMethylationEPICanno.ilm10b2.hg19', 'IlluminaHumanMethylationEPICanno.ilm10b4.hg19', 'MethylAid', 'conumee', 'BiocParallel', 'Biobase', 'limma', 'MatrixGenerics', 'GenomeInfoDb')
 
@@ -81,7 +77,7 @@ if (!require("BiocManager")) install.packages("BiocManager", dependencies = TRUE
 install_load_cran("foreach")
 install_load_cran("doParallel")
 
-library(doParallel)
+library('doParallel')
 registerDoParallel(cores = no_cores - 1)
 
 # CRAN Packages
