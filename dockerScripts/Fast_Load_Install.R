@@ -96,6 +96,15 @@ unlist(foreach(pkg = names(github_repos)) %dopar% {install_load_github(pkg, gith
 # Unregister parallel backend and print failed packages if any
 stopImplicitCluster()
 if (nrow(failed_packages) > 0) {
-    print(paste("Failed to install/load the following packages:"))
-    print(failed_packages)
+    message("Failed to install/load the following packages:")
+    message(paste0(capture.output(failed_packages), collapse="\n"))
+    stop("Failed to install/load packages!")
 }
+
+# Update any packages as needed
+if(Sys.info()[['sysname']]!="Darwin"){
+    update.packages(ask = FALSE, repos = 'https://cran.rstudio.com/', lib='/usr/local/lib/R/site-library', dependencies=TRUE)
+    base_pkgs <- c('base', 'compiler', 'datasets', 'graphics', 'grDevices', 'methods', 'stats', 'utils')
+    install.packages(base_pkgs, repos = 'https://cran.rstudio.com/', ask = FALSE, type = 'source', dependencies=TRUE, lib='/usr/local/lib/R/site-library')
+}
+                    
