@@ -419,9 +419,10 @@ msg_code "${HOME}/make_consensus.sh ${runID} ${pactRun}"
 # msg_step 4 "#bae1ff" "Knit the rMarkdown file in your consensus directory"
 # #msg_code "cp ${HOME}/Desktop/${pactRun}_desc.csv ${consensusDir}${pactRun}_consensus/"
 # msg_code "cd ${consensusDir}${pactRun}_consensus/ && Rscript --verbose -e \"rmarkdown::render('${consensusDir}${pactRun}_consensus/${pactRun}_consensus.Rmd', params=list(pactName='${pactRun}', userName='${kerbero}'))\""
-msg_step 2 "#bae1ff" "Once the CNV concensus html is created, copy it to the output folder and email to notify the file is ready"
-msg_code "open ${consensusDir}${pactRun}_consensus/${pactRun}_consensus.html"
-msg_code "cp ${consensusDir}${pactRun}_consensus/${pactRun}_consensus.html \"/Volumes${outputDir}${currYear}/${pactRun}/\""
+msg_step 2 "#bae1ff" "Once the CNV concensus html is created, copy it to \"/Volumes${outputDir}${currYear}/${pactRun}/\""
+#msg_code "open ${consensusDir}${pactRun}_consensus/${pactRun}_consensus.html"
+#msg_code "cp ${consensusDir}${pactRun}_consensus/${pactRun}_consensus.html \"/Volumes${outputDir}${currYear}/${pactRun}/\""
+msg_step 3 "#bae1ff" "Send an email to notify the file is ready"
 msg_code "Hi all,
 The methylation CNV consensus is copied here:
 smb://shares-cifs.nyumc.org/apps/acc_pathology${outputDir}${currYear}/${pactRun}/${pactRun}_consensus.html
