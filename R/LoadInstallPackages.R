@@ -562,10 +562,8 @@ startLoadingAll <- function() {
     } else{
         typeSrc <- "source"
         classPath = "molecpathlab/production/Methylation/classifiers/"
-        mgmtstp27 = file.path(yourHome, classPath,"mgmtstp27_0.6-4.tar.gz")
-        if(!require("mgmtstp27")){
-            install.packages(mgmtstp27, repos=NULL, type="source", dependencies=T)
-        }
+        #mgmtstp27 = file.path(yourHome, classPath,"mgmtstp27_0.6-4.tar.gz")
+        #if(!require("mgmtstp27")){install.packages(mgmtstp27, repos=NULL, type="source", dependencies=T)}
     }
 
     installAll(classPacks, srcInst)
@@ -587,9 +585,11 @@ startLoadingAll <- function() {
     if(!require("wateRmelon")){
         try(BiocManager::install("wateRmelon", update=F, ask=F, dependencies=T, type=typeSrc), silent=T)
     }
+    if(Sys.info()[['sysname']]=="Darwin") {
     if (!requireNamespace("UniD", quietly = T)) {
         try(install.packages(uniDpath, type = "source", dependencies = T, repo = NULL), silent = T)
     }
+        }
 
 }
 
