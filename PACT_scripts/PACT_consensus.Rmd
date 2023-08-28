@@ -21,7 +21,7 @@ devtools::source_url("https://raw.githubusercontent.com/NYU-Molecular-Pathology/
 gb$bamURL <- file.path("https://genome.med.nyu.edu/external/clinpathlab", params$pactName)
 ```
 
-```{css, echo=FALSE,code=readLines("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/consensus.css")}
+```{css, echo=FALSE,code=base::readLines("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/consensus.css")}
 ```
 <h4>**Sign in with Kerberos to view all BAM files in**: [`r gb$bamURL`](`r gb$bamURL`)</h4><br>
 ```{r, label='Input Parameters', echo=FALSE, message=TRUE, warning=FALSE, error=FALSE, include=FALSE}
