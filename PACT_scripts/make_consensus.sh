@@ -25,9 +25,25 @@ curl -# -L ${pactGithub}/PACT_consensus.Rmd >"${consensusDir}${pactRun}_consensu
 
 cd "${consensusDir}${pactRun}_consensus" || exit
 
-echo "Copying files: rsync -vrthP '/Volumes/molecular/Molecular/REDCap/cnv_facets/${pactRun}/*.pdf' '$HOME/Desktop/${runID}-SampleSheet.csv' '$HOME/Desktop/${pactRun}_MethylMatch.xlsx /Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/${pactRun}-Somatic_Variants.html" "/Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/${pactRun}.html' '/Volumes/molecular/Molecular/REDCap/cnv_facets/${pactRun}/${pactRun}-QC.tsv' '/Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/${pactRun}_Hotspots.tsv' ./
-"
-rsync -vrthP "/Volumes/molecular/Molecular/REDCap/cnv_facets/${pactRun}/*.pdf" "$HOME/Desktop/${runID}-SampleSheet.csv" "$HOME/Desktop/${pactRun}_MethylMatch.xlsx /Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/${pactRun}-Somatic_Variants.html" "/Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/${pactRun}.html" "/Volumes/molecular/Molecular/REDCap/cnv_facets/${pactRun}/${pactRun}-QC.tsv" "/Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/${pactRun}_Hotspots.tsv" ./
+volMolec="/Volumes/molecular/Molecular/"
+deskDir="$HOME/Desktop/${pactRun}/"
+
+mkdir -p "${deskDir}"
+
+echo "Copying files: rsync -vrthP --include='*.pdf' '${volMolec}REDCap/cnv_facets/${pactRun}/' '${deskDir}'"
+
+rsync -vrthP --include="*.pdf" "${volMolec}REDCap/cnv_facets/${pactRun}/" "${deskDir}"
+rsync -vrthP "${clinicalOuput}${pactRun}-Somatic_Variants.html" "${deskDir}"
+rsync -vrthP "${clinicalOuput}${pactRun}.html" "${deskDir}"
+rsync -vrthP "${volMolec}REDCap/cnv_facets/${pactRun}/${pactRun}-QC.tsv" "${deskDir}"
+rsync -vrthP "${volMolec}NGS607/${currYear}/${runID}/${pactRun}_Hotspots.tsv" "${deskDir}"
+
+rsync -vrthP --include="*.pdf" "${deskDir}" "${consensusDir}${pactRun}_consensus"
+rsync -vrthP --include="*.tsv" "${deskDir}" "${consensusDir}${pactRun}_consensus"
+rsync -vrthP "$HOME/Desktop/${runID}-SampleSheet.csv" "${consensusDir}${pactRun}_consensus"
+rsync -vrthP "$HOME/Desktop/${pactRun}_MethylMatch.xlsx" "${consensusDir}${pactRun}_consensus"
+rsync -vrthP "${deskDir}${pactRun}-Somatic_Variants.html" "${consensusDir}${pactRun}_consensus"
+rsync -vrthP "${deskDir}${pactRun}.html" "${consensusDir}${pactRun}_consensus"
 
 cd "${HOME}" && curl -# -L ${pactGithub}/MakeIndelList.R >"${HOME}/MakeIndelList.R"
 
