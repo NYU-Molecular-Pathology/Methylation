@@ -17,14 +17,16 @@ currYear="20$runMid"
 
 #Once mounted, create the output directories in /MOLECULAR/NGS607/
 mkdir -p "${zdrive}/NGS607/${currYear}/${runID}/output/alignments" "/mnt/${kerbero}${outputDir}${currYear}/${pactRun}"
-chmod -R g+rwx "/mnt/${kerbero}${outputDir}${currYear}/${pactRun}" && chmod -R g+rwx "${gpfsHome}molecpathlab/production/NGS607/${runID}/output"
+chmod -R g+rwx "/mnt/${kerbero}${outputDir}${currYear}/${pactRun}"
+chmod -R g+rwx "${gpfsHome}molecpathlab/production/NGS607/${runID}/output"
 
 # Once created, rsync the files from BigPurple to /MOLECULAR/NGS607/
-rsync -vrthP "${rsyncDir}/alignments/recalibrated" "${zdrive}/NGS607/${currYear}/${runID}/output/alignments/" && \
-rsync -vrthP "${rsyncDir}/annotations" "${zdrive}/NGS607/${currYear}/${runID}/output/annotations/" && \
-rsync -vrthP "${rsyncDir}/clinical" "${zdrive}/NGS607/${currYear}/${runID}/output/" && \
+rsync -vrthP "${rsyncDir}/alignments/recalibrated" "${zdrive}/NGS607/${currYear}/${runID}/output/alignments/"
+rsync -vrthP "${rsyncDir}/annotations" "${zdrive}/NGS607/${currYear}/${runID}/output/annotations/"
+rsync -vrthP "${rsyncDir}/clinical" "${zdrive}/NGS607/${currYear}/${runID}/output/"
 rsync -vrthP "${rsyncDir}/*.tsv" "${zdrive}/NGS607/${currYear}/${runID}/"
 
 #Go to /MOLECULAR LAB ONLY/NYU PACT Patient Data/ on the Z-drive and copy the remaining clinical output files, PDF facets, and QC tsv "
-cd "/mnt/${kerbero}${outputDir}${currYear}/${pactRun}/" && rsync -vrthP "${rsyncDir}/clinical/" ./
+cd "/mnt/${kerbero}${outputDir}${currYear}/${pactRun}/"
+rsync -vrthP "${rsyncDir}/clinical/" ./
 rsync -vrthP "${productionDir}/NGS607/${runID}/output/cnv/FACETS/*.pdf" "${productionDir}/NGS607/${runID}/${pactRun}-QC.tsv" "${zdrive}/REDCap/cnv_facets/${pactRun}/"
