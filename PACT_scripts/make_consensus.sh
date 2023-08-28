@@ -53,4 +53,9 @@ RScript --verbose "${HOME}/MakeIndelList.R" "${pactRun}"
 
 cd "${consensusDir}${pactRun}_consensus/" || exit
 
-Rscript --verbose -e "rmarkdown::render('${consensusDir}${pactRun}_consensus/${pactRun}_consensus.Rmd', params=list(pactName='${pactRun}', userName='${kerbero}'))"
+Rscript --verbose -e "rmarkdown::render('${consensusDir}${pactRun}_consensus/${pactRun}_consensus.Rmd', params=list(pactName='${pactRun}', userName='${kerbero}'))" && open "${consensusDir}${pactRun}_consensus/${pactRun}_consensus.html"
+
+echo "Trying to copy files:"
+echo "rsync -vrthP ${consensusDir}${pactRun}_consensus/${pactRun}_consensus.html \"/Volumes${outputDir}${currYear}/${pactRun}/\""
+
+rsync -vrthP "${consensusDir}${pactRun}_consensus/${pactRun}_consensus.html" "/Volumes${outputDir}${currYear}/${pactRun}/"
