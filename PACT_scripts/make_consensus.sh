@@ -25,6 +25,8 @@ curl -# -L ${pactGithub}/PACT_consensus.Rmd >"${consensusDir}${pactRun}_consensu
 
 cd "${consensusDir}${pactRun}_consensus" || exit
 
+echo "Copying files: cp -fvX '/Volumes/molecular/Molecular/REDCap/cnv_facets/${pactRun}/*.pdf' '$HOME/Desktop/${runID}-SampleSheet.csv' '$HOME/Desktop/${pactRun}_MethylMatch.xlsx /Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/${pactRun}-Somatic_Variants.html" "/Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/${pactRun}.html' '/Volumes/molecular/Molecular/REDCap/cnv_facets/${pactRun}/${pactRun}-QC.tsv' '/Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/${pactRun}_Hotspots.tsv' ./
+"
 cp -fvX "/Volumes/molecular/Molecular/REDCap/cnv_facets/${pactRun}/*.pdf" "$HOME/Desktop/${runID}-SampleSheet.csv" "$HOME/Desktop/${pactRun}_MethylMatch.xlsx /Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/${pactRun}-Somatic_Variants.html" "/Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/${pactRun}.html" "/Volumes/molecular/Molecular/REDCap/cnv_facets/${pactRun}/${pactRun}-QC.tsv" "/Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/${pactRun}_Hotspots.tsv" ./
 
 cd "${HOME}" && curl -# -L ${pactGithub}/MakeIndelList.R >"${HOME}/MakeIndelList.R"
