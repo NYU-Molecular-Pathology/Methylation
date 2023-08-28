@@ -57,7 +57,7 @@ install_load_github <- function(pkg, repo) {
 bioc_packages <- c('HDF5Array', 'bumphunter', 'GEOquery', 'minfi', 'lumi', 'rngtools', 'methylumi', 'randomForest', 'glmnet','IlluminaHumanMethylation450kmanifest', 'IlluminaHumanMethylation450kanno.ilmn12.hg19', 'IlluminaHumanMethylationEPICmanifest', 'Rtsne', 'IlluminaHumanMethylationEPICanno.ilm10b2.hg19', 'IlluminaHumanMethylationEPICanno.ilm10b4.hg19', 'MethylAid', 'conumee', 'BiocParallel', 'Biobase', 'limma', 'MatrixGenerics', 'GenomeInfoDb')
 
 # CRAN packages
-cran_packages <- c('devtools', 'remotes', 'sjmisc', 'stringi', 'digest', 'RCurl', 'rlang', 'parallel', 'grid', 'gridExtra', 'knitr', 'kableExtra', 'ggplot2', 'plotly', 'ggfortify', 'ggrepel', 'gplots', 'fastmatch', 'pals', 'Polychrome', 'qdapTools', 'beepr', 'xtable', 'pander', 'grDevices', 'graphics', 'stats', 'utils', 'magick', 'ade4', 'MASS', 'R.utils', 'optparse', 'targets', 'usethis', 'webshot', 'reshape', 'reshape2', 'data.table', 'DT', 'scales', 'RColorBrewer', 'readxl', 'stringr', 'tinytex', 'future.apply', 'Rcpp', 'httpuv', 'shiny')
+cran_packages <- c('devtools','doSnow', 'remotes', 'sjmisc', 'stringi', 'digest', 'RCurl', 'rlang', 'parallel', 'grid', 'gridExtra', 'knitr', 'kableExtra', 'ggplot2', 'plotly', 'ggfortify', 'ggrepel', 'gplots', 'fastmatch', 'pals', 'Polychrome', 'qdapTools', 'beepr', 'xtable', 'pander', 'grDevices', 'graphics', 'stats', 'utils', 'magick', 'ade4', 'MASS', 'R.utils', 'optparse', 'targets', 'usethis', 'webshot', 'reshape', 'reshape2', 'data.table', 'DT', 'scales', 'RColorBrewer', 'readxl', 'stringr', 'tinytex', 'future.apply', 'Rcpp', 'httpuv', 'shiny')
 
 # GitHub packages
 github_repos <- c(
