@@ -46,10 +46,10 @@ classPacks <- c(
 cranPkgs <- c(
     'devtools',
     'remotes',
-    #'sjmisc',
-    #'stringi',
-    #'digest',
-    #'RCurl',
+    'sjmisc',
+    'stringi',
+    'digest',
+    'RCurl',
     'rlang',
     'parallel',
     'grid',
@@ -76,7 +76,7 @@ cranPkgs <- c(
     'ade4',
     "MASS",
     "R.utils",
-    #"optparse",
+    "optparse",
     "targets",
     "usethis",
     "webshot",
@@ -91,7 +91,7 @@ cranPkgs <- c(
     "tinytex",
     "future.apply",
     "Rcpp",
-    #"httpuv",
+    "httpuv",
     "shiny"
 )
 
@@ -108,7 +108,7 @@ gHubPkgs <- data.frame(
 
 # BioConductor Packages ----
 biocPkgs <- c(
-    'HDF5Array', 'bumphunter','GEOquery', 'minfi', 'lumi', #'rngtools',
+    'HDF5Array', 'bumphunter','GEOquery', 'minfi', 'lumi', 'rngtools',
     'methylumi', 'randomForest', 'glmnet','IlluminaHumanMethylation450kmanifest',
     'IlluminaHumanMethylation450kanno.ilmn12.hg19', 'IlluminaHumanMethylationEPICmanifest', 'Rtsne',
     'IlluminaHumanMethylationEPICanno.ilm10b2.hg19', 'IlluminaHumanMethylationEPICanno.ilm10b4.hg19',
