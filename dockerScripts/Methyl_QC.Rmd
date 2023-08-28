@@ -81,7 +81,18 @@ mcParam <- BiocParallel::MulticoreParam(workers = mcc, progressbar = T)
 gb$totNum <- totNum <- gb$GetTotalPairs(gb$fixerrors)
 fixerrors <- as.data.frame(gb$fixerrors)
 # MethylAid Summarize ------------------------------------------
-sdata <- MethylAid::summarize(fixerrors, verbose = T, batchSize = totNum, force = T, BPPARAM = mcParam)
+#sdata <- MethylAid::summarize(fixerrors, verbose = T, batchSize = totNum, force = T, BPPARAM = mcParam)
+sdata <- tryCatch(
+    {
+        sdata_temp <- MethylAid::summarize(fixerrors, verbose = TRUE, batchSize = totNum, force = TRUE, BPPARAM = mcParam)
+        return(sdata_temp)
+    },
+    error = function(e) {
+        message(paste("error with biocparallel:\n", e))
+        sdata_temp <- MethylAid::summarize(fixerrors, verbose = TRUE, force = TRUE)
+        return(sdata_temp)
+    }
+)
 gb$sdata <- sdata
 ## Get MU Data & Colors ----------------------------------------
 gb$targets <- fixerrors
