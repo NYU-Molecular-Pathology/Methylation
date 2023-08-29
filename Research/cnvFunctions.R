@@ -99,7 +99,7 @@ GetGeneCopyNumb <- function(cnv_data, samName){
     cnvGeneRatio <- data.frame(cnv_data@detail$ratio)
     colnames(cnvGeneRatio) <- "log2_ratio"
     cnvGeneRatio$Gene <- rownames(cnvGeneRatio)
-    cnvGeneRatio$CopyNumber <- round((2**(cnvGeneRatio[,1]))*2, 0)
+    cnvGeneRatio$CopyNumber <- round((2**(cnvGeneRatio[,1]))*2, 2)
     cnvGeneRatio$GainLoss <- "NONE"
     cnvGeneRatio$GainLoss[cnvGeneRatio$CopyNumber > 2 ] <- "Gain"
     cnvGeneRatio$GainLoss[cnvGeneRatio$CopyNumber <= 1] <- "Loss"
