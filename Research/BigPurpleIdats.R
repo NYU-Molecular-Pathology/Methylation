@@ -33,6 +33,74 @@ dsh2="================\n"
 
 supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
 
+#  Copy idats and Worksheets creation
+writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
+    if (is.null(bn)) {bn = file.path(getwd(), df$barcode_and_row_column)}
+    message(crayon::bgCyan("~~~Writing from redcap samplesheet.csv using dataframe:"))
+
+    df<- df[!is.na(df[, "barcode_and_row_column"]),]
+    df<- df[!is.null(df[, "barcode_and_row_column"]),]
+	    print(df)
+    samplesheet_csv = data.frame(
+        Sample_Name = df[, "record_id"],
+        DNA_Number = df[,"b_number"],
+        Sentrix_ID = samplesheet_ID[, 1],
+        Sentrix_Position = samplesheet_ID[, 2],
+        SentrixID_Pos = df[, "barcode_and_row_column"],
+        Basename = paste0(bn),
+        RunID = df$run_number,
+        MP_num = df$accession_number,
+        tech = df$primary_tech,
+        tech2 = df$second_tech,
+        Date = df$arrived
+    )
+    samplesheet_csv <- samplesheet_csv[!is.na(samplesheet_csv$SentrixID_Pos),]
+    print(samplesheet_csv)
+    write.csv(samplesheet_csv, file = "samplesheet.csv", quote = F,row.names = F)
+}
+
+search.redcap <- function(rd_numbers, ApiToken=NULL) {
+    if(is.null(ApiToken)){message("You must provide an ApiToken!")}
+    rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", ApiToken)
+    flds = c("record_id","b_number","primary_tech","second_tech","run_number","barcode_and_row_column","accession_number","arrived")
+    result <- redcapAPI::exportRecords(
+	    rcon, records = rd_numbers, fields = flds, dag = F, factors = F, labels = F, dates = F, form_complete_auto = F, format = 'csv')
+    result <- as.data.frame(result)
+    return(result)
+}
+
+get.idats2<-function(csvNam = "samplesheet.csv"){
+    rsch.idat <- gb$rsch.idat;clin.idat <- gb$clin.idat
+    if(!dir.exists(rsch.idat)){warnMount(rsch.idat)}; if(!dir.exists(clin.idat)){warnMount(clin.idat)}
+    stopifnot(dir.exists(rsch.idat)|dir.exists(clin.idat))
+    if (file.exists(csvNam)) {
+        allFi <- gb$getAllFiles(idatDir = c(rsch.idat, clin.idat), csvNam = csvNam)
+        allFi = allFi[file.exists(allFi)]
+        if (length(allFi) > 0) {
+            message("Files found: "); print(allFi)
+            cur.idat <- dir(pattern = "*.idat$")
+            bcds <- paste0(basename(allFi))
+            if (all(bcds %in% cur.idat)) {message(".idat files already copied")}
+            if (!all(bcds %in% cur.idat)) {gb$copyBaseIdats(allFi[!(bcds %in% cur.idat)])}
+        } else {message("No .idat files found! Check worksheet and input folder path")}
+    } else {message(paste("Cannot find your sheet named:", csvNam))}
+}
+
+# FUN: Copies .idat files to your directory and saves samplesheet.csv
+get.rd.info <- function(rd_numbers=NULL, token=NULL, sh_name=NULL){
+    if (is.null(rd_numbers)){
+	    message("No RD-numbers found, Input RD-numbers using get.rd.info(rd_numbers)")
+	    return(NULL)
+    }
+	print(rd_numbers)
+    if (is.null(sh_name)) {sh_name = "samplesheet.csv"}
+    result <- gb$search.redcap(rd_numbers, token)
+    samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[, "barcode_and_row_column"], "_", 2))
+    writeFromRedcap(result, samplesheet_ID) # writes API export as minfi dataframe sheet
+    gb$get.idats2(csvNam = sh_name)  # copies idat files from return to current directory
+    return(result)
+}
+
 # FUN: Sets your directory and sources the helper functions
 sourceFuns <- function(workingPath = NULL) {
     mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
@@ -176,5 +244,8 @@ checkMounts()
 sourceFuns()
 
 # Example Use
-rds <- readInfo(inputSheet)
-grabRDCopyIdat(rd_numbers=rds, token=token, copyIdats=T)
+if(!is.na(token) & !is.na(inputSheet)){
+    rds <- readInfo(inputSheet)
+    grabRDCopyIdat(rd_numbers=rds, token=token, copyIdats=T)
+}
+
