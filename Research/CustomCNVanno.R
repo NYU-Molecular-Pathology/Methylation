@@ -280,3 +280,17 @@ merge_and_filter_genes <- function(input_directory, gene1 = "MTAP", gene2 = "CDK
     write.csv(filtered_gene_data, file = outFi, row.names = FALSE)
     return(outFi)
 }
+
+
+LoadSaveAnno <- function(gene_list, array_type, customAnnoFi= NULL, gb = .GlobalEnv){
+    if(is.null(customAnnoFi)){
+        customAnnoFi <- file.path(getwd(), "custom_anno.Rdata")
+    }
+    if(!file.exists(customAnnoFi)){
+        custom_anno <- gb$MakeCustomAnno(array_type = arrayType, chrXY = T, detail_regions = c(gene_list, gb$annoEPICxy@detail))
+        gb$SaveObj(custom_anno, customAnnoFi)
+    }else{
+        custom_anno <- gb$LoadRdatObj(customAnnoFi)
+    }
+    return(custom_anno)
+}
