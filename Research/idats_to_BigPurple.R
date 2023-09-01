@@ -323,16 +323,18 @@ RsyncBigPurple <- function(allFi, idatPath = NULL) {
     }
 }
 
-
-
-LoopIdatFiles <- function(idatsToCopy) {
+           
+LoopIdatFiles <- function(idatsToCopy, tRows=200) {
     totalFiles <- length(idatsToCopy)
-    if (totalFiles > 200) {
-        warning("More than 200 idats being copied!")
-        num_iterations <- ceiling(totalFiles / 200)
+    if (totalFiles > tRows) {
+        message("More than ", tRows, " idats being copied!")
+        message(sprintf("Looping through %d files at a time from total: %d", tRows, totalFiles))
+        num_iterations <- ceiling(totalFiles / tRows)
         for (i in 1:num_iterations) {
-            current_files <- idatsToCopy[(((i - 1) * 200) + 1):min(i * 200, totalFiles)]
-            message(sprintf("Copying %d out of %d sets of 200 files", i, num_iterations))
+            current_files <- idatsToCopy[((i - 1) * tRows + 1) : min(i * tRows, totalFiles)]
+            red_files <- stringr::str_replace_all(current_files, "_Grn", "_Red")
+            current_files <- unique(c(red_files, current_files))
+            message(sprintf("Copying %d out of %d sets of %d files", i, num_iterations, tRows))
             RsyncBigPurple(current_files)
         }
     } else {
@@ -340,6 +342,7 @@ LoopIdatFiles <- function(idatsToCopy) {
     }
 }
 
+           
 GetIdatsFromDrives <- function(csvNam = "samplesheet.csv", runDir = NULL) {
     runDir <- if (is.null(runDir)) getwd() else runDir
     extr.idat <- file.path(gb$rsch.idat, "External")
