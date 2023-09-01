@@ -21,6 +21,69 @@ rsch.idat = file.path(rsVol,"idats")
 flds = c("record_id","b_number","tm_number","accession_number","block","diagnosis",
          "organ","tissue_comments","run_number", "nyu_mrn")
 
+checkAndUpdateFiles <- function() {
+  # Initialize flag for missing lines
+  lines_missing <- FALSE
+
+  # Define file paths and contents
+  rprofile_path <- file.path(Sys.getenv("HOME"), ".Rprofile")
+  makevars_path <- file.path(Sys.getenv("HOME"), ".R/Makevars")
+  
+  rprofile_content <- c(
+    'Sys.setenv(PKG_LIBS="/gpfs/share/apps/libsodium/1.0.18/lib/")',
+    'Sys.setenv(PKG_CONFIG_PATH="/gpfs/share/apps/libsodium/1.0.18/lib/pkgconfig/")',
+    'Sys.setenv(INCLUDE_DIR="/gpfs/share/apps/libsodium/1.0.18/include/")',
+    'Sys.setenv(LD_LIBRARY_PATH="/gpfs/share/apps/libsodium/1.0.18/lib/")'
+  )
+  
+  makevars_content <- c(
+    'PKG_CONFIG_PATH=/gpfs/share/apps/libsodium/1.0.18/lib/pkgconfig',
+    'PKG_CPPFLAGS=-I/gpfs/share/apps/libsodium/1.0.18/include',
+    'PKG_LIBS=-L/gpfs/share/apps/libsodium/1.0.18/lib -lsodium',
+    'INCLUDE_DIR=-I/gpfs/share/apps/libsodium/1.0.18/include/'
+  )
+  
+  # Check and update .Rprofile
+  if (!file.exists(rprofile_path)) {
+    cat(rprofile_content, file = rprofile_path, sep = "\n")
+    lines_missing <- TRUE
+  } else {
+    existing_lines <- readLines(rprofile_path)
+    missing_lines <- setdiff(rprofile_content, existing_lines)
+    if (length(missing_lines) > 0) {
+      cat(missing_lines, file = rprofile_path, sep = "\n", append = TRUE)
+      lines_missing <- TRUE
+    }
+  }
+  
+  # Check and update Makevars
+  if (!file.exists(makevars_path)) {
+    dir.create(file.path(Sys.getenv("HOME"), ".R"), showWarnings = FALSE)
+    cat(makevars_content, file = makevars_path, sep = "\n")
+    lines_missing <- TRUE
+  } else {
+    existing_lines <- readLines(makevars_path)
+    missing_lines <- setdiff(makevars_content, existing_lines)
+    if (length(missing_lines) > 0) {
+      cat(missing_lines, file = makevars_path, sep = "\n", append = TRUE)
+      lines_missing <- TRUE
+    }
+  }
+
+  # If any lines were missing, restart the R session
+  if (lines_missing) {
+    # Source this script upon session restart
+    writeLines(sprintf("source('%s')", normalizePath(sys.frame(1)$ofile)), con = rprofile_path, append = TRUE)
+    
+    # Restart R session
+    message("Reload Script to install. Restarting R session...")
+    .rs.restartR()
+  }
+}
+
+# Execute the function
+checkAndUpdateFiles()
+
 # Load redcapAPI Package -----
 if(suppressWarnings(!require("redcapAPI"))){
     params=list('nutterb/redcapAPI', dependencies=T, upgrade="always", type="source")
