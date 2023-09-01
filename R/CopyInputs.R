@@ -141,7 +141,13 @@ CheckIdatsReal <- function(ssheet, allFi) {
         if (nrow(ssheet) * 2 > length(allFi)) {
             message("The following samples are missing:")
             toDrop <- ssheet$SentrixID_Pos %in%  themissed
-            DataFrameMessage(ssheet$SentrixID_Pos[!toDrop])
+            missing_samples <- ssheet$SentrixID_Pos[!toDrop]
+            DataFrameMessage(missing_samples)
+            
+            # Save missing samples to a CSV log file
+            missing_samples_df <- data.frame(Missing_Samples = missing_samples)
+            write.csv(missing_samples_df, "missing_idats_log.csv", row.names = F, quote = F)
+            message("Check the log file to see which idats were not found: missing_idats_log.csv")
         }
     }
 }
