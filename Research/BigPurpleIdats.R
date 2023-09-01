@@ -83,7 +83,7 @@ checkAndUpdateFiles <- function() {
 
 # Execute the function
 checkAndUpdateFiles()
-
+dyn.load("/gpfs/share/apps/libsodium/1.0.18/lib/libsodium.so.23")
 # Load redcapAPI Package -----
 if(suppressWarnings(!require("redcapAPI"))){
     params=list('nutterb/redcapAPI', dependencies=T, upgrade="always", type="source")
