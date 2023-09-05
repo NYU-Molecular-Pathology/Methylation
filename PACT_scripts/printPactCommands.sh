@@ -193,31 +193,6 @@ h1{
 .stagehead {
   font-size:40px !important;
   font-weight: 600!important;
-  background-image: linear-gradient(45deg,
-        #CA4246 16.666%, 
-        #E16541 16.666%, 
-        #E16541 33.333%, 
-        #F18F43 33.333%, 
-        #F18F43 50%, 
-        #8B9862 50%, 
-        #8B9862 66.666%, 
-        #476098 66.666%, 
-        #476098 83.333%, 
-        #A7489B 83.333%)!important;
-  color: transparent!important;
-  display: block;
-  background-clip: text!important;
-  -webkit-background-clip: text!important;
-  font-family: 'Allerta Stencil';
-  margin-bottom: 0px !important;
-  -webkit-text-stroke-width: 0.25px;
-  -webkit-text-stroke-color: black;
-}
-
-.gradient-text {
-  background-color: #CA4246;
-  font-size:40px !important;
-  font-weight: 600!important;
   background-image: linear-gradient(
         45deg,
         #CA4246 16.666%, 
@@ -230,9 +205,6 @@ h1{
         #476098 66.666%, 
         #476098 83.333%, 
         #A7489B 83.333%)!important;
-  background-size: 100%;
-  background-repeat: repeat;
-  -webkit-text-fill-color: transparent!important;
   color: transparent!important;
   display: block;
   background-clip: text!important;
@@ -241,54 +213,6 @@ h1{
   margin-bottom: 0px !important;
   -webkit-text-stroke-width: 0.25px;
   -webkit-text-stroke-color: black;
-  animation: rainbow-text-simple-animation-rev 0.75s ease forwards;
-}
-
-.gradient-text:hover{
-    animation: rainbow-text-simple-animation 0.6s ease-in forwards;
-}
-
-
-/* Move the background and make it smaller. */
-/* Animation shown when entering the page and after the hover animation. */
-@keyframes rainbow-text-simple-animation-rev {
-    0% {
-        background-size: 650%;
-    }
-    40% {
-        background-size: 650%;
-    }
-    100% {
-        background-size: 100%;
-    }
-}
-
-/* Move the background and make it larger. */
-/* Animation shown when hovering over the text. */
-@keyframes rainbow-text-simple-animation {
-    0% {
-        background-size: 100%;
-    }
-    80% {
-        background-size: 650%;
-    }
-    100% {
-        background-size: 650%;
-    }
-}
-
-a {
-  font-family: 'Archivo Black', sans-serif;
-  font-weight: normal;
-  font-size: 6em;
-  text-align: center;
-  margin-bottom: 0;
-  margin-bottom: -0.25em;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-  cursor: pointer;
-  width: 605px;
 }
 
 </style>
@@ -306,7 +230,7 @@ msg_stage() {
     stageString=$1
     stageTitle=$2
     echo " "
-    echo "<a class='gradient-text' id='stage-${stageString}'>STAGE-${stageString}</a>"
+    echo "<a class='stagehead' id='stage-${stageString}'>STAGE-${stageString}</a>"
     echo " "
     echo "<h3 style='font-style:italic;color:#004c00'>${stageTitle}</h3>"
     echo "$BOX1"
