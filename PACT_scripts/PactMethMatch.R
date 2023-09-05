@@ -16,6 +16,10 @@ message("inputSheet: ", inputSheet,"\n")
 stopifnot(!is.na(token))
 stopifnot(!is.na(inputSheet))
 
+if(paste(utils::packageVersion("redcapAPI")) != "2.7.4"){
+    install.packages("redcapAPI", ask=F, update=T, dependencies=T)
+}
+
 readFlag <- endsWith(inputSheet,".csv")==T
 stopifnot(rlang::is_bool(readFlag))
 
