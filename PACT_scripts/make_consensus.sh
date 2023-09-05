@@ -6,12 +6,14 @@
 ## Copyright (c) NYULH Jonathan Serrano, 2023
 ## ---------------------------
 
+# Input args
 runID=${1-NULL}   # if arg $1 is empty assign NULL as default else i.e. 123456_NB501073_0212_AHT3V7BGXK
 pactRun=${2-NULL} # if arg $2 is empty assign NULL as default else i.e. PACT-21-28
 DEFAULTVALUE="/Volumes/CBioinformatics/jonathan/pact/consensus/"
 consensusDir="${3:-$DEFAULTVALUE}"
 kerbero=${4-$USER} # if arg $3 is empty assign $USER as default else i.e. whoami kerberosid
 
+# Hardcoded paths
 currYear=$(date +'%Y')
 pactGithub="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts"
 outputDir="/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics/"
