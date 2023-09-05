@@ -215,13 +215,10 @@ h1{
 }
 
 .gradient-text {
-  /* Fallback: Set a background color. */
   background-color: #CA4246;
   font-size:40px !important;
   font-weight: 600!important;
-  
-  /* Create the gradient. */
-   background-image: linear-gradient(
+  background-image: linear-gradient(
         45deg,
         #CA4246 16.666%, 
         #E16541 16.666%, 
@@ -232,16 +229,10 @@ h1{
         #8B9862 66.666%, 
         #476098 66.666%, 
         #476098 83.333%, 
-        #A7489B 83.333%);
-  
-  /* Set the background size and repeat properties. */
+        #A7489B 83.333%)!important;
   background-size: 100%;
   background-repeat: repeat;
-
-  /* Use the text as a mask for the background. */
-  /* This will show the gradient as a text color rather than element bg. */
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent; 
+  -webkit-text-fill-color: transparent!important;
   color: transparent!important;
   display: block;
   background-clip: text!important;
@@ -250,15 +241,11 @@ h1{
   margin-bottom: 0px !important;
   -webkit-text-stroke-width: 0.25px;
   -webkit-text-stroke-color: black;
-  
-  /* Animate the text when loading the element. */
-    /* This animates it on page load and when hovering out. */
-    animation: rainbow-text-simple-animation-rev 0.75s ease forwards;
-
+  animation: rainbow-text-simple-animation-rev 0.75s ease forwards;
 }
 
 .gradient-text:hover{
-    animation: rainbow-text-simple-animation 0.5s ease-in forwards;
+    animation: rainbow-text-simple-animation 0.6s ease-in forwards;
 }
 
 
