@@ -277,6 +277,20 @@ h1{
     }
 }
 
+a {
+  font-family: 'Archivo Black', sans-serif;
+  font-weight: normal;
+  font-size: 6em;
+  text-align: center;
+  margin-bottom: 0;
+  margin-bottom: -0.25em;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  cursor: pointer;
+  width: 605px;
+}
+
 </style>
 "
 
