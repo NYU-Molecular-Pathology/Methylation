@@ -208,7 +208,7 @@ h1{
   font-family: 'Allerta Stencil';
   margin-bottom: 25px !important;
   margin-top: 25px !important;
-  -webkit-text-stroke-width: 0.25px;
+  -webkit-text-stroke-width: 0.05px;
   -webkit-text-stroke-color: black;
   line-height: 30px;
 }
@@ -287,8 +287,7 @@ zdrive="/mnt/${kerbero}/molecular/Molecular"
 echo "<span style='font-weight: bold'>Author</span>: Jonathan Serrano</br>"
 echo "<span style='font-weight: bold'>Current Date</span>: $(date)</br>"
 echo "</br>"
-echo "<h2 style='padding-top: 10px !important; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: black;'>${FG_GRN}LG-PACT Commands${normal}</h2>"
-echo "<h2 style='padding-top: 10px !important; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: black;'>${FG_BLU}Your Input Args${normal}</h2>"
+echo "<h2 style='padding-top: 5px !important; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: black;'>${FG_GRN}LG-PACT Commands${normal}</h2>"
 msg_step 1 "white" "PACT RUNID: ${runID}</br>"
 msg_step 2 "white" "PACT Run Name: ${pactRun}</br>"
 msg_step 3 "white" "Consensus Directory: ${consensusDir}</br>"
