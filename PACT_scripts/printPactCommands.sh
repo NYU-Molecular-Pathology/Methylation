@@ -379,7 +379,7 @@ msg_code "mkdir -p \"/gpfs/data/clinpathlab/external/${pactRun}\" && rsync -vrth
 msg_step 1 "#baffc9" "Go to the data mover node within BigPurple and mount the molecular drive"
 msg_code "ssh ${kerbero}@dmn-0002"
 msg_code "mount /mnt/${kerbero}/molecular"
-msg_note "NOTE:" "Occasionally, the 0001 will be down and the 0002 will take over.  We usually just use 0002"
+#msg_note "NOTE:" "Occasionally, the 0001 will be down and the 0002 will take over.  We usually just use 0002"
 msg_step 2 "#baffc9" "Once mounted, create the output directories in /MOLECULAR/NGS607/"
 msg_code "/mnt/${kerbero}/molecular/Molecular/Validation/Scripts/zdrive_copier.sh ${runID} ${pactRun}"
 # msg_code "mkdir -p \"${zdrive}/NGS607/${currYear}/${runID}/output/alignments\" \"/mnt/${kerbero}${outputDir}${currYear}/${pactRun}\""
