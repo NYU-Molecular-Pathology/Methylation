@@ -14,6 +14,7 @@ kerbero=${4-$USER} # if arg $3 is empty assign $USER as default else i.e. whoami
 
 currYear=$(date +'%Y')
 pactGithub="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts"
+outputDir="/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics/"
 
 mkdir -p "${consensusDir}${pactRun}_consensus" 
 
