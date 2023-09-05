@@ -19,7 +19,7 @@ currYear=$(date +'%Y')
 # Hardcoded paths
 pactGithub="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts"
 outputDir="/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics/"
-clinicalOuput="/Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/"
+#clinicalOuput="/Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/"
 
 mkdir -p "${consensusDir}${pactRun}_consensus" 
 
@@ -39,8 +39,8 @@ mkdir -p "${deskDir}"
 echo "Copying files: rsync -vrthP --include='*.pdf' '${volMolec}REDCap/cnv_facets/${pactRun}/' '${deskDir}'"
 
 rsync -vrthP --include="*.pdf" "${volMolec}REDCap/cnv_facets/${pactRun}/" "${deskDir}"
-rsync -vrthP "${clinicalOuput}${pactRun}-Somatic_Variants.html" "${deskDir}"
-rsync -vrthP "${clinicalOuput}${pactRun}.html" "${deskDir}"
+#rsync -vrthP "${clinicalOuput}${pactRun}-Somatic_Variants.html" "${deskDir}"
+#rsync -vrthP "${clinicalOuput}${pactRun}.html" "${deskDir}"
 rsync -vrthP "${volMolec}REDCap/cnv_facets/${pactRun}/${pactRun}-QC.tsv" "${deskDir}"
 rsync -vrthP "${volMolec}NGS607/${currYear}/${runID}/${pactRun}_Hotspots.tsv" "${deskDir}"
 
