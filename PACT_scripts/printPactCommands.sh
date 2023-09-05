@@ -193,7 +193,17 @@ h1{
 .stagehead {
   font-size:40px !important;
   font-weight: 600!important;
-  background-image: linear-gradient(to bottom, #2c3e50, blue, purple )!important;
+  background-image: linear-gradient(45deg,
+        #CA4246 16.666%, 
+        #E16541 16.666%, 
+        #E16541 33.333%, 
+        #F18F43 33.333%, 
+        #F18F43 50%, 
+        #8B9862 50%, 
+        #8B9862 66.666%, 
+        #476098 66.666%, 
+        #476098 83.333%, 
+        #A7489B 83.333%)!important;
   color: transparent!important;
   display: block;
   background-clip: text!important;
@@ -291,7 +301,7 @@ echo ' <div class="tocbox"> '
 echo "<h2 style='margin-top: 0px;font-size:20;'> Table of Contents </h2>"
 echo " "
 echo '<ol start="0" style="font-size:14;">'
-print_toc 0 "Setup SampleSheet.csv & Copy to BigPurple"
+#print_toc 0 "Setup SampleSheet.csv & Copy to BigPurple"
 print_toc 1 "Demultiplexing"
 print_toc 2 "Execute In-House Pipeline and Philips Uploads"
 print_toc 3 "Generate In-House QC"
@@ -300,15 +310,15 @@ print_toc 5 "Generate Consensus"
 echo "</ol>"
 echo "$BOX2"
 # Stage 0 -----------------------
-msg_stage 0 "Create SampleSheet.csv & Copy to BigPurple"
-msg_step 1 "#ffb3ba" "First mount the Molecular drive and execute the shell script"
-msg_code "diskutil mountdisk /Volumes/CBioinformatics/"
-msg_code "/Volumes/CBioinformatics/PACT/parsepact.sh ${pactRun} ${runID}"
-msg_step 2 "#ffb3ba" "Review the generated SampleSheet.csv ouput below and notify the lab if it contains any errors"
-msg_code "${HOME}/Desktop/${runID}-SampleSheet.csv"
-msg_step 3 "#ffb3ba" "Verify the script copied the samplesheet to BigPurple and added group read/write permissions to the directory:"
-msg_code "${productionDir}/samplesheets/LG-PACT/${runID}/${runID}-SampleSheet.csv"
-echo "$BOX2"
+# msg_stage 0 "Create SampleSheet.csv & Copy to BigPurple"
+# msg_step 1 "#ffb3ba" "First mount the Molecular drive and execute the shell script"
+# msg_code "diskutil mountdisk /Volumes/CBioinformatics/"
+# msg_code "/Volumes/CBioinformatics/PACT/parsepact.sh ${pactRun} ${runID}"
+# msg_step 2 "#ffb3ba" "Review the generated SampleSheet.csv ouput below and notify the lab if it contains any errors"
+# msg_code "${HOME}/Desktop/${runID}-SampleSheet.csv"
+# msg_step 3 "#ffb3ba" "Verify the script copied the samplesheet to BigPurple and added group read/write permissions to the directory:"
+# msg_code "${productionDir}/samplesheets/LG-PACT/${runID}/${runID}-SampleSheet.csv"
+# echo "$BOX2"
 
 # Stage 1 -----------------------
 msg_stage 1 "Demux Steps"
