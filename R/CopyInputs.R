@@ -198,6 +198,7 @@ GetExternalIdats <- function(allFi, ssheet, extr.idat){
     message(paste0(capture.output(ssheet), collapse="\n"))
     message(crayon::bgRed("Still missing some idats! Checking External Folder:")," ", extr.idat)
     basesNeeded = as.vector(ssheet$SentrixID_Pos)
+    message(paste0(capture.output(basesNeeded), collapse="\n"))
     if (length(allFi) > 0) {
         stillMissing <- ListMissedIdats(allFi, basesNeeded)
     } else{
@@ -205,6 +206,8 @@ GetExternalIdats <- function(allFi, ssheet, extr.idat){
         allFi <- NULL
     }
     if(any(stillMissing) == T){
+        message("Missing idats:")
+        message(paste0(capture.output(stillMissing), collapse="\n"))
         idatsToAdd <- GetIdats2Add(basesNeeded, stillMissing, extr.idat)
         if(!is.null(allFi)){
             toDrop <- basename(idatsToAdd) %in% basename(allFi)
