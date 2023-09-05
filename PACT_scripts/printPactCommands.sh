@@ -338,12 +338,12 @@ msg_code "make passed && make uploads && make deploy-NGS607 && cd ${productionDi
 msg_step 4 "#ffffba" "Update and then submit the slurm job and check your squeue logs"
 msg_code "make update && make submit"
 msg_code "squeue -u ${kerbero} && lt logs/*"
-msg_step 5 "#ffffba" "chmod the isg-uploads folder to ensure the files are accessible and check the pgm log to verify uploading to Philips every 30 min"
+msg_step 5 "#ffffba" "ssh pgm@pgmlcdcpvm01.nyumc.org to the isg-uploads folder to ensure the files are accessible and check the pgm log to verify uploading to Philips every 30 min"
 #msg_code "chmod -R g+rwx ${productionDir}/isg-uploads/${runID}"
-msg_code "ssh pgm@pgmlcdcpvm01.nyumc.org"
-msg_note "NOTE:" "If you forget the pgm password, we have it saved in Evernote"
+#msg_code "ssh pgm@pgmlcdcpvm01.nyumc.org"
+#msg_note "NOTE:" "If you forget the pgm password, we have it saved in Evernote"
 msg_code "cat pgm/log/uploads.log"
-msg_note "Reminder:" "Check Philips ISPM to ensure uploads are not pending or missing.  Nextflow will email you any errors and when the pipeline completes successfully"
+msg_note "Reminder:" "If you forget the pgm password, we have it saved in Evernote.  Check Philips ISPM to ensure uploads are not pending or missing.  Nextflow will email you any errors and when the pipeline completes"
 echo "$BOX2"
 
 # Stage 3 -----------------------
