@@ -70,6 +70,10 @@ loadPacks <- function(){
             install.packages(pk, dependencies=T, verbose=T, repos="http://cran.us.r-project.org", type="both")
             libLoad(pk)
         }else{libLoad(pk)}}))
+    if(paste(utils::packageVersion("redcapAPI")) != "2.7.4"){
+    install.packages("redcapAPI", ask=F, update=T, dependencies=T)
+    }
+
 }
 
 
