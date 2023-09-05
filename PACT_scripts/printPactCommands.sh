@@ -315,7 +315,7 @@ msg_stage 1 "Demux Steps"
 msg_step 1 "#ffdfba" "Once sequencing is finished, start demultiplexing by logging into BigPurple"
 msg_code "ssh -Y ${kerbero}@bigpurple.nyumc.org"
 msg_step 2 "#ffdfba" "Go into the demux-nf2 directory"
-msg_code "cd ~/molecpathlab/pipelines/demux-nf2/"
+msg_code "cd /gpfs/data/molecpathlab/pipelines/demux-nf2/"
 msg_step 3 "#ffdfba" "Execute the deploy command for your run"
 msg_code "make deploy RUNID=${runID} SAMPLESHEET=$SHEETDIR/${runID}-SampleSheet.csv SEQTYPE=NGS607"
 msg_step 4 "#ffdfba" "Go into the newly deployed Demultiplexing run directory then make update and submit"
@@ -329,17 +329,17 @@ msg_step 1 "#ffffba" "After Demux finishes, check the QC by pasting the link bel
 msg_code "sftp://bigpurple.nyumc.org${DEMUXDIR}/output/${runID}.report.html"
 msg_step 2 "#ffffba" "Log back in to BigPurple and open directory permissions for others"
 msg_code "ssh ${kerbero}@bigpurple.nyumc.org"
-msg_code "chmod -R g+rwx ${DEMUXDIR}/output"
+#msg_code "chmod -R g+rwx ${DEMUXDIR}/output"
 msg_step 3 "#ffffba" "Return to the Demux directory, execute the pass and upload *make* commands to upload to Philips, then deploy the in-house pipeline"
-msg_code "cd $DEMUXDIR"
+msg_code "cd $DEMUXDIR && chmod -R g+rwx ${DEMUXDIR}/output"
 msg_note "NOTE:" "If you have any filler or validation cases make sure they are not uploaded to pgm by moving the fastq files out of the directory"
-msg_code "make passed && make uploads && make deploy-NGS607"
-msg_code "cd ${productionDir}/NGS607/${runID}"
+msg_code "make passed && make uploads && make deploy-NGS607 && cd ${productionDir}/NGS607/${runID} && chmod -R g+rwx ${productionDir}/isg-uploads/${runID}"
+#msg_code "cd ${productionDir}/NGS607/${runID}"
 msg_step 4 "#ffffba" "Update and then submit the slurm job and check your squeue logs"
 msg_code "make update && make submit"
 msg_code "squeue -u ${kerbero} && lt logs/*"
 msg_step 5 "#ffffba" "chmod the isg-uploads folder to ensure the files are accessible and check the pgm log to verify uploading to Philips every 30 min"
-msg_code "chmod -R g+rwx ${productionDir}/isg-uploads/${runID}"
+#msg_code "chmod -R g+rwx ${productionDir}/isg-uploads/${runID}"
 msg_code "ssh pgm@pgmlcdcpvm01.nyumc.org"
 msg_note "NOTE:" "If you forget the pgm password, we have it saved in Evernote"
 msg_code "cat pgm/log/uploads.log"
@@ -392,12 +392,10 @@ msg_code "/mnt/${kerbero}/molecular/Molecular/Validation/Scripts/zdrive_copier.s
 # msg_code "rsync -vrthP ${productionDir}/NGS607/${runID}/output/cnv/FACETS/*.pdf ${productionDir}/NGS607/${runID}/${pactRun}-QC.tsv ${zdrive}/REDCap/cnv_facets/${pactRun}/"
 msg_step 3 "#baffc9" "Email the PACT team once the QC files are copied to notify them the following"
 msg_code "The in-house pipeline completed for ${pactRun}.
-
 The data for this week’s PACT run is copied here:
-smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/NGS607/${currYear}/${runID}/
-
+<smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/NGS607/${currYear}/${runID}/>
 The QC and output is copied here:
-smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics/${currYear}/${pactRun}/${pactRun}.html
+<smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics/${currYear}/${pactRun}/${pactRun}.html>
 "
 echo "$BOX2"
 
@@ -419,13 +417,13 @@ msg_code "${HOME}/make_consensus.sh ${runID} ${pactRun}"
 # msg_step 4 "#bae1ff" "Knit the rMarkdown file in your consensus directory"
 # #msg_code "cp ${HOME}/Desktop/${pactRun}_desc.csv ${consensusDir}${pactRun}_consensus/"
 # msg_code "cd ${consensusDir}${pactRun}_consensus/ && Rscript --verbose -e \"rmarkdown::render('${consensusDir}${pactRun}_consensus/${pactRun}_consensus.Rmd', params=list(pactName='${pactRun}', userName='${kerbero}'))\""
-msg_step 2 "#bae1ff" "Once the CNV concensus html is created, copy it to \"/Volumes${outputDir}${currYear}/${pactRun}/\""
-#msg_code "open ${consensusDir}${pactRun}_consensus/${pactRun}_consensus.html"
-#msg_code "cp ${consensusDir}${pactRun}_consensus/${pactRun}_consensus.html \"/Volumes${outputDir}${currYear}/${pactRun}/\""
-msg_step 3 "#bae1ff" "Send an email to notify the file is ready"
+# msg_step 2 "#bae1ff" "Once the CNV concensus html is created, copy it to \"/Volumes${outputDir}${currYear}/${pactRun}/\""
+# msg_code "open ${consensusDir}${pactRun}_consensus/${pactRun}_consensus.html"
+# msg_code "cp ${consensusDir}${pactRun}_consensus/${pactRun}_consensus.html \"/Volumes${outputDir}${currYear}/${pactRun}/\""
+msg_step 2 "#bae1ff" "Send an email to notify the file is ready"
 msg_code "Hi all,
 The methylation CNV consensus is copied here:
-smb://shares-cifs.nyumc.org/apps/acc_pathology${outputDir}${currYear}/${pactRun}/${pactRun}_consensus.html
+<smb://shares-cifs.nyumc.org/apps/acc_pathology${outputDir}${currYear}/${pactRun}/${pactRun}_consensus.html>
 "
 echo "$BOX2"
 
