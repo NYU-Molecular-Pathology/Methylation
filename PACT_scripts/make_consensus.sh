@@ -13,10 +13,13 @@ DEFAULTVALUE="/Volumes/CBioinformatics/jonathan/pact/consensus/"
 consensusDir="${3:-$DEFAULTVALUE}"
 kerbero=${4-$USER} # if arg $3 is empty assign $USER as default else i.e. whoami kerberosid
 
-# Hardcoded paths
+# Current Year Calculation
 currYear=$(date +'%Y')
+
+# Hardcoded paths
 pactGithub="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts"
 outputDir="/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics/"
+clinicalOuput="/Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/"
 
 mkdir -p "${consensusDir}${pactRun}_consensus" 
 
