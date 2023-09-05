@@ -12,10 +12,10 @@ formals(library)$warn.conflicts <- F
 formals(require)$warn.conflicts <- F
 formals(install.packages)$dependencies <- T
 formals(install.packages)$verbose <- T
-formals(install.packages)$ask <- F 
+formals(install.packages)$ask <- F
 
 args <- commandArgs(T)
-if(!require(quietly=T, "devtools")){install.packages("devtools", quiet=T)}
+if(!requireNamespace("devtools")){install.packages("devtools", quiet=T)}
 
 # Input Arguments ------------------------------------------
 try(args[1] -> token)
@@ -37,9 +37,13 @@ flds = c("record_id","b_number","tm_number","accession_number","block","diagnosi
          "organ","tissue_comments","run_number", "nyu_mrn")
 
 # Load redcapAPI Package -----
-if(suppressWarnings(!require(quietly=T, "redcapAPI"))){
+if(suppressWarnings(!requireNamespace("redcapAPI"))){
     params=list('nutterb/redcapAPI', dependencies=T, upgrade="always", type="source")
     do.call(devtools::install_github,c(params))
+}
+
+if(paste(utils::packageVersion("redcapAPI")) != "2.7.4"){
+    install.packages("redcapAPI", ask=F, update=T, dependencies=T)
 }
 
 if(length(copyToFolder)==0){
@@ -79,14 +83,14 @@ loadPacks <- function(){
         bothType <- "source"
     }
     invisible(lapply(pkgs, function(pk){
-        if(suppressWarnings(!require(quietly=T, pk, character.only=T))){
+        if(suppressWarnings(!requireNamespace(pk, character.only=T))){
             install.packages(pk,dependencies=T, verbose=T, repos="http://cran.us.r-project.org", type=bothType)
         }}))
-    if(!require(quietly=T, "redcapAPI")){install.packages("redcapAPI", dependencies = T, type=bothType,ask=F)}
-    if(!require(quietly=T, "remotes")){install.packages("remotes", dependencies=T)}
+    if(!requireNamespace("redcapAPI")){install.packages("redcapAPI", dependencies = T, type=bothType,ask=F)}
+    if(!requireNamespace("remotes")){install.packages("remotes", dependencies=T)}
     library("redcapAPI")
     library(dplyr)
-    require(quietly=T, 'foreach')
+    requireNamespace('foreach')
 }
 
 # API Call functions -----
@@ -101,8 +105,16 @@ search.redcap <- function(rd_numbers, token=NULL, flds=NULL) {
     rcon <- redcapAPI::redcapConnection(gb$apiLink, token)
     if (is.null(flds)){flds = c("record_id","b_number","primary_tech","second_tech","run_number",
                                 "barcode_and_row_column","accession_number","arrived")}
-    result <- redcapAPI::exportRecords(rcon,records = rd_numbers,fields = flds, dag = F,factors = F,
+    result <- redcapAPI::exportRecordsTyped(rcon,records = rd_numbers,fields = flds, dag = F,factors = F,
                                        labels = F,dates = F, form_complete_auto = F,format = 'csv')
+    allFound <- rd_numbers %in% result$record_id
+    missing <- which(allFound == FALSE)
+
+    if(length(missing) > 0){
+        warning("Some RD-numbers were not found in REDCap!")
+        message(paste0(capture.output(rd_numbers[missing]), collapse="\n"))
+    }
+
     return(as.data.frame(result))
 }
 
@@ -241,8 +253,8 @@ readInfo <- function(inputSheet) {
         rds <- read.delim(inputSheet, header = F, sep=",", colClasses=character(), row.names=NULL)[,1]
     } else{
         message("FileType is .xlsx, executing readxl::read_excel...")
-        rds <- readxl::read_excel(inputSheet, col_names = F, sheet = 1)[, 1]     
-    }      
+        rds <- readxl::read_excel(inputSheet, col_names = F, sheet = 1)[, 1]
+    }
     if ( typeof(rds) != "character" ) {
         warning('Converting RD-numbers to class "character", your readxl should not output typeof == "list". Update your version of the `tibble` package in the future!')
         rds <- as.data.frame(rds)[,1]
@@ -337,8 +349,8 @@ sourceFuns()
 
 if(length(inputSheet) >0 & length(token)>0){
     if(!is.na(inputSheet) & !is.na(token)){
-        rds <- readInfo(inputSheet)
-        grabRDCopyIdat(rd_numbers=rds, token=token)
+        rd_numbers <- readInfo(inputSheet)
+        grabRDCopyIdat(rd_numbers=rd_numbers, token=token)
     }
 }
 
