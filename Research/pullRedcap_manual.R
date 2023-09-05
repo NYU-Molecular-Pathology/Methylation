@@ -111,7 +111,7 @@ search.redcap <- function(rd_numbers, token=NULL, flds=NULL) {
     missing <- which(allFound == FALSE)
 
     if(length(missing) > 0){
-        warning("Some RD-numbers were not found in REDCap!")
+        message("Some RD-numbers were not found in REDCap!")
         message(paste0(capture.output(rd_numbers[missing]), collapse="\n"))
     }
 
