@@ -191,28 +191,26 @@ h1{
 }
 
 .stagehead {
-  font-size:40px !important;
+  font-size: 40px;
   font-weight: 600!important;
   background-image: linear-gradient(
-        45deg,
-        #CA4246 16.666%, 
-        #E16541 16.666%, 
-        #E16541 33.333%, 
-        #F18F43 33.333%, 
-        #F18F43 50%, 
-        #8B9862 50%, 
-        #8B9862 66.666%, 
-        #476098 66.666%, 
-        #476098 83.333%, 
-        #A7489B 83.333%)!important;
+        to bottom,
+        #CA4246, 
+        #E16541, 
+        #F18F43, 
+        #8B9862, 
+        #476098, 
+        #A7489B)!important;
   color: transparent!important;
   display: block;
   background-clip: text!important;
   -webkit-background-clip: text!important;
   font-family: 'Allerta Stencil';
-  margin-bottom: 0px !important;
+  margin-bottom: 25px !important;
+  margin-top: 25px !important;
   -webkit-text-stroke-width: 0.25px;
   -webkit-text-stroke-color: black;
+  line-height: 30px;
 }
 
 </style>
