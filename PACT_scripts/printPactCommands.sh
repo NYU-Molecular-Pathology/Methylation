@@ -217,6 +217,8 @@ h1{
 .gradient-text {
   /* Fallback: Set a background color. */
   background-color: #CA4246;
+  font-size:40px !important;
+  font-weight: 600!important;
   
   /* Create the gradient. */
    background-image: linear-gradient(
@@ -240,6 +242,14 @@ h1{
   /* This will show the gradient as a text color rather than element bg. */
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent; 
+  color: transparent!important;
+  display: block;
+  background-clip: text!important;
+  -webkit-background-clip: text!important;
+  font-family: 'Allerta Stencil';
+  margin-bottom: 0px !important;
+  -webkit-text-stroke-width: 0.25px;
+  -webkit-text-stroke-color: black;
   
   /* Animate the text when loading the element. */
     /* This animates it on page load and when hovering out. */
