@@ -198,9 +198,7 @@ h1{
         #CA4246, 
         #E16541, 
         #F18F43, 
-        #8B9862, 
-        #476098, 
-        #A7489B)!important;
+        #8B9862)!important;
   color: transparent!important;
   display: block;
   background-clip: text!important;
@@ -210,7 +208,6 @@ h1{
   margin-top: 25px !important;
   -webkit-text-stroke-width: 0.05px;
   -webkit-text-stroke-color: black;
-  line-height: 30px;
 }
 
 </style>
