@@ -275,7 +275,6 @@ makeSampleSheet <- function(df, samplesheet_ID, bn = NULL, outputFi = "sampleshe
 
 Find_copy_idats <- function(rd_numbers, token, copyIdats = T, outputFi = "samplesheet_og.csv", idatPath = NULL) {
     idatPath <- if (is.null(idatPath)) file.path(getwd(), "idats") else idatPath
-    if(!dir.exists(idatPath)){dir.create(idatPath)}
     result_raw <- search.redcap(rd_numbers, token)
     if(nrow(result_raw)==0){
         stop(paste0("None of your RD-numbers have idat files or are not found in REDCap\n",
