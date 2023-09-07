@@ -1,6 +1,6 @@
 #!/usr/bin/env R
 ## ---------------------------
-## Script name: idats_to_BigPurple.R
+## Script name: BigPurpleIdats.R
 ## Purpose: source of global scripts, copy idat files to HPC, & create minfi samplesheet.csv
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2023
