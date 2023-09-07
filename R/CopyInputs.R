@@ -132,87 +132,79 @@ DataFrameMessage <- function(dat){
 }
 
 CheckIdatsReal <- function(ssheet, allFi) {
-    if ((nrow(ssheet) * 2 == length(allFi)) == F) {
+    basesNeeded = as.vector(ssheet$SentrixID_Pos)
+    if (length(unique(basesNeeded)) * 2 == length(unique(basename(allFi)))){
         message(crayon::bgRed("Still missing idat files not in External folder:"))
-        themissed <-
-            stringr::str_split_fixed(basename(allFi), "_", 3)
-        themissed <-
-            paste(themissed[, 1], themissed[, 2], sep = "_")
-        if (nrow(ssheet) * 2 > length(allFi)) {
-            message("The following samples are missing:")
-            toDrop <- ssheet$SentrixID_Pos %in%  themissed
-            missing_samples <- ssheet$SentrixID_Pos[!toDrop]
-            DataFrameMessage(missing_samples)
-            
-            # Save missing samples to a CSV log file
-            missing_samples_df <- data.frame(Missing_Samples = missing_samples)
-            write.csv(missing_samples_df, "missing_idats_log.csv", row.names = F, quote = F)
-            message("Check the log file to see which idats were not found: missing_idats_log.csv")
-        }
+        themissed <- stringr::str_split_fixed(basename(allFi), "_", 3)[,1:2]
+        themissed <- paste(themissed[, 1], themissed[, 2], sep = "_")
+        message("The following samples are missing:")
+        missing_samples <- basesNeeded[!(basesNeeded %in% themissed)]
+        DataFrameMessage(missing_samples)
+        missing_samples_df <- data.frame(Missing_Samples = missing_samples)
+        write.csv(missing_samples_df, "missing_idats_log.csv", row.names = F, quote = F)
+        stop("Check the log file to see which idats were not found: missing_idats_log.csv")
     }
 }
 
 
 VerifyIdatFound <- function(foundIdat, otherIdat, toBeFound, extr.idat){
     if (any(foundIdat)==F){
-            message(crayon::bgRed("Still missing idat files not in External folder:"))
-            DataFrameMessage(toBeFound)
-            stopifnot(any(foundIdat))
-        }
-        message(crayon::bgGreen("Found extra idats in External folder:")," ", extr.idat)
-        idatsToAdd <- otherIdat[foundIdat]
-        DataFrameMessage(idatsToAdd)
-        return(idatsToAdd)
+        message(crayon::bgRed("Still missing idat files not in External folder:"))
+        DataFrameMessage(toBeFound)
+        return(NULL)
+    }
+    message(crayon::bgGreen("Found extra idats in External folder:")," ", extr.idat)
+    idatsToAdd <- otherIdat[foundIdat]
+    DataFrameMessage(idatsToAdd)
+    return(idatsToAdd)
 }
 
 
 ListMissedIdats <- function(allFi, basesNeeded){
-    basesSplit <-
-        stringr::str_split_fixed(basename(allFi), "_", 3)[, c(1, 2)]
-    basesFound <-
-        unique(paste0(basesSplit[, 1], "_", basesSplit[, 2]))
+    basesSplit <- stringr::str_split_fixed(basename(allFi), "_", 3)[, c(1, 2)]
+    basesFound <- unique(paste0(basesSplit[, 1], "_", basesSplit[, 2]))
     stillMissing <- !(basesNeeded %in% basesFound)
     return(stillMissing)
 }
 
 
-GetIdats2Add <- function(basesNeeded, stillMissing, extr.idat){
-    toBeFound <- basesNeeded[stillMissing]
+GetIdats2Add <- function(toBeFound, extr.idat){
     message(crayon::bgRed("The following idats are missing:"))
     DataFrameMessage(toBeFound)
     message(crayon::bgGreen("Searching the External folder for more idats..."))
-    otherIdat <- dir(extr.idat, pattern = ".idat", full.names = T, recursive = T)
-    toBeSearch <- paste(toBeFound, collapse = "|")
-    foundIdat <- stringr::str_detect(otherIdat, pattern = toBeSearch)
-    idatsToAdd <- VerifyIdatFound(foundIdat, otherIdat, toBeFound, extr.idat)
+    redGreenFi <- paste0(rep(toBeFound, each = 2), c("_Grn.idat", "_Red.idat"))
+    idatsToAdd <- file.path(extr.idat, redGreenFi)
+    if(all(file.exists(idatsToAdd))==F){
+        otherIdat <- dir(extr.idat, pattern = ".idat", full.names = T, recursive = T)
+        toBeSearch <- paste(toBeFound, collapse = "|")
+        foundIdat <- stringr::str_detect(otherIdat, pattern = toBeSearch)
+        idatsToAdd <- VerifyIdatFound(foundIdat, otherIdat, toBeFound, extr.idat)
+    }
     return(idatsToAdd)
 }
 
 
 # FUN: Checks for additional missing idat files if not in molecular or research iScan folders
 GetExternalIdats <- function(allFi, ssheet, extr.idat){
-    if (nrow(ssheet) * 2 == length(allFi)){
+    basesNeeded = as.vector(ssheet$SentrixID_Pos)
+    if (length(unique(basesNeeded)) * 2 == length(unique(basename(allFi)))){
         message("All idats detected in folders!")
         return(allFi)
     }
-    message(paste0(capture.output(ssheet), collapse="\n"))
     message(crayon::bgRed("Still missing some idats! Checking External Folder:")," ", extr.idat)
-    basesNeeded = as.vector(ssheet$SentrixID_Pos)
-    message(paste0(capture.output(basesNeeded), collapse="\n"))
+
     if (length(allFi) > 0) {
         stillMissing <- ListMissedIdats(allFi, basesNeeded)
     } else{
         stillMissing <- basesNeeded %in% basesNeeded
         allFi <- NULL
     }
+    
     if(any(stillMissing) == T){
-        message("Missing idats:")
-        message(paste0(capture.output(stillMissing), collapse="\n"))
-        idatsToAdd <- GetIdats2Add(basesNeeded, stillMissing, extr.idat)
+        message("Missing idats:\n", paste0(capture.output(ssheet[stillMissing,]), collapse="\n"))
+        idatsToAdd <- GetIdats2Add(basesNeeded[stillMissing], extr.idat)
         if(!is.null(allFi)){
-            toDrop <- basename(idatsToAdd) %in% basename(allFi)
-            idatsToAdd <- idatsToAdd[!toDrop]
-            allFi <- c(allFi, idatsToAdd)
+            allFi <- unique(c(allFi, setdiff(idatsToAdd, allFi)))
             CheckIdatsReal(ssheet, allFi)
         }else{
             allFi <- idatsToAdd
