@@ -309,6 +309,20 @@ Find_copy_idats <- function(rd_numbers, token, copyIdats = T, outputFi = "sample
 }
 
 
+CopyFile2HPC <- function(iFile, outputCmd, logFile, errorLog) {
+    copyCmd <- sprintf("rsync -e ssh %s %s", iFile, outputCmd)
+    message(sprintf("\nCopying file:\n%s", copyCmd))
+
+    systemStatus <- try(system(copyCmd), silent = TRUE)
+
+    if (inherits(systemStatus, "try-error") == FALSE) {
+        write(iFile, file = logFile, append = TRUE)
+    } else{
+        write(iFile, file = errorLog, append = TRUE)
+    }
+}
+
+
 RsyncBigPurple <- function(allFi, idatPath = NULL) {
     idatPath <- if (is.null(idatPath)){gb$copyToFolder}else{idatPath}
     msgFunName(cpInLnk, "RsyncBigPurple")
@@ -316,27 +330,18 @@ RsyncBigPurple <- function(allFi, idatPath = NULL) {
 
     userNam <- Sys.info()[["user"]]
     outputCmd <- sprintf("%s@bigpurple.nyumc.org:%s", userNam, copyToFolder)
-
     logFile <- "rsync_logs.txt"
-    if (!file.exists(logFile)) {
-        file.create(logFile)
-    }
+    errorLog <- "rsync_errors.txt"
 
-    # Read existing logs to determine files that have already been copied
+    if (!file.exists(logFile)) {file.create(logFile)}
+    if (!file.exists(errorLog)) {file.create(errorLog)}
+
     existingFiles <- readLines(logFile, warn = FALSE)
-
     for (iFile in allFi) {
         if (!(iFile %in% existingFiles)) {
-            copyCmd <- sprintf("rsync -e ssh %s %s", iFile, outputCmd)
-            message(sprintf("Copying file:\n%s", copyCmd))
-            systemStatus <- try(system(copyCmd), silent = TRUE)
-
-            # If rsync command is successful, append the filename to the log
-            if (inherits(systemStatus, "try-error") == FALSE) {
-                write(iFile, file = logFile, append = TRUE)
-            }
+            CopyFile2HPC(iFile, outputCmd, logFile, errorLog)
         } else {
-            message(sprintf("File %s is already copied according to logs. Skipping.", iFile))
+            message(sprintf("%s is already copied according to logs. Skipping.", iFile))
         }
     }
 }
