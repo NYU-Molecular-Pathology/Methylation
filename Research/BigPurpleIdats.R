@@ -42,15 +42,19 @@ loadOrInstallPackages <- function(pkg){
 loadOrInstallPackages("devtools")
 
 # Package loading function
-loadPacks <- function() {
-    pkgs <- c("data.table", "foreach", "openxlsx", "jsonlite", "RCurl", "readxl", "stringr", "tidyverse", "crayon", "redcapAPI", "remotes")
+LoadPkgs <- function() {
+    pkgs <- c("data.table", "foreach", "openxlsx", "jsonlite", "RCurl", "readxl",
+              "stringr", "tidyverse", "crayon", "redcapAPI", "remotes", "utils")
     lapply(pkgs, loadOrInstallPackages)
+    if(paste(utils::packageVersion("redcapAPI")) != "2.7.4"){
+        install.packages("redcapAPI", ask=F, update=T, dependencies=T)
+    }
 }
 
 WarnMounts <- function(idat.dir) {
     if (!dir.exists(idat.dir)) {
         stop(crayon::bgRed("Directory not found, ensure the idat path is accessible:"), "\n", idat.dir)
-    }
+    }else{return(paste("Directory exists:", idat.dir))}
 }
 
 checkMounts <- function() {
@@ -101,7 +105,7 @@ search.redcap <- function(rd_numbers, token=NULL, flds=NULL) {
             flds
         }
     result <-
-        redcapAPI::exportRecords(
+        redcapAPI::exportRecordsTyped(
             rcon,
             records = rd_numbers,
             fields = flds,
@@ -202,6 +206,7 @@ setDirectory <- function(foldr) {
 }
 
 SourceFunctions <- function(workingPath = NULL) {
+    LoadPkgs()
     git_url <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/CopyInputs.R"
     workingPath <- if (is.null(workingPath)) getwd() else workingPath
     invisible(devtools::source_url(url = git_url))
@@ -216,7 +221,7 @@ readInfo <- function(inputSheet) {
         readxl::read_excel(inputSheet, col_names = F)[, 1]
     }
     rds <- rds[!is.na(rds)]
-    return(rds)
+    return(unique(rds))
 }
 
 
@@ -270,8 +275,21 @@ makeSampleSheet <- function(df, samplesheet_ID, bn = NULL, outputFi = "sampleshe
 
 Find_copy_idats <- function(rd_numbers, token, copyIdats = T, outputFi = "samplesheet_og.csv", idatPath = NULL) {
     idatPath <- if (is.null(idatPath)) file.path(getwd(), "idats") else idatPath
+    if(!dir.exists(idatPath)){dir.create(idatPath)}
     result_raw <- search.redcap(rd_numbers, token)
-    result <- result_raw[!is.na(result_raw$barcode_and_row_column), ]
+    if(nrow(result_raw)==0){
+        stop(paste0("None of your RD-numbers have idat files or are not found in REDCap\n",
+                   paste0(capture.output(rd_numbers), collapse="\n")))
+    }
+    missing_idat <- is.na(result_raw$barcode_and_row_column)
+    if(any(missing_idat)){
+        message(crayon::bgRed("Some RD-numbers do not have idat files on REDCap and will be dropped:"))
+        message(paste0(capture.output(result_raw[missing_idat,]), collapse="\n"))
+        result <- result_raw[!missing_idat, ]
+    }else{
+        result <- result_raw
+    }
+
     res_barcodes <- result[, "barcode_and_row_column"]
     samplesheet_ID <- as.data.frame(stringr::str_split_fixed(res_barcodes, "_", 2))
 
@@ -282,8 +300,8 @@ Find_copy_idats <- function(rd_numbers, token, copyIdats = T, outputFi = "sample
     }
 
     stopifnot(nrow(samplesheet_ID) > 0)
-
-    makeSampleSheet(result, samplesheet_ID, bn = NULL, outputFi = outputFi)
+    bn <- file.path(copyToFolder, res_barcodes)
+    makeSampleSheet(result, samplesheet_ID, bn = bn, outputFi = outputFi)
 
     if (copyIdats) {
         GetIdatsFromDrives(csvNam = outputFi, runDir = idatPath)
@@ -323,7 +341,7 @@ RsyncBigPurple <- function(allFi, idatPath = NULL) {
     }
 }
 
-           
+
 LoopIdatFiles <- function(idatsToCopy, tRows=200) {
     totalFiles <- length(idatsToCopy)
     if (totalFiles > tRows) {
@@ -342,16 +360,16 @@ LoopIdatFiles <- function(idatsToCopy, tRows=200) {
     }
 }
 
-           
+
 GetIdatsFromDrives <- function(csvNam = "samplesheet.csv", runDir = NULL) {
     runDir <- if (is.null(runDir)) getwd() else runDir
     extr.idat <- file.path(gb$rsch.idat, "External")
 
-    lapply(c(rsch.idat, clin.idat), WarnMounts)
-
+    unlist(lapply(c(rsch.idat, clin.idat), WarnMounts))
     stopifnot(file.exists(csvNam))
 
     ssheet <- read.csv(csvNam, strip.white = TRUE)
+
     allIdats <- getAllFiles(idatDir = c(rsch.idat, clin.idat), csvNam = csvNam)
     allFi <- allIdats[file.exists(allIdats)]
     if (length(allFi) == 0) {
@@ -360,11 +378,9 @@ GetIdatsFromDrives <- function(csvNam = "samplesheet.csv", runDir = NULL) {
     stopifnot(length(allFi) > 0)
     message("Files found: ")
     DataFrameMessage(allFi)
-
     allFi <- GetExternalIdats(allFi, ssheet, extr.idat)
-    cur.idat <- basename(dir(path = runDir, pattern = "*.idat$", recursive = FALSE))
-
-    idatsToCopy <- allFi[!(basename(allFi) %in% cur.idat)]
+    #cur.idat <- basename(dir(path = runDir, pattern = "*.idat$", recursive = FALSE))
+    idatsToCopy <- allFi #[!(basename(allFi) %in% cur.idat)]
 
     if (length(idatsToCopy) > 0) {
         LoopIdatFiles(idatsToCopy)
