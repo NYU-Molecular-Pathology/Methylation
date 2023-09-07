@@ -314,9 +314,11 @@ CopyFile2HPC <- function(iFile, outputCmd, logFile, errorLog) {
 
     systemStatus <- try(system(copyCmd), silent = TRUE)
 
-    if (inherits(systemStatus, "try-error") == FALSE) {
+    if (systemStatus == 0) {
+        message(crayon::bgGreen("Copy Successful"))
         write(iFile, file = logFile, append = TRUE)
     } else{
+        message(crayon::bgRed(sprintf("Error copying file: %s\nCheck the log: %s", iFile, errorLog)))
         write(iFile, file = errorLog, append = TRUE)
     }
 }
@@ -327,8 +329,7 @@ RsyncBigPurple <- function(allFi, idatPath = NULL) {
     msgFunName(cpInLnk, "RsyncBigPurple")
     cat(sprintf("%s\n", crayon::white$bgCyan("Copying idats to current directory...")))
 
-    userNam <- Sys.info()[["user"]]
-    outputCmd <- sprintf("%s@bigpurple.nyumc.org:%s", userNam, copyToFolder)
+    outputCmd <- sprintf("%s@bigpurple.nyumc.org:%s", Sys.info()[["user"]], copyToFolder)
     logFile <- "rsync_logs.txt"
     errorLog <- "rsync_errors.txt"
 
@@ -346,7 +347,7 @@ RsyncBigPurple <- function(allFi, idatPath = NULL) {
 }
 
 
-LoopIdatFiles <- function(idatsToCopy, tRows=200) {
+LoopIdatFiles <- function(idatsToCopy, tRows=200, outputFi= "samplesheet_og.csv") {
     totalFiles <- length(idatsToCopy)
     if (totalFiles > tRows) {
         message("More than ", tRows, " idats being copied!")
@@ -358,9 +359,18 @@ LoopIdatFiles <- function(idatsToCopy, tRows=200) {
             current_files <- unique(c(red_files, current_files))
             message(sprintf("Copying %d out of %d sets of %d files", i, num_iterations, tRows))
             RsyncBigPurple(current_files)
+            outputFi_sub <- gsub(".csv$", paste0("_set_", i, ".csv"), outputFi)
+            outputFi_path <- file.path(getwd(), outputFi_sub)
+            if(file.exists(outputFi_path)){
+                RsyncBigPurple(outputFi_path)
+            }
         }
     } else {
         RsyncBigPurple(idatsToCopy)
+        outputFi <- file.path(getwd(), outputFi)
+        if(file.exists(outputFi)){
+            RsyncBigPurple(outputFi)
+        }
     }
 }
 
