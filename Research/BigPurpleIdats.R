@@ -14,7 +14,7 @@ options(repos = c(CRAN = "http://cran.us.r-project.org"))
 args <- commandArgs(TRUE)
 try(args[1] ->> token)
 try(args[2] ->> inputSheet)
-try(args[3] ->> copyToFolder)
+try(args[3] ->> copyToFolder) # Path to BigPurple Directory, i.e. /gpfs/home/...
 
 # Helper function to return shared drive names
 NameDrive <- function(volumeName, driveSpace){
