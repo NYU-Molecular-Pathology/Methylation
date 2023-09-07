@@ -1,238 +1,249 @@
 #!/usr/bin/env R
+## ---------------------------
+## Script name: idats_to_BigPurple.R
+## Purpose: source of global scripts, copy idat files to HPC, & create minfi samplesheet.csv
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2023
+## ---------------------------
+
+# Set package installation options
 library("base"); gb <- globalenv(); assign("gb", gb)
+options(repos = c(CRAN = "http://cran.us.r-project.org"))
+
+# Input Arguments
 args <- commandArgs(TRUE)
-if(!require("devtools")){install.packages("devtools", quiet=T)}
+try(args[1] ->> token)
+try(args[2] ->> inputSheet)
+try(args[3] ->> copyToFolder)
 
-# Input Arguments ------------------------------------------
-args[1] -> token
-args[2] -> inputSheet
-
-# Default Paths --------------------------------------------
-apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
-userNam <- paste0(Sys.info()[["user"]])
-
-moVol = file.path("/mnt",userNam,"molecular")
-rsVol = file.path("/mnt",userNam,"snudem01labspace")
-
-clin.idat = file.path(moVol, "MOLECULAR","iScan")
-rsch.idat = file.path(rsVol,"idats")
-
-# REDcap Heading Fields for API pull to create SampleSheet -----
-flds = c("record_id","b_number","tm_number","accession_number","block","diagnosis",
-         "organ","tissue_comments","run_number", "nyu_mrn")
-
-checkAndUpdateFiles <- function() {
-  # Initialize flag for missing lines
-  lines_missing <- FALSE
-
-  # Define file paths and contents
-  rprofile_path <- file.path(Sys.getenv("HOME"), ".Rprofile")
-  makevars_path <- file.path(Sys.getenv("HOME"), ".R/Makevars")
-  
-  rprofile_content <- c(
-    'Sys.setenv(PKG_LIBS="/gpfs/share/apps/libsodium/1.0.18/lib/")',
-    'Sys.setenv(PKG_CONFIG_PATH="/gpfs/share/apps/libsodium/1.0.18/lib/pkgconfig/")',
-    'Sys.setenv(INCLUDE_DIR="/gpfs/share/apps/libsodium/1.0.18/include/")',
-    'Sys.setenv(LD_LIBRARY_PATH="/gpfs/share/apps/libsodium/1.0.18/lib/")'
-  )
-  
-  makevars_content <- c(
-    'PKG_CONFIG_PATH=/gpfs/share/apps/libsodium/1.0.18/lib/pkgconfig',
-    'PKG_CPPFLAGS=-I/gpfs/share/apps/libsodium/1.0.18/include',
-    'PKG_LIBS=-L/gpfs/share/apps/libsodium/1.0.18/lib -lsodium',
-    'INCLUDE_DIR=-I/gpfs/share/apps/libsodium/1.0.18/include/'
-  )
-  
-  # Check and update .Rprofile
-  if (!file.exists(rprofile_path)) {
-    cat(rprofile_content, file = rprofile_path, sep = "\n")
-    lines_missing <- TRUE
-  } else {
-    existing_lines <- readLines(rprofile_path)
-    missing_lines <- setdiff(rprofile_content, existing_lines)
-    if (length(missing_lines) > 0) {
-      cat(missing_lines, file = rprofile_path, sep = "\n", append = TRUE)
-      lines_missing <- TRUE
-    }
-  }
-  
-  # Check and update Makevars
-  if (!file.exists(makevars_path)) {
-    dir.create(file.path(Sys.getenv("HOME"), ".R"), showWarnings = FALSE)
-    cat(makevars_content, file = makevars_path, sep = "\n")
-    lines_missing <- TRUE
-  } else {
-    existing_lines <- readLines(makevars_path)
-    missing_lines <- setdiff(makevars_content, existing_lines)
-    if (length(missing_lines) > 0) {
-      cat(missing_lines, file = makevars_path, sep = "\n", append = TRUE)
-      lines_missing <- TRUE
-    }
-  }
-
-  # If any lines were missing, restart the R session
-  if (lines_missing) {
-    # Source this script upon session restart
-    writeLines(sprintf("source('%s')", normalizePath(sys.frame(1)$ofile)), con = rprofile_path, append = TRUE)
-    
-    # Restart R session
-    message("Reload Script to install. Restarting R session...")
-    .rs.restartR()
-  }
+# Helper function to return shared drive names
+NameDrive <- function(volumeName, driveSpace){
+    return(file.path("","Volumes", volumeName, driveSpace))
 }
 
-# Execute the function
-checkAndUpdateFiles()
-dyn.load("/gpfs/share/apps/libsodium/1.0.18/lib/libsodium.so.23")
-# Load redcapAPI Package -----
-if(suppressWarnings(!require("redcapAPI"))){
-    params=list('nutterb/redcapAPI', dependencies=T, upgrade="always", type="source")
-    do.call(devtools::install_github,c(params))
+# Default Paths
+apiLink <<- "https://redcap.nyumc.org/apps/redcap/api/"
+rsch.idat <<- NameDrive("snudem01labspace","idats")
+clin.idat <<- NameDrive("molecular", "MOLECULAR/iScan")
+
+# REDcap Heading Fields to pull for SampleSheet
+flds <<- c("record_id", "b_number", "tm_number", "accession_number", "block", "diagnosis", "organ", "tissue_comments", "run_number", "nyu_mrn")
+
+# Helper function to suppress messages and warnings
+supM <- function(sobj) suppressMessages(suppressWarnings(sobj))
+
+loadOrInstallPackages <- function(pkg){
+    if (!requireNamespace(pkg, quietly = TRUE)) {
+        install.packages(pkg, dependencies = TRUE, verbose = TRUE, ask = FALSE)
+    }
+    library(pkg, character.only = TRUE, quietly = TRUE, warn.conflicts = FALSE)
 }
 
-# Variables for messages
-dsh="\n================"
-dsh2="================\n"
+loadOrInstallPackages("devtools")
 
-supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
+# Package loading function
+loadPacks <- function() {
+    pkgs <- c("data.table", "foreach", "openxlsx", "jsonlite", "RCurl", "readxl", "stringr", "tidyverse", "crayon", "redcapAPI", "remotes")
+    lapply(pkgs, loadOrInstallPackages)
+}
 
-#  Copy idats and Worksheets creation
-writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
-    if (is.null(bn)) {bn = file.path(getwd(), df$barcode_and_row_column)}
-    message(crayon::bgCyan("~~~Writing from redcap samplesheet.csv using dataframe:"))
+WarnMounts <- function(idat.dir) {
+    if (!dir.exists(idat.dir)) {
+        stop(crayon::bgRed("Directory not found, ensure the idat path is accessible:"), "\n", idat.dir)
+    }
+}
 
-    df<- df[!is.na(df[, "barcode_and_row_column"]),]
-    df<- df[!is.null(df[, "barcode_and_row_column"]),]
-	    print(df)
-    samplesheet_csv = data.frame(
-        Sample_Name = df[, "record_id"],
-        DNA_Number = df[,"b_number"],
-        Sentrix_ID = samplesheet_ID[, 1],
-        Sentrix_Position = samplesheet_ID[, 2],
-        SentrixID_Pos = df[, "barcode_and_row_column"],
-        Basename = paste0(bn),
-        RunID = df$run_number,
-        MP_num = df$accession_number,
-        tech = df$primary_tech,
-        tech2 = df$second_tech,
-        Date = df$arrived
+checkMounts <- function() {
+    molecDrive = "/Volumes/molecular/MOLECULAR LAB ONLY"
+    zDrive = "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular"
+
+    if (dir.exists(molecDrive)) {
+        message("\n", crayon::bgGreen("Z-drive path is accessible"), "\n")
+    } else {
+        cat("\nPATH does not exist, ensure path is mounted:\n")
+        cat(crayon::white$bgRed$bold(molecDrive))
+        cat("\nYou must mount the network Z-drive path:\n")
+        cat(crayon::white$bgRed$bold(zDrive), "\n")
+        stop("Z-drive path is inaccessible.")
+    }
+}
+
+grabAllRecords <- function(flds, rcon) {
+    dbCols <- redcapAPI::exportRecordsTyped(
+        rcon,
+        fields = flds,
+        labels = FALSE,
+        dates = FALSE,
+        survey = FALSE,
+        dag = FALSE,
+        factors = FALSE,
+        form_complete_auto = FALSE
     )
-    samplesheet_csv <- samplesheet_csv[!is.na(samplesheet_csv$SentrixID_Pos),]
-    print(samplesheet_csv)
-    write.csv(samplesheet_csv, file = "samplesheet.csv", quote = F,row.names = F)
-}
-
-search.redcap <- function(rd_numbers, ApiToken=NULL) {
-    if(is.null(ApiToken)){message("You must provide an ApiToken!")}
-    rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", ApiToken)
-    flds = c("record_id","b_number","primary_tech","second_tech","run_number","barcode_and_row_column","accession_number","arrived")
-    result <- redcapAPI::exportRecords(
-	    rcon, records = rd_numbers, fields = flds, dag = F, factors = F, labels = F, dates = F, form_complete_auto = F, format = 'csv')
-    result <- as.data.frame(result)
-    return(result)
-}
-
-get.idats2<-function(csvNam = "samplesheet.csv"){
-    rsch.idat <- gb$rsch.idat;clin.idat <- gb$clin.idat
-    if(!dir.exists(rsch.idat)){warnMount(rsch.idat)}; if(!dir.exists(clin.idat)){warnMount(clin.idat)}
-    stopifnot(dir.exists(rsch.idat)|dir.exists(clin.idat))
-    if (file.exists(csvNam)) {
-        allFi <- gb$getAllFiles(idatDir = c(rsch.idat, clin.idat), csvNam = csvNam)
-        allFi = allFi[file.exists(allFi)]
-        if (length(allFi) > 0) {
-            message("Files found: "); print(allFi)
-            cur.idat <- dir(pattern = "*.idat$")
-            bcds <- paste0(basename(allFi))
-            if (all(bcds %in% cur.idat)) {message(".idat files already copied")}
-            if (!all(bcds %in% cur.idat)) {gb$copyBaseIdats(allFi[!(bcds %in% cur.idat)])}
-        } else {message("No .idat files found! Check worksheet and input folder path")}
-    } else {message(paste("Cannot find your sheet named:", csvNam))}
-}
-
-# FUN: Copies .idat files to your directory and saves samplesheet.csv
-get.rd.info <- function(rd_numbers=NULL, token=NULL, sh_name=NULL){
-    if (is.null(rd_numbers)){
-	    message("No RD-numbers found, Input RD-numbers using get.rd.info(rd_numbers)")
-	    return(NULL)
-    }
-	print(rd_numbers)
-    if (is.null(sh_name)) {sh_name = "samplesheet.csv"}
-    result <- gb$search.redcap(rd_numbers, token)
-    samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[, "barcode_and_row_column"], "_", 2))
-    writeFromRedcap(result, samplesheet_ID) # writes API export as minfi dataframe sheet
-    gb$get.idats2(csvNam = sh_name)  # copies idat files from return to current directory
-    return(result)
-}
-
-# FUN: Sets your directory and sources the helper functions
-sourceFuns <- function(workingPath = NULL) {
-    mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/"
-    script.list <- c("SetRunParams.R","CopyInputs.R") #,"PACT_scripts/generateCNV.R"
-    if (is.null(workingPath)) {workingPath = getwd()}
-    scripts <- paste0(mainHub, script.list)
-    invisible(lapply(scripts, function(i){devtools::source_url(i)}))
-    gb$setDirectory(workingPath)
-    return(gb$defineParams(loadClassifier=F, clin.idat=clin.idat, rsch.idat=rsch.idat))
-}
-
-# FUN: Checks if z-drive is accessible to the Rscript
-checkMounts <- function(){
-    mntAccess <- dir.exists(clin.idat) && dir.exists(rsch.idat)
-    failMount <- ifelse(mntAccess, T, F)
-    if(failMount!=T){
-        cat("\nidat drive paths are not accessible, ensure both paths are mounted:\n")
-        cat("Drive mounted:", dir.exists(clin.idat))
-        cat(crayon::white$bgRed$bold(moVol))
-        cat("Drive mounted:", dir.exists(rsch.idat))
-        cat(crayon::white$bgRed$bold(rsVol))
-        stopifnot(!any(failMount==T))
-    } else {message("\n",crayon::bgGreen("idat drive paths are accessible"),"\n")}
-}
-
-# Functions to load packages and get redcap info -----
-loadPacks <- function(){
-    pkgs = c("data.table", "foreach", "openxlsx","jsonlite","RCurl","readxl","stringr","tidyverse","crayon")
-    rlis = getOption("repos")
-    rlis["CRAN"] = "http://cran.us.r-project.org"
-    options(repos = rlis)
-    invisible(lapply(pkgs, function(pk){
-        if(suppressWarnings(!require(pk, character.only=T))){
-            install.packages(pk,dependencies=T, verbose=T, repos="http://cran.us.r-project.org", type="both")
-        }}))
-    if(!require("redcapAPI")){install.packages("redcapAPI", dependencies = T, type="both",ask=F)}
-    if(!require("remotes")){install.packages("remotes", dependencies=T)}
-    library("redcapAPI")
-    library(dplyr)
-    require('foreach')
-}
-
-# API Call functions -----
-grabAllRecords <- function(flds, rcon){
-    params = list(rcon, fields=flds, labels=F, dates = F, survey = F, dag = F, factors=F, form_complete_auto=F)
-    dbCols <- do.call(redcapAPI::exportRecords, c(params))
     return(as.data.frame(dbCols))
 }
 
 search.redcap <- function(rd_numbers, token=NULL, flds=NULL) {
-    if(is.null(token)){message("You must provide an ApiToken!")};stopifnot(!is.null(token))
+    if (is.null(token)){stop("You must provide an ApiToken!")}
     rcon <- redcapAPI::redcapConnection(gb$apiLink, token)
-    if (is.null(flds)){flds = c("record_id","b_number","primary_tech","second_tech","run_number",
-                                "barcode_and_row_column","accession_number","arrived")}
-    result <- redcapAPI::exportRecords(rcon,records = rd_numbers,fields = flds, dag = F,factors = F,
-                                       labels = F,dates = F, form_complete_auto = F,format = 'csv')
+    flds <-
+        if (is.null(flds)) {
+            c(
+                "record_id",
+                "b_number",
+                "primary_tech",
+                "second_tech",
+                "run_number",
+                "barcode_and_row_column",
+                "accession_number",
+                "arrived"
+            )
+        } else {
+            flds
+        }
+    result <-
+        redcapAPI::exportRecords(
+            rcon,
+            records = rd_numbers,
+            fields = flds,
+            dag = F,
+            factors = F,
+            labels = F,
+            dates = F,
+            form_complete_auto = F,
+            format = 'csv'
+        )
     return(as.data.frame(result))
 }
 
-makeSampleSheet <- function(df, samplesheet_ID, bn = NULL, outputFi="samplesheet_og.csv") {
-    if (is.null(bn)) {bn = file.path(getwd(), df$barcode_and_row_column)}
-    message(crayon::bgCyan("~~~Writing from redcap samplesheet.csv using dataframe:"))
-    # Drop Null/Missing sentrix IDs
-    df<- df[!is.na(df[, "barcode_and_row_column"]),]
-    df<- df[!is.null(df[, "barcode_and_row_column"]),]
-    # Make Data Frame
-    samplesheet_csv = data.frame(
+getDefaults <- function() {
+    cbVol <- switch(Sys.info()[['sysname']], "Darwin"="/Volumes/CBioinformatics/Methylation", "Linux"="~/molecpathlab/production/Methylation")
+    moVol = "/Volumes/molecular"
+    rsVol = "/Volumes/snudem01labspace"
+    defaultParams <- data.frame(
+        mnp.pk.loc = file.path(cbVol, "classifiers/mnp.v11b6"),
+        # other parameters as in the original code
+        stringsAsFactors=F
+    )
+    return(defaultParams)
+}
+
+setVar <- function(valueName,val){
+    return(assign(valueName, val, envir=.GlobalEnv))
+}
+
+assignVar <- function(varStr, assignedVal){
+    if (exists(varStr, envir = .GlobalEnv)) {
+        message(varStr," = ", assignedVal)
+    } else {
+        setVar(varStr, assignedVal)
+    }
+}
+
+getSetvars <- function() {
+    assignedVars <- data.frame(
+        mnp.pk.loc = gb$mnp.pk.loc,
+        ApiToken = gb$ApiToken,
+        methDir = gb$methDir,
+        clinDrv = gb$clinDrv,
+        rschOut = gb$rschOut,
+        clinOut = gb$clinOut,
+        rsch.idat = gb$rsch.idat,
+        clin.idat = gb$clin.idat,
+        QC_file = gb$QC_file,
+        baseDir = gb$baseDir,
+        stringsAsFactors = F
+    )
+    return(assignedVars)
+}
+
+defineParams <- function(mnp.pk.loc = NULL,
+                         ApiToken = NULL,
+                         methDir = NULL,
+                         clinDrv = NULL,
+                         rschOut = NULL,
+                         clinOut = NULL,
+                         rsch.idat = NULL,
+                         clin.idat = NULL,
+                         QC_file = NULL,
+                         isMC = T,
+                         baseDir = NULL,
+                         runID = NULL,
+                         loadClassifier = T) {
+    defVars <- getDefaults()
+    inVars <- list(mnp.pk.loc, ApiToken, methDir, clinDrv, rschOut, clinOut, rsch.idat, clin.idat, QC_file, baseDir)
+
+    non_null_indices <- !sapply(inVars, is.null)
+    defVars[non_null_indices] <- inVars[non_null_indices]
+
+    lapply(names(defVars), function(x) {
+        if (!is.null(defVars[[x]])) setVar(x, defVars[[x]])
+    })
+
+    sapply(names(defVars), function(i) assignVar(i, defVars[[i]]))
+
+    cbVol <- switch(Sys.info()[['sysname']], "Darwin"="/Volumes/CBioinformatics/", "Linux"="~/molecpathlab/production/")
+
+    if (!isMC) {
+        methDir = rschOut
+        assign("workDir", cbVol)
+    }
+}
+
+
+setDirectory <- function(foldr) {
+    bsDir = paste("cd", foldr)
+    if (dir.exists(foldr)) {
+        system(bsDir)
+        setwd(foldr)
+        assign("workDir", foldr)
+    } else{
+        warning(paste("Location Not Found:", foldr))
+    }
+}
+
+SourceFunctions <- function(workingPath = NULL) {
+    git_url <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/CopyInputs.R"
+    workingPath <- if (is.null(workingPath)) getwd() else workingPath
+    invisible(devtools::source_url(url = git_url))
+    setDirectory(foldr = workingPath)
+    return(defineParams(loadClassifier = F))
+}
+
+readInfo <- function(inputSheet) {
+    rds <- if (endsWith(inputSheet, ".csv")) {
+        read.delim(inputSheet, header = F, sep = ",", colClasses = "character")[, 1]
+    } else {
+        readxl::read_excel(inputSheet, col_names = F)[, 1]
+    }
+    rds <- rds[!is.na(rds)]
+    return(rds)
+}
+
+
+WriteSamSheet200 <- function(samplesheet_csv, outputFi, rowBatch = 200){
+    nRows <- nrow(samplesheet_csv)
+    if (nRows > rowBatch) {
+        num_iterations <- ceiling(nRows / rowBatch)
+        for (i in seq_len(num_iterations)) {
+            start_row <- (i - 1) * rowBatch + 1
+            end_row <- min(i * rowBatch, nRows)
+            outputFi_sub <- gsub(".csv$", paste0("_set_", i, ".csv"), outputFi)
+            write.csv(samplesheet_csv[start_row:end_row,],
+                      outputFi_sub,
+                      quote = FALSE,
+                      row.names = FALSE)
+        }
+    }
+}
+
+
+makeSampleSheet <- function(df, samplesheet_ID, bn = NULL, outputFi = "samplesheet_og.csv") {
+    bn <- if (is.null(bn)) file.path(getwd(), df$barcode_and_row_column) else bn
+    df <- df[!is.na(df$barcode_and_row_column), ]
+
+    samplesheet_csv <- data.frame(
         Sample_Name = df[, "record_id"],
-        DNA_Number = df[,"b_number"],
+        DNA_Number = df[, "b_number"],
         Sentrix_ID = samplesheet_ID[, 1],
         Sentrix_Position = samplesheet_ID[, 2],
         SentrixID_Pos = df[, "barcode_and_row_column"],
@@ -241,74 +252,131 @@ makeSampleSheet <- function(df, samplesheet_ID, bn = NULL, outputFi="samplesheet
         MP_num = df$accession_number,
         Date = df$arrived
     )
-    samplesheet_csv <- samplesheet_csv[!is.na(samplesheet_csv$SentrixID_Pos),]
-    write.csv(samplesheet_csv, file = outputFi, quote = F,row.names = F)
-    message(paste0(capture.output(samplesheet_csv), collapse="\n"))
+
+    toDrop <- stringr::str_detect(samplesheet_csv$SentrixID_Pos, "DUPLICATE")
+
+    if (any(toDrop)) {
+        message("Dropping duplicated samples!")
+        otherCsv <- samplesheet_csv[toDrop, ]
+        write.csv(otherCsv, file = "duplicated_samples.csv", quote = FALSE, row.names = FALSE)
+    }
+
+    samplesheet_csv <- samplesheet_csv[!toDrop, ]
+
+    write.csv(samplesheet_csv, outputFi, quote = FALSE, row.names = FALSE)
+    WriteSamSheet200(samplesheet_csv, outputFi)
 }
 
-grabRDCopyIdat <- function(rd_numbers, token, copyIdats=T, outputFi="samplesheet_og.csv"){
-        ApiToken <- token
-        result_raw <- gb$search.redcap(rd_numbers, token)
-        result <- result_raw[!is.na(result_raw$barcode_and_row_column),]
-        samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[,"barcode_and_row_column"],"_",2))
-        if(nrow(samplesheet_ID)>0) {
-            message(
-                "The RD-numbers you entered have not been run yet or do not have idat files in REDCap:\n\n",
-                paste(capture.output(result_raw), collapse = "\n")
-            )
-            stopifnot(nrow(samplesheet_ID)>0)
+
+Find_copy_idats <- function(rd_numbers, token, copyIdats = T, outputFi = "samplesheet_og.csv", idatPath = NULL) {
+    idatPath <- if (is.null(idatPath)) file.path(getwd(), "idats") else idatPath
+    result_raw <- search.redcap(rd_numbers, token)
+    result <- result_raw[!is.na(result_raw$barcode_and_row_column), ]
+    res_barcodes <- result[, "barcode_and_row_column"]
+    samplesheet_ID <- as.data.frame(stringr::str_split_fixed(res_barcodes, "_", 2))
+
+    if (nrow(samplesheet_ID) == 0) {
+        message("The RD-numbers entered do not have sentrix IDs!",
+                "Either samples have not been run or do not have SentrixID in REDCap:",
+                paste(capture.output(result_raw), collapse = "\n"))
+    }
+
+    stopifnot(nrow(samplesheet_ID) > 0)
+
+    makeSampleSheet(result, samplesheet_ID, bn = NULL, outputFi = outputFi)
+
+    if (copyIdats) {
+        GetIdatsFromDrives(csvNam = outputFi, runDir = idatPath)
+    }
+}
+
+
+RsyncBigPurple <- function(allFi, idatPath = NULL) {
+    idatPath <- if (is.null(idatPath)){gb$copyToFolder}else{idatPath}
+    msgFunName(cpInLnk, "RsyncBigPurple")
+    cat(sprintf("%s\n", crayon::white$bgCyan("Copying idats to current directory...")))
+
+    userNam <- Sys.info()[["user"]]
+    outputCmd <- sprintf("%s@bigpurple.nyumc.org:%s", userNam, copyToFolder)
+
+    logFile <- "rsync_logs.txt"
+    if (!file.exists(logFile)) {
+        file.create(logFile)
+    }
+
+    # Read existing logs to determine files that have already been copied
+    existingFiles <- readLines(logFile, warn = FALSE)
+
+    for (iFile in allFi) {
+        if (!(iFile %in% existingFiles)) {
+            copyCmd <- sprintf("rsync -e ssh %s %s", iFile, outputCmd)
+            message(sprintf("Copying file:\n%s", copyCmd))
+            systemStatus <- try(system(copyCmd), silent = TRUE)
+
+            # If rsync command is successful, append the filename to the log
+            if (inherits(systemStatus, "try-error") == FALSE) {
+                write(iFile, file = logFile, append = TRUE)
+            }
+        } else {
+            message(sprintf("File %s is already copied according to logs. Skipping.", iFile))
         }
-        gb$makeSampleSheet(result, samplesheet_ID, bn = NULL, outputFi=outputFi) # writes API export as minfi dataframe sheet
-        # copies idat files from return to current directory
-        if(copyIdats==T){
-            supM(get.idats(csvNam = outputFi))
+    }
+}
+
+           
+LoopIdatFiles <- function(idatsToCopy, tRows=200) {
+    totalFiles <- length(idatsToCopy)
+    if (totalFiles > tRows) {
+        message("More than ", tRows, " idats being copied!")
+        message(sprintf("Looping through %d files at a time from total: %d", tRows, totalFiles))
+        num_iterations <- ceiling(totalFiles / tRows)
+        for (i in 1:num_iterations) {
+            current_files <- idatsToCopy[((i - 1) * tRows + 1) : min(i * tRows, totalFiles)]
+            red_files <- stringr::str_replace_all(current_files, "_Grn", "_Red")
+            current_files <- unique(c(red_files, current_files))
+            message(sprintf("Copying %d out of %d sets of %d files", i, num_iterations, tRows))
+            RsyncBigPurple(current_files)
         }
+    } else {
+        RsyncBigPurple(idatsToCopy)
     }
-
-fillMissingDat <- function(targets, col_samNames="Sample_Name", originalFi="samplesheet_og.csv"){
-    newTarg <- read.csv(originalFi, strip.white=T, row.names=NULL)
-    targets <- merge(newTarg,targets, by=col_samNames, all=F, suffixes = c("",".xyzq"))
-    dupeDrop <- grepl(".xyzq", colnames(targets))==F
-    targets <- targets[,dupeDrop]
-    write.csv(targets, file="samplesheet.csv", quote=F, row.names=F)
-    targets <- read.csv("samplesheet.csv", strip.white=T, row.names=NULL)
-    if(class(targets)!="data.frame"){targets <- as.data.frame(targets)}
-    return(targets)
 }
 
-fixBaseName <- function(targets, runDir, col_sentrix) {
-    if(class(targets)!="data.frame"){targets <- as.data.frame(targets)}
-    senCol <- min(which(grepl(col_sentrix, colnames(targets)) == T))
-    targets$Basename <- file.path(runDir, targets[, senCol]) # writes path to idat files
-    return(targets)
-}
+           
+GetIdatsFromDrives <- function(csvNam = "samplesheet.csv", runDir = NULL) {
+    runDir <- if (is.null(runDir)) getwd() else runDir
+    extr.idat <- file.path(gb$rsch.idat, "External")
 
-readInfo <- function(inputSheet) {
-    # Detect if file is xlsx or csv
-    readFlag <- endsWith(inputSheet,".csv")==T
+    lapply(c(rsch.idat, clin.idat), WarnMounts)
 
-    if (readFlag == T) {
-        message("FileType is .csv, executing read.delim...")
-        rds <- read.delim(inputSheet, sep=",", colClasses=character(), row.names=NULL)[,1]
-    } else{
-        message("FileType is .xlsx, executing readxl::read_excel...")
-        rds <- readxl::read_excel(inputSheet, sheet = 1)[, 1]
+    stopifnot(file.exists(csvNam))
+
+    ssheet <- read.csv(csvNam, strip.white = TRUE)
+    allIdats <- getAllFiles(idatDir = c(rsch.idat, clin.idat), csvNam = csvNam)
+    allFi <- allIdats[file.exists(allIdats)]
+    if (length(allFi) == 0) {
+        allFi <- GetExternalIdats(allFi, ssheet, extr.idat)
     }
-    if(typeof(rds)!="character"){
-        warning('Converting RD-numbers to "Character" [1], readxl or read.delim should not output typeof=="list" update version of tibble')
-        rds <- as.data.frame(rds)[,1]
+    stopifnot(length(allFi) > 0)
+    message("Files found: ")
+    DataFrameMessage(allFi)
+
+    allFi <- GetExternalIdats(allFi, ssheet, extr.idat)
+    cur.idat <- basename(dir(path = runDir, pattern = "*.idat$", recursive = FALSE))
+
+    idatsToCopy <- allFi[!(basename(allFi) %in% cur.idat)]
+
+    if (length(idatsToCopy) > 0) {
+        LoopIdatFiles(idatsToCopy)
+    } else {
+        message(".idat files already copied to run directory")
     }
-    return(rds)
 }
 
-# Search REDCap Worksheets for MRN Match for output -------------------------------------
-loadPacks()
-checkMounts()
-sourceFuns()
+if(Sys.info()[['sysname']] == "Darwin") {checkMounts()}
+SourceFunctions()
 
-# Example Use
-if(!is.na(token) & !is.na(inputSheet)){
-    rds <- readInfo(inputSheet)
-    grabRDCopyIdat(rd_numbers=rds, token=token, copyIdats=T)
+if (length(inputSheet) > 0 && length(token) > 0 && !is.na(inputSheet) && !is.na(token)) {
+    rd_numbers <- readInfo(inputSheet)
+    Find_copy_idats(rd_numbers = rd_numbers, token = token, idatPath = copyToFolder)
 }
-
