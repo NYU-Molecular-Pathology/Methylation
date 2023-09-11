@@ -477,29 +477,38 @@ MatchRGtargets <- function(RGSet, targets, sampleSheet=NULL){
 }
 
 
-GetArrayTypes <- function(targets, arrayColumn, outputFi = "samplesheet_annotated_epic.csv") {
-    if(is.null(arrayColumn)){
+GetArrayTypes <- function(targets,
+                          arrayColumn = NULL,
+                          outputFi = "samplesheet_annotated_epic.csv",
+                          sentrixID_col = "SentrixID_Pos",
+                          idatPath = NULL) {
+    if (is.null(arrayColumn)) {
         targets$ArrayType <- NULL
         arrayColumn <- "ArrayType"
     }
-    sentrix.ids <- as.character(targets$SentrixID_Pos)
-  if (!file.exists(outputFi)) {
-    for (i in 1:length(sentrix.ids)) {
-      sampleEpic <- sentrix.ids[i]
-      pathEpic <- file.path(gb$idatPath, sampleEpic)
-      RGsetEpic <- read.metharray(pathEpic, verbose = T, force = T)
-      is450K <- RGsetEpic@annotation[["array"]] == "IlluminaHumanMethylation450k"
-      if(is450K == T){
-        targets[i, arrayColumn] <- "450k"
-      }else{
-        targets[i, arrayColumn] <- "EPIC"
-      }
+    if (is.null(idatPath)) {
+        idatPath <- getwd()
     }
-    write.csv(targets, file = outputFi, row.names = F, quote = F)
-  }
-  targets <- as.data.frame(read.csv(outputFi))
-  return(targets)
+    targets$Basename <- file.path(idatPath, targets[, sentrixID_col])
+    sentrix.ids <- as.character(targets[, sentrixID_col])
+    if (!file.exists(outputFi)) {
+        for (i in 1:length(sentrix.ids)) {
+            sample_idat <- sentrix.ids[i]
+            idat_path <- file.path(idatPath, sampleEpic)
+            rgset <- minfi::read.metharray(idat_path, verbose = T, force = T)
+            is450K <- rgset@annotation[["array"]] == "IlluminaHumanMethylation450k"
+            if (is450K) {
+                targets[i, arrayColumn] <- "450k"
+            } else{
+                targets[i, arrayColumn] <- "EPIC"
+            }
+        }
+        write.csv(targets, file = outputFi, row.names = F, quote = F)
+    }
+    targets <- as.data.frame(read.csv(outputFi))
+    return(targets)
 }
+
 
 Get_Unfiltered_Betas <- function(idatPath, samsheet, dataFi="data/unfilteredBetas.Rdata"){
     if (file.exists(dataFi)) {
