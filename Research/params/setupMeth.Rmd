@@ -16,7 +16,8 @@ rFiles = c(
     "tableMaker.R",
     "pathviews.R",
     "pullRedcap_manual.R",
-    "cleanSamples.R"
+    "cleanSamples.R",
+    "SetupMethKnit.R"
 )
 mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/"
 
