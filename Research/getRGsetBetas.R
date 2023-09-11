@@ -492,6 +492,7 @@ GetArrayTypes <- function(targets,
     targets$Basename <- file.path(idatPath, targets[, sentrixID_col])
     sentrix.ids <- as.character(targets[, sentrixID_col])
     if (!file.exists(outputFi)) {
+        message("Adding ArrayTypes (EPIC vs 450k) to Samplesheet")
         for (i in 1:length(sentrix.ids)) {
             sample_idat <- sentrix.ids[i]
             idat_path <- file.path(idatPath, sample_idat)
