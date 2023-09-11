@@ -494,7 +494,7 @@ GetArrayTypes <- function(targets,
     if (!file.exists(outputFi)) {
         for (i in 1:length(sentrix.ids)) {
             sample_idat <- sentrix.ids[i]
-            idat_path <- file.path(idatPath, sampleEpic)
+            idat_path <- file.path(idatPath, sample_idat)
             rgset <- minfi::read.metharray(idat_path, verbose = T, force = T)
             is450K <- rgset@annotation[["array"]] == "IlluminaHumanMethylation450k"
             if (is450K) {
