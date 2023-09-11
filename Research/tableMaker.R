@@ -401,17 +401,26 @@ loadHtmlTag <- function(){
     return(htmltools::tagList(plotly::ggplotly(ggplot2::ggplot())))
 }
 
+
 sourceParams <- function(X = c("Params_input.R", "Params_output.R")) {
     paramFiles <- unlist(lapply(X, function(X) {file.path(".", "params", X)}))
     stopifnot(file.exists(paramFiles[1])|file.exists(paramFiles[2]))
     invisible(lapply(paramFiles, source))
 }
 
+
 GetCsvSheet <- function(needFi, samsheet, token, idatPath=NULL, outputFi="samplesheet_og.csv"){
   if(is.null(idatPath)){idatPath<- file.path(getwd(),"idats")}
     # Using "pullRedcap_manual.R"
     rds <- gb$readInfo(inputSheet = samsheet) # inputSheet can be xlsx or csv
-    stopifnot(length(rds)>1 & stringr::str_detect(rds[1],"RD-"))
+    stopifnot(length(rds)>1)
+    valid_rd <- stringr::str_detect(rds,"RD-")
+    if(any(!valid_rd)){
+        message("Some samples do not have valid RD-numbers and will be removed:")
+        toDrop <- which(!valid_rd)
+        message(capture.output(rds[toDrop]), collapse="\n")
+        rds <- rds[-toDrop]
+    }
     if(gb$needFi==T) {
       gb$grabRDCopyIdat(rd_numbers=rds, token, copyIdats=T, outputFi=outputFi)
       gb$MoveIdats()
