@@ -1,7 +1,6 @@
 ---
-title: "Methylation Clusters"
-author: "Jonathan Serrano"
-date: "17 March, 2023"
+author: "Your Name"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
 output:
   html_document: 
     code_download: yes
@@ -23,9 +22,12 @@ knitr::opts_knit$set(gb$knitOpt); knitr::opts_chunk$set(gb$knitOpt)
 gb$sourceParams(); gb$loadHtmlTag()
 targets <- gb$GenerateTargets(gb)
 ```
+---
+title: "`r paste(gb$htmlTitle)`"
+---
 ```{css, echo=FALSE,code=readLines("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/Research.css")}
 ```
-```{r,label='Project Info', child='./parameters/about.Rmd', include=TRUE}
+```{r,label='Project Info', child='./params/about.Rmd', include=TRUE}
 ```
 # Input Sample Sheet Information
 
@@ -50,9 +52,14 @@ targets <- gb$MatchBetas2Targets(targets, betas)
 theMissing <- gb$dropBadQc(targets, betas) # Drop low-quality probe samples (exports csv)
 targets <- gb$getTargCsv(gb$samsheet)
 RGSet <- gb$cleanRgset(RGSet, gb$col_sentrix, betas)
-gb$superbetas <- gb$loadSupervise(RGSet, betas, gb, gb$selectedVars[1])
-gb$superbetas2 <- gb$loadSupervise(RGSet, betas, gb, gb$selectedVars[2])
 gb$mSetSq.beta <- gb$GetMsetSq(RGSet, targets, gb$mbfile)
+if(gb$supervisedRun){
+    for(i in 1:length(gb$selectedVars)){
+        superbetas <- gb$loadSupervise(RGSet, betas, gb, gb$selectedVars[i], dmpTyp = "categorical")
+        varName <- paste0("superbetas", i)
+        assign(x = varName, value = superbetas, envir = gb)
+    }
+}
 ```
 
 # MDS Plots {.tabset}
@@ -65,31 +72,35 @@ gb$ShowAnyMissed(gb)
 
 # All Groups Unsupervised TSNE
 ```{r ,label='TSNE Unsupervised2', echo=FALSE, error=FALSE, dpi=350, out.height="650px", out.width="3650px", results='asis', fig.path="figures/tsne/", fig.keep='all'}
-gb$GetCatHeader(gb$tsneHead1)
-targets1 <- gb$SubsetTargets(targets)
+targets1 <- gb$SubsetTargets(targets, gb$variable_to_filter)
+tnseHead <- gb$GetColorShape(gb$col_samGrp, gb$col_shapes)
+
+gb$GetCatHeader(tnseHead)
 gb$GenerateUnsuperTsne(targets1, betas, gb)
-cat('\n\n')
-cat('# All Groups Unsupervised TSNE (No Shapes/Symbols)\n\n')
-gb$GetCatHeader(gb$tsneHead2)
+
+gb$GetCatHeader(NULL, FALSE)
+
+tnseHead <- gb$GetColorShape(gb$col_samGrp, gb$col_Grouping)
+gb$GetCatHeader(tnseHead)
 targets1 <- gb$SubsetTargets(targets)
 gb$GenerateUnsuperTsne(targets1, betas, gb, shapeVariable = gb$col_Grouping)
 cat('\n\n')
 ```
+
 # DMP Supervised TSNE
+
 ```{r, label='TSNE Supervised2', echo=FALSE, error=FALSE, dpi=350, out.height="650px", out.width="3650px", results='asis', fig.path="figures/tsne/", fig.keep='all'}
-gb$GetCatHeader(gb$tsneHead3)
-targets1 <- gb$SubsetTargets(targets)
-if (gb$supervisedRun == T) {gb$GenerateUnsuperTsne(targets1, betas = gb$superbetas, gb, colorVariable = gb$selectedVars[1],
-    shapeVariable = gb$col_Grouping, sampleGrouping = "Sample_Group", isSuper = T)} else {cat("No supervised analysis output")}
-```
-
-# DMP Supervised TSNE
-
-```{r, label='TSNE Supervised1', echo=FALSE, error=FALSE, dpi=350, out.height="650px", out.width="3650px", results='asis', fig.path="figures/tsne/", fig.keep='all'}
-gb$GetCatHeader(gb$tsneHead4)
-targets1 <- gb$SubsetTargets(targets)
-if (gb$supervisedRun == T) {gb$GenerateUnsuperTsne(targets1, gb$superbetas2, gb,
-    colorVariable = gb$selectedVars[2], shapeVariable = gb$col_Grouping, isSuper = T)} else {cat("No supervised analysis output")}
+if (gb$supervisedRun) {
+    targets1 <- gb$SubsetTargets(targets, gb$variable_to_filter)
+    for(i in 1:length(gb$selectedVars)){
+        tnseHead <- gb$GetColorShape(gb$col_samTypes, gb$samGroup)
+        gb$GetCatHeader(tnseHead)
+        gb$superbetas <- eval(parse(text = paste0("gb$superbetas", i)))
+        gb$GenerateUnsuperTsne(targets1, betas = gb$superbetas, gb, colorVariable = gb$selectedVars[i],
+                               shapeVariable = gb$samGroup, isSuper = T)
+        cat("\n\n")
+    }
+} else {cat("No supervised analysis output")}
 ```
 
 # HeatMaps
@@ -123,25 +134,34 @@ gb$LoopSaveHm(hm.db, gb$varProbes)
 # Copy Number Plots
 
 ```{r, label='segfile-generation', echo=FALSE, fig.height=8, fig.width=15, fig.asp=0.75, include=FALSE, fig.path = "figures/cnv/"}
-gb$writeSegTab(gb$segFile, targets, idatPath = file.path(getwd(), "idats"))
-cnData <- gb$grabClusterDat(gb$seg_clust_file, gb$segFile)
-gb$loadHtmlTag()
+if (gb$generateCNVchunk){
+    gb$writeSegTab(gb$segFile, targets, idatPath = file.path(getwd(), "idats"))
+    cnData <- gb$grabClusterDat(gb$seg_clust_file, gb$segFile)
+    gb$loadHtmlTag()
+} else{
+    cat("No CNV analysis output")
+}
 ```
+
 # Copy Number Variation
 ```{r, label='sample-cnv-generation', echo=FALSE, fig.keep='all', fig.path="figures/cnv/", results='asis', include=TRUE}
-gb$LoopSavePlainCNV(targets)
+if (gb$generateCNVchunk){gb$LoopSavePlainCNV(targets)}else{cat("No CNV analysis output")}
 ```
 
 ## Sample `r I(as.character(gb$col_samGrp))` Groups CNV Frequency {.tabset}
 
 ```{r, label='CNV-plots', echo=FALSE, error=FALSE, fig.keep='all', fig.path='figures/cnv/', fig.show='asis', fig.height=10, fig.width=16, dpi=300, include=TRUE, out.width='100%', results='asis'}
+if (gb$generateCNVchunk){
 gb$SaveLoadCnvs(cnData[, 1:(ncol(cnData))], plotName = "All", "All")
 gb$GenCNVdataGroupSave(cnData, targets, gb$col_samGrp)
-if (gb$genPathwaychunk == F) {knitr::knit_exit()} else{gb$PrintPathHeader(gb$GroupSubset)}
+} else{
+    cat("No CNV analysis output")
+}
+if (gb$genPathwaychunk) {gb$PrintPathHeader(gb$GroupSubset)}else{knitr::knit_exit()}
 ```
 
 ```{r, label='cluster profile', echo=FALSE, fig.path = "figures/cluster/", dpi=300, fig.height=5, fig.width=8, out.width='800px', include=TRUE}
-enrichedData <- gb$GetKeggGeneVals(RGSet, targets, nameGrp = "chordoma", gb = gb)
+enrichedData <- gb$GetKeggGeneVals(RGSet, targets, nameGrp = gb$pathwayGrp_Filter, gb = gb)
 gb$geneVals <- enrichedData$geneVals
 ```
 
@@ -151,7 +171,7 @@ gb$geneVals <- enrichedData$geneVals
 ::: {#PathHeat .collapse style="width:100%; height:auto; margin: 0px;"}
 ```{r, label='GeneClusterHeatMap', echo=FALSE, fig.path="figures/heatmaps/", fig.align='left', fig.width=18, fig.height=22, dpi=350, fig.keep='all', include=TRUE, results='asis'}
 gb$pathWayGenes <- gb$WritePathVals(gb$geneVals, gb$geneListIn)
-gb$LoopPathwayHeatMap(gb$pathWayGenes[1:3,], targets)
+gb$LoopPathwayHeatMap(gb$pathWayGenes[1:3,], RGSet, betas, targets)
 ```
 :::
 
