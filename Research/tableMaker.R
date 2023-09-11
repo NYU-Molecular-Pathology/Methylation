@@ -323,7 +323,7 @@ ReadSheetType <- function(inputFi){
 ValidateSentrix <- function(targets, gb) {
     if (is.null(gb$col_sentrix) | any(gb$col_sentrix %in% colnames(targets))) {
         message("Creating Sentrix ID column")
-        gb$col_sentrix <- "Sentrix_ID"
+        gb$col_sentrix <- "SentrixID_Pos"
     }
     gb$GetCsvSheet(gb$needFi, gb$samsheet, gb$token, idatPath = gb$idatPath)
     targets <- gb$SetKeyColumns(
