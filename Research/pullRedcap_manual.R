@@ -83,7 +83,7 @@ loadPacks <- function(){
         bothType <- "source"
     }
     invisible(lapply(pkgs, function(pk){
-        if(suppressWarnings(!requireNamespace(pk, character.only=T))){
+        if(suppressWarnings(!requireNamespace(pk))){
             install.packages(pk,dependencies=T, verbose=T, repos="http://cran.us.r-project.org", type=bothType)
         }}))
     if(!requireNamespace("redcapAPI")){install.packages("redcapAPI", dependencies = T, type=bothType,ask=F)}
