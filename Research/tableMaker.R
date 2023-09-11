@@ -402,7 +402,7 @@ loadHtmlTag <- function(){
 }
 
 sourceParams <- function(X = c("Params_input.R", "Params_output.R")) {
-    paramFiles <- unlist(lapply(X, function(X) {file.path(".", "parameters", X)}))
+    paramFiles <- unlist(lapply(X, function(X) {file.path(".", "params", X)}))
     stopifnot(file.exists(paramFiles[1])|file.exists(paramFiles[2]))
     invisible(lapply(paramFiles, source))
 }
