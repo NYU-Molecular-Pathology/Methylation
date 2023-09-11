@@ -198,9 +198,8 @@ DropMissingIdats <- function(targets, gb){
 
 GenerateTargets <- function(gb){
   targets <- gb$sanitizeSheet(gb$inputFi, gb$samsheet, gb) # Drop commas in xlsx sheet
-#  targets <- FillMissingData(targets)
   targets <- ModifyTargetColumns(targets, gb)
-  targets <- gb$GetArrayTypes(targets, arrayColumn = gb$col_arrayType)
+  targets <- gb$GetArrayTypes(targets, arrayColumn = gb$col_arrayType, idatPath = gb$idatPath)
   targets <- DropMissingIdats(targets, gb)
   targets <- gb$colorTargets(targets, gb$selectedVars)
   write.csv(targets, gb$samsheet, quote=F, row.names=F)
