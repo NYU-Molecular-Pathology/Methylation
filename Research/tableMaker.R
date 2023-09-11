@@ -61,30 +61,36 @@ EndDiv <- function(){
 
 makeDt <- function(targets, gb=NULL) {
     dtOpts <- list(
-      columnDefs = list(list(className = 'dt-center', targets = "_all")), scrollX = T, scrollY = T,
-      info = F, pageLength = 20, autoWidth = F, rownames = F, lengthChange = F, searchable = T
-      )
-
-    if(!is.null(gb)){
-      colFilter <- c(gb$col_samNames, gb$col_samTypes, gb$col_shapes, "SentrixID_Pos")
-      if(!is.null(gb$col_arrayType)){
-         colFilter <- c(colFilter, gb$col_arrayType)
-      }
-      if(!is.null(gb$batch_col)){
-         colFilter <- c(colFilter, gb$batch_col)
-      }
-      colFilter <- unique(colFilter)
-      targets <- targets[, colFilter]
-    }
-
-    theDt <- DT::datatable(
-      targets,
-      selection = "single",
-      autoHideNavigation = F,
-      options = dtOpts,
-      class = 'white-space: nowrap'
+        columnDefs = list(list(className = 'dt-center', targets = "_all")), scrollX = T, scrollY = T,
+        info = F, pageLength = 20, autoWidth = F, rownames = F, lengthChange = F, searchable = T
     )
-
+    
+    if(!is.null(gb)){
+        colFilter <- c(gb$col_samNames, gb$col_samTypes, gb$col_shapes, "SentrixID_Pos")
+        if(!is.null(gb$col_arrayType)){
+            colFilter <- c(colFilter, gb$col_arrayType)
+        }
+        if(!is.null(gb$batch_col)){
+            colFilter <- c(colFilter, gb$batch_col)
+        }
+        if(!is.null(gb$col_samGrp)){
+            colFilter <- c(colFilter, gb$col_samGrp)
+        }
+        if(!is.null(gb$col_other)){
+            colFilter <- c(colFilter, gb$col_other)
+        }
+        colFilter <- unique(colFilter)
+        targets <- targets[, colFilter]
+    }
+    
+    theDt <- DT::datatable(
+        targets,
+        selection = "single",
+        autoHideNavigation = F,
+        options = dtOpts,
+        class = 'white-space: nowrap'
+    )
+    
     return(theDt)
 }
 
