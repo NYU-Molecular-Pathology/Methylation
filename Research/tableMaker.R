@@ -596,12 +596,15 @@ PrintPathHeader <-function(GroupSubset){
 }
 
 
-GetCatHeader <- function(tsneHead, tbset=T){
-    knitr::opts_chunk$set(out.width='100%')
+GetCatHeader <- function(tsneHead = NULL, tbset = T) {
+    knitr::opts_chunk$set(out.width = '100%')
     cat('\n\n')
-    if(tbset==T){
+    if (is.null(tsneHead)) {
+        tsneHead <- "All Groups Unsupervised TSNE (No Shapes/Symbols)"
+    }
+    if (tbset == T) {
         cat(paste('##', tsneHead, '{.tabset}', '\n\n'))
-    }else{
+    } else{
         cat(paste('#', tsneHead, '\n\n'))
     }
 }
