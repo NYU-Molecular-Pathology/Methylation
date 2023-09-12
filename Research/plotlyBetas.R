@@ -252,11 +252,11 @@ gb$grabAllBeta <- grabAllBeta <- function(targets1, betas, supervised = F) {
         allBetas1 <- list(supBets[1:100,], supBets[1:1000,], supBets)
     } else{
         betas1 <- betas[, targets1$SampleFilter] # filtering betas
-        if (file.exists(file.path(gb$runDir, gb$unbetaVariance))) {
+        if (file.exists(gb$unbetaVariance)) {
             unBets <- gb$LoadRdatObj(gb$unbetaVariance, msgProg=F)
         } else{
             unBets <- gb$takeTopVariance(betas1, topVar = 1:10000)
-            gb$SaveObj(unBets, file = file.path(gb$runDir, gb$unbetaVariance))
+            gb$SaveObj(unBets, gb$unbetaVariance)
         }
         unBets <- unBets[, targets1$SampleFilter]
         allBetas1 <- list(unBets[1:100, ], unBets[1:1000, ], unBets)
