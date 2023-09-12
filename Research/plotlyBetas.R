@@ -30,11 +30,11 @@ FormatLegendText <- function(fig){
         lgndGrp <- otherPlot[["x"]][["data"]][[nSam]][["legendgroup"]]
         nlgndGrp <- stringr::str_remove_all(lgndGrp, "[()]")
         lgndSplt <- stringr::str_split_fixed(nlgndGrp, ",", 2)
-        isShape <- lgndSplt[, 2] == "NA"
+        isShape <- lgndSplt[, 2] == 1
         isSingle <- F
-        if(lgndSplt[1,2]==""){
+        if(lgndSplt[,1]==""|lgndSplt[,2]==""){
             nlgndGrp <- paste0(nlgndGrp,",",nlgndGrp)
-            isSingle <- T    
+            isSingle <- T
         }
         otherPlot[["x"]][["data"]][[nSam]][["marker"]][["opacity"]] <- 1
         otherPlot[["x"]][["data"]][[nSam]][["marker"]][["size"]] <- 18
@@ -46,9 +46,11 @@ FormatLegendText <- function(fig){
             theSamLabs <- which(lgndSplt[1,1]==fig$data$symbol)
             otherPlot[["x"]][["data"]][[nSam]]$text <- paste("Sample:", fig$data$samples[theSamLabs])
             otherPlot[["x"]][["data"]][[nSam]]$visible <- 'legendonly'
-            otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]][["color"]] <- "grey"
+            otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]][["color"]] <- "black"
             otherPlot[["x"]][["data"]][[nSam]][["marker"]][["color"]] <- "darkgrey"
-            }else{otherPlot[["x"]][["data"]][[nSam]]$visible <- F}
+            }else{
+                otherPlot[["x"]][["data"]][[nSam]]$visible <- F
+                }
         } else{
             nGroupSplit <- stringr::str_split_fixed(nlgndGrp, ",", 2)[1, 1]
             theSamLabs <- which(nlgndGrp==figGrps)
@@ -58,17 +60,18 @@ FormatLegendText <- function(fig){
                 otherPlot[["x"]][["data"]][[nSam]][["showlegend"]] <- F
                 otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]] <- list(width = 2) 
                 fillColor <- otherPlot[["x"]][["data"]][[nSam]][["marker"]][["color"]]
-                if(fillColor=='darkgrey'){
+                
+                if(any(fillColor=='darkgrey') & length(fillColor)==1){
                     otherPlot[["x"]][["data"]][[nSam]][["showlegend"]] <- F
                 }
                 colSplit <- stringr::str_split_fixed(fillColor, ",", 4)
                 colSplit[1,4] <- "1)"
                 otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]][["color"]] <- paste(colSplit, collapse = ",")
                 }else{
-                    fillColor <- otherPlot[["x"]][["data"]][[nSam]][["marker"]][["color"]]
-                if(fillColor=='darkgrey'){
+                    #fillColor <- otherPlot[["x"]][["data"]][[nSam]][["marker"]][["color"]]
                     otherPlot[["x"]][["data"]][[nSam]][["showlegend"]] <- F
-                }
+                    #if(any(fillColor=='darkgrey') & length(fillColor)==1){
+                    #otherPlot[["x"]][["data"]][[nSam]][["showlegend"]] <- F}
                 }
                 }
         }
@@ -77,7 +80,7 @@ FormatLegendText <- function(fig){
     numList <- 1:length(otherPlot[["x"]][["data"]])
     for(nSam in numList){
         fillColor <- otherPlot[["x"]][["data"]][[nSam]][["marker"]][["color"]]
-        if(fillColor=="darkgrey"){
+        if(any(fillColor=='darkgrey') & length(fillColor)==1){
             lgndGrp <- otherPlot[["x"]][["data"]][[nSam]][["legendgroup"]]
             otherPlot[["x"]][["data"]][[nSam]][["showlegend"]] <- F
             for(idx in numList[-nSam]){
@@ -105,9 +108,26 @@ FormatPlotlyLayout <- function(otherPlot) {
     opLayout[["xaxis"]][["tickfont"]][["size"]] <- 12
     opLayout[["yaxis"]][["tickfont"]][["size"]] <- 12
     otherPlot[["x"]][["layout"]] <- opLayout
-    otherPlot[["x"]][["layout"]][["legend"]][["title"]][["text"]] <- "Sample Color & Shape Legend"
     pltTtl <- otherPlot[["x"]][["layout"]][["title"]][["text"]]
     otherPlot[["x"]][["layout"]][["margin"]]$t <- 100
+    numList <- 1:length(otherPlot[["x"]][["data"]])
+    shapeText <- paste("Symbols:", R.utils::capitalize(gb$samShapes))
+    #colorText <- paste("Colors:", R.utils::capitalize(gb$samGroup))
+    for(nSam in numList) {
+        if (!is.null(otherPlot[["x"]][["data"]][[nSam]][["visible"]])) {
+            otherPlot[["x"]][["data"]][[nSam]]$visible <- 'legendonly'
+            otherPlot[["x"]][["data"]][[nSam]]$showlegend <- TRUE
+            otherPlot[["x"]][["data"]][[nSam]][["legendgroup"]] <- paste("Shape Legend", otherPlot[["x"]][["data"]][[nSam]][["legendgroup"]])
+            otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]][["color"]] <- "black"
+            otherPlot[["x"]][["data"]][[nSam]][["marker"]][["color"]] <- "darkgrey"
+            otherPlot[["x"]][["data"]][[nSam]][["legendgrouptitle"]] <- list(text = shapeText, font = list(color="black", size=14))
+        }
+        #else{
+            #otherPlot[["x"]][["data"]][[nSam]][["legendgroup"]] <- "Color Legend"
+            #otherPlot[["x"]][["data"]][[nSam]][["legendgrouptitle"]] <- list(text = colorText, font = list(color="black", size=14))
+        #}
+    }
+    otherPlot[["x"]][["layout"]][["legend"]][["title"]][["text"]] <- "Shape & Color Legend"
     return(otherPlot)
 }
 
