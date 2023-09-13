@@ -338,7 +338,7 @@ ValidateSentrix <- function(targets, gb) {
         gb$col_samNames,
         gb$col_other,
         gb$col_shapes,
-        gb$sam.grp.type
+        gb$col_Grouping
     )
     targets <- FillMissingData(targets)
     return(targets)
