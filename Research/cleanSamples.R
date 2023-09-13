@@ -48,6 +48,7 @@ SetKeyColumns <- function(targets, col_samTypes, col_samNames, col_other, col_sh
     targets <- CheckSamNames(targets$Sample_ID, targets)
     if (is.null(col_Grouping)) {
       targets$Sample_Group <- "All Samples"
+      col_Grouping <<- "Sample_Group"
     }else{
       targets$Sample_Group <- col_Grouping  
     }
