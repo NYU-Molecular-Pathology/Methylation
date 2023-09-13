@@ -26,7 +26,7 @@ CheckSamNames <-  function(samNames, targets){
 SetKeyColumns <- function(targets, col_samTypes, col_samNames, col_other, col_shapes, sam.grp.type=NULL) {
     targets <- dfTargets(targets)
     if(is.null(col_samTypes)){
-        targets$Type <- "A"
+        targets$Type <- "All Types"
     }else{
         targets$Type <- targets[, col_samTypes] # Creates any new "Type" column
     }
@@ -36,18 +36,18 @@ SetKeyColumns <- function(targets, col_samTypes, col_samNames, col_other, col_sh
         targets$Sample_Name <- targets$Sample_ID <- targets[, col_samNames]
     }
     if(is.null(col_other)){
-        targets$Other_Group <- targets$Sample_Group <- "B"
+        targets$Other_Group <- targets$Sample_Group <- "All Groups"
     }else{
         targets$Other_Group <- targets$Sample_Group <- targets[, col_other]
     }
     if(is.null(col_shapes)){
-        targets$Sym_Shape <- "C"
+        targets$Sym_Shape <- "All Samples"
     }else{
         targets$Sym_Shape <- targets[,col_shapes]
     }
     targets <- CheckSamNames(targets$Sample_ID, targets)
     if (is.null(sam.grp.type)) {
-      targets$Sample_Group <- "D"
+      targets$Sample_Group <- "All Samples"
     }else{
       targets$Sample_Group <- sam.grp.type  
     }
