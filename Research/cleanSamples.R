@@ -23,7 +23,7 @@ CheckSamNames <-  function(samNames, targets){
 }
 
 
-SetKeyColumns <- function(targets, col_samTypes, col_samNames, col_other, col_shapes, sam.grp.type=NULL) {
+SetKeyColumns <- function(targets, col_samTypes, col_samNames, col_other, col_shapes, col_Grouping=NULL) {
     targets <- dfTargets(targets)
     if(is.null(col_samTypes)){
         targets$Type <- "All Types"
@@ -46,10 +46,10 @@ SetKeyColumns <- function(targets, col_samTypes, col_samNames, col_other, col_sh
         targets$Sym_Shape <- targets[,col_shapes]
     }
     targets <- CheckSamNames(targets$Sample_ID, targets)
-    if (is.null(sam.grp.type)) {
+    if (is.null(col_Grouping)) {
       targets$Sample_Group <- "All Samples"
     }else{
-      targets$Sample_Group <- sam.grp.type  
+      targets$Sample_Group <- col_Grouping  
     }
     return(targets)
   }
@@ -139,7 +139,7 @@ ModifyTargetColumns <- function(targets, gb) {
             gb$col_samNames,
             gb$col_other,
             gb$col_shapes,
-            gb$sam.grp.type
+            gb$col_Grouping
         )
         targets <- FillMissingData(targets)
     } else{
@@ -149,7 +149,7 @@ ModifyTargetColumns <- function(targets, gb) {
             gb$col_samNames,
             gb$col_other,
             gb$col_shapes,
-            gb$sam.grp.type
+            gb$col_Grouping
         )
     }
     
