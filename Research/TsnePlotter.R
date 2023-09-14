@@ -219,26 +219,28 @@ getTopPlot <- function(samNames){
     return(toplot_Histo)
 }
 
+
 GenerateUnsuperTsne <- function(targets1, betas, gb, colorVariable = NULL, shapeVariable = NULL, sampleGrouping = "Sample_Group", isSuper=NULL){
     if(is.null(colorVariable)){
         colorVariable <- gb$col_samTypes
     }
     if(is.null(shapeVariable)){
-        shapeVariable <-  gb$col_shapes
+        shapeVariable <- "Sample_Group"
     }
     if(is.null(isSuper)){
         isSuper <- F
     }
     if(isSuper == F){
         tsne_titles = gb$tsne_titles[1:3]
+        plot_betas <- betas
     }else{
         tsne_titles = gb$tsne_titles[4:6]
-        betas <- gb$superbetas
+        plot_betas <- betas
     }
     gb$subsetBetas(
         targFilter = sampleGrouping,
         samGroup = colorVariable,
-        betas = betas,
+        betas = plot_betas,
         targets = targets1,
         samShapes = shapeVariable,
         samNames = gb$col_samNames,
