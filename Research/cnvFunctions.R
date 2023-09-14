@@ -122,7 +122,7 @@ writeSegTab <- function(segFile = NULL, targets = NULL, idatPath = NULL, custom_
     if(is.null(segFile)){segFile <- paste0(format(Sys.Date(),"%b%d"), "_segmentVals.csv")}
     if(is.null(idatPath)){idatPath <- getwd()}
     if(is.null(targets)){targets <- as.data.frame(read.csv("samplesheet.csv"))}
-
+    segFile <- basename(segFile)
     samplename_data <- as.character(targets[,1])
     stopifnot(any(stringr::str_detect(colnames(targets),"SentrixID_Pos")))
     sentrix.ids <- as.character(targets$SentrixID_Pos)
