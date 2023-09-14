@@ -353,54 +353,30 @@ grabProbes <- function(your_genes, RGSet, region){
                                            
 
 SaveHmPng <- function(fi_prefix, fi_suffix, hm, topvar = "", outDir=NULL) {
-    # Ensure output directory exists
     if(is.null(outDir)) { outDir <- file.path(".", "figures", "heatmaps") }
     if(!dir.exists(outDir)) { dir.create(outDir, recursive = TRUE) }
-    
-    # Prepare file name
     imgFile <- file.path(outDir, paste0(fi_prefix, "_", topvar, "_", fi_suffix, ".png"))
   
-    # Extract the original dimensions of the heatmap
     wd_original <- as.numeric(hm@ht_list_param[["width"]])
     ht_original <- as.numeric(hm@ht_list_param[["height"]])
-
-    # Initialize a resolution parameter
     resolution <- 200
-
-    # Evaluate size of original dimensions
-    if(ht_original > 2400 || wd_original > 2400) {
-        # Reduce dimensions to a tenth if too large
+    
+    if(ht_original > 2400 | wd_original > 2400) {
         wd_original <- wd_original / 10
         ht_original <- ht_original / 10
-        # Lower resolution for very large heatmaps
-        resolution <- 100
+        resolution <- 150
     }
     
-    # Calculate aspect ratio
-    aspect_ratio <- wd_original / ht_original
-    
-    # Dynamically set dimensions based on aspect ratio
-    if(aspect_ratio >= 1) {
-        wd <- 200
-        ht <- wd / aspect_ratio
-    } else {
-        ht <- 200
-        wd <- ht * aspect_ratio
-    }
-    
-    # Save PNG with calculated dimensions and resolution
+    wd <- round(wd_original * 8)
+    ht <- round(ht_original * 8)
     png(
       file = imgFile,
       width = wd,
       height = ht,
-      units = "mm",
+      units = "px",
       res = resolution
     )
-    
-    # Draw the heatmap
     ComplexHeatmap::draw(hm)
-    
-    # Turn off the graphic device
     invisible(dev.off())
 }
 
@@ -748,7 +724,7 @@ LoopPathwayHeatMap <- function(pathWayGenes, RGSet, betas, targets) {
 }
 
                                            
-LoopSaveHm <- function(hm.db, varProbes, fi_prefix = "hm_top", fi_suffix = "notAnnot"){
+LoopSaveHm <- function(hm.db, varProbes, fi_prefix = "unsuper_hm_top", fi_suffix = "notAnnot"){
   for (tn in 1:length(varProbes)) {
       hm <- hm.db[[tn]]
       hmOutPath <- file.path(".", "figures", "heatmaps")
