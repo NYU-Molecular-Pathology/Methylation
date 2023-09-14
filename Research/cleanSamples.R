@@ -49,10 +49,10 @@ SetKeyColumns <- function(targets, col_samTypes, col_samNames, col_other, col_sh
     if (is.null(col_Grouping)) {
       targets$Sample_Group <- "All Samples"
     }else{
-      targets$Sample_Group <- targets[, col_Grouping]
+      targets$Sample_Group <- col_Grouping  
     }
     return(targets)
-  }
+}
 
 getTargCsv <- function(csvFi = "samplesheet.csv") {
   gc(verbose = F)
