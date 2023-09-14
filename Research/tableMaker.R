@@ -365,7 +365,7 @@ sanitizeSheet <- function(inputFi, samsheet, gb) {
     library("magrittr")
     library("dplyr")
     samSh <- ReadSheetType(inputFi)
-    targets <- StripSheetSpaces(samSh, samsheet)
+    targets <- StripSheetSpaces(samSh, samsheet, gb)
     ValidateColumns(targets, gb)
     targets <- ValidateSentrix(targets, gb)
     targets <- StandardizeHeaders(targets, samNames = targets[, gb$col_samNames], sentrixs = targets[, gb$col_sentrix])
