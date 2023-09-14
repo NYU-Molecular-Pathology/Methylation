@@ -689,3 +689,18 @@ ShowKnitProgress <- function() {
   )
 }
 
+CatShapeColor <- function(var1Col = NULL, var2Col = NULL, tbset = TRUE, preFix = "Unsupervised") {
+    knitr::opts_chunk$set(out.width = '100%')
+    cat('\n\n')
+    if (is.null(var2Col)) {
+        var2Col <- "None"
+    }
+    if (tbset) {
+        tsneHead <- paste0("Color Labels = ", var1Col, " & ", "Shapes = ", var2Col)
+        cat(paste('##', tsneHead, '{.tabset}', '\n\n'))
+    } else {
+        tsneHead <- paste("All Groups", preFix, "TSNE (No Shapes/Symbols)")
+        cat(paste('#', tsneHead, '\n\n'))
+    }
+}
+
