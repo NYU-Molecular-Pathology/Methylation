@@ -351,22 +351,58 @@ grabProbes <- function(your_genes, RGSet, region){
     return(z[1:cutt,])
 }
                                            
+
 SaveHmPng <- function(fi_prefix, fi_suffix, hm, topvar = "", outDir=NULL) {
-  if(is.null(outDir)){outDir <- file.path(".", "figures", "heatmaps")}
-  if(!dir.exists(outDir)){dir.create(outDir)}
-  imgFile <- file.path(outDir, paste0(fi_prefix, "_", topvar, "_", fi_suffix, ".png"))
-  wd <- as.numeric(hm@ht_list_param[["width"]]) + 5
-  ht <- as.numeric(hm@ht_list_param[["height"]]) + 5
-  png(
-    file = imgFile,
-    width = wd,
-    height = ht,
-    units = "mm",
-    res = 200
-  )
-  ComplexHeatmap::draw(hm)
-  invisible(dev.off())
-}                               
+    # Ensure output directory exists
+    if(is.null(outDir)) { outDir <- file.path(".", "figures", "heatmaps") }
+    if(!dir.exists(outDir)) { dir.create(outDir, recursive = TRUE) }
+    
+    # Prepare file name
+    imgFile <- file.path(outDir, paste0(fi_prefix, "_", topvar, "_", fi_suffix, ".png"))
+  
+    # Extract the original dimensions of the heatmap
+    wd_original <- as.numeric(hm@ht_list_param[["width"]])
+    ht_original <- as.numeric(hm@ht_list_param[["height"]])
+
+    # Initialize a resolution parameter
+    resolution <- 200
+
+    # Evaluate size of original dimensions
+    if(ht_original > 2400 || wd_original > 2400) {
+        # Reduce dimensions to a tenth if too large
+        wd_original <- wd_original / 10
+        ht_original <- ht_original / 10
+        # Lower resolution for very large heatmaps
+        resolution <- 100
+    }
+    
+    # Calculate aspect ratio
+    aspect_ratio <- wd_original / ht_original
+    
+    # Dynamically set dimensions based on aspect ratio
+    if(aspect_ratio >= 1) {
+        wd <- 200
+        ht <- wd / aspect_ratio
+    } else {
+        ht <- 200
+        wd <- ht * aspect_ratio
+    }
+    
+    # Save PNG with calculated dimensions and resolution
+    png(
+      file = imgFile,
+      width = wd,
+      height = ht,
+      units = "mm",
+      res = resolution
+    )
+    
+    # Draw the heatmap
+    ComplexHeatmap::draw(hm)
+    
+    # Turn off the graphic device
+    invisible(dev.off())
+}
 
                                            
 # FUN: Alternate heatmap function                                           
