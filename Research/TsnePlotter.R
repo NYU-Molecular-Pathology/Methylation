@@ -225,7 +225,7 @@ GenerateUnsuperTsne <- function(targets1, betas, gb, colorVariable = NULL, shape
         colorVariable <- gb$col_samTypes
     }
     if(is.null(shapeVariable)){
-        shapeVariable <- "Sample_Group"
+        shapeVariable <- sampleGrouping
     }
     if(is.null(isSuper)){
         isSuper <- F
@@ -237,8 +237,12 @@ GenerateUnsuperTsne <- function(targets1, betas, gb, colorVariable = NULL, shape
         tsne_titles = gb$tsne_titles[4:6]
         plot_betas <- betas
     }
-    
-    gb$CatShapeColor(colorVariable, shapeVariable)
+
+    if(isSuper){
+        gb$CatShapeColor(colorVariable, shapeVariable, preFix = "Supervised")
+    }else{
+        gb$CatShapeColor(colorVariable, shapeVariable)
+    }
     
     gb$subsetBetas(
         targFilter = sampleGrouping,
@@ -259,11 +263,9 @@ LoopSupervisedPlots <- function(targets, gb){
   if (gb$supervisedRun) {
       targets1 <- gb$SubsetTargets(targets, gb$variable_to_filter)
       for(i in 1:length(gb$selectedVars)){
-          tnseHead <- gb$GetColorShape(gb$col_samTypes, gb$col_samGrp)
-          gb$GetCatHeader(tnseHead)
           gb$superbetas <- eval(parse(text = paste0("gb$superbetas", i)))
-          gb$GenerateUnsuperTsne(targets1, betas = gb$superbetas, gb, colorVariable = gb$selectedVars[i],
-                                 shapeVariable = gb$col_samGrp, isSuper = T)
+          gb$GenerateUnsuperTsne(targets1, betas = gb$superbetas, gb, colorVariable = gb$col_samGrp,
+                                 shapeVariable = gb$selectedVars[i], isSuper = T)
           cat("\n\n")
       }
   } else {cat("No supervised analysis output")}
