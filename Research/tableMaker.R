@@ -552,6 +552,9 @@ if(Sys.info()[['sysname']]!="Darwin") {
 
 
 GetColorShape <- function(var1Col, var2Col){
+  if(is.null(var2Col)){
+   var2Col <- "None"
+  }
   return(paste0("Color Labels = ", var1Col, " & ", "Shapes = ", var2Col))
 }
 
