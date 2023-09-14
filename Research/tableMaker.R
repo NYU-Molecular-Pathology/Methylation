@@ -299,14 +299,18 @@ StandardizeHeaders <- function(targets, samNames, sentrixs){
 }
 
 
-StripSheetSpaces <- function(samSh, samsheet){
+StripSheetSpaces <- function(samSh, samsheet, gb){
     colnames(samSh) <- gsub(pattern = " ", replacement = "_", colnames(samSh))
     samSh <- samSh %>% dplyr::mutate_all(stringr::str_replace_all, " ", "-")
+    if(any(is.na(samSh))){
+        samSh[is.na(samSh)] <- gb$blank_keywd
+    }
     write.csv(samSh, samsheet, quote = F, row.names = F)
-    targets <- read.csv(samsheet, strip.white = T)
+    targets <- read.csv(samsheet)
     if (class(targets) != "data.frame") {targets <- as.data.frame(targets)}
     return(targets)
 }
+
 
 ValidateColumns <- function(targets, gb) {
     stopifnot(
