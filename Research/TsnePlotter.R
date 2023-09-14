@@ -237,6 +237,9 @@ GenerateUnsuperTsne <- function(targets1, betas, gb, colorVariable = NULL, shape
         tsne_titles = gb$tsne_titles[4:6]
         plot_betas <- betas
     }
+    
+    gb$CatShapeColor(colorVariable, shapeVariable)
+    
     gb$subsetBetas(
         targFilter = sampleGrouping,
         samGroup = colorVariable,
