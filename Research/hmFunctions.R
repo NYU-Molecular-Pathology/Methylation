@@ -144,9 +144,9 @@ getHeatMap <- function(betaRanges, titleValue, ha, geneNams=F, colSplt = NULL, r
     toLabRows <- ifelse(nrow(betaRanges)<=60, T, F)
     geneNams <- ifelse(geneNams == T, toLabRows, F)
     rowTall <- ifelse(toLabRows==T, 5, 2)
-    shrinkRows <- ifelse(nrow(betaRanges)>=900, T, F)
+    shrinkRows <- ifelse(nrow(betaRanges) > 1000, T, F)
     if(shrinkRows == T){
-        rowTall <- 0.5
+        rowTall <- 0.1
     }
     try(knitr::opts_chunk$set(out.width='100%'), silent=T)
     hmTopNumbers <- ComplexHeatmap::Heatmap(
