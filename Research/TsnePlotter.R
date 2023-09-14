@@ -252,3 +252,17 @@ GenerateUnsuperTsne <- function(targets1, betas, gb, colorVariable = NULL, shape
     cat("\n\n")
 }
 
+LoopSupervisedPlots <- function(targets, gb){
+  if (gb$supervisedRun) {
+      targets1 <- gb$SubsetTargets(targets, gb$variable_to_filter)
+      for(i in 1:length(gb$selectedVars)){
+          tnseHead <- gb$GetColorShape(gb$col_samTypes, gb$col_samGrp)
+          gb$GetCatHeader(tnseHead)
+          gb$superbetas <- eval(parse(text = paste0("gb$superbetas", i)))
+          gb$GenerateUnsuperTsne(targets1, betas = gb$superbetas, gb, colorVariable = gb$selectedVars[i],
+                                 shapeVariable = gb$col_samGrp, isSuper = T)
+          cat("\n\n")
+      }
+  } else {cat("No supervised analysis output")}
+}
+
