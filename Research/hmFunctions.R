@@ -826,6 +826,7 @@ SubsetTargets <- function(targets, varToFilter = NULL){
 
 
 GetSuperHmData <- function(gb, targets, RGSet) {
+  library("grDevices")
   if (gb$supervisedRun) {
       for(i in 1:length(gb$selectedVars)){
           superbetas1 <- eval(parse(text = paste0("gb$superbetas", i)))
