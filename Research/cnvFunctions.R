@@ -183,7 +183,7 @@ writeSegTab <- function(segFile = NULL, targets = NULL, idatPath = NULL, custom_
     }
     
     segPath <- file.path(getwd(), "CNV_segments")
-    segFileAll <- file.path(segPath, segFile)
+    segFileAll <- file.path(segPath, basename(segFile))
     
     if(!file.exists(segFileAll)){
         allSegFiles <- dir(path = segPath, pattern = "_segfile.csv", full.names = TRUE)
