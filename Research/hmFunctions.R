@@ -823,4 +823,21 @@ SubsetTargets <- function(targets, varToFilter = NULL){
   rownames(targets1) <- 1:nrow(targets1) # ensures rows are chronological
   return(targets1)
 }
+
+LoopSupervisedHm <- function(gb) {
+  if(gb$supervisedRun){
+      for(i in 1:length(gb$selectedVars)){
+        hmPlotData <- eval(parse(text = paste0("gb$hmPlotData", i)))
+        hm.db <- gb$LoopPrintHeatMap(hmPlotData$unBetas, hmPlotData$ha, geneNams = gb$addGenesHm, colSplt = 5)
+        cat("\n\n")
+        invisible(gc(verbose=F))
+        try(gb$LoopSaveHm(hm.db, gb$varProbes, fi_prefix = paste0("super_", gb$selectedVars[i], "_hm_top")), T)
+        invisible(gc(verbose=F))
+      }
+  } else {
+    cat("\n\nNo supervised HeatMap analysis output\n\n")
+  }
+}
+
+
                                            
