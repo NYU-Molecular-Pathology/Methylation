@@ -824,6 +824,19 @@ SubsetTargets <- function(targets, varToFilter = NULL){
   return(targets1)
 }
 
+
+GetSuperHmData <- function(gb, targets, RGSet) {
+  if (gb$supervisedRun) {
+      for(i in 1:length(gb$selectedVars)){
+          superbetas1 <- eval(parse(text = paste0("gb$superbetas", i)))
+          hmPlotData <- gb$GetHeatMapData(targets, superbetas1, RGSet, gb)
+          varName <- paste0("hmPlotData", i)
+          assign(x = varName, value = hmPlotData, envir = gb)
+      }
+  }
+}
+
+                                         
 LoopSupervisedHm <- function(gb) {
   if(gb$supervisedRun){
       for(i in 1:length(gb$selectedVars)){
@@ -839,5 +852,3 @@ LoopSupervisedHm <- function(gb) {
   }
 }
 
-
-                                           
