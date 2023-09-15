@@ -165,14 +165,14 @@ getHeatMap <- function(betaRanges, titleValue, ha, geneNams=F, colSplt = NULL, r
         show_column_dend = T,
         width = ncol(betaRanges)*unit(5, "mm"),
         height = nrow(betaRanges)*unit(rowTall, "mm"),
-        use_raster=T,
+        use_raster=shrinkRows,
         show_heatmap_legend = T,
         top_annotation = ha,
         column_title = titleOfPlot,
         column_title_gp = gpar(fontsize = 12,fontface = "bold"),
         raster_device = "CairoPNG",
         raster_quality = 1,
-        raster_resize_mat = TRUE,
+        #raster_resize_mat = TRUE,
         heatmap_legend_param = list(
             title = "Beta Value",
             labels_gp = gpar( fontsize = 14),
@@ -367,8 +367,8 @@ SaveHmPng <- function(fi_prefix, fi_suffix, hm, topvar = "", outDir=NULL) {
       wd <- round(wd / 2)
       ht <- round(ht / 2)
       resolution <- 100
-    }   
-    png(
+    }
+    grDevices::png(
       file = imgFile,
       width = wd,
       height = ht,
