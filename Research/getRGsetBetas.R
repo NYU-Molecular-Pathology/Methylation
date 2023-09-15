@@ -161,31 +161,37 @@ loadSupervise <- function(RGSet, betas, gb, superVar = NULL, dmpTyp = "categoric
     if (gb$supervisedRun == F) {
       return(NULL)
     }
-    supbetaOutFi <- paste(gb$supbetaOut, superVar , ".Rdata", sep = "_")
+    supbetaOutFi <- paste0(gb$supbetaOut, "_", superVar, ".Rdata")
     if (!file.exists(supbetaOutFi)) {
       rgRows <- RGSet@colData@rownames # ensure poor samples are dropped
       rgLiDat <- RGSet@colData@listData
       if(any(is.na(rgLiDat[["Sample_ID"]]))){
           rgLiDat[["Sample_ID"]] <- rgLiDat[["Sample_Name"]]
-          dropFilter <- rgLiDat[["Sample_Name"]] %in% colnames(betas)    
+          dropFilter <- rgLiDat[["Sample_Name"]] %in% colnames(betas)
       }else{
-          dropFilter <- rgLiDat[["Sample_ID"]] %in% colnames(betas)    
+          dropFilter <- rgLiDat[["Sample_ID"]] %in% colnames(betas)
       }
       samFltr <- rgLiDat[["SentrixID_Pos"]][dropFilter]
       newRg <- RGSet[, rgRows %in% samFltr]
       topVar = 1:max(gb$varProbes)
       # supervised dmp top Variance with getSupervise
-      superbetas <- gb$getSupervise(
-        betas,
-        newRg,
-        topVar,
-        dmpTyp = dmpTyp,
-        superVar = superVar)
+      superbetas <- gb$getSupervise(betas, newRg, topVar, dmpTyp = dmpTyp, superVar = superVar)
       SaveObj(superbetas, file.name = supbetaOutFi)
     } else{
       superbetas <- LoadRdatObj(supbetaOutFi)
     }
     return(superbetas)
+}
+
+
+LoopSuperviseCategory <- function(gb, RGSet, betas) {
+  if(gb$supervisedRun){
+      for(i in 1:length(gb$selectedVars)){
+          superbetas <- gb$loadSupervise(RGSet, betas, gb, gb$selectedVars[i], dmpTyp = "categorical")
+          varName <- paste0("superbetas", i)
+          assign(x = varName, value = superbetas, envir = gb)
+      }
+  }
 }
 
 # COMABAT batch correction between groups
