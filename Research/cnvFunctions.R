@@ -118,62 +118,78 @@ SaveHtmlCnv <- function(samName, cnvPath, cnv_data) {
     file.rename(htmlFi, htmlOut)
 }
 
+GrabMsetData <- function(idatBasename){
+    rgSet <- minfi::read.metharray(idatBasename, verbose = T, force = T)
+    if(rgSet@annotation[["array"]] == "IlluminaHumanMethylationEPIC"){
+        require("mnp.v11b6")
+        Mset <- minfi::preprocessIllumina(rgSet, normalize = "controls")
+    }else{
+        require("mnp.v11b4")
+        Mset <- minfi::preprocessIllumina(rgSet, normalize = "controls")
+    }
+    return(Mset)
+}
+
+
+GetCNVObj <- function(segFile, targets, i, idatPath, custom_anno) {
+    segFile <- basename(segFile)
+    samplename_data <- as.character(targets[,1])
+    sentrix.ids <- as.character(targets$SentrixID_Pos)
+    
+    samGroup <- as.character(targets$Type)
+    
+    segPath <- file.path(getwd(), "CNV_segments")
+    cnvPath <- file.path(getwd(), "CNV_plots")
+    
+    if(!dir.exists(segPath)){dir.create(segPath)}
+    if(!dir.exists(cnvPath)){dir.create(cnvPath)}
+    
+    samName <- samplename_data[i]
+    sample_id <- sentrix.ids[i]
+    idatBasename <- file.path(idatPath, sample_id)
+    currFi <- file.path(segPath, paste0(samName, "_", segFile))
+    geneFi <- file.path(segPath, paste("genes", samName, segFile, sep = "_"))
+    
+    if (file.exists(currFi) & file.exists(geneFi)) {
+        message("Files already exist! Skipping:\n", currFi, "\n", geneFi)
+    } else{
+        Mset <- GrabMsetData(idatBasename)
+        cnv_data <- gb$customCNV(Mset, samName, customAnno = custom_anno)
+        cnvObjOut <- conumee::CNV.write(cnv_data)
+        cnvObjOut$ID <- paste(samName)
+        cnvObjOut$group <- paste(samGroup[i])
+        cnvGeneRatio <- GetGeneCopyNumb(cnv_data, samName)
+        write.table(cnvObjOut, file = currFi, quote=F, sep=",", row.names=F)
+        write.table(cnvGeneRatio, file = geneFi, quote=F, sep=",", row.names=F)
+        SaveHtmlCnv(samName, cnvPath, cnv_data)
+    }
+}
+
+
 writeSegTab <- function(segFile = NULL, targets = NULL, idatPath = NULL, custom_anno = NULL) {
     if(is.null(segFile)){segFile <- paste0(format(Sys.Date(),"%b%d"), "_segmentVals.csv")}
     if(is.null(idatPath)){idatPath <- getwd()}
     if(is.null(targets)){targets <- as.data.frame(read.csv("samplesheet.csv"))}
-    segFile <- basename(segFile)
-    samplename_data <- as.character(targets[,1])
     stopifnot(any(stringr::str_detect(colnames(targets),"SentrixID_Pos")))
-    sentrix.ids <- as.character(targets$SentrixID_Pos)
-
+    
     if(!any(stringr::str_detect(colnames(targets),"Type"))){
         targets$Type <- "Sample_Group_1"
     }
-
-    samGroup <- as.character(targets$Type)
-
-    segPath <- file.path(getwd(), "CNV_segments")
-    cnvPath <- file.path(getwd(), "CNV_plots")
-    if(!dir.exists(segPath)){dir.create(segPath)}
-    if(!dir.exists(cnvPath)){dir.create(cnvPath)}
+    
+    sentrix.ids <- as.character(targets$SentrixID_Pos)
+    
     for (i in 1:length(sentrix.ids)) {
-
-        samName <- samplename_data[i]
-        sampleEpic <- sentrix.ids[i]
-        pathEpic <- file.path(idatPath, sampleEpic)
-
-        segFileSam <- paste0(samName, "_", segFile)
-        geneFiName <- paste("genes", samName, segFile, sep = "_")
-        currFi <- file.path(segPath, segFileSam)
-        geneFi <- file.path(segPath, geneFiName)
-
-        if (file.exists(currFi) & file.exists(geneFi)) {
-            message("Files already exist! Skipping:\n", currFi, "\n", geneFi)
-            next
-        }
-
-        rgSet <- minfi::read.metharray(pathEpic, verbose = T, force = T)
-
-        if(rgSet@annotation[["array"]] == "IlluminaHumanMethylationEPIC"){
-            require("mnp.v11b6")
-            Mset <- mnp.v11b6::MNPpreprocessIllumina(rgSet, normalize = "controls")
-        }else{
-            require("mnp.v11b4")
-            Mset <- mnp.v11b4::MNPpreprocessIllumina(rgSet, normalize = "controls")
-        }
-
-        cnv_data <- gb$customCNV(Mset, samName, customAnno = custom_anno)
-
-        cnvObjOut <- conumee::CNV.write(cnv_data)
-        cnvObjOut$ID <- paste(samName)
-        cnvObjOut$group <- paste(samGroup[i])
-
-        cnvGeneRatio <- GetGeneCopyNumb(cnv_data, samName)
-
-        write.table(cnvObjOut, file = currFi, quote=F, sep=",", row.names=F)
-        write.table(cnvGeneRatio, file = geneFi, quote=F, sep=",", row.names=F)
-        SaveHtmlCnv(samName, cnvPath, cnv_data)
+        GetCNVObj(segFile, targets, i, idatPath, custom_anno)
+    }
+    
+    segPath <- file.path(getwd(), "CNV_segments")
+    segFileAll <- file.path(segPath, segFile)
+    
+    if(!file.exists(segFileAll)){
+        allSegFiles <- dir(path = segPath, pattern = "_segfile.csv", full.names = TRUE)
+        cnvSegFiles <- allSegFiles[which(stringr::str_detect(basename(allSegFiles), "genes_", TRUE))]
+        allSegs <- vroom::vroom(cnvSegFiles, col_types = paste(rep("c", 10), collapse = ""))
+        write.csv(allSegs, file = segFileAll, quote = F, row.names = F)
     }
 }
 
@@ -305,26 +321,27 @@ SaveLoadCnvs <- function(cnData,
 
 
 SaveClusters <- function(seg_clust_file, segFile){
-  set1Nam<- c("chrom","loc.start","loc.end", "seg.mean","ID")
-  set2Nam<- c("chr","start","end", "value","ID"   )
+    set1Nam <- c("chrom", "loc.start", "loc.end", "seg.mean", "ID")
+    set2Nam <- c("chr", "start", "end", "value", "ID")
     detailVals <- as.data.frame(read.csv(segFile, row.names=NULL))
-    detailVals <- detailVals[,set1Nam]
+    detailVals <- detailVals[, set1Nam]
     #detailVals <- detailVals[,set2Nam]
     colnames(detailVals) <- c("chromosome", "start", "end", "segmean", "sample")
-    detailVals$CopyNumber <- round((2**(detailVals$segmean))*2, 0)
-    write.table(detailVals,file=seg_clust_file,sep = "\t",row.names = F)
-    cnData <- read.delim(seg_clust_file,header = T,sep = "\t",row.names=NULL)
+    detailVals$CopyNumber <- round((2**(detailVals$segmean))*2, 1)
+    write.table(detailVals, seg_clust_file, sep = "\t", row.names = F)
     return(cnData)
 }
 
 
 grabClusterDat <- function(seg_clust_file, segFile){
-     if(!file.exists(seg_clust_file)){
-        cnData <- SaveClusters(seg_clust_file,segFile)} else{
-        cnData <- read.delim(seg_clust_file,header = T,sep = "\t",row.names=NULL)
-        }
+    if(!file.exists(seg_clust_file)) {
+        cnData <- SaveClusters(seg_clust_file, segFile)
+    } else{
+        cnData <- read.delim(seg_clust_file, header = T, sep = "\t", row.names=NULL)
+    }
     cnData$start <- as.numeric(cnData$start)
     cnData$end <- as.numeric(cnData$end)
+    cnData <- cnData[,-6]
     return(cnData)
 }
 
