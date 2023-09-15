@@ -72,7 +72,6 @@ function checkSystem {
 
 }
 
-
 unameOut="$(uname -s)"
 
 if [[ "$unameOut" == "Darwin" ]]; then
@@ -111,6 +110,7 @@ message_curl() {
    filename=$2
    printf "${BG_GRN}$HOME/$filename${NORMAL}\n"
    curl -k -# -L "$linkname$filename" >"$HOME/$filename"
+   chmod +rwx "$HOME/$filename"
 }
 
 check_directory() {
@@ -138,7 +138,7 @@ if [ -n "$runPath" ]; then
    runPath=$DEFAULTPATH
 fi
 
-LOCALDIR="$HOME/${methRun}"
+LOCALDIR="$HOME/Desktop/Html_${methRun}/${methRun}"
 RUNYEAR=${methRun%%-*}
 MOLECDIR="/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/Results/20${RUNYEAR}"
 MOLECOUT="/Volumes/molecular/Molecular/MethylationClassifier/20${RUNYEAR}"
@@ -159,14 +159,12 @@ printf "${BG_GRN}rsync -vrthP --include '*.html' --exclude '*' '${runPath}' '$LO
 rsync -vrthP --include '*.html' --exclude '*' "${runPath}" "$LOCALDIR"
 
 printf "\n${BG_BLU}Ensure output files are copied from your HOME to Z-drive:${NORMAL}\n"
-printf "${BG_RED}cp -RvfX '${LOCALDIR}' '${MOLECDIR}'${NORMAL}\n"
-printf "${BG_RED}cp -RvfX '${LOCALDIR}' '${MOLECOUT}'${NORMAL}\n"
+printf "${BG_RED}rsync -vrthP '${LOCALDIR}' '${MOLECDIR}'${NORMAL}\n"
+printf "${BG_RED}rsync -vrthP '${LOCALDIR}' '${MOLECOUT}'${NORMAL}\n"
 
-cp -RvX "$LOCALDIR" "$MOLECDIR"
-cp -RvX "$LOCALDIR" "$MOLECOUT"
+rsync -vrthP "${LOCALDIR}" "${MOLECDIR}"
+rsync -vrthP "${LOCALDIR}" "${MOLECOUT}"
 
 printf "\n${BG_BLU}Verify files are copied here:${NORMAL}\n${MOLECDIR}\n"
-
-open "${MOLECOUT}"
-
+open "${MOLECDIR}"
 printf "\n${BG_GRN}METHYLATION RUN ${methRun} COMPLETE${NORMAL}\n"
