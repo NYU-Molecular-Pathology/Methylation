@@ -55,19 +55,15 @@ customCNV <- function (Mset, samName = NULL, sex = NULL, customAnno = NULL) {
 
 
 SaveCNVplots <- function(samplename_data, sentrix.ids, i, idatPath = NULL) {
-  if (is.null(idatPath)) {
-    idatPath <- getwd()
-  }
-  samName <- samplename_data[i]
-  sampleEpic <- sentrix.ids[i]
-  imgName <- paste(samName, sampleEpic, "CNV.png", sep = "_")
-  imgPath <- file.path(".", "figures", "cnv")
-  imgFi <- file.path(imgPath, imgName)
+  if (is.null(idatPath)) {idatPath <- getwd()}
+  sample_id <- samplename_data[i]
+  idatBase <- sentrix.ids[i]
+  imgName <- paste(sample_id, idatBase, "CNV.png", sep = "_")
+  imgFi <- file.path(file.path(".", "figures", "cnv"), imgName)
   if (!file.exists(imgFi)) {
-    pathEpic <- file.path(idatPath, sampleEpic)
-    RGsetEpic <- read.metharray(pathEpic, verbose = T, force = T)
-    MsetEpic <- mnp.v11b6::MNPpreprocessIllumina(RGsetEpic, bg.correct = TRUE, normalize = "controls")
-    x <- gb$customCNV(MsetEpic, samName, NULL)
+    samRgset <- minfi::read.metharray(basenames = file.path(idatPath, idatBase), verbose = F, force = T)
+    MsetEpic <- mnp.v11b6::MNPpreprocessIllumina(samRgset, bg.correct = TRUE, normalize = "controls")
+    x <- gb$customCNV(MsetEpic, sample_id, NULL)
     slot(x, 'detail', check = FALSE) <- NULL
     invisible(format(object.size(x), units = 'auto'))
     png(filename = imgFi, width = 1820, height = 1040)
@@ -75,8 +71,8 @@ SaveCNVplots <- function(samplename_data, sentrix.ids, i, idatPath = NULL) {
     conumee::CNV.genomeplot(x, cols = cnvColors)
     invisible(dev.off())
   }
-  cat(paste("###", samName, "\n\n"))
-  postImg <- paste0("![", samName, "](", imgFi, ")")
+  cat(paste("###", sample_id, "\n\n"))
+  postImg <- paste0("![", sample_id, "](", imgFi, ")")
   cat("\n\n")
   cat(postImg)
   cat("\n\n")
@@ -333,7 +329,8 @@ SaveClusters <- function(seg_clust_file, segFile){
 }
 
 
-grabClusterDat <- function(seg_clust_file, segFile){
+grabClusterDat <- function(seg_clust_file, segFile, targets, idatPath){
+    writeSegTab(segFile, targets, idatPath)
     if(!file.exists(seg_clust_file)) {
         cnData <- SaveClusters(seg_clust_file, segFile)
     } else{
