@@ -584,7 +584,7 @@ BuildNoPhilips <- function(rawSheetData, runID, pact_run) {
     mainSheet$Test_Number <- rawSheetData$Test_Number
     mainSheet$Tumor_Content <- 0
     mainSheet$Tumor_Type <- rawSheetData$`Tumor Type`
-    fixNa <- is.na(mainSheet$Tumor_Type) | mainSheet$Tumor_Type == "NA"
+    fixNa <- mainSheet$Tumor_Type == "NA"
     mainSheet[fixNa, "Tumor_Type"] <- ""
     mainSheet$Description <- rawSheetData$Description
     mainSheet$Run_Number <- runID
