@@ -596,7 +596,7 @@ BuildNoPhilips <- function(rawSheetData, runID, pact_run) {
     concat_id <- paste(mainSheet$EPIC_ID, runID, mainSheet$Specimen_ID, rawSheetData$`DNA #`, sep="_")
     mainSheet$Sample_ID <- concat_id
     mainSheet$Sample_Name <- concat_id
-    mainSheet$Paired_Normal <- concat_id
+    mainSheet$Paired_Normal <- ""
     whichNormal <- rawSheetData$`Type & Tissue` == "Normal" | rawSheetData$`Type & Tissue` == "Control"
     mainSheet[whichNormal, "Paired_Normal"] <- ""
     onlyNormals <- rawSheetData$`Type & Tissue` == "Normal"
