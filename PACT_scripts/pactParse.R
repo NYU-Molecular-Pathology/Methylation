@@ -71,7 +71,7 @@ loadPacks <- function(){
             libLoad(pk)
         }else{libLoad(pk)}}))
     if(paste(utils::packageVersion("redcapAPI")) != "2.7.4"){
-    install.packages("redcapAPI", ask=F, update=T, dependencies=T)
+        install.packages("redcapAPI", ask=F, update=T, dependencies=T)
     }
 
 }
@@ -307,7 +307,7 @@ FixDuplicateControls <- function(control_sams) {
         substr(string, 1, 1) <- as.character(number)
         return(string)
     }
-    
+
     for (unique_string in unique(control_sams)) {
         indices <- which(control_sams == unique_string)
         if (length(indices) > 1) {
@@ -315,7 +315,7 @@ FixDuplicateControls <- function(control_sams) {
                 replace_first_char, control_sams[indices], rev(seq_along(indices) - 1))
         }
     }
-    
+
     return(control_sams)
 }
 
@@ -339,7 +339,7 @@ BindUnpairedRows <- function(rawSheetData, pairedList, runID) {
         message("Binding additional rows/filler:",
                 "\n",
                 paste(accessions[rowsMissing], collapse = "\n"))
-        
+
         sapply(seq_along(accessions[rowsMissing]), function(i) {
             paste0(0,
                    "_",
@@ -361,7 +361,7 @@ BindUnpairedRows <- function(rawSheetData, pairedList, runID) {
                rawSheetData$`DNA #`[controls][i])
     })
     message(crayon::bgBlue("Binding controls:"),"\n", paste(controlRows, collapse = "\n"))
-    
+
     if(any(duplicated(controlRows))){
         message("Fixing duplicated controls:\n",
                 paste(controlRows[duplicated(controlRows)], sep="\n"))
@@ -569,9 +569,43 @@ FixLastColumns <- function(mainSheet, rawSheetData){
 }
 
 
+BuildNoPhilips <- function(rawSheetData, runID, pact_run) {
+    message("Generating SampleSheet without Philips Data: ALL cases are validation!")
+    mainSheet <- matrix(nrow = nrow(rawSheetData), ncol = 16)
+    colnames(mainSheet) <- c("Sample_ID", "Sample_Name", "Paired_Normal", "I7_Index_ID", "index",
+                             "Specimen_ID", "EPIC_ID", "Test_Number", "Tumor_Content", "Tumor_Type",
+                             "Description", "Run_Number", "Sequencer_ID", "Chip_ID",
+                             "Sample_Project", "GenomeFolder")
+    mainSheet <- as.data.frame(mainSheet)
+    mainSheet$I7_Index_ID <- rawSheetData$I7_Index_ID
+    mainSheet$index <- rawSheetData$index
+    mainSheet$Specimen_ID <- rawSheetData$`Accession#`
+    mainSheet$EPIC_ID <- 0
+    mainSheet$Test_Number <- rawSheetData$Test_Number
+    mainSheet$Tumor_Content <- 0
+    mainSheet$Tumor_Type <- rawSheetData$`Tumor Type`
+    fixNa <- is.na(mainSheet$Tumor_Type)
+    mainSheet[fixNa, "Tumor_Type"] <- ""
+    mainSheet$Description <- rawSheetData$Description
+    mainSheet$Run_Number <- runID
+    seqId <- stringr::str_split_fixed(runID, "_", 4)
+    mainSheet$Sequencer_ID <- paste0(seqId[1,2])
+    mainSheet$Chip_ID <- paste0(seqId[1,4])
+    mainSheet$Sample_Project <- pact_run
+    mainSheet$GenomeFolder <- "PhiX-Illumina-RTA-Sequence-WholeGenomeFASTA"
+    concat_id <- paste(mainSheet$EPIC_ID, runID, mainSheet$Specimen_ID, rawSheetData$`DNA #`, sep="_")
+    mainSheet$Sample_ID <- concat_id
+    mainSheet$Sample_Name <- concat_id
+    mainSheet$Paired_Normal <- concat_id
+    whichNormal <- rawSheetData$`Type & Tissue` == "Normal" | rawSheetData$`Type & Tissue` == "Control"
+    mainSheet[whichNormal, "Paired_Normal"] <- ""
+    return(mainSheet)
+}
+
+
 BuildMainSheet <- function(philipsExport, rawSheetData, runID, pact_run) {
     epicOrder <- philipsExport[,'Epic Order Number']
-    testNumber <-  philipsExport[,'Test Number']
+    testNumber <- philipsExport[,'Test Number']
     tumorPercent <- philipsExport[,'Tumor Percentage']
     diagColumn <- philipsExport[,'Diagnosis for interpretation']
     pairedList <- GetPairedList(philipsExport, runID)
@@ -614,6 +648,10 @@ GetPhilipsData <- function(inputFi){
     shNames <- readxl::excel_sheets(inputFi)
     sh2 <- which(grepl("Philips", shNames, ignore.case = T))[1]
     philipsExport <- GetExcelData(inputFi, sh2, NULL, 3, cm=T)
+    if(nrow(philipsExport)==0){
+        warning("No PhilipsExport tab data found!")
+        return(NULL)
+    }
     philipsExport <- philipsExport[philipsExport$`Test Name`!="",]
     filterColumns <- GetPhilipsColumns()
     philipsExport <- philipsExport[,filterColumns]
@@ -685,7 +723,11 @@ AltParseFormat <- function(inputFi, runID){
     }
     philipsExport <- GetPhilipsData(inputFi)
     pact_run <- stringr::str_split_fixed(base::basename(inputFi), ".xls", 2)[1,1]
-    mainSheet <- BuildMainSheet(philipsExport, rawSheetData, runID, pact_run)
+    if(is.null(philipsExport)){
+        mainSheet <- BuildNoPhilips(rawSheetData, sheetRunID, pact_run)
+    }else{
+        mainSheet <- BuildMainSheet(philipsExport, rawSheetData, sheetRunID, pact_run)
+    }
     return(mainSheet)
 }
 
@@ -809,6 +851,7 @@ pushToRedcap <- function(outVals, token=NULL) {
     )
     emailNotify(record, rcon)
 }
+
 
 # Gets dataframe and saves as CSV file -----
 writeSampleSheet <- function(inputSheet, token, runID = NULL) {
