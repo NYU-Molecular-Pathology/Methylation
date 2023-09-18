@@ -621,6 +621,10 @@ GetMethMatchInfo <- function(methData, theRd){
     txtLink <- paste0("[", theRd, "](", rdDtRows$`Report Path`, ")")
     cat(txtLink)
     cat("\n\n")
+    pathLink <- file.path(stringr::str_split_fixed(dirname(rdDtRows$`Report Path`), "acc_pathology", 2)[1, 2], 
+                          basename(rdDtRows$`Report Path`))
+    cat("The link should lead to the file here:", pathLink)
+    cat("\n\n")
     print(newTa)
     cat("\n\n")
 }
