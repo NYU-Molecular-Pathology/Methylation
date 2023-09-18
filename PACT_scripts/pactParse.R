@@ -599,6 +599,8 @@ BuildNoPhilips <- function(rawSheetData, runID, pact_run) {
     mainSheet$Paired_Normal <- concat_id
     whichNormal <- rawSheetData$`Type & Tissue` == "Normal" | rawSheetData$`Type & Tissue` == "Control"
     mainSheet[whichNormal, "Paired_Normal"] <- ""
+    onlyNormals <- rawSheetData$`Type & Tissue` == "Normal"
+    mainSheet[!whichNormal, "Paired_Normal"] <- mainSheet[onlyNormals, "Sample_ID"]
     return(mainSheet)
 }
 
