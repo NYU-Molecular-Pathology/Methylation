@@ -571,36 +571,32 @@ FixLastColumns <- function(mainSheet, rawSheetData){
 
 BuildNoPhilips <- function(rawSheetData, runID, pact_run) {
     message("Generating SampleSheet without Philips Data: ALL cases are validation!")
-    mainSheet <- matrix(nrow = nrow(rawSheetData), ncol = 16)
-    colnames(mainSheet) <- c("Sample_ID", "Sample_Name", "Paired_Normal", "I7_Index_ID", "index",
-                             "Specimen_ID", "EPIC_ID", "Test_Number", "Tumor_Content", "Tumor_Type",
-                             "Description", "Run_Number", "Sequencer_ID", "Chip_ID",
-                             "Sample_Project", "GenomeFolder")
-    mainSheet <- as.data.frame(mainSheet)
-    mainSheet$I7_Index_ID <- rawSheetData$I7_Index_ID
-    mainSheet$index <- rawSheetData$index
-    mainSheet$Specimen_ID <- rawSheetData$`Accession#`
-    mainSheet$EPIC_ID <- 0
-    mainSheet$Test_Number <- rawSheetData$Test_Number
-    mainSheet$Tumor_Content <- 0
-    mainSheet$Tumor_Type <- rawSheetData$`Tumor Type`
-    fixNa <- mainSheet$Tumor_Type == "NA"
-    mainSheet[fixNa, "Tumor_Type"] <- ""
-    mainSheet$Description <- rawSheetData$Description
-    mainSheet$Run_Number <- runID
+    
     seqId <- stringr::str_split_fixed(runID, "_", 4)
-    mainSheet$Sequencer_ID <- paste0(seqId[1,2])
-    mainSheet$Chip_ID <- paste0(seqId[1,4])
-    mainSheet$Sample_Project <- pact_run
-    mainSheet$GenomeFolder <- "PhiX-Illumina-RTA-Sequence-WholeGenomeFASTA"
-    concat_id <- paste(mainSheet$EPIC_ID, runID, mainSheet$Specimen_ID, rawSheetData$`DNA #`, sep="_")
-    mainSheet$Sample_ID <- concat_id
-    mainSheet$Sample_Name <- concat_id
-    mainSheet$Paired_Normal <- ""
-    whichNormal <- rawSheetData$`Type & Tissue` == "Normal" | rawSheetData$`Type & Tissue` == "Control"
-    mainSheet[whichNormal, "Paired_Normal"] <- ""
+    whichNormal <- rawSheetData$`Type & Tissue` %in% c("Normal", "Control")
     onlyNormals <- rawSheetData$`Type & Tissue` == "Normal"
-    mainSheet[!whichNormal, "Paired_Normal"] <- mainSheet[onlyNormals, "Sample_ID"]
+    concat_id <- paste(0, runID, rawSheetData$`Accession#`, rawSheetData$`DNA #`, sep="_")
+    
+    mainSheet <- data.frame(
+        Sample_ID = concat_id,
+        Sample_Name = concat_id,
+        Paired_Normal = ifelse(!whichNormal, concat_id[onlyNormals], ""),
+        I7_Index_ID = rawSheetData$I7_Index_ID,
+        index = rawSheetData$index,
+        Specimen_ID = rawSheetData$`Accession#`,
+        EPIC_ID = 0,
+        Test_Number = rawSheetData$Test_Number,
+        Tumor_Content = 0,
+        Tumor_Type = ifelse(rawSheetData$`Tumor Type` == "NA", "", rawSheetData$`Tumor Type`),
+        Description = rawSheetData$Description,
+        Run_Number = runID,
+        Sequencer_ID = seqId[1, 2],
+        Chip_ID = seqId[1, 4],
+        Sample_Project = pact_run,
+        GenomeFolder = "PhiX-Illumina-RTA-Sequence-WholeGenomeFASTA",
+        stringsAsFactors = FALSE
+    )
+    
     return(mainSheet)
 }
 
