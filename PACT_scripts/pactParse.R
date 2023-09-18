@@ -709,6 +709,9 @@ WriteMainSheet <- function(mainSheet, sheetHead){
     outFile <- file.path(fs::path_home(), "Desktop", runIdFi)
     write.table(sheetHead, sep=",", file=outFile, row.names=F, col.names=F, quote=F)
     message("Writing file output, check your samplesheet here: ", outFile)
+    if(any(mainSheet$Tumor_Type == "NA")){
+        mainSheet[mainSheet$Tumor_Type == "NA", "Tumor_Type"] <- ""
+    }
     suppressWarnings(write.table(mainSheet, sep=",", file=outFile, row.names=F, col.names=T, append=T, quote=F))
     return(outFile)
 }
