@@ -278,7 +278,6 @@ runID="${FG_YLW}${runID}${normal}"
 currYear="${FG_BLU}20$runMid${normal}"
 gpfsHome="/gpfs/home/${kerbero}/"
 rsyncDir="${gpfsHome}molecpathlab/production/NGS607/${runID}/output"
-
 zdrive="/mnt/${kerbero}/molecular/Molecular"
 
 echo "<span style='font-weight: bold'>Author</span>: Jonathan Serrano</br>"
@@ -398,17 +397,15 @@ msg_code "/mnt/${kerbero}/molecular/Molecular/Validation/Scripts/zdrive_copier.s
 # msg_code "cd \"/mnt/${kerbero}${outputDir}${currYear}/${pactRun}/\" && rsync -vrthP ${rsyncDir}/${FG_GRN}clinical/${normal} ./"
 # msg_code "rsync -vrthP ${productionDir}/NGS607/${runID}/output/cnv/FACETS/*.pdf ${productionDir}/NGS607/${runID}/${pactRun}-QC.tsv ${zdrive}/REDCap/cnv_facets/${pactRun}/"
 msg_step 3 "#baffc9" "Email the PACT team once the QC files are copied to notify them the following"
-msg_code "The in-house pipeline completed for ${pactRun}.
-The data for this week’s PACT run is copied here:
+msg_code "The in-house pipeline completed for ${pactRun}. The data for this week’s PACT run is copied here:
 &lt;smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/NGS607/${currYear}/${runID}/&gt;
 The QC and output is copied here:
-&lt;smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics/${currYear}/${pactRun}/${pactRun}.html&gt;
-"
+&lt;smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics/${currYear}/${pactRun}/${pactRun}.html&gt;"
 echo "$BOX2"
 
 # Stage 4 -----------------------
 msg_stage 4 "Methylation and Philips CNV Consensus Report"
-msg_step 1 "#bae1ff" "Exit BigPurple and in the LOCAL terminal execute the make_consensus.sh script" #, create a new directory for your PACT consensus in CBioinformatics drive and curl the template RMD file from GitHub"
+msg_step 1 "#bae1ff" "In your LOCAL terminal execute the make_consensus.sh script Monday after the Philips data dumps into /molecular/Molecular/Philips_SFTP" #, create a new directory for your PACT consensus in CBioinformatics drive and curl the template RMD file from GitHub"
 msg_code "${HOME}/make_consensus.sh ${runID} ${pactRun}"
 # msg_code "mkdir -p \"${consensusDir}${pactRun}_consensus\" && cd \"${consensusDir}${pactRun}_consensus\""
 # msg_code "curl -# -L ${pactGithub}/PACT_consensus.Rmd >${consensusDir}${pactRun}_consensus/${pactRun}_consensus.Rmd"
@@ -430,8 +427,7 @@ msg_code "${HOME}/make_consensus.sh ${runID} ${pactRun}"
 msg_step 2 "#bae1ff" "Send an email to notify the file is ready"
 msg_code "Hi all,
 The methylation CNV consensus is copied here:
-&lt;smb://shares-cifs.nyumc.org/apps/acc_pathology${outputDir}${currYear}/${pactRun}/${pactRun}_consensus.html&gt;
-"
+&lt;smb://shares-cifs.nyumc.org/apps/acc_pathology${outputDir}${currYear}/${pactRun}/${pactRun}_consensus.html&gt;"
 echo "$BOX2"
 
 echo "
