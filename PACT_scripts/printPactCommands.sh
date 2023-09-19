@@ -204,8 +204,8 @@ h1{
   background-clip: text!important;
   -webkit-background-clip: text!important;
   font-family: 'Allerta Stencil';
-  margin-bottom: 25px !important;
-  margin-top: 25px !important;
+  margin-bottom: 0px !important;
+  margin-top: 15px !important;
   -webkit-text-stroke-width: 0.05px;
   -webkit-text-stroke-color: black;
 }
