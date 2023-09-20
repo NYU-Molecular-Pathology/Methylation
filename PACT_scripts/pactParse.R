@@ -696,7 +696,8 @@ GetRawSamplesheet <- function(inputFi){
     msgRd <- paste0('Reading Excel Sheet named \"', shNames[sh],'\" from file:')
     message(crayon::bgGreen(msgRd),'\n',inputFi)
     rawSheetData <- GetExcelData(inputFi, sh, shRange="A6:X200", cm=T)
-    toDrop <- which(rawSheetData[, "DNA #"]=="HAPMAP")[1]
+    #toDrop <- which(rawSheetData[, "DNA #"]=="HAPMAP")[1]
+    toDrop <- which(rawSheetData[,15] == "")[1] - 1
     rawSheetData <- rawSheetData[1:toDrop,]
     return(rawSheetData)
 }
