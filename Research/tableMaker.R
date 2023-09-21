@@ -617,12 +617,12 @@ GetCatHeader <- function(tsneHead = NULL, tbset = T, preFix = "Unsupervised") {
 }
 
 
-MakeHideButton <- function(btnName){
+MakeHideButton <- function(button_name){
     cat("\n\n")
     cat(paste0('<button class="btn btn-primary" data-toggle="collapse" data-target="#',
-               btnName,'">Show/Hide</button>'))
+               button_name,'">Show/Hide</button>'))
     cat("\n\n")
-    cat(paste0('::: {#', btnName,' .collapse style="width:100%; height:auto; margin: 0px;"}'))
+    cat(paste0('::: {#', button_name,' .collapse style="width:100%; height:auto; margin: 0px;"}'))
     cat("\n\n")
 }
 
