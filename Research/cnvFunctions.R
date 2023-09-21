@@ -294,18 +294,14 @@ SavePlotPng <- function(cnvDir, plotName, freqPlot, fileEnd="cnv.png"){
 }
 
 
-SaveLoadCnvs <- function(cnData,
-                           plotName,
-                           plotTitle,
-                           plotChr = c(paste0("chr", 1:22)),
-                           saveImg = T) {
+SaveLoadCnvs <- function(cnData, plotName, plotTitle, plotChr = c(paste0("chr", 1:22)), saveImg = T) {
     SilentLoadLib("ggplot2")
     SilentLoadLib("GenVisR")
     SilentLoadLib("grDevices")
-
-    freqPlot <- gb$GetFreqPlot(cnData, plotChr, plotTitle)
-    freqDat <- gb$GetFreqData(cnData, plotChr, plotTitle)
+    freqPlot <- suppressMessages(gb$GetFreqPlot(cnData, plotChr, plotTitle))
+    freqDat <- suppressMessages(gb$GetFreqData(cnData, plotChr, plotTitle))
     cnvDir <- gb$SaveCnvData(freqDat, plotName)
+    cat('\n\n')
     labelTitle <- paste("###", plotName, "Samples" , '\n\n')
     cat(labelTitle)
     print(freqPlot)
