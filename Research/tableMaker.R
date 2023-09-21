@@ -59,7 +59,7 @@ EndDiv <- function(){
 }
 
 
-makeDt <- function(targets, gb=NULL) {
+makeDt <- function(targets, gb=NULL, showHide = FALSE) {
     dtOpts <- list(
         columnDefs = list(list(className = 'dt-center', targets = "_all")), scrollX = T, scrollY = T,
         info = F, pageLength = 20, autoWidth = F, rownames = F, lengthChange = F, searchable = T
@@ -91,7 +91,13 @@ makeDt <- function(targets, gb=NULL) {
         class = 'white-space: nowrap'
     )
     
-    return(theDt)
+    if(showHide){
+        gb$MakeHideButton("SampleData")
+        return(theDt)
+    }else{
+        return(theDt)
+    }
+    
 }
 
 smallTab <- function(dtObj) {
