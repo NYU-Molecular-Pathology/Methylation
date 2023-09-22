@@ -259,9 +259,11 @@ GenerateUnsuperTsne <- function(targets1, betas, gb, colorVariable = NULL, shape
     cat("\n\n")
 }
 
+
 LoopSupervisedPlots <- function(targets, gb){
   if (gb$supervisedRun) {
       targets1 <- gb$SubsetTargets(targets, gb$variable_to_filter)
+      cat("\n\n")
       for(i in 1:length(gb$selectedVars)){
           gb$superbetas <- eval(parse(text = paste0("gb$superbetas", i)))
           gb$GenerateUnsuperTsne(targets1, betas = gb$superbetas, gb, colorVariable = gb$col_samGrp,
