@@ -521,7 +521,7 @@ MessageBatchMix <- function(targets, gb){
 
 PrintSamTypes <- function(targets, shCol) {
     if (!is.null(shCol)) {
-        samF <- setNames(as.data.frame(table(targets[, shCol]), NULL), c(paste("Type:", shCol), "----Total"))
+        samF <- setNames(as.data.frame(table(targets[, shCol]), NULL), c(paste("Type:", shCol), "---Total"))
         return(samF)
     }
 }
