@@ -348,10 +348,11 @@ cleanRawProbes <- function(RGSet, targets, gb) {
     } else{
         betas <- LoadRdatObj(gb$rawBetaFi)
     }
-    targets <- MatchBetas2Targets(targets, betas)
     if (!is.null(gb$batch_col)) {
+        targets <<- MatchBetas2Targets(targets, betas)
         betas <- gb$RemoveBatchEffect(betas, targets, gb)
     }
+    targets <<- MatchBetas2Targets(targets, betas)
     return(betas)
 }
 
