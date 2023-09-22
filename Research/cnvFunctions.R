@@ -294,13 +294,15 @@ SavePlotPng <- function(cnvDir, plotName, freqPlot, fileEnd="cnv.png"){
 }
 
 
-SaveLoadCnvs <- function(cnData, plotName, plotTitle, plotChr = c(paste0("chr", 1:22)), saveImg = T) {
+SaveLoadCnvs <- function(cnData, plotName, plotTitle, plotChr = c(paste0("chr", 1:22)), saveImg = T, isGrp=F) {
     SilentLoadLib("ggplot2")
     SilentLoadLib("GenVisR")
     SilentLoadLib("grDevices")
-    cat("\n\n")
-    cat(paste("## Sample", as.character(gb$col_samGrp), "Groups CNV Frequency {.tabset}"))
-    cat("\n\n")
+    if(isGrp==FALSE){
+      cat("\n\n")
+      cat(paste("## Sample", as.character(gb$col_samGrp), "Groups CNV Frequency {.tabset}"))
+      cat("\n\n")
+    }
     freqPlot <- suppressMessages(gb$GetFreqPlot(cnData, plotChr, plotTitle))
     freqDat <- suppressMessages(gb$GetFreqData(cnData, plotChr, plotTitle))
     cnvDir <- gb$SaveCnvData(freqDat, plotName)
@@ -484,10 +486,11 @@ GenCNVdataGroupSave <- function(cnData, targets, col_samGrp, plotChr = NULL) {
   for (samgrp in unique(cnData$group)) {
     plotTitle <- paste0(samgrp)
     cnDat2 <- gb$filterGrp(cnData, samgrp)
-    gb$SaveLoadCnvs(cnDat2, plotName = plotTitle, plotTitle, plotChr=plotChr)
+    gb$SaveLoadCnvs(cnDat2, plotName = plotTitle, plotTitle, plotChr = plotChr, isGrp = T)
   }
     cat('\n\n')
 }
+
 
 LoopSavePlainCNV <- function(targets) {
     cat("\n\n")
@@ -500,7 +503,6 @@ LoopSavePlainCNV <- function(targets) {
         cat("\n\n")
     }
 }
-
 
 
 SaveChromoCNV <- function(sampleImg, x, chrNum) {
