@@ -424,6 +424,7 @@ dropBadQc <- function(targets, betas, csvFi="samplesheet.csv") {
     }
     rownames(targets) <- 1:nrow(targets)
     write.csv(targets, file = csvFi, quote = F, row.names = F)
+    targets <<- gb$getTargCsv(csvFi)
     return(theMissing)
 }
 
