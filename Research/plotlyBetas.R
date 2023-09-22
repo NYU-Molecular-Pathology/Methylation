@@ -103,10 +103,10 @@ FormatLegendText <- function(fig){
         otherPlot[["x"]][["data"]][[nSam]][["marker"]][["size"]] <- 18
         otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]][["width"]] <- 2
         otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]][["opacity"]] <- 1
+        nGroupSplit <- stringr::str_split_fixed(nlgndGrp, ",", 2)[1, 1]
         if (isShape) {
           otherPlot <- FormatShapeColors(isSingle, nlgndGrp, lgndSplt, fig, otherPlot, nSam)
         } else{
-            nGroupSplit <- stringr::str_split_fixed(nlgndGrp, ",", 2)[1, 1]
             theSamLabs <- which(nlgndGrp==figGrps)
             otherPlot[["x"]][["data"]][[nSam]]$text <- paste("Sample:", fig$data$samples[theSamLabs])
             if (otherPlot[["x"]][["data"]][[nSam]][["marker"]][["symbol"]] != "circle") {
