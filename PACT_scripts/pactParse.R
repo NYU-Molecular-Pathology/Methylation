@@ -78,15 +78,19 @@ loadPacks <- function(){
 
 
 # FUN: Returns Path to xlsx file ---------------------------------------------------------------
-getExcelPath <- function(inputSheet, pathType = 1){
+getExcelPath <- function(inputSheet, pathType = 1, isNxtSeq=F){
     if(stringr::str_detect(inputSheet,"/")==T){return(inputSheet)}
     drive = file.path("", "Volumes", "molecular", "MOLECULAR LAB ONLY")
     folder = file.path("NYU PACT Patient Data", "Workbook")
     runyr <- stringr::str_split_fixed(inputSheet, "-", 3)[, 2]
     yearDir <- paste0("20", runyr)
-    ending <-ifelse(pathType==1,".xlsm","_FinalExportedList.xlsx")
+    ending <- ifelse(pathType==1,".xlsm","_FinalExportedList.xlsx")
     xlFi <- paste0(inputSheet, ending)
     inputFiPath <- file.path(drive, folder, yearDir, inputSheet, xlFi)
+    if(isNxtSeq == T){
+        folder <- "Validations/PACT new i7-NextSeq2000/Wet Lab/Workbook"
+        inputFiPath <- file.path(drive, folder, yearDir, xlFi)
+    }
     return(inputFiPath)
 }
 
@@ -858,12 +862,12 @@ pushToRedcap <- function(outVals, token=NULL) {
 # Gets dataframe and saves as CSV file -----
 writeSampleSheet <- function(inputSheet, token, runID = NULL) {
     isPath <- stringr::str_detect(inputSheet, .Platform$file.sep) == T
+    isNxtSeq <- ifelse(stringr::str_detect(inputSheet, "2000"), T, F)
     if(isPath==F){
-        inputFi <- getExcelPath(inputSheet)
+        inputFi <- getExcelPath(inputSheet, 1, isNxtSeq)
     }else{
         inputFi <- inputSheet
     }
-    message("File path input:\n", inputFi)
     if (file.exists(inputFi)) {
         outVals <- parseExcelFile(inputFi, runID)
     } else {
