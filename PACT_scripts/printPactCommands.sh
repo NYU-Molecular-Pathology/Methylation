@@ -379,11 +379,11 @@ BAMSDIR="/gpfs/data/molecpathlab/production/NGS607/${runID}/output/alignments/re
 
 # Stage 3 -----------------------
 msg_stage 3 "Copy the QC files and Output data to the Molecular Z-drive"
-msg_step 1 "#baffc9" "Create the output BAM directory and copy calibrated:"
+msg_step 1 "#baffc9" "Create the output BAM directory and copy calibrated and then ssh to the data mover node by executing below:"
 msg_code "/gpfs/home/${kerbero}/molecpathlab/scripts/bash_helpers/bam_copier.sh ${runID} ${pactRun}"
 #msg_code "mkdir -p \"/gpfs/data/clinpathlab/external/${pactRun}\" && rsync -vrthP ${BAMSDIR}/*.dd.ra.rc.bam \"/gpfs/data/clinpathlab/external/${pactRun}/\" && rsync -vrthP ${BAMSDIR}/*.dd.ra.rc.bam.bai \"/gpfs/data/clinpathlab/external/${pactRun}/\" && chmod -R ag+rwx \"/gpfs/data/clinpathlab/external/${pactRun}\""
-msg_step 2 "#baffc9" "ssh to the data mover node, mount /mnt/${kerbero}/molecular, and execute zdrive_copier.sh below"
-msg_code "ssh ${kerbero}@dmn-0002"
+msg_step 2 "#baffc9" "From the data mover node, mount /mnt/${kerbero}/molecular, and execute zdrive_copier.sh below"
+#msg_code "ssh ${kerbero}@dmn-0002"
 #msg_code "mount /mnt/${kerbero}/molecular"
 #msg_note "NOTE:" "Occasionally, the 0001 will be down and the 0002 will take over.  We usually just use 0002"
 #msg_step 2 "#baffc9" "Once mounted, create the output directories in /MOLECULAR/NGS607/"
