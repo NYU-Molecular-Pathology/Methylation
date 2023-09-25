@@ -398,9 +398,9 @@ msg_code "/mnt/${kerbero}/molecular/Molecular/Validation/Scripts/zdrive_copier.s
 # msg_code "rsync -vrthP ${productionDir}/NGS607/${runID}/output/cnv/FACETS/*.pdf ${productionDir}/NGS607/${runID}/${pactRun}-QC.tsv ${zdrive}/REDCap/cnv_facets/${pactRun}/"
 msg_step 3 "#baffc9" "Email the PACT team once the QC files are copied to notify them the following"
 msg_code "The in-house pipeline completed for ${pactRun}. The data for this week’s PACT run is copied here:
-&lt;smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/NGS607/${currYear}/${runID}/&gt;
+smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/NGS607/${currYear}/${runID}/
 The QC and output is copied here:
-&lt;smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics/${currYear}/${pactRun}/${pactRun}.html&gt;"
+smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics/${currYear}/${pactRun}/${pactRun}.html"
 echo "$BOX2"
 
 # Stage 4 -----------------------
@@ -427,7 +427,7 @@ msg_code "${HOME}/make_consensus.sh ${runID} ${pactRun}"
 msg_step 2 "#bae1ff" "Send an email to notify the file is ready"
 msg_code "Hi all,
 The methylation CNV consensus is copied here:
-&lt;smb://shares-cifs.nyumc.org/apps/acc_pathology${outputDir}${currYear}/${pactRun}/${pactRun}_consensus.html&gt;"
+smb://shares-cifs.nyumc.org/apps/acc_pathology${outputDir}${currYear}/${pactRun}/${pactRun}_consensus.html"
 echo "$BOX2"
 
 echo "
