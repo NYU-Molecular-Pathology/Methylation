@@ -306,76 +306,60 @@ AddSampleIndexes <- function(pairedList, rawSheetData, philipsExport){
 }
 
 
-FixDuplicateControls <- function(control_sams) {
-    replace_first_char <- function(string, number) {
-        substr(string, 1, 1) <- as.character(number)
-        return(string)
-    }
-
-    for (unique_string in unique(control_sams)) {
-        indices <- which(control_sams == unique_string)
-        if (length(indices) > 1) {
-            control_sams[indices] <- mapply(
-                replace_first_char, control_sams[indices], rev(seq_along(indices) - 1))
+FixDuplicateControls <- function(controlRows) {
+    message("Fixing duplicated controls:\n", paste(controlRows[duplicated(controlRows)], collapse = "\n"))
+    
+    for (unique_string in unique(controlRows)) {
+        indices <- which(controlRows == unique_string)
+        n <- length(indices)
+        if (n > 1) {
+            new_values <- sapply(seq_len(n) - 1, function(x) {
+                substr(unique_string, 1, 1) <- as.character(x)
+                return(unique_string)
+            })
+            controlRows[indices] <- rev(new_values)
         }
     }
-
-    return(control_sams)
+    
+    return(controlRows)
 }
 
 
 BindUnpairedRows <- function(rawSheetData, pairedList, runID) {
-
     accessions <- rawSheetData$`Accession#`
-    controls <- which(str_detect(rawSheetData$`Type & Tissue`, pattern =  "Control"))
-    rowsMissing <- !vapply(accessions[-controls], function(x) any(str_detect(pairedList, x)), logical(1))
-    doubleBars <- vapply(pairedList, function(X) str_detect(X, pattern = "__"), logical(1))
-
+    dnaNumbers <- rawSheetData$`DNA #`
+    controls <- which(str_detect(rawSheetData$`Type & Tissue`, "Control"))
+    missRows <- vapply(accessions[-controls], function(x) !any(str_detect(pairedList, x)), logical(1))
+    doubleBars <- vapply(pairedList, function(X) {str_detect(X, pattern = "__")}, logical(1))
+    
     if(any(doubleBars)){
         message(crayon::bgRed("The following rows are missing data:"),"\n",
                 paste(pairedList[doubleBars], collapse = "\n"))
     }
-
-    newRows <- if(length(accessions[rowsMissing]) == 0) {
-        message(crayon::bgGreen("No additional paired sample rows to bind to sample sheet"))
-        NULL
+    
+    newRows <- NULL
+    
+    if(any(missRows)) {
+        message(crayon::bgGreen("Binding additional rows/filler:"), "\n", 
+                paste(accessions[missRows], collapse = "\n"))
+        extraRow <- accessions == accessions[missRows]
+        newRows <-  paste0(accessions[missRows], "_", runID, "_", accessions[extraRow], "_", dnaNumbers[extraRow]))
     } else {
-        message("Binding additional rows/filler:",
-                "\n",
-                paste(accessions[rowsMissing], collapse = "\n"))
-
-        sapply(seq_along(accessions[rowsMissing]), function(i) {
-            paste0(0,
-                   "_",
-                   runID,
-                   "_",
-                   accessions[rowsMissing][i],
-                   "_",
-                   rawSheetData$`DNA #`[rowsMissing][i])
-        })
+        message(crayon::bgGreen("No additional fillers or paired sample rows to bind to sample sheet"))
     }
-    control_acc <- rawSheetData$Test_Number[controls]
-    controlRows <- sapply(seq_along(controls), function(i) {
-        paste0(control_acc[i],
-               "_",
-               runID,
-               "_",
-               accessions[controls][i],
-               "_",
-               rawSheetData$`DNA #`[controls][i])
-    })
+    
+    cntrlT <- rawSheetData$Test_Number == rawSheetData$Test_Number[controls]
+    controlRows <- paste0(rawSheetData$Test_Number[controls], "_", runID, "_", accessions[cntrlT], "_", dnaNumbers[cntrlT])
     message(crayon::bgBlue("Binding controls:"),"\n", paste(controlRows, collapse = "\n"))
-
-    if(any(duplicated(controlRows))){
-        message("Fixing duplicated controls:\n",
-                paste(controlRows[duplicated(controlRows)], sep="\n"))
+    
+    if(any(duplicated(controlRows))) {
         controlRows <- FixDuplicateControls(controlRows)
-        message(crayon::bgBlue("New control names:"),"\n", paste(controlRows, collapse = "\n"))
+        message(crayon::bgBlue("New control names:"), paste(controlRows, collapse = "\n"))
     }
-
+    
     pairedList <- data.frame("Sample_ID" = c(pairedList, newRows, controlRows))
     rownames(pairedList) <- seq_len(nrow(pairedList))
-
+    
     return(pairedList)
 }
 
