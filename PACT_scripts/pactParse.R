@@ -401,31 +401,31 @@ GetPairedList <- function(philipsExport, runID){
     return(pairedList)
 }
 
+
 MatchIndex <- function(list1, list2){
     return(unlist(lapply(list1, function(x) {which(x==list2)})))
 }
 
 
-CheckMissingPairs <- function(ngsNumbers, philipsT, philipsN){
-    if(any(is.na(philipsT)|philipsT==0)){
-        philipsT[is.na(philipsT)] <- 0
-        missingPair <- which(philipsT==0)
-        message(crayon::bgRed("Some samples are missing tumor/normal pairs:"))
-        message(ngsNumbers[missingPair],"\nPhilips Normal: ", philipsN[missingPair], "\nPhilips Tumor: ", philipsT[missingPair])
-    }
+DisplayMissing <- function(ngsMissing, valMissing, type) {
+    message(crayon::bgRed("Some samples are missing tumor/normal pairs:"))
+    message(paste(ngsMissing, "Philips", type, "=" , valMissing, collapse = "\n")) 
+}
 
-    if(any(is.na(philipsN)|philipsN==0)){
-        philipsN[is.na(philipsN)] <- 0
-        missingPair <- which(philipsN==0)
-        message(crayon::bgRed("Some samples are missing tumor/normal pairs:"))
-        message(ngsNumbers[missingPair],"\nPhilips Normal: ", philipsN[missingPair], "\nPhilips Tumor: ", philipsT[missingPair])
+CheckMissingPairs <- function(ngsNumbers, philipsT, philipsN) {
+    listCheck <- list("Normal" = philipsN, "Tumor" = philipsT)
+    
+    for (type in names(listCheck)) {
+        val <- listCheck[[type]]
+        miss <- val == 0 | is.na(val)
+        if (any(miss)) {DisplayMissing(ngsNumbers[miss], val[miss], type)}
     }
-
-    if(any(philipsN %in% philipsT)){
-        theDupe <- which(philipsN %in% philipsT ==T)
-        message(crayon::bgRed("Some Philips samples have the same tumor/normal accession number:"))
-        MsgDF(ngsNumbers[theDupe])
-        MsgDF(philipsN[theDupe])
+    
+    dupes <- philipsN %in% philipsT
+    if (any(dupes)) {
+        message(crayon::bgRed("Philips samples have the same tumor/normal accession#:"))
+        MsgDF(ngsNumbers[dupes])
+        MsgDF(philipsN[dupes])
     }
 }
 
