@@ -343,7 +343,7 @@ BindUnpairedRows <- function(rawSheetData, pairedList, runID) {
         message(crayon::bgGreen("Binding additional rows/filler:"), "\n", 
                 paste(accessions[missRows], collapse = "\n"))
         extraRow <- accessions == accessions[missRows]
-        newRows <-  paste0(accessions[missRows], "_", runID, "_", accessions[extraRow], "_", dnaNumbers[extraRow]))
+        newRows <-  paste0(accessions[missRows], "_", runID, "_", accessions[extraRow], "_", dnaNumbers[extraRow])
     } else {
         message(crayon::bgGreen("No additional fillers or paired sample rows to bind to sample sheet"))
     }
