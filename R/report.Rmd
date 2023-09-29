@@ -25,6 +25,12 @@ htmltools::includeCSS(file.path(gitPath,"SarcStyle.html"))
 gb$RGset <- RGset <- params$RGsetEpic[, 1]
 gb$msetDat <- gb$GetSexMsetBa(RGset, FFPE=NULL)
 knitr::asis_output(gb$SuppInfoTable(dat, RGset, gb$msetDat))
+if(all(RGset@assays@data@listData[["Green"]]==0)){
+  cat("\n\n")
+  cat("Array Values are not valid!  All are NaN.  This array may be incompatible with the Current Classifer!")
+  cat("\n\n")
+  knitr::knit_exit()
+}
 ```
 ### Brain Tumor Methylation Classifier Version 11
 ```{r 'Brain Classifier Family'}
