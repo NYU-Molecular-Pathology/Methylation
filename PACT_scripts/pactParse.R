@@ -95,59 +95,54 @@ getExcelPath <- function(inputSheet, pathType = 1, isNxtSeq=F){
 }
 
 
-MsgChangesMade <- function(mainSheet, ptrn=","){
-    for(i in 1:ncol(mainSheet)){
-        theRows <- mainSheet[,i]
-        if(any(is.na(theRows))){
-            theRows[which(is.na(theRows))] <- ""
-        }
-        theMatch <- stringr::str_detect(theRows, pattern=ptrn)
-        if(any(theMatch)){
-            theCommas <- which(theMatch==T)
-            theSym <- paste0('"', ptrn, '"')
-            message(paste('The following', theSym, 'will be removed from rows',
-                          paste(theCommas, collapse=", "), 'in the column:', colnames(mainSheet)[i]))
-            MsgDF(theRows[theCommas])
+MsgChangesMade <- function(mainSheet, badChars = c("[\r\n]", ",", " ")) {
+    for (ptrn in badChars) {
+        for (i in seq_along(mainSheet)) {
+            col <- ifelse(is.na(mainSheet[[i]]), "", mainSheet[[i]])
+            idxMatch <- which(stringr::str_detect(col, pattern = ptrn))
+            if (length(idxMatch) > 0) {
+                message(sprintf('The following "%s" will be removed from the column: %s',
+                                ptrn, names(mainSheet)[i]))
+                MsgDF(mainSheet[idxMatch, i])
+            }
         }
     }
 }
 
 
-# Removes and fixes newlines, commas, and blanks from samplesheet ------------------------------
-sanitizeSheet <- function(mainSheet){
-    mainSheet <- mainSheet[!is.na(mainSheet[,1]),]
-    spacedTxt <- stringr::str_detect(mainSheet$Tumor_Type, " ")
-    if(any(spacedTxt)){
-        message("The following Tumor_Type have spaces:")
-        MsgDF(mainSheet$Tumor_Type[spacedTxt])
-    }
-    mainSheet$Tumor_Type <- gsub(" ", "-", mainSheet$Tumor_Type)
-
-    MsgChangesMade(mainSheet)
-    MsgChangesMade(mainSheet, " ")
-    MsgChangesMade(mainSheet, "[\r\n]")
-
-    for(i in 1:ncol(mainSheet)){
-        mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub("[\r\n]", "", x) })
-        mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub(",", "", x) })
-        mainSheet[,i] <- sapply(mainSheet[,i], function(x) { gsub(" ", "", x) })
-    }
-
-    mainSheet$Paired_Normal[mainSheet$Paired_Normal==0|is.na(mainSheet$Paired_Normal)] <-""
-    mainSheet$Tumor_Type[mainSheet$Tumor_Type==0] <- "NA"
-    mainSheet[,1:16] <- sapply(mainSheet[,1:16], function(x) { gsub("\\\\", "-", x) })
-    controlNames <- "NTC_H20|SC_SERACARE|NC_HAPMAP"
+CountControls <- function(mainSheet, controlNames="NTC_H20|SC_SERACARE|NC_HAPMAP") {
     controlSamples <- grepl(pattern=controlNames, mainSheet$Sample_Name)
     if(table(controlSamples)[['TRUE']]!=3){
-        warning("There are not 3 control samples, either NTC_H20, SC_SERACARE, or NC_HAPMAP is missing OR there are extra controls added in this run")
+        message(crayon::bgRed("There are not 3 Control samples"))
+        message("Either NTC_H20, SC_SERACARE, or NC_HAPMAP is missing")
+        message("OR\nThere are extra controls added in this run:")
+        MsgDF(mainSheet$Sample_Name[controlSamples])
     }else{
         controlIndexes <- which(controlSamples==T)
         mainSheet[controlIndexes,'Paired_Normal'] <- ""
     }
+    return(mainSheet)
+}
+
+
+# Removes and fixes newlines, commas, and blanks from samplesheet ------------------------------
+sanitizeSheet <- function(mainSheet){
+    MsgChangesMade(data.frame(Tumor_Type = mainSheet$Tumor_Type), " ")
+    mainSheet$Tumor_Type <- gsub(" ", "-", mainSheet$Tumor_Type)
+    MsgChangesMade(mainSheet)
+    mainSheet <- data.frame(lapply(mainSheet, function(col) gsub("[\r\n, ]", "", col)))
+
+    pn_blank <- mainSheet$Paired_Normal == 0 | is.na(mainSheet$Paired_Normal)
+    mainSheet$Paired_Normal[pn_blank] <- ""
+    mainSheet$Tumor_Type[mainSheet$Tumor_Type == 0] <- "NA"
+    mainSheet[,1:16] <- sapply(mainSheet[, 1:16], function(x) {gsub("\\\\", "-", x)})
+    mainSheet <- CountControls(mainSheet)
+
     if(any(duplicated(mainSheet$Sample_ID))){
-        warning("There are duplicated Sample_ID in the SampleSheet")
-        print(mainSheet$Sample_ID[duplicated(mainSheet$Sample_ID)])
+        message(crayon::bgRed("There are duplicated Sample_ID in the SampleSheet"))
+        MsgDF(mainSheet$Sample_ID[duplicated(mainSheet$Sample_ID)])
     }
+
     return(mainSheet)
 }
 
