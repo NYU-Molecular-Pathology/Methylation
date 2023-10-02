@@ -554,16 +554,24 @@ FixLastColumns <- function(mainSheet, rawSheetData){
 
 BuildNoPhilips <- function(rawSheetData, runID, pact_run) {
     message("Generating SampleSheet without Philips Data: ALL cases are validation!")
-    
     seqId <- stringr::str_split_fixed(runID, "_", 4)
-    whichNormal <- rawSheetData$`Type & Tissue` %in% c("Normal", "Control")
-    onlyNormals <- rawSheetData$`Type & Tissue` == "Normal"
-    concat_id <- paste(0, runID, rawSheetData$`Accession#`, rawSheetData$`DNA #`, sep="_")
-    
+    whichNormal <- stringr::str_detect(rawSheetData$`Type & Tissue`, "Norm|norm|cont|Cont")
+    onlyNormals <- stringr::str_detect(rawSheetData$`Type & Tissue`, "Norm|norm")
+    concat_id <- data.frame(sid = paste(0, runID, rawSheetData$`Accession#`, rawSheetData$`DNA #`, sep="_"))
+    pairedNorm <- NULL
+    for (sam in concat_id[onlyNormals, 1]) {
+        if(is.null(pairedNorm)){
+            pairedNorm <- c(sam, "")
+        }else{
+            pairedNorm <- c(pairedNorm, sam, "")
+        }
+    }
+    toAdd <- nrow(concat_id) - length(pairedNorm)
+    pairedNorm <- c(pairedNorm, rep("", toAdd))
     mainSheet <- data.frame(
-        Sample_ID = concat_id,
-        Sample_Name = concat_id,
-        Paired_Normal = ifelse(!whichNormal, concat_id[onlyNormals], ""),
+        Sample_ID = concat_id[,1],
+        Sample_Name = concat_id[,1],
+        Paired_Normal = pairedNorm,
         I7_Index_ID = rawSheetData$I7_Index_ID,
         index = rawSheetData$index,
         Specimen_ID = rawSheetData$`Accession#`,
@@ -579,7 +587,6 @@ BuildNoPhilips <- function(rawSheetData, runID, pact_run) {
         GenomeFolder = "PhiX-Illumina-RTA-Sequence-WholeGenomeFASTA",
         stringsAsFactors = FALSE
     )
-    
     return(mainSheet)
 }
 
