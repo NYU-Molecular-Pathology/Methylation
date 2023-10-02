@@ -48,8 +48,8 @@ rsync -vrthP --include="*.pdf" "${deskDir}" "${consensusDir}${pactRun}_consensus
 rsync -vrthP --include="*.tsv" "${deskDir}" "${consensusDir}${pactRun}_consensus"
 rsync -vrthP "$HOME/Desktop/${runID}-SampleSheet.csv" "${consensusDir}${pactRun}_consensus"
 rsync -vrthP "$HOME/Desktop/${pactRun}_MethylMatch.xlsx" "${consensusDir}${pactRun}_consensus"
-rsync -vrthP "${deskDir}${pactRun}-Somatic_Variants.html" "${consensusDir}${pactRun}_consensus"
-rsync -vrthP "${deskDir}${pactRun}.html" "${consensusDir}${pactRun}_consensus"
+#rsync -vrthP "${deskDir}${pactRun}-Somatic_Variants.html" "${consensusDir}${pactRun}_consensus"
+#rsync -vrthP "${deskDir}${pactRun}.html" "${consensusDir}${pactRun}_consensus"
 
 cd "${HOME}" && curl -# -L ${pactGithub}/MakeIndelList.R >"${HOME}/MakeIndelList.R"
 
