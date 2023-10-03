@@ -558,16 +558,8 @@ BuildNoPhilips <- function(rawSheetData, runID, pact_run) {
     whichNormal <- stringr::str_detect(rawSheetData$`Type & Tissue`, "Norm|norm|cont|Cont")
     onlyNormals <- stringr::str_detect(rawSheetData$`Type & Tissue`, "Norm|norm")
     concat_id <- data.frame(sid = paste(0, runID, rawSheetData$`Accession#`, rawSheetData$`DNA #`, sep="_"))
-    pairedNorm <- NULL
-    for (sam in concat_id[onlyNormals, 1]) {
-        if(is.null(pairedNorm)){
-            pairedNorm <- c(sam, "")
-        }else{
-            pairedNorm <- c(pairedNorm, sam, "")
-        }
-    }
-    toAdd <- nrow(concat_id) - length(pairedNorm)
-    pairedNorm <- c(pairedNorm, rep("", toAdd))
+    pairedNorm <- rep("", nrow(concat_id))
+    pairedNorm[!whichNormal] <- concat_id[onlyNormals, 1]
     mainSheet <- data.frame(
         Sample_ID = concat_id[,1],
         Sample_Name = concat_id[,1],
