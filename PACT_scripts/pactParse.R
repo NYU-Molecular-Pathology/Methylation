@@ -579,6 +579,7 @@ BuildNoPhilips <- function(rawSheetData, runID, pact_run) {
         GenomeFolder = "PhiX-Illumina-RTA-Sequence-WholeGenomeFASTA",
         stringsAsFactors = FALSE
     )
+    mainSheet[!whichNormal, "Tumor_Content"] <- 70
     return(mainSheet)
 }
 
