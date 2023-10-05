@@ -164,6 +164,35 @@ CheckFiExist <- function(pactName, philipsFtp) {
 }
 
 
+CheckMethPaths <- function(methData){
+    for(i in 1:length(methData$`Report Path`)){
+          currPath <- methData$`Report Path`[i]
+          currSplit <- stringr::str_split_fixed(currPath, "/",11)[1,]
+          if(stringr::str_detect(currSplit[10], "MGDM")==F) {
+              next
+          }
+          runYear <- stringr::str_split_fixed(currSplit[10],"-", 2)[1,1]
+          runYear <- paste0("20", runYear)
+          currSplit[9] <- runYear
+          newPath <- paste(currSplit, collapse = "/")
+          methData[i, "Report Path"] <- newPath
+      }
+    
+    checkPaths <- stringr::str_replace_all(methData$`Report Path`,
+                                           "smb://shares-cifs.nyumc.org/apps/acc_pathology", "/Volumes")
+    
+    anyPathsFalse <- file.exists(checkPaths) == F
+    
+    if(any(anyPathsFalse)){
+        message("Some paths need to be fixed 'Report Path' column of in ", methSheet, ":" )
+        cat("Paths don't exist:\n")
+        cat(paste(checkPaths[anyPathsFalse], collapse="\n"))
+    }
+    stopifnot(all(file.exists(checkPaths)))
+    return(methData)
+}
+
+
 GetMethDf <- function(pactName) {
     methSheet <- paste0(pactName, "_MethylMatch.xlsx")
     methData <- as.data.frame(readxl::read_excel(methSheet))
@@ -178,7 +207,13 @@ GetMethDf <- function(pactName) {
         ngsRow <- which(stringr::str_detect(wsData$Specimen_ID, pattern = nSam))[[1]]
         methData$Test_Number[xRow] <- wsData$Test_Number[ngsRow]
       }
+      
     }
+    
+    if(nrow(methData) > 0){
+        methData <- CheckMethPaths(methData)
+    }
+    
     return(methData)
 }
 
