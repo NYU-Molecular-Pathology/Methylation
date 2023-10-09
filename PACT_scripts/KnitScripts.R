@@ -180,7 +180,7 @@ CheckMethPaths <- function(methData){
     
     checkPaths <- stringr::str_replace_all(methData$`Report Path`,
                                            "smb://shares-cifs.nyumc.org/apps/acc_pathology", "/Volumes")
-    
+    checkPaths <- checkPaths[checkPaths != ""]
     anyPathsFalse <- file.exists(checkPaths) == F
     
     if(any(anyPathsFalse)){
