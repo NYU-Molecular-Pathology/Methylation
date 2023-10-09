@@ -295,11 +295,9 @@ echo ' <div class="tocbox"> '
 echo "<h2 style='margin-top: 0px;font-size:20;'> Table of Contents </h2>"
 echo " "
 echo '<ol start="0" style="font-size:14;">'
-#print_toc 0 "Setup SampleSheet.csv & Copy to BigPurple"
 print_toc 1 "Demultiplexing"
 print_toc 2 "Execute In-House Pipeline and Philips Uploads"
 print_toc 3 "Generate In-House QC and Copy the Output Files and QC to Zdrive"
-#print_toc 4 "Copy the Output Files and QC to Zdrive"
 print_toc 4 "Generate Consensus"
 echo "</ol>"
 echo "$BOX2"
