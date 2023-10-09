@@ -16,10 +16,6 @@ message("inputSheet: ", inputSheet,"\n")
 stopifnot(!is.na(token))
 stopifnot(!is.na(inputSheet))
 
-if(paste(utils::packageVersion("redcapAPI")) != "2.7.4"){
-    install.packages("redcapAPI", ask=F, update=T, dependencies=T)
-}
-
 readFlag <- endsWith(inputSheet,".csv")==T
 stopifnot(rlang::is_bool(readFlag))
 
@@ -28,9 +24,16 @@ flds = c("record_id","b_number","tm_number","accession_number","block","diagnosi
          "organ","tissue_comments","run_number", "nyu_mrn")
 
 # Load redcapAPI Package -----
-if(suppressWarnings(!require("redcapAPI"))){
-    params=list('nutterb/redcapAPI', dependencies=T, upgrade="always", type="source")
-    do.call(devtools::install_github,c(params))
+if(!requireNamespace("redcapAPI")){
+    params = list('nutterb/redcapAPI', dependencies = T, upgrade = "always", type = "source")
+    do.call(devtools::install_github, c(params))
+}
+
+current_version <- utils::packageVersion("redcapAPI")
+required_version <- "2.7.4"
+
+if (is.na(current_version) || utils::compareVersion(as.character(current_version), required_version) < 0) {
+    install.packages("redcapAPI", ask=FALSE, update=TRUE, dependencies=TRUE)
 }
 
 supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
@@ -52,21 +55,22 @@ checkMounts <- function(){
 
 # Functions to load packages and get redcap info -----
 loadPacks <- function(){
-    pkgs = c("data.table", "foreach", "openxlsx","jsonlite","RCurl","readxl","stringr","webshot","tidyverse","crayon","plotly","htmlwidgets","tinytex")
+    pkgs = c("data.table", "foreach", "openxlsx", "jsonlite", "RCurl", "readxl", "stringr", "webshot",
+             "tidyverse", "crayon", "plotly", "htmlwidgets", "tinytex")
     rlis = getOption("repos")
     rlis["CRAN"] = "http://cran.us.r-project.org"
     options(repos = rlis)
     invisible(lapply(pkgs, function(pk){
-        if(supM(!require(pk, character.only=T))){
-            install.packages(pk,dependencies=T, verbose=T, repos="http://cran.us.r-project.org", type="both")
+        if(supM(!requireNamespace(pk))){
+            install.packages(pk, dependencies = T, verbose = T, repos = "http://cran.us.r-project.org", type = "both")
         }}))
-    if(!require("systemfonts")){devtools::install_github('r-lib/systemfonts')}
-    if(!require("redcapAPI")){install.packages("redcapAPI", dependencies = T, type="both",ask=F)}
-    if(!require("remotes")){install.packages("remotes", dependencies=T)}
-    if(!require("chromote")){remotes::install_github("rstudio/chromote", upgrade ="never")}
-    if(!require("webshot2")){remotes::install_github("rstudio/webshot2")}
+    if(!requireNamespace("systemfonts")){devtools::install_github('r-lib/systemfonts')}
+    if(!requireNamespace("redcapAPI")){install.packages("redcapAPI", dependencies = T, type="both",ask=F)}
+    if(!requireNamespace("remotes")){install.packages("remotes", dependencies=T)}
+    #if(!requireNamespace("chromote")){remotes::install_github("rstudio/chromote", upgrade ="never")}
+    #if(!requireNamespace("webshot2")){remotes::install_github("rstudio/webshot2")}
     supM(library("redcapAPI"))
-    supM(library("chromote"))
+    #supM(library("chromote"))
     #try(tinytex::tlmgr_install(),silent=T)
     #try(tinytex:::install_prebuilt(),silent=T)
 }
@@ -84,22 +88,22 @@ searchDb <- function(queryList, db){
     v2f <- paste(queryList, collapse="|"); i=NULL
     res <- NULL
     for (idx in 1:length(queryList)) {
-      item <- queryList[idx]
-      ngsNumber = paste(names(item)[1])
-      for (i in colnames(db)) {
-        ngsMatch <- which(grepl(item, db[,i]))
-        if(length(ngsMatch) > 0) {
-          message("Match found for ",item, " (", db[ngsMatch,i], ") for ",
-                  ngsNumber," in:\n", '"', i,'"', " column")
-          dbMatch <- db[ngsMatch,]
-          dbMatch$Test_Number <- names(item)
-          if(is.null(res)){
-            res <- dbMatch
-          }else{
-            res <- rbind(res, dbMatch)
-          }
-          }
-      }
+        item <- queryList[idx]
+        ngsNumber = paste(names(item)[1])
+        for (i in colnames(db)) {
+            ngsMatch <- which(grepl(item, db[,i]))
+            if(length(ngsMatch) > 0) {
+                message("Match found for ",item, " (", db[ngsMatch,i], ") for ",
+                        ngsNumber," in:\n", '"', i,'"', " column")
+                dbMatch <- db[ngsMatch,]
+                dbMatch$Test_Number <- names(item)
+                if(is.null(res)){
+                    res <- dbMatch
+                }else{
+                    res <- rbind(res, dbMatch)
+                }
+            }
+        }
     }
     return(res)
 }
@@ -140,24 +144,24 @@ getPactFolder <- function(inputSheet){
 # Returns path to run worksheet if path is valid
 getFilePath <- function(inputSheet){
     runFolder <- getPactFolder(inputSheet)
-    inputFi <- file.path(runFolder,paste0(inputSheet,".xlsm"))
+    inputFi <- file.path(runFolder, paste0(inputSheet, ".xlsm"))
     if(file.exists(inputFi)) {return(inputFi)} else{return(getAltPath(inputFi))}
 }
 
 # Parses the input file for the "PhilipsExport" tab
 parseWorksheet <- function(inputFi){
-  sheet2Read <- "PhilipsExport"
-  message("Reading the file:\n", inputFi)
-  shNames <- readxl::excel_sheets(inputFi)
-  message("Excel sheet names:")
-  message(paste(shNames, collapse="\n"))
-  stopifnot(!is.null(shNames) & length(shNames) > 2)
-  sh <- which(grepl(sheet2Read, shNames, ignore.case = T))[1]
-  pactShCol <- c("Tumor Specimen ID", "Normal Specimen ID", "Tumor DNA/RNA Number", "MRN", "Test Number")
-  vals2find <-  suppressMessages(as.data.frame(readxl::read_excel(
-    inputFi, sheet=shNames[sh], skip=3, col_types ="text")[,pactShCol]))
-  vals2find <- vals2find[!is.na(vals2find[,1]),]
-  return(vals2find)
+    sheet2Read <- "PhilipsExport"
+    message("Reading the file:\n", inputFi)
+    shNames <- readxl::excel_sheets(inputFi)
+    message("Excel sheet names:")
+    message(paste(shNames, collapse="\n"))
+    stopifnot(!is.null(shNames) & length(shNames) > 2)
+    sh <- which(grepl(sheet2Read, shNames, ignore.case = T))[1]
+    pactShCol <- c("Tumor Specimen ID", "Normal Specimen ID", "Tumor DNA/RNA Number", "MRN", "Test Number")
+    vals2find <-  suppressMessages(as.data.frame(readxl::read_excel(
+        inputFi, sheet=shNames[sh], skip=3, col_types ="text")[,pactShCol]))
+    vals2find <- vals2find[!is.na(vals2find[,1]),]
+    return(vals2find)
 }
 
 # Import csv Worksheet -----
@@ -195,8 +199,9 @@ genQuery <- function(dbCol,vals2find){
 
 # Get Methylation and Molecular Samples list ----
 queryCases <- function(vals2find, db) {
+    library("foreach")
     i=NULL
-    queryList <- foreach::foreach(i=1:ncol(vals2find), .combine="c") %do% {genQuery(i,vals2find)}
+    queryList <- foreach::foreach(i=1:ncol(vals2find), .combine="c", .packages="foreach") foreach:::`%do%`{genQuery(i,vals2find)}
     tsTb <- stringr::str_detect(queryList, "TS|TB|TC")
     theTScases <- queryList[tsTb]
     for (x in 1:length(theTScases)) {
@@ -228,95 +233,128 @@ addOutputLinks <- function(output){
 }
 
 
-
 FillMissingNGS <- function(output, vals2find){
-  skipCols = F
-  rows2fill <- which(is.na(output$Test_Number))
-  outputRows <- output$accession_number[rows2fill]
-  matchedTs <- which(grepl(paste(outputRows, collapse = "|"),
-                           vals2find$`Tumor Specimen ID`, ignore.case = T))
-  if(length(matchedTs)>0){
-    foundTs <- vals2find$`Tumor Specimen ID`[matchedTs]
-    ngsFound <- vals2find$`Test Number`[matchedTs]
-    if(length(foundTs)==1){
-    skipCols = T
-      }
-    foundTs <- stringr::str_split_fixed(foundTs, "-", 3)[,1:2]
-    if(length(foundTs)>0){
-      if(skipCols==F){
-        foundTs <- paste(foundTs[,1], foundTs[,2], sep = "-")
-      }else{
-        foundTs <- paste(foundTs[1], foundTs[2], sep = "-")
-      }
-      }
-    matchFound <- which(grepl(paste(foundTs, collapse = "|"),
-                              output$accession_number, ignore.case = T))
-    output[matchFound,"Test_Number"] <- ngsFound
+    skipCols = F
     rows2fill <- which(is.na(output$Test_Number))
-  }
-  if(length(rows2fill)>0){
-    warning("Some samples still missing NGS Numbers:\n",
-            paste(output$record_id[rows2fill], collapse = "\n"))
-  }
-  return(output)
+    outputRows <- output$accession_number[rows2fill]
+    matchedTs <- which(grepl(paste(outputRows, collapse = "|"),
+                             vals2find$`Tumor Specimen ID`, ignore.case = T))
+    if(length(matchedTs)>0){
+        foundTs <- vals2find$`Tumor Specimen ID`[matchedTs]
+        ngsFound <- vals2find$`Test Number`[matchedTs]
+        if(length(foundTs)==1){
+            skipCols = T
+        }
+        foundTs <- stringr::str_split_fixed(foundTs, "-", 3)[,1:2]
+        if(length(foundTs)>0){
+            if(skipCols==F){
+                foundTs <- paste(foundTs[,1], foundTs[,2], sep = "-")
+            }else{
+                foundTs <- paste(foundTs[1], foundTs[2], sep = "-")
+            }
+        }
+        matchFound <- which(grepl(paste(foundTs, collapse = "|"),
+                                  output$accession_number, ignore.case = T))
+        output[matchFound,"Test_Number"] <- ngsFound
+        rows2fill <- which(is.na(output$Test_Number))
+    }
+    if(length(rows2fill)>0){
+        warning("Some samples still missing NGS Numbers:\n",
+                paste(output$record_id[rows2fill], collapse = "\n"))
+    }
+    return(output)
 }
 
 
 modifyOutput <- function(output, vals2find) {
-  #output$Test_Number <- NA
-  if (length(vals2find$`Test Number`) == 0) {
-    vals2find$`Test Number` <- ""
-  }
-  NGSmissing <- F
-  if(all(output$Test_Number %in% vals2find$`Test Number`)){
-    message("All NGS Found")
-  }else{
-    message("Not all NGS do not have methylation")
-  }
-  # for (i in 1:nrow(output)) {
-  #   theVal = NA
-  #   for (var in 1:ncol(vals2find)) {
-  #     pat <- vals2find[, var]
-  #     pat <- unique(pat)
-  #     currRow <- paste(output[i,])
-  #     theMatch <- which(pat %in% currRow[currRow != "0" & currRow != "NA"])
-  #     if (length(theMatch) > 1) {
-  #       warning(paste("Multiple records found matching pattern:",
-  #                     paste(theMatch, collapse = " "),"\nPattern:",
-  #                     paste(pat, collapse = " ")))
-  #     }
-  #     if (length(theMatch) > 0) {
-  #       theVal <- vals2find$`Test Number`[theMatch]
-  #     }
-  #     output$Test_Number[i] <- theVal
-  #   }
-  #   if (is.na(theVal)) {
-  #     warning(paste(output$record_id[i], "is missing NGS Number!"))
-  #     NGSmissing <- T
-  #   }
-  # }
-  if(NGSmissing==T){
-    output <- FillMissingNGS(output, vals2find)
-  }
-  output <- addOutputLinks(output)
-  return(output)
+    #output$Test_Number <- NA
+    if (length(vals2find$`Test Number`) == 0) {
+        vals2find$`Test Number` <- ""
+    }
+    NGSmissing <- F
+    if(all(output$Test_Number %in% vals2find$`Test Number`)){
+        message("All NGS Found")
+    }else{
+        message("Not all NGS do not have methylation")
+    }
+    # for (i in 1:nrow(output)) {
+    #   theVal = NA
+    #   for (var in 1:ncol(vals2find)) {
+    #     pat <- vals2find[, var]
+    #     pat <- unique(pat)
+    #     currRow <- paste(output[i,])
+    #     theMatch <- which(pat %in% currRow[currRow != "0" & currRow != "NA"])
+    #     if (length(theMatch) > 1) {
+    #       warning(paste("Multiple records found matching pattern:",
+    #                     paste(theMatch, collapse = " "),"\nPattern:",
+    #                     paste(pat, collapse = " ")))
+    #     }
+    #     if (length(theMatch) > 0) {
+    #       theVal <- vals2find$`Test Number`[theMatch]
+    #     }
+    #     output$Test_Number[i] <- theVal
+    #   }
+    #   if (is.na(theVal)) {
+    #     warning(paste(output$record_id[i], "is missing NGS Number!"))
+    #     NGSmissing <- T
+    #   }
+    # }
+    if(NGSmissing==T){
+        output <- FillMissingNGS(output, vals2find)
+    }
+    output <- addOutputLinks(output)
+    return(output)
 }
 
 
-addExcelLink <- function(output,fiLn,wb,runId){
+CheckMethPaths <- function(methData){
+    for(i in 1:length(methData$`Report Path`)){
+        currPath <- methData$`Report Path`[i]
+        currSplit <- stringr::str_split_fixed(currPath, "/",11)[1,]
+        if(stringr::str_detect(currSplit[10], "MGDM")==F) {
+            next
+        }
+        runYear <- stringr::str_split_fixed(currSplit[10],"-", 2)[1,1]
+        runYear <- paste0("20", runYear)
+        currSplit[9] <- runYear
+        newPath <- paste(currSplit, collapse = "/")
+        methData[i, "Report Path"] <- newPath
+    }
+
+    checkPaths <- stringr::str_replace_all(methData$`Report Path`,
+                                           "smb://shares-cifs.nyumc.org/apps/acc_pathology", "/Volumes")
+
+    checkPaths <- checkPaths[checkPaths != ""]
+    anyPathsFalse <- file.exists(checkPaths) == F
+
+    if(any(anyPathsFalse)){
+        message("Some paths need to be fixed 'Report Path' column of in the methylation sheet!" )
+        cat("Paths don't exist:\n")
+        cat(paste(checkPaths[anyPathsFalse], collapse="\n"))
+    }
+
+    return(methData)
+}
+
+
+addExcelLink <- function(output, fiLn, wb, runId){
     x <- c(output$'Report Link'[fiLn])
     names(x) <- paste0(output$record_id[fiLn],".html")
     class(x) <- "hyperlink"
     colNum <- which(colnames(output)=="Report Link")
-    openxlsx::writeData(wb, sheet=runId, x=x, startCol=colNum, startRow=fiLn+1)
+
+    openxlsx::writeData(wb, sheet = runId, x = x, startCol = colNum, startRow = fiLn + 1)
 }
 
-createXlFile <- function(runId,output){
+createXlFile <- function(runId, output){
     wb <- openxlsx::createWorkbook()
     openxlsx::addWorksheet(wb, runId)
-    openxlsx::writeData(wb, sheet=runId, x=output)
+    openxlsx::writeData(wb, sheet = runId, x = output)
+    output <- CheckMethPaths(methData = output)
     for (fiLn in 1:length(output$'Report Link')) {
-        if(output$'Report Link'[fiLn]!=''){addExcelLink(output,fiLn,wb,runId)}
+        if(output$'Report Link'[fiLn]!=''){
+            addExcelLink(output, fiLn, wb, runId)
+        }
     }
     outFi <-file.path(fs::path_home(),"Desktop", paste0(runId,"_MethylMatch.xlsx"))
     openxlsx::saveWorkbook(wb, outFi, overwrite = T)
@@ -350,7 +388,7 @@ emailFile <- function(runId, outFi, rcon){
                 error = function(cond){
                     list(status_code = "200")
                 }
-                )
+            )
         if(res$status_code=="200"){
             message("REDCap file upload successful: ", outFi)
         }else{
@@ -364,45 +402,45 @@ emailFile <- function(runId, outFi, rcon){
 
 # Main workflow to get dataframe
 getOuputData <- function(token, flds, inputSheet, readFlag){
-  apiUrl = "https://redcap.nyumc.org/apps/redcap/api/"
-  rcon <- redcapAPI::redcapConnection(apiUrl, token)
-  vals2find <- getCaseValues(inputSheet, readFlag)
-  db <- grabAllRecords(flds, rcon)
-  if(nrow(db)==0){
-    message("REDCap API connection failed!\n",
-            "Check the Database for non-ASCII characters and verify the API Token: ", token)
-    stopifnot(nrow(db)>0)
-  }
-  if(class(vals2find)!="data.frame"){
-    vals2find <- as.data.frame(vals2find)
-  }
-  if(nrow(vals2find)!=0){
-    output <- queryCases(vals2find, db)
-  }
-  if(nrow(output)==0){
-    warning("No Methylation Cases on this Pact run, generating blank file")
-    output[1,] <- "NONE"
-  }else{
-    rownames(output) <- 1:nrow(output)
-  }
-  if(readFlag==T){
-    output <- modifyOutput(output, vals2find)
-    write.csv(output, file="meth_sample_data.csv", quote=F, row.names=F)
-    return(output)
-  }
-  runId <- ifelse(readFlag == T, substr(inputSheet, 1, nchar(inputSheet) - 4), inputSheet)
-  output <- modifyOutput(output, vals2find)
-  toDrop <- is.na(output$Test_Number)
-  if(any(toDrop)){
-    hasNGS <- which(grepl("NGS", output$tm_number))
-    message("NGS Number found in 'tm_number' field of REDCap!")
-    if(length(hasNGS) > 0){
-      output$Test_Number[hasNGS] <- output$tm_number[hasNGS]
+    apiUrl = "https://redcap.nyumc.org/apps/redcap/api/"
+    rcon <- redcapAPI::redcapConnection(apiUrl, token)
+    vals2find <- getCaseValues(inputSheet, readFlag)
+    db <- grabAllRecords(flds, rcon)
+    if(nrow(db)==0){
+        message("REDCap API connection failed!\n",
+                "Check the Database for non-ASCII characters and verify the API Token: ", token)
+        stopifnot(nrow(db)>0)
     }
-  }
-  outFi <- createXlFile(runId, output)
-  emailFile(runId, outFi, rcon)
-  return(output)
+    if(class(vals2find)!="data.frame"){
+        vals2find <- as.data.frame(vals2find)
+    }
+    if(nrow(vals2find)!=0){
+        output <- queryCases(vals2find, db)
+    }
+    if(nrow(output)==0){
+        warning("No Methylation Cases on this Pact run, generating blank file")
+        output[1,] <- "NONE"
+    }else{
+        rownames(output) <- 1:nrow(output)
+    }
+    if(readFlag==T){
+        output <- modifyOutput(output, vals2find)
+        write.csv(output, file="meth_sample_data.csv", quote=F, row.names=F)
+        return(output)
+    }
+    runId <- ifelse(readFlag == T, substr(inputSheet, 1, nchar(inputSheet) - 4), inputSheet)
+    output <- modifyOutput(output, vals2find)
+    toDrop <- is.na(output$Test_Number)
+    if(any(toDrop)){
+        hasNGS <- which(grepl("NGS", output$tm_number))
+        message("NGS Number found in 'tm_number' field of REDCap!")
+        if(length(hasNGS) > 0){
+            output$Test_Number[hasNGS] <- output$tm_number[hasNGS]
+        }
+    }
+    outFi <- createXlFile(runId, output)
+    emailFile(runId, outFi, rcon)
+    return(output)
 }
 
 # FUN: Sets your directory and sources the helper functions
@@ -412,7 +450,7 @@ sourceFuns2 <- function(workingPath = NULL) {
     if (is.null(workingPath)) {workingPath = getwd()}
     scripts <- paste0(mainHub, script.list)
     invisible(lapply(scripts, function(i){
-      suppressPackageStartupMessages(devtools::source_url(i))}))
+        suppressPackageStartupMessages(devtools::source_url(i))}))
     supM(library("sest"))
     supM(library("mnp.v11b6"))
     #supM(require("plotly"))
@@ -477,16 +515,16 @@ loopCNV <- function(mySentrix, asPNG){
 
 
 CheckIfPngExists <- function(
-    rds,
-    outFolder = "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG") {
+        rds,
+        outFolder = "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG") {
     outpng <- paste0(rds, "_cnv.png")
     outFiles <- file.path(outFolder, outpng)
     finished <- file.exists(outFiles)
     if (any(finished)) {
         message(crayon::bgGreen(
-          "The following samples are completed and will be skipped:"), "\n",
+            "The following samples are completed and will be skipped:"), "\n",
             paste(capture.output(outFiles[finished]), collapse = '\n')
-          )
+        )
         rds <- rds[!finished]
     }
     return(rds)
@@ -494,14 +532,14 @@ CheckIfPngExists <- function(
 
 
 gb$SaveConumeePACT <-  function(x, sampleImg, doXY=F){
-  chrAll <- paste0("chr", 1:22)
-  if(doXY==T){
-    chrAll <- "all"
-  }
-  message("Saving file to:\n", sampleImg)
-  png(filename = sampleImg, width = 1820, height = 1040, res=150)
-  conumee::CNV.genomeplot(x, chr = chrAll)
-  invisible(dev.off())
+    chrAll <- paste0("chr", 1:22)
+    if(doXY==T){
+        chrAll <- "all"
+    }
+    message("Saving file to:\n", sampleImg)
+    png(filename = sampleImg, width = 1820, height = 1040, res=150)
+    conumee::CNV.genomeplot(x, chr = chrAll)
+    invisible(dev.off())
 }
 
 
@@ -513,7 +551,7 @@ gb$SaveCNVplotsPACT <- function(samplename_data, sentrix.ids, i, idatPath = NULL
     sampleEpic <- sentrix.ids[i]
     sampleImg <- file.path(fs::path_home(), "Desktop", paste0(samName, "_cnv.png"))
     pathEpic <- file.path(idatPath, sampleEpic)
-    RGsetEpic <- read.metharray(pathEpic, verbose = T, force = T)
+    RGsetEpic <- minfi::read.metharray(pathEpic, verbose = T, force = T)
     if(RGsetEpic@annotation[['array']] == "IlluminaHumanMethylation450k"){
         library("mnp.v11b4")
         MsetEpic <- mnp.v11b4::MNPpreprocessIllumina(RGsetEpic, bg.correct = T, normalize = "controls")
@@ -529,18 +567,18 @@ gb$SaveCNVplotsPACT <- function(samplename_data, sentrix.ids, i, idatPath = NULL
 
 
 LoopSavePlainCNV3 <- function(targets) {
-  samplename_data <- as.character(targets[,1])
-  sentrix.ids <- as.character(targets$SentrixID_Pos)
-  for (i in 1:length(sentrix.ids)) {
-    gb$SaveCNVplotsPACT(samplename_data, sentrix.ids, i)
-  }
+    samplename_data <- as.character(targets[,1])
+    sentrix.ids <- as.character(targets$SentrixID_Pos)
+    for (i in 1:length(sentrix.ids)) {
+        gb$SaveCNVplotsPACT(samplename_data, sentrix.ids, i)
+    }
 }
 
 
 TryCnvMaker <- function(myDt) {
     tryCatch(
         expr = {
-          gb$makeCNV(myDt)
+            gb$makeCNV(myDt)
         },
         error = function(e) {
             message("The following error occured:\n", e)
@@ -560,17 +598,16 @@ makeCNV <- function(myDt, asPNG = T) {
     if (nrow(mySentrix) > 0) {
         #loopCNV(mySentrix, asPNG)
         gb$LoopSavePlainCNV3(myDt)
-        } else{
-            message("The RD-number(s) do not have idat files in REDCap:/n")
-            print(myDt)
-            }
+    } else{
+        message("The RD-number(s) do not have idat files in REDCap:/n")
+        print(myDt)
+    }
     msgCreated(mySentrix)
     while (!is.null(dev.list())) {dev.off()}
 }
 
 
-CheckIfPngExists <- function(rds,
-                             outFolder = "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG") {
+CheckIfPngExists <- function(rds, outFolder = "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG") {
     outpng <- paste0(rds, "_cnv.png")
     outFiles <- file.path(outFolder, outpng)
     finished <- file.exists(outFiles)
@@ -643,5 +680,5 @@ output <- getOuputData(token, flds, inputSheet, readFlag)
 
 # CNV PNG Creation -------------------------------------
 if(output[1,1]!="NONE"){
-  QueCnvMaker(output, token)
+    QueCnvMaker(output, token)
 }
