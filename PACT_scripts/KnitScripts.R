@@ -590,7 +590,10 @@ convert.plots <- function(tumors, pdfList) {
         if(!file.exists(outputFile)){
             tryCatch(
                 expr = {suppressWarnings(pdftools::pdf_convert(pdfFile, filenames = outputFile, dpi = 300))},
-                error = function(e) {message(e,"\nTry running:\nbrew install fontconfig --universal")})
+                error = function(e) {
+                    message(e,"\nTry running:\nbrew install fontconfig --universal")
+                    system("brew update --auto-update")
+                })
             }}
         ))
 }
