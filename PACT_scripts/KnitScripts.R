@@ -28,10 +28,44 @@ CheckBrewLatex <- function() {
 }
 
 
-if (Sys.info()[['sysname']]=="Darwin") {
-    invisible(CheckBrewLatex())
+# Function to check if a command exists
+command_exists <- function(cmd) {
+    exit_status <- system(paste("which", cmd, ">/dev/null 2>&1"))
+    return (exit_status == 0)
 }
 
+# Function to check and install fontconfig via Homebrew
+check_brew_fontconfig <- function() {
+    brew_list <- system("brew list", intern = TRUE)
+    if ("fontconfig" %in% brew_list) {
+        message("fontconfig is already installed.")
+    } else {
+        message("fontconfig is not installed. Installing...")
+        system("brew install fontconfig")
+    }
+}
+
+# Function to check and install fontconfig via Homebrew
+check_fontconfig <- function() {
+    if (command_exists("brew")) {
+        check_brew_fontconfig()
+    } else {
+        message("Homebrew is not installed on this system. Installing...")
+        system(
+            '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+        )
+        if (command_exists("brew")) {
+            check_brew_fontconfig()
+        } else {
+            message("Failed to install Homebrew. Exiting.")
+        }
+    }
+}
+
+if (Sys.info()[['sysname']]=="Darwin") {
+    invisible(check_fontconfig())
+    invisible(CheckBrewLatex())
+}
 
 # Librarian shelf loads or installs package from CRAN, BioConductor, & GitHub
 if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 4, quiet=T)}
