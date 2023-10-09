@@ -41,7 +41,7 @@ check_brew_fontconfig <- function() {
         message("fontconfig is already installed.")
     } else {
         message("fontconfig is not installed. Installing...")
-        system("brew install fontconfig")
+        system("brew install fontconfig --universal")
     }
 }
 
