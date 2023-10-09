@@ -8,6 +8,13 @@ library(data.table)
 library(dplyr)
 library(tibble)
 
+current_version <- utils::packageVersion("redcapAPI")
+required_version <- "2.7.4"
+
+if (is.na(current_version) || utils::compareVersion(as.character(current_version), required_version) < 0) {
+    install.packages("redcapAPI", ask=FALSE, update=TRUE, dependencies=TRUE)
+}
+
 #  Copy idats and Worksheets creation
 writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
     if (is.null(bn)) {bn = file.path(getwd(), df$barcode_and_row_column)}
@@ -38,7 +45,7 @@ search.redcap <- function(rd_numbers, ApiToken=NULL) {
     if(is.null(ApiToken)){message("You must provide an ApiToken!")}
     rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", ApiToken)
     flds = c("record_id","b_number","primary_tech","second_tech","run_number","barcode_and_row_column","accession_number","arrived")
-    result <- redcapAPI::exportRecords(
+    result <- redcapAPI::exportRecordsTyped(
 	    rcon, records = rd_numbers, fields = flds, dag = F, factors = F, labels = F, dates = F, form_complete_auto = F, format = 'csv')
     result <- as.data.frame(result)
     return(result)
