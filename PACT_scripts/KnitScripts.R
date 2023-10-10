@@ -252,21 +252,25 @@ GetMethDf <- function(pactName) {
 }
 
 
-GetSamList <- function(pactName) {
-    colFltr <- c("Test_Number","Specimen_ID","Tumor_Content")
+GetSamList <- function(pactName, listType = 1) {
+    colFltr <- c("Test_Number", "Specimen_ID", "Tumor_Content")
+    if(listType == 2){
+       colFltr <- c(colFltr, "Paired_Normal")
+    }
     samsheet <- list.files('.', "-SampleSheet.csv", T)[1]
     message("Reading file: ", samsheet)
     samList <- read.csv(samsheet, skip=19)[, colFltr]
     isNGS <- !is.na(stringr::str_extract(samList$Test_Number, 'NGS'))
     toKeep <- samList$Test_Number!="0" & isNGS
     if(any(toKeep==F)){
-        message(crayon::bgRed("The following cases have no NGS number and are being excluded:"), "\n")
+        message(crayon::bgRed("The following cases have no NGS number and are being excluded:"),"\n")
         message(paste(utils::capture.output(as.data.frame(samList[!toKeep,])), collapse = "\n"))
         samList <- samList[toKeep,]
     }
-    stopifnot(nrow(samList)>2)
+    stopifnot(nrow(samList) > 2)
     return(samList)
 }
+
 
 GrabSamples <- function(samList){
     sam <- unique(samList$Test_Number)
@@ -548,7 +552,7 @@ checkDataDump <- function(sam, cnvTab) {
     return(cnvTab)
 }
 
-checkTumorPdf <- function(samList, outDir){
+checkTumorPdf <-  function(samList, outDir){
     pngOutDir <- file.path(outDir,"cnvpng") # output copy of cnvPNG files
     if(!dir.exists(pngOutDir)){
         dir.create(pngOutDir)
@@ -556,25 +560,24 @@ checkTumorPdf <- function(samList, outDir){
     pdfList <- list.files(outDir, pattern = "*.pdf", recursive = T, full.names=T)
     if(length(pdfList)==0){
         message("No PDFs found in current directory:\n",getwd())
-        message(
-            "Make sure this Runs Facet PDFs are availible in the directory:\n",
-            "/Volumes/molecular/Molecular/REDCap/cnv_facets\n",
-            "or copy facetpdf files to working directory")
-        stopifnot(length(pdfList)!=0)
+        message("Make sure this Runs Facet PDFs are availible in the directory:\n",
+                "/Volumes/molecular/Molecular/REDCap/cnv_facets\n",
+                "or copy facetpdf files to working directory")
+        stopifnot(length(pdfList) != 0)
     }
-    toDrop <- samList$Tumor_Content != 0 & samList$Specimen_ID != "SC"
+    toDrop <- samList$Paired_Normal != ""
     tumors <- samList[toDrop, ] # drop controls/normals
     row.names(tumors)<- 1:nrow(tumors) # re-number rows
-    if(length(pdfList)!=nrow(tumors)){
-        message(
-            "Number of sample rows ", nrow(tumors),
-            " does not equal length of pdf files: ", length(pdfList),
-            "\nCheck if any are missing:\n"
-        )
+    if(length(pdfList) != nrow(tumors)){
+        message("Number of sample rows ", nrow(tumors),
+                " does not equal length of pdf files: ", length(pdfList),
+                "\nCheck if any are missing:\n"
+                )
         message("Tumors:")
         print(tumors$Specimen_ID)
         message("Files:")
         print(pdfList)
+        stopifnot(length(pdfList) == nrow(tumors))
     }
     return(tumors)
 }
@@ -582,20 +585,25 @@ checkTumorPdf <- function(samList, outDir){
 # Converts FACETS PDF cnv facets to PNG format renamed as NGS name----------------------------------
 convert.plots <- function(tumors, pdfList) {
     stopifnot(class(tumors)=="data.frame")
+    ngsOrder <- unlist(lapply(X=tumors$Paired_Normal, FUN=function(X){base::which(stringr::str_detect(pdfList, X))}))
     ngsOrder = base::which(sapply(tumors$Specimen_ID, grepl, pdfList), arr.ind = T)[, "row"]
-    invisible(lapply(X=1:length(ngsOrder), FUN=function(X){
+    for(X in 1:nrow(tumors)){
+        currCase <- tumors$Paired_Normal[X]
+        fileFind <- stringr::str_detect(pdfList, pattern = currCase)
+        pdfFile <- pdfList[fileFind]
         pngName <- paste0(tumors$Test_Number[X], ".png")
-        pdfFile <- pdfList[ngsOrder[X]]
+        message("PDF file: ", basename(pdfFile))
+        message("Matching NGS: ", tumors$Test_Number[X], " ", tumors$Paired_Normal[X])
         outputFile <- file.path("cnvpng", pngName)
         if(!file.exists(outputFile)){
             tryCatch(
                 expr = {suppressWarnings(pdftools::pdf_convert(pdfFile, filenames = outputFile, dpi = 300))},
                 error = function(e) {
                     message(e,"\nTry running:\nbrew install fontconfig --universal")
-                    system("brew update --auto-update")
-                })
-            }}
-        ))
+                    system("brew update --auto-update")}
+            )
+        }
+    }
 }
 
 GetMethCnv <- function(params, methDir){
@@ -627,10 +635,11 @@ GetMethCnv <- function(params, methDir){
     }
 }
 
+
 # Checks if the facets pdfs have been converted to png ------------------------------------
 CopyPdfsPngs <- function(params) {
     outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus"))
-    samList <- gb$GetSamList(params$pactName)
+    samList <- gb$GetSamList(params$pactName, 2)
     pdfDir <- file.path(outDir,"FACETpdfs") # input facet pdf directory
     tumors <- checkTumorPdf(samList, outDir)
     pdfList <- list.files(pattern = "*.pdf", recursive = T)
