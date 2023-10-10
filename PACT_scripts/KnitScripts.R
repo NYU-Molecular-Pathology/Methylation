@@ -198,7 +198,7 @@ CheckFiExist <- function(pactName, philipsFtp) {
 }
 
 
-CheckMethPaths <- function(methData){
+CheckMethPaths <- function(methData, methSheet){
     for(i in 1:length(methData$`Report Path`)){
           currPath <- methData$`Report Path`[i]
           currSplit <- stringr::str_split_fixed(currPath, "/",11)[1,]
@@ -245,7 +245,7 @@ GetMethDf <- function(pactName) {
     }
     
     if(nrow(methData) > 0){
-        methData <- CheckMethPaths(methData)
+        methData <- CheckMethPaths(methData, methSheet)
     }
     
     return(methData)
