@@ -260,8 +260,8 @@ GetSamList <- function(pactName) {
     isNGS <- !is.na(stringr::str_extract(samList$Test_Number, 'NGS'))
     toKeep <- samList$Test_Number!="0" & isNGS
     if(any(toKeep==F)){
-        message(crayon::bgRed("The following cases have no NGS number and are being excluded:"),"\n")
-        message(paste0(utils::capture.output(samList[!toKeep,]), collapse = "\n"))
+        message(crayon::bgRed("The following cases have no NGS number and are being excluded:"), "\n")
+        message(paste(utils::capture.output(as.data.frame(samList[!toKeep,])), collapse = "\n"))
         samList <- samList[toKeep,]
     }
     stopifnot(nrow(samList)>2)
