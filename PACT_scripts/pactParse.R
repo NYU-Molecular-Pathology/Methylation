@@ -752,8 +752,8 @@ parseExcelFile <- function(inputFi, runID = NULL){
         mainSheet <- AltParseFormat(inputFi, runID)
     }
     mainSheet <- sanitizeSheet(mainSheet)
-    toDrop <- which(stringr::str_detect(mainSheet$Sample_Name, "HAPMAP"))
-    mainSheet <- mainSheet[1:toDrop,]
+    #toDrop <- which(stringr::str_detect(mainSheet$Sample_Name, "HAPMAP"))
+    #mainSheet <- mainSheet[1:toDrop,]
     try(WritePhilipsGender(mainSheet,inputFi, shNames), silent=T)
     outFile <- WriteMainSheet(mainSheet, sheetHead)
     return(c(runID = mainSheet[1, "Sample_Project"], outFile = outFile))
