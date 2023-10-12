@@ -228,7 +228,7 @@ GetTypeIndex <- function(samNumber, rawSheetData){
     )
 }
 
-CheckControlRows <- function(rawSheetData, allBnumber){
+CheckControlRows2 <- function(rawSheetData, allBnumber){
     controlIndex <- which(rawSheetData$`DNA #` %in% allBnumber == F)
     message(crayon::bgRed("The following samples are Controls or not in Philips:"),"\n",
             paste(rawSheetData$`DNA #`[controlIndex], collapse="\n"),"\n")
@@ -255,7 +255,7 @@ FixPairedList <- function(philipsExport, rawSheetData){
     if(!all(allBnumber %in% rawSheetData$`DNA #`)==T){
         message(crayon::bgRed("Not all B-numbers from PhilipsExport tab are in the SampleSheet DNA # Column!"))
     }
-    rawSheetData <- CheckControlRows(rawSheetData, allBnumber)
+    rawSheetData <- CheckControlRows2(rawSheetData, allBnumber)
     return(rawSheetData$`Type & Tissue`)
 }
 
@@ -303,7 +303,7 @@ AddSampleIndexes <- function(pairedList, rawSheetData, philipsExport){
 
 FixDuplicateControls <- function(controlRows) {
     message("Fixing duplicated controls:\n", paste(controlRows[duplicated(controlRows)], collapse = "\n"))
-    
+
     for (unique_string in unique(controlRows)) {
         indices <- which(controlRows == unique_string)
         n <- length(indices)
@@ -315,46 +315,66 @@ FixDuplicateControls <- function(controlRows) {
             controlRows[indices] <- rev(new_values)
         }
     }
-    
     return(controlRows)
 }
 
 
-BindUnpairedRows <- function(rawSheetData, pairedList, runID) {
+
+CheckControlRows <- function(rawSheetData, runID, newRows) {
     accessions <- rawSheetData$`Accession#`
     dnaNumbers <- rawSheetData$`DNA #`
-    controls <- which(str_detect(rawSheetData$`Type & Tissue`, "Control"))
-    missRows <- vapply(accessions[-controls], function(x) !any(str_detect(pairedList, x)), logical(1))
+    controls <- which(str_detect(rawSheetData$`Type & Tissue`, "Cont|cont"))
+    controlRows <- paste0(rawSheetData$Test_Number[controls], "_", runID, "_", accessions[controls], "_", dnaNumbers[controls])
+    hasControls <- controlRows %in% newRows
+
+    if(any(duplicated(controlRows))) {
+      controlRows <- FixDuplicateControls(controlRows)
+      message(crayon::bgBlue("New control names:"), paste(controlRows, collapse = "\n"))
+    }
+
+    if(!any(hasControls)){
+      message(crayon::bgBlue("Binding controls:"),"\n", paste(controlRows, collapse = "\n"))
+    } else{
+      controlRows <- NULL
+    }
+    return(controlRows)
+}
+
+
+CheckMissingRows <- function(pairedList, rawSheetData, runID) {
+    accessions <- rawSheetData$`Accession#`
+    dnaNumbers <- rawSheetData$`DNA #`
+    tst_number <- rawSheetData$Test_Number
+    missRows <- vapply(dnaNumbers, function(x) {!any(stringr::str_detect(pairedList, x))}, logical(1))
+    if(any(missRows)) {
+        message(crayon::bgGreen("Binding additional rows/filler:"), "\n",
+                paste(accessions[missRows], collapse = "\n"))
+        extraRow <- dnaNumbers %in% dnaNumbers[missRows]
+        newRows <-  paste0(tst_number[missRows], "_", runID, "_", accessions[extraRow], "_", dnaNumbers[extraRow])
+    } else {
+        message(crayon::bgGreen("No additional fillers or paired sample rows to bind to sample sheet"))
+        newRows <- NULL
+    }
+
+    return(newRows)
+}
+
+
+CheckMissingData <- function(pairedList){
     doubleBars <- vapply(pairedList, function(X) {str_detect(X, pattern = "__")}, logical(1))
-    
     if(any(doubleBars)){
         message(crayon::bgRed("The following rows are missing data:"),"\n",
                 paste(pairedList[doubleBars], collapse = "\n"))
     }
-    
-    newRows <- NULL
-    
-    if(any(missRows)) {
-        message(crayon::bgGreen("Binding additional rows/filler:"), "\n", 
-                paste(accessions[missRows], collapse = "\n"))
-        extraRow <- accessions == accessions[missRows]
-        newRows <-  paste0(accessions[missRows], "_", runID, "_", accessions[extraRow], "_", dnaNumbers[extraRow])
-    } else {
-        message(crayon::bgGreen("No additional fillers or paired sample rows to bind to sample sheet"))
-    }
-    
-    cntrlT <- rawSheetData$Test_Number == rawSheetData$Test_Number[controls]
-    controlRows <- paste0(rawSheetData$Test_Number[controls], "_", runID, "_", accessions[cntrlT], "_", dnaNumbers[cntrlT])
-    message(crayon::bgBlue("Binding controls:"),"\n", paste(controlRows, collapse = "\n"))
-    
-    if(any(duplicated(controlRows))) {
-        controlRows <- FixDuplicateControls(controlRows)
-        message(crayon::bgBlue("New control names:"), paste(controlRows, collapse = "\n"))
-    }
-    
+}
+
+
+BindUnpairedRows <- function(rawSheetData, pairedList, runID) {
+    CheckMissingData(pairedList)
+    newRows <- CheckMissingRows(pairedList, rawSheetData, runID)
+    controlRows <- CheckControlRows(rawSheetData, runID, newRows)
     pairedList <- data.frame("Sample_ID" = c(pairedList, newRows, controlRows))
     rownames(pairedList) <- seq_len(nrow(pairedList))
-    
     return(pairedList)
 }
 
@@ -388,18 +408,18 @@ MatchIndex <- function(list1, list2){
 
 DisplayMissing <- function(ngsMissing, valMissing, type) {
     message(crayon::bgRed("Some samples are missing tumor/normal pairs:"))
-    message(paste(ngsMissing, "Philips", type, "=" , valMissing, collapse = "\n")) 
+    message(paste(ngsMissing, "Philips", type, "=" , valMissing, collapse = "\n"))
 }
 
 CheckMissingPairs <- function(ngsNumbers, philipsT, philipsN) {
     listCheck <- list("Normal" = philipsN, "Tumor" = philipsT)
-    
+
     for (type in names(listCheck)) {
         val <- listCheck[[type]]
         miss <- val == 0 | is.na(val)
         if (any(miss)) {DisplayMissing(ngsNumbers[miss], val[miss], type)}
     }
-    
+
     dupes <- philipsN %in% philipsT
     if (any(dupes)) {
         message(crayon::bgRed("Philips samples have the same tumor/normal accession#:"))
@@ -676,12 +696,13 @@ GetRawSamplesheet <- function(inputFi){
         message(crayon::bgRed('Did not detect "PACT" in Excel sheetnames, defaulting to reading sheet 1'))
         sh = 1
     }
-    msgRd <- paste0('Reading Excel Sheet named \"', shNames[sh],'\" from file:')
+    msgRd <- paste0('Reading Excel Sheet named \"', shNames[sh], '\" from file:')
     message(crayon::bgGreen(msgRd),'\n',inputFi)
     rawSheetData <- GetExcelData(inputFi, sh, shRange="A6:X200", cm=T)
     #toDrop <- which(rawSheetData[, "DNA #"]=="HAPMAP")[1]
     toDrop <- which(rawSheetData[,15] == "")[1] - 1
     rawSheetData <- rawSheetData[1:toDrop,]
+    rawSheetData$`DNA #` <- stringr::str_replace_all(rawSheetData$`DNA #`, "_", "-")
     return(rawSheetData)
 }
 
@@ -697,6 +718,7 @@ WriteMainSheet <- function(mainSheet, sheetHead){
     suppressWarnings(write.table(mainSheet, sep=",", file=outFile, row.names=F, col.names=T, append=T, quote=F))
     return(outFile)
 }
+
 
 AltParseFormat <- function(inputFi, runID){
     rawSheetData <- GetRawSamplesheet(inputFi)
@@ -730,6 +752,8 @@ parseExcelFile <- function(inputFi, runID = NULL){
         mainSheet <- AltParseFormat(inputFi, runID)
     }
     mainSheet <- sanitizeSheet(mainSheet)
+    toDrop <- which(stringr::str_detect(mainSheet$Sample_Name, "HAPMAP"))
+    mainSheet <- mainSheet[1:toDrop,]
     try(WritePhilipsGender(mainSheet,inputFi, shNames), silent=T)
     outFile <- WriteMainSheet(mainSheet, sheetHead)
     return(c(runID = mainSheet[1, "Sample_Project"], outFile = outFile))
