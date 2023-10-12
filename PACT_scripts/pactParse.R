@@ -7,8 +7,6 @@
 ## ---------------------------
 
 library("base"); args <- commandArgs(TRUE); gb <- globalenv(); assign("gb", gb)
-dsh<-"\n================"
-dsh2<-"\n==========================\n"
 
 # Main arguments input in comandline (Uncomment to Debug or run Locally) -----------------------
 args[1] -> token        #<- '8XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' = APITOKEN
@@ -16,8 +14,8 @@ args[2] -> inputSheet   #<- 'PACT-YY-##'
 args[3] -> runID        #<- 'YYMMDD_NB######_0###_AH7ABCDEFG'
 
 # Display & Verify the Input args --------------------------------------------------------------
-message(dsh,"\nParameters input",dsh)
-message("token:    ", token, "\n", "PACT Run: ", inputSheet,"\n","Run ID:   ", runID,"\n")
+message("\n================\nParameters input\n================")
+message("token:", "    ", token, "\n", "PACT Run: ", inputSheet, "\n", "Run ID:", "   ", runID, "\n")
 stopifnot(exists("token") & !is.null(token) & exists("inputSheet") & !is.null(inputSheet))
 
 MsgDF <- function(data){
@@ -48,12 +46,14 @@ GetPhilipsColumns <- function() {
     return(filterColumns)
 }
 
+
 # Function to silently load library without conflict warnings ----------------------------------
 libLoad <- function(libName) {
     lib.opts <- list(package = libName, character.only = T, verbose = F, warn.conflicts = F)
     suppressWarnings(suppressPackageStartupMessages(do.call(library, c(lib.opts))))
     message(libName, " ...loaded successful")
 }
+
 
 # Functions to load or install missing required packages ---------------------------------------
 loadPacks <- function(){
@@ -303,7 +303,6 @@ AddSampleIndexes <- function(pairedList, rawSheetData, philipsExport){
 
 FixDuplicateControls <- function(controlRows) {
     message("Fixing duplicated controls:\n", paste(controlRows[duplicated(controlRows)], collapse = "\n"))
-
     for (unique_string in unique(controlRows)) {
         indices <- which(controlRows == unique_string)
         n <- length(indices)
@@ -317,7 +316,6 @@ FixDuplicateControls <- function(controlRows) {
     }
     return(controlRows)
 }
-
 
 
 CheckControlRows <- function(rawSheetData, runID, newRows) {
@@ -337,6 +335,7 @@ CheckControlRows <- function(rawSheetData, runID, newRows) {
     } else{
       controlRows <- NULL
     }
+    
     return(controlRows)
 }
 
@@ -467,8 +466,8 @@ CheckTotalIndexes <- function(tumorSam, normalSam, ngsNumbers, sheetType = "Phil
         }
         message("Extra ", length(which(totalDrop==F)), " cases...")
     }
-
 }
+
 
 GetIndexMatch <- function(rawSheetData, philipsExport){
     message("Running GetIndexMatch function in pactParse.R")
@@ -580,6 +579,8 @@ BuildNoPhilips <- function(rawSheetData, runID, pact_run) {
     concat_id <- data.frame(sid = paste(0, runID, rawSheetData$`Accession#`, rawSheetData$`DNA #`, sep="_"))
     pairedNorm <- rep("", nrow(concat_id))
     pairedNorm[!whichNormal] <- concat_id[onlyNormals, 1]
+    typeNa <- rawSheetData$`Tumor Type` == "NA"
+    rawSheetData$`Tumor Type` <- ""
     mainSheet <- data.frame(
         Sample_ID = concat_id[,1],
         Sample_Name = concat_id[,1],
@@ -590,7 +591,7 @@ BuildNoPhilips <- function(rawSheetData, runID, pact_run) {
         EPIC_ID = 0,
         Test_Number = rawSheetData$Test_Number,
         Tumor_Content = 0,
-        Tumor_Type = ifelse(rawSheetData$`Tumor Type` == "NA", "", rawSheetData$`Tumor Type`),
+        Tumor_Type = rawSheetData$`Tumor Type`,
         Description = rawSheetData$Description,
         Run_Number = runID,
         Sequencer_ID = seqId[1, 2],
@@ -809,7 +810,7 @@ emailNotify <- function(record, rcon){
     record$pact_csv_email <- "pact_csv_email"
     datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox=T)
     PostRedcapCurl(rcon, datarecord)
-    message("\n", dsh2, "Email Notification Created", dsh2)
+    message("\n\n==========================\nEmail Notification Created\n==========================\n")
 }
 
 
