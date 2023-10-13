@@ -33,7 +33,7 @@ Use **ARM** (-arm64.pkg) package downloads for *M1/M2 Macs* & **Intel** (-x86_64
 - [X] **Homebrew**: https://brew.sh/ <br />
 - [X] **Library Magic, Sqlite and Proj**: `brew install libmagic sqlite proj tcl-tk`<br />
 - [X] **Compilers+**: `brew install llvm aspell gdal autoconf automake gcc libgit2 openssl@3 zlib go pandoc git libffi`<br />
-- [X] **Additional Libraries**: `brew install texinfo pango cairo open-mpi poppler-qt5 graphviz libopenmpt java11 libomp`<br />
+- [X] **Additional Libraries**: `brew install texinfo pango cairo open-mpi poppler-qt5 graphviz libopenmpt java11 libomp libtorch`<br />
 
 ## 𓇲 Additional Steps for Apple Silicon Macs Only
 - [X] **Additional OpenGL**: `brew install --from-source glfw3`<br />
@@ -63,13 +63,13 @@ ___
 - To install & run the pipeline, it is critical to mount the following network smb shared drives:
 - Open Finder and press **⌘(CMD) + K** then paste each of the directories below, using NYUMC\KerberosID as the login name and password is your kerberos password. <br>
 ```
-cifs://research-cifs.nyumc.org/Research/CBioinformatics/
+smb://research-cifs.nyumc.org/Research/CBioinformatics/
 ```
 ```
-cifs://research-cifs.nyumc.org/Research/snudem01lab/snudem01labspace
+smb://research-cifs.nyumc.org/Research/snudem01lab/snudem01labspace
 ```
 ```
-cifs://shares-cifs.nyumc.org/apps/acc_pathology/molecular
+smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular
 ```
 # ⚡️ Quickstart
 #### 1. Download the shell script to your home folder or another directory:
