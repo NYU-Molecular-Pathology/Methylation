@@ -660,18 +660,18 @@ checkNeeds <- function(){
 }
 
 if(Sys.info()[['sysname']]=="Darwin"){
-    checkNeeds()
-    closeAllConnections()
-    isGdal <- paste(system("echo `gdalinfo --version`", intern = T))
-    if(!exists("isGdal")){
-        system("brew install pkg-config")
-        system("brew install gdal")
-    }
-    isProj <- system("which proj", intern=T)
-    if(!exists("isProj")){
-        system("brew install pkg-config")
-        system("brew install proj")
-    }
+  checkNeeds()
+  closeAllConnections()
+  isGdal <- paste(system("echo `gdalinfo --version`", intern = T))
+  if(isGdal=="") {
+    system("brew install pkg-config")
+    system("brew install gdal")
+  }
+  isProj <- system("which proj", intern=T)
+  if(length(isProj) == 0){
+    system("brew install pkg-config")
+    system("brew install proj")
+  }
 } else{
   if(!("needs" %in% rownames(installed.packages()))){
     install.packages("needs", dependencies = T, verbose = T, ask = F)
