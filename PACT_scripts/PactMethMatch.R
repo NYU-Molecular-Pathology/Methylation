@@ -231,6 +231,8 @@ addOutputLinks <- function(output){
         oldRun[is.na(oldRun)] <- FALSE
         output$run_number[oldRun] <- ""
         output$report_complete[oldRun] <- "NOT_YET_RUN"
+        output$`Report Link`[oldRun] <- ""
+        output$`Report Path`[oldRun] <- ""
     }
     output$'Report Link' <- paste0(winpath, yearPath,"/",output$run_number,"/",output$record_id,".html")
     output$'Report Link'[is.na(output$run_number)] <- ""
