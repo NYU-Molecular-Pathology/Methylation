@@ -201,7 +201,7 @@ genQuery <- function(dbCol,vals2find){
 queryCases <- function(vals2find, db) {
     library("foreach")
     i=NULL
-    queryList <- foreach::foreach(i=1:ncol(vals2find), .combine="c", .packages="foreach") foreach:::`%do%` {genQuery(i,vals2find)}
+    queryList <- foreach::foreach(i=1:ncol(vals2find), .combine="c", .packages="foreach") %do% {genQuery(i,vals2find)}
     tsTb <- stringr::str_detect(queryList, "TS|TB|TC")
     theTScases <- queryList[tsTb]
     for (x in 1:length(theTScases)) {
