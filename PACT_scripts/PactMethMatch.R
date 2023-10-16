@@ -337,7 +337,7 @@ CheckMethPaths <- function(methData){
 
     if(any(anyPathsFalse)){
         message("Some paths need to be fixed 'Report Path' column of in the methylation sheet!" )
-        cat("Paths don't exist:\n")
+        cat("Fix in worksheet the paths don't exist:\n\n")
         cat(paste(checkPaths[anyPathsFalse], collapse="\n"))
     }
 
