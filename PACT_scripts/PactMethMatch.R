@@ -226,6 +226,9 @@ addOutputLinks <- function(output){
         if(nchar(yr)>0){paste0("20",rnum)}else{rnum}
     })
     output$report_complete <- ifelse(!is.na(output$run_number), "YES", "NOT_YET_RUN")
+    output$'Report Link' <- paste0(winpath, yearPath,"/",output$run_number,"/",output$record_id,".html")
+    output$'Report Link'[is.na(output$run_number)] <- ""
+    output$'Report Path'<-output$'Report Link'
     oldRun <- stringr::str_detect(output$run_number, pattern="MGDM", negate = T)
     if(any(oldRun)){
         oldRun[is.na(oldRun)] <- FALSE
@@ -234,9 +237,6 @@ addOutputLinks <- function(output){
         output$`Report Link`[oldRun] <- ""
         output$`Report Path`[oldRun] <- ""
     }
-    output$'Report Link' <- paste0(winpath, yearPath,"/",output$run_number,"/",output$record_id,".html")
-    output$'Report Link'[is.na(output$run_number)] <- ""
-    output$'Report Path'<-output$'Report Link'
     return(output)
 }
 
