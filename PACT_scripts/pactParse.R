@@ -866,7 +866,7 @@ pushToRedcap <- function(outVals, token=NULL) {
 # Gets dataframe and saves as CSV file -----
 writeSampleSheet <- function(inputSheet, token, runID = NULL) {
     isPath <- stringr::str_detect(inputSheet, .Platform$file.sep) == T
-    isNxtSeq <- ifelse(stringr::str_detect(inputSheet, "2000"), T, F)
+    isNxtSeq <- ifelse(stringr::str_detect(inputSheet, "2000|NextSeq550"), T, F)
     if(isPath==F){
         inputFi <- getExcelPath(inputSheet, 1, isNxtSeq)
     }else{
