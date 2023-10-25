@@ -147,6 +147,8 @@ dat.dp <- gb$mergeDF(df, tg=gb$targets)
 plotDP <- swm(plotParams(totNum, dParam = gb$GetNewDt(dat.dp), xincept = 0, yincept = 0.95))
 plotDP <- swm(makeLabels(totNum, plotName = paste0(pltNames[5]),
                          xName = "Samples", yName = "Pvalue", thePlot = plotDP))
+## Save Plot Values -----------------------------------------------------------------------
+gb$SaveQCmetrics(gb, dat.mu, dat.op, dat.bs, dat.hc, dat.dp)
 ```
 
 ```{r "Signal Intensity QC", echo=FALSE, error=FALSE, fig.align="left", fig.margin=TRUE, message=FALSE, warning=FALSE, results='hide', fig.width=14.8, fig.height=9.6}
