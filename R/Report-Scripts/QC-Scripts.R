@@ -467,25 +467,43 @@ MsgFailedQCs <- function(summaryFail) {
 }
 
 
-Filter_col_names <- function(outData, xName, yName){
-    sam_cols <- c("RunID", "Sample_Name", "DNA_Number", "MP_num" , "x", "y")
-    new_colnames <- c("RunID", "RD-number", "B-number", "TM-number", as.character(xName), as.character(yName))
-    if ("final_data" %in% names(outData)) {
-        outData_new <- outData[["final_data"]]
-    } else{
-        outData_new <- outData
-    }
-    outData_new <- outData_new[, sam_cols]
-    colnames(outData_new) <- new_colnames
-    if(xName == "Samples"){
-        outData_new <- outData_new[, -5]
-    }
-    return(outData_new)
+# FUNCTION: Filters out columns in Plot data and re-names
+FilterColNames <- function(outData, xName, yName) {
+    selectedColumns <- c("RunID", "Sample_Name", "DNA_Number", "MP_num", "x", "y")
+    newColumnNames <- c("RunID", "RD-number", "B-number", "TM-number", as.character(xName), as.character(yName))
+
+    dataSubset <- if ("final_data" %in% names(outData)) outData[["final_data"]] else outData
+
+    filteredData <- dataSubset[, selectedColumns]
+    colnames(filteredData) <- newColumnNames
+
+    if (xName == "Samples") {filteredData <- filteredData[, -5]}
+    return(filteredData)
 }
 
-
-Combine_data <- function(data_1, data2){
-    final_data <- merge(data_1, data2, by = c("RunID", "RD-number", "B-number", "TM-number"))
-    return(final_data)
+# FUNCTION: Merges common columns between two plot data frames
+Combine_QC_data <- function(data_1, data2){
+    return(merge(data_1, data2, by = c("RunID", "RD-number", "B-number", "TM-number")))
 }
 
+# FUNCTION: Saves each qc metric x and y values to a csv file
+SaveQCmetrics <- function(gb, dat.mu, dat.op, dat.bs, dat.hc, dat.dp) {
+  fileOut <- paste(gb$runID, "qc_data.csv", sep = "_")
+  fileOutDir <- file.path(gb$runPath, fileOut)
+
+  outData_MU <- FilterColNames(dat.mu, "Log2sqrt(M*U)", "Log2(M/U)")
+  outData_OP <- FilterColNames(dat.op, "log2sqrt(R*G)", "log2(R/G)")
+
+  final_data <- Combine_QC_data(outData_MU, outData_OP)
+
+  outData_BS <- FilterColNames(dat.bs, "BS_log2sqrt(R*G)", "BS_log2(R/G)")
+  final_data <- Combine_QC_data(final_data, outData_BS)
+
+  outData_HC <- FilterColNames(dat.hc, "log2sqrt(H*L)", "log2(H/L)")
+  final_data <- Combine_QC_data(final_data, outData_HC)
+
+  outData_DP <- FilterColNames(dat.dp, "Samples", "Pvalue")
+  final_data <- Combine_QC_data(final_data, outData_DP)
+
+  write.csv(final_data, file = fileOutDir, row.names = F, quote = F)
+}
