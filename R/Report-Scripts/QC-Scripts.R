@@ -467,4 +467,25 @@ MsgFailedQCs <- function(summaryFail) {
 }
 
 
+Filter_col_names <- function(outData, xName, yName){
+    sam_cols <- c("RunID", "Sample_Name", "DNA_Number", "MP_num" , "x", "y")
+    new_colnames <- c("RunID", "RD-number", "B-number", "TM-number", as.character(xName), as.character(yName))
+    if ("final_data" %in% names(outData)) {
+        outData_new <- outData[["final_data"]]
+    } else{
+        outData_new <- outData
+    }
+    outData_new <- outData_new[, sam_cols]
+    colnames(outData_new) <- new_colnames
+    if(xName == "Samples"){
+        outData_new <- outData_new[, -5]
+    }
+    return(outData_new)
+}
+
+
+Combine_data <- function(data_1, data2){
+    final_data <- merge(data_1, data2, by = c("RunID", "RD-number", "B-number", "TM-number"))
+    return(final_data)
+}
 
