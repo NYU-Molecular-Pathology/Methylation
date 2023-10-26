@@ -166,27 +166,27 @@ parseWorksheet <- function(inputFi){
 
 # Import csv Worksheet -----
 getCaseValues <- function(inputSheet, readFlag) {
-    isSamSheet <- stringr::str_detect(inputSheet, "-SampleSheet") == T
-    if (readFlag) {
-        if (isSamSheet == T) {
-            vals2find <- utils::read.csv(inputSheet, skip = 19)[, c(6, 7, 9)]
-            vals2find <- vals2find[!grepl("H20|SERACARE|HAPMAP", vals2find[, 2]),]
-        } else{
-            vals2find <- as.data.frame(read.csv(inputSheet))
-            if (ncol(vals2find) > 1) {
-                vals2find <- unlist(lapply(X = 1:ncol(vals2find), FUN = function(X) {vals2find[, X]}))
-            }
+    isSamSheet <- stringr::str_detect(inputSheet, "-SampleSheet")
+    hasFileSep <- stringr::str_detect(inputSheet, .Platform$file.sep)
+    
+    if (readFlag && isSamSheet) {
+        vals2find <- utils::read.csv(inputSheet, skip = 19)[, c(6, 7, 9)]
+        return(as.data.frame(vals2find[!grepl("H20|SERACARE|HAPMAP", vals2find[, 2]),]))
+    }
+    
+    if (readFlag && !isSamSheet) {
+        vals2find <- read.csv(inputSheet)
+        if (ncol(vals2find) > 1) {
+            vals2find <- unlist(lapply(vals2find, identity))
         }
-        vals2find <- as.data.frame(vals2find)
-        return(vals2find)
+        return(as.data.frame(unique(vals2find[vals2find != ""])))
     }
-    if (stringr::str_detect(inputSheet, .Platform$file.sep) == T) {
-        vals2find <- parseWorksheet(inputSheet)
-    } else{
-        inputFi <- getFilePath(inputSheet)
-        vals2find <- parseWorksheet(inputFi)
+    
+    if (!readFlag && hasFileSep) {
+        return(parseWorksheet(inputSheet))
     }
-    return(vals2find)
+    
+    return(parseWorksheet(getFilePath(inputSheet)))
 }
 
 genQuery <- function(dbCol,vals2find){
