@@ -275,41 +275,24 @@ FillMissingNGS <- function(output, vals2find){
 
 
 modifyOutput <- function(output, vals2find) {
-    #output$Test_Number <- NA
+    if (!("Test Number" %in% colnames(vals2find))) {return(vals2find)}
+
     if (length(vals2find$`Test Number`) == 0) {
         vals2find$`Test Number` <- ""
     }
-    NGSmissing <- F
-    if(all(output$Test_Number %in% vals2find$`Test Number`)){
-        message("All NGS Found")
-    }else{
+
+    if (all(output$Test_Number %in% vals2find$`Test Number`)) {
+        NGSmissing <- F
+        message("All NGS Test Numbers Found in Methylation Database")
+    } else{
+        NGSmissing <- T
         message("Not all NGS do not have methylation")
     }
-    # for (i in 1:nrow(output)) {
-    #   theVal = NA
-    #   for (var in 1:ncol(vals2find)) {
-    #     pat <- vals2find[, var]
-    #     pat <- unique(pat)
-    #     currRow <- paste(output[i,])
-    #     theMatch <- which(pat %in% currRow[currRow != "0" & currRow != "NA"])
-    #     if (length(theMatch) > 1) {
-    #       warning(paste("Multiple records found matching pattern:",
-    #                     paste(theMatch, collapse = " "),"\nPattern:",
-    #                     paste(pat, collapse = " ")))
-    #     }
-    #     if (length(theMatch) > 0) {
-    #       theVal <- vals2find$`Test Number`[theMatch]
-    #     }
-    #     output$Test_Number[i] <- theVal
-    #   }
-    #   if (is.na(theVal)) {
-    #     warning(paste(output$record_id[i], "is missing NGS Number!"))
-    #     NGSmissing <- T
-    #   }
-    # }
-    if(NGSmissing==T){
+
+    if (NGSmissing == T) {
         output <- FillMissingNGS(output, vals2find)
     }
+
     output <- addOutputLinks(output)
     return(output)
 }
