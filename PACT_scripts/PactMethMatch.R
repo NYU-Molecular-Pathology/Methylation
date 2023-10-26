@@ -275,7 +275,7 @@ FillMissingNGS <- function(output, vals2find){
 
 
 modifyOutput <- function(output, vals2find) {
-    if (!("Test Number" %in% colnames(vals2find))) {return(vals2find)}
+    if (!("Test Number" %in% colnames(vals2find))) {return(output)}
 
     if (length(vals2find$`Test Number`) == 0) {
         vals2find$`Test Number` <- ""
