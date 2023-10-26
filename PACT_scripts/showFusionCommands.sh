@@ -265,7 +265,7 @@ echo "<span style='font-weight: bold'>Current Date</span>: $(date)</br>"
 echo "</br>"
 echo "<h2 style='padding-top: 5px !important; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: black;'>${FG_GRN}LG-PACT Commands${normal}</h2>"
 msg_step 1 "white" "FUSION RUN: ${runID}</br>"
-msg_step 2 "white" "FUSION ID: ${fusionID}</br>"
+msg_step 2 "white" "SHEETPATH: ${SHEETPATH}</br>"
 msg_step 3 "white" "Kerberos ID: ${kerbero}</br>"
 echo "</br>"
 echo ' <div class="tocbox"> '
