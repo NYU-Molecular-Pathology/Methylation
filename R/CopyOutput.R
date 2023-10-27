@@ -625,11 +625,11 @@ CombineClassAndQC <- function(output_fi = NULL, token, runDir = NULL, runID = NU
         output[col_id] <- ""
     }
 
-    controlRows <- which(output$`RD-number` == "control")
-    output[controlRows, "RD-number"] <- paste(output[controlRows, "RunID"], output[controlRows, "RD-number"], sep = "_")
+    controlRows <- which(output$`RD.number` == "control")
+    output[controlRows, "RD.number"] <- paste(output[controlRows, "RunID"], output[controlRows, "RD.number"], sep = "_")
 
     for (xrow in 1:nrow(output)) {
-        currRow <- which(db$record_id == output$`RD-number`[xrow])
+        currRow <- which(db$record_id == output$`RD.number`[xrow])
         stopifnot(length(currRow) == 1)
         redcap_row <- db[currRow, newCols]
         output[xrow, newCols] <- redcap_row
