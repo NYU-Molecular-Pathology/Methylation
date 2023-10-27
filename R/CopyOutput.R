@@ -604,3 +604,38 @@ ForceUploadToRedcap <- function(file.list, token=NULL, deskCSV = T) {
     if (deskCSV == T) {try(importDesktopCsv(rcon), outFile = "importDesktopRedcapLog.txt")}
 }
 
+CombineClassAndQC <- function(output = NULL, token, runDir = NULL, runID = NULL) {
+
+    if(is.null(output)){
+        currDir <- "/Volumes/molecular/Molecular/MethylationClassifier/Methylation_QC_metrics/2023"
+        output <- as.data.frame(readxl::read_excel(file.path(currDir, "Meth_QC_metrics_2023_runs.xlsx")))
+    }else{
+        output <- as.data.frame(read.csv(output))
+    }
+
+    fieldsToPull <- c("record_id", "run_number", "b_number", "tm_number", "block", "accession_number",
+                      "subgroup_score", "classifier_value", "subgroup", "classifier_score", "primary_tech", "diagnosis")
+
+    apiUrl = "https://redcap.nyumc.org/apps/redcap/api/"
+    rcon <- redcapAPI::redcapConnection(apiUrl, token)
+    db <- grabAllRecords(fieldsToPull, rcon)
+    newCols <- colnames(db)
+
+    for (col_id in newCols) {
+        output[col_id] <- ""
+    }
+
+    controlRows <- which(output$`RD-number` == "control")
+    output[controlRows, "RD-number"] <- paste(output[controlRows, "RunID"], output[controlRows, "RD-number"], sep = "_")
+
+    for (xrow in 1:nrow(output)) {
+        currRow <- which(db$record_id == output$`RD-number`[xrow])
+        stopifnot(length(currRow) == 1)
+        redcap_row <- db[currRow, newCols]
+        output[xrow, newCols] <- redcap_row
+    }
+    outFile <- file.path(runDir, paste(runID,"QC_and_Classifier_Scores.csv", sep = "_"))
+    write.csv(output, file = outFile, row.names = F, quote = F)
+
+}
+
