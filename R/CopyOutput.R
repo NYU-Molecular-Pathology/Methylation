@@ -604,13 +604,27 @@ ForceUploadToRedcap <- function(file.list, token=NULL, deskCSV = T) {
     if (deskCSV == T) {try(importDesktopCsv(rcon), outFile = "importDesktopRedcapLog.txt")}
 }
 
-CombineClassAndQC <- function(output_fi = NULL, token, runDir = NULL, runID = NULL) {
+grabAllRecords <- function(flds, rcon){
+    message("Pulling REDCap data...")
+    params = list(rcon, fields=flds, labels=F, dates = F, survey = F, dag = F, factors=F, form_complete_auto=F)
+    dbCols <- do.call(redcapAPI::exportRecordsTyped, c(params))
+    return(as.data.frame(dbCols))
+}
 
+
+
+CombineClassAndQC <- function(output_fi = NULL, token, runDir = NULL, runID = NULL) {
+    if(is.null(runDir)){
+        runDir <- getwd()
+    }
     if(is.null(output_fi)){
         currDir <- "/Volumes/molecular/Molecular/MethylationClassifier/Methylation_QC_metrics/2023"
         output <- as.data.frame(readxl::read_excel(file.path(currDir, "Meth_QC_metrics_2023_runs.xlsx")))
     }else{
-        output <- as.data.frame(read.csv(file.path(runDir, output_fi)))
+        currDir <- file.path(runDir, output_fi)
+        message("Reading file: ", currDir)
+        output <- as.data.frame(read.csv(currDir))
+        
     }
 
     fieldsToPull <- c("record_id", "run_number", "b_number", "tm_number", "block", "accession_number",
@@ -640,4 +654,3 @@ CombineClassAndQC <- function(output_fi = NULL, token, runDir = NULL, runID = NU
     write.csv(output, file = outFile, row.names = F, quote = F)
 
 }
-
