@@ -462,6 +462,8 @@ makeReports.v11b6 <- function(runPath = NULL,
         file.list <- dir(pattern = ".html", full.names = T)
         gb$uploadToRedcap(file.list, T)
     }
+
+    gb$CombineClassAndQC(output = paste0(runID, "_qc_data.csv"), token, runDir = runPath, runID)
     if(email==T){launchEmailNotify(runID)}
     try(beepr::beep(5), T)
     tidyUpFiles(runID)
