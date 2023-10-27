@@ -634,6 +634,8 @@ CombineClassAndQC <- function(output_fi = NULL, token, runDir = NULL, runID = NU
         redcap_row <- db[currRow, newCols]
         output[xrow, newCols] <- redcap_row
     }
+    colnames(output) <- c("RunID", "RD-number", "B-number", "TM-number", "Log2sqrt(M*U)", "Log2(M/U)", "log2sqrt(R*G)", "log2(R/G)",
+                          "BS_log2sqrt(R*G)", "BS_log2(R/G)", "log2sqrt(H*L)", "log2(H/L)", "Pvalue", fieldsToPull)
     outFile <- file.path(runDir, paste(runID,"QC_and_Classifier_Scores.csv", sep = "_"))
     write.csv(output, file = outFile, row.names = F, quote = F)
 
