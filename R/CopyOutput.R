@@ -188,7 +188,7 @@ GetRedcapCsv <- function(samsheet) {
         data <- read.csv(samsheet, stringsAsFactors = F)
         if (any(duplicated(data$record_id))) {
             message(mkRed("Remove duplicate rows in the REDCap csv dataframe:"))
-            #MsgDF(data$record_id[duplicated(data$record_id)])
+            MsgDF(data$record_id[duplicated(data$record_id)])
             data = data[!duplicated(data$record_id),]
         }
         return(data)
