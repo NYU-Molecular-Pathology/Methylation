@@ -397,15 +397,19 @@ loopRender <- function(samList = NULL, data, redcapUp = T){
     wksh <- checkSamSh(samList)
     toRun <- getRunList(data, samList)
     CopyRmdFile(gb$runID, reportMd)
-    for (i in toRun) {
-        msgProgress(1, i, samList)
-        do_report(data = data[i, ], gb$genCn)
-        msgProgress(2, i, samList)
-        if (redcapUp == T) {
-            sh_Dat <- wksh[data[i, 1], ]
-            gb$importSingle(sh_Dat)
-        }
-    }
+    
+  currIdx = 1
+  for (i in toRun) {
+      message("Sample ", currIdx, " of ", length(samList))
+      msgProgress(1, i, samList)
+      do_report(data = data[i, ], gb$genCn)
+      msgProgress(2, i, samList)
+      if (redcapUp == T) {
+          sh_Dat <- wksh[data[i, 1], ]
+          gb$importSingle(sh_Dat)
+      }
+      currIdx = currIdx + 1
+  }
     message(bkGrn(dsh, "RUN COMPLETE", dsh))
 }
 
