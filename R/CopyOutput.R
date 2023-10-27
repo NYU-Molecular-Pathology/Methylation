@@ -610,7 +610,7 @@ CombineClassAndQC <- function(output = NULL, token, runDir = NULL, runID = NULL)
         currDir <- "/Volumes/molecular/Molecular/MethylationClassifier/Methylation_QC_metrics/2023"
         output <- as.data.frame(readxl::read_excel(file.path(currDir, "Meth_QC_metrics_2023_runs.xlsx")))
     }else{
-        output <- as.data.frame(read.csv(output))
+        output <- as.data.frame(read.csv(file.path(runDir, output)))
     }
 
     fieldsToPull <- c("record_id", "run_number", "b_number", "tm_number", "block", "accession_number",
