@@ -232,7 +232,8 @@ CheckControlRows2 <- function(rawSheetData, allBnumber){
     controlIndex <- which(rawSheetData$`DNA #` %in% allBnumber == F)
     message(crayon::bgRed("The following samples are Controls or not in Philips:"),"\n",
             paste(rawSheetData$`DNA #`[controlIndex], collapse="\n"),"\n")
-    rawSheetData$`Type & Tissue`[controlIndex] <- "Filler"
+    
+    rawSheetData$`Type & Tissue`[controlIndex] <- paste(rawSheetData$original_tissue[controlIndex], "Filler")
     isControl <- unlist(lapply(rawSheetData$`Accession#`, function(sam){ sam=="NTC" | sam=="SC" | sam=="NC"}))
     rawSheetData$`Type & Tissue`[isControl] <- "Control"
     message(crayon::bgGreen("Assigned Values:"))
@@ -248,6 +249,7 @@ FixPairedList <- function(philipsExport, rawSheetData){
     }
     tumorIndex <- GetTypeIndex(philipsExport$`Tumor DNA/RNA Number`, rawSheetData)
     normalIndex <- GetTypeIndex(philipsExport$`Normal DNA/RNA Number`, rawSheetData)
+    rawSheetData$original_tissue <- rawSheetData$`Type & Tissue`
     rawSheetData$`Type & Tissue` <- ""
     rawSheetData$`Type & Tissue`[tumorIndex] <- "Tumor"
     rawSheetData$`Type & Tissue`[normalIndex] <- "Normal"
