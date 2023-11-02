@@ -341,20 +341,24 @@ CheckControlRows <- function(rawSheetData, runID, newRows) {
 
 
 CheckMissingRows <- function(pairedList, rawSheetData, runID) {
-    accessions <- rawSheetData$`Accession#`
     dnaNumbers <- rawSheetData$`DNA #`
-    tst_number <- rawSheetData$Test_Number
+    no_control <- stringr::str_detect(dnaNumbers, "H20|SERACARE|HAPMAP", negate = T)
+    accessions <- rawSheetData$`Accession#`[no_control]
+    tst_number <- rawSheetData$Test_Number[no_control]
+    dnaNumbers <- dnaNumbers[no_control]
     missRows <- vapply(dnaNumbers, function(x) {!any(stringr::str_detect(pairedList, x))}, logical(1))
     if(any(missRows)) {
         message(crayon::bgGreen("Binding additional rows/filler:"), "\n",
                 paste(accessions[missRows], collapse = "\n"))
         extraRow <- dnaNumbers %in% dnaNumbers[missRows]
-        newRows <-  paste0(tst_number[missRows], "_", runID, "_", accessions[extraRow], "_", dnaNumbers[extraRow])
+        newRows <- paste(tst_number[missRows],
+                         runID, 
+                         accessions[extraRow], 
+                         dnaNumbers[extraRow], sep = "_")
     } else {
         message(crayon::bgGreen("No additional fillers or paired sample rows to bind to sample sheet"))
         newRows <- NULL
     }
-
     return(newRows)
 }
 
