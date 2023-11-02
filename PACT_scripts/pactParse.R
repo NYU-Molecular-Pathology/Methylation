@@ -261,9 +261,10 @@ FixPairedList <- function(philipsExport, rawSheetData){
 
 AddSampleIndexes <- function(pairedList, rawSheetData, philipsExport){
     tissueType <- FixPairedList(philipsExport, rawSheetData)
-    sheetTumors <- which(tissueType == "Tumor")
-    sheetControl <- which(tissueType != "Control")
-    sheetNormals <- which(tissueType == "Normal" & tissueType != "Control")
+    sheetTumors <- which(stringr::str_detect(tissueType, pattern = "(?i)tumor"))
+    sheetControl <- which(!stringr::str_detect(tissueType, pattern = "(?i)cont"))
+    sheetNormals <- which(stringr::str_detect(tissueType, pattern = "(?i)norm"))
+    
     mainSheet <- data.frame(matrix("", nrow = nrow(pairedList), ncol = 0))
     mainSheet$Sample_Name <- mainSheet$Sample_ID <- paste(pairedList[, 1])
     mainSheet$Paired_Normal <- ""
@@ -351,9 +352,10 @@ CheckMissingRows <- function(pairedList, rawSheetData, runID) {
         message(crayon::bgGreen("Binding additional rows/filler:"), "\n",
                 paste(accessions[missRows], collapse = "\n"))
         extraRow <- dnaNumbers %in% dnaNumbers[missRows]
+        tst_number[missRows] <- 0
         newRows <- paste(tst_number[missRows],
-                         runID, 
-                         accessions[extraRow], 
+                         runID,
+                         accessions[extraRow],
                          dnaNumbers[extraRow], sep = "_")
     } else {
         message(crayon::bgGreen("No additional fillers or paired sample rows to bind to sample sheet"))
