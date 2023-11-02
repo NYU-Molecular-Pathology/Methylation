@@ -630,22 +630,6 @@ GetSheetHeading <- function(inputFi){
     return(sheetHead)
 }
 
-GetExcelData <- function(inputFi, sheetNum, shRange, toSkip=0, cm=F){
-    sheetData <- suppressMessages(as.data.frame(
-        readxl::read_excel(
-            inputFi,
-            sheet = sheetNum,
-            na = "",
-            range = shRange,
-            col_types = "text",
-            col_names = cm,
-            skip=toSkip
-        )
-    ))
-    sheetData[is.na(sheetData)] <- ""
-    return(sheetData)
-}
-
 GetPhilipsData <- function(inputFi){
     shNames <- readxl::excel_sheets(inputFi)
     sh2 <- which(grepl("Philips", shNames, ignore.case = T))[1]
@@ -685,9 +669,13 @@ GrabRunNumber <- function(inputFi, runID) {
     sh <- which(grepl("PACT-", shNames, ignore.case = TRUE))[1]
     sh <- ifelse(is.na(sh), 1, sh)
 
-    rawSheetData <- GetExcelData(inputFi, sh, shRange = "A6:X200")
+    rawSheetData <- GetExcelData(inputFi, sh, shRange = "A6:X200", cm = T)
+    if(!"Test_Number" %in% colnames(rawSheetData)){
+        stop("Input Sheet formatting is incorrect, column names are:\n", 
+             paste(colnames(rawSheetData), collapse = "\n"))
+    }
     lastRow <- which(rawSheetData$Test_Number == 0)[1]
-    sheetBottom <- rawSheetData[lastRow:nrow(rawSheetData), ]
+    sheetBottom <- rawSheetData[c(lastRow:nrow(rawSheetData)), ]
 
     # Locate 'Run ID:' and extract relevant run number
     runID_row <- which(stringr::str_detect(sheetBottom$`DNA #`, "Run ID:"))
@@ -709,6 +697,7 @@ GrabRunNumber <- function(inputFi, runID) {
     run_number <- stringr::str_replace_all(run_number, c("Run ID:" = "", " " = ""))
     return(run_number)
 }
+                                   
 
 GetRawSamplesheet <- function(inputFi){
     shNames <- readxl::excel_sheets(inputFi)
