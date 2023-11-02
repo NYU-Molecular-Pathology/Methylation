@@ -229,7 +229,8 @@ addOutputLinks <- function(output){
     output$'Report Link' <- paste0(winpath, yearPath,"/",output$run_number,"/",output$record_id,".html")
     output$'Report Link'[is.na(output$run_number)] <- ""
     output$'Report Path'<-output$'Report Link'
-    oldRun <- stringr::str_detect(output$run_number, pattern="MGDM", negate = T)
+    theRuns <- output$run_number[!is.na(output$run_number)]
+    oldRun <- stringr::str_detect(theRuns, pattern="MGDM", negate = T)
     if(any(oldRun)){
         oldRun[is.na(oldRun)] <- FALSE
         output$run_number[oldRun] <- ""
