@@ -259,39 +259,57 @@ FixPairedList <- function(philipsExport, rawSheetData){
     return(rawSheetData$`Type & Tissue`)
 }
 
+
+AddUnmatchNormals <- function(normalSampleIDs, tumorPairedNormals, mainSheet, sheetTumors) {
+    unmatchedNormals <- normalSampleIDs[!normalSampleIDs %in% tumorPairedNormals]
+    extraIndices <- which(unmatchedNormals)
+
+    if (length(extraIndices) > 0) {
+        message(
+            crayon::bgRed(paste(length(extraIndices),
+                                "Samples are extra normals and will need to be added manually:")))
+        MsgDF(unmatchedNormals[extraIndices])
+
+        # Remove unmatched normals from list
+        matchedNormalList <- normalSampleIDs[-extraIndices]
+        mainSheet$Paired_Normal[sheetTumors] <- matchedNormalList
+
+        # Check for missing tumor-normal pairs and drop them
+        missingTumorNorm <- which(stringr::str_ends(mainSheet$Sample_ID,
+                                                    paste0(unmatchedNormals, collapse="|")))
+        if (length(missingTumorNorm) > 0) {
+            message(crayon::bgRed("There are samples missing tumor normal pairs and will be dropped:"))
+            MsgDF(mainSheet[missingTumorNorm, 1])
+            mainSheet <- mainSheet[-missingTumorNorm,]
+            rownames(mainSheet) <- 1:nrow(mainSheet)
+        }
+    }
+    return(mainSheet)
+}
+
+
 AddSampleIndexes <- function(pairedList, rawSheetData, philipsExport){
     tissueType <- FixPairedList(philipsExport, rawSheetData)
     sheetTumors <- which(stringr::str_detect(tissueType, pattern = "(?i)tumor"))
     sheetControl <- which(!stringr::str_detect(tissueType, pattern = "(?i)cont"))
     sheetNormals <- which(stringr::str_detect(tissueType, pattern = "(?i)norm"))
-    
+
     mainSheet <- data.frame(matrix("", nrow = nrow(pairedList), ncol = 0))
     mainSheet$Sample_Name <- mainSheet$Sample_ID <- paste(pairedList[, 1])
     mainSheet$Paired_Normal <- ""
 
-    if(length(mainSheet$Paired_Normal[sheetTumors])!=length(paste(mainSheet$Sample_ID[sheetNormals]))){
-        suppressWarnings(mainSheet$Paired_Normal[sheetTumors] <- paste(mainSheet$Sample_ID[sheetNormals]))
-        theSampleIdEx <- paste(mainSheet$Sample_ID[sheetNormals])
-        extraIndex <- which(theSampleIdEx %in% mainSheet$Paired_Normal[sheetTumors] == F)
-        message(crayon::bgRed(paste(length(extraIndex),
-                                    "Samples are extra normals and will need to be added manually:")))
-        thenNext <- theSampleIdEx[extraIndex]
-        MsgDF(thenNext)
-        newNormList <- paste(mainSheet$Sample_ID[sheetNormals])[-extraIndex]
-        mainSheet$Paired_Normal[sheetTumors] <- newNormList
-        #missingTumorNorm <- stringr::str_ends(mainSheet$Sample_ID, "0_0")
-        missingTumorNorm <- which(stringr::str_ends(mainSheet$Sample_ID,  paste(thenNext,collapse="|")))
-        if(length(missingTumorNorm)>0){
-            message(crayon::bgRed("There are samples missing tumor normal pairs and will be dropped:"))
-            MsgDF(mainSheet[missingTumorNorm,1])
-            mainSheet <- mainSheet[-missingTumorNorm,]
-            rownames(mainSheet) <- 1:nrow(mainSheet)
-        }
-    }else{
-        mainSheet$Paired_Normal[sheetTumors] <- paste(mainSheet$Sample_ID[sheetNormals])
-    }
-    if (length(rawSheetData$I7_Index_ID) != nrow(mainSheet)){
+    tumorPairedNormals <- mainSheet$Paired_Normal[sheetTumors]
+    normalSampleIDs <- mainSheet$Sample_ID[sheetNormals]
 
+    # Check if length mismatch between tumor normals and normal samples
+    if (length(tumorPairedNormals) != length(normalSampleIDs)) {
+        mainSheet <- AddUnmatchNormals(normalSampleIDs, tumorPairedNormals, mainSheet, sheetTumors)
+    } else {
+        mainSheet$Paired_Normal[sheetTumors] <- normalSampleIDs
+    }
+
+    if (length(rawSheetData$I7_Index_ID) != nrow(mainSheet)){
+        message("length(rawSheetData$I7_Index_ID) != nrow(mainSheet)")
     }
     mainSheet$I7_Index_ID <- paste(rawSheetData$I7_Index_ID)
     mainSheet$index <- paste(rawSheetData$index)
