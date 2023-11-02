@@ -686,7 +686,8 @@ GrabRunNumber <- function(inputFi, runID) {
     sh <- ifelse(is.na(sh), 1, sh)
 
     rawSheetData <- GetExcelData(inputFi, sh, shRange = "A6:X200")
-    sheetBottom <- rawSheetData[which(rawSheetData$Test_Number == 0)[1]:nrow(rawSheetData), ]
+    lastRow <- which(rawSheetData$Test_Number == 0)[1]
+    sheetBottom <- rawSheetData[lastRow:nrow(rawSheetData), ]
 
     # Locate 'Run ID:' and extract relevant run number
     runID_row <- which(stringr::str_detect(sheetBottom$`DNA #`, "Run ID:"))
