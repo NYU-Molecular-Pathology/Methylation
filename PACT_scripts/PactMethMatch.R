@@ -421,6 +421,9 @@ getOuputData <- function(token, flds, inputSheet, readFlag){
         return(output)
     }
     runId <- ifelse(readFlag == T, substr(inputSheet, 1, nchar(inputSheet) - 4), inputSheet)
+    if(stringr::str_detect(inputSheet, ".xls")){
+        runId <-substr(basename(inputSheet), 1, nchar(basename(inputSheet)) - 5)
+    }
     output <- modifyOutput(output, vals2find)
     toDrop <- is.na(output$Test_Number)
     if(any(toDrop)){
