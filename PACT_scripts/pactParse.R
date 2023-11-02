@@ -673,21 +673,40 @@ GetPhilipsData <- function(inputFi){
 }
 
 
-GrabRunNumber <- function(inputFi){
+Err_runID <- function(runID){
+    err_msg <- crayon::bgRed('Keyword "Run ID:" not found in SampleSheet "DNA #" column')
+    new_id <- paste('\nDefaulting to script input RUNID:', runID)
+    message(err_msg, new_id)
+}
+
+
+GrabRunNumber <- function(inputFi, runID) {
     shNames <- readxl::excel_sheets(inputFi)
-    sh <- which(grepl("PACT-", shNames, ignore.case = T))[1]
-    if(is.na(sh)){
-        sh = 1
+    sh <- which(grepl("PACT-", shNames, ignore.case = TRUE))[1]
+    sh <- ifelse(is.na(sh), 1, sh)
+
+    rawSheetData <- GetExcelData(inputFi, sh, shRange = "A6:X200")
+    sheetBottom <- rawSheetData[which(rawSheetData$Test_Number == 0)[1]:nrow(rawSheetData), ]
+
+    # Locate 'Run ID:' and extract relevant run number
+    runID_row <- which(stringr::str_detect(sheetBottom$`DNA #`, "Run ID:"))
+
+    # If 'Run ID:' keyword not found, use provided runID as default
+    if(length(runID_row) != 1) {
+        Err_runID(runID)
+        return(runID)
     }
-    rawSheetData <- GetExcelData(inputFi, sh, shRange="A6:X200", cm=T)
-    runID_row <- which(rawSheetData$`DNA #`=="Run ID:")
-    runID_col <- which(stringr::str_detect(paste(rawSheetData[runID_row, ]),"NB551709|NB501073|VH01471"))
-    run_number <- try(paste(rawSheetData[runID_row, runID_col]), silent=T)
-    if(length(run_number) == 0){
-        message(crayon::bgRed('Keyword "Run ID:" not found in SampleSheet, defaulting to script input RUNID'))
-        run_number <- ""
+
+    runID_find <- paste(sheetBottom[runID_row, ])
+    runID_col <- which(stringr::str_detect(runID_find, "NB551709|NB501073|VH01471"))
+
+    if(length(runID_col) == 0) {
+        Err_runID(runID)
+        return(runID)
     }
-    return(run_number[1])
+    run_number <- paste(sheetBottom[runID_row, runID_col])
+    run_number <- stringr::str_replace_all(run_number, c("Run ID:" = "", " " = ""))
+    return(run_number)
 }
 
 GetRawSamplesheet <- function(inputFi){
