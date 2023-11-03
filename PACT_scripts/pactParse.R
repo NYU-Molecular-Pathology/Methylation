@@ -410,7 +410,6 @@ BindUnpairedRows <- function(rawSheetData, pairedList, runID) {
                 newIdx <- matchedIdx[i]
                 new_paired_list[newIdx,] <- all_samples[currSam]
             }
-            
         }else{
             new_paired_list[sam,] <- all_samples[sam_idx]
         }
