@@ -291,7 +291,7 @@ msg_step 1 "#ffbfda" "After Demux finishes, ssh to data mover node"
 msg_code "ssh -Y ${kerbero}@bigpurple.nyumc.org"
 msg_code "ssh ${kerbero}@dmn-0002"
 msg_code "mount /mnt/${kerbero}/molecular"
-mesg_step 2 "#ffbfda" "This script will copy the files to the Z-drive:"
+msg_step 2 "#ffbfda" "This script will copy the files to the Z-drive:"
 msg_code "/mnt/${kerbero}/molecular/Molecular/Validation/Scripts/fusion_run_copy.sh ${runID}"
 echo "$BOX2"
 
