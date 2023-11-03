@@ -766,6 +766,7 @@ AltParseFormat <- function(inputFi, runID){
     }
     philipsExport <- GetPhilipsData(inputFi)
     pact_run <- stringr::str_split_fixed(base::basename(inputFi), ".xls", 2)[1,1]
+    message(crayon::bgBlue(paste("PACT ID is:", pact_run)))
     if(is.null(philipsExport)){
         mainSheet <- BuildNoPhilips(rawSheetData, sheetRunID, pact_run)
     }else{
