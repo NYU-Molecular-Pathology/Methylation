@@ -403,8 +403,17 @@ BindUnpairedRows <- function(rawSheetData, pairedList, runID) {
     all_samples <- c(pairedList, newRows, controlRows)
     for (sam in 1:length(b_numbers)) {
         sam_idx <- which(stringr::str_detect(all_samples, b_numbers[sam]))
-        stopifnot(length(sam_idx) == 1)
-        new_paired_list[sam,] <- all_samples[sam_idx]
+        if(length(sam_idx) > 1){
+            for(i in 1:length(sam_idx)){
+                currSam <- sam_idx[i]
+                matchedIdx <- which(b_numbers == b_numbers[sam])
+                newIdx <- matchedIdx[i]
+                new_paired_list[newIdx,] <- all_samples[currSam]
+            }
+            
+        }else{
+            new_paired_list[sam,] <- all_samples[sam_idx]
+        }
     }
     rownames(new_paired_list) <- seq_len(nrow(new_paired_list))
     return(new_paired_list)
