@@ -398,9 +398,16 @@ BindUnpairedRows <- function(rawSheetData, pairedList, runID) {
     CheckMissingData(pairedList)
     newRows <- CheckMissingRows(pairedList, rawSheetData, runID)
     controlRows <- CheckControlRows(rawSheetData, runID, newRows)
-    pairedList <- data.frame("Sample_ID" = c(pairedList, newRows, controlRows))
-    rownames(pairedList) <- seq_len(nrow(pairedList))
-    return(pairedList)
+    new_paired_list <- data.frame("Sample_ID" = c(1:nrow(rawSheetData)))
+    b_numbers <- rawSheetData$`DNA #`
+    all_samples <- c(pairedList, newRows, controlRows)
+    for (sam in 1:length(b_numbers)) {
+        sam_idx <- which(stringr::str_detect(all_samples, b_numbers[sam]))
+        stopifnot(length(sam_idx) == 1)
+        new_paired_list[sam,] <- all_samples[sam_idx]
+    }
+    rownames(new_paired_list) <- seq_len(nrow(new_paired_list))
+    return(new_paired_list)
 }
 
 
