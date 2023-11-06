@@ -643,6 +643,7 @@ CopyPdfsPngs <- function(params) {
     pdfDir <- file.path(outDir,"FACETpdfs") # input facet pdf directory
     tumors <- checkTumorPdf(samList, outDir)
     pdfList <- list.files(pattern = "*.pdf", recursive = T)
+    pdfList <- pdfList[!grepl("^0_", pdfList)]
     if (length(pdfList)>0) {
         convert.plots(tumors, pdfList)
         if(!dir.exists(pdfDir)){dir.create(pdfDir)}
