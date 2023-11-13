@@ -287,13 +287,13 @@ ReadQcFile <- function(pactName){
 
 
 makePdfTab <- function(pdfFi, cnvTab, outDir) {
-    pdfFi <- file.path(outDir, "cnvpng", paste0(pdfFi, ".png"))
+    ngsPng <- file.path(outDir, "ngs_cnv_png", paste0(pdfFi, ".png"))
     cat(
         "<span style='color: red;'>",
         "**Note**: CNV Amplifications are listed first,",
         "followed other Philips CNV abberations in table below this image\n\n"
     )
-    cat(paste0("![In-house Facets Plot (Above)](", pdfFi, "){width=100%}"))
+    cat(paste0("![In-house Facets Plot (Above)](", ngsPng, "){width=100%}"))
     cat("\n\n")
     if (nrow(cnvTab) > 0) {
         newTa <- knitr::kable(cnvTab, row.names = F, "html", align="c")
@@ -884,6 +884,67 @@ loadHtmlTag <- function(){
     par(ask=F); devAskNewPage(ask = F)
     #doParallel::registerDoParallel(cores=2)
     return(htmltools::tagList(plotly::ggplotly(ggplot2::ggplot())))
+}
+
+RenamePngs <- function(tumors, pngList, ngsPngDir) {
+    stopifnot(class(tumors) == "data.frame")
+    ngsOrder <- base::which(sapply(tumors$Specimen_ID, grepl, pngList), arr.ind = T)[, "row"]
+    for(X in 1:nrow(tumors)){
+        currCase <- tumors$Paired_Normal[X]
+        fileFind <- stringr::str_detect(pngList, pattern = currCase)
+        current_png <- pngList[fileFind]
+        stopifnot(length(current_png) == 1)
+        new_pngName <- paste0(tumors$Test_Number[X], ".png")
+        message("Current PNG file:\n", basename(current_png))
+        message("Matching NGS name: ", tumors$Test_Number[X], "\n", tumors$Paired_Normal[X], "\n")
+        renamedPng <- file.path(ngsPngDir, new_pngName)
+        if(!file.exists(renamedPng)){
+            file.copy(current_png, renamedPng)
+        }
+    }
+}
+
+
+FixPngList <- function(tumors, pngList) {
+    message("The number of tumor samples does not match the number of FACET PNG files available!")
+    message("Total sample rows:", " ", nrow(tumors))
+    message("Total PNG files in the directory:", " ", length(pngList))
+    message("Check if any are missing:\n")
+    message(paste0(capture.output(as.data.frame(tumors$Specimen_ID)), collapse="\n"))
+    message(paste0(capture.output(data.frame(PNG_Files = basename(pngList))), collapse="\n"))
+    normLi <- paste(tumors$Paired_Normal, collapse = "|")
+    toKeep <- unlist(lapply(pngList, FUN=function(X){stringr::str_detect(X, pattern = normLi)}))
+    message("Dropping the following:")
+    print(pngList[!toKeep])
+    stopifnot(length(pngList) == nrow(tumors))
+    return(pngList)
+}
+
+CheckTumorPngs <- function(samList, outDir){
+    pngOutDir <- file.path(outDir,"cnvpng") # output copy of cnvPNG files
+    if(!dir.exists(pngOutDir)){dir.create(pngOutDir)}
+    pngList <- list.files(pngOutDir, pattern = "*.png", recursive = T, full.names=T)
+    pngList <- pngList[!grepl("^0_", basename(pngList))]
+    if(length(pngList) == 0){
+        message("No CNV PNG Facets found in current directory:\n", pngOutDir)
+        message("Check if the Facet PNG files are available in the output directory:\n",
+                "/Volumes/molecular/Molecular/REDCap/cnv_facets/ or the Desktop")
+        stopifnot(length(pngList) != 0)
+    }
+    tumors <- samList[samList$Paired_Normal != "", ] # drop controls/normals
+    row.names(tumors) <- 1:nrow(tumors) # correct row numbering
+    if(length(pngList) != nrow(tumors)){
+      pngList <- FixPngList(tumors, pngList)
+    }
+    ngsPngDir <- file.path(outDir, "ngs_cnv_png")
+    if(!dir.exists(ngsPngDir)){dir.create(ngsPngDir)}
+    RenamePngs(tumors, pngList, ngsPngDir)
+}
+
+CopyCnvPngs <- function(params) {
+    outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus"))
+    samList <- gb$GetSamList(params$pactName, 2)
+    CheckTumorPngs(samList, outDir)
 }
 
 animation::ani.options(autobrowse = FALSE); options(width = 1600)
