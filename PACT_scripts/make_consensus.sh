@@ -36,15 +36,15 @@ deskDir="$HOME/Desktop/${pactRun}/"
 
 mkdir -p "${deskDir}"
 
-echo "Copying files: rsync -vrthP --include='*.pdf' '${volMolec}REDCap/cnv_facets/${pactRun}/' '${deskDir}'"
+echo "Copying files: rsync -vrthP --include='*.png' '${volMolec}REDCap/cnv_facets/${pactRun}/' '${deskDir}'"
 
-rsync -vrthP --include="*.pdf" "${volMolec}REDCap/cnv_facets/${pactRun}/" "${deskDir}"
+rsync -vrthP --include="*.png" "${volMolec}REDCap/cnv_facets/${pactRun}/" "${deskDir}"
 #rsync -vrthP "${clinicalOuput}${pactRun}-Somatic_Variants.html" "${deskDir}"
 #rsync -vrthP "${clinicalOuput}${pactRun}.html" "${deskDir}"
 rsync -vrthP "${volMolec}REDCap/cnv_facets/${pactRun}/${pactRun}-QC.tsv" "${deskDir}"
 rsync -vrthP "${volMolec}NGS607/${currYear}/${runID}/${pactRun}_Hotspots.tsv" "${deskDir}"
 
-rsync -vrthP --include="*.pdf" "${deskDir}" "${consensusDir}${pactRun}_consensus"
+rsync -vrthP --include="*.png" "${deskDir}" "${consensusDir}${pactRun}_consensus/cnvpng/"
 rsync -vrthP --include="*.tsv" "${deskDir}" "${consensusDir}${pactRun}_consensus"
 rsync -vrthP "$HOME/Desktop/${runID}-SampleSheet.csv" "${consensusDir}${pactRun}_consensus"
 rsync -vrthP "$HOME/Desktop/${pactRun}_MethylMatch.xlsx" "${consensusDir}${pactRun}_consensus"
