@@ -149,7 +149,7 @@ preReqPkgs <- c(
     'plyr',
     #'TxDb.Hsapiens.UCSC.hg19.knownGene',
     #'org.Hs.eg.db',
-    #'GenomeInfoDbData',
+    'GenomeInfoDbData',
     #'MatrixGenerics',
     'base64',
     #'Rsamtools',
