@@ -38,7 +38,7 @@ flds = c("record_id","b_number","tm_number","accession_number","block","diagnosi
 
 # Load redcapAPI Package -----
 if(suppressWarnings(!requireNamespace("redcapAPI"))){
-    params=list('nutterb/redcapAPI', dependencies=T, upgrade="always", type="source")
+    params = list('nutterb/redcapAPI', dependencies = T, upgrade = "always", type = "source")
     do.call(devtools::install_github,c(params))
 }
 
@@ -46,10 +46,12 @@ if(paste(utils::packageVersion("redcapAPI")) != "2.7.4"){
     install.packages("redcapAPI", ask=F, update=T, dependencies=T)
 }
 
-if(length(copyToFolder)==0){
-    copyToFolder <- getwd()
+are_valid <- function(...) {
+    args <- list(...)
+    return(all(sapply(args, function(x) !is.null(x) && !is.na(x) && length(x) > 0 && nzchar(x))))
 }
-if(is.na(copyToFolder) | is.null(copyToFolder)){
+
+if(!are_valid(copyToFolder)){
     copyToFolder <- getwd()
 }
 
@@ -347,15 +349,14 @@ loadPacks()
 if (Sys.info()[['sysname']]=="Darwin") {checkMounts()}
 sourceFuns()
 
-if(length(inputSheet) >0 & length(token)>0){
-    if(!is.na(inputSheet) & !is.na(token)){
-        rd_numbers <- readInfo(inputSheet)
-        grabRDCopyIdat(rd_numbers=rd_numbers, token=token)
-    }
+if(are_valid(inputSheet, token)) {
+    rd_numbers <- readInfo(inputSheet)
+    grabRDCopyIdat(rd_numbers = rd_numbers, token = token)
 }
 
-# Example Use
-#rds <- readInfo(inputSheet="~/Desktop/MySampleSheet.xlsx")
+# Example Use ---------------------------------------------------------------------------
+#rds <- readInfo(inputSheet = "~/Desktop/MySampleSheet.xlsx")
 # OR
 #rds <- c("RD-22-123", "RD-21-345", "RD-20-678")
+# THEN run
 #grabRDCopyIdat(rd_numbers=rds, token=token)
