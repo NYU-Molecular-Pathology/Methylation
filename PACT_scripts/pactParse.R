@@ -66,11 +66,11 @@ loadPacks <- function(){
     rlis = getOption("repos");rlis["CRAN"] = "http://cran.us.r-project.org"
     options(repos = rlis)
     invisible(lapply(pkgs, function(pk){
-        if(suppressWarnings(!require(pk, character.only=T))){
+        if(suppressWarnings(!requireNamespace(pk))){
             install.packages(pk, dependencies=T, verbose=T, repos="http://cran.us.r-project.org", type="both")
             libLoad(pk)
         }else{libLoad(pk)}}))
-    if(paste(utils::packageVersion("redcapAPI")) != "2.7.4"){
+    if(!(utils::packageVersion("redcapAPI") >= "2.7.4")){
         install.packages("redcapAPI", ask=F, update=T, dependencies=T)
     }
 
