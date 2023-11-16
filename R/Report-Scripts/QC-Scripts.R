@@ -275,6 +275,13 @@ get.op.dat <- function(targets) {
 	return(OPvals)
 }
 
+get.dp.dat <- function(gb){
+  dpDt <- gb$sdata@DPfreq
+  df <- data.frame(x = 1:length(dpDt), y = dpDt, row.names = names(dpDt))
+  dat.dp <- gb$mergeDF(df, tg = gb$targets)
+  return(dat.dp)
+}
+
 swm <- function(funObj){return(suppressMessages(suppressWarnings(funObj)))}
 
 SetKnitPath <- function(runPath, baseDir){
