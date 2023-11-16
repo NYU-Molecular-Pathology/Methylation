@@ -42,7 +42,7 @@ if(suppressWarnings(!requireNamespace("redcapAPI"))){
     do.call(devtools::install_github,c(params))
 }
 
-if(paste(utils::packageVersion("redcapAPI")) != "2.7.4"){
+if(!(utils::packageVersion("redcapAPI") >= "2.7.4")){
     install.packages("redcapAPI", ask=F, update=T, dependencies=T)
 }
 
