@@ -262,64 +262,85 @@ FixPairedList <- function(philipsExport, rawSheetData){
 }
 
 
-AddUnmatchNormals <- function(normalSampleIDs, tumorPairedNormals, mainSheet, sheetTumors) {
-    unmatchedNormals <- normalSampleIDs[!normalSampleIDs %in% tumorPairedNormals]
-    extraIndices <- which(unmatchedNormals)
-
-    if (length(extraIndices) > 0) {
-        message(
-            crayon::bgRed(paste(length(extraIndices),
-                                "Samples are extra normals and will need to be added manually:")))
-        MsgDF(unmatchedNormals[extraIndices])
-
-        # Remove unmatched normals from list
-        matchedNormalList <- normalSampleIDs[-extraIndices]
-        mainSheet$Paired_Normal[sheetTumors] <- matchedNormalList
-
-        # Check for missing tumor-normal pairs and drop them
-        missingTumorNorm <- which(stringr::str_ends(mainSheet$Sample_ID,
-                                                    paste0(unmatchedNormals, collapse="|")))
-        if (length(missingTumorNorm) > 0) {
-            message(crayon::bgRed("There are samples missing tumor normal pairs and will be dropped:"))
-            MsgDF(mainSheet[missingTumorNorm, 1])
-            mainSheet <- mainSheet[-missingTumorNorm,]
-            rownames(mainSheet) <- 1:nrow(mainSheet)
-        }
+AddUnmatchNormals <- function(sheetsPairedNorm, sheetPairedTumor, mainSheet, sheetTumors, sheetNormals, philipsExport) {
+  
+  if(length(sheetsPairedNorm) > length(sheetPairedTumor)){
+    extraNormals <- T
+    message(crayon::bgRed(paste("More NORMALS than Tumors on this run!  Manually edit sample sheet!")))
+    unmatchedSamples <- which(!philipsExport$`Tumor DNA/RNA Number` %in% sheetPairedTumor)
+    dnaMissingPair <- stringr::str_detect(mainSheet$Sample_ID, pattern = paste(sheetsPairedNorm[unmatchedSamples], collapse = "|"))
+    message(crayon::bgBlue("The following case(s) are missing a paired Tumor:"))
+    MsgDF(mainSheet$Sample_ID[dnaMissingPair])
+  }else{
+    extraNormals <- F
+    message(crayon::bgRed(paste("More TUMORS than Normals on this run!  Manually edit sample sheet!")))
+    unmatchedSamples <- which(!philipsExport$`Normal DNA/RNA Number` %in% sheetsPairedNorm)
+    dnaMissingPair <- stringr::str_detect(mainSheet$Sample_ID, pattern = paste(sheetPairedTumor[unmatchedSamples], collapse = "|"))
+    message(crayon::bgBlue("The following case(s) are missing a paired Normal:"))
+    MsgDF(mainSheet$Sample_ID[dnaMissingPair])
+  }
+  
+  if (any(dnaMissingPair)) {
+    extraIndices <- which(dnaMissingPair)
+    normalSamplesPair <- mainSheet$Sample_ID[sheetNormals]
+    tumorSamplesPair <- mainSheet$Sample_ID[sheetTumors]
+    
+    missingCases <- mainSheet$Sample_ID[dnaMissingPair]
+    
+    if(extraNormals == T){
+      message(crayon::bgRed(paste(length(extraIndices), 
+                                  "extra Normal(s) do not need to be paired to missing Tumor(s)")))
+      indexToDrop <- which(!normalSamplesPair %in% missingCases)
+      mainSheet$Paired_Normal[sheetTumors] <- normalSamplesPair[-indexToDrop]
+    }else{
+      message(crayon::bgRed(paste(length(extraIndices), 
+                                  "extra Tumor(s) may need to be paired manually to missing Normal(s)")))
+      
+      indexToAdd <- which(tumorSamplesPair %in% missingCases)
+      # Insert "missing" at this index
+      for(idx in indexToAdd){
+        normalSamplesPair <- append(normalSamplesPair, "MISSING_NORMAL_PAIR", after = idx-1)
+      }
+      mainSheet$Paired_Normal[sheetTumors] <- normalSamplesPair
+      return(mainSheet)
     }
-    return(mainSheet)
+  }
+  return(mainSheet)
 }
 
 
 AddSampleIndexes <- function(pairedList, rawSheetData, philipsExport){
-    tissueType <- FixPairedList(philipsExport, rawSheetData)
-    sheetTumors <- which(stringr::str_detect(tissueType, pattern = "(?i)tumor"))
-    sheetControl <- which(!stringr::str_detect(tissueType, pattern = "(?i)cont"))
-    sheetNormals <- which(stringr::str_detect(tissueType, pattern = "(?i)norm"))
-
-    mainSheet <- data.frame(matrix("", nrow = nrow(pairedList), ncol = 0))
-    mainSheet$Sample_Name <- mainSheet$Sample_ID <- paste(pairedList[, 1])
-    mainSheet$Paired_Normal <- ""
-
-    tumorPairedNormals <- mainSheet$Paired_Normal[sheetTumors]
-    normalSampleIDs <- mainSheet$Sample_ID[sheetNormals]
-
-    # Check if length mismatch between tumor normals and normal samples
-    if (length(tumorPairedNormals) != length(normalSampleIDs)) {
-        mainSheet <- AddUnmatchNormals(normalSampleIDs, tumorPairedNormals, mainSheet, sheetTumors)
-    } else {
-        mainSheet$Paired_Normal[sheetTumors] <- normalSampleIDs
-    }
-
-    if (length(rawSheetData$I7_Index_ID) != nrow(mainSheet)){
-        message("length(rawSheetData$I7_Index_ID) != nrow(mainSheet)")
-    }
-    mainSheet$I7_Index_ID <- paste(rawSheetData$I7_Index_ID)
-    mainSheet$index <- paste(rawSheetData$index)
-    mainSheet$Specimen_ID <- paste(rawSheetData$`Accession#`)
-    mainSheet$Tumor_Content <- mainSheet$Test_Number <- mainSheet$EPIC_ID <- "0"
-    mainSheet$Description <- mainSheet$Tumor_Type <- ""
-    return(mainSheet)
+  tissueType <- FixPairedList(philipsExport, rawSheetData)
+  
+  sheetTumors <- which(stringr::str_detect(tissueType, pattern = "(?i)tumor"))
+  sheetControl <- which(stringr::str_detect(tissueType, pattern = "(?i)cont"))
+  sheetNormals <- which(stringr::str_detect(tissueType, pattern = "(?i)norm"))
+  
+  mainSheet <- data.frame(matrix("", nrow = nrow(pairedList), ncol = 0))
+  mainSheet$Sample_Name <- mainSheet$Sample_ID <- paste(pairedList[, 1])
+  mainSheet$Paired_Normal <- ""
+  
+  sheetPairedTumor <- rawSheetData$`DNA #`[sheetTumors]
+  sheetsPairedNorm <- rawSheetData$`DNA #`[sheetNormals]
+  
+  # Check if length mismatch between tumor normals and normal samples
+  if (length(sheetPairedTumor) != length(sheetsPairedNorm)) {
+    mainSheet <- AddUnmatchNormals(sheetsPairedNorm, sheetPairedTumor, mainSheet, sheetTumors, sheetNormals, philipsExport)
+  } else {
+    mainSheet$Paired_Normal[sheetTumors] <- mainSheet$Sample_ID[sheetNormals]
+  }
+  
+  if (length(rawSheetData$I7_Index_ID) != nrow(mainSheet)){
+    stop("length(rawSheetData$I7_Index_ID) != nrow(mainSheet)")
+  }
+  mainSheet$I7_Index_ID <- paste(rawSheetData$I7_Index_ID)
+  mainSheet$index <- paste(rawSheetData$index)
+  mainSheet$Specimen_ID <- paste(rawSheetData$`Accession#`)
+  mainSheet$Tumor_Content <- mainSheet$Test_Number <- mainSheet$EPIC_ID <- "0"
+  mainSheet$Description <- mainSheet$Tumor_Type <- ""
+  return(mainSheet)
 }
+
 
 
 FixDuplicateControls <- function(controlRows) {
