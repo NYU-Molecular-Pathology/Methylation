@@ -6,12 +6,14 @@
 ## Copyright (c) NYULH Jonathan Serrano, 2023
 ## ---------------------------
 
-fusionRun=${1-NULL}  # if arg $2 is empty assign NULL as default i.e. 220819_NB551999_0999_AHVTN5XYZ3
-SHEETPATH=${2-$NULL} # if arg $3 is empty will be NULL i.e. /Users/Jonathan/Desktop/22-MGFS25.xlsx
-kerbero=${3-$USER}   # if arg $3 is empty assign $USER as default else i.e. whoami kerberosid
+# INPUT ARGS -----------------------------------------------------------------------------------------
+RUN_ID=${1-NULL}     # if arg $1 is empty assign NULL as default i.e. 220819_NB551999_0999_AHVTN5XYZ3
+SHEETPATH=${2-$NULL} # if arg $2 is empty will be NULL i.e. "/Users/$USER/Downloads/22-MGFS25.xlsx"
+FUSION_ID=${3-$NULL} # if arg $3 is empty, value is set to basename of SHEETPATH i.e. "22-MGFS25"
+KERBERO=${4-$USER}   # if arg $4 is empty, value is set to $USER as default i.e. kerberos ID
 
-samSheetDest="/gpfs/data/molecpathlab/production/samplesheets/archer/worksheets/"
-#DEMUXDIR="/gpfs/data/molecpathlab/production/Demultiplexing/${fusionRun}"
+SHEETDIR="/gpfs/data/molecpathlab/production/samplesheets/archer/worksheets"
+#DEMUXDIR="/gpfs/data/molecpathlab/production/Demultiplexing/${RUN_ID}"
 
 FG_YLW='<span style="color:#cf6a00;">' # makes text darkorange color
 FG_GRN='<span style="color:#6aa84f">'  # makes text color green
@@ -21,8 +23,14 @@ normal="</span>" # resets default text
 BOX1=' <div class="boxed"> '
 BOX2=' </div> '
 
-kerbero="${FG_CYA}${kerbero}${normal}"
-runID="${FG_YLW}${fusionRun}${normal}"
+KERBERO="${FG_CYA}${KERBERO}${normal}"
+RUN_ID="${FG_YLW}${RUN_ID}${normal}"
+
+# If FUSION_ID is NULL use `basename` to get FUSION_ID by removing the extension -----------------------------
+if [ "$FUSION_ID" == "NULL" ]; then
+    FUSION_ID=$(basename -- "$SHEETPATH")
+    FUSION_ID="${FUSION_ID%.*}"
+fi
 
 echo "
 <link href='https://fonts.googleapis.com/css?family=Allerta Stencil' rel='stylesheet'>
@@ -47,8 +55,8 @@ html body {
 
 
 .pressed {
-  background-color: #06a96e;
-  background-image: linear-gradient(1deg, #00aa6c, #14C667 99%);
+    background-color: #06a96e;
+    background-image: linear-gradient(1deg, #00aa6c, #14C667 99%);
 }
 
 
@@ -115,89 +123,84 @@ code {
 }
 
 *, *:before, *:after {
-  box-sizing: border-box;
+    box-sizing: border-box;
 }
 
 pre[class*=\"language-\"] {
-  position:relative;
-  overflow: auto;
-  margin:5px 0;
-  padding:1.75rem 0 1.75rem 1rem;
-  border-radius:10px;
+    position:relative;
+    overflow: auto;
+    margin:5px 0;
+    padding:1.75rem 0 1.75rem 1rem;
+    border-radius:10px;
 }
 
 button {
-  align-items: center;
-  appearance: none;
-  background-color: #3EB2FD;
-  background-image: linear-gradient(1deg, #4F58FD, #149BF3 99%);
-  background-size: calc(100% + 20px) calc(100% + 20px);
-  border-radius: 100px;
-  border-width: 0;
-  box-shadow: none;
-  box-sizing: border-box;
-  color: #FFFFFF;
-  cursor: pointer;
-  display: inline-flex;
-  font-family: CircularStd,sans-serif;
-  font-size: 14;
-  height: auto;
-  justify-content: center;
-  line-height: 1.0;
-  padding: 3px 10px;
-  position: relative;
-  text-align: center;
-  text-decoration: none;
-  transition: background-color .2s,background-position .2s;
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: manipulation;
-  vertical-align: top;
-  white-space: nowrap;
+    align-items: center;
+    appearance: none;
+    background-color: #3EB2FD;
+    background-image: linear-gradient(1deg, #4F58FD, #149BF3 99%);
+    background-size: calc(100% + 20px) calc(100% + 20px);
+    border-radius: 100px;
+    border-width: 0;
+    box-shadow: none;
+    box-sizing: border-box;
+    color: #FFFFFF;
+    cursor: pointer;
+    display: inline-flex;
+    font-family: CircularStd,sans-serif;
+    font-size: 14;
+    height: auto;
+    justify-content: center;
+    line-height: 1.0;
+    padding: 3px 10px;
+    position: relative;
+    text-align: center;
+    text-decoration: none;
+    transition: background-color .2s,background-position .2s;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    vertical-align: top;
+    white-space: nowrap;
 }
 
 button:active,
 button:focus {
-  outline: none;
+    outline: none;
 }
 
 button:hover {
-  background-position: -20px -20px;
+    background-position: -20px -20px;
 }
 
 button:focus:not(:active) {
-  box-shadow: rgba(40, 170, 255, 0.25) 0 0 0 .125em;
+    box-shadow: rgba(40, 170, 255, 0.25) 0 0 0 .125em;
 }
 
 main {
-  display: grid;
-  max-width: 600px;
-  margin: 20px auto;
+    display: grid;
+    max-width: 600px;
+    margin: 20px auto;
 }
 
 
 h1{
-  font-size:1.3rem;
+    font-size:1.3rem;
 }
 
 .stagehead {
-  font-size: 40px;
-  font-weight: 600!important;
-  background-image: linear-gradient(
-        to bottom,
-        #CA4246, 
-        #E16541, 
-        #F18F43, 
-        #8B9862)!important;
-  color: transparent!important;
-  display: block;
-  background-clip: text!important;
-  -webkit-background-clip: text!important;
-  font-family: 'Allerta Stencil';
-  margin-bottom: 0px !important;
-  margin-top: 15px !important;
-  -webkit-text-stroke-width: 0.05px;
-  -webkit-text-stroke-color: black;
+    font-size: 40px;
+    font-weight: 600!important;
+    background-image: linear-gradient(to bottom, #CA4246, #E16541, #F18F43, #8B9862)!important;
+    color: transparent!important;
+    display: block;
+    background-clip: text!important;
+    -webkit-background-clip: text!important;
+    font-family: 'Allerta Stencil';
+    margin-bottom: 0px !important;
+    margin-top: 15px !important;
+    -webkit-text-stroke-width: 0.05px;
+    -webkit-text-stroke-color: black;
 }
 
 </style>
@@ -264,9 +267,9 @@ echo "<span style='font-weight: bold'>Author</span>: Jonathan Serrano</br>"
 echo "<span style='font-weight: bold'>Current Date</span>: $(date)</br>"
 echo "</br>"
 echo "<h2 style='padding-top: 5px !important; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: black;'>${FG_GRN}LG-PACT Commands${normal}</h2>"
-msg_step 1 "white" "FUSION RUN: ${runID}</br>"
-msg_step 2 "white" "SHEETPATH: ${SHEETPATH}</br>"
-msg_step 3 "white" "Kerberos ID: ${kerbero}</br>"
+msg_step 1 "white" "FUSION RUN: ${RUN_ID}</br>"
+msg_step 2 "white" "FUSION ID: ${FUSION_ID}</br>"
+msg_step 3 "white" "KERBEROs ID: ${KERBERO}</br>"
 echo "</br>"
 echo ' <div class="tocbox"> '
 
@@ -283,16 +286,22 @@ echo "$BOX2"
 msg_stage 1 "Demux Automation Steps"
 msg_step 1 "#ffdfba" "Before 8pm on Friday, the Fusion worksheet has been copied to BigPurple with the script below"
 msg_code "/Volumes/CBioinformatics/FUSION/copyFusionSheet.sh ${SHEETPATH}"
+msg_step 2 "#ffdfba" "If needed, the commands to create the SampleSheet in the worksheets directory and manually deploy are below"
+msg_code "module load python/cpu/3.6.5"
+msg_code "python /gpfs/data/molecpathlab/bin/ArcherDX/gen_sample_sheet.py -p ${FUSION_ID} -r ${RUN_ID} -t ${SHEETPATH} -o ."
+msg_code "cd /gpfs/data/molecpathlab/pipelines/demux-nf2/"
+msg_code "make deploy RUNID=${RUN_ID} SAMPLESHEET=$SHEETDIR/${RUN_ID}-SampleSheet.csv SEQTYPE=Archer"
 echo "$BOX2"
 
 # Stage 2 -----------------------
 msg_stage 2 "Copying Output Files to Z-drive"
 msg_step 1 "#ffbfda" "After Demux finishes, ssh to data mover node"
-msg_code "ssh -Y ${kerbero}@bigpurple.nyumc.org"
-msg_code "ssh ${kerbero}@dmn-0002"
-msg_code "mount /mnt/${kerbero}/molecular"
-msg_step 2 "#ffbfda" "This script will copy the files to the Z-drive:"
-msg_code "/mnt/${kerbero}/molecular/Molecular/Validation/Scripts/fusion_run_copy.sh ${runID}"
+msg_code "ssh ${KERBERO}@bigpurple.nyumc.org"
+msg_code "ssh ${KERBERO}@dmn-0002"
+msg_code "mount /mnt/${KERBERO}/molecular"
+mesg_step 2 "#ffbfda" "This script will copy the files to the Z-drive:"
+msg_code "/mnt/${KERBERO}/molecular/Molecular/Validation/Scripts/fusion_run_copy.sh ${RUN_ID}"
+msg_step 3 "#ffbfda" "Send an email to notify the files are copied to the Z-drive and ready for upload to Archer"
 echo "$BOX2"
 
 echo "
