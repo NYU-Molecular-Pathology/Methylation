@@ -28,8 +28,8 @@ fi
 
 KERBERO="${FG_CYA}${KERBERO}${normal}"
 RUN_ID="${FG_YLW}${RUN_ID}${normal}"
-SHEETDIR="/gpfs/data/molecpathlab/production/samplesheets/archer/worksheets/${RUN_ID}"
-XLSXPATH="$SHEETDIR/${FUSION_ID}.xlsx"
+SHEETDIR="/gpfs/data/molecpathlab/production/samplesheets/archer"
+XLSXPATH="${SHEETDIR}/worksheets/${FUSION_ID}.xlsx"
 
 echo "
 <link href='https://fonts.googleapis.com/css?family=Allerta Stencil' rel='stylesheet'>
@@ -287,9 +287,11 @@ msg_step 1 "#ffdfba" "Before 8pm on Friday, the Fusion worksheet has been copied
 msg_code "/Volumes/CBioinformatics/FUSION/copyFusionSheet.sh ${SHEETPATH}"
 msg_step 2 "#ffdfba" "If needed, the commands to create the SampleSheet in the worksheets directory and manually deploy are below"
 msg_code "module load python/cpu/3.6.5"
+msg_code "mkdir -p ${SHEETDIR}/${RUN_ID} && chmod -R g+rwx ${SHEETDIR}/${RUN_ID}"
+msg_code "cd ${SHEETDIR}/${RUN_ID}"
 msg_code "python /gpfs/data/molecpathlab/bin/ArcherDX/gen_sample_sheet.py -p ${FUSION_ID} -r ${RUN_ID} -t ${XLSXPATH} -o ."
 msg_code "cd /gpfs/data/molecpathlab/pipelines/demux-nf2/"
-msg_code "make deploy RUNID=${RUN_ID} SAMPLESHEET=$SHEETDIR/${RUN_ID}-SampleSheet.csv SEQTYPE=Archer"
+msg_code "make deploy RUNID=${RUN_ID} SAMPLESHEET=${SHEETDIR}/${RUN_ID}/${RUN_ID}-SampleSheet.csv SEQTYPE=Archer"
 echo "$BOX2"
 
 # Stage 2 -----------------------
