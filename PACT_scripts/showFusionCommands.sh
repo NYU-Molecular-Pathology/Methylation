@@ -12,9 +12,6 @@ SHEETPATH=${2-$NULL} # if arg $2 is empty will be NULL i.e. "/Users/$USER/Downlo
 FUSION_ID=${3-$NULL} # if arg $3 is empty, value is set to basename of SHEETPATH i.e. "22-MGFS25"
 KERBERO=${4-$USER}   # if arg $4 is empty, value is set to $USER as default i.e. kerberos ID
 
-SHEETDIR="/gpfs/data/molecpathlab/production/samplesheets/archer/worksheets"
-#DEMUXDIR="/gpfs/data/molecpathlab/production/Demultiplexing/${RUN_ID}"
-
 FG_YLW='<span style="color:#cf6a00;">' # makes text darkorange color
 FG_GRN='<span style="color:#6aa84f">'  # makes text color green
 FG_CYA='<span style="color:cyan;">'    # makes text color #baffc9
@@ -23,15 +20,16 @@ normal="</span>" # resets default text
 BOX1=' <div class="boxed"> '
 BOX2=' </div> '
 
-KERBERO="${FG_CYA}${KERBERO}${normal}"
-RUN_ID="${FG_YLW}${RUN_ID}${normal}"
-SHEET_DIR="/gpfs/data/molecpathlab/production/samplesheets/archer/worksheets/"
-
 # If FUSION_ID is NULL use `basename` to get FUSION_ID by removing the extension -----------------------------
 if [ "$FUSION_ID" == "NULL" ]; then
     FUSION_ID=$(basename -- "$SHEETPATH")
     FUSION_ID="${FUSION_ID%.*}"
 fi
+
+KERBERO="${FG_CYA}${KERBERO}${normal}"
+RUN_ID="${FG_YLW}${RUN_ID}${normal}"
+SHEETDIR="/gpfs/data/molecpathlab/production/samplesheets/archer/worksheets/${RUN_ID}"
+XLSXPATH="$SHEETDIR/${FUSION_ID}.xlsx"
 
 echo "
 <link href='https://fonts.googleapis.com/css?family=Allerta Stencil' rel='stylesheet'>
@@ -289,7 +287,7 @@ msg_step 1 "#ffdfba" "Before 8pm on Friday, the Fusion worksheet has been copied
 msg_code "/Volumes/CBioinformatics/FUSION/copyFusionSheet.sh ${SHEETPATH}"
 msg_step 2 "#ffdfba" "If needed, the commands to create the SampleSheet in the worksheets directory and manually deploy are below"
 msg_code "module load python/cpu/3.6.5"
-msg_code "python /gpfs/data/molecpathlab/bin/ArcherDX/gen_sample_sheet.py -p ${FUSION_ID} -r ${RUN_ID} -t ${SHEET_DIR}${FUSION_ID}.xlsx -o ."
+msg_code "python /gpfs/data/molecpathlab/bin/ArcherDX/gen_sample_sheet.py -p ${FUSION_ID} -r ${RUN_ID} -t ${XLSXPATH} -o ."
 msg_code "cd /gpfs/data/molecpathlab/pipelines/demux-nf2/"
 msg_code "make deploy RUNID=${RUN_ID} SAMPLESHEET=$SHEETDIR/${RUN_ID}-SampleSheet.csv SEQTYPE=Archer"
 echo "$BOX2"
