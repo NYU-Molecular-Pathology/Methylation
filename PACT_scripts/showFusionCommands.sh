@@ -25,6 +25,7 @@ BOX2=' </div> '
 
 KERBERO="${FG_CYA}${KERBERO}${normal}"
 RUN_ID="${FG_YLW}${RUN_ID}${normal}"
+SHEET_DIR="/gpfs/data/molecpathlab/production/samplesheets/archer/worksheets/"
 
 # If FUSION_ID is NULL use `basename` to get FUSION_ID by removing the extension -----------------------------
 if [ "$FUSION_ID" == "NULL" ]; then
@@ -288,7 +289,7 @@ msg_step 1 "#ffdfba" "Before 8pm on Friday, the Fusion worksheet has been copied
 msg_code "/Volumes/CBioinformatics/FUSION/copyFusionSheet.sh ${SHEETPATH}"
 msg_step 2 "#ffdfba" "If needed, the commands to create the SampleSheet in the worksheets directory and manually deploy are below"
 msg_code "module load python/cpu/3.6.5"
-msg_code "python /gpfs/data/molecpathlab/bin/ArcherDX/gen_sample_sheet.py -p ${FUSION_ID} -r ${RUN_ID} -t ${SHEETPATH} -o ."
+msg_code "python /gpfs/data/molecpathlab/bin/ArcherDX/gen_sample_sheet.py -p ${FUSION_ID} -r ${RUN_ID} -t ${SHEET_DIR}${FUSION_ID}.xlsx -o ."
 msg_code "cd /gpfs/data/molecpathlab/pipelines/demux-nf2/"
 msg_code "make deploy RUNID=${RUN_ID} SAMPLESHEET=$SHEETDIR/${RUN_ID}-SampleSheet.csv SEQTYPE=Archer"
 echo "$BOX2"
