@@ -906,9 +906,8 @@ RenamePngs <- function(tumors, pngList, ngsPngDir) {
 
 
 FixPngList <- function(tumors, pngList) {
-    message("The number of tumor samples does not match the number of FACET PNG files available!")
-    message("Total sample rows:", " ", nrow(tumors))
-    message("Total PNG files in the directory:", " ", length(pngList))
+    message("Mismatch in tumor samples and FACET PNG files!")
+    message("Sample rows: ", nrow(tumors), ", PNG files: ", length(pngList))
     message("Check if any are missing:\n")
     message(paste0(capture.output(as.data.frame(tumors$Specimen_ID)), collapse="\n"))
     message(paste0(capture.output(data.frame(PNG_Files = basename(pngList))), collapse="\n"))
@@ -916,9 +915,12 @@ FixPngList <- function(tumors, pngList) {
     toKeep <- unlist(lapply(pngList, FUN=function(X){stringr::str_detect(X, pattern = normLi)}))
     message("Dropping the following:")
     print(pngList[!toKeep])
+    stopifnot(any(toKeep))
+    pngList <- pngList[toKeep]
     stopifnot(length(pngList) == nrow(tumors))
     return(pngList)
 }
+
 
 CheckTumorPngs <- function(samList, outDir){
     pngOutDir <- file.path(outDir,"cnvpng") # output copy of cnvPNG files
