@@ -460,21 +460,17 @@ PullNeedsSarcoma <- function(rd_numbers, token){
 StartSarcWorkflow <- function(rd_numbers, token){
     runLocal <- T
     selectRDs <- baseFolder <- NULL
-    sarc_dir <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs/Sarcoma_runs"
-
-    setwd(sarc_dir)
-
+    
     ghLink <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R"
     devtools::source_url(file.path(ghLink, "Report-Scripts/SourceLoadGitHub.R"))
 
-    sh_path <- file.path(sarc_dir, "samplesheet.csv")
-    if(file.exists(sh_path)){file.remove(sh_path)}
-
     gb$MakeLocalSampleSheet(runID = "MR23-rerun_sarc", token, samSheetIn = NULL,  rd_numbers = rd_numbers)
-    gb$MakeSarcomaReport(targets = as.data.frame(read.csv("samplesheet.csv")))
+    gb$MakeSarcomaReport(targets = as.data.frame(read.csv("samplesheet_sarc.csv")))
 
-    file.list <- dir(sarc_dir, pattern = ".html", full.names = T)
-    gb$ForceUploadToRedcap(file.list, token, F)
+    file.list <- dir(sarc_dir, pattern = "_sarc.html", full.names = T)
+    if(length(file.list) > 0){
+        gb$ForceUploadToRedcap(file.list, token, F)
+    }
 }
 
 
