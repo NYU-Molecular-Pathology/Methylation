@@ -445,6 +445,56 @@ RenameFailed <- function(qcVals) {
   }
 }
 
+PullNeedsSarcoma <- function(rd_numbers, token){
+    message("Pulling REDCap data...")
+    apiUrl = "https://redcap.nyumc.org/apps/redcap/api/"
+    pull_flds = c("record_id", "barcode_and_row_column", "needs_sarcoma", "classifier_pdf_other")
+    rcon <- redcapAPI::redcapConnection(apiUrl, token)
+    params = list(rcon, records = rd_numbers, fields = pull_flds, labels = F,
+                  dates = F, survey = F, dag = F, factors=F, form_complete_auto=F)
+    dbCols <- do.call(redcapAPI::exportRecordsTyped, c(params))
+    return(as.data.frame(dbCols))
+}
+
+
+StartSarcWorkflow <- function(rd_numbers, token){
+    runLocal <- T
+    selectRDs <- baseFolder <- NULL
+    sarc_dir <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs/Sarcoma_runs"
+
+    setwd(sarc_dir)
+
+    ghLink <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R"
+    devtools::source_url(file.path(ghLink, "Report-Scripts/SourceLoadGitHub.R"))
+
+    sh_path <- file.path(sarc_dir, "samplesheet.csv")
+    if(file.exists(sh_path)){file.remove(sh_path)}
+
+    gb$MakeLocalSampleSheet(runID = "MR23-rerun_sarc", token, samSheetIn = NULL,  rd_numbers = rd_numbers)
+    gb$MakeSarcomaReport(targets = as.data.frame(read.csv("samplesheet.csv")))
+
+    file.list <- dir(sarc_dir, pattern = ".html", full.names = T)
+    gb$ForceUploadToRedcap(file.list, token, F)
+}
+
+
+CheckNeedsSarcoma <- function(rd_numbers, token){
+    pulled_rds <- PullNeedsSarcoma(rd_numbers, token)
+    if(nrow(pulled_rds) > 0){
+        valid_sams <-
+            pulled_rds$needs_sarcoma == "yes" &
+            !is.na(pulled_rds$barcode_and_row_column) &
+            is.na(pulled_rds$classifier_pdf_other)
+        valid_sams[is.na(valid_sams)] <- FALSE
+    }else{
+        valid_sams <- FALSE
+    }
+    if(any(valid_sams)){
+        rd_to_run <- pulled_rds$record_id[valid_sams]
+        StartSarcWorkflow(rd_to_run, token)
+    }
+}
+
 
 #' REPORT: Generates Html reports to cwd with samplesheet.csv
 #' @param runPath The location of samplesheet.csv and idats
@@ -494,8 +544,12 @@ makeReports.v11b6 <- function(runPath = NULL,
       gb$CombineClassAndQC(output_fi = paste0(runID, "_qc_data.csv"), gb$ApiToken, runDir = runPath, runID)
       launchEmailNotify(runID)
     }
+    
     try(beepr::beep(2), T)
     tidyUpFiles(runID)
+  
+    rd_numbers <- data[-1,1]
+    CheckNeedsSarcoma(rd_numbers, gb$ApiToken)
 }
 
 # FUN: Checks if all the paths are accessible to the Rscript location
