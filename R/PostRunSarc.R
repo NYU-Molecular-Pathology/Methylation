@@ -28,8 +28,9 @@ StartSarcWorkflow <- function(rd_numbers, token, runID){
     ghLink <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R"
     devtools::source_url(file.path(ghLink, "Report-Scripts/SourceLoadGitHub.R"))
 
-    gb$MakeLocalSampleSheet(runID = runID, token, samSheetIn = NULL,  rd_numbers = rd_numbers)
-    gb$MakeSarcomaReport(targets = as.data.frame(read.csv("samplesheet_sarc.csv")))
+    targets = as.data.frame(read.csv("samplesheet.csv"))
+    rownames(targets) <- targets[,1]
+    gb$MakeSarcomaReport(targets[rd_numbers,])
 
     file.list <- dir(getwd(), pattern = "_sarc.html", full.names = T)
     if(length(file.list) > 0){
@@ -51,6 +52,7 @@ CheckNeedsSarcoma <- function(rd_numbers, token, runID){
     }
     if(any(valid_sams)){
         rd_to_run <- pulled_rds$record_id[valid_sams]
+        message("Generating Sarcoma Reports for:", paste(rd_to_run))
         StartSarcWorkflow(rd_to_run, token, runID)
     }
 }
