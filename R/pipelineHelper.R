@@ -113,7 +113,7 @@ CopyRmdFile <- function(runID, rmdFile){
 
 
 CheckSampleQCmetrics <- function(runID) {
-  qcValsFile <- file.path(getwd(), paste(runID, "QC_and_Classifier_Scores.csv", sep = "_"))
+  qcValsFile <- file.path(getwd(), paste(runID, "qc_data.csv", sep = "_"))
   # qcValsFile <- "/Methylation/Clinical_Runs/23-MGDM54/23-MGDM54_QC_and_Classifier_Scores.csv"
   qc_cols <- c("RD.number", "Log2sqrt.M.U.", "log2sqrt.R.G.", "BS_log2sqrt.R.G.", "log2sqrt.H.L.", "Pvalue")
   qcVals <- as.data.frame(read.csv(qcValsFile)[qc_cols])
