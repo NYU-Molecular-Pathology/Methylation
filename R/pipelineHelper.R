@@ -543,9 +543,6 @@ makeReports.v11b6 <- function(runPath = NULL,
     
     try(beepr::beep(2), T)
     tidyUpFiles(runID)
-  
-    rd_numbers <- data[-1,1]
-    CheckNeedsSarcoma(rd_numbers, gb$ApiToken)
 }
 
 # FUN: Checks if all the paths are accessible to the Rscript location
