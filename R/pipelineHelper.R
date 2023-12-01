@@ -112,6 +112,22 @@ CopyRmdFile <- function(runID, rmdFile){
 }
 
 
+CheckSampleQCmetrics <- function(runID) {
+  qcValsFile <- file.path(getwd(), paste(runID, "QC_and_Classifier_Scores.csv", sep = "_"))
+  # qcValsFile <- "/Methylation/Clinical_Runs/23-MGDM54/23-MGDM54_QC_and_Classifier_Scores.csv"
+  qc_cols <- c("RD.number", "Log2sqrt.M.U.", "log2sqrt.R.G.", "BS_log2sqrt.R.G.", "log2sqrt.H.L.", "Pvalue")
+  qcVals <- as.data.frame(read.csv(qcValsFile)[qc_cols])
+  qcVals$Passed_SI <- as.integer(qcVals$Log2sqrt.M.U. <= 9.0)
+  qcVals$Passed_BP <- as.integer(qcVals$log2sqrt.R.G. <= 11.0)
+  qcVals$Passed_BS <- as.integer(qcVals$BS_log2sqrt.R.G. <= 10.0)
+  qcVals$Passed_HC <- as.integer(qcVals$log2sqrt.H.L. <= 12.75)
+  qcVals$Passed_NC <- as.integer(qcVals$Pvalue <= 0.95)
+  qcVals$passed_qc <- with(qcVals, Passed_SI + Passed_BP + Passed_BS + Passed_HC + Passed_NC)
+  qcVals$passed_qc <- ifelse(qcVals$passed_qc < 2, "yes", "no")
+  final_qc <- data.frame(record_id = qcVals$RD.number, qc_passed = qcVals$passed_qc)
+  return(final_qc)
+}
+
 # QC REPORT maker: knits the QC RMD file
 generateQCreport <- function(runID=NULL) {
     msgFunName(pipeLnk, "generateQCreport")
@@ -413,6 +429,23 @@ loopRender <- function(samList = NULL, data, redcapUp = T){
     message(bkGrn(dsh, "RUN COMPLETE", dsh))
 }
 
+
+RenameFailed <- function(qcVals) {
+  if (!is.null(qcVals)) {
+    if (any(qcVals$qc_passed == "no")) {
+      file.list <- dir(getwd(), pattern = ".html", full.names = T)
+      toRename <- qcVals$record_id[qcVals$qc_passed == "no"]
+      for (rd_num in toRename) {
+        findFile <- stringr::str_detect(file.list, pattern = rd_num)
+        old_name <- file.list[findFile]
+        new_name <- stringr::str_replace_all(old_name, ".html", "_QC_FAILED.hml")
+        base::file.rename(old_name, new_name)
+      }
+    }
+  }
+}
+
+
 #' REPORT: Generates Html reports to cwd with samplesheet.csv
 #' @param runPath The location of samplesheet.csv and idats
 #' @param sheetName name of samplesheet if it is not "samplesheet.csv"
@@ -430,43 +463,38 @@ makeReports.v11b6 <- function(runPath = NULL,
                               email = T,
                               cpReport = T,
                               redcapUp = T) {
-    msgFunName(pipeLnk,"makeReports.v11b6")
+    msgFunName(pipeLnk, "makeReports.v11b6")
 
     assign("genCn", genCn, envir = gb)
-    data <- read.csv(sheetName, strip.white=T)
+    data <- read.csv(sheetName, strip.white = T)
     runID <- paste0(data$RunID[1])
-
-    # if(file.exists(predictionPath)){
-    #     message("\nLoading data...\n",predictionPath,"\n")
-    #     load(predictionPath)
-    # }
-
-    isMC = sjmisc::str_contains(runID, "MGDM")|sjmisc::str_contains(runID, "MC")
-    if(isMC==T){CreateRedcapRecord(runID,"control")}
+    isMC = sjmisc::str_contains(runID, "MGDM") | sjmisc::str_contains(runID, "MC")
+    if (isMC == T) {
+      CreateRedcapRecord(runID, "control")
+    }
     loopRender(selectSams, data, redcapUp)
     checkRunOutput(runID)
-    if(skipQC == F){
-        CreateRedcapRecord(runID)
-        generateQCreport()
+    qcVals <- NULL
+    if (skipQC == F) {
+      CreateRedcapRecord(runID)
+      generateQCreport()
+      qcVals <- CheckSampleQCmetrics(runID)
+      rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
+      redcapAPI::importRecords(rcon, qcVals, "normal", "ids", logfile = "REDCapQCimports.txt")
     }
-    if(grepl("TEST",runID)){cpReport=F;redcapUp=F;email=F}
-    if(cpReport==T){
-        #file.list <- try(gb$copy2outFolder(gb$clinDrv, runID), outFile = "copyLog.txt")
-        if(isMC==T){
-            #runYear <- paste0("20", stringr::str_split_fixed(runID, "-", 2)[1])
-            #gb$copy.to.clinical(clinOut = "/Volumes/molecular/MOLECULAR/MethylationClassifier", runID, runYear)
-            #gb$copy.to.clinical(clinOut = "/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/Results", runID, runYear)
-            }
+    if (grepl("TEST", runID)) {
+      cpReport = F; redcapUp = F; email = F
     }
     if (redcapUp == T) {
-        file.list <- dir(pattern = ".html", full.names = T)
-        gb$uploadToRedcap(file.list, T)
+      file.list <- dir(pattern = ".html", full.names = T)
+      gb$uploadToRedcap(file.list, T)
     }
-    if(email==T){
-      gb$CombineClassAndQC(output_fi = paste0(runID, "_qc_data.csv"), gb$ApiToken, runDir = runPath, runID)  
+    if (email == T) {
+      RenameFailed(qcVals)
+      gb$CombineClassAndQC(output_fi = paste0(runID, "_qc_data.csv"), gb$ApiToken, runDir = runPath, runID)
       launchEmailNotify(runID)
     }
-    try(beepr::beep(5), T)
+    try(beepr::beep(2), T)
     tidyUpFiles(runID)
 }
 
