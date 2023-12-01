@@ -30,7 +30,8 @@ StartSarcWorkflow <- function(rd_numbers, token, runID){
 
     targets = as.data.frame(read.csv("samplesheet.csv"))
     rownames(targets) <- targets[,1]
-    gb$MakeSarcomaReport(targets[rd_numbers,])
+    
+    gb$MakeSarcomaReport(worksheet = NULL, targets = targets[rd_numbers,])
 
     file.list <- dir(getwd(), pattern = "_sarc.html", full.names = T)
     if(length(file.list) > 0){
@@ -52,7 +53,7 @@ CheckNeedsSarcoma <- function(rd_numbers, token, runID){
     }
     if(any(valid_sams)){
         rd_to_run <- pulled_rds$record_id[valid_sams]
-        message("Generating Sarcoma Reports for:", paste(rd_to_run))
+        message(crayon::bgGreen("Generating Sarcoma Reports for:"), "\n", paste(rd_to_run, sep = "\n"))
         StartSarcWorkflow(rd_to_run, token, runID)
     }
 }
