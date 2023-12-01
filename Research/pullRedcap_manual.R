@@ -249,17 +249,30 @@ sourceFuns <- function(workingPath = NULL) {
 
 readInfo <- function(inputSheet) {
     # Detect if file is xlsx or csv
-    readFlag <- endsWith(inputSheet,".csv")==T
+    readFlag <- endsWith(inputSheet, ".csv") == T
     if (readFlag == T) {
         message("FileType is .csv, executing read.delim...")
-        rds <- read.delim(inputSheet, header = F, sep=",", colClasses=character(), row.names=NULL)[,1]
+        rds <-
+            read.delim(inputSheet, header = F, sep = ",", colClasses = character(), row.names = NULL)[, 1]
     } else{
         message("FileType is .xlsx, executing readxl::read_excel...")
-        rds <- readxl::read_excel(inputSheet, col_names = F, sheet = 1)[, 1]
+        findFlag <- endsWith(inputSheet, ".xlsx") == T
+        if (findFlag) {
+            rds <- readxl::read_excel(inputSheet,
+                                      col_names = F,
+                                      sheet = 1)[, 1]
+        } else{
+            rds <-
+                read.delim(
+                    file.path(getwd(), "samplesheet.csv"),
+                    header = F, sep = ",", colClasses = character(), row.names = NULL)[, 1]
+        }
     }
-    if ( typeof(rds) != "character" ) {
-        warning('Converting RD-numbers to class "character", your readxl should not output typeof == "list". Update your version of the `tibble` package in the future!')
-        rds <- as.data.frame(rds)[,1]
+    if (typeof(rds) != "character") {
+        warning(
+            'Converting RD-numbers to class "character", your readxl should not output typeof == "list". Update your version of the `tibble` package in the future!'
+        )
+        rds <- as.data.frame(rds)[, 1]
     }
     rds <- rds[!is.na(rds)]
     return(rds)
