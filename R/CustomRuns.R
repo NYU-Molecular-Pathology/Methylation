@@ -135,44 +135,33 @@ ParseInputCsvPath <- function(samSheetIn){
     return(rd_numbers$rd_numbers)
 }
 
-# Deletes existing samplesheet in current directory and generates new one with RD-number input
-MakeLocalSampleSheet <-  function(runID, token, samSheetIn=NULL, rd_numbers=NULL){
-  msgFunName(cpInLnk4,"MakeLocalSampleSheet")
-  stopifnot(!is.null(token))
-  if(file.exists("samplesheet.csv")){file.remove("samplesheet.csv")}
-    #ifelse(file.exists("samplesheet.csv"), file.remove("samplesheet.csv"), cat("\nCreating new SampleSheet\n"))
-  token2 <- token
-  idatScript <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/pullRedcap_manual.R"
-  if(!is.null(rd_numbers)){
-    rd_numbers <- rd_numbers
-  if(length(rd_numbers)==1){
-      rd_numbers <- c(rd_numbers, rd_numbers)
-    }
-  }else{
-    if(is.null(samSheetIn)){
-      rd_numbers <- PromptInputCsv(runID)
+# Delete existing samplesheet in current directory to generates new one with RD-number input
+MakeLocalSampleSheet <- function(runID, token, samSheetIn=NULL, rd_numbers=NULL){
+    msgFunName(cpInLnk4,"MakeLocalSampleSheet")
+    stopifnot(!is.null(token))
+    token2 <- token
+    idatScript <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/pullRedcap_manual.R"
+    if(!is.null(rd_numbers)){
+        rd_numbers <- rd_numbers
+        if(length(rd_numbers)==1){
+            rd_numbers <- c(rd_numbers, rd_numbers)
+        }
     }else{
-      rd_numbers <- ParseInputCsvPath(samSheetIn)
+        if(is.null(samSheetIn)){
+            rd_numbers <- PromptInputCsv(runID)
+        }else{
+            rd_numbers <- ParseInputCsvPath(samSheetIn)
+        }
     }
-  }
-  stopifnot(
-      length(rd_numbers) >= 1 &
-      length(rd_numbers) != 0 &
-      stringr::str_detect(rd_numbers[1], "RD-")
-  )
-    # if(!is.null(samSheetIn) & !is.null(rd_numbers)) {
-    #     stop(
-    #         paste(
-    #             "You cannot list both rd_numbers and an rd_csv file!",
-    #             "\nOnly one variable can be taken as input, one of these should be NULL:",
-    #             "\nrd_csv:", samSheetIn, "\nrd_numbers:", rd_numbers
-    #             )
-    #         )
-    # }
-  message("Sourcing: ", idatScript)
-  devtools::source_url(idatScript)
-  gb$token <- gb$ApiToken <- token <- token2
-  gb$grabRDCopyIdat(rd_numbers, token2, copyIdats=T, outputFi="samplesheet.csv")
+    stopifnot(
+        length(rd_numbers) >= 1 &
+            length(rd_numbers) != 0 &
+            stringr::str_detect(rd_numbers[1], "RD-")
+    )
+    message("Sourcing: ", idatScript)
+    devtools::source_url(idatScript)
+    gb$token <- gb$ApiToken <- token <- token2
+    gb$grabRDCopyIdat(rd_numbers, token2, copyIdats = T, outputFi = "samplesheet_sarc.csv")
 }
 
 
