@@ -55,7 +55,7 @@ if(!are_valid(copyToFolder)){
     copyToFolder <- getwd()
 }
 
-setwd(copyToFolder)
+#setwd(copyToFolder)
 
 supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
 
