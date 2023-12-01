@@ -21,7 +21,7 @@ stopifnot(rlang::is_bool(readFlag))
 
 # REDcap Heading Fields -----
 flds = c("record_id","b_number","tm_number","accession_number","block","diagnosis",
-         "organ","tissue_comments","run_number", "nyu_mrn")
+         "organ","tissue_comments","run_number", "nyu_mrn", "qc_passed")
 
 # Load redcapAPI Package -----
 if(!requireNamespace("redcapAPI")){
@@ -138,7 +138,9 @@ getPactFolder <- function(inputSheet){
     folder <- file.path("NYU PACT Patient Data", "Workbook")
     runyr <- stringr::str_split_fixed(inputSheet,"-",3)[,2]
     runFolder <- file.path(drive, folder, paste0("20", runyr), inputSheet)
-    print(runFolder); stopifnot(dir.exists(runFolder)==T); return(runFolder)
+    print(runFolder)
+    stopifnot(dir.exists(runFolder) == T)
+    return(runFolder)
 }
 
 # Returns path to run worksheet if path is valid
@@ -168,12 +170,12 @@ parseWorksheet <- function(inputFi){
 getCaseValues <- function(inputSheet, readFlag) {
     isSamSheet <- stringr::str_detect(inputSheet, "-SampleSheet")
     hasFileSep <- stringr::str_detect(inputSheet, .Platform$file.sep)
-    
+
     if (readFlag && isSamSheet) {
         vals2find <- utils::read.csv(inputSheet, skip = 19)[, c(6, 7, 9)]
         return(as.data.frame(vals2find[!grepl("H20|SERACARE|HAPMAP", vals2find[, 2]),]))
     }
-    
+
     if (readFlag && !isSamSheet) {
         vals2find <- read.csv(inputSheet)
         if (ncol(vals2find) > 1) {
@@ -181,11 +183,11 @@ getCaseValues <- function(inputSheet, readFlag) {
         }
         return(as.data.frame(unique(vals2find[vals2find != ""])))
     }
-    
+
     if (!readFlag && hasFileSep) {
         return(parseWorksheet(inputSheet))
     }
-    
+
     return(parseWorksheet(getFilePath(inputSheet)))
 }
 
@@ -422,7 +424,7 @@ getOuputData <- function(token, flds, inputSheet, readFlag){
     }
     runId <- ifelse(readFlag == T, substr(inputSheet, 1, nchar(inputSheet) - 4), inputSheet)
     if(stringr::str_detect(inputSheet, ".xls")){
-        runId <-substr(basename(inputSheet), 1, nchar(basename(inputSheet)) - 5)
+        runId <- substr(basename(inputSheet), 1, nchar(basename(inputSheet)) - 5)
     }
     output <- modifyOutput(output, vals2find)
     toDrop <- is.na(output$Test_Number)
@@ -674,6 +676,6 @@ checkMounts()
 output <- getOuputData(token, flds, inputSheet, readFlag)
 
 # CNV PNG Creation -------------------------------------
-if(output[1,1]!="NONE"){
+if(output[1, 1] != "NONE") {
     QueCnvMaker(output, token)
 }
