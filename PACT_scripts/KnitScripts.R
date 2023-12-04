@@ -714,27 +714,47 @@ GetMethMatchInfo <- function(methData, theRd){
 
 # Generates a new Sample Tabbed row in html  -------------------------------
 makeMethTab <- function(sam, methCn, methData) {
-    if (nrow(methCn) == 0) {
-        methCn <- NULL
-    }
-    if (any(sam %in% methData$Test_Number) == F) {
-        cat("## **No Methylation** \n\n")
-        cat("\n\nNo additional data table for this sample tab\n\n")
-    }
-    if (any(sam %in% methData$Test_Number) == T) {
-        currRD <- methData$record_id[methData$Test_Number == sam]
-        if (length(currRD) > 1) {
-            message(sam, " has more than one RD-number:\n", paste(currRD, sep = " ", collapse=" "))
-            for (rd in 1:length(currRD)) {
-                rdTab <- paste0("Methylation_", rd)
-                makeDT(rdTab, methCn, pdfFi = NULL, currRD[rd], sam)
-                GetMethMatchInfo(methData, currRD[rd])
-            }
-        } else{
-            makeDT("Methylation", methCn, NULL, currRD, sam)
-            GetMethMatchInfo(methData, currRD)
+  if (nrow(methCn) == 0) {
+    methCn <- NULL
+  }
+  if (any(sam %in% methData$Test_Number) == F) {
+    cat("## **No Methylation** \n\n")
+    cat("\n\nNo additional data table for this sample tab\n\n")
+  }
+  if (any(sam %in% methData$Test_Number) == T) {
+    currRD <- methData$record_id[methData$Test_Number == sam]
+    passFail <- methData$qc_passed[methData$Test_Number == sam]
+    if (length(currRD) > 1) {
+      message(sam, " has more than one RD-number:\n", paste(currRD, sep = " ", collapse = " "))
+      for (rd in 1:length(currRD)) {
+        rdTab <- paste0("Methylation_", rd)
+        if (!is.na(passFail[rd])) {
+          if (passFail[rd] == "No") {
+            rdTab <- paste0(rdTab, "_QC_FAILED")
+            curr_html <- methData$`Report Path`[methData$Test_Number == sam][rd]
+            new_html <- stringr::str_replace_all(curr_html, ".html", "_QC_FAILED.html")
+            methData$`Report Path`[methData$Test_Number == sam][rd] <- new_html
+            methData$`Report Link`[methData$Test_Number == sam][rd] <- basename(new_html)
+          }
         }
+        makeDT(rdTab, methCn, pdfFi = NULL, currRD[rd], sam)
+        GetMethMatchInfo(methData, currRD[rd])
+      }
+    } else{
+      rdTab <- "Methylation"
+      if (!is.na(passFail)) {
+        if (passFail == "No") {
+          rdTab <- paste0(rdTab, "_QC_FAILED")
+          curr_html <- methData$`Report Path`[methData$Test_Number == sam]
+          new_html <- stringr::str_replace_all(curr_html, ".html", "_QC_FAILED.html")
+          methData$`Report Path`[methData$Test_Number == sam] <- new_html
+          methData$`Report Link`[methData$Test_Number == sam] <- basename(new_html)
+        }
+      }
+      makeDT(rdTab, methCn, NULL, currRD, sam)
+      GetMethMatchInfo(methData, currRD)
     }
+  }
 }
 
 
