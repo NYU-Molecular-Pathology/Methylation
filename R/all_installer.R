@@ -82,8 +82,8 @@ checkRequire <- function(pkgName){
     )
 }
 
-if(checkRequire("devtools")){install.packages("devtools", dependencies=T, verbose=T, quiet=T, ask=F)}
-if(checkRequire("librarian")){install.packages("librarian", dependencies=T,verbose=T,ask=F, quiet = FALSE)}
+if(checkRequire("devtools")){install.packages("devtools", dependencies = T, verbose = T ask = F)}
+if(checkRequire("librarian")){install.packages("librarian", dependencies = T, verbose = T, ask = F)}
 loadLibrary("devtools")
 
 #if(checkRequire("rstudioapi")){devtools::install_github("rstudio/rstudioapi", dependencies = T, upgrade = "never")}
