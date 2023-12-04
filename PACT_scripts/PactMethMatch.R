@@ -74,26 +74,25 @@ loadPacks <- function(){
 # API Call functions -----
 grabAllRecords <- function(flds, rcon){
     message("Pulling REDCap data...")
-    library("dplyr")
     params = list(rcon, fields = flds, labels = F, dates = F, survey = F, dag = F, factors = F, form_complete_auto = F)
     dbCols <- do.call(redcapAPI::exportRecordsTyped, c(params))
-    rd_df <- as.data.frame(dbCols)
-    rd_df <- rd_df %>% dplyr::mutate_all(~stringr::str_replace_all(., ",", ""))
-    return(rd_df)
+    return(as.data.frame(dbCols))
 }
+
 
 searchDb <- function(queryList, db) {
     res <- data.frame()  
     
-    for (item in queryList) {
+    for (idx in 1:length(queryList)) {
+        item <- queryList[idx]
         ngsNumber <- paste(names(item)[1])
         for (col_n in colnames(db)) {
             ngsMatch <- which(grepl(item, db[[col_n]]))
             if (length(ngsMatch) > 0) {
-                message(sprintf("Match found for %s (%s) for %s in: \"%s\" column", 
-                                item, db[ngsMatch, col], ngsNumber, col))
+                message(sprintf("Match found for \"%s\" (%s) for %s in: \"%s\" column\n", 
+                                item, db[ngsMatch, col_n], ngsNumber, col_n))
                 dbMatch <- db[ngsMatch, ]
-                dbMatch$Test_Number <- ngsNumber
+                dbMatch$Test_Number <- names(item)
                 if(nrow(res) == 0){
                     res <- dbMatch
                 }else{
@@ -402,17 +401,17 @@ getOuputData <- function(token, flds, inputSheet, readFlag){
     if(nrow(db)==0){
         message("REDCap API connection failed!\n",
                 "Check the Database for non-ASCII characters and verify the API Token: ", token)
-        stopifnot(nrow(db)>0)
+        stopifnot(nrow(db) > 0)
     }
     if(class(vals2find)!="data.frame"){
         vals2find <- as.data.frame(vals2find)
     }
-    if(nrow(vals2find)!=0){
+    if(nrow(vals2find) != 0){
         output <- queryCases(vals2find, db)
     }
-    if(nrow(output)==0){
-        warning("No Methylation Cases on this Pact run, generating blank file")
-        output[1,] <- "NONE"
+    if(nrow(output) == 0){
+        warning("No Methylation Cases on this PACT run, generating blank file")
+        output[1, ] <- "NONE"
     }else{
         rownames(output) <- 1:nrow(output)
     }
@@ -453,9 +452,9 @@ sourceFuns2 <- function(workingPath = NULL) {
     return(gb$defineParams())
 }
 
+
 msgRDs <- function(rds, token){
-    message("\nRD-numbers with idats:\n")
-    message(paste(rds, collapse="\n"))
+    message("\nRD-numbers with idats:\n", paste(rds, collapse="\n"))
     assign("rds", rds)
     message(dsh, crayon::bgMagenta("Starting CNV PNG Creation"), dsh2)
     ApiToken <- token
@@ -486,6 +485,21 @@ msgCreated <- function(mySentrix){
 }
 
 
+TryCatchCNV <- function(mySentrix, sam, asPNG) {
+    sampleName <- mySentrix[sam, 1]
+    sentrix <- mySentrix[sam, "SentrixID_Pos"]
+    message("\nGetting RGset for ", sentrix, "\n")
+    RGsetEpic <- gb$grabRGset(getwd(), sentrix)
+    tryCatch(
+        expr = {gb$gen.cnv.png2(RGsetEpic, sampleName, asPNG)},
+        error = function(e) {
+            message(crayon::bgRed(sprintf("An error occured with %s png creation:", sampleName)), "\n", e)
+            message(crayon::bgGreen("Trying next sample"))
+        }
+    )
+}
+
+
 loopCNV <- function(mySentrix, asPNG){
     for (sam in rownames(mySentrix)) {
         sampleName <- mySentrix[sam, 1]
@@ -493,33 +507,19 @@ loopCNV <- function(mySentrix, asPNG){
         if (file.exists(fn)) {
             message("\nFile already exists, skipping:", fn, "\n")
         } else{
-            sentrix <- mySentrix[sam, "SentrixID_Pos"]
-            message("\nGetting RGset for ", sentrix, "\n")
-            RGsetEpic <- gb$grabRGset(getwd(), sentrix)
-            tryCatch(
-                expr = {gb$gen.cnv.png2(RGsetEpic, sampleName, asPNG)},
-                error = function(e) {
-                    erTxt <-paste0("An error occured with ", mySentrix[sam, 1]," png creation:")
-                    message(crayon::bgRed(erTxt), "\n", e)
-                    message(crayon::bgGreen("Trying next sample"))
-                    }
-            )
+            TryCatchCNV(mySentrix, sam, asPNG)
         }
     }
 }
 
 
-CheckIfPngExists <- function(
-        rds,
-        outFolder = "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG") {
+CheckIfPngExists <- function(rds, outFolder = "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG") {
     outpng <- paste0(rds, "_cnv.png")
     outFiles <- file.path(outFolder, outpng)
     finished <- file.exists(outFiles)
     if (any(finished)) {
-        message(crayon::bgGreen(
-            "The following samples are completed and will be skipped:"), "\n",
-            paste(capture.output(outFiles[finished]), collapse = '\n')
-        )
+        message(crayon::bgGreen("The following samples are completed and will be skipped:"))
+        message(paste(capture.output(outFiles[finished]), collapse = '\n'))
         rds <- rds[!finished]
     }
     return(rds)
