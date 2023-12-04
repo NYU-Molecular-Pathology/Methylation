@@ -303,6 +303,7 @@ msg_code "mount /mnt/${KERBERO}/molecular"
 msg_step 2 "#ffbfda" "This script will copy the files to the Z-drive:"
 msg_code "/mnt/${KERBERO}/molecular/Molecular/Validation/Scripts/fusion_run_copy.sh ${RUN_ID}"
 msg_step 3 "#ffbfda" "Send an email to notify the files are copied to the Z-drive and ready for upload to Archer"
+msg_code "Hi all, the demultiplexing results for ${FUSION_ID} are copied over in smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/Demultiplexing/${RUN_ID}/"
 echo "$BOX2"
 
 echo "
