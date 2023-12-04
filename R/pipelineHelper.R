@@ -437,7 +437,7 @@ RenameFailed <- function(qcVals) {
       for (rd_num in toRename) {
         findFile <- stringr::str_detect(file.list, pattern = rd_num)
         old_name <- file.list[findFile]
-        new_name <- stringr::str_replace_all(old_name, ".html", "_QC_FAILED.hml")
+        new_name <- stringr::str_replace_all(old_name, ".html", "_QC_FAILED.html")
         base::file.rename(old_name, new_name)
       }
     }
