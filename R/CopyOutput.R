@@ -47,7 +47,7 @@ SavePrevDir <- function(newFolder) {
 
 
 Copy2TempDir <- function(fi2copy, runID){
-     msgFunName(cpOutLnk, "Copy2TempDir")
+    msgFunName(cpOutLnk, "Copy2TempDir")
     tempDir <- file.path(fs::path_home(), runID)
     if (!dir.exists(tempDir)) {dir.create(tempDir)}
     fs::file_copy(fi2copy, tempDir, overwrite = T)
@@ -89,28 +89,28 @@ copy.to.clinical <- function(clinOut, runID, runYear) {
 
 # Checks if field is already filled in REDCap returns boolean
 checkRedcapRecord <- function(recordName, fieldName = 'classifier_pdf') {
-      msgFunName(cpOutLnk, "checkRedcapRecord")    
+    msgFunName(cpOutLnk, "checkRedcapRecord")    
     url = gb$apiLink
-        formData <- list(
-            "token" = gb$ApiToken,
-            content = 'record',
-            action = 'export',
-            format = 'json',
-            type = 'flat',
-            csvDelimiter = '',
-            'records[0]' = recordName,
-            #'fields[0]'='classifier_pdf',
-            rawOrLabel = 'raw',
-            rawOrLabelHeaders = 'raw',
-            exportCheckboxLabel = 'false',
-            exportSurveyFields = 'false',
-            exportDataAccessGroups = 'false',
-            returnFormat = 'json'
-        )
-        response <- httr::POST(url, body = formData, encode = "form")
-        result <- httr::content(response)[[1]]
-        return(result[[fieldName]])
-    }
+    formData <- list(
+        "token" = gb$ApiToken,
+        content = 'record',
+        action = 'export',
+        format = 'json',
+        type = 'flat',
+        csvDelimiter = '',
+        'records[0]' = recordName,
+        #'fields[0]'='classifier_pdf',
+        rawOrLabel = 'raw',
+        rawOrLabelHeaders = 'raw',
+        exportCheckboxLabel = 'false',
+        exportSurveyFields = 'false',
+        exportDataAccessGroups = 'false',
+        returnFormat = 'json'
+    )
+    response <- httr::POST(url, body = formData, encode = "form")
+    result <- httr::content(response)[[1]]
+    return(result[[fieldName]])
+}
 
 
 MakeLogFile <- function(i, logFile){
@@ -287,7 +287,7 @@ copy.cnv.files <- function(newFolder, runID, runYear = NULL) {
 # Returns Total Sample Count in the run
 getTotalSamples <- function(thisSh = NULL) {
     msgFunName(cpOutLnk, "getTotalSamples")
-
+    
     templateDir = "Clinical_Methylation/methylation_run_TEMPLATE.xlsm"
     thisSh <-  ifelse(is.null(thisSh), gb$GrabSampleSheet(), thisSh)
     thisSh <- thisSh[!stringi::stri_detect_fixed(thisSh, "~$")]
@@ -311,7 +311,7 @@ getTotalSamples <- function(thisSh = NULL) {
 # Imports the xlsm sheet 3 data
 importRedcapStart <- function(nfldr) {
     msgFunName(cpOutLnk, "importRedcapStart")
-
+    
     samSh <- gb$GrabSampleSheet()
     sampleNumb <- getTotalSamples(samSh)
     sh_Dat <- suppressMessages(as.data.frame(readxl::read_excel(
@@ -338,14 +338,14 @@ DoRedcapApi <- function(rcon, recordName, runID) {
             redcapAPI::importRecords(
                 rcon, data, overwriteBehavior = "normal",
                 returnContent = "ids", logfile = logfi)
-            },
+        },
         error = function(e) {
             rdMsg <- paste(data$record_id, "failed import data to REDCap:")
             message(mkRed("DATA:"),"\n")
             message(paste0(capture.output(data), collapse="\n"))
             message(mkRed(rdMsg), "\n", e$message)
-            }
-        )
+        }
+    )
 }
 
 
@@ -478,19 +478,19 @@ CopyFilesOut <- function(file.list, newFolder, runID) {
     tryCatch(
         expr = {
             fs::file_copy(file.list, newFolder, overwrite = F)
-            },
+        },
         error = function(e) {
             message(e, "\n", mkRed("Trying other file copy method:"),"\n")
             RsyncCopyFiles(file.list, newFolder)
-            }
-        )
+        }
+    )
 }
 
 
 # FUN: Copies Reports to Z drive
 copy2outFolder <- function(clinDrv = NULL, runID, runYear = NULL) {
     msgFunName(cpOutLnk, "copy2outFolder")
-
+    
     runYear <- ifelse(is.null(runYear), paste0(format(Sys.Date(), "%Y")), runYear)
     clinDrv <- ifelse(is.null(clinDrv), gb$clinDrv, clinDrv)
     isMC = sjmisc::str_contains(runID, "MGDM") | sjmisc::str_contains(runID, "MC")
@@ -548,36 +548,36 @@ CallApiFileForce <- function(rcon, recordName) {
 
 
 ForceCallApiFile <- function(rcon, recordName, ovwr = T) {
-  msgFunName(cpOutLnk, "ForceCallApiFile")
-  uploadField = "classifier_pdf"
-  if(stringr::str_detect(recordName, "_sarc")){
-    uploadField = "classifier_pdf_other"
-  }
-  recordFi <- paste0(recordName, ".html")
-  message("\n", mkBlue("Importing Record File:"), paste0(" ", recordFi))
-  recordName <- CheckSarcRDnumber(recordName)
-  if (ovwr == F) {
-    writeLogFi(recordName)
-  } else{
-    tryCatch(
-      expr = {
-        suppressWarnings(
-          redcapAPI::importFiles(
-            rcon = rcon,
-            file = file.path(getwd(), recordFi),
-            record = recordName,
-            field = uploadField,
-            overwrite = ovwr,
-            repeat_instance = 1
-          )
+    msgFunName(cpOutLnk, "ForceCallApiFile")
+    uploadField = "classifier_pdf"
+    if(stringr::str_detect(recordName, "_sarc")){
+        uploadField = "classifier_pdf_other"
+    }
+    recordFi <- paste0(recordName, ".html")
+    message("\n", mkBlue("Importing Record File:"), paste0(" ", recordFi))
+    recordName <- CheckSarcRDnumber(recordName)
+    if (ovwr == F) {
+        writeLogFi(recordName)
+    } else{
+        tryCatch(
+            expr = {
+                suppressWarnings(
+                    redcapAPI::importFiles(
+                        rcon = rcon,
+                        file = file.path(getwd(), recordFi),
+                        record = recordName,
+                        field = uploadField,
+                        overwrite = ovwr,
+                        repeat_instance = 1
+                    )
+                )
+            },
+            error = function(e) {
+                message(recordFi, " was not imported to REDCap")
+                message(mkRed(e$message))
+            }
         )
-      },
-      error = function(e) {
-        message(recordFi, " was not imported to REDCap")
-        message(mkRed(e$message))
-      }
-    )
-  }
+    }
 }
 
 
@@ -604,53 +604,105 @@ ForceUploadToRedcap <- function(file.list, token=NULL, deskCSV = T) {
     if (deskCSV == T) {try(importDesktopCsv(rcon), outFile = "importDesktopRedcapLog.txt")}
 }
 
+
 grabAllRecords <- function(flds, rcon){
     message("Pulling REDCap data...")
-    params = list(rcon, fields=flds, labels=F, dates = F, survey = F, dag = F, factors=F, form_complete_auto=F)
+    library("dplyr")
+    params = list(rcon, fields = flds, labels = F, dates = F, survey = F, dag = F, factors = F, form_complete_auto = F)
     dbCols <- do.call(redcapAPI::exportRecordsTyped, c(params))
-    return(as.data.frame(dbCols))
+    rd_df <- as.data.frame(dbCols)
+    rd_df <- rd_df %>% dplyr::mutate_all(~stringr::str_replace_all(., ",", ""))
+    return(rd_df)
 }
 
 
+GrabSpecificRecords <- function(flds, rd_num, rcon){
+    message("Pulling REDCap data...")
+    library("dplyr")
+    params = list(rcon, records = rd_num, fields = flds, labels=F, dates = F, survey = F,
+                  dag = F, factors=F, form_complete_auto=F)
+    dbCols <- do.call(redcapAPI::exportRecordsTyped, c(params))
+    rd_df <- as.data.frame(dbCols)
+    rd_df <- rd_df %>% dplyr::mutate_all(~stringr::str_replace_all(., ",", ""))
+    return(rd_df)
+}
 
-CombineClassAndQC <- function(output_fi = NULL, token, runDir = NULL, runID = NULL) {
-    if(is.null(runDir)){
-        runDir <- getwd()
-    }
-    if(is.null(output_fi)){
-        currDir <- "/Volumes/molecular/Molecular/MethylationClassifier/Methylation_QC_metrics/2023"
-        output <- as.data.frame(readxl::read_excel(file.path(currDir, "Meth_QC_metrics_2023_runs.xlsx")))
+
+CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull) {
+    msgFunName(cpOutLnk, "CheckOutputScoresQC")
+    totalNA <- which(is.na(output$classifier_value))
+    if(length(totalNA) > 3){
+        find_redCsv <- dir(path = getwd(), pattern = "_Redcap.csv")[1]
+        if(is.na(find_redCsv)){
+            find_redCsv <- dir(path = file.path(fs::path_home(), "Desktop", runID), pattern = "_Redcap.csv")[1]
+        }
+        redcap_dat <- as.data.frame(read.csv(find_redCsv))
+        redcap_dat$block <- ""
+        redcap_dat$accession_number <- redcap_db[redcap_dat$record_id, "accession_number"]
+        redcap_dat$diagnosis <- redcap_db[redcap_dat$record_id, "diagnosis"]
+        data_subset <- redcap_dat[ , fieldsToPull]
+        rownames(data_subset) <- data_subset$record_id
+        output[, fieldsToPull] <- data_subset[output$RD.number, fieldsToPull]
+        return(output)
     }else{
+        return(output)
+    }
+}
+
+
+get_QC_metric_data <- function(output_fi, runDir, runID) {
+    runYear <- paste0(20, stringr::str_split_fixed(runID, "-", 2)[1, 1])
+    if (is.null(output_fi)) {
+        metrics_dir <- "/Volumes/molecular/Molecular/MethylationClassifier/Methylation_QC_metrics"
+        xlsx_file <- paste("Meth_QC_metrics", runYear,"runs.xlsx", sep = "_")
+        output <- as.data.frame(readxl::read_excel(file.path(metrics_dir, runYear, xlsx_file)))
+    } else{
         currDir <- file.path(runDir, output_fi)
         message("Reading file: ", currDir)
         output <- as.data.frame(read.csv(currDir))
-        
     }
+    return(output)
+}
 
+
+CombineClassAndQC <- function(output_fi = NULL, token, runDir = NULL, runID = NULL) {
+    msgFunName(cpOutLnk, "CombineClassAndQC")
+    
     fieldsToPull <- c("record_id", "run_number", "b_number", "tm_number", "block", "accession_number",
                       "subgroup_score", "classifier_value", "subgroup", "classifier_score", "primary_tech", "diagnosis")
-
+    
+    if(is.null(runDir)){runDir <- getwd()}
+    if(is.null(runID)){runID <- basename(getwd())}
+    
+    output <- get_QC_metric_data(output_fi, runDir, runID)
+    
     apiUrl = "https://redcap.nyumc.org/apps/redcap/api/"
     rcon <- redcapAPI::redcapConnection(apiUrl, token)
-    db <- grabAllRecords(fieldsToPull, rcon)
-    newCols <- colnames(db)
-
-    for (col_id in newCols) {
-        output[col_id] <- ""
-    }
-
+    
     controlRows <- which(output$`RD.number` == "control")
     output[controlRows, "RD.number"] <- paste(output[controlRows, "RunID"], output[controlRows, "RD.number"], sep = "_")
-
+    
+    redcap_db <- GrabSpecificRecords(fieldsToPull, rd_num = output$RD.number, rcon)
+    
+    newCols <- colnames(redcap_db)
+    for (col_id in newCols) {output[col_id] <- ""}
+    rownames(redcap_db) <- redcap_db$record_id
     for (xrow in 1:nrow(output)) {
-        currRow <- which(db$record_id == output$`RD.number`[xrow])
-        stopifnot(length(currRow) == 1)
-        redcap_row <- db[currRow, newCols]
-        output[xrow, newCols] <- redcap_row
+        currRow <- output$`RD.number`[xrow]
+        output[xrow, newCols] <- redcap_db[currRow, newCols]
     }
-    colnames(output) <- c("RunID", "RD-number", "B-number", "TM-number", "Log2sqrt(M*U)", "Log2(M/U)", "log2sqrt(R*G)", "log2(R/G)",
-                          "BS_log2sqrt(R*G)", "BS_log2(R/G)", "log2sqrt(H*L)", "log2(H/L)", "Pvalue", fieldsToPull)
-    outFile <- file.path(runDir, paste(runID,"QC_and_Classifier_Scores.csv", sep = "_"))
+    
+    output <- CheckOutputScoresQC(output, runID, redcap_db, fieldsToPull)
+    
+    colnames(output) <- c("RunID", "RD-number", "B-number", "TM-number", "Log2sqrt(M*U)", "Log2(M/U)",
+                          "log2sqrt(R*G)", "log2(R/G)", "BS_log2sqrt(R*G)", "BS_log2(R/G)",
+                          "log2sqrt(H*L)", "log2(H/L)", "Pvalue", fieldsToPull)
+    
+    if(any(is.na(output))){
+        output[is.na(output)] <- ""
+    }
+    
+    outFile <- file.path(runDir, paste(runID, "QC_and_Classifier_Scores.csv", sep = "_"))
     write.csv(output, file = outFile, row.names = F, quote = F)
-
+    
 }
