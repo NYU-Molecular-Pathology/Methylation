@@ -1,14 +1,18 @@
 options("install.packages.compile.from.source" = "No")
 options("install.packages.check.source" = "no")
 
-if(Sys.info()[['sysname']]=="Darwin"){
+if (Sys.info()[['sysname']] == "Darwin") {
     local({
-        path <- sub(":/opt/homebrew/bin", ":/usr/local/homebrew/bin", Sys.getenv("PATH"))
+        path <-
+            sub(":/opt/homebrew/bin",
+                ":/usr/local/homebrew/bin",
+                Sys.getenv("PATH"))
         Sys.setenv(PATH = path)
     })
 }
 
-if (Sys.info()[['sysname']]=="Darwin" & !dir.exists(file.path("~", ".R"))) {
+if (Sys.info()[['sysname']] == "Darwin" &
+    !dir.exists(file.path("~", ".R"))) {
     message("No Makevars file in ~/.R")
     system("mkdir -p ~/.R")
     system("touch ~/.R/MakeVars")
@@ -46,18 +50,19 @@ if (Sys.info()[['sysname']]=="Darwin" & !dir.exists(file.path("~", ".R"))) {
     )
     writeLines(params, fileConn)
     close(fileConn)
-#closeAllConnections()
+    #closeAllConnections()
     cmd = 'devtools::source_url("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/all_installer.R")'
     #rstudioapi::restartSession(cmd)
 }
 
-if (Sys.info()[['sysname']]=="Darwin" & !file.exists(file.path("~", ".Renviron"))) {
+if (Sys.info()[['sysname']] == "Darwin" &
+    !file.exists(file.path("~", ".Renviron"))) {
     system("touch ~/.Renviron")
     fileConn <- file("~/.Renviron")
     params <- c('PATH="/usr/local/gfortran/bin:${PATH}"')
     writeLines(params, fileConn)
     close(fileConn)
-#closeAllConnections()
+    #closeAllConnections()
 }
 
 # Setting US CRAN REPO
@@ -76,31 +81,45 @@ loadLibrary <- function(pkgName) {
     ))
 }
 
-checkRequire <- function(pkgName){
-    return(
-        suppressWarnings(!require(pkgName,character.only = T,warn.conflicts = FALSE))
+checkRequire <- function(pkgName) {
+    return(suppressWarnings(!require(
+        pkgName,
+        character.only = T,
+        warn.conflicts = FALSE
+    )))
+}
+
+if (checkRequire("devtools")) {
+    install.packages(
+        "devtools",
+        dependencies = T,
+        verbose = T,
+        ask = F
     )
 }
 
-if(checkRequire("devtools")){install.packages("devtools", dependencies = T, verbose = T ask = F)}
-if(checkRequire("librarian")){install.packages("librarian", dependencies = T, verbose = T, ask = F)}
+if (checkRequire("librarian")) {
+    install.packages(
+        "librarian",
+        dependencies = T,
+        verbose = T,
+        ask = F
+    )
+}
 loadLibrary("devtools")
 
-#if(checkRequire("rstudioapi")){devtools::install_github("rstudio/rstudioapi", dependencies = T, upgrade = "never")}
-# if(rstudioapi::buildToolsCheck()==FALSE){
-#     system("xcode-select --install")
-#     system("xcode-select -s /Library/Developer/CommandLineTools")
-# }
-if (Sys.info()[['sysname']]=="Darwin"){
+if (Sys.info()[['sysname']] == "Darwin") {
     isOpen <- system("which openssl", intern = TRUE)
-    if(!exists("isOpen")){
+    if (!exists("isOpen")) {
         system("brew update")
         system("brew install openssl")
         system("ln -sf /usr/local/opt/openssl/lib/libcrypto.3.dylib /usr/local/lib/")
         system("ln -sf /usr/local/opt/openssl/lib/libssl.3.dylib /usr/local/lib/")
-        system("ln -sf /usr/local/Cellar/openssl@3/3.0.5/bin/openssl /usr/local/bin/openssl")
-    }else{
-        if(isOpen != "/usr/bin/openssl"){
+        system(
+            "ln -sf /usr/local/Cellar/openssl@3/3.0.5/bin/openssl /usr/local/bin/openssl"
+        )
+    } else{
+        if (isOpen != "/usr/bin/openssl") {
             system("ln -sf /usr/local/opt/openssl/lib/libcrypto.3.dylib /usr/local/lib/")
             system("ln -sf /usr/local/opt/openssl/lib/libssl.3.dylib /usr/local/lib/")
             system("ln -sf /usr/local/Cellar/openssl@3/3.0.5/bin/openssl /usr/local/bin/openssl")
@@ -109,9 +128,10 @@ if (Sys.info()[['sysname']]=="Darwin"){
     }
 }
 
+# List Classifier Core Packages -------------------------------------------------------------------
 corePkgs <- c("randomForest", "glmnet", "ggplot2", "gridExtra", "knitr", "pander", "gmp")
 
-# List of all Packages
+# List Prerequisite Packages ----------------------------------------------------------------------
 preReqPkgs <- c(
     'MASS',
     'ade4',
@@ -167,6 +187,7 @@ preReqPkgs <- c(
     'BiocParallel'
 )
 
+# List Remaining Packages -------------------------------------------------------------------------
 pkgs <- c(
     "abind",
     "animation",
@@ -477,43 +498,88 @@ biocPkgs <-
     )
 
 if (checkRequire("BiocManager")) {
-    install.packages("BiocManager", dependencies = T, verbose = T, ask = F)
+    install.packages(
+        "BiocManager",
+        dependencies = T,
+        verbose = T,
+        ask = F
+    )
 }
 
 loadLibrary("devtools")
 loadLibrary("librarian")
 loadLibrary("BiocManager")
-if (checkRequire("Biobase")) {BiocManager::install("Biobase", update = F, ask = F)}
+if (checkRequire("Biobase")) {
+    BiocManager::install("Biobase", update = F, ask = F)
+}
 loadLibrary("Biobase")
 
-if (checkRequire("mapview")) {remotes::install_github("r-spatial/mapview", dependencies = T, upgrade="never")}
+if (checkRequire("mapview")) {
+    remotes::install_github("r-spatial/mapview",
+                            dependencies = T,
+                            upgrade = "never")
+}
 
-# Load/install missing pacakges without asking
-supM <- function(pk){return(suppressPackageStartupMessages(suppressWarnings(pk)))}
+# Load/install missing pacakges without asking ----------------------------------------------------
+supM <-
+    function(pk) {
+        return(suppressPackageStartupMessages(suppressWarnings(pk)))
+    }
 
 message("Loading packages:", paste0(capture.output(corePkgs), collapse = "\n"))
 message("...loading")
-supM(librarian::shelf(corePkgs, ask = F, update_all = F, quiet = FALSE))
+supM(librarian::shelf(
+    corePkgs,
+    ask = F,
+    update_all = F,
+    quiet = FALSE
+))
 
-message("Loading packages:",paste0(capture.output(preReqPkgs), collapse = "\n"))
+message("Loading packages:", paste0(capture.output(preReqPkgs), collapse = "\n"))
 message("...loading")
-supM(librarian::shelf(preReqPkgs, ask = F, update_all = F, quiet = FALSE))
+supM(librarian::shelf(
+    preReqPkgs,
+    ask = F,
+    update_all = F,
+    quiet = FALSE
+))
 
 message("Loading BioConductor Packages and IlluminaHumanMethylation Manifest...")
 
-if(checkRequire("IlluminaHumanMethylationEPICmanifest")){
-    devtools::install_github(repo = "mwsill/IlluminaHumanMethylationEPICmanifest", dependencies = T, upgrade = "never")
+if (checkRequire("IlluminaHumanMethylationEPICmanifest")) {
+    devtools::install_github(repo = "mwsill/IlluminaHumanMethylationEPICmanifest",
+                             dependencies = T,
+                             upgrade = "never")
 }
 
-if(checkRequire("FDb.InfiniumMethylation.hg19")){
-    BiocManager::install("FDb.InfiniumMethylation.hg19", update=F, ask=F, dependencies=T)
+if (checkRequire("FDb.InfiniumMethylation.hg19")) {
+    BiocManager::install(
+        "FDb.InfiniumMethylation.hg19",
+        update = F,
+        ask = F,
+        dependencies = T
+    )
 }
 
-supM(librarian::shelf(biocPkgs, ask=F, update_all=F, quiet=F, dependencies=T))
+supM(librarian::shelf(
+    biocPkgs,
+    ask = F,
+    update_all = F,
+    quiet = F,
+    dependencies = T
+))
 
-if(checkRequire("mgmtstp27")){
-    gitLink <- "https://github.com/badozor/mgmtstp27/raw/master/archive/mgmtstp27_0.6-3.tar.gz"
-    install.packages(gitLink, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F)
+if (checkRequire("mgmtstp27")) {
+    gitLink <-
+        "https://github.com/badozor/mgmtstp27/raw/master/archive/mgmtstp27_0.6-3.tar.gz"
+    install.packages(
+        gitLink,
+        repos = NULL,
+        dependencies = T,
+        verbose = T,
+        type = "source",
+        ask = F
+    )
 }
 
 fixProf <- function() {
@@ -525,10 +591,10 @@ fixProf <- function() {
         Sys.getenv("R_PROFILE")
     }
     if (!file.exists(siteProf)) {
-        try(file.create(siteProf), silent=T)
+        try(file.create(siteProf), silent = T)
     }
-    cxn <- try(file(siteProf), silent=T)
-    lines <- try(base::readLines(cxn),silent=T)
+    cxn <- try(file(siteProf), silent = T)
+    lines <- try(base::readLines(cxn), silent = T)
     if (!any(grepl(txt1, lines))) {
         write(txt2, file = siteProf, append = T)
     }
@@ -536,83 +602,127 @@ fixProf <- function() {
     closeAllConnections()
 }
 
-fixNeeds <- function (){
-    sysfile <- system.file("extdata", "promptUser", package="needs")
-    try(write(0, file=sysfile),silent=T)
-    options(needs.promptUser=FALSE)
+fixNeeds <- function () {
+    sysfile <- system.file("extdata", "promptUser", package = "needs")
+    try(write(0, file = sysfile), silent = T)
+    options(needs.promptUser = FALSE)
     invisible(needs:::autoload(TRUE))
     closeAllConnections()
 }
 
-checkNeeds <- function(){
+checkNeeds <- function() {
     tryCatch(
-        expr={
-            if(!("needs" %in% rownames(installed.packages()))){
-                install.packages("needs",dependencies=T,verbose=T, Ncpus = 2)
+        expr = {
+            if (!("needs" %in% rownames(installed.packages()))) {
+                install.packages(
+                    "needs",
+                    dependencies = T,
+                    verbose = T,
+                    Ncpus = 2
+                )
                 fixNeeds()
-                try(fixProf(), silent=T)
-            }else{
+                try(fixProf(), silent = T)
+            } else{
                 fixNeeds()
-                try(fixProf(), silent=T)
+                try(fixProf(), silent = T)
             }
         },
-        error=function(cond){
-            devtools::install_github("joshkatz/needs", ref = "development",
-                                     dependencies=T,verbose=T,upgrade="never")
-            fixNeeds()
-            try(fixProf(), silent=T)
-        },
-        warning=function(cond){
+        error = function(cond) {
             devtools::install_github(
-                "joshkatz/needs", ref = "development",
-                                     dependencies=T,verbose=T,upgrade="never")
+                "joshkatz/needs",
+                ref = "development",
+                dependencies = T,
+                verbose = T,
+                upgrade = "never"
+            )
             fixNeeds()
-            try(fixProf(), silent=T)
+            try(fixProf(), silent = T)
+        },
+        warning = function(cond) {
+            devtools::install_github(
+                "joshkatz/needs",
+                ref = "development",
+                dependencies = T,
+                verbose = T,
+                upgrade = "never"
+            )
+            fixNeeds()
+            try(fixProf(), silent = T)
         }
     )
 }
 
-if(Sys.info()[['sysname']]=="Darwin"){
-  checkNeeds()
-  closeAllConnections()
-  isGdal <- paste(system("echo `gdalinfo --version`", intern = T))
-  if(isGdal=="") {
-    system("brew install pkg-config")
-    system("brew install gdal")
-  }
-  isProj <- system("which proj", intern=T)
-  if(length(isProj) == 0){
-    system("brew install pkg-config")
-    system("brew install proj")
-  }
+if (Sys.info()[['sysname']] == "Darwin") {
+    checkNeeds()
+    closeAllConnections()
+    isGdal <- paste(system("echo `gdalinfo --version`", intern = T))
+    if (isGdal == "") {
+        system("brew install pkg-config")
+        system("brew install gdal")
+    }
+    isProj <- system("which proj", intern = T)
+    if (length(isProj) == 0) {
+        system("brew install pkg-config")
+        system("brew install proj")
+    }
 } else{
-  if(!("needs" %in% rownames(installed.packages()))){
-    install.packages("needs", dependencies = T, verbose = T, ask = F)
-  }
-  options(needs.promptUser=FALSE)
+    if (!("needs" %in% rownames(installed.packages()))) {
+        install.packages(
+            "needs",
+            dependencies = T,
+            verbose = T,
+            ask = F
+        )
+    }
+    options(needs.promptUser = FALSE)
 }
 
-if(!(require("Rcpp"))){remotes::install_github("RcppCore/Rcpp")}
-spat_config <- '--with-proj-lib=/usr/local/lib/ --with-proj-include=/usr/local/include/'
+if (!(require("Rcpp"))) {
+    remotes::install_github("RcppCore/Rcpp")
+}
+spat_config <-
+    '--with-proj-lib=/usr/local/lib/ --with-proj-include=/usr/local/include/'
 options(configure.args = c("sf" = spat_config, "rgdal" = spat_config))
 
-if(checkRequire("sf")){
+if (checkRequire("sf")) {
     tryCatch(
-        install.packages(c("sf"), type = "source", dependencies=T, verbose=T, Ncpus = 4),
-        error=function(e){
-            remotes::install_github("r-spatial/sf", configure.args = "--with-proj-lib=/usr/local/lib/", dependencies=T, upgrade="never")
+        install.packages(
+            c("sf"),
+            type = "source",
+            dependencies = T,
+            verbose = T,
+            Ncpus = 4
+        ),
+        error = function(e) {
+            remotes::install_github(
+                "r-spatial/sf",
+                configure.args = "--with-proj-lib=/usr/local/lib/",
+                dependencies = T,
+                upgrade = "never"
+            )
         }
     )
 }
 
-if(checkRequire("rgdal")){
-    install.packages("rgdal", configure.args = c("--with-proj-lib=/usr/local/lib/", "--with-proj-include=/usr/local/include/"), 
-                     type = "source", dependencies=T, verbose=T, Ncpus = 4)
+if (checkRequire("rgdal")) {
+    install.packages(
+        "rgdal",
+        configure.args = c(
+            "--with-proj-lib=/usr/local/lib/",
+            "--with-proj-include=/usr/local/include/"
+        ),
+        type = "source",
+        dependencies = T,
+        verbose = T,
+        Ncpus = 4
+    )
 }
 
 invisible(gc())
 
-if(Sys.info()[['sysname']]=="Darwin"){system("export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib")}
+if (Sys.info()[['sysname']] == "Darwin") {
+    system("export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib")
+}
 
 options("install.packages.compile.from.source" = "No")
 options("install.packages.check.source" = "no")
@@ -620,31 +730,69 @@ loadLibrary("BiocManager")
 loadLibrary("Biobase")
 
 terraDep <- c('tinytest', 'ncdf4', 'leaflet')
-suppressWarnings(librarian::shelf(terraDep, ask = F, update_all = F, quiet = FALSE))
+suppressWarnings(librarian::shelf(
+    terraDep,
+    ask = F,
+    update_all = F,
+    quiet = FALSE
+))
 
-if(checkRequire("terra")) {
-    install.packages('terra', repos = 'https://rspatial.r-universe.dev', dependencies = T, verbose = T, Ncpus = 4)
+if (checkRequire("terra")) {
+    install.packages(
+        'terra',
+        repos = 'https://rspatial.r-universe.dev',
+        dependencies = T,
+        verbose = T,
+        Ncpus = 4
+    )
 }
 
-if(checkRequire("FField")){
-    gitLink <- "https://cran.r-project.org/src/contrib/Archive/FField/FField_0.1.0.tar.gz"
-    install.packages(gitLink, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F)
+if (checkRequire("FField")) {
+    gitLink <-
+        "https://cran.r-project.org/src/contrib/Archive/FField/FField_0.1.0.tar.gz"
+    install.packages(
+        gitLink,
+        repos = NULL,
+        dependencies = T,
+        verbose = T,
+        type = "source",
+        ask = F
+    )
 }
 
 if (checkRequire("GenVisR")) {
-    devtools::install_github("griffithlab/GenVisR", dependencies = T, upgrade = "never")
+    devtools::install_github("griffithlab/GenVisR",
+                             dependencies = T,
+                             upgrade = "never")
 }
-suppressWarnings(librarian::shelf(pkgs, ask = F, update_all = F, quiet = FALSE))
+suppressWarnings(librarian::shelf(
+    pkgs,
+    ask = F,
+    update_all = F,
+    quiet = FALSE
+))
 invisible(gc())
 
 cbioLn <- switch(Sys.info()[['sysname']],
                  "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
-                 "Linux" = "~/molecpathlab/production/Methylation/classifiers"
-    )
+                 "Linux" = "~/molecpathlab/production/Methylation/classifiers")
 
-librarian::shelf(c("mlr", "wateRmelon", "RPMM", "impute"), ask=F, update_all = FALSE, quiet = FALSE)
-if (checkRequire("UniD")) {try(install.packages(file.path(cbioLn, "UniD"), type="source", repos=NULL), silent=T)}
+librarian::shelf(
+    c("mlr", "wateRmelon", "RPMM", "impute"),
+    ask = F,
+    update_all = FALSE,
+    quiet = FALSE
+)
+
+if (checkRequire("UniD")) {
+    try(install.packages(file.path(cbioLn, "UniD"),
+                         type = "source",
+                         repos = NULL),
+        silent = T)
+}
 
 closeAllConnections()
 
-devtools::source_url("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/LoadInstallPackages.R")
+devtools::source_url(
+    "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/LoadInstallPackages.R"
+)
