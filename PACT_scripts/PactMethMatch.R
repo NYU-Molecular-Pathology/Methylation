@@ -1,40 +1,41 @@
 #!/usr/bin/env Rscript
-args <- commandArgs(TRUE)
-library("base"); gb <- globalenv(); assign("gb", gb)
-dsh="\n================"
-dsh2="================\n"
+args <- commandArgs(TRUE); library("base"); gb <- globalenv(); assign("gb", gb)
+if(!requireNamespace("devtools")){install.packages("devtools", dependencies=T, ask=F)}
+dsh = "\n================"
+dsh2 = "================\n"
 
 # Main arguments input in comandline
 token <- args[1]
 inputSheet <- args[2]
 
-# Displays the Input args -----
-message(dsh,"Parameters input",dsh2)
-message("token: ",token)
+# Displays the Input args -----------------------------------------------------------------------------
+message(dsh,"Parameters input", dsh2)
+message("token: ", token)
 message("inputSheet: ", inputSheet,"\n")
 
 stopifnot(!is.na(token))
 stopifnot(!is.na(inputSheet))
 
-readFlag <- endsWith(inputSheet,".csv")==T
+readFlag <- endsWith(inputSheet, ".csv") == T
 stopifnot(rlang::is_bool(readFlag))
 
 # REDcap Heading Fields -----
-flds = c("record_id","b_number","tm_number","accession_number","block","diagnosis",
-         "organ","tissue_comments","run_number", "nyu_mrn", "qc_passed")
+flds = c("record_id", "b_number", "tm_number", "accession_number", "block", "diagnosis",
+         "organ", "tissue_comments", "run_number", "nyu_mrn", "qc_passed")
 
-# Load redcapAPI Package -----
-if(!requireNamespace("redcapAPI")){
-    params = list('nutterb/redcapAPI', dependencies = T, upgrade = "always", type = "source")
-    do.call(devtools::install_github, c(params))
+# Check redcapAPI Package Version Compatibility -------------------------------------------------------
+CheckREDCapVersion <- function(){
+    if(!requireNamespace("redcapAPI")){
+        params = list('nutterb/redcapAPI', dependencies = T, upgrade = "always", type = "source")
+        do.call(devtools::install_github, c(params))
+    }
+    current_vers <- utils::packageVersion("redcapAPI")
+    minimum_vers <- "2.7.4"
+    if (is.na(current_vers) || utils::compareVersion(as.character(current_vers), minimum_vers) < 0) {
+        install.packages("redcapAPI", ask = FALSE, update = TRUE, dependencies = TRUE)
+    }
 }
 
-current_version <- utils::packageVersion("redcapAPI")
-required_version <- "2.7.4"
-
-if (is.na(current_version) || utils::compareVersion(as.character(current_version), required_version) < 0) {
-    install.packages("redcapAPI", ask=FALSE, update=TRUE, dependencies=TRUE)
-}
 
 supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
 
@@ -42,14 +43,14 @@ supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
 checkMounts <- function(){
     molecDrive = "/Volumes/molecular/MOLECULAR LAB ONLY"
     zDrive = "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular"
-    failMount <- ifelse(dir.exists(molecDrive),T,F)
+    failMount <- ifelse(dir.exists(molecDrive), T, F)
     if(failMount!=T){
         cat("PATH does not exist, ensure path is mounted:")
         cat(crayon::white$bgRed$bold(molecDrive))
         cat("You must mount the network Z-drive path:\n")
         cat(crayon::white$bgRed$bold(zDrive),"\n")
         stopifnot(!any(failMount==T))
-    } else {message("\n",crayon::bgGreen("Z-drive path is accessible"),"\n")}
+    } else {message("\n", crayon::bgGreen("Z-drive path is accessible"), "\n")}
 }
 
 
@@ -62,42 +63,38 @@ loadPacks <- function(){
     options(repos = rlis)
     invisible(lapply(pkgs, function(pk){
         if(supM(!requireNamespace(pk))){
-            install.packages(pk, dependencies = T, verbose = T, repos = "http://cran.us.r-project.org", type = "both")
+            install.packages(pk, dependencies = T, verbose = T, repos = "http://cran.us.r-project.org")
         }}))
     if(!requireNamespace("systemfonts")){devtools::install_github('r-lib/systemfonts')}
-    if(!requireNamespace("redcapAPI")){install.packages("redcapAPI", dependencies = T, type="both",ask=F)}
-    if(!requireNamespace("remotes")){install.packages("remotes", dependencies=T)}
-    #if(!requireNamespace("chromote")){remotes::install_github("rstudio/chromote", upgrade ="never")}
-    #if(!requireNamespace("webshot2")){remotes::install_github("rstudio/webshot2")}
+    if(!requireNamespace("redcapAPI")){install.packages("redcapAPI", dependencies = T, ask=F)}
+    if(!requireNamespace("remotes")){install.packages("remotes", dependencies = T)}
     supM(library("redcapAPI"))
-    #supM(library("chromote"))
-    #try(tinytex::tlmgr_install(),silent=T)
-    #try(tinytex:::install_prebuilt(),silent=T)
 }
 
 # API Call functions -----
 grabAllRecords <- function(flds, rcon){
     message("Pulling REDCap data...")
-    params = list(rcon, fields=flds, labels=F, dates = F, survey = F, dag = F, factors=F, form_complete_auto=F)
+    library("dplyr")
+    params = list(rcon, fields = flds, labels = F, dates = F, survey = F, dag = F, factors = F, form_complete_auto = F)
     dbCols <- do.call(redcapAPI::exportRecordsTyped, c(params))
-    return(as.data.frame(dbCols))
+    rd_df <- as.data.frame(dbCols)
+    rd_df <- rd_df %>% dplyr::mutate_all(~stringr::str_replace_all(., ",", ""))
+    return(rd_df)
 }
 
-# Database search function -----
-searchDb <- function(queryList, db){
-    v2f <- paste(queryList, collapse="|"); i=NULL
-    res <- NULL
-    for (idx in 1:length(queryList)) {
-        item <- queryList[idx]
-        ngsNumber = paste(names(item)[1])
-        for (i in colnames(db)) {
-            ngsMatch <- which(grepl(item, db[,i]))
-            if(length(ngsMatch) > 0) {
-                message("Match found for ",item, " (", db[ngsMatch,i], ") for ",
-                        ngsNumber," in:\n", '"', i,'"', " column")
-                dbMatch <- db[ngsMatch,]
-                dbMatch$Test_Number <- names(item)
-                if(is.null(res)){
+searchDb <- function(queryList, db) {
+    res <- data.frame()  
+    
+    for (item in queryList) {
+        ngsNumber <- paste(names(item)[1])
+        for (col_n in colnames(db)) {
+            ngsMatch <- which(grepl(item, db[[col_n]]))
+            if (length(ngsMatch) > 0) {
+                message(sprintf("Match found for %s (%s) for %s in: \"%s\" column", 
+                                item, db[ngsMatch, col], ngsNumber, col))
+                dbMatch <- db[ngsMatch, ]
+                dbMatch$Test_Number <- ngsNumber
+                if(nrow(res) == 0){
                     res <- dbMatch
                 }else{
                     res <- rbind(res, dbMatch)
@@ -105,8 +102,10 @@ searchDb <- function(queryList, db){
             }
         }
     }
+    
     return(res)
 }
+
 
 # Filters list of possible files in the directory for worksheet
 filterFiles <- function(potentialFi) {
@@ -147,7 +146,11 @@ getPactFolder <- function(inputSheet){
 getFilePath <- function(inputSheet){
     runFolder <- getPactFolder(inputSheet)
     inputFi <- file.path(runFolder, paste0(inputSheet, ".xlsm"))
-    if(file.exists(inputFi)) {return(inputFi)} else{return(getAltPath(inputFi))}
+    if (file.exists(inputFi)) {
+        return(inputFi)
+    } else{
+        return(getAltPath(inputFi))
+    }
 }
 
 # Parses the input file for the "PhilipsExport" tab
@@ -314,19 +317,16 @@ CheckMethPaths <- function(methData){
         newPath <- paste(currSplit, collapse = "/")
         methData[i, "Report Path"] <- newPath
     }
-
-    checkPaths <- stringr::str_replace_all(methData$`Report Path`,
-                                           "smb://shares-cifs.nyumc.org/apps/acc_pathology", "/Volumes")
-
-    checkPaths <- checkPaths[checkPaths != ""]
+    smb_path <- "smb://shares-cifs.nyumc.org/apps/acc_pathology"
+    checkPaths <- stringr::str_replace_all(methData$`Report Path`, smb_path, "/Volumes")
+    checkPaths <- checkPaths[checkPaths != "" & !is.na(checkPaths)]
+    checkPaths <- checkPaths[stringr::str_detect(checkPaths, "MGDM")]
     anyPathsFalse <- file.exists(checkPaths) == F
-
-    if(any(anyPathsFalse)){
-        message("Some paths need to be fixed 'Report Path' column of in the methylation sheet!" )
-        cat("Fix in worksheet the paths don't exist:\n\n")
-        cat(paste(checkPaths[anyPathsFalse], collapse="\n"))
+    if(any(anyPathsFalse)) {
+        message(crayon::bgRed("Some paths to html reports may need editing in the output MethylMatch.xlsx sheet!"))
+        cat("\nFix the following paths in worksheet 'Report Path' column that do not exist:\n\n")
+        cat(paste(checkPaths[anyPathsFalse], collapse = "\n"))
     }
-
     return(methData)
 }
 
@@ -366,7 +366,6 @@ emailFile <- function(runId, outFi, rcon){
     postData(rcon, record)
     isDone <- redcapAPI::exportRecordsTyped(rcon, factors=F, records=record$record_id, fields=c("record_id", "other_file"))
     if (length(isDone$other_file) == 0) {
-        #rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", gb$token)
         body <- list(
             token = rcon$token,
             content = 'file',
@@ -450,8 +449,6 @@ sourceFuns2 <- function(workingPath = NULL) {
         suppressPackageStartupMessages(devtools::source_url(i))}))
     supM(library("sest"))
     supM(library("mnp.v11b6"))
-    #supM(require("plotly"))
-    #require("htmlwidgets")
     gb$setDirectory(workingPath)
     return(gb$defineParams())
 }
@@ -504,7 +501,8 @@ loopCNV <- function(mySentrix, asPNG){
                 error = function(e) {
                     erTxt <-paste0("An error occured with ", mySentrix[sam, 1]," png creation:")
                     message(crayon::bgRed(erTxt), "\n", e)
-                    message(crayon::bgGreen("Trying next sample"))}
+                    message(crayon::bgGreen("Trying next sample"))
+                    }
             )
         }
     }
@@ -593,7 +591,6 @@ TryCnvMaker <- function(myDt) {
 makeCNV <- function(myDt, asPNG = T) {
     mySentrix <- myDt[myDt[, "SentrixID_Pos"] %like% "_R0", ]
     if (nrow(mySentrix) > 0) {
-        #loopCNV(mySentrix, asPNG)
         gb$LoopSavePlainCNV3(myDt)
     } else{
         message("The RD-number(s) do not have idat files in REDCap:/n")
@@ -638,6 +635,7 @@ TryCnvMaker <- function(myDt) {
     )
 }
 
+
 GetSampleList <- function(rds, sampleSheet="samplesheet.csv"){
     myDt <- read.csv(sampleSheet)
     toDrop <- myDt$Sample_Name %in% rds
@@ -646,9 +644,11 @@ GetSampleList <- function(rds, sampleSheet="samplesheet.csv"){
     return(myDt)
 }
 
-GreenMsg <- function(strMsg){
+
+Grn <- function(strMsg){
     message(crayon::bgGreen(strMsg))
 }
+
 
 QueCnvMaker <- function(output, token) {
     rds <- output$record_id[output$report_complete == "YES"]
@@ -662,16 +662,17 @@ QueCnvMaker <- function(output, token) {
             TryCnvMaker(myDt)
             try(gb$copyOutputPng(), silent=T)
         } else{
-            GreenMsg("No CNV png images to generate.  Check the output directory.")
+            Grn("No CNV png images to generate.  Check the output directory.")
         }
     } else{
-        GreenMsg("The PACT run has no cases with methylation completed.")
-        GreenMsg("No CNV png images will generate.")
+        Grn("The PACT run has no cases with methylation completed.")
+        Grn("No CNV png images will generate.")
     }
 }
 
 # Search REDCap Worksheets for MRN Match for output -------------------------------------
 loadPacks()
+CheckREDCapVersion()
 checkMounts()
 output <- getOuputData(token, flds, inputSheet, readFlag)
 
