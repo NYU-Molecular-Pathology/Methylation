@@ -5,43 +5,55 @@ assign(x = "supM", value = supM, envir = .GlobalEnv)
 options(install.packages.compile.from.source = "--no-multiarch")
 options(Ncpus = 4)
 
+is_installed <- function(package_name) {
+    tryCatch(
+        expr = {
+            return(length(find.package(package_name, quiet = TRUE)) > 0)
+        },
+        error = function(e) {
+            return(FALSE)
+        }
+    )
+}
+
+
 pkgs <- c(
-        "needs",
-        "knitr",
-        "jsonlite",
-        "crayon",
-        "RCurl",
-        "ggplot2",
-        "kableExtra",
-        "tidyverse",
-        "plotly",
-        "pkgdown",
-        "magrittr",
-        "compiler",
-        "minfi",
-        "pander",
-        "parallel",
-        "doParallel",
-        "randomForest",
-        "glmnet",
-        "gridExtra",
-        "Rtsne",
-        "dplyr"
-        )
+    "needs",
+    "knitr",
+    "jsonlite",
+    "crayon",
+    "RCurl",
+    "ggplot2",
+    "kableExtra",
+    "tidyverse",
+    "plotly",
+    "pkgdown",
+    "magrittr",
+    "compiler",
+    "minfi",
+    "pander",
+    "parallel",
+    "doParallel",
+    "randomForest",
+    "glmnet",
+    "gridExtra",
+    "Rtsne",
+    "dplyr"
+)
 
 optsLi <- list(
-        error = FALSE,
-        echo = FALSE,
-        message = FALSE,
-        warning = FALSE,
-        fig.align = "left",
-        self.contained = TRUE,
-        comment = '',
-        label_list = FALSE,
-        highlight = FALSE,
-        quiet = TRUE,
-        verbose = FALSE,
-        progress = TRUE
+    error = FALSE,
+    echo = FALSE,
+    message = FALSE,
+    warning = FALSE,
+    fig.align = "left",
+    self.contained = TRUE,
+    comment = '',
+    label_list = FALSE,
+    highlight = FALSE,
+    quiet = TRUE,
+    verbose = FALSE,
+    progress = TRUE
 )
 
 chunkOpts <- list(error = FALSE, echo = FALSE, message = FALSE, warning = FALSE, self.contained = TRUE, comment = '')
@@ -52,12 +64,25 @@ LoadReportPkgs <- function(pkgs, optsLi, chunkOpts){
     try(options(repos = rlis), silent=T)
     options("install.packages.compile.from.source" = "never")
     options("install.packages.check.source"="no")
-    if(!require("librarian")){install.packages("librarian", dependencies = c("Depends", "Imports", "LinkingTo"), quiet=T)}
-    if(!require("devtools")){install.packages("devtools", dependencies = c("Depends", "Imports", "LinkingTo"))}
-    if (!requireNamespace("BiocManager", quietly = TRUE)) {install.packages("BiocManager", dependencies = c("Depends", "Imports", "LinkingTo"))}
-    if(!requireNamespace("UniD", quietly = TRUE)) {
-        install.packages("/Volumes/CBioinformatics/Methylation/classifiers/UniD", type = "source", dependencies = c("Depends", "Imports", "LinkingTo"), repo = NULL)
+    if(!require("librarian")){
+        install.packages("librarian", dependencies = c("Depends", "Imports", "LinkingTo"), quiet = T,
+                         ask = FALSE, lib = .libPaths()[1], update = F)
+        }
+    if(!is_installed("devtools")){
+        install.packages("devtools", dependencies = c("Depends", "Imports", "LinkingTo"), quiet = T,
+                         ask = FALSE, lib = .libPaths()[1], update = F)
+        }
+    if (!is_installed("BiocManager")) {
+        install.packages("BiocManager", dependencies = c("Depends", "Imports", "LinkingTo"), quiet = T,
+                         ask = FALSE, lib = .libPaths()[1], update = F)
+        }
+    if (!is_installed("UniD")) {
+        install.packages("/Volumes/CBioinformatics/Methylation/classifiers/UniD", type = "source",
+                         dependencies = c("Depends", "Imports", "LinkingTo"), repo = NULL, quiet = T,
+                         ask = FALSE, lib = .libPaths()[1], update = F)
     }
+    library("BiocManager")
+    library("UniD")
     librarian::shelf(pkgs, ask=F, verbose=F, warn.conflicts = F, quietly = T)
     require("needs", quietly = T, warn.conflicts=F)
     library(verbose=F, warn.conflicts = F, quietly = T, package = "knitr")
@@ -66,29 +91,27 @@ LoadReportPkgs <- function(pkgs, optsLi, chunkOpts){
     knitr::opts_current$set(optsLi)
     knitr::opts_knit$set(root.dir = getwd())
     options(width = 300, scipen = 5)
-    library(verbose=F, warn.conflicts = F, quietly = T, package = "pander")
+    library(verbose = F, warn.conflicts = F, quietly = T, package = "pander")
     pander::panderOptions('table.alignment.default', "left")
     require("compiler")
-#    invisible(supM(compiler::enableJIT(3)))
     invisible(supM(compiler::compilePKGS(enable = TRUE)))
- #   supM(compiler::setCompilerOptions(suppressAll = TRUE, optimize = 3))
-
-knitr::opts_chunk$set(chunkOpts)
-supM(library(verbose=F, warn.conflicts = F, quietly = T, package="ggplot2"))
+    knitr::opts_chunk$set(chunkOpts)
+    supM(library(verbose=F, warn.conflicts = F, quietly = T, package="ggplot2"))
 }
 
 LoadReportPkgs(pkgs, optsLi, chunkOpts)
 
 GetSexMsetBa <- function(RGset, FFPE = NULL) {
-        is450k <- RGset@annotation[[1]] == "IlluminaHumanMethylation450k"
+    is450k <- RGset@annotation[[1]] == "IlluminaHumanMethylation450k"
     if (is450k) {
         library(verbose=F, warn.conflicts = F, quietly = T, package = "IlluminaHumanMethylation450kmanifest")
         library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b4")
         Mset <- mnp.v11b4::MNPpreprocessIllumina(RGset)
         if (is.null(FFPE)) {FFPE <- mnp.v11b4::MNPgetFFPE(RGset)}
         Mset_ba <- mnp.v11b4::MNPbatchadjust(Mset, FFPE)
-        if (FFPE == "Frozen") {Mset@preprocessMethod <-
-            c(Mset_ba@preprocessMethod, FFPE_Frozen.mnp.adjustment = '0.11')}
+        if (FFPE == "Frozen") {
+            Mset@preprocessMethod <- c(Mset_ba@preprocessMethod, FFPE_Frozen.mnp.adjustment = '0.11')
+            }
         sex <- ifelse(mnp.v11b4::MNPgetSex(Mset)$predictedSex == "M", "Male", "Female")
     } else {
         library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylationEPICmanifest")
@@ -104,7 +127,12 @@ GetSexMsetBa <- function(RGset, FFPE = NULL) {
         yest1 <- as.double(sexEstimate$`Y:(0,0.1]`) >= 0.12
         sex <- ifelse((yest == TRUE && yest1 == TRUE), "male", "female")
     }
-    return(list("sex"=sex, "Mset"= Mset, "Mset_ba"=Mset_ba, "FFPE"=FFPE))
+    return(list(
+        "sex" = sex,
+        "Mset" = Mset,
+        "Mset_ba" = Mset_ba,
+        "FFPE" = FFPE
+    ))
 }
 
 
@@ -146,94 +174,94 @@ SpecialMNPpredict6 <- function (betas, calibrate = T, type = "response", MCF = F
 
 GetFamilyProb <- function(is450k, Mset_ba, Mset){
     if(is450k == T){
-      library(
-        verbose = F,
-        warn.conflicts = F,
-        quietly = T,
-        package = "IlluminaHumanMethylation450kmanifest"
-      )
+        library(
+            verbose = F,
+            warn.conflicts = F,
+            quietly = T,
+            package = "IlluminaHumanMethylation450kmanifest"
+        )
         library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b4")
-      loadNamespace("mnp.v11b4")
-      gb$rf.pred <- mnp.v11b4::rf.pred
-      gb$calfit <- mnp.v11b4::calfit
-      gb$refset.center <- mnp.v11b4::refset.center
-      gb$reflist <- mnp.v11b4::reflist
-      betas <- minfi::getBeta(Mset_ba[, 1])  
-      probs_mcf <- tryCatch(
-          expr = {
-            probs_mcf <- mnp.v11b4::MNPpredict_betas(betas, type = 'prob', MCF = TRUE)
-            return(probs_mcf)
-        },
-        error = function(e) {
-            message("Error at GetFamilyProb in Brain Classifier v11 prediction mnp.v11b4::MNPpredict: \n", e)
-            message("Using MNPpredict(Mset[, 1]) instead of Mset_ba\n")
-            probs_mcf <- mnp.v11b4::MNPpredict(Mset[, 1], type = 'prob', MCF = TRUE)
-            return(probs_mcf)
+        loadNamespace("mnp.v11b4")
+        gb$rf.pred <- mnp.v11b4::rf.pred
+        gb$calfit <- mnp.v11b4::calfit
+        gb$refset.center <- mnp.v11b4::refset.center
+        gb$reflist <- mnp.v11b4::reflist
+        betas <- minfi::getBeta(Mset_ba[, 1])  
+        probs_mcf <- tryCatch(
+            expr = {
+                probs_mcf <- mnp.v11b4::MNPpredict_betas(betas, type = 'prob', MCF = TRUE)
+                return(probs_mcf)
+            },
+            error = function(e) {
+                message("Error at GetFamilyProb in Brain Classifier v11 prediction mnp.v11b4::MNPpredict: \n", e)
+                message("Using MNPpredict(Mset[, 1]) instead of Mset_ba\n")
+                probs_mcf <- mnp.v11b4::MNPpredict(Mset[, 1], type = 'prob', MCF = TRUE)
+                return(probs_mcf)
             }
         )
         return(probs_mcf)
     }else{
-      library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylationEPICmanifest")
-      library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b6")
-      loadNamespace("mnp.v11b6")
-      gb$rf.pred <- mnp.v11b6::rf.pred
-      gb$calfit <- mnp.v11b6::calfit
-      gb$refset.center <- mnp.v11b6::refset.center
-      gb$reflist <- mnp.v11b6::reflist
-      probs_mcf <- tryCatch(
-        expr = {
-          probs_mcf <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob', MCF = TRUE)
-          return(probs_mcf)
-        },
-        error = function(e) {
-            message("Error at GetFamilyProb in Brain Classifier v11 function mnp.v11b6::MNPpredict:\n", e)
-            message("Trying SpecialMNPpredict6...")
-            betas <- minfi::getBeta(Mset_ba[, 1], type = "Illumina")
-            probs_mcf <- SpecialMNPpredict6(betas, type = 'prob', MCF = TRUE)
-            return(probs_mcf)
+        library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylationEPICmanifest")
+        library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b6")
+        loadNamespace("mnp.v11b6")
+        gb$rf.pred <- mnp.v11b6::rf.pred
+        gb$calfit <- mnp.v11b6::calfit
+        gb$refset.center <- mnp.v11b6::refset.center
+        gb$reflist <- mnp.v11b6::reflist
+        probs_mcf <- tryCatch(
+            expr = {
+                probs_mcf <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob', MCF = TRUE)
+                return(probs_mcf)
+            },
+            error = function(e) {
+                message("Error at GetFamilyProb in Brain Classifier v11 function mnp.v11b6::MNPpredict:\n", e)
+                message("Trying SpecialMNPpredict6...")
+                betas <- minfi::getBeta(Mset_ba[, 1], type = "Illumina")
+                probs_mcf <- SpecialMNPpredict6(betas, type = 'prob', MCF = TRUE)
+                return(probs_mcf)
             }
-         )
-      }
+        )
+    }
 }
-                            
+
 
 GetMnpV11Prob <- function(Mset_ba) {
-  probs <- tryCatch(
-      expr = {
-        probs <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob')
-        return(probs)
-      },
-      error = function(e) {
-        message("Error at GetMnpV11Prob in Brain Classifier v11 function mnp.v11b6::MNPpredict:\n", e)
-        message("Trying SpecialMNPpredict6...")
-        betas <- minfi::getBeta(Mset_ba[, 1], type = "Illumina")
-        probs <- SpecialMNPpredict6(betas, type = 'prob')
-        return(probs)
-      }
+    probs <- tryCatch(
+        expr = {
+            probs <- mnp.v11b6::MNPpredict(Mset_ba[, 1], type = 'prob')
+            return(probs)
+        },
+        error = function(e) {
+            message("Error at GetMnpV11Prob in Brain Classifier v11 function mnp.v11b6::MNPpredict:\n", e)
+            message("Trying SpecialMNPpredict6...")
+            betas <- minfi::getBeta(Mset_ba[, 1], type = "Illumina")
+            probs <- SpecialMNPpredict6(betas, type = 'prob')
+            return(probs)
+        }
     )
-  return(probs)
+    return(probs)
 }
 
 LoadMnpManifest <- function(is450k){
-   if(is450k==T){
-      library(verbose = F, warn.conflicts = F, quietly = T, package = "IlluminaHumanMethylation450kmanifest")
-      library(verbose = F, warn.conflicts = F, quietly = T, package = "mnp.v11b4")
-      try(unloadNamespace("mnp.v11b6"), silent = T)
-      try(detach_package("mnp.v11b6"), silent = T)
-      invisible(loadNamespace("mnp.v11b4")) 
-      invisible(requireNamespace("mnp.v11b4"))
-      require(warn.conflicts = F, quietly = T, package = "mnp.v11b4")
+    if(is450k==T){
+        library(verbose = F, warn.conflicts = F, quietly = T, package = "IlluminaHumanMethylation450kmanifest")
+        library(verbose = F, warn.conflicts = F, quietly = T, package = "mnp.v11b4")
+        try(unloadNamespace("mnp.v11b6"), silent = T)
+        try(detach_package("mnp.v11b6"), silent = T)
+        invisible(loadNamespace("mnp.v11b4")) 
+        invisible(requireNamespace("mnp.v11b4"))
+        require(warn.conflicts = F, quietly = T, package = "mnp.v11b4")
     }else{
-      library(verbose = F, warn.conflicts = F, quietly = T, package = "IlluminaHumanMethylationEPICmanifest")
-      library(verbose = F, warn.conflicts = F, quietly = T, package = "mnp.v11b6")
-      try(unloadNamespace("mnp.v11b4"), silent = T)
-      try(detach_package("mnp.v11b4"), silent = T)
-      invisible(loadNamespace("mnp.v11b6"))
-      invisible(requireNamespace("mnp.v11b6"))
-      require(warn.conflicts = F, quietly = T, package = "mnp.v11b6")
+        library(verbose = F, warn.conflicts = F, quietly = T, package = "IlluminaHumanMethylationEPICmanifest")
+        library(verbose = F, warn.conflicts = F, quietly = T, package = "mnp.v11b6")
+        try(unloadNamespace("mnp.v11b4"), silent = T)
+        try(detach_package("mnp.v11b4"), silent = T)
+        invisible(loadNamespace("mnp.v11b6"))
+        invisible(requireNamespace("mnp.v11b6"))
+        require(warn.conflicts = F, quietly = T, package = "mnp.v11b6")
     }
 }
-                            
+
 
 GetFamScore <- function(out_class_family){
     fsco <- as.numeric(paste0(out_class_family$`Class Score`[1]))
@@ -259,8 +287,8 @@ GetOutFamily <- function(is450k, Mset_ba, Mset) {
     eps <- 1e-3
     out_class_family <- probs_mcf[oo_mcf[1:5]]
     out_class_family <- cbind(
-            round(pmax(pmin(out_class_family, 1 - eps), eps),3),
-            colnames(probs_mcf)[oo_mcf][1:5]
+        round(pmax(pmin(out_class_family, 1 - eps), eps),3),
+        colnames(probs_mcf)[oo_mcf][1:5]
     )
     colnames(out_class_family) <- c("Class Score","Methylation Family")
     out_class_family <- as.data.frame(out_class_family)
@@ -281,33 +309,33 @@ detach_package <- function(pkg, character.only = FALSE) {
 
 
 Get450kProb <- function(betas){
-  betas <- betas[match(rownames(mnp.v11b4::rf.pred$importance), rownames(betas)), drop = F]
-  pred <- predict(mnp.v11b4::rf.pred, t(betas), type = "prob")
-  sidat <- rownames(pred)
-  classes <- colnames(pred)
-  currData <- predict(mnp.v11b4::calfit$glmnet.fit, newx = pred, type = "response", s = 0.000683)
-  pred <- matrix(currData, nrow = nrow(pred))
-  class(pred) <- "numeric"
-  storage.mode(pred) <- "numeric"
-  colnames(pred) <- classes
-  rownames(pred) <- sidat
-  return(pred)
+    betas <- betas[match(rownames(mnp.v11b4::rf.pred$importance), rownames(betas)), drop = F]
+    pred <- predict(mnp.v11b4::rf.pred, t(betas), type = "prob")
+    sidat <- rownames(pred)
+    classes <- colnames(pred)
+    currData <- predict(mnp.v11b4::calfit$glmnet.fit, newx = pred, type = "response", s = 0.000683)
+    pred <- matrix(currData, nrow = nrow(pred))
+    class(pred) <- "numeric"
+    storage.mode(pred) <- "numeric"
+    colnames(pred) <- classes
+    rownames(pred) <- sidat
+    return(pred)
 }
 
 
 GetProbData <- function(is450k, Mset_ba, Mset) {
-   LoadMnpManifest(is450k)
+    LoadMnpManifest(is450k)
     if(!exists('calfit')){
         load(file.path("/Volumes/CBioinformatics/Methylation/Methylation_classifier_v11b6/",
                        "mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData"))
     }
     if(is450k==T) {
-      betas <- minfi::getBeta(Mset_ba[, 1])
-      probs <- Get450kProb(betas)
-      return(probs)
+        betas <- minfi::getBeta(Mset_ba[, 1])
+        probs <- Get450kProb(betas)
+        return(probs)
     }else{
-      probs <- GetMnpV11Prob(Mset_ba)
-      return(probs)
+        probs <- GetMnpV11Prob(Mset_ba)
+        return(probs)
     }
 }
 
@@ -337,8 +365,8 @@ GetOutClass <- function(msetDat) {
     Mset <- msetDat$Mset
     is450k <- Mset_ba@annotation[["array"]] != "IlluminaHumanMethylationEPIC"
     if(is450k==T){
-      try(unloadNamespace("mnp.v11b6"),T)
-      library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b4", mask.ok = T)
+        try(unloadNamespace("mnp.v11b6"),T)
+        library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v11b4", mask.ok = T)
         requireNamespace("mnp.v11b4", quietly = T)
     }else{
         try(unloadNamespace("mnp.v11b4"),T)
@@ -355,13 +383,13 @@ GetOutClass <- function(msetDat) {
     if(is450k==T){
         colToMatch <- colnames(probs)[oo][1]
         idx <- match(colToMatch, mnp.v11b4::reflist[, 4])
-      if(is.na(idx)){
-        colToMatch <- stringr::str_replace_all(colToMatch, "_", "")
-        newList <- stringr::str_replace_all( mnp.v11b4::reflist[, 4], "_", "")
-        idx <- match(colToMatch, newList)
-       }
+        if(is.na(idx)){
+            colToMatch <- stringr::str_replace_all(colToMatch, "_", "")
+            newList <- stringr::str_replace_all( mnp.v11b4::reflist[, 4], "_", "")
+            idx <- match(colToMatch, newList)
+        }
     }else{
-      idx <- match(colnames(probs)[oo][1], mnp.v11b6::reflist[,2])
+        idx <- match(colnames(probs)[oo][1], mnp.v11b6::reflist[,2])
     }
     stopifnot(!is.na(idx))
     out <- as.data.frame(out)
@@ -374,7 +402,7 @@ GetOutClass <- function(msetDat) {
 GetV12score <- function(RGset, FFPE = NULL) {
     library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v12b6")
     library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylationEPICmanifest")
-#    load("/Volumes/CBioinformatics/Methylation/mnp_v12_R-package/mnp.v12b6/R/sysdata.rda")
+    #    load("/Volumes/CBioinformatics/Methylation/mnp_v12_R-package/mnp.v12b6/R/sysdata.rda")
     RGset <- RGset[,1]
     Mset12 <- mnp.v12b6::MNPpreprocessIllumina(RGset)
     if(is.null(FFPE)) FFPE <- mnp.v12b6::MNPgetFFPE(RGset)
@@ -410,10 +438,10 @@ PrintScoreTable <- function(outV12, dat) {
     v12redcap$Subgroup_score <- v12Data$Subclass[2]
     v12redcap <- v12redcap[1,-1]
     rownames(v12redcap) <- NULL
-        v12FiOut <- paste0(dat$run_id, "_v12.csv")
-        v12DirOut <- file.path(fs::path_home(), "Desktop", dat$run_id)
+    v12FiOut <- paste0(dat$run_id, "_v12.csv")
+    v12DirOut <- file.path(fs::path_home(), "Desktop", dat$run_id)
     redcsv <- file.path(v12DirOut, v12FiOut)
-        if(!dir.exists(v12DirOut)){dir.create(v12DirOut)}
+    if(!dir.exists(v12DirOut)){dir.create(v12DirOut)}
     if (file.exists(redcsv)) {
         dfRedcap = as.data.frame(read.csv(redcsv, header = T, row.names = NULL))
         redDF <- rbind(dfRedcap, v12redcap)
@@ -443,24 +471,24 @@ FormatSuppInfo <- function(suppinfo){
     return(suppinfo)
 }
 
-                           
+
 GetSuppInfo <- function(dat, RGset, msetDat) {
     suppinfo <- c(
-            paste(dat$sampleID),
-            paste(dat$run_id),
-            paste(dat$tech),
-            paste(dat$bnumber),
-            paste(dat$mp_number),
-            colnames(RGset),
-            minfi::annotation(RGset)[[1]],
-            msetDat$FFPE,
-            msetDat$sex
+        paste(dat$sampleID),
+        paste(dat$run_id),
+        paste(dat$tech),
+        paste(dat$bnumber),
+        paste(dat$mp_number),
+        colnames(RGset),
+        minfi::annotation(RGset)[[1]],
+        msetDat$FFPE,
+        msetDat$sex
     )
     suppinfo <- FormatSuppInfo(suppinfo)
     return(suppinfo)
 }
 
-                           
+
 GetCNVTables <- function(dra){
     gainDf <- t(data.frame(Gains = c(rownames(dra[(dra$Gain == T),]))))
     lossDf <- t(data.frame(Loss = c(rownames(dra[(dra$Loss == T),]))))
@@ -470,14 +498,14 @@ GetCNVTables <- function(dra){
     extra_css1 = "border-radius:0px;border-width:1px;border-style:solid;border-color:rgb(192,192,192);"
     txtc = "text-align:center;"
     gainTab <-
-    	gainDf %>% knitr::kable("html", kgh, align = 'clc') %>%
-    	kableExtra::kable_styling(kgb, full_width = F, position="left") %>%
-    	kableExtra::row_spec(row = 1, extra_css = extra_css1) %>%
+        gainDf %>% knitr::kable("html", kgh, align = 'clc') %>%
+        kableExtra::kable_styling(kgb, full_width = F, position="left") %>%
+        kableExtra::row_spec(row = 1, extra_css = extra_css1) %>%
         kableExtra::column_spec(column = 1, background = "palegreen", extra_css = txtc)
     lossTab <-
-    	lossDf %>% knitr::kable("html", kgh, align = 'clc') %>%
-    	kableExtra::kable_styling(kgb, full_width = F, position="left") %>%
-    	kableExtra::row_spec(row = 1, extra_css = extra_css1) %>%
+        lossDf %>% knitr::kable("html", kgh, align = 'clc') %>%
+        kableExtra::kable_styling(kgb, full_width = F, position="left") %>%
+        kableExtra::row_spec(row = 1, extra_css = extra_css1) %>%
         kableExtra::column_spec(column = 1, background = "#CD5C5C", extra_css = txtc)
     return(list("gainDf"=gainDf, "lossDf"=lossDf, "gainTab"=gainTab, "lossTab"=lossTab))
 }
@@ -521,26 +549,26 @@ GetClassProbTables <- function(outList){
     btso = c("bordered")
     kgb <- c("striped",font_size = 14, bootstrap_options = btso, position = "left")
     kgh <- c(booktabs = T, escape = F, linesep = "")
-
+    
     famTable <- out_class_family %>%
-    	knitr::kable("html",kgh,align='clc') %>%
-    	kableExtra::kable_styling(kgb, full_width = F, position="float_left") %>%
-    	kableExtra::column_spec(column=c(1,2),extra_css=xtraCss1) %>%
+        knitr::kable("html",kgh,align='clc') %>%
+        kableExtra::kable_styling(kgb, full_width = F, position="float_left") %>%
+        kableExtra::column_spec(column=c(1,2),extra_css=xtraCss1) %>%
         kableExtra::column_spec(column = 2, background = "rgb(204,255,204)", extra_css = txtc) %>%
         kableExtra::row_spec(row = 0, font_size = 16, background = "rgb(127,217,126)", color = "black") %>%
-    	kableExtra::row_spec(row=1,extra_css=xtraCss2)
-
+        kableExtra::row_spec(row=1,extra_css=xtraCss2)
+    
     grpTable <- out %>%
-    	knitr::kable("html",kgh,align='clc') %>%
+        knitr::kable("html",kgh,align='clc') %>%
         kableExtra::kable_styling(kgb, full_width = F) %>%
-    	kableExtra::column_spec(column=c(1,2), extra_css=xtraCss1) %>%
-    	kableExtra::column_spec(column=2,background="rgb(204,230,255)", extra_css=txtc) %>%
-    	kableExtra::row_spec(row=0,font_size=16,background="rgb(135,174,237)", color="black") %>%
-    	kableExtra::row_spec(row=1,extra_css=xtraCss3)
-
+        kableExtra::column_spec(column=c(1,2), extra_css=xtraCss1) %>%
+        kableExtra::column_spec(column=2,background="rgb(204,230,255)", extra_css=txtc) %>%
+        kableExtra::row_spec(row=0,font_size=16,background="rgb(135,174,237)", color="black") %>%
+        kableExtra::row_spec(row=1,extra_css=xtraCss3)
+    
     return(list("famTable" = famTable, "grpTable" = grpTable))
 }
-                      
+
 
 SuppInfoTable <- function(dat, RGset, msetDat){
     suppinfo <- GetSuppInfo(dat, RGset, msetDat)
@@ -549,8 +577,8 @@ SuppInfoTable <- function(dat, RGset, msetDat){
     kgb <- c("striped", font_size = 9, bootstrap_options = c("bordered"), position = "float_left")
     totCol <- ncol(suppinfo)
     suppTab <- suppinfo %>%
-    	knitr::kable("html",c(booktabs = T, escape = F, linesep = ""), align='clc') %>%
-    	kableExtra::kable_styling(kgb, full_width = F, position="left") %>%
+        knitr::kable("html",c(booktabs = T, escape = F, linesep = ""), align='clc') %>%
+        kableExtra::kable_styling(kgb, full_width = F, position="left") %>%
         column_spec(column = c(1:totCol), width = "200px") %>%
         column_spec(1, border_left = "3px solid white") %>%
         column_spec(5, border_right = "3px solid white") %>%
@@ -560,7 +588,7 @@ SuppInfoTable <- function(dat, RGset, msetDat){
     return(suppTab)
 }
 
-                      
+
 PrintClassTable <- function(outList,gitPath){
     classTables <- gb$GetClassProbTables(outList)
     knitr::asis_output(classTables$famTable)
@@ -569,7 +597,7 @@ PrintClassTable <- function(outList,gitPath){
     knitr::asis_output("<h4>Methylation Class Description</h4>")
 }
 
-                      
+
 PrintGainLoss <- function(gnLss){
     knitr::asis_output('<p class="cnvdesc"></p> <hr class="dotted"><h4>CNV Gains and Loss</h4>')
     if (nrow(gnLss$gainDf) > 0) {knitr::asis_output(gnLss$gainTab)}
@@ -577,13 +605,11 @@ PrintGainLoss <- function(gnLss){
     knitr::asis_output('<hr class="solid">')
 }
 
-                      
+
 GetRefList <- function(Mset_ba, outList) {
-  if (Mset_ba@annotation[["array"]] != "IlluminaHumanMethylationEPIC") {
-    return(I(as.character(mnp.v11b4::reflist[outList$idx,7])))
-  } else{
-    return(I(as.character(mnp.v11b6::reflist[outList$idx,7])))
-  }
+    if (Mset_ba@annotation[["array"]] != "IlluminaHumanMethylationEPIC") {
+        return(I(as.character(mnp.v11b4::reflist[outList$idx,7])))
+    } else{
+        return(I(as.character(mnp.v11b6::reflist[outList$idx,7])))
+    }
 }
-
-
