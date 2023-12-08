@@ -124,13 +124,25 @@ DebugDataFrame <-function(e, gb){
 }
 
 GetRedcapDF <- function(gb) {
-    gb$out <- gb$outList$out
-    familia <- gb$outList$out_class_family$`Methylation Family`[1]
-    fscore <- gb$outList$out_class_family$`Class Score`[1]
-    subfam <- gb$out$`Methylation Subgroup`[1]
-    subScore <- gb$out$`Subgroup Score`[1]
-    mgmtStat <- gb$mgmtValues$mgmtVal
     gb$is450k <- gb$RGset@annotation[["array"]] != "IlluminaHumanMethylationEPIC"
+    array_opt1 <- ifelse(gb$is450k, yes = "450k", no = "EPIC")
+    array_opt <- ifelse(gb$RGset@annotation[["array"]] == "IlluminaHumanMethylationEPICv2", yes = "EPICV2", no = array_opt1)
+    
+    if (array_opt == "EPICV2") {
+        familia <- gb$outList["family", "predicted"]
+        fscore <- gb$outList["family", "maxscore"]
+        subfam <- gb$outList["subclass", "predicted"]
+        subScore <- gb$outList["subclass", "maxscore"]
+        mgmtStat <- gb$mgmtValues
+    } else{
+        gb$out <- gb$outList$out
+        familia <- gb$outList$out_class_family$`Methylation Family`[1]
+        fscore <- gb$outList$out_class_family$`Class Score`[1]
+        subfam <- gb$out$`Methylation Subgroup`[1]
+        subScore <- gb$out$`Subgroup Score`[1]
+        mgmtStat <- gb$mgmtValues$mgmtVal
+    }
+    
     mlh_status <- gb$mlh1Pred$theValue$m.reslt
     mlh_total <- gb$mlh1Pred$theValue$MLH1.pos.loci
     
@@ -138,7 +150,7 @@ GetRedcapDF <- function(gb) {
         record_id = gb$dat$sampleID,
         b_number = paste(gb$dat$bnumber),
         barcode_and_row_column = colnames(gb$RGset),
-        array_type = ifelse(gb$is450k, yes = "450k", no = "EPIC"),
+        array_type = array_opt,
         classifier_sex = tolower(gb$msetDat$sex),
         classifier_score = gsub(",","", familia),
         classifier_value = gsub(",","", fscore),
