@@ -2,6 +2,8 @@ gb <- globalenv()
 assign("gb", gb)
 supM <- function(objTing){return(suppressMessages(suppressWarnings(objTing)))}
 assign(x = "supM", value = supM, envir = .GlobalEnv)
+options(install.packages.compile.from.source = "--no-multiarch")
+options(Ncpus = 4)
 
 pkgs <- c(
         "needs",
@@ -50,11 +52,11 @@ LoadReportPkgs <- function(pkgs, optsLi, chunkOpts){
     try(options(repos = rlis), silent=T)
     options("install.packages.compile.from.source" = "never")
     options("install.packages.check.source"="no")
-    if(!require("librarian")){install.packages("librarian", dependencies=T, quiet=T)}
-    if(!require("devtools")){install.packages("devtools", dependencies=T)}
-    if (!requireNamespace("BiocManager", quietly = TRUE)) {install.packages("BiocManager", dependencies = T)}
+    if(!require("librarian")){install.packages("librarian", dependencies = c("Depends", "Imports", "LinkingTo"), quiet=T)}
+    if(!require("devtools")){install.packages("devtools", dependencies = c("Depends", "Imports", "LinkingTo"))}
+    if (!requireNamespace("BiocManager", quietly = TRUE)) {install.packages("BiocManager", dependencies = c("Depends", "Imports", "LinkingTo"))}
     if(!requireNamespace("UniD", quietly = TRUE)) {
-        install.packages("/Volumes/CBioinformatics/Methylation/UniD", type = "source", dependencies = T, repo = NULL)
+        install.packages("/Volumes/CBioinformatics/Methylation/classifiers/UniD", type = "source", dependencies = c("Depends", "Imports", "LinkingTo"), repo = NULL)
     }
     librarian::shelf(pkgs, ask=F, verbose=F, warn.conflicts = F, quietly = T)
     require("needs", quietly = T, warn.conflicts=F)
