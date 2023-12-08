@@ -39,7 +39,7 @@ writeRedcapPred <- function(run_id, dfNewRed) {
 }
 
 SetDesktopOutput <- function(run_id){
-    redfolder <- file.path("~","Desktop", run_id)
+    redfolder <- file.path(fs::path_home(),"Desktop", run_id)
     redcsv <- file.path(redfolder, paste0(run_id,"_v11_Redcap.csv"))
     redcapDF <- data.frame(
         record_id = character(),
@@ -178,7 +178,7 @@ TryREDCap <- function(gb) {
 }
 
 CheckScoreCsv <- function(targets){
-    deskDir <- file.path("~", "Desktop", targets$RunID[1])
+    deskDir <- file.path(fs::path_home(), "Desktop", targets$RunID[1])
     if(!dir.exists(deskDir)){dir.create(deskDir)}
     #scoreFile <- file.path(deskDir, paste0(targets$RunID[1], "_v12.csv"))
     #if(!file.exists(scoreFile)){write.csv(v12df, file = scoreFile, row.names=F)}
