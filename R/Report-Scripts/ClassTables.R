@@ -64,10 +64,7 @@ LoadReportPkgs <- function(pkgs, optsLi, chunkOpts){
     try(options(repos = rlis), silent=T)
     options("install.packages.compile.from.source" = "never")
     options("install.packages.check.source"="no")
-    if(!require("librarian")){
-        install.packages("librarian", dependencies = c("Depends", "Imports", "LinkingTo"), quiet = T,
-                         ask = FALSE, lib = .libPaths()[1], update = F)
-        }
+    
     if(!is_installed("devtools")){
         install.packages("devtools", dependencies = c("Depends", "Imports", "LinkingTo"), quiet = T,
                          ask = FALSE, lib = .libPaths()[1], update = F)
@@ -76,7 +73,14 @@ LoadReportPkgs <- function(pkgs, optsLi, chunkOpts){
         install.packages("BiocManager", dependencies = c("Depends", "Imports", "LinkingTo"), quiet = T,
                          ask = FALSE, lib = .libPaths()[1], update = F)
         }
+    if(!require("librarian")){
+        install.packages("librarian", dependencies = c("Depends", "Imports", "LinkingTo"), quiet = T,
+                         ask = FALSE, lib = .libPaths()[1], update = F)
+        }
     if (!is_installed("UniD")) {
+        unid_deps <- c("plyr", "mlr", "wateRmelon", "glmnet", "RPMM", "minfi", "impute",
+                   "IlluminaHumanMethylationEPICmanifest", "IlluminaHumanMethylation450kmanifest")
+        librarian::shelf(unid_deps, ask = F, verbose = T, warn.conflicts = F, quietly = T)
         install.packages("/Volumes/CBioinformatics/Methylation/classifiers/UniD", type = "source",
                          dependencies = c("Depends", "Imports", "LinkingTo"), repo = NULL, quiet = T,
                          ask = FALSE, lib = .libPaths()[1], update = F)
