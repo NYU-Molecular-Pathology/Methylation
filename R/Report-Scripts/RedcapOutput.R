@@ -15,7 +15,7 @@ supM <- function(objTing){return(suppressMessages(suppressWarnings(objTing)))}
 gb <- globalenv(); assign("gb", gb)
 
 writeRedcapPred <- function(run_id, dfNewRed) {
-  redDir <- file.path("~", "Desktop", run_id)
+  redDir <- file.path(fs::path_home(), "Desktop", run_id)
   redcsv <- file.path(redDir, paste0(run_id, "_v11_Redcap.csv"))
   if (file.exists(redcsv)) {
     dfRedcap = read.csv(redcsv, header = T, row.names = NULL)
