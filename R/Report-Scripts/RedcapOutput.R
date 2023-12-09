@@ -183,6 +183,7 @@ GetRedcapDF <- function(gb) {
         run_number =  paste0(gb$dat$run_id),
         tm_number = paste0(gb$dat$mp_number)
     )
+    stopifnot(nrow(dfNewRed) > 0 & !is.null(dfNewRed$run_number))
     return(dfNewRed)
 }
 
@@ -192,6 +193,7 @@ TryREDCap <- function(gb) {
     gb$writeRedcapPred(gb$dat$run_id, dfNewRed = gb$GetRedcapDF(gb)),
     error = function(e) {
       gb$DebugDataFrame(e, gb)
+        stop("REDCap csv saving failed!")
     }
   )
 }
