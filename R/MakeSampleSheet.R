@@ -311,6 +311,12 @@ writeSampleSheet <- function(df, bn = NULL, sampleName, dnaNumber, Sentrix) {
         tech2 = df$Tech2,
         Date = df$Date
     )
+    runID <- paste0(df$Batch)[1]
+    is_validation <- sjmisc::str_contains(runID, "VAL")
+
+    if(is_validation){
+        samplesheet_csv$Sample_Name <- paste(samplesheet_csv$Sample_Name, "VAL", sep = "_")
+    }
     write.csv(samplesheet_csv, file = "samplesheet.csv", quote = F, row.names = F)
 }
 
