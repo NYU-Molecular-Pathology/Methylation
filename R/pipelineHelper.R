@@ -465,6 +465,8 @@ loopRender <- function(samList = NULL, data, redcapUp = T) {
 
 RenameFailed <- function(qcVals) {
     if (!is.null(qcVals)) {
+      message("qcVals")
+      print(qcVals)
         if (any(qcVals$qc_passed == "no")) {
             file.list <- dir(getwd(), pattern = ".html", full.names = T)
             toRename <- qcVals$record_id[qcVals$qc_passed == "no"]
