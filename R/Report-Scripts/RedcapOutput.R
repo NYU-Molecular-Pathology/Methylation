@@ -123,7 +123,7 @@ DebugDataFrame <-function(e, gb){
     message("mlh1_pos_loci: ", paste(gb$dat$mp_number))
 }
 
-GetRedcapDF <- function(gb) {
+gb$GetRedcapDF <- GetRedcapDF <- function(gb) {
     gb$is450k <- gb$RGset@annotation[["array"]] != "IlluminaHumanMethylationEPIC"
     array_opt1 <- ifelse(gb$is450k, yes = "450k", no = "EPIC")
     array_opt <- ifelse(gb$RGset@annotation[["array"]] == "IlluminaHumanMethylationEPICv2", yes = "EPICV2", no = array_opt1)
@@ -133,14 +133,14 @@ GetRedcapDF <- function(gb) {
         fscore <- gb$outList["family", "maxscore"]
         subfam <- gb$outList["subclass", "predicted"]
         subScore <- gb$outList["subclass", "maxscore"]
-        mgmtStat <- as.data.frame(gb$mgmtValues)
+        mgmtStat1 <- as.data.frame(gb$mgmtValues)
     } else{
         gb$out <- gb$outList$out
         familia <- gb$outList$out_class_family$`Methylation Family`[1]
         fscore <- gb$outList$out_class_family$`Class Score`[1]
         subfam <- gb$out$`Methylation Subgroup`[1]
         subScore <- gb$out$`Subgroup Score`[1]
-        mgmtStat <- gb$mgmtValues$mgmtVal
+        mgmtStat1 <- gb$mgmtValues$mgmtVal
     }
     
     mlh_status <- gb$mlh1Pred$theValue$m.reslt
@@ -156,7 +156,7 @@ GetRedcapDF <- function(gb) {
         classifier_value = gsub(",","", fscore),
         subgroup = gsub(",","", subfam),
         subgroup_score = gsub(",","", subScore),
-        mgmt_status = mgmtStat$Status,
+        mgmt_status = paste0(mgmtStat1$Status),
         mlh1_status = paste0(mlh_status),
         mlh1_pos_loci = paste0(mlh_total),
         second_tech = paste(gb$dat$tech2),
