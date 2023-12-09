@@ -138,6 +138,10 @@ CheckSampleQCmetrics <- function(runID) {
     qcVals$passed_qc <- with(qcVals, Passed_SI + Passed_BP + Passed_BS + Passed_HC + Passed_NC)
     qcVals$passed_qc <- ifelse(qcVals$passed_qc < 2, "yes", "no")
     final_qc <- data.frame(record_id = qcVals$RD.number, qc_passed = qcVals$passed_qc)
+    currVals <- final_qc$passed_qc
+    if(any(is.na(currVals))){
+        final_qc$passed_qc[is.na(currVals)] <- "no"
+    }
     return(final_qc)
 }
 
