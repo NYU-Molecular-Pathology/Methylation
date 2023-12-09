@@ -15,7 +15,7 @@ params:
 ```{r setup, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
 gb <- globalenv(); assign("gb", gb)
 # Source External Functions  ---------------------------------------
-gitPath="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/Report-Scripts"
+gitPath = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/Report-Scripts"
 devtools::source_url(file.path(gitPath, "QC-Scripts.R"))
 # Check Input Parameters -------------------------------------------
 runID <- gb$CheckParamRunID(params, gb)
@@ -75,25 +75,22 @@ par(mar = c(8, 8, 0, 0)) #it's important to have that in a separate chunk
 ```{r BioCParallel, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, results='hide'}
 gb <- globalenv(); assign("gb", gb)
 # Set Parallel Parameters --------------------------------------
-mcc = parallel::detectCores()/2
-BiocParallel::register(BiocParallel::MulticoreParam(mcc))
-mcParam <- BiocParallel::MulticoreParam(workers = mcc, progressbar = T)
 gb$totNum <- totNum <- gb$GetTotalPairs(gb$fixerrors)
 fixerrors <- as.data.frame(gb$fixerrors)
+
 # MethylAid Summarize ------------------------------------------
-sdata <<- MethylAid::summarize(fixerrors, verbose = T, batchSize = totNum, force = T, BPPARAM = mcParam)
-#sdata <- tryCatch(
-#    {
-#        sdata_temp <- MethylAid::summarize(fixerrors, verbose = TRUE, batchSize = totNum, force = TRUE, BPPARAM = mcParam)
-#        return(sdata_temp)
-#    },
-#    error = function(e) {
-#        message(paste("error with biocparallel:\n", e))
-#        sdata_temp <- MethylAid::summarize(fixerrors, verbose = TRUE, force = TRUE)
-#        return(sdata_temp)
-#    }
-#)
-gb$sdata <- sdata
+is_validation <- sjmisc::str_contains(gb$runID, "VAL")
+
+if(is_validation == T) {
+  gb$sdata <- sdata <- MethylAid::summarize(fixerrors, verbose = TRUE, force = TRUE)
+} else{
+    mcc = parallel::detectCores()/2
+    BiocParallel::register(BiocParallel::MulticoreParam(mcc))
+    mcParam <- BiocParallel::MulticoreParam(workers = mcc, progressbar = T)
+    gb$sdata <- sdata <- MethylAid::summarize(fixerrors, verbose = T, batchSize = totNum, force = T, BPPARAM = mcParam)
+}
+assign("sdata", sdata, envir = gb)
+
 ## Get MU Data & Colors ----------------------------------------
 gb$targets <- fixerrors
 MU <- log2(t(sdata@MU))
@@ -102,7 +99,8 @@ d <- sdata@plotdata; assign("d", sdata@plotdata, envir = gb)
 ## Merge and Rotate Data ----------------------------------------
 mergedMU <- merge(MU, targets, by = "row.names")
 data_rotated <- gb$rotateData(mergedMU, columns = c("Methylated", "Unmethylated"))
-data_rotated$x = data_rotated[,2]; data_rotated$y = data_rotated[,3]
+data_rotated$x = data_rotated[, 2]
+data_rotated$y = data_rotated[, 3]
 gb$data_rotated <- data_rotated
 MUvals <- gb$GetNewDt(data_rotated)
 plot.colours <- pals::glasbey()[1:(length(MUvals$final_data$Sample_Name))]
@@ -141,9 +139,7 @@ plotHC <- swm(plotParams(totNum, dParam = gb$GetNewDt(dat.hc), xincept = 12.75, 
 plotHC <- swm(makeLabels(totNum, plotName = paste0(pltNames[4]),
                          xName = "log2 sqrt(H*L)", yName = "log2 (H/L)", thePlot = plotHC))
 ## Plot DP --------------------------------------------------------------------------------
-dpDt <- gb$sdata@DPfreq
-df <- data.frame(x=1:length(dpDt), y=dpDt, row.names=names(dpDt))
-dat.dp <- gb$mergeDF(df, tg=gb$targets)
+dat.dp <- gb$get.dp.dat(gb)
 plotDP <- swm(plotParams(totNum, dParam = gb$GetNewDt(dat.dp), xincept = 0, yincept = 0.95))
 plotDP <- swm(makeLabels(totNum, plotName = paste0(pltNames[5]),
                          xName = "Samples", yName = "Pvalue", thePlot = plotDP))
@@ -202,8 +198,10 @@ summarName <- paste("Classifier Report Summary for", runID) # summary table head
 ```
 <hr class="solid"><h2>`r I(as.character(summarName))`</h2><div style="align-content:left;width:950px">
 ```{r label="Summary Table", fig.align="left", message=FALSE, echo=FALSE, warning=FALSE}
-redCsv <- file.path(fs::path_home(),"Desktop",runID, paste0(runID,"_Redcap.csv"))
-if(!file.exists(redCsv)){knitr::knit_exit()}
+redCsv <- file.path(fs::path_home(), "Desktop", runID, paste0(runID, "_Redcap.csv"))
+if(!file.exists(redCsv)) {
+  knitr::knit_exit()
+}
 mnpOutTb <- as.data.frame(read.csv(redCsv, strip.white = T))
 mnpOutTb <- unique(mnpOutTb)
 stopifnot(nrow(mnpOutTb) > 1)
