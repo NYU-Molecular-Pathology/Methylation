@@ -168,6 +168,7 @@ ValidateRedImport <- function(record) {
 
 
 loopRedcapImport <- function(data) {
+    msgFunName(cpOutLnk, "loopRedcapImport")
     if (!is.null(data)) {
         for (n in 1:nrow(data)) {
             record = c(data[n,])
@@ -360,6 +361,11 @@ CheckSarcRDnumber <- function(record){
 
 callApiImport <- function(rcon, recordName, runID) {
     msgFunName(cpOutLnk, "callApiImport")
+    is_validation <- sjmisc::str_contains(runID, "VAL")
+    has_val <- sjmisc::str_contains(recordName, "VAL")
+    if(is_validation == T & has_val == F){
+        recordName <- paste0(recordName, "_VAL")
+    }
     isEmpty <- checkRedcapRecord(recordName, "subgroup")
     if (isEmpty == '') {
         DoRedcapApi(rcon, recordName, runID)
@@ -415,7 +421,16 @@ uploadToRedcap <- function(file.list, deskCSV = T, runNumb = NULL) {
     htmlLi <- stringr::str_replace_all(basename(file.list), ".html", "")
     message(paste(htmlLi))
     for (recordName in htmlLi) {
+        is_validation <- sjmisc::str_contains(runNumb, "VAL")
+    has_val <- sjmisc::str_contains(recordName, "VAL")
+    if(is_validation == T & has_val == F){
+        recordName <- paste0(recordName, "_VAL")
+    }
         recordName2 <- CheckSarcRDnumber(recordName)
+        has_val <- sjmisc::str_contains(recordName2, "VAL")
+    if(is_validation == T & has_val == F){
+        recordName2 <- paste0(recordName2, "_VAL")
+    }
         callApiImport(rcon, recordName2, runID)
         isEmpty <- checkRedcapRecord(recordName2) == ''
         callApiFile(rcon, recordName, isEmpty)
@@ -518,6 +533,12 @@ copy2outFolder <- function(clinDrv = NULL, runID, runYear = NULL) {
 
 CallApiFileForce <- function(rcon, recordName) {
     msgFunName(cpOutLnk, "CallApiFileForce")
+    is_validation <- sjmisc::str_contains(gb$runID, "VAL")
+    has_val <- sjmisc::str_contains(recordName, "VAL")
+    if(is_validation == T & has_val == F){
+        recordName <- paste0(recordName, "_VAL")
+    }
+    
     recordFi <- paste0(recordName, ".html")
     message("\n", gb$mkBlue("Importing Record File:"), paste0(" ", recordFi))
     fiPath <- file.path(getwd(), recordFi)
