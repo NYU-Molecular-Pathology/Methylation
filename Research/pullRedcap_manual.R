@@ -129,16 +129,18 @@ grabAllRecords <- function(flds, rcon){
     return(as.data.frame(dbCols))
 }
 
-search.redcap <- function(rd_numbers, token=NULL, flds=NULL) {
-    if(is.null(token)){message("You must provide an ApiToken!")};stopifnot(!is.null(token))
+search.redcap <- function(rd_numbers, token = NULL, flds = NULL) {
+    if(is.null(token)){
+        stop("You must provide an ApiToken!")
+    }
     rcon <- redcapAPI::redcapConnection(gb$apiLink, token)
     if (is.null(flds)){
          flds <- c("record_id", "b_number", "primary_tech", "second_tech"," run_number",
                    "barcode_and_row_column", "accession_number", "arrived")
     }
-    result <- redcapAPI::exportRecordsTyped(rcon,records = rd_numbers,fields = flds, dag = F,factors = F,
-                                       labels = F,dates = F, form_complete_auto = F,format = 'csv')
     
+    result <- redcapAPI::exportRecordsTyped(rcon, records = rd_numbers, fields = flds, dag = F, factors = F,
+                                       labels = F, dates = F, form_complete_auto = F, format = 'csv')
     allFound <- rd_numbers %in% result$record_id
     missing <- which(allFound == FALSE)
 
@@ -153,9 +155,10 @@ search.redcap <- function(rd_numbers, token=NULL, flds=NULL) {
 
 # Sets default variable paths/names
 getDefaults <- function() {
-    cbVol <- switch (Sys.info()[['sysname']],
-                     "Darwin" = "/Volumes/CBioinformatics/Methylation",
-                     "Linux" = "~/molecpathlab/production/Methylation"
+    cbVol <- switch (
+        Sys.info()[['sysname']],
+        "Darwin" = "/Volumes/CBioinformatics/Methylation",
+        "Linux" = "~/molecpathlab/production/Methylation"
     )
     moVol = "/Volumes/molecular"
     rsVol = "/Volumes/snudem01labspace"
@@ -175,10 +178,12 @@ getDefaults <- function() {
     return(defaultParams)
 }
 
+                      
 setVar <- function(valueName,val){
     return(assign(valueName, val, envir=.GlobalEnv))
 }
 
+                      
 assignVar <- function(varStr, assignedVal){
     return(
         tryCatch(
