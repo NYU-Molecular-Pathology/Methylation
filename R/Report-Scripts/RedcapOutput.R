@@ -133,7 +133,7 @@ GetRedcapDF <- function(gb) {
         fscore <- gb$outList["family", "maxscore"]
         subfam <- gb$outList["subclass", "predicted"]
         subScore <- gb$outList["subclass", "maxscore"]
-        mgmtStat <- gb$mgmtValues
+        mgmtStat <- as.data.frame(gb$mgmtValues)
     } else{
         gb$out <- gb$outList$out
         familia <- gb$outList$out_class_family$`Methylation Family`[1]
