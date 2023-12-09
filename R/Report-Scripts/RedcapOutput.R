@@ -14,8 +14,10 @@ makePost <- function(dfNewRed, params){
 supM <- function(objTing){return(suppressMessages(suppressWarnings(objTing)))}
 gb <- globalenv(); assign("gb", gb)
 
-writeRedcapPred <- function(run_id, dfNewRed) {
+writeRedcapPred <- function(run_id = NULL, dfNewRed) {
+  stopifnot(length(run_id) > 0 & !is.na(run_id) & !is.null(run_id))
   redDir <- file.path(fs::path_home(), "Desktop", run_id)
+  if(!dir.exists(redDir)){dir.create(redDir, recursive = T)}
   redcsv <- file.path(redDir, paste0(run_id, "_v11_Redcap.csv"))
   if (file.exists(redcsv)) {
     dfRedcap = read.csv(redcsv, header = T, row.names = NULL)
