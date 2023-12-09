@@ -113,8 +113,8 @@ DebugDataFrame <- function(e, gb){
     subfam <- fixNull(gb$out$`Methylation Subgroup`[1])
     subScore <- fixNull(gb$out$`Subgroup Score`[1])
     mgmtStat1 <- fixNull(gb$mgmtValues$mgmtVal)
-     
       }
+    
     mlh_status <- gb$mlh1Pred$theValue$m.reslt
     mlh_total <- gb$mlh1Pred$theValue$MLH1.pos.loci
     mlh1_status <- fixNull(paste0(mlh_status))
