@@ -454,7 +454,7 @@ loopRender <- function(samList = NULL, data, redcapUp = T) {
         do_report(single_data, gb$genCn)
         msgProgress(2, i, samList)
         if (redcapUp == T) {
-            sh_Dat <- wksh[data[i, 1], ]
+            sh_Dat <- wksh[i, ]
             gb$importSingle(sh_Dat)
         }
         currIdx = currIdx + 1
