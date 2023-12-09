@@ -65,23 +65,29 @@ generateCNVpng <- function(RGsetEpic, sampleName) {
     dev.off(); message("File saved:\n",imgName,"\n")
 }
 
-getRGset<- function(runPath, sentrix){
+
+getRGset <- function(runPath, sentrix){
     msgFunName(pipeLnk,"getRGset")
     barcode = stringr::str_split_fixed(sentrix, "_",2)[1]
     RGsetEpic <- minfi::read.metharray(file.path(runPath, sentrix), verbose = T, force = T)
-    aEpic=c(array="IlluminaHumanMethylationEPIC", annotation="ilm10b4.hg19")
-    a450k=c(array="IlluminaHumanMethylation450k", annotation="ilmn12.hg19")
-    if (RGsetEpic@annotation['array'] == "IlluminaHumanMethylationEPIC") {
+
+    aEpic = c(array = "IlluminaHumanMethylationEPIC", annotation = "ilm10b4.hg19")
+    a450k = c(array = "IlluminaHumanMethylation450k", annotation = "ilmn12.hg19")
+    arrayAnno <- RGsetEpic@annotation[['array']]
+    if (arrayAnno == "IlluminaHumanMethylationEPICv2") {
         return(RGsetEpic)
     }
-    if (RGsetEpic@annotation['array'] == "IlluminaHumanMethylation450k") {
+    if (arrayAnno == "IlluminaHumanMethylationEPIC") {
+        return(RGsetEpic)
+    }
+    if (arrayAnno == "IlluminaHumanMethylation450k") {
         RGsetEpic@annotation = a450k
         return(RGsetEpic)
     }
-    if (as.numeric(barcode) >= as.numeric("204220033000")) {
-        RGsetEpic@annotation = aEpic
+    if (as.numeric(barcode) <= as.numeric("204220033000")) {
+        RGsetEpic@annotation = a450k
     } else{
-        RGsetEpic@annotation = a450k
+        RGsetEpic@annotation = aEpic
     }
     return(RGsetEpic)
 }
@@ -89,9 +95,11 @@ getRGset<- function(runPath, sentrix){
 CopyRmdFile <- function(runID, rmdFile){
     msgFunName(pipeLnk, "CopyRmdFile")
     message("runID: ", runID, " rmdFile: ",rmdFile)
-    if (!file.exists(rmdFile)) {message(bkRed("rmdFile.rmd not found:"), "\n", rmdFile)}
+    if (!file.exists(rmdFile)) {
+      message(bkRed("rmdFile.rmd not found:"), "\n", rmdFile)
+    }
     qcFileName = paste0(runID, "_QC.html") # output file name
-    if(stringr::str_detect(rmdFile, pattern = "QC")==T) {
+    if(stringr::str_detect(rmdFile, pattern = "QC") == T) {
         if (file.exists(file.path(getwd(), qcFileName))) {
             warning(qcFileName, " Already Exists! Detete file to output new QC")
             return(NULL)
