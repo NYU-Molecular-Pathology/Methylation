@@ -15,7 +15,9 @@ formals(install.packages)$verbose <- T
 formals(install.packages)$ask <- F
 
 args <- commandArgs(T)
-if(!requireNamespace("devtools")){install.packages("devtools", quiet=T)}
+if (!requireNamespace("devtools")) {
+    install.packages("devtools", quiet=T)
+}
 
 # Input Arguments ------------------------------------------
 try(args[1] -> token)
@@ -33,8 +35,8 @@ rsch.idat = paste0(file.path(rsVol,"idats"))
 clin.idat = paste0(file.path(moVol, "MOLECULAR/iScan"))
 
 # REDcap Heading Fields to pull for SampleSheet -----
-flds = c("record_id","b_number","tm_number","accession_number","block","diagnosis",
-         "organ","tissue_comments","run_number", "nyu_mrn")
+flds = c("record_id", "b_number", "tm_number", "accession_number", "block", "diagnosis",
+         "organ", "tissue_comments", "run_number", "nyu_mrn")
 
 # Load redcapAPI Package -----
 if(suppressWarnings(!requireNamespace("redcapAPI"))){
@@ -54,8 +56,7 @@ are_valid <- function(...) {
 if(!are_valid(copyToFolder)){
     copyToFolder <- getwd()
 }
-
-#setwd(copyToFolder)
+try(setwd(copyToFolder), T)
 
 supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
 
@@ -73,31 +74,57 @@ checkMounts <- function(){
     } else {message("\n",crayon::bgGreen("Z-drive path is accessible"),"\n")}
 }
 
+is_installed <- function(package_name) {
+    tryCatch(
+        expr = {
+            return(length(find.package(package_name, quiet = TRUE)) > 0)
+        },
+        error = function(e) {
+            return(FALSE)
+        }
+    )
+}
+
+
 # Functions to load packages and get redcap info -----
 loadPacks <- function(){
-    pkgs = c("data.table", "foreach", "openxlsx","jsonlite","RCurl","readxl","stringr","tidyverse","crayon")
+    pkgs <- c("data.table", "foreach", "openxlsx", "jsonlite", "RCurl", "readxl", "stringr", "tidyverse", "crayon")
+    
     rlis = getOption("repos")
     rlis["CRAN"] = "http://cran.us.r-project.org"
     options(repos = rlis)
+    
     if (Sys.info()[['sysname']]=="Darwin") {
-        bothType <- "both"
+        instType <- "both"
     }else{
-        bothType <- "source"
+        instType <- "source"
     }
-    invisible(lapply(pkgs, function(pk){
-        if(suppressWarnings(!requireNamespace(pk))){
-            install.packages(pk,dependencies=T, verbose=T, repos="http://cran.us.r-project.org", type=bothType)
-        }}))
-    if(!requireNamespace("redcapAPI")){install.packages("redcapAPI", dependencies = T, type=bothType,ask=F)}
-    if(!requireNamespace("remotes")){install.packages("remotes", dependencies=T)}
+    
+    invisible(lapply(pkgs, function(pk) {
+        if (suppressWarnings(!requireNamespace(pk))) {
+            install.packages(
+                pk, dependencies = c("Depends", "Imports", "LinkingTo"),
+                verbose = T, repos = "http://cran.us.r-project.org", type = instType)
+            }
+    }))
+    
+    if (!is_installed("remotes")) {
+        install.packages("remotes", dependencies = c("Depends", "Imports", "LinkingTo"), type = instType, ask = F)
+        }
+    
+    if (!is_installed("redcapAPI")) {
+        install.packages("redcapAPI", dependencies = c("Depends", "Imports", "LinkingTo"), type = instType, ask = F)
+        }
+    
     library("redcapAPI")
-    library(dplyr)
+    library("dplyr")
     requireNamespace('foreach')
 }
 
 # API Call functions -----
 grabAllRecords <- function(flds, rcon){
-    params = list(rcon, fields=flds, labels=F, dates = F, survey = F, dag = F, factors=F, form_complete_auto=F)
+    params = list(rcon, fields = flds, labels = F, dates = F, survey = F,
+                  dag = F, factors = F, form_complete_auto = F)
     dbCols <- do.call(redcapAPI::exportRecords, c(params))
     return(as.data.frame(dbCols))
 }
@@ -105,10 +132,13 @@ grabAllRecords <- function(flds, rcon){
 search.redcap <- function(rd_numbers, token=NULL, flds=NULL) {
     if(is.null(token)){message("You must provide an ApiToken!")};stopifnot(!is.null(token))
     rcon <- redcapAPI::redcapConnection(gb$apiLink, token)
-    if (is.null(flds)){flds = c("record_id","b_number","primary_tech","second_tech","run_number",
-                                "barcode_and_row_column","accession_number","arrived")}
+    if (is.null(flds)){
+         flds <- c("record_id", "b_number", "primary_tech", "second_tech"," run_number",
+                   "barcode_and_row_column", "accession_number", "arrived")
+    }
     result <- redcapAPI::exportRecordsTyped(rcon,records = rd_numbers,fields = flds, dag = F,factors = F,
                                        labels = F,dates = F, form_complete_auto = F,format = 'csv')
+    
     allFound <- rd_numbers %in% result$record_id
     missing <- which(allFound == FALSE)
 
@@ -222,8 +252,6 @@ defineParams <- function(mnp.pk.loc = NULL,
     }
 }
 
-
-
 setDirectory <- function(foldr) {
     bsDir = paste("cd", foldr)
     if (dir.exists(foldr)) {
@@ -243,8 +271,8 @@ sourceFuns <- function(workingPath = NULL) {
     if (is.null(workingPath)) {workingPath = getwd()}
     scripts <- paste0(mainHub, script.list)
     invisible(lapply(scripts, function(i){devtools::source_url(i)}))
-    setDirectory(workingPath)
-    return(defineParams(loadClassifier=F))
+    try(setDirectory(workingPath), T)
+    return(defineParams(loadClassifier = F))
 }
 
 readInfo <- function(inputSheet) {
@@ -258,14 +286,10 @@ readInfo <- function(inputSheet) {
         message("FileType is .xlsx, executing readxl::read_excel...")
         findFlag <- endsWith(inputSheet, ".xlsx") == T
         if (findFlag) {
-            rds <- readxl::read_excel(inputSheet,
-                                      col_names = F,
-                                      sheet = 1)[, 1]
+            rds <- readxl::read_excel(inputSheet, col_names = F, sheet = 1)[, 1]
         } else{
-            rds <-
-                read.delim(
-                    file.path(getwd(), "samplesheet.csv"),
-                    header = F, sep = ",", colClasses = character(), row.names = NULL)[, 1]
+            rds <- read.delim(file.path(getwd(), "samplesheet.csv"),
+                              header = F, sep = ",", colClasses = character(), row.names = NULL)[, 1]
         }
     }
     if (typeof(rds) != "character") {
