@@ -90,29 +90,29 @@ if(is450k==T){
 }
 
 
-DebugDataFrame <- function(e, gb){
+DebugDataFrame <- function(e, gb) {
     eMsg <- crayon::bgRed("Potentially missing variable(s) in REDCap dataframe:")
     message(e,"\n",eMsg,"\n")
-    fixNull <- function(obj) {if (is.null(obj)|length(obj)==0) {return("NONE or Missing")} else{return(obj)}}
+    fixNull <- function(obj) {if (is.null(obj)|length(obj) == 0) {return("NONE or Missing")} else{return(obj)}}
     
     gb$is450k <- gb$RGset@annotation[["array"]] != "IlluminaHumanMethylationEPIC"
     array_opt1 <- ifelse(gb$is450k, yes = "450k", no = "EPIC")
     array_opt <- ifelse(gb$RGset@annotation[["array"]] == "IlluminaHumanMethylationEPICv2", yes = "EPICV2", no = array_opt1)
     
     if (array_opt == "EPICV2") {
-      familia <- gb$outList["family", "predicted"]
+        familia <- gb$outList["family", "predicted"]
         fscore <- gb$outList["family", "maxscore"]
         subfam <- gb$outList["subclass", "predicted"]
         subScore <- gb$outList["subclass", "maxscore"]
         mgmtStat1 <- as.data.frame(gb$mgmtValues)
         
-    }else{
+    } else{
         out <- fixNull(gb$outList$out)
-    familia <- fixNull(gb$outList$out_class_family$`Methylation Family`[1])
-    fscore <- fixNull(gb$outList$out_class_family$`Class Score`[1])
-    subfam <- fixNull(gb$out$`Methylation Subgroup`[1])
-    subScore <- fixNull(gb$out$`Subgroup Score`[1])
-    mgmtStat1 <- fixNull(gb$mgmtValues$mgmtVal)
+        familia <- fixNull(gb$outList$out_class_family$`Methylation Family`[1])
+        fscore <- fixNull(gb$outList$out_class_family$`Class Score`[1])
+        subfam <- fixNull(gb$out$`Methylation Subgroup`[1])
+        subScore <- fixNull(gb$out$`Subgroup Score`[1])
+        mgmtStat1 <- fixNull(gb$mgmtValues$mgmtVal)
       }
     
     mlh_status <- gb$mlh1Pred$theValue$m.reslt
@@ -139,7 +139,8 @@ DebugDataFrame <- function(e, gb){
     message("mlh1_pos_loci: ", paste(gb$dat$mp_number))
 }
 
-gb$GetRedcapDF <- GetRedcapDF <- function(gb) {
+
+GetRedcapDF <- function(gb) {
     gb$is450k <- gb$RGset@annotation[["array"]] != "IlluminaHumanMethylationEPIC"
     array_opt1 <- ifelse(gb$is450k, yes = "450k", no = "EPIC")
     array_opt <- ifelse(gb$RGset@annotation[["array"]] == "IlluminaHumanMethylationEPICv2", yes = "EPICV2", no = array_opt1)
@@ -163,11 +164,11 @@ gb$GetRedcapDF <- GetRedcapDF <- function(gb) {
     mlh_total <- gb$mlh1Pred$theValue$MLH1.pos.loci
     
     dfNewRed <- data.frame(
-        record_id = gb$dat$sampleID,
+        record_id = paste0(gb$dat$sampleID),
         b_number = paste(gb$dat$bnumber),
-        barcode_and_row_column = colnames(gb$RGset),
+        barcode_and_row_column = paste0(colnames(gb$RGset)),
         array_type = array_opt,
-        classifier_sex = tolower(gb$msetDat$sex),
+        classifier_sex = paste0(tolower(gb$msetDat$sex)),
         classifier_score = gsub(",","", familia),
         classifier_value = gsub(",","", fscore),
         subgroup = gsub(",","", subfam),
@@ -175,14 +176,14 @@ gb$GetRedcapDF <- GetRedcapDF <- function(gb) {
         mgmt_status = paste0(mgmtStat1$Status),
         mlh1_status = paste0(mlh_status),
         mlh1_pos_loci = paste0(mlh_total),
-        second_tech = paste(gb$dat$tech2),
-        primary_tech = paste(gb$dat$tech),
-        run_number =  paste(gb$dat$run_id),
-        tm_number = paste(gb$dat$mp_number)
+        second_tech = paste0(gb$dat$tech2),
+        primary_tech = paste0(gb$dat$tech),
+        run_number =  paste0(gb$dat$run_id),
+        tm_number = paste0(gb$dat$mp_number)
     )
-    
     return(dfNewRed)
 }
+
 
 TryREDCap <- function(gb) {
   tryCatch(
