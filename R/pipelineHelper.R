@@ -127,6 +127,7 @@ CopyRmdFile <- function(runID, rmdFile) {
 
 
 CheckSampleQCmetrics <- function(runID) {
+  msgFunName(pipeLnk, "CheckSampleQCmetrics")
     qcValsFile <- file.path(getwd(), paste(runID, "qc_data.csv", sep = "_"))
     qc_cols <- c("RD.number", "Log2sqrt.M.U.", "log2sqrt.R.G.", "BS_log2sqrt.R.G.", "log2sqrt.H.L.", "Pvalue")
     qcVals <- as.data.frame(read.csv(qcValsFile)[qc_cols])
@@ -469,9 +470,14 @@ loopRender <- function(samList = NULL, data, redcapUp = T) {
 
 
 RenameFailed <- function(qcVals) {
-    if (!is.null(qcVals)) {
+  msgFunName(pipeLnk, "RenameFailed")
+    
+  if (!is.null(qcVals)) {
+      
       message("qcVals")
+      qcVals <- apply(qcVals, 2, function(x) ifelse(is.na(x), "no", x))
       print(qcVals)
+      
         if (any(qcVals$qc_passed == "no")) {
             file.list <- dir(getwd(), pattern = ".html", full.names = T)
             toRename <- qcVals$record_id[qcVals$qc_passed == "no"]
