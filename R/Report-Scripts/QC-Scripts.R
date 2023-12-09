@@ -367,12 +367,20 @@ GetSummaryTab <- function(mnpOutTb){
 
 GetFailedSams <- function(mnpOutTb){
     rNum = mnpOutTb$record_id
-    lowClassVals <- paste0("**",rNum[mnpOutTb$classifier_value < 0.90],"**")
-    lowValScores <- mnpOutTb$classifier_value[mnpOutTb$classifier_value < 0.90]
-    lowScoring <-  paste(lowClassVals, lowValScores, sep = ", ")
-    failedSams <- unlist(lapply(lowScoring, function(x){paste("<li>", x,"</li>\n")}))
-    return(failedSams)
+    low_vals <- mnpOutTb$classifier_value < 0.90
+    if(any(low_vals)){
+      lowClassVals <- paste0("**", rNum[low_vals], "**")
+      lowValScores <- mnpOutTb$classifier_value[low_vals]
+      lowScoring <-  paste(lowClassVals, lowValScores, sep = ", ")
+      failedSams <- unlist(lapply(lowScoring, function(x){
+        paste("<li>", x,"</li>\n")
+      }))
+      return(failedSams)
+    }else{
+      return(NULL)
+    }
 }
+
 
 GetControlSam <- function(mnpOutTb){
     tm <- mnpOutTb$tm_number
