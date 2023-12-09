@@ -359,46 +359,43 @@ handle_knit_error <- function(e, dat, params) {
 }
 
 
-do_report <- function(data = NULL, genCn = FALSE) {
+do_report <- function(single_data = NULL, genCn = FALSE) {
     msgFunName(pipeLnk, "do_report")
     msgParams("data")
-    
-    if (is.null(data)) {
-        message(bkRed("Data is NULL, check your SampleSheet.csv"))
-        stopifnot(!is.null(data))
+
+    if (is.null(single_data)) {
+        message(bkRed("single_data is NULL, check your SampleSheet.csv"))
+        stopifnot(!is.null(single_data))
     }
-    
-    dat <- getRunData(data)
-    
-    RGsetEpic <- getRGset(getwd(), dat$senLi)
-    
+
+    dat <- getRunData(single_data)
+    RGsetEpic <- getRGset(runPath = getwd(), sentrix = dat$senLi)
+
     if (genCn == T) {
         generate_cnv_png(RGsetEpic, dat$sampleID)
     }
-    
+
     msgRunUp(dat$sampleID, dat$run_id, dat$senLi)
     message("Knitting report: ", reportMd)
-    
+
     params_init <- list(
         token = gb$ApiToken,
         rundata  = dat,
         RGsetEpic = RGsetEpic,
         knitDir = getwd()
     )
-  
+
     message(paste0(capture.output(dat), collapse = "\n"))
-    
     tryCatch(
         expr = make_knit_report(dat, reportMd, params_init),
         error = function(e){handle_knit_error(e, dat, params_init)},
         finally = message("\nRunning next sample\n")
-    )   
+    )
 }
 
 # FUN: Iterates over each sample in the csv file to generate a report
 loopRender <- function(samList = NULL, data, redcapUp = T){
     msgFunName(pipeLnk, "loopRender")
-    #    msgParams(samList, data, redcapUp)
     # Debug: data <- read.csv("samplesheet.csv", strip.white=T)
     stopifnot(!is.null(data))
 
@@ -411,20 +408,26 @@ loopRender <- function(samList = NULL, data, redcapUp = T){
     }
     wksh <- checkSamSh(samList)
     toRun <- getRunList(data, samList)
-    CopyRmdFile(gb$runID, reportMd)
     
-  currIdx = 1
-  for (i in toRun) {
-      message(bkGrn(dsh, currIdx, "of", length(toRun), "samples remaining to run", dsh))
-      msgProgress(1, i, samList)
-      do_report(data = data[i, ], gb$genCn)
-      msgProgress(2, i, samList)
-      if (redcapUp == T) {
-          sh_Dat <- wksh[data[i, 1], ]
-          gb$importSingle(sh_Dat)
-      }
-      currIdx = currIdx + 1
-  }
+    is_validation <-  sjmisc::str_contains(gb$runID, "VAL")
+    if(is_validation){
+        reportMd <<- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report.Rmd"
+        CopyRmdFile(gb$runID, reportMd)
+    }
+    
+    currIdx = 1
+    for (i in toRun) {
+        message(bkGrn(dsh, currIdx, "of", length(toRun), "samples remaining to run", dsh))
+        msgProgress(1, i, samList)
+        single_data = data[i, ]
+        do_report(single_data, gb$genCn)
+        msgProgress(2, i, samList)
+        if (redcapUp == T) {
+            sh_Dat <- wksh[data[i, 1], ]
+            gb$importSingle(sh_Dat)
+        }
+        currIdx = currIdx + 1
+    }
     message(bkGrn(dsh, "RUN COMPLETE", dsh))
 }
 
