@@ -130,6 +130,7 @@ CheckSampleQCmetrics <- function(runID) {
     qcValsFile <- file.path(getwd(), paste(runID, "qc_data.csv", sep = "_"))
     qc_cols <- c("RD.number", "Log2sqrt.M.U.", "log2sqrt.R.G.", "BS_log2sqrt.R.G.", "log2sqrt.H.L.", "Pvalue")
     qcVals <- as.data.frame(read.csv(qcValsFile)[qc_cols])
+    qcVals <- apply(qcVals, 2, function(x) ifelse(is.na(x), 0, x))
     qcVals$Passed_SI <- as.integer(qcVals$Log2sqrt.M.U. <= 9.0)
     qcVals$Passed_BP <- as.integer(qcVals$log2sqrt.R.G. <= 11.0)
     qcVals$Passed_BS <- as.integer(qcVals$BS_log2sqrt.R.G. <= 10.0)
