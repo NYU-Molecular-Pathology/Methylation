@@ -89,17 +89,33 @@ if(is450k==T){
 }
 }
 
-DebugDataFrame <-function(e, gb){
+
+DebugDataFrame <- function(e, gb){
     eMsg <- crayon::bgRed("Potentially missing variable(s) in REDCap dataframe:")
     message(e,"\n",eMsg,"\n")
     fixNull <- function(obj) {if (is.null(obj)|length(obj)==0) {return("NONE or Missing")} else{return(obj)}}
-    out <- fixNull(gb$outList$out)
+    
+    gb$is450k <- gb$RGset@annotation[["array"]] != "IlluminaHumanMethylationEPIC"
+    array_opt1 <- ifelse(gb$is450k, yes = "450k", no = "EPIC")
+    array_opt <- ifelse(gb$RGset@annotation[["array"]] == "IlluminaHumanMethylationEPICv2", yes = "EPICV2", no = array_opt1)
+    
+    if (array_opt == "EPICV2") {
+      familia <- gb$outList["family", "predicted"]
+        fscore <- gb$outList["family", "maxscore"]
+        subfam <- gb$outList["subclass", "predicted"]
+        subScore <- gb$outList["subclass", "maxscore"]
+        mgmtStat1 <- as.data.frame(gb$mgmtValues)
+        
+    }else{
+        out <- fixNull(gb$outList$out)
     familia <- fixNull(gb$outList$out_class_family$`Methylation Family`[1])
     fscore <- fixNull(gb$outList$out_class_family$`Class Score`[1])
     subfam <- fixNull(gb$out$`Methylation Subgroup`[1])
     subScore <- fixNull(gb$out$`Subgroup Score`[1])
-    mgmtStat <- fixNull(gb$mgmtValues$mgmtVal)
-     mlh_status <- gb$mlh1Pred$theValue$m.reslt
+    mgmtStat1 <- fixNull(gb$mgmtValues$mgmtVal)
+     
+      }
+    mlh_status <- gb$mlh1Pred$theValue$m.reslt
     mlh_total <- gb$mlh1Pred$theValue$MLH1.pos.loci
     mlh1_status <- fixNull(paste0(mlh_status))
     mlh1_pos_loci <- fixNull(paste0(mlh_total))
@@ -108,13 +124,13 @@ DebugDataFrame <-function(e, gb){
     message("sampleID: ", gb$dat$sampleID)
     message("paste(dat$bnumber): ", paste(gb$dat$bnumber))
     message("colnames(RGset): ", colnames(gb$RGset))
-    message("is450k: ", paste0(ifelse(gb$is450k, yes = "450k", no = "EPIC")))
+    message("is450k: ", array_opt)
     message("sex: ", tolower(gb$msetDat$sex))
     message("familia: ", familia)
     message("fscore: ", fscore)
     message("subfam: ", subfam)
     message("subScore: ", subScore)
-    message("mgmtStat$Status: ", mgmtStat$Status)
+    message("mgmtStat1$Status: ", paste0(mgmtStat1$Status))
     message("mlh1_status: ", mlh1_status)
     message("mlh1_pos_loci: ", mlh1_pos_loci)
     message("second_tech: ", paste(gb$dat$tech2))
