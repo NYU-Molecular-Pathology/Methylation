@@ -279,7 +279,7 @@ NameControl <- function(data, runId) {
         } else{
             warning('No word "control" in RD-number found in samplesheet')
         }
-        #return(data)
+        return(data)
     }
     return(data)
 }
@@ -320,7 +320,8 @@ checkSamSh <- function(samList){
     require(rmarkdown)
     wksh <- ReadSamSheet(samList)
     isMC = sjmisc::str_contains(gb$runID, "MGDM")|sjmisc::str_contains(gb$runID, "MC")
-    if(isMC==T){
+    is_validation <- sjmisc::str_contains(gb$runID, "VAL")
+    if(isMC == T & is_validation == F){
         wksh <- NameControl(wksh, wksh$run_number[1])
     }
     stopifnot(!is.null(wksh))
@@ -408,7 +409,8 @@ loopRender <- function(samList = NULL, data, redcapUp = T){
     stopifnot(!is.null(data))
 
     isMC = sjmisc::str_contains(gb$runID, "MGDM")|sjmisc::str_contains(gb$runID, "MC")
-    if(isMC==T){
+    is_validation <- sjmisc::str_contains(gb$runID, "VAL")  
+    if(isMC == T & is_validation == F){
         data <- NameControl(data, data$RunID[1])
     }
     if (is.null(samList)) {
