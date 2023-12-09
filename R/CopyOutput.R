@@ -350,6 +350,7 @@ DoRedcapApi <- function(rcon, recordName, runID) {
 
 
 CheckSarcRDnumber <- function(record){
+     msgFunName(cpOutLnk, "CheckSarcRDnumber")
     isSarc <- ifelse(stringr::str_detect(record, pattern="_sarc"), T, F)
     if(isSarc==T){
         record <- stringr::str_split_fixed(record, pattern = "_", 2)[1,1]
