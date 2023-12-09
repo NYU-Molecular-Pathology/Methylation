@@ -136,7 +136,10 @@ ParseInputCsvPath <- function(samSheetIn){
 }
 
 # Delete existing samplesheet in current directory to generates new one with RD-number input
-MakeLocalSampleSheet <- function(runID, token, samSheetIn=NULL, rd_numbers=NULL){
+MakeLocalSampleSheet <- function(runID, token, samSheetIn=NULL, rd_numbers=NULL, outputFi = NULL){
+    if (is.null(outputFi)){
+        outputFi <- "samplesheet_sarc.csv"
+    }
     msgFunName(cpInLnk4,"MakeLocalSampleSheet")
     stopifnot(!is.null(token))
     token2 <- token
@@ -154,14 +157,12 @@ MakeLocalSampleSheet <- function(runID, token, samSheetIn=NULL, rd_numbers=NULL)
         }
     }
     stopifnot(
-        length(rd_numbers) >= 1 &
-            length(rd_numbers) != 0 &
-            stringr::str_detect(rd_numbers[1], "RD-")
+        length(rd_numbers) >= 1 & stringr::str_detect(rd_numbers[1], "RD-")
     )
     message("Sourcing: ", idatScript)
     devtools::source_url(idatScript)
     gb$token <- gb$ApiToken <- token <- token2
-    gb$grabRDCopyIdat(rd_numbers, token2, copyIdats = T, outputFi = "samplesheet_sarc.csv")
+    gb$grabRDCopyIdat(rd_numbers, token2, copyIdats = T, outputFi = outputFi)
 }
 
 
