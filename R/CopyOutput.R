@@ -146,6 +146,11 @@ RedcapRcurl <- function(datarecord) {
 
 
 WarnSentrix <- function(record, isEmpty) {
+    is_validation <- sjmisc::str_contains(gb$runID, "VAL")
+    is_val <- sjmisc::str_contains(record$record_id, "VAL")
+    if(is_validation == T & is_val == F){
+        record$record_id <- paste0(record$record_id, "_VAL")
+    }
     if (record$barcode_and_row_column == isEmpty) {
         message(mkRed(record$record_id), " already has the same Sentrix ID on REDCap: ", isEmpty)
     } else{
@@ -158,6 +163,11 @@ WarnSentrix <- function(record, isEmpty) {
 
 
 ValidateRedImport <- function(record) {
+    is_validation <- sjmisc::str_contains(gb$runID, "VAL")
+    is_val <- sjmisc::str_contains(record$record_id, "VAL")
+    if(is_validation == T & is_val == F){
+        record$record_id <- paste0(record$record_id, "_VAL")
+    }
     isEmpty <- checkRedcapRecord(record$record_id, "barcode_and_row_column")
     if (isEmpty == "") {
         RedcapRcurl(datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox = T))
@@ -172,6 +182,11 @@ loopRedcapImport <- function(data) {
     if (!is.null(data)) {
         for (n in 1:nrow(data)) {
             record = c(data[n,])
+            is_validation <- sjmisc::str_contains(gb$runID, "VAL")
+    is_val <- sjmisc::str_contains(record$record_id, "VAL")
+    if(is_validation == T & is_val == F){
+        record$record_id <- paste0(record$record_id, "_VAL")
+    }
             ValidateRedImport(record)
         }
     } else{
