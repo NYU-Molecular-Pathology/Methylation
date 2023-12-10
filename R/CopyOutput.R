@@ -460,9 +460,9 @@ importSingle <- function(sh_Dat) {
     msgFunName(cpOutLnk, "importSingle")
     sh_Dat <- AddPngFilePath(sh_Dat)
     is_validation <- sjmisc::str_contains(sh_Dat$run_number[1], "VAL")
-    is_val <- sjmisc::str_contains(record$record_id, "VAL")
+    is_val <- sjmisc::str_contains(sh_Dat$record_id, "VAL")
     if(is_validation == T & is_val == F){
-        record$record_id <- paste0(record$record_id, "_VAL")
+        sh_Dat$record_id <- paste0(sh_Dat$record_id, "_VAL")
     }
     recordEmpty <- checkRedcapRecord(sh_Dat$record_id, fieldName = "well_number")
     record = sh_Dat$record_id
