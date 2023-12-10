@@ -437,15 +437,15 @@ uploadToRedcap <- function(file.list, deskCSV = T, runNumb = NULL) {
     message(paste(htmlLi))
     for (recordName in htmlLi) {
         is_validation <- sjmisc::str_contains(runNumb, "VAL")
-    has_val <- sjmisc::str_contains(recordName, "VAL")
-    if(is_validation == T & has_val == F){
-        recordName <- paste0(recordName, "_VAL")
-    }
+        has_val <- sjmisc::str_contains(recordName, "VAL")
+        if(is_validation == T & has_val == F){
+            recordName <- paste0(recordName, "_VAL")
+        }
         recordName2 <- CheckSarcRDnumber(recordName)
         has_val <- sjmisc::str_contains(recordName2, "VAL")
-    if(is_validation == T & has_val == F){
-        recordName2 <- paste0(recordName2, "_VAL")
-    }
+        if(is_validation == T & has_val == F){
+            recordName2 <- paste0(recordName2, "_VAL")
+        }
         callApiImport(rcon, recordName2, runID)
         isEmpty <- checkRedcapRecord(recordName2) == ''
         callApiFile(rcon, recordName, isEmpty)
@@ -459,6 +459,11 @@ uploadToRedcap <- function(file.list, deskCSV = T, runNumb = NULL) {
 importSingle <- function(sh_Dat) {
     msgFunName(cpOutLnk, "importSingle")
     sh_Dat <- AddPngFilePath(sh_Dat)
+    is_validation <- sjmisc::str_contains(sh_Dat$run_number[1], "VAL")
+    is_val <- sjmisc::str_contains(record$record_id, "VAL")
+    if(is_validation == T & is_val == F){
+        record$record_id <- paste0(record$record_id, "_VAL")
+    }
     recordEmpty <- checkRedcapRecord(sh_Dat$record_id, fieldName = "well_number")
     record = sh_Dat$record_id
     if (recordEmpty == '') {
@@ -466,6 +471,7 @@ importSingle <- function(sh_Dat) {
     } else{
         message(crayon::white$bgBlue("Record Data not Uploaded:"), "\n", record[1])
     }
+    
     uploadToRedcap(file.list = paste0(record[1], ".html"), deskCSV = F)
 }
 
