@@ -131,7 +131,7 @@ CheckSampleQCmetrics <- function(runID) {
     qcValsFile <- file.path(getwd(), paste(runID, "qc_data.csv", sep = "_"))
     qc_cols <- c("RD.number", "Log2sqrt.M.U.", "log2sqrt.R.G.", "BS_log2sqrt.R.G.", "log2sqrt.H.L.", "Pvalue")
     qcVals <- as.data.frame(read.csv(qcValsFile)[qc_cols])
-    qcVals <- apply(qcVals, 2, function(x) ifelse(is.na(x), 0, x))
+    qcVals[is.na(qcVals)] <- 0
     qcVals$Passed_SI <- as.integer(qcVals$Log2sqrt.M.U. <= 9.0)
     qcVals$Passed_BP <- as.integer(qcVals$log2sqrt.R.G. <= 11.0)
     qcVals$Passed_BS <- as.integer(qcVals$BS_log2sqrt.R.G. <= 10.0)
@@ -167,7 +167,7 @@ generateQCreport <- function(runID = NULL) {
         qcCache <- stringr::str_replace_all(string = rmdToKnit, ".Rmd", "_cache")
         unlink(qcCache, recursive = T) #clear cache
         gb$uploadToRedcap(outQCpath, F)
-    }else{
+    } else{
         message("Skipping QC render: QC file already exists in the directory.  Delete QC rmd and QC.html to generate new output.")
     }
 }
@@ -487,7 +487,7 @@ RenameFailed <- function(qcVals) {
   if (!is.null(qcVals)) {
       
       message("qcVals")
-      qcVals <- apply(qcVals, 2, function(x) ifelse(is.na(x), "no", x))
+      qcVals[is.na(qcVals)] <- "no"
       print(qcVals)
       
         if (any(qcVals$qc_passed == "no")) {
