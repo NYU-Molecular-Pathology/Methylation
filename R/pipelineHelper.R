@@ -295,7 +295,12 @@ NameControl <- function(data, runId) {
     library("data.table")
     if (any(data[, 1] %like% 'control')) {
         cntrl <- which(data[, 1] %like% 'control') #DNA_Number
-        data[cntrl, 1] <- paste0(runId, "_control")
+        if(length(cntrl) > 1){
+          controlSams <- make.unique(data[cntrl, 1], sep = "_")
+          data[cntrl, 1] <- paste0(runId, "_", controlSams)  
+        } else{
+          data[cntrl, 1] <- paste0(runId, "_control")
+        }
     } else{
         if (any(data[, 2] %like% 'control')) {
             cntrl <- which(data[, 2] %like% 'control') #DNA_Number
@@ -346,7 +351,11 @@ checkSamSh <- function(samList) {
     wksh <- ReadSamSheet(samList)
     isMC = sjmisc::str_contains(gb$runID, "MGDM")|sjmisc::str_contains(gb$runID, "MC")
     is_validation <- sjmisc::str_contains(gb$runID, "VAL")
+    
     if (isMC == T & is_validation == F) {
+        wksh <- NameControl(wksh, wksh$run_number[1])
+    }
+    if(gb$runID == "23-MGDM_VAL3"){
         wksh <- NameControl(wksh, wksh$run_number[1])
     }
     stopifnot(!is.null(wksh))
@@ -440,6 +449,9 @@ loopRender <- function(samList = NULL, data, redcapUp = T) {
     if (isMC == T & is_validation == F) {
         data <- NameControl(data, data$RunID[1])
     }
+    if(gb$runID == "23-MGDM_VAL3"){
+        data <- NameControl(data, data$RunID[1])
+    }
     if (is.null(samList)) {
         samList <- 1:length(data$Sample_Name!=0)
     }
@@ -510,19 +522,27 @@ makeReports.v11b6 <- function(runPath = NULL,
                               cpReport = T,
                               redcapUp = T) {
     msgFunName(pipeLnk, "makeReports.v11b6")
-
+    library("data.table")
     assign("genCn", genCn, envir = gb)
     data <- read.csv(sheetName, strip.white = T)
     runID <- paste0(data$RunID[1])
 
     isMC = sjmisc::str_contains(runID, "MGDM") | sjmisc::str_contains(runID, "MC")
     is_validation <- sjmisc::str_contains(runID, "VAL")
-    if (isMC == T & is_validation == F) {
-        CreateRedcapRecord(runID, "control")
+    # if (isMC == T & is_validation == F) {
+    #     CreateRedcapRecord(runID, "control")
+    # }
+    
+    cntrl <- which(data[, 1] %like% 'control')
+    if(length(cntrl) >= 1){
+        control_sams <- data[cntrl, 1]
+        control_sams <- make.unique(control_sams, sep = "_")
+        for(sam in control_sams){
+          CreateRedcapRecord(runID, sam)  
+        }
     }
 
     loopRender(selectSams, data, redcapUp)
-
     checkRunOutput(runID)
 
     qcVals <- NULL
