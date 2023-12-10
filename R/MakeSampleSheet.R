@@ -13,6 +13,7 @@ rschSheets = "/Volumes/snudem01labspace/Methylation_Worksheets"
 worksheetDirPath = "/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/WORKSHEETS/"
 researchWsPath = "/Volumes/snudem01labspace/Methylation_Worksheets/"
 validation_dir = "/Volumes/molecular/MOLECULAR LAB ONLY/Validations/MethylationEPIC V2.0 Kit/WORK SHEET"
+epicv1_val_dir = file.path("/Volumes/CBioinformatics/Validations/Methylation/EPIC_V1_RUNS")
 
 bkBlue <- function(...) {
     return(crayon::bgBlue$white$bold(paste0(...)))
@@ -69,7 +70,10 @@ listMolecularSheets <- function(runID = gb$runID, getAll = F) {
     isMC <- sjmisc::str_contains(runID, "MGDM") | sjmisc::str_contains(runID, "MC")
     is_validation <- sjmisc::str_contains(runID, "VAL")
     runYear <- grabYear(runID)
-
+    if(sjmisc::str_contains(runID, "EPICV1")){
+        wsPath <- file.path(gb$epicv1_val_dir)
+        prevMC <- dir(path = wsPath, pattern = "MGDM", full.names = T)
+    }
     if (isMC) {
         wsPath <- file.path(gb$clinDrv, "WORKSHEETS", runYear)
         prevMC <- dir(path = wsPath, pattern = "MGDM", full.names = T)
