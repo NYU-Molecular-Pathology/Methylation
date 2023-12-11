@@ -147,7 +147,7 @@ copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
     if (dir.exists(mountLoc)) {
         fiPath <- file.path(mountLoc, runYear, paste0(runID, ".xlsm"))
         if(sjmisc::str_contains(runID, "EPICV1")){
-            fiPath <- file.path(mountLoc, paste0(runID, ".xlsm"))
+            fiPath <- file.path(gb$epicv1_val_dir, paste0(runID, ".xlsm"))
         }
         message("\nCopying file from:\n", fiPath)
         FsCopyFile(fiPath)
