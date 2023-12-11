@@ -140,15 +140,15 @@ copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
     assign("isMC", isMC)
     message("\nIs methylation run Clinical? ", isMC)
     is_validation <- sjmisc::str_contains(runID, "VAL")
-
+    mountLoc <- ifelse(isMC, file.path(gb$clinDrv, "WORKSHEETS"), gb$rschSheets)
     if (is_validation) {
         mountLoc <- gb$validation_dir
-    } else{
-        mountLoc <- ifelse(isMC, file.path(gb$clinDrv, "WORKSHEETS"), gb$rschSheets)
-    }
-
+    } 
     if (dir.exists(mountLoc)) {
         fiPath <- file.path(mountLoc, runYear, paste0(runID, ".xlsm"))
+        if(sjmisc::str_contains(runID, "EPICV1")){
+            fiPath <- file.path(mountLoc, paste0(runID, ".xlsm"))
+        }
         message("\nCopying file from:\n", fiPath)
         FsCopyFile(fiPath)
     } else {
