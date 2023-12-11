@@ -165,7 +165,7 @@ GrabSampleSheet <- function() {
     }
     if (length(samSh) > 1) {
         message("Multiple samplesheets found:\n")
-        print(samSh)
+        message(paste0(capture.output(samSh), collapse="\n"))
         samSh <- samSh[stringr::str_detect(samSh,pattern = "\\$",negate = T)]
         samSh <- samSh[!stringi::stri_detect_fixed(samSh, "~$")]
     }
@@ -329,15 +329,14 @@ writeSampleSheet <- function(df, bn = NULL, sampleName, dnaNumber, Sentrix) {
 checkHeaders <- function(worksheet) {
     msgFunName(cpInLnk2, "checkHeaders")
     hdrs = dimnames(worksheet)[[2]]
-    print(data.frame(HEADERS = hdrs))
+    message(paste0(capture.output(data.frame(HEADERS = hdrs)), collapse = "\n"))
     Var.names = c(
         sampleName = paste(hdrs[9]), # "Sample_Name"
         Sentrix = paste(hdrs[1]),    # "Sentrix_ID"
         dnaNumber = paste(hdrs[10]), # "b_number"
         mpnum = paste(hdrs[8])       # "MP_number"
     )
-    cat("\n")
-    print(data.frame(Var.names))
+    message(paste0(capture.output(data.frame(VarNames = Var.names)), collapse="\n"))
     var.default = c("Sample_Name", "Sentrix_ID", "b_number", "MP_number")
     if (any(Var.names != var.default)) {
         rawInput <- paste(var.default[1:4], collapse = " ")
