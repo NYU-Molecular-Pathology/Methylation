@@ -77,8 +77,8 @@ msg_code rsync -vrthP \"${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/${pactRun}-QC.t
 msg_code rsync -vrthP \"${MOLEC_VOL}NGS607/${currYear}/${runID}/${pactRun}_Hotspots.tsv\" \"${DESK_DIR}\"
 
 printf "\n${BG_GRN}Executing:${NORMAL}\n"
-printf "cp ${DESK_DIR}/*.png ${FACET_DIR}/"
-cp "${DESK_DIR}"/*.png "${FACET_DIR}/"
+printf "cp ${DESK_DIR}*.png ${FACET_DIR}"
+cp "${DESK_DIR}"*.png "${FACET_DIR}"
 
 msg_code rsync -vrthP --include=\"*.tsv\" \"${DESK_DIR}\" \"${consensusDir}${pactRun}_consensus\"
 msg_code rsync -vrthP \"$HOME/Desktop/${runID}-SampleSheet.csv\" \"${consensusDir}${pactRun}_consensus\"
