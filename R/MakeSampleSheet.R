@@ -24,7 +24,7 @@ bkRed <- function(...) {
 }
 
 msgFunName <- function(pthLnk, funNam) {
-    message("\nExecuting function: ", crayon::black$bgYellow(funNam),
+    message("Executing function: ", crayon::black$bgYellow(funNam),
             " from RScript in:\n", pthLnk, "\n")
 }
 
