@@ -6,7 +6,7 @@ defaultDir = "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
 
 # Helper function to debug prints the name of the function being run from GitHub source
 msgFunName <- function(pthLnk, funNam){
-    message("\nExecuting function: ", crayon::black$bgYellow(funNam), " from RScript in:\n", pthLnk,"\n")
+    message("Executing function: ", crayon::black$bgYellow(funNam), " from RScript in:\n", pthLnk,"\n")
 }
 
 # Helper function to debug prints parameters passed to a function
