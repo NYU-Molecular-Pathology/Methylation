@@ -107,4 +107,4 @@ FINAL_DEST="/Volumes${outputDir}${currYear}/${pactRun}/"
 cp "${CONSENSUS_FILE}" "${DESK_DIR}"
 
 # Copy HTML file from DESK_DIR to final destination
-cp "${DESK_DIR}/${pactRun}_consensus.html" "${FINAL_DEST}"
+cp -X "${DESK_DIR}${pactRun}_consensus.html" "${FINAL_DEST}"
