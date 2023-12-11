@@ -6,7 +6,7 @@ cpOutLnk = "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/Cop
 rschDrv = "/Volumes/snudem01labspace/FINAL_PDF_Reports_Brain"
 
 msgFunName <- function(pthLnk, funNam) {
-    message("\nExecuting function: ", funNam, " from RScript in:\n", pthLnk, "\n")
+    message("Executing function: ", funNam, " from RScript in:\n", pthLnk, "\n")
 }
 
 mkBlue <- function(strVar) {return(crayon::white$bgBlue(strVar))}
