@@ -180,6 +180,9 @@ launchEmailNotify <- function(runID) {
     if (is_validation) {
         return(message("Run is Validation. No email will be generated"))
     }
+    if (sjmisc::str_contains(runID, "EPICV1")) {
+        return(message("Run is Validation. No email will be generated"))
+    }
     com <- ifelse(isMC == T, "sample_qc", "sample_research") # research or clinical notification
     record = data.frame(record_id = paste0(runID, "_QC"), comments = com)
     datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox = T)
