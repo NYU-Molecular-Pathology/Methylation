@@ -264,6 +264,8 @@ print_toc() {
 
 echo "<span style='font-weight: bold'>Author</span>: Jonathan Serrano</br>"
 echo "<span style='font-weight: bold'>Current Date</span>: $(date)</br>"
+echo "<span style='font-weight: bold'>Created with</span>: <pre>$HOME/showFusionCommands.sh $RUN_ID ${SHEETPATH} ${FUSION_ID} >$HOME/${FUSION_ID}.html</pre></br>"
+
 echo "</br>"
 echo "<h2 style='padding-top: 5px !important; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: black;'>${FG_GRN}LG-PACT Commands${normal}</h2>"
 msg_step 1 "white" "FUSION RUN: ${RUN_ID}</br>"
@@ -290,7 +292,7 @@ msg_code "ssh ${KERBERO}@bigpurple.nyumc.org"
 msg_code "module load python/cpu/3.6.5"
 msg_code "mkdir -p ${SHEETDIR}/${RUN_ID} && chmod -R g+rwx ${SHEETDIR}/${RUN_ID}"
 msg_code "cd ${SHEETDIR}/${RUN_ID}"
-msg_code "python /gpfs/data/molecpathlab/bin/ArcherDX/gen_sample_sheet.py -p ${FUSION_ID} -r ${RUN_ID} -t ${XLSXPATH} -o ."
+msg_code "python /gpfs/data/molecpathlab/bin/ArcherDX/gen_sample_sheet_fixed.py -p ${FUSION_ID} -r ${RUN_ID} -t ${XLSXPATH} -o ."
 msg_code "cd /gpfs/data/molecpathlab/pipelines/demux-nf2/"
 msg_code "make deploy RUNID=${RUN_ID} SAMPLESHEET=${SHEETDIR}/${RUN_ID}/${RUN_ID}-SampleSheet.csv SEQTYPE=Archer"
 msg_code "cd /gpfs/data/molecpathlab/production/Demultiplexing/${RUN_ID}"
