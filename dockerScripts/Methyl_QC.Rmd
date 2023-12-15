@@ -72,7 +72,7 @@ classoption:
 par(mar = c(8, 8, 0, 0)) #it's important to have that in a separate chunk
 ``` 
 
-```{r BioCParallel, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, results='hide'}
+```{r BioCParallel, echo=FALSE, message=TRUE, warning=FALSE, paged.print=FALSE, results='hide'}
 gb <- globalenv(); assign("gb", gb)
 # Set Parallel Parameters --------------------------------------
 gb$totNum <- totNum <- gb$GetTotalPairs(gb$fixerrors)
@@ -84,10 +84,12 @@ is_validation <- sjmisc::str_contains(gb$runID, "VAL")
 if(is_validation == T) {
   gb$sdata <- sdata <- MethylAid::summarize(fixerrors, verbose = TRUE, force = TRUE)
 } else{
-    mcc = parallel::detectCores()/2
-    BiocParallel::register(BiocParallel::MulticoreParam(mcc))
-    mcParam <- BiocParallel::MulticoreParam(workers = mcc, progressbar = T)
-    gb$sdata <- sdata <- MethylAid::summarize(fixerrors, verbose = T, batchSize = totNum, force = T, BPPARAM = mcParam)
+    message(paste0(capture.output(fixerrors), collapse="\n"))
+    gb$sdata <- sdata <- MethylAid::summarize(fixerrors, verbose = TRUE, force = TRUE)
+    #mcc = parallel::detectCores()/2
+    #BiocParallel::register(BiocParallel::MulticoreParam(mcc))
+    #mcParam <- BiocParallel::MulticoreParam(workers = mcc, progressbar = T)
+    #gb$sdata <- sdata <- MethylAid::summarize(fixerrors, verbose = T, batchSize = totNum, force = T, BPPARAM = mcParam)
 }
 assign("sdata", sdata, envir = gb)
 
