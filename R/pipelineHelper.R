@@ -158,6 +158,14 @@ generateQCreport <- function(runID = NULL) {
         outQCpath <- file.path(getwd(), qcFileName)
         rmdToKnit <- dir(getwd(), "*QC.Rmd", full.names = T)[1]
         deskRunDir <- file.path(fs::path_home(), "Desktop", runID)
+        message("Knitting RMD file", rmdToKnit, "with params:")
+        message(paste0(capture.output(
+            data.frame(
+                runID = runID,
+                baseDir = deskRunDir,
+                knitDir = getwd()
+            )
+        ), collapse = "\n"))
         rmarkdown::render(
             rmdToKnit,
             output_file = outQCpath,
