@@ -148,6 +148,7 @@ or if you have not saved the runMeth.sh script locally:
 ```
 You can then check the output to confirm each html report was generated in the output directory: <br/>
 `/Volumes/CBioinformatics/Methylation/Clinical_Runs/21-MGDM_TEST`
+`ls -lha "$HOME/Desktop/html_21-MGDM_TEST/21-MGDM_TEST/"`
 
 **NOTE**: When running the test case (*21-MGDM_TEST*) you may notice an **error** with the upload log as these reports would already exist in REDCap. It is normal for the test case html files to **fail uploading** since the REDCap database already contains the data and files for the test run, 21-MGDM_TEST.<br>
 <br>
@@ -157,6 +158,7 @@ You can then check the output to confirm each html report was generated in the o
  `Rscript --verbose /Volumes/CBioinformatics/Methylation/Clinical_Runs/Sarcoma_runs/methylExpress_sarcoma.R RD-15-123 RD-16-1234 RD-17-321`<br>
  - For Several/Bulk Cases: Execute the script by passing the path to a csv file containing a list of RD-numbers in the first column, for example:<br>
 `Rscript --verbose /Volumes/CBioinformatics/Methylation/Clinical_Runs/Sarcoma_runs/methylExpress_sarcoma.R /Path/To/Desktop/MyListRDs.csv`<br>
+In the event the shared drive is not accessible, the script without the API token is availible [here](https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/methylExpress_sarcoma.R)
 
 # ⚠️ Troubleshooting
 <details>
