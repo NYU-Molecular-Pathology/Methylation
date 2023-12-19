@@ -153,8 +153,10 @@ You can then check the output to confirm each html report was generated in the o
 <br>
 
 ## To run the Sarcoma Classifier or re-Run Individual Samples
-View the [Custom Run ReadMe](https://github.com/NYU-Molecular-Pathology/Methylation/blob/880aa8f8482677f4041bceefa4daf65ad7b4dbc8/R/CustomRuns/ReadMe.md) here:
-https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/R/CustomRuns/ReadMe.md 
+ - For Individual Cases: Execute the script directly with RD-numbers, for example:<br>
+ `Rscript --verbose /Volumes/CBioinformatics/Methylation/Clinical_Runs/Sarcoma_runs/methylExpress_sarcoma.R RD-15-123 RD-16-1234 RD-17-321`<br>
+ - For Several/Bulk Cases: Execute the script by passing the path to a csv file containing a list of RD-numbers in the first column, for example:<br>
+`Rscript --verbose /Volumes/CBioinformatics/Methylation/Clinical_Runs/Sarcoma_runs/methylExpress_sarcoma.R /Path/To/Desktop/MyListRDs.csv`<br>
 
 # ⚠️ Troubleshooting
 <details>
