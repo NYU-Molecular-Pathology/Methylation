@@ -682,7 +682,7 @@ if (!(require("Rcpp"))) {
 }
 spat_config <-
     '--with-proj-lib=/usr/local/lib/ --with-proj-include=/usr/local/include/'
-options(configure.args = c("sf" = spat_config, "rgdal" = spat_config))
+options(configure.args = c("sf" = spat_config))
 
 if (checkRequire("sf")) {
     tryCatch(
@@ -701,20 +701,6 @@ if (checkRequire("sf")) {
                 upgrade = "never"
             )
         }
-    )
-}
-
-if (checkRequire("rgdal")) {
-    install.packages(
-        "rgdal",
-        configure.args = c(
-            "--with-proj-lib=/usr/local/lib/",
-            "--with-proj-include=/usr/local/include/"
-        ),
-        type = "source",
-        dependencies = T,
-        verbose = T,
-        Ncpus = 4
     )
 }
 
