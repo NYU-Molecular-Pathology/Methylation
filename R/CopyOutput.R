@@ -2,7 +2,7 @@
 options(stringsAsFactors = FALSE)
 gb <- globalenv(); assign("gb", gb)
 apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
-cpOutLnk = "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/CopyOutput.R"
+cpOutLnk = "https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/R/CopyOutput.R"
 rschDrv = "/Volumes/snudem01labspace/FINAL_PDF_Reports_Brain"
 
 msgFunName <- function(pthLnk, funNam) {
@@ -132,6 +132,7 @@ writeLogFi <- function(recordName, isHtml = T, logFile = "upload_log.tsv") {
 }
 
 RedcapRcurl <- function(datarecord) {
+    msgFunName(cpOutLnk, "RedcapRcurl")
     message(crayon::bgBlue("Record Data Uploaded:"), datarecord)
     RCurl::postForm(
         apiLink,
@@ -146,6 +147,7 @@ RedcapRcurl <- function(datarecord) {
 
 
 WarnSentrix <- function(record, isEmpty) {
+    msgFunName(cpOutLnk, "WarnSentrix")
     is_validation <- sjmisc::str_contains(gb$runID, "VAL")
     is_val <- sjmisc::str_contains(record$record_id, "VAL")
     if(is_validation == T & is_val == F){
@@ -392,6 +394,7 @@ callApiImport <- function(rcon, recordName, runID) {
 
 
 callApiFile <- function(rcon, recordName, ovwr = T) {
+    msgFunName(cpOutLnk, "callApiFile")
     recordFi <- paste0(recordName, ".html")
     message("\n", gb$mkBlue("Importing Record File:"), paste0(" ", recordFi))
     fiPath <- file.path(getwd(), recordFi)
@@ -400,7 +403,7 @@ callApiFile <- function(rcon, recordName, ovwr = T) {
     } else{
         
         fld <- "classifier_pdf"
-        message(fiPath)
+        message(paste("fiPath", "=", fiPath))
         stopifnot(file.exists(fiPath))
         body <- list(
             token = rcon$token,
@@ -650,6 +653,7 @@ ForceUploadToRedcap <- function(file.list, token=NULL, deskCSV = T) {
 
 
 grabAllRecords <- function(flds, rcon){
+    msgFunName(cpOutLnk, "grabAllRecords")
     message("Pulling REDCap data...")
     library("dplyr")
     params = list(rcon, fields = flds, labels = F, dates = F, survey = F, dag = F, factors = F, form_complete_auto = F)
@@ -661,6 +665,7 @@ grabAllRecords <- function(flds, rcon){
 
 
 GrabSpecificRecords <- function(flds, rd_num, rcon){
+    msgFunName(cpOutLnk, "GrabSpecificRecords")
     message("Pulling REDCap data...")
     library("dplyr")
     params = list(rcon, records = rd_num, fields = flds, labels=F, dates = F, survey = F,
@@ -695,6 +700,7 @@ CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull) {
 
 
 get_QC_metric_data <- function(output_fi, runDir, runID) {
+    msgFunName(cpOutLnk, "get_QC_metric_data")
     runYear <- paste0(20, stringr::str_split_fixed(runID, "-", 2)[1, 1])
     if (is.null(output_fi)) {
         metrics_dir <- "/Volumes/molecular/Molecular/MethylationClassifier/Methylation_QC_metrics"
