@@ -400,7 +400,8 @@ callApiFile <- function(rcon, recordName, ovwr = T) {
     } else{
         
         fld <- "classifier_pdf"
-        
+        message(fiPath)
+        stopifnot(file.exists(fiPath))
         body <- list(
             token = rcon$token,
             content = 'file',
