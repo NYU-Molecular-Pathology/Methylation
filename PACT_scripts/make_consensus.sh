@@ -41,7 +41,10 @@ trap 'last_command=$BASH_COMMAND; last_line=$LINENO' DEBUG
 trap 'trap_error "${BASH_COMMAND}" $? "${LINENO}"' ERR EXIT
 
 # Current Year Calculation -----------------------------------------------------------------------------
-currYear=$(date +'%Y')
+yearPart=${pactRun:5:2}
+# Concatenate "20" with the extracted part
+currYear="20${yearPart}"
+#currYear=$(date +'%Y')
 
 # Function to display and execute code
 msg_code() {
