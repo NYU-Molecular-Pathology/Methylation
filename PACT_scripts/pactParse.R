@@ -294,7 +294,7 @@ AddUnmatchNormals <- function(sheetsPairedNorm, sheetPairedTumor, mainSheet, she
                                   "extra Normal(s) do not need to be paired to missing Tumor(s)")))
       indexToDrop <- which(!normalSamplesPair %in% missingCases)
       extraNormals <- normalSamplesPair[-indexToDrop]
-      message("This sample will not be paired with a tumor:\n",  )
+      message("This sample will not be paired with a tumor:\n", extraNormals )
       toDrop <- normalSamplesPair == extraNormals
       mainSheet$Paired_Normal[sheetTumors] <- normalSamplesPair[-toDrop]
     }else{
