@@ -289,12 +289,14 @@ AddUnmatchNormals <- function(sheetsPairedNorm, sheetPairedTumor, mainSheet, she
 
     missingCases <- mainSheet$Sample_ID[dnaMissingPair]
 
-    if(extraNormals == T){
+   if(extraNormals == T){
       message(crayon::bgRed(paste(length(extraIndices),
                                   "extra Normal(s) do not need to be paired to missing Tumor(s)")))
       indexToDrop <- which(!normalSamplesPair %in% missingCases)
-      message("This sample will not be paired with a tumor:\n",  normalSamplesPair[-indexToDrop])
-      #mainSheet$Paired_Normal[sheetTumors] <- normalSamplesPair[-indexToDrop]
+      extraNormals <- normalSamplesPair[-indexToDrop]
+      message("This sample will not be paired with a tumor:\n",  )
+      toDrop <- normalSamplesPair == extraNormals
+      mainSheet$Paired_Normal[sheetTumors] <- normalSamplesPair[-toDrop]
     }else{
       message(crayon::bgRed(paste(length(extraIndices),
                                   "extra Tumor(s) may need to be paired manually to missing Normal(s)")))
