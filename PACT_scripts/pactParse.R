@@ -3,6 +3,7 @@
 ## Script name: pactParse.R
 ## Purpose: source of global scripts and generate PACT -SampleSheet.csv file
 ## Author: Jonathan Serrano
+## Version: 1.0.1
 ## Copyright (c) NYULH Jonathan Serrano, 2023
 ## ---------------------------
 
@@ -263,7 +264,7 @@ FixPairedList <- function(philipsExport, rawSheetData){
 
 
 AddUnmatchNormals <- function(sheetsPairedNorm, sheetPairedTumor, mainSheet, sheetTumors, sheetNormals, philipsExport) {
-  
+
   if(length(sheetsPairedNorm) > length(sheetPairedTumor)){
     extraNormals <- T
     message(crayon::bgRed(paste("More NORMALS than Tumors on this run!  Manually edit sample sheet!")))
@@ -271,7 +272,8 @@ AddUnmatchNormals <- function(sheetsPairedNorm, sheetPairedTumor, mainSheet, she
     dnaMissingPair <- stringr::str_detect(mainSheet$Sample_ID, pattern = paste(sheetsPairedNorm[unmatchedSamples], collapse = "|"))
     message(crayon::bgBlue("The following case(s) are missing a paired Tumor:"))
     MsgDF(mainSheet$Sample_ID[dnaMissingPair])
-  }else{
+
+    }else{
     extraNormals <- F
     message(crayon::bgRed(paste("More TUMORS than Normals on this run!  Manually edit sample sheet!")))
     unmatchedSamples <- which(!philipsExport$`Normal DNA/RNA Number` %in% sheetsPairedNorm)
@@ -279,23 +281,23 @@ AddUnmatchNormals <- function(sheetsPairedNorm, sheetPairedTumor, mainSheet, she
     message(crayon::bgBlue("The following case(s) are missing a paired Normal:"))
     MsgDF(mainSheet$Sample_ID[dnaMissingPair])
   }
-  
+
   if (any(dnaMissingPair)) {
     extraIndices <- which(dnaMissingPair)
     normalSamplesPair <- mainSheet$Sample_ID[sheetNormals]
     tumorSamplesPair <- mainSheet$Sample_ID[sheetTumors]
-    
+
     missingCases <- mainSheet$Sample_ID[dnaMissingPair]
-    
+
     if(extraNormals == T){
-      message(crayon::bgRed(paste(length(extraIndices), 
+      message(crayon::bgRed(paste(length(extraIndices),
                                   "extra Normal(s) do not need to be paired to missing Tumor(s)")))
       indexToDrop <- which(!normalSamplesPair %in% missingCases)
-      mainSheet$Paired_Normal[sheetTumors] <- normalSamplesPair[-indexToDrop]
+      message("This sample will not be paired with a tumor:\n",  normalSamplesPair[-indexToDrop])
+      #mainSheet$Paired_Normal[sheetTumors] <- normalSamplesPair[-indexToDrop]
     }else{
-      message(crayon::bgRed(paste(length(extraIndices), 
+      message(crayon::bgRed(paste(length(extraIndices),
                                   "extra Tumor(s) may need to be paired manually to missing Normal(s)")))
-      
       indexToAdd <- which(tumorSamplesPair %in% missingCases)
       # Insert "missing" at this index
       for(idx in indexToAdd){
