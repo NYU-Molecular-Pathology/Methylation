@@ -404,7 +404,7 @@ callApiFile <- function(rcon, recordName, ovwr = T) {
         
         fld <- "classifier_pdf"
         message(paste("fiPath", "=", fiPath))
-        #stopifnot(file.exists(fiPath))
+        if(file.exists(fiPath)){
         body <- list(
             token = rcon$token,
             content = 'file',
@@ -426,7 +426,9 @@ callApiFile <- function(rcon, recordName, ovwr = T) {
         }else{
             message("REDCap file upload failed: ", fiPath)
         }
-        
+        }else{
+            message("REDCap file upload failed: ", fiPath)
+        }
     }
 }
 
