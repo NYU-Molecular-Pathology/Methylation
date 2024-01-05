@@ -263,54 +263,99 @@ FixPairedList <- function(philipsExport, rawSheetData){
 }
 
 
-AddUnmatchNormals <- function(sheetsPairedNorm, sheetPairedTumor, mainSheet, sheetTumors, sheetNormals, philipsExport) {
-
-  if(length(sheetsPairedNorm) > length(sheetPairedTumor)){
-    extraNormals <- T
-    message(crayon::bgRed(paste("More NORMALS than Tumors on this run!  Manually edit sample sheet!")))
-    unmatchedSamples <- which(!philipsExport$`Tumor DNA/RNA Number` %in% sheetPairedTumor)
-    dnaMissingPair <- stringr::str_detect(mainSheet$Sample_ID, pattern = paste(sheetsPairedNorm[unmatchedSamples], collapse = "|"))
-    message(crayon::bgBlue("The following case(s) are missing a paired Tumor:"))
-    MsgDF(mainSheet$Sample_ID[dnaMissingPair])
-
-    }else{
-    extraNormals <- F
-    message(crayon::bgRed(paste("More TUMORS than Normals on this run!  Manually edit sample sheet!")))
-    unmatchedSamples <- which(!philipsExport$`Normal DNA/RNA Number` %in% sheetsPairedNorm)
-    dnaMissingPair <- stringr::str_detect(mainSheet$Sample_ID, pattern = paste(sheetPairedTumor[unmatchedSamples], collapse = "|"))
-    message(crayon::bgBlue("The following case(s) are missing a paired Normal:"))
-    MsgDF(mainSheet$Sample_ID[dnaMissingPair])
-  }
-
-  if (any(dnaMissingPair)) {
-    extraIndices <- which(dnaMissingPair)
-    normalSamplesPair <- mainSheet$Sample_ID[sheetNormals]
-    tumorSamplesPair <- mainSheet$Sample_ID[sheetTumors]
-
-    missingCases <- mainSheet$Sample_ID[dnaMissingPair]
-
-   if(extraNormals == T){
-      message(crayon::bgRed(paste(length(extraIndices),
-                                  "extra Normal(s) do not need to be paired to missing Tumor(s)")))
-      indexToDrop <- which(!normalSamplesPair %in% missingCases)
-      extraNormals <- normalSamplesPair[-indexToDrop]
-      message("This sample will not be paired with a tumor:\n", extraNormals )
-      toDrop <- normalSamplesPair == extraNormals
-      mainSheet$Paired_Normal[sheetTumors] <- normalSamplesPair[-toDrop]
-    }else{
-      message(crayon::bgRed(paste(length(extraIndices),
-                                  "extra Tumor(s) may need to be paired manually to missing Normal(s)")))
-      indexToAdd <- which(tumorSamplesPair %in% missingCases)
-      # Insert "missing" at this index
-      for(idx in indexToAdd){
-        normalSamplesPair <- append(normalSamplesPair, "MISSING_NORMAL_PAIR", after = idx-1)
-      }
-      mainSheet$Paired_Normal[sheetTumors] <- normalSamplesPair
-      return(mainSheet)
+FindMissingPairs <- function(extraNormals, philipsExport, sheetPairedTumor, sheetsPairedNorm, mainSheet) {
+    unmatchedSamples <- if(extraNormals) {
+        message(crayon::bgRed("More NORMALS than Tumors on this run!  Manually edit sample sheet!"))
+        which(!philipsExport$`Tumor DNA/RNA Number` %in% sheetPairedTumor)
+    } else {
+        message(crayon::bgRed("More TUMORS than Normals on this run!  Manually edit sample sheet!"))
+        which(!philipsExport$`Normal DNA/RNA Number` %in% sheetsPairedNorm)
     }
-  }
-  return(mainSheet)
+    
+    missingSams <- paste(if (extraNormals) {sheetsPairedNorm[unmatchedSamples]
+        } else {sheetPairedTumor[unmatchedSamples]}, collapse = "|")
+    
+    dnaMissingPair <- stringr::str_detect(mainSheet$Sample_ID, pattern = missingSams)
+    
+    return(dnaMissingPair)
 }
+
+
+MessageMismatched <- function(extraIndices, extraNormals, mainSheet, dnaMissingPair){
+    message(crayon::bgBlue(paste("The following case(s) are missing a paired", if(extraNormals) "Tumor:" else "Normal:")))
+    MsgDF(mainSheet$Sample_ID[dnaMissingPair])
+    msg_tum_norm <-
+        paste(length(extraIndices), "extra", if (extraNormals) {
+            "Normal(s) may need to be paired manually to missing Tumor(s)"
+        } else {
+            "Tumor(s) may need to be paired manually to missing Normal(s)"
+        })
+    message(crayon::bgRed(msg_tum_norm))
+}
+
+
+ProcessExtraNormals <- function(normalSamplesPair, missingCases, tumorSamplesPair, mainSheet, sheetTumors) {
+    pairedNormals <- which(!normalSamplesPair %in% missingCases)
+    extraNormals <- normalSamplesPair[-pairedNormals]
+    
+    message("This normal sample will not be paired with a tumor:\n", extraNormals)
+    
+    indexToAdd <- which(normalSamplesPair %in% missingCases)
+    indexToAdd <- sort(indexToAdd, decreasing = FALSE)
+    
+    # Insert normal as an unpaired tumor at this index
+    for(idx in indexToAdd){
+        tumorSamplesPair <- append(tumorSamplesPair, normalSamplesPair[idx], after = idx - 1)
+    }
+    
+    tumorRowAdd <- which(mainSheet$Sample_ID %in% missingCases)
+    indexToAdd <- sort(tumorRowAdd, decreasing = FALSE)
+    
+    for(idx in indexToAdd){
+        sheetTumors <- append(sheetTumors, idx)
+    }
+    
+    for(xSam in extraNormals) {
+        toDrop <- normalSamplesPair == xSam
+        normalSamplesPair[toDrop] <- ""
+    }
+    
+    mainSheet$Paired_Normal[sheetTumors] <- normalSamplesPair
+    mainSheet$Sample_ID[sheetTumors] <- mainSheet$Sample_ID[sheetTumors] <- tumorSamplesPair
+    return(mainSheet)
+}
+
+
+AddUnmatchNormals <- function(sheetsPairedNorm, sheetPairedTumor, mainSheet, sheetTumors, sheetNormals, philipsExport) {
+    
+    extraNormals <- length(sheetsPairedNorm) > length(sheetPairedTumor)
+    dnaMissingPair <- FindMissingPairs(extraNormals, philipsExport, sheetPairedTumor, sheetsPairedNorm, mainSheet)
+    
+    if (any(dnaMissingPair)) {
+        extraIndices <- which(dnaMissingPair)
+        
+        MessageMismatched(extraIndices, extraNormals, mainSheet, dnaMissingPair)
+        
+        normalSamplesPair <- mainSheet$Sample_ID[sheetNormals]
+        tumorSamplesPair <- mainSheet$Sample_ID[sheetTumors]
+        missingCases <- mainSheet$Sample_ID[dnaMissingPair]
+        
+        if(extraNormals == T){
+            mainSheet <- ProcessExtraNormals(normalSamplesPair, missingCases, tumorSamplesPair, mainSheet, sheetTumors)
+            return(mainSheet)
+        }else{
+            indexToAdd <- which(tumorSamplesPair %in% missingCases)
+            # Insert "missing" at this index to manually pair
+            for(idx in indexToAdd){
+                normalSamplesPair <- append(normalSamplesPair, "MISSING_NORMAL_PAIR", after = idx-1)
+            }
+            mainSheet$Paired_Normal[sheetTumors] <- normalSamplesPair
+            return(mainSheet)
+        }
+    }
+    return(mainSheet)
+}
+
 
 
 AddSampleIndexes <- function(pairedList, rawSheetData, philipsExport){
