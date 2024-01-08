@@ -9,8 +9,9 @@ if(is.na(concensusDir)){
     concensusDir <- paste0("/Volumes/CBioinformatics/jonathan/pact/consensus/", pactRunName, "_consensus")
 }
 
+runYear <- stringr::str_split_fixed(pactRunName, "-", 3)[1,2]
 molecOut <- "/Volumes/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics"
-csvPath <- file.path(molecOut, format(Sys.Date(), "%Y"), pactRunName)
+csvPath <- file.path(molecOut, paste0("20", runYear), pactRunName)
 
 stopifnot(dir.exists(csvPath))
 
