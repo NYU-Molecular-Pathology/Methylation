@@ -1,5 +1,5 @@
 ---
-title: "Methylation Profiling Report"
+title: "Methylation Profiling Report Version 1.2"
 author: "Quick Links:"
 output: 
   html_document: 
