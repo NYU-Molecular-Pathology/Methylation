@@ -1,3 +1,13 @@
+#!/usr/bin/env Rscript
+## ---------------------------
+## Script name: CustomRuns.R
+## Purpose: Source of functions to execute a customized methylation run
+## Date Last Modified: January 11, 2024
+## Version: 1.0.0
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2024
+## ---------------------------
+
 gb <- globalenv(); assign("gb", gb)
 reportMd <- file.path(fs::path_home(),"report.Rmd") # From curl github download
 sarcRmdFile = "/Volumes/CBioinformatics/Methylation/SarcReport.Rmd"

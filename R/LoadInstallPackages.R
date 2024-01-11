@@ -1,4 +1,13 @@
 #!/usr/bin/env Rscript
+## ---------------------------
+## Script name: LoadInstallPackages.R
+## Purpose: Functions that check if the required classifier packages and dependencies are installed and loaded
+## Date Last Modified: January 11, 2024
+## Version: 1.0.0
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2024
+## ---------------------------
+
 formals(library)$quietly <- T
 formals(library)$warn.conflicts <- F
 formals(require)$warn.conflicts <- F

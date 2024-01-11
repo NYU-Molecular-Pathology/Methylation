@@ -1,3 +1,13 @@
+#!/usr/bin/env Rscript
+## ---------------------------
+## Script name: pactParse.R
+## Purpose: Functions to check if all required packages for the pipeline are installed
+## Date Last Modified: January 11, 2024
+## Version: 1.0.0
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2024
+## ---------------------------
+
 options("install.packages.compile.from.source" = "No")
 options("install.packages.check.source" = "no")
 

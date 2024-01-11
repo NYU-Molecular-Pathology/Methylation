@@ -1,4 +1,13 @@
 #!/usr/bin/env Rscript
+## ---------------------------
+## Script name: CopyInputs.R
+## Purpose: Functions that copy files into the current methylation run directory for the pipeline input
+## Date Last Modified: January 11, 2024
+## Version: 1.0.0
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2024
+## ---------------------------
+
 gb <- globalenv(); assign("gb", gb)
 apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
 cpInLnk = "https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/CopyInputs.R"

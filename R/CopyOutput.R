@@ -1,4 +1,13 @@
 #!/usr/bin/env Rscript
+## ---------------------------
+## Script name: CopyOutputs.R
+## Purpose: Functions to copy files output from the current methylation run directory to the output directory
+## Date Last Modified: January 11, 2024
+## Version: 1.0.0
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2024
+## ---------------------------
+
 options(stringsAsFactors = FALSE)
 gb <- globalenv(); assign("gb", gb)
 apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
