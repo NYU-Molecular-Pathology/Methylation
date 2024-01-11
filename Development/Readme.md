@@ -13,7 +13,7 @@ usethis::create_github_token()
 ```
   + This function will take you to github.com, assuming you’re already signed in.
   + You can also manage your personal access tokens from https://github.com/settings/tokens, by going to Settings ➡️ Developer settings ➡️ Personal access tokens.
-  + You can click on “Generate new token” here, and adjust the Expiration behaviour as you see fit, including “No expiration”.<br/> 
+  + You can click on “Generate new token” here, and adjust the Expiration behavior, including “No expiration”.<br/> 
 
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/89248fc7b58dd5d0b3ea9a78ee88bf0219605b88/screenshots/new-personal-access-token-screenshot.png" width="80%"/><br/> 
 
@@ -38,7 +38,7 @@ If you don’t have gitcreds installed, install via `install.packages("gitcreds"
 ```
 Alternitavely:
 ```R
-credentials::set_github_pat("PasteYourPAT")
+credentials::set_github_pat()
 ```
 ### 3. Restart RStudio and Verify settings ######################################################
 ```R
