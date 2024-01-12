@@ -2,6 +2,7 @@
 ## ---------------------------
 ## Script name: pactParse.R
 ## Purpose: source of global scripts and generate PACT -SampleSheet.csv file
+## Date Last Modified: January 12, 2024
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2023

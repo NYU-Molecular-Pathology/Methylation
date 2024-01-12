@@ -2,6 +2,8 @@
 ## ---------------------------
 ## Script name: pipelineHelper.R
 ## Purpose: source of global scripts to help execute Methylation Pipeline
+## Date Last Modified: January 11, 2024
+## Version: 1.0.0
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2023
 ## ---------------------------

@@ -2,6 +2,8 @@
 ## ---------------------------
 ## Script name: methylExpress.R
 ## Purpose: Source global scripts for executing Clinical methylation pipeline
+## Date Last Modified: January 12, 2024
+## Version: 1.0.0
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2023
 ## ---------------------------

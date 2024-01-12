@@ -1,4 +1,12 @@
 #!/usr/bin/env Rscript
+## ---------------------------
+## Script name: PostRunSarc.R
+## Purpose: Source global scripts for executing Clinical sarcoma pipeline
+## Date Last Modified: January 12, 2024
+## Version: 1.0.0
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2023
+## ---------------------------
 gb <- globalenv(); assign("gb", gb)
 if (!requireNamespace("devtools")) {install.packages("devtools", quiet = T)}
 
