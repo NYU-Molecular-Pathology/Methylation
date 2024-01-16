@@ -72,7 +72,7 @@ classoption:
 par(mar = c(8, 8, 0, 0)) #it's important to have that in a separate chunk
 ``` 
 
-```{r BioCParallel, echo=FALSE, message=TRUE, warning=FALSE, paged.print=FALSE, results='hide'}
+```{r BioCParallel, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, results='hide'}
 gb <- globalenv(); assign("gb", gb)
 # Set Parallel Parameters --------------------------------------
 gb$totNum <- totNum <- gb$GetTotalPairs(gb$fixerrors)
