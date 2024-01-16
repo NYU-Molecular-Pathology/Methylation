@@ -49,7 +49,7 @@ htmltools::includeCSS(file.path(gitPath,"QC-Style.html"))
 
 ---
 title: "`r titleName`"
-subtitle: "Clinical Methylation Run"
+subtitle: "Clinical Methylation Run QC Version 1.0"
 author: "`r paste0(params$author)`"
 date: "`r paste0(gb$fixerrors$Date[1])`"
 always_allow_html: yes
