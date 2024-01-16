@@ -1,3 +1,13 @@
+#!/usr/bin/env Rscript
+## ---------------------------
+## Script name: MakeIndelList.R
+## Purpose: Filter out somatic variants for the PACT consensus report into a csv file
+## Date Last Modified: January 16, 2024
+## Version: 1.0.0
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2024
+## ---------------------------
+
 library("base")
 args <- commandArgs(TRUE)
 
@@ -9,21 +19,20 @@ if(is.na(concensusDir)){
     concensusDir <- paste0("/Volumes/CBioinformatics/jonathan/pact/consensus/", pactRunName, "_consensus")
 }
 
+deps <- c("Depends", "Imports", "LinkingTo")
+if(!requireNamespace("stringr", quietly = TRUE)) {
+    install.packages("stringr", dependencies = deps, ask = F)
+}
+if(!requireNamespace("dplyr", quietly = TRUE)) {
+    install.packages("dplyr", dependencies = deps, ask = F)
+}
+library("dplyr", mask.ok = T, warn.conflicts = F, quietly = T)
+
 runYear <- stringr::str_split_fixed(pactRunName, "-", 3)[1,2]
 molecOut <- "/Volumes/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics"
 csvPath <- file.path(molecOut, paste0("20", runYear), pactRunName)
 
 stopifnot(dir.exists(csvPath))
-
-if(!require("stringr", warn.conflicts = F)){install.packages("stringr", dependencies = T)}
-if(!require("dplyr", warn.conflicts = F)){install.packages("dplyr", dependencies = T)}
-library("dplyr", mask.ok = T)
-
-#monthDay <- gsub("0(\\d)", "\\1", format(Sys.Date(), "%m_%d_"))
-#thisYear <- format(Sys.Date(), "%Y.csv")
-#thisFile <- paste0("export_mytable_", paste0(monthDay, thisYear))
-#inputFile <- dir(path = file.path(fs::path_home(), "Downloads"), pattern = thisFile, full.names = T)
-#path = file.path(fs::path_home(), "Downloads")
 
 thisFile <- "somatic_variants.csv"
 inputFile <- inputFile <- dir(path = csvPath, pattern = thisFile, full.names = T)
