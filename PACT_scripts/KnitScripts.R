@@ -1,3 +1,13 @@
+#!/usr/bin/env Rscript
+## ---------------------------
+## Script name: KnitScripts.R
+## Purpose: Source of global scripts used by the PACT_consensus.Rmd file
+## Date Last Modified: January 17, 2024
+## Version: 1.0.0
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2024
+## ---------------------------
+
 gb <- globalenv(); assign("gb", gb)
 
 CheckBrewLatex <- function() {
@@ -906,14 +916,20 @@ loadHtmlTag <- function(){
     return(htmltools::tagList(plotly::ggplotly(ggplot2::ggplot())))
 }
 
+
 RenamePngs <- function(tumors, pngList, ngsPngDir) {
     stopifnot(class(tumors) == "data.frame")
     ngsOrder <- base::which(sapply(tumors$Specimen_ID, grepl, pngList), arr.ind = T)[, "row"]
-    for(X in 1:nrow(tumors)){
+    for (X in 1:nrow(tumors)) {
         currCase <- tumors$Paired_Normal[X]
         fileFind <- stringr::str_detect(pngList, pattern = currCase)
         current_png <- pngList[fileFind]
-        stopifnot(length(current_png) == 1)
+        isInValid <- length(current_png) == 1
+        if (!isInValid) {
+          message("File png not found for sample: ", currCase)
+          message("Check Samplesheet CSV file and compare with the demux-samplesheet.csv used")
+        }
+        stopifnot(length(current_png) == 1) 
         new_pngName <- paste0(tumors$Test_Number[X], ".png")
         message("Current PNG file:\n", basename(current_png))
         message("Matching NGS name: ", tumors$Test_Number[X], "\n", tumors$Paired_Normal[X], "\n")
