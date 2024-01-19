@@ -26,7 +26,7 @@ Use **ARM** (-arm64.pkg) package downloads for *M1/M2 Macs* & **Intel** (-x86_64
 - [X] **Gfortran** from GitHub use dmg installer: https://github.com/fxcoudert/gfortran-for-macOS/releases/ <br />
 - [X] **RStudio 2023.06.0+421 or later**: https://www.rstudio.com/products/rstudio/download/#download<br />
 - [X] **XQuartz**: https://www.xquartz.org/<br />
-- [X] **LaTeX** for Mac: https://www.tug.org/mactex/mactex-download.html [Direct DL](https://mirror.ctan.org/systems/mac/mactex/MacTeX.pkg)<br />
+- [X] **LaTeX** for Mac: https://www.tug.org/mactex/mactex-download.html [Direct DL](https://mirror.ctan.org/systems/mac/mactex/MacTeX.pkg) or `brew install --cask basictex`<br />
 - [X] **Pandoc**: https://pandoc.org/installing.html<br />
 - [X] **XCode command line tools** for Mac OS: in iTerm or Terminal enter `xcode-select --install`<br>
 - [X] **Java 8 JDK**: https://www.oracle.com/java/technologies/downloads/#java8-mac (Intel Macs) or [Java for M1/M2 Macs](https://www.azul.com/downloads/?version=java-8-lts&os=macos&architecture=arm-64-bit&package=jdk)
