@@ -1,4 +1,13 @@
 #!/usr/bin/env Rscript
+## ---------------------------
+## Script name: SarcTables.R
+## Purpose: source of global scripts imported for methylation Sarcoma analysis report tables
+## Date Last Modified: January 19, 2024
+## Version: 1.0.0
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2024
+## ---------------------------
+
 library("base")
 gb <- globalenv(); assign("gb", gb)
 options(width = 320, scipen = 5, knitr.kable.NA = '')

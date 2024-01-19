@@ -1,11 +1,12 @@
 #!/usr/bin/env Rscript
 ## ---------------------------
 ## Script name: TsneFunctions.R
-## Purpose: source of global scripts imported for  methylation Report.Rmd t-sne plotting
+## Purpose: source of global scripts imported for methylation Report.Rmd t-sne plotting
+## Date Last Modified: January 19, 2024
+## Version: 1.0.0
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2023
+## Copyright (c) NYULH Jonathan Serrano, 2024
 ## ---------------------------
-
 getScores <- function(Mset=NULL){
     if(is.null(Mset)){
         stop("Mset is NULL in getScores()")

@@ -2,8 +2,10 @@
 ## ---------------------------
 ## Script name: QC-Scripts.R
 ## Purpose: source of global scripts imported for QC methylation analysis
+## Date Last Modified: January 19, 2024
+## Version: 1.0.0
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2023
+## Copyright (c) NYULH Jonathan Serrano, 2024
 ## ---------------------------
 
 gb <- globalenv(); assign("gb", gb)

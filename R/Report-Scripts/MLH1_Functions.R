@@ -1,3 +1,13 @@
+#!/usr/bin/env Rscript
+## ---------------------------
+## Script name: MLH1_Functions.R
+## Purpose: source of global functions used for calculation of methylation MLH1 values in report.Rmd
+## Date Last Modified: January 19, 2024
+## Version: 1.0.0
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2024
+## ---------------------------
+
 GetMLH1Data <- function(ratioSet, RGset){
     #Output is DF with sample information, betas for relevant MLH1 loci
     MLH1_CGIDS_og = c("cg23658326","cg11600697","cg21490561","cg00893636")

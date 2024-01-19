@@ -1,3 +1,13 @@
+#!/usr/bin/env Rscript
+## ---------------------------
+## Script name: RedcapOutput.R
+## Purpose: source of global functions for methylation REDCap database data import
+## Date Last Modified: January 19, 2024
+## Version: 1.0.0
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2024
+## ---------------------------
+
 makePost <- function(dfNewRed, params){
     library(verbose=F, warn.conflicts = F, quietly = T, package= "jsonlite")
     library(verbose=F, warn.conflicts = F, quietly = T, package= "crayon")

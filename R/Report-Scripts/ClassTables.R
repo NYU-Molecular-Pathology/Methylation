@@ -1,3 +1,13 @@
+#!/usr/bin/env Rscript
+## ---------------------------
+## Script name: ClassTables.R
+## Purpose: source of global functions used for methylation report.Rmd knitting
+## Date Last Modified: January 19, 2024
+## Version: 1.0.0
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2024
+## ---------------------------
+
 gb <- globalenv() 
 assign("gb", gb)
 supM <- function(objTing){return(suppressMessages(suppressWarnings(objTing)))}

@@ -1,3 +1,12 @@
+#!/usr/bin/env Rscript
+## ---------------------------
+## Script name: PipeLineU.R
+## Purpose: source of global functions used for methylation UniD report.Rmd knitting
+## Date Last Modified: January 19, 2024
+## Version: 1.0.0
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2024
+## ---------------------------
 
 TryLoadUniD <- function(rdsPath="/Volumes/CBioinformatics/Methylation/UniD/R/sysdata.rda"){
     library(verbose=F, warn.conflicts = F, quietly = T, package= "dplyr")

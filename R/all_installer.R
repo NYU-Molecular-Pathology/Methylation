@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 ## ---------------------------
-## Script name: pactParse.R
+## Script name: all_installer.R
 ## Purpose: Functions to check if all required packages for the pipeline are installed
 ## Date Last Modified: January 11, 2024
 ## Version: 1.0.0
