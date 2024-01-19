@@ -1,7 +1,7 @@
 #!/bin/bash
 ## ---------------------------
 ## Script name: BigPurpleCopy.sh
-## Purpose: Copy a file from a local directory to a BigPurple directory
+## Purpose: Copy a file from a local directory to a BigPurple HPC directory
 ## Date Created: October 23, 2023
 ## Date Last Modified: January 19, 2024
 ## Author: Jonathan Serrano
@@ -9,10 +9,11 @@
 ## Copyright (c) NYULH Jonathan Serrano, 2024
 ## ---------------------------
 
-INPUTFI_PATH=${1-NULL}
-OUTDIR=${2-NULL}
-KERBEROS=${3-$USER} # if arg $3 is empty assign USER as default
-kerbero="$KERBEROS"
+INPUTFI_PATH=${1-NULL} # Full path to the file to be copied (i.e. /Users/myName/Desktop/myfile.csv)
+OUTDIR=${2-NULL}       # Full path to the directory on HPC where the file should be copied
+KERBEROS=${3-$USER}    # if arg $3 is empty assign USER as default
+
+kerbero="$KERBEROS" # force console input as string
 
 # Check if OUTDIR ends with a file separator slash ("/"). Append a slash if it doesn't.
 if [[ "$OUTDIR" != */ ]]; then
@@ -37,14 +38,21 @@ message_print() {
 }
 
 # FUN: Checks if BigPurple directory exists ----------------------------------------------------------
+echo_hpc_command() {
+    OUTDIR=$1
+    kerbero=$2
+    hpc_command='ssh "'${kerbero}@bigpurple.nyumc.org'" "mkdir -p '${OUTDIR}'"'
+    echo -e "\nCreating new Directory:\n${OUTDIR}"
+    echo -e "\n${BG_BLUE}${hpc_command}${normal}\n"
+}
+
 check_directory() {
-   kerbero=$1
-   OUTDIR=$2
-   if ssh "$kerbero@bigpurple.nyumc.org" "[ ! -d $OUTDIR ]"; then
-      printf "Creating new Directory:\n%s" "$OUTDIR"
-      printf "\n%sssh \"%s@bigpurple.nyumc.org\" \"mkdir -p %s\"%s" "${BG_BLUE}" "$kerbero" "$OUTDIR" "${normal}"
-      ssh "$kerbero@bigpurple.nyumc.org" "mkdir -p $OUTDIR"
-   fi
+    kerbero=$1
+    OUTDIR=$2
+    if ssh "$kerbero@bigpurple.nyumc.org" "[ ! -d $OUTDIR ]"; then
+        echo_hpc_command "$OUTDIR" "$kerbero"
+        ssh "$kerbero@bigpurple.nyumc.org" "mkdir -p $OUTDIR"
+    fi
 }
 
 # Check if BigPurple Directory Directory Exists ----------------------------------------------
