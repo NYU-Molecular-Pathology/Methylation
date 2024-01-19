@@ -2,8 +2,11 @@
 ## ---------------------------
 ## Script name: BigPurpleCopy.sh
 ## Purpose: Copy a file from a local directory to a BigPurple directory
+## Date Created: October 23, 2023
+## Date Last Modified: January 19, 2024
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2023
+## Version: 1.0.0
+## Copyright (c) NYULH Jonathan Serrano, 2024
 ## ---------------------------
 
 INPUTFI_PATH=${1-NULL}
