@@ -14,10 +14,6 @@ OUTDIR=${2-NULL}
 KERBEROS=${3-$USER} # if arg $3 is empty assign USER as default
 kerbero="$KERBEROS"
 
-if [ "$kerbero" == "Jonathan" ]; then
-   kerbero="serraj10"
-fi
-
 # Check if OUTDIR ends with a file separator slash ("/"). Append a slash if it doesn't.
 if [[ "$OUTDIR" != */ ]]; then
    OUTDIR="${OUTDIR}/"
