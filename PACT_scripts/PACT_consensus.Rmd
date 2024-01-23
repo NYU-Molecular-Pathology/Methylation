@@ -8,9 +8,9 @@ output:
 toc_collapsed: true
 params:
   pactName: "PACT-22-##"
-  userName: "Jonathan Serrano"
+  userName: "`r paste0(Sys.info()[['user']])`"
   workDir: "/Volumes/CBioinformatics/jonathan/pact/consensus"
-title: "Consensus `r params$pactName`"
+title: "Consensus `r params$pactName` Version 1.0.1"
 author: "`r params$userName`"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 ---
