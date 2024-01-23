@@ -2,8 +2,8 @@
 ## ---------------------------
 ## Script name: KnitScripts.R
 ## Purpose: Source of global scripts used by the PACT_consensus.Rmd file
-## Date Last Modified: January 17, 2024
-## Version: 1.0.0
+## Date Last Modified: January 23, 2024
+## Version: 1.0.1
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2024
 ## ---------------------------
@@ -348,38 +348,38 @@ makeSpecimenTab <- function(objDat) {
 
 
 PrintHotspotTable <- function(objDat) {
-    cat(
-        "<span style='color: red;'>",
-        "**Note**: The Hotspot calls below are from the unfiltered VCF files.  Any called (YES) will be listed first</span>\n\n"
+    cat("<span style='color: red;'>",
+        "**Note**: The Hotspot calls below are from the unfiltered VCF files.  Any called (YES) will be listed first</span>\n\n")
+
+    # Reorder the data frame so that rows with "YES" are at the top
+    rows_with_yes <- rowSums(objDat[, c("Strelka", "LoFreqSomatic", "Mutect")] == "YES") > 0
+    sorted_objDat <- objDat[order(-rows_with_yes),]
+    
+    dtOpts <- list(scrollX = T, scrollY=T, info = F, autoWidth = F, pageLength = 25,
+                   lengthChange = T, searchable = T)
+
+    datTab <- DT::datatable(
+        sorted_objDat,
+        style = "bootstrap",
+        rownames = FALSE,
+        options = dtOpts,
+        height = "120%",
+        width = "120%"
     )
 
-# Reorder the data frame so that rows with "YES" are at the top
-rows_with_yes <- rowSums(objDat[, c("Strelka", "LoFreqSomatic", "Mutect")] == "YES") > 0
-sorted_objDat <- objDat[order(-rows_with_yes),]
-dtOpts <- list(
-        scrollX = T, scrollY=T, info = F, autoWidth = F, pageLength = 25,
-        lengthChange = T, searchable = T
-    )
-
-datTab <- DT::datatable(
-    sorted_objDat,
-    style = "bootstrap",
-    rownames = FALSE,
-    options = dtOpts,
-    height = "120%",
-    width = "120%"
-)
-
-# Apply the color to cells with "YES" in the specified columns
-for (col in c("Strelka", "LoFreqSomatic", "Mutect")) {
+    # Apply the color to cells with "YES" in the specified columns
     datTab <- datTab %>%
-      formatStyle(col, backgroundColor = styleEqual("YES", "#64a463"), target = 'cell')
-}
+      formatStyle(columns = c("Strelka", "LoFreqSomatic", "Mutect"),
+                  backgroundColor = styleEqual("YES", "#64a463"), target = 'cell')
 
-dtTab <- htmltools::tagList(datTab)
-
-print(dtTab)
-cat("\n\n")
+    # format "Common COSMIC Variant" column in italics
+    variantCol <- which(stringr::str_detect(names(sorted_objDat), "Variant"))
+    datTab <- datTab %>% formatStyle(variantCol, fontStyle = "italic")
+    
+    dtTab <- htmltools::tagList(datTab)
+    
+    print(dtTab)
+    cat("\n\n")
 }
 
 
@@ -491,6 +491,7 @@ MakeHStab <- function(sam, hsDat, samList, outDir){
     ts_number <- samList$Specimen_ID[samList$Tumor_Content!=0 & ngsRows]
     hotspot_tsv <- file.path(outDir, 'hotspots', paste0(ts_number, "_Hotspots.tsv"))
     hsMain <- hsDat[hsDat$Test_Number == sam,]
+    names(hsMain)[names(hsMain) == 'Variant'] <- 'Common COSMIC Variant'
     makeDT(tabNam = "Hotspots", objDat = hsMain, NULL, NULL, sam)
 }
 
