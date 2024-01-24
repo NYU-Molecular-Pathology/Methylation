@@ -21,7 +21,8 @@ WHT_BG="<span style='background-color:white;margin-left:30px;padding:3px;margin-
 normal="</span>" # resets default text
 BOX1=' <div class="boxed"> '
 BOX2=' </div> '
-currYear=$(date +'%Y')
+year_part=${str:5:2}
+currYear="20${year_part}"
 #currYear=$(date +"%Y") #date2022
 #evernoteLink='https://www.evernote.com/shard/s331/sh/5416e425-83c7-5aeb-0683-6667fb3d6f8e/07ef3e8f603ecdff3afe5da18f0204f2'
 consensusDir='/Volumes/CBioinformatics/jonathan/pact/consensus/'
@@ -29,7 +30,6 @@ productionDir="/gpfs/data/molecpathlab/production"
 outputDir="/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics/"
 #reprtDir="/gpfs/data/molecpathlab/bin/QC_reprot/"
 pactGithub="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts"
-
 SHEETDIR="${productionDir}/samplesheets/LG-PACT/${runID}"
 DEMUXDIR="${productionDir}/Demultiplexing/${runID}"
 #molecDir="${productionDir}/NGS607/"
@@ -331,13 +331,11 @@ msg_stage 2 "Execute In-House Pipeline and Philips Uploads"
 msg_step 1 "#ffffba" "After Demux finishes, check the QC by pasting the link below in a web browser to open in a SFTP client like CyberDuck:"
 msg_code "sftp://bigpurple.nyumc.org${DEMUXDIR}/output/${runID}.report.html"
 #msg_code "chmod -R g+rwx ${DEMUXDIR}/output"
-msg_step "2a" "#ffffba" "Return to the Demux directory, execute the pass and upload *make* commands to upload to Philips, then deploy the in-house pipeline"
+msg_step "2" "#ffffba" "Return to the Demux directory, execute the pass and upload *make* commands to upload to Philips, then deploy the in-house pipeline with EITHER 2a or 2b"
 msg_code "ssh ${kerbero}@bigpurple.nyumc.org"
-msg_note "NOTE:" "If all samples in the run are production then execute the following command 2a"
+msg_step "2a" "#acacff" "If all samples in the run are production samples then execute the following command 2a"
 msg_code "/gpfs/data/molecpathlab/scripts/bash_helpers/start_pipeline.sh ${pactRun} ${runID}"
-#msg_code "cd $DEMUXDIR && chmod -R g+rwx ${DEMUXDIR}/output"
-msg_step "2b" "#ffffba" "Return to the Demux directory, execute the pass and upload *make* commands to upload to Philips, edit samplesheet, then deploy the in-house pipeline"
-msg_note "NOTE:" "Otherwise, if have any filler or validation cases that need to be changed in the sample sheet, execute the steps below instead separately 2b."
+msg_step "2b" "#acacff" "If the run has any filler or previous validation cases that need to be changed in the sample sheet, execute the steps below separately after editing the run"
 msg_code "/gpfs/data/molecpathlab/scripts/bash_helpers/make_passed_uploads.sh ${pactRun} ${runID}"
 msg_code "/gpfs/data/molecpathlab/scripts/bash_helpers/deploy_607_submit.sh ${pactRun} ${runID}"
 #msg_code "make passed && make uploads && make deploy-NGS607 && cd ${productionDir}/NGS607/${runID} && chmod -R g+rwx ${productionDir}/isg-uploads/${runID}"
