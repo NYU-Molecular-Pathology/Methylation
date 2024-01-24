@@ -21,7 +21,7 @@ WHT_BG="<span style='background-color:white;margin-left:30px;padding:3px;margin-
 normal="</span>" # resets default text
 BOX1=' <div class="boxed"> '
 BOX2=' </div> '
-year_part=${str:5:2}
+year_part=${pactRun:5:2}
 currYear="20${year_part}"
 #currYear=$(date +"%Y") #date2022
 #evernoteLink='https://www.evernote.com/shard/s331/sh/5416e425-83c7-5aeb-0683-6667fb3d6f8e/07ef3e8f603ecdff3afe5da18f0204f2'
