@@ -538,6 +538,12 @@ makeReports.v11b6 <- function(runPath = NULL,
     library("data.table")
     assign("genCn", genCn, envir = gb)
     data <- read.csv(sheetName, strip.white = T)
+    sheetRunID <- paste0(data$RunID[1])
+    if(sheetRunID != gb$runID) {
+      message("Batch ID in sheet is: ", sheetRunID)
+      message("Batch ID provided is: ", gb$runID)
+      stopifnot(sheetRunID == gb$runID)
+    }
     runID <- paste0(data$RunID[1])
 
     isMC = sjmisc::str_contains(runID, "MGDM") | sjmisc::str_contains(runID, "MC")
