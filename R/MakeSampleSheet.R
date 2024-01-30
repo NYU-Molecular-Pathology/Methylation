@@ -127,7 +127,7 @@ FsCopyFile <- function(fileLoc) {
 
 
 # FUN: copies the molecular or research lab Worksheet xlsm to cwd
-copyWorksheetFile <- function(runID=NULL, runYear=NULL) {
+copyWorksheetFile <- function(runID = NULL, runYear = NULL) {
     msgFunName(cpInLnk2, "copyWorksheetFile")
 
     if (is.null(runID)) {
@@ -219,9 +219,9 @@ ReadSheetDate <- function(sampleSheet) {
 
 
 # FUN: Reads the csv samplesheet for minfi input
-readSampleSheet <- function(runID=F, totalSam=F, wks=F) {
+readSampleSheet <- function(run_ID=F, totalSam=F, wks=F) {
     msgFunName(cpInLnk2, "readSampleSheet")
-    msgParams(runID,totalSam,wks)
+    msgParams(run_ID, totalSam, wks)
 
     sampleSheet <- GrabSampleSheet()
     message(paste0("Reading worksheet named: ", sampleSheet))
@@ -236,7 +236,18 @@ readSampleSheet <- function(runID=F, totalSam=F, wks=F) {
 
     wsDate <- ReadSheetDate(sampleSheet)
     worksheet$Date <- paste0(wsDate$Date[1])
-    if (runID == T) {
+    
+    if(is.null(gb$runID)){
+        gb$runID <- paste0(stringr::str_split_fixed(basename(sampleSheet), pattern = ".xlsm", 2)[1,1])
+    }
+    
+    if(gb$runID != worksheet$Project[1]){
+        message("The Batch ID in the samplesheet: ", worksheet$Project[1])
+        message("Does not Match the input Run ID: ", gb$runID)
+        stopifnot(gb$runID == worksheet$Project[1])
+    }
+    
+    if (run_ID == T) {
         return(worksheet$Project[1])
     }
     if (totalSam == T) {
