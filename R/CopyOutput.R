@@ -98,7 +98,11 @@ copy.to.clinical <- function(clinOut, runID, runYear) {
 
 # Checks if field is already filled in REDCap returns boolean
 checkRedcapRecord <- function(recordName, fieldName = 'classifier_pdf') {
-    msgFunName(cpOutLnk, "checkRedcapRecord")    
+    msgFunName(cpOutLnk, "checkRedcapRecord")
+    is_val_control <- sjmisc::str_contains(recordName, "_control_")
+    if(is_val_control){
+        return(FALSE)
+    }
     url = gb$apiLink
     formData <- list(
         "token" = gb$ApiToken,
