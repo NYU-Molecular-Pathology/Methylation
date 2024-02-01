@@ -700,10 +700,15 @@ CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull) {
         redcap_dat$block <- ""
         redcap_dat$accession_number <- redcap_db[redcap_dat$record_id, "accession_number"]
         redcap_dat$diagnosis <- redcap_db[redcap_dat$record_id, "diagnosis"]
-        data_subset <- redcap_dat[ , fieldsToPull]
-        rownames(data_subset) <- data_subset$record_id
-        output[, fieldsToPull] <- data_subset[output$RD.number, fieldsToPull]
-        return(output)
+        redcapCsvCols <- colnames(redcap_dat)
+        data_subset <- redcap_dat # [ , fieldsToPull]
+        merged_data <- merge(output, data_subset, by.x = "RD.number", by.y = "record_id")
+        newQcCols <- c("RunID", "RD-number", "B-number", "TM-number", "Log2sqrt(M*U)", "Log2(M/U)",
+                          "log2sqrt(R*G)", "log2(R/G)", "BS_log2sqrt(R*G)", "BS_log2(R/G)",
+                          "log2sqrt(H*L)", "log2(H/L)", "Pvalue")
+        colnames(merged_data) <- c(newQcCols, redcapCsvCols)
+        #output[, fieldsToPull] <- data_subset[output$RD.number, fieldsToPull]
+        return(merged_data)
     }else{
         return(output)
     }
@@ -746,18 +751,18 @@ CombineClassAndQC <- function(output_fi = NULL, token, runDir = NULL, runID = NU
     redcap_db <- GrabSpecificRecords(fieldsToPull, rd_num = output$RD.number, rcon)
     
     newCols <- colnames(redcap_db)
-    for (col_id in newCols) {output[col_id] <- ""}
+    for (col_id in newCols) {
+        output[col_id] <- ""
+    }
+    
     rownames(redcap_db) <- redcap_db$record_id
+    
     for (xrow in 1:nrow(output)) {
         currRow <- output$`RD.number`[xrow]
         output[xrow, newCols] <- redcap_db[currRow, newCols]
     }
     
     output <- CheckOutputScoresQC(output, runID, redcap_db, fieldsToPull)
-    
-    colnames(output) <- c("RunID", "RD-number", "B-number", "TM-number", "Log2sqrt(M*U)", "Log2(M/U)",
-                          "log2sqrt(R*G)", "log2(R/G)", "BS_log2sqrt(R*G)", "BS_log2(R/G)",
-                          "log2sqrt(H*L)", "log2(H/L)", "Pvalue", fieldsToPull)
     
     if(any(is.na(output))){
         output[is.na(output)] <- ""
