@@ -473,7 +473,7 @@ loopRender <- function(samList = NULL, data, redcapUp = T) {
 
     is_validation <-  sjmisc::str_contains(gb$runID, "VAL")
     if (is_validation) {
-        reportMd <<- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report.Rmd"
+        reportMd <<- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
         CopyRmdFile(gb$runID, reportMd)
     }
 
