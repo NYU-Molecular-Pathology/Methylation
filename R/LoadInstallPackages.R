@@ -491,13 +491,18 @@ fixCompiles <- function(brewExtra=F){
     system('export GOROOT=/usr/local/opt/go/libexec')
     system("export PATH=$PATH:$GOROOT/bin")
     system("brew install cmake gsl gmp libopenmpt open-mpi")
-    if(brewExtra==T){runAllBrew()}
+    if (brewExtra == T) {
+      runAllBrew()
+    }
 }
 
 colorMsg <- function(){
-    ms1 <- paste0(mkGrn("Updating in-house classifier to current version:"),"\n",
-                  mkblu("classifierInstall(pathtoFile=NULL, instNew=F, rmpkg=F)"),"\n"
-                  )
+    ms1 <-
+      paste(
+        mkGrn("Updating in-house classifier to current version:"),
+        mkblu("classifierInstall(pathtoFile=NULL, instNew=F, rmpkg=F)"),
+        sep = "\n"
+      )
     ms2 <- paste0(mkred("Classifier package is not installed installing classifier"),"\n")
     ms3 <- paste0(mkGrn("Your classifier package is up-to-date and loading"),"\n")
     return(c(ms1,ms2,ms3))
@@ -561,6 +566,16 @@ checkClassifier <- function(mnpClass) {
     }
 }
 
+
+checkEpicV2 <- function(pkg = "mnp.v12epicv2"){
+    if (pkg %in% rownames(installed.packages())) {
+      message(paste("Package", pkg, "is installed with version:", utils::packageVersion(pkg)))
+    } else{
+      source("/Volumes/CBioinformatics/Methylation/Rscripts/install_epic_v2_classifier.R")
+    }
+}
+
+
 # Load all Functions ---------------------
 startLoadingAll <- function() {
     setEnviron()
@@ -577,11 +592,12 @@ startLoadingAll <- function() {
 
     installAll(classPacks, srcInst)
     
-    if(Sys.info()[['sysname']]=="Darwin") {
+    if(Sys.info()[['sysname']] == "Darwin") {
         checkClassifier(mnpV4)
         checkClassifier(mnpV6)
         checkClassifier(mnpV12)
         checkClassifier(srcV12)
+        checkEpicV2()
     }
     
     uniDpkgs <- c("lumi","ade4","methylumi","mlr")
