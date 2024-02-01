@@ -116,6 +116,7 @@ checkRedcapRecord <- function(recordName, fieldName = 'classifier_pdf') {
         exportDataAccessGroups = 'false',
         returnFormat = 'json'
     )
+    message(paste0(capture.output(as.data.frame(formData)), collapse="\n"))
     response <- httr::POST(url, body = formData, encode = "form")
     result <- httr::content(response)[[1]]
     return(result[[fieldName]])
