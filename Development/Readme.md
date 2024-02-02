@@ -1,9 +1,16 @@
 # Setup Methylation Developement Environment in RStudio
+
+## Methylation Pipeline Development Directory
+The methylation project can be opened in Rstudio in the following directory:
+`/Volumes/CBioinformatics/Development/Methylation/Pipeline/Methylation`
+  + Make sure to **Git Pull** the latest version from Github before attempting to commit changes (under Tools > Version Control > Pull Branches)
+  + If you do not have Rstudio configured with the Methylation repo the steps are outlined below
+
 ### 1. Configure git with Rstudio ############################################
   + If you do not have git installed, you can download and install here: https://git-scm.com/download/
   + Install usethis package if not already installed: `if(!require(usethis)){install.packages("usethis", dependencies=T)}`
   + Set your user name and email:
-```ruby
+```R
 usethis::use_git_config(user.name = "YourGithubName", user.email = "yourGithubEmail@mail.com")
 ```
 ### 1. Generate a Personal Access Token (PAT) for Authentication ############################################
@@ -58,3 +65,4 @@ The report output shoud contain something like: `Personal access token: '<found 
 
   + It should automatically create a directory for you named Methylation. Check the box "Open in new session" and click "Create Project"
   + This will clone the latest Methylation repository files locally in a new RStudio project environment
+  + If you want to load the existing Development project, in Rstudio open a Project in a new session from `/Volumes/CBioinformatics/Development/Methylation/Pipeline/Methylation` and then be sure to Git > Pull the latest updates first
