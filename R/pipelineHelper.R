@@ -2,8 +2,9 @@
 ## ---------------------------
 ## Script name: pipelineHelper.R
 ## Purpose: source of global scripts to help execute Methylation Pipeline
-## Date Last Modified: January 11, 2024
-## Version: 1.0.0
+## Date Created: August 5, 2021
+## Date Last Modified: February 2, 2024
+## Version: 1.0.1
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2023
 ## ---------------------------
@@ -251,7 +252,7 @@ tidyUpFiles <- function(runID) {
 
 
 msgProgress <- function(msg, i, samList) {
-    startEnd <- ifelse(msg == 1, "Now Running", "Completed Report")
+    startEnd <- ifelse(msg == 1, "Now Running Index", "Completed Report")
     nOfTotal <- paste(i, "of", length(samList), dsh)
     cat("\n", bky(dsh, startEnd , nOfTotal),"\n")
 }
@@ -479,7 +480,7 @@ loopRender <- function(samList = NULL, data, redcapUp = T) {
 
     currIdx = 1
     for (i in toRun) {
-        message(bkGrn(dsh, currIdx, "of", length(toRun), "samples are complete", dsh))
+        message(bkGrn(dsh, currIdx, "of", length(toRun), "samples to run", dsh))
         msgProgress(1, i, samList)
         single_data = data[i, ]
         do_report(single_data, gb$genCn)
