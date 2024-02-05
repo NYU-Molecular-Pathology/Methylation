@@ -177,7 +177,7 @@ GetRedcapDF <- function(gb) {
     
     dfNewRed <- data.frame(
         record_id = paste0(gb$dat$sampleID),
-        b_number = paste(gb$dat$bnumber),
+        b_number = paste0(gb$dat$bnumber),
         barcode_and_row_column = paste0(colnames(gb$RGset)),
         array_type = array_opt,
         classifier_sex = paste0(tolower(gb$msetDat$sex)),
