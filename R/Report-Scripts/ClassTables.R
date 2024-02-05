@@ -2,7 +2,8 @@
 ## ---------------------------
 ## Script name: ClassTables.R
 ## Purpose: source of global functions used for methylation report.Rmd knitting
-## Date Last Modified: January 19, 2024
+## Date Created: Aug 5, 2021
+## Date Last Modified: February 5, 2024
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2024
@@ -643,4 +644,14 @@ GetRefList <- function(Mset_ba, outList) {
     } else{
         return(I(as.character(mnp.v11b6::reflist[outList$idx,7])))
     }
+}
+
+GrabClassDetails <- function(refData, sclass) {
+  sampleMatch <- refData$Molecular_subclass == sclass$predicted
+  if (any(sampleMatch)) {
+    theRefLi <- refData$description[sampleMatch]
+  } else{
+    theRefLi <- "No description availible."
+  }
+  return(theRefLi)
 }
