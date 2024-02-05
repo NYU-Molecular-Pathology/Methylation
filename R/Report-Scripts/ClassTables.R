@@ -618,8 +618,12 @@ SuppInfoTable <- function(dat, RGset, msetDat){
 
 PrintClassTable <- function(outList,gitPath){
     classTables <- gb$GetClassProbTables(outList)
-    knitr::asis_output(classTables$famTable)
-    knitr::asis_output(classTables$grpTable)
+    if(length(classTables) == 2){
+        knitr::asis_output(classTables$famTable)
+        knitr::asis_output(classTables$grpTable)
+    }else{
+        knitr::asis_output(classTables)
+    }
     htmltools::includeHTML(file.path(gitPath,"InterpretKey.html"))
     knitr::asis_output("<h4>Methylation Class Description</h4>")
 }
