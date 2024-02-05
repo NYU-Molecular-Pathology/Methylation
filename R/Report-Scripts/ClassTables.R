@@ -567,7 +567,7 @@ GetClassProbTables <-  function(outList){
         outList$maxscore <- as.character(outList$maxscore)
         return(outList %>%
                    knitr::kable("html", kgh, align='clc') %>%
-                   kableExtra::kable_styling(kgb, full_width = F) %>%
+                   kableExtra::kable_styling(kgb, full_width = F, position="float_left") %>%
                    kableExtra::column_spec(column = c(1, 2), extra_css = xtraCss1) %>%
                    kableExtra::column_spec(column = 2, background = "rgb(204,230,255)", extra_css = txtc) %>%
                    kableExtra::row_spec(row = 0, font_size = 16, background = "rgb(135,174,237)", color = "black")
