@@ -75,32 +75,6 @@ generateCNVpng <- function(RGsetEpic, sampleName) {
 }
 
 
-getRGset <- function(runPath, sentrix) {
-    msgFunName(pipeLnk,"getRGset")
-    barcode = stringr::str_split_fixed(sentrix, "_",2)[1]
-    RGsetEpic <- minfi::read.metharray(file.path(runPath, sentrix), verbose = T, force = T)
-
-    aEpic = c(array = "IlluminaHumanMethylationEPIC", annotation = "ilm10b4.hg19")
-    a450k = c(array = "IlluminaHumanMethylation450k", annotation = "ilmn12.hg19")
-    arrayAnno <- RGsetEpic@annotation[['array']]
-    if (arrayAnno == "IlluminaHumanMethylationEPICv2") {
-        return(RGsetEpic)
-    }
-    if (arrayAnno == "IlluminaHumanMethylationEPIC") {
-        return(RGsetEpic)
-    }
-    if (arrayAnno == "IlluminaHumanMethylation450k") {
-        RGsetEpic@annotation = a450k
-        return(RGsetEpic)
-    }
-    if (as.numeric(barcode) <= as.numeric("204220033000")) {
-        RGsetEpic@annotation = a450k
-    } else{
-        RGsetEpic@annotation = aEpic
-    }
-    return(RGsetEpic)
-}
-
 CopyRmdFile <- function(runID, rmdFile) {
     msgFunName(pipeLnk, "CopyRmdFile")
     message("runID: ", runID, " rmdFile: ",rmdFile)
@@ -126,6 +100,40 @@ CopyRmdFile <- function(runID, rmdFile) {
         overwrite = F
     )
     return(qcFileName)
+}
+
+
+getRGset <- function(runPath, sentrix) {
+  msgFunName(pipeLnk,"getRGset")
+  barcode = stringr::str_split_fixed(sentrix, "_",2)[1]
+  RGsetEpic <- minfi::read.metharray(file.path(runPath, sentrix), verbose = T, force = T)
+  
+  aEpic = c(array = "IlluminaHumanMethylationEPIC", annotation = "ilm10b4.hg19")
+  a450k = c(array = "IlluminaHumanMethylation450k", annotation = "ilmn12.hg19")
+  arrayAnno <- RGsetEpic@annotation[['array']]
+  if (arrayAnno == "IlluminaHumanMethylationEPICv2") {
+    is_validation <- T
+    if (is_validation) {
+      is_validation <<- T
+      reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
+      reportMd <<- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
+      gb$CopyRmdFile(gb$runID, reportMd)
+    }
+    return(RGsetEpic)
+  }
+  if (arrayAnno == "IlluminaHumanMethylationEPIC") {
+    return(RGsetEpic)
+  }
+  if (arrayAnno == "IlluminaHumanMethylation450k") {
+    RGsetEpic@annotation = a450k
+    return(RGsetEpic)
+  }
+  if (as.numeric(barcode) <= as.numeric("204220033000")) {
+    RGsetEpic@annotation = a450k
+  } else{
+    RGsetEpic@annotation = aEpic
+  }
+  return(RGsetEpic)
 }
 
 
