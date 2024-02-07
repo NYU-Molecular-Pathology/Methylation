@@ -172,7 +172,7 @@ NewGgplotly <- function (msetDat, dat) {
     detail.ratio <- xx@detail$ratio - xx@bin$shift
     detail.ratio[detail.ratio < ylim[1]] <- ylim[1]
     detail.ratio[detail.ratio > ylim[2]] <- ylim[2]
-    detail.ratio.above <- (detail.ratio > 0.15 & detail.ratio < 1) | detail.ratio < -0.15
+    detail.ratio.above <- (detail.ratio > 0.15) | detail.ratio < -0.15 #& detail.ratio < 1
     xAnno <- xx@anno@detail
     detail.x <- start( xAnno) + (end( xAnno) - start( xAnno)) / 2 + chr.cumsum0[as.vector(seqnames(xAnno))]
     df3 <- data.frame(detail.ratio, detail.x, names = (xAnno)$name)
@@ -235,7 +235,7 @@ NewGgplotly <- function (msetDat, dat) {
         ggplotly(tooltip = "text") %>% plotly::style(hoverlabel = list(bgcolor = "blue"))
     
     # Generate Gain/Loss Table
-    dra <- data.frame(Gain = c(detail.ratio > 0.15 & detail.ratio < 1.5), Loss = c(detail.ratio < -0.15))
+    dra <- data.frame(Gain = c(detail.ratio > 0.15), Loss = c(detail.ratio < -0.15)) #& detail.ratio < 1.5
     gainLoss <- gb$GetCNVTables(dra)
     return(list("thePlot"=ggpb %>% toWebGL(),"gainLoss"=gainLoss))
 }
