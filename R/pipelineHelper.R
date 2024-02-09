@@ -122,6 +122,7 @@ getRGset <- function(runPath, sentrix) {
     return(RGsetEpic)
   }
   if (arrayAnno == "IlluminaHumanMethylationEPIC") {
+    requireNamespace("mnp.v12b6")
     return(RGsetEpic)
   }
   if (arrayAnno == "IlluminaHumanMethylation450k") {
