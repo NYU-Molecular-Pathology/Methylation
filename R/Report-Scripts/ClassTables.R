@@ -563,7 +563,7 @@ GetClassProbTables <-  function(outList){
     kgb <- c("striped",font_size = 14, bootstrap_options = btso, position = "left")
     kgh <- c(booktabs = T, escape = F, linesep = "")
     
-    if(all(rownames(outList) == c("super family", "family", "class", "subclass"))){
+    if(all(names(outList) == c("super family", "family", "class", "subclass"))){
         outList$maxscore <- as.character(outList$maxscore)
         return(outList %>%
                    knitr::kable("html", kgh, align='clc') %>%
