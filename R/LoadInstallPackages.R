@@ -597,7 +597,7 @@ startLoadingAll <- function() {
         checkClassifier(mnpV6)
         checkClassifier(mnpV12)
         checkClassifier(srcV12)
-        checkEpicV2()
+        # checkEpicV2()
     }
     
     uniDpkgs <- c("lumi","ade4","methylumi","mlr")
