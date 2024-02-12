@@ -1,9 +1,12 @@
 #!/bin/bash
 ## ---------------------------
-## Script name: runmeth.sh
-## Purpose: cUrl source and execute Rscripts locally for clinical methylation report generation
+## Script name: runMeth.sh
+## Purpose: Download methylation pipeline scripts from Github with curl and execute Rscripts
+## Date Created: August 5, 2021
+## Date Last Modified: February 1, 2024
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2023
+## Version: 1.0.0
+## Copyright (c) NYULH Jonathan Serrano, 2024
 ## ---------------------------
 
 # RedCap API Token: Saved Locally (Hardcoded)
@@ -17,7 +20,6 @@ redcapUp=${4-NULL} # to upload to redcap or not if server down single char i.e. 
 runLocal=${5-NULL} # If the run directory should be executed without shared drives locally i.e. "T" or "F"
 
 # HARDCODED GITHUB PATHS ---------------------------------------------------------------------------------------
-GITHUBLINK="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/dockerScripts/"
 GITHUBMAIN="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/"
 
 # Hardcoded Terminal Color Variables ---------------------------------------------------------------------------
@@ -57,8 +59,8 @@ R_LOCAL="/usr/local/bin/R"
 R_CURR="$(which R)"
 
 if [[ "$R_CURR" != "$R_LOCAL" ]]; then
-   printf "\n%sYour system is not using R located in:%s $R_LOCAL" "${BG_RED}" "${NORMAL}"
-   printf "\nInstead R is located in: $R_CURR"
+   echo -e "\n%sYour system is not using R located in:%s $R_LOCAL" "${BG_RED}" "${NORMAL}"
+   echo -e "\nInstead R is located in: $R_CURR"
    exit 0
 fi
 
@@ -66,7 +68,7 @@ fi
 function checkSystem {
    APPNAME="$1"
    if ! command -v "$APPNAME" &> /dev/null; then
-      printf "\n${BG_RED}You did not install $APPNAME!${NORMAL} Stopping script\n"
+      echo -e "\n${BG_RED}You did not install $APPNAME!${NORMAL} Stopping script\n"
       exit 0
    fi
 
@@ -83,88 +85,102 @@ if [[ "$unameOut" == "Darwin" ]]; then
    checkSystem "go"
 fi
 
-#BackupDir=$(find /Library/Frameworks/R.framework/Versions -maxdepth 1 -type d -name '*4.3*' -print -quit)
-
 # CHECK: Prints instruction if methRun parameter is empty ------------------------------------------------------
-if [ -z "$methRun" ]; then
-   echo "${BG_RED}You did not provide a Methylation Run ID name${NORMAL}. Ex. '21-MGDM30'"
-   exit 1
-fi
-
-if [ -z "$redcapUp" ]; then
-   redcapUp="T"
-fi
+[ -z "$methRun" ] && { echo "${BG_RED}Missing Input: Methylation Run ID ${NORMAL}. Ex. '21-MGDM30'"; exit 1; }
+[ -z "$redcapUp" ] && { redcapUp="T"; }
 
 # SANITY CHECK: Prints parameters ------------------------------------------------------------------------------
 echo "~~~~~~~~~~~~~~~~~~~~~Parameters passed to RScript~~~~~~~~~~~~~~~~~~~~~"
 echo "${BG_BLU}methAPI:${NORMAL} $methAPI"
 echo "${BG_CYA}(arg1) methRun:${NORMAL} $methRun"
-echo "${BG_MAG}(arg2) PRIORITY samples:${NORMAL} $PRIORITY"
-echo "${BG_GRN}(arg3) Custom runPath:${NORMAL} $runPath"
-echo "${BG_BLU}(arg4) To upload redcapUp:${NORMAL} $redcapUp"
-printf "\nCurl files downloaded:\n"
+echo "${BG_MAG}(arg2) PRIORITY:${NORMAL} $PRIORITY"
+echo "${BG_GRN}(arg3) runPath:${NORMAL} $runPath"
+echo "${BG_BLU}(arg4) redcapUp:${NORMAL} $redcapUp"
 
 # FUNCTIONS: Curl download and mkdir if not exists -------------------------------------------------------------
 message_curl() {
    linkname=$1
    filename=$2
-   printf "${BG_GRN}$HOME/$filename${NORMAL}\n"
+   echo -e "${BG_GRN}Downloading file from Github:${NORMAL}\n$HOME/$filename\n"
    curl -k -# -L "$linkname$filename" >"$HOME/$filename"
    chmod +rwx "$HOME/$filename"
 }
 
 check_directory() {
    CURRDIR=$1
-   if [ ! -d "$CURRDIR" ]; then
-      printf "\nCreating new Directory:\n$CURRDIR"
-      mkdir -p "$CURRDIR"
-   fi
+   echo -e "${BG_GRN}Creating Directory:${NORMAL}\nmkdir -p $CURRDIR\n"
+   mkdir -p "$CURRDIR"
+}
+
+message_red() {
+   CMD_CODE=$1
+   echo -e "${BG_RED}${CMD_CODE}${NORMAL}\n"
 }
 
 message_curl ${GITHUBMAIN} "report.Rmd"
-message_curl ${GITHUBLINK} "Methyl_QC.Rmd"
+message_curl ${GITHUBMAIN} "Methyl_QC.Rmd"
 message_curl ${GITHUBMAIN} "methylExpress.R"
+message_curl ${GITHUBMAIN} "PostRunSarc.R"
 
 printf "\nExecuting Rscript with parameters input:\n"
 color_params="${BG_MAG}$methAPI${NORMAL} ${BG_CYA}$methRun${NORMAL} ${BG_GRN}$PRIORITY${NORMAL} ${BG_BLU}$runPath${NORMAL} ${BG_MAG}$redcapUp${NORMAL} ${BG_GRN}$runLocal${NORMAL}\n"
-printf "${BG_BLU}${bold}Rscript --verbose $HOME/methylExpress.R${NORMAL} $color_params"
+
+echo -e "${BG_BLU}${bold}Rscript --verbose $HOME/methylExpress.R${NORMAL} $color_params"
 
 # EXECUTE: Main command using user input  ----------------------------------------------------------------------
 Rscript --verbose "$HOME/methylExpress.R" $methAPI $methRun $PRIORITY $runPath $redcapUp $runLocal
+Rscript --verbose "$HOME/PostRunSarc.R" $methAPI $methRun
 
 # ASSIGN: Default output paths ---------------------------------------------------------------------------------
-if [ -n "$runPath" ]; then
-   DEFAULTPATH="/Volumes/CBioinformatics/Methylation/Clinical_Runs/${methRun}/"
-   runPath=$DEFAULTPATH
-fi
+[ -n "$runPath" ] && runPath="/Volumes/CBioinformatics/Methylation/Clinical_Runs/${methRun}/"
 
-LOCALDIR="$HOME/Desktop/Html_${methRun}/${methRun}"
+LOCALDIR="$HOME/Desktop/Html_${methRun}/${methRun}/"
+
 RUNYEAR=${methRun%%-*}
-MOLECDIR="/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/Results/20${RUNYEAR}"
-MOLECOUT="/Volumes/molecular/Molecular/MethylationClassifier/20${RUNYEAR}"
+MOLECDIR="/Volumes/molecular/MOLECULAR LAB ONLY/NYU-METHYLATION/Results/20${RUNYEAR}/"
+MOLECOUT="/Volumes/molecular/Molecular/MethylationClassifier/20${RUNYEAR}/"
 
 # SANITY CHECK: Prints output directories ----------------------------------------------------------------------
-echo ""
-echo "----Output Directories----"
+echo -e "\n----Output Directories----\n"
 echo "${BG_GRN}runPath:${NORMAL}  $runPath"
 echo "${BG_GRN}MOLECDIR:${NORMAL} $MOLECDIR"
 echo "${BG_GRN}LOCALDIR:${NORMAL} $LOCALDIR"
 
-# EXECUTE: Rsync html to HOME directory then cp from HOME to Z-Drive -------------------------------------------
+copy_htmls() {
+   COPY_DIR=$1
+   OUTPUT_QC=$2
+   rsync -avWP --progress --include '*.html' --include='*/' --exclude='*' "${LOCALDIR}" "$COPY_DIR"
+   rsync -vWPh --progress "$OUTPUT_QC" "$COPY_DIR"
+}
+
+# COPY: Rsync html to HOME directory then cp from HOME to Z-Drive -------------------------------------------
 check_directory "$LOCALDIR"
 
-printf "\nRsyncing ${methRun} html files to Home directory:\n"
-printf "${BG_GRN}rsync -vrthP --include '*.html' --exclude '*' '${runPath}' '$LOCALDIR'${NORMAL}\n"
+echo -e "\nRsyncing ${methRun} html files to Home directory:\n"
+echo -e "${BG_GRN}rsync -vrthP --include '*.html' --exclude '*' '${runPath}' '$LOCALDIR'${NORMAL}\n"
 
-rsync -vrthP --include '*.html' --exclude '*' "${runPath}" "$LOCALDIR"
+rsync -av --include '*.html' --exclude '*' "${runPath}" "$LOCALDIR"
+rsync -av "${runPath}${methRun}_QC_and_Classifier_Scores.csv" "$LOCALDIR"
 
-printf "\n${BG_BLU}Ensure output files are copied from your HOME to Z-drive:${NORMAL}\n"
-printf "${BG_RED}rsync -vrthP '${LOCALDIR}' '${MOLECDIR}'${NORMAL}\n"
-printf "${BG_RED}rsync -vrthP '${LOCALDIR}' '${MOLECOUT}'${NORMAL}\n"
+OUTPUT_DIR_1="${MOLECDIR}${methRun}/"
+OUTPUT_DIR_2="${MOLECOUT}${methRun}/"
+OUTPUT_QC_FI="${LOCALDIR}${methRun}_QC_and_Classifier_Scores.csv"
 
-rsync -vrthP "${LOCALDIR}" "${MOLECDIR}"
-rsync -vrthP "${LOCALDIR}" "${MOLECOUT}"
+check_directory "${OUTPUT_DIR_1}"
+check_directory "${OUTPUT_DIR_2}"
 
-printf "\n${BG_BLU}Verify files are copied here:${NORMAL}\n${MOLECDIR}\n"
+HTMLCOPY="rsync -avWP --progress --include '*.html' --include='*/' --exclude='*'"
+
+echo -e "\n${BG_BLU}Ensure output files are copied from your HOME to Z-drive:${NORMAL}\n"
+message_red "${HTMLCOPY} \"${LOCALDIR}\" \"${OUTPUT_DIR_1}\""
+message_red "rsync -vWPh --progress \"${OUTPUT_QC_FI}\" \"${OUTPUT_DIR_1}\""
+
+message_red "${HTMLCOPY} \"${LOCALDIR}\" \"${OUTPUT_DIR_2}\""
+message_red "rsync -vWPh --progress \"${OUTPUT_QC_FI}\" \"${OUTPUT_DIR_2}\""
+
+copy_htmls "${OUTPUT_DIR_1}" "${OUTPUT_QC_FI}"
+copy_htmls "${OUTPUT_DIR_2}" "${OUTPUT_QC_FI}"
+
+echo -e "\n${BG_BLU}Verify files are copied here:${NORMAL}\n${MOLECDIR}\n"
 open "${MOLECDIR}"
-printf "\n${BG_GRN}METHYLATION RUN ${methRun} COMPLETE${NORMAL}\n"
+echo -e "\n${BG_GRN}METHYLATION RUN ${methRun} COMPLETE${NORMAL}\n"
