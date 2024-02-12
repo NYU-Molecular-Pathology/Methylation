@@ -206,6 +206,7 @@ Additional resources are here: https://redcap.nyumc.org/apps/redcap/index.php?ac
  `>>>>CURRENT Runs~~~~~ and 3) >>>>>CLINICAL Current Run`<br />
  3. Here, you can click on the RD-number of choice and then select "Upload html file" under the methylation menue<br />
  4. Optionally, you can also select "Add / Edit Records" menu in the left sidebar and find your RD-number in the "Search query" field<br />
+ 5. To upload the sample classifier details, on the Desktop, there will be a run folder created containing a csv file named \<run_id\>_Redcap.csv, this file can be uploaded in the import tab of REDCap under *Data Import Tool* in the sidebar.  Additionally, this file is copied to: `/Volumes/CBioinformatics/Methylation/Clinical_Runs/csvRedcap/\<run_id\>/\<run_id\>_Redcap.csv`
 </details>
 
 <details>
