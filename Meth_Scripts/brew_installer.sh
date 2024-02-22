@@ -35,10 +35,10 @@ brew install texinfo pango cairo open-mpi poppler-qt5 graphviz libopenmpt java11
 brew install --cask basictex
 
 # Check if XQuartz is installed -------------------------------------------------------------------
-if pkgutil --pkgs=com.apple.pkg.X11 >/dev/null; then
-    echo "XQuartz is already installed."
+if [[ -d "/Applications/Utilities/XQuartz.app" ]]; then
+    echo -e "XQuartz is already installed.\n"
 else
-    echo "XQuartz is not installed. Installing now..."
+    echo -e "XQuartz is not installed. Installing now...\n"
     message_curl ${XQUARTZURL} "XQuartz-2.8.5.pkg"
     sudo installer -pkg "$HOME/XQuartz-2.8.5.pkg" -target /
     echo "XQuartz installation completed."
