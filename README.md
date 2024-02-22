@@ -56,6 +56,7 @@ https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/Notes/SystemPer
 ___
 
 # ❗First Time Running Classifier Pre-install packages
+- You can install all the dependencies above by executing the script on the CBioinformatics shared drive: `/Volumes/CBioinformatics/Methylation/install_requirements.sh`
 - After you have installed all the required system dependencies above in Essential Downloads above, you must install all the R packages needed to install and run the classifiers.
 - Before running the classifier for the first time run the Rscript below, `all_installer.R`, to install any R-package dependencies.  The script only needs to be run the first time installing the classifier on new systems.<br />
 - For better debugging, paste the raw code from the URL into RStudio:<br />
