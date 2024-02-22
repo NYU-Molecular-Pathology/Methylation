@@ -66,5 +66,7 @@ if ! xcode-select -p >/dev/null 2>&1; then
 fi
 
 message_curl ${GITHUBMAIN} "all_installer.R"
-
 Rscript --verbose "$HOME/all_installer.R"
+
+message_curl ${GITHUBMAIN} "LoadInstallPackages.R"
+Rscript --verbose "$HOME/LoadInstallPackages.R"
