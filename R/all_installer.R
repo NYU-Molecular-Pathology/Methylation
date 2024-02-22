@@ -13,16 +13,15 @@ options("install.packages.check.source" = "no")
 
 if (Sys.info()[['sysname']] == "Darwin") {
     local({
-        path <-
-            sub(":/opt/homebrew/bin",
-                ":/usr/local/homebrew/bin",
-                Sys.getenv("PATH"))
+        path <- sub(":/opt/homebrew/bin", ":/usr/local/homebrew/bin", Sys.getenv("PATH"))
         Sys.setenv(PATH = path)
     })
+    options(BioC_mirror = "https://packagemanager.rstudio.com/bioconductor")
+    options(repos = c(CRAN = "https://packagemanager.posit.co/cran/2024-02-20"))
+    options(warn = -1)
 }
 
-if (Sys.info()[['sysname']] == "Darwin" &
-    !dir.exists(file.path("~", ".R"))) {
+if (Sys.info()[['sysname']] == "Darwin" & !dir.exists(file.path("~", ".R"))) {
     message("No Makevars file in ~/.R")
     system("mkdir -p ~/.R")
     system("touch ~/.R/MakeVars")
