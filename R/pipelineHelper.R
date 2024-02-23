@@ -3,7 +3,7 @@
 ## Script name: pipelineHelper.R
 ## Purpose: source of global scripts to help execute Methylation Pipeline
 ## Date Created: August 5, 2021
-## Date Last Modified: February 2, 2024
+## Date Last Modified: February 23, 2024
 ## Version: 1.0.1
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2023
@@ -501,6 +501,53 @@ loopRender <- function(samList = NULL, data, redcapUp = T) {
         currIdx = currIdx + 1
     }
     message(bkGrn(dsh, "RUN COMPLETE", dsh))
+}
+
+
+RenderReportsParallel <- function(samList = NULL, data, redcapUp = T) {
+    msgFunName(pipeLnk, "loopRenderAndReportParallel")
+    if (is.null(data)) stop("Data is NULL")
+    library("parallel")
+    
+    if (grepl("VAL", gb$runID)) {
+        reportMd <<- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
+        CopyRmdFile(gb$runID, reportMd)
+    }
+
+    if ((grepl("MGDM|MC", gb$runID) && !grepl("VAL", gb$runID)) || gb$runID == "23-MGDM_VAL3") {
+        data <- NameControl(data, data$RunID[1])
+    }
+    samList <- if (is.null(samList)) 1:length(data$Sample_Name!=0) else samList
+    wksh <- checkSamSh(samList)
+    toRun <- getRunList(data, samList)
+
+    # Setup parallel processing
+    no_cores <- detectCores() - 1
+    cl <- makeCluster(no_cores)
+    clusterExport(cl, c("getRunData", "getRGset", "generate_cnv_png", "make_knit_report",
+                        "handle_knit_error", "gb", "reportMd", "wksh", "redcapUp", "checkSamSh"))
+
+    parLapply(cl, toRun, function(i) {
+        single_data <- data[i, ]
+        dat <- getRunData(single_data)
+        RGsetEpic <- getRGset(runPath = getwd(), sentrix = dat$senLi)
+
+        if (gb$genCn) {generate_cnv_png(RGsetEpic, dat$sampleID)}
+        params_init <- list(token = gb$ApiToken, rundata = dat, 
+                            RGsetEpic = RGsetEpic, knitDir = getwd())
+        tryCatch(
+            make_knit_report(dat, reportMd, params_init),
+            error = function(e) {handle_knit_error(e, dat, params_init)}
+        )
+
+        if (redcapUp) {
+            sh_Dat <- wksh[i, ]
+            gb$importSingle(sh_Dat)
+        }
+    })
+
+    stopCluster(cl)
+    message("RUN COMPLETE")
 }
 
 
