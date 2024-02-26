@@ -1,3 +1,14 @@
+#!/usr/bin/env Rscript
+## ---------------------------
+## Script name: Params_input.R
+## Purpose: Source global parameters and flags for research report inputs
+## Date Created: May 17, 2022
+## Date Last Modified: February 26, 2024
+## Version: 1.0.0
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2024
+## ---------------------------
+
 gb <- globalenv(); assign("gb", gb)
 # Input File Names  -----------------------------------------------
 xlsxFile <- "my_samples.xlsx" # Your main input file
