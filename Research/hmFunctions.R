@@ -352,17 +352,39 @@ grabProbes <- function(your_genes, RGSet, region){
 }
                                            
 
-SaveHmPng <- function(fi_prefix, fi_suffix, hm, topvar = "", outDir=NULL) {
-    if(is.null(outDir)) { outDir <- file.path(".", "figures", "heatmaps") }
-    if(!dir.exists(outDir)) { dir.create(outDir, recursive = TRUE) }
-    imgFile <- file.path(outDir, paste0(fi_prefix, "_", topvar, "_", fi_suffix, ".png"))
+# SaveHmPng <- function(fi_prefix, fi_suffix, hm, topvar = "", outDir=NULL) {
+#     if(is.null(outDir)) { outDir <- file.path(".", "figures", "heatmaps") }
+#     if(!dir.exists(outDir)) { dir.create(outDir, recursive = TRUE) }
+#     imgFile <- file.path(outDir, paste0(fi_prefix, "_", topvar, "_", fi_suffix, ".png"))
+#     wd_original <- as.numeric(hm@ht_list_param[["width"]])
+#     ht_original <- as.numeric(hm@ht_list_param[["height"]])
+#     resolution <- 200
+    
+#     wd <- round(wd_original * 8)
+#     ht <- round(ht_original * 8)
+    
+#     if(ht > 10000 | wd > 10000){
+#       wd <- round(wd / 2)
+#       ht <- round(ht / 2)
+#       resolution <- 100
+#     }
+#     grDevices::png(
+#       file = imgFile,
+#       width = wd,
+#       height = ht,
+#       units = "px",
+#       res = resolution
+#     )
+#     ComplexHeatmap::draw(hm)
+#     invisible(dev.off())
+# }
+
+SaveHmPng <- function(imgFile, hm) {
     wd_original <- as.numeric(hm@ht_list_param[["width"]])
     ht_original <- as.numeric(hm@ht_list_param[["height"]])
     resolution <- 200
-    
     wd <- round(wd_original * 8)
     ht <- round(ht_original * 8)
-    
     if(ht > 10000 | wd > 10000){
       wd <- round(wd / 2)
       ht <- round(ht / 2)
@@ -723,29 +745,31 @@ LoopPathwayHeatMap <- function(pathWayGenes, RGSet, betas, targets) {
 }
 
                                            
-LoopSaveHm <- function(hm.db, varProbes, fi_prefix = "unsuper_hm_top", fi_suffix = "notAnnot"){
-  for (tn in 1:length(varProbes)) {
-      hm <- hm.db[[tn]]
-      hmOutPath <- file.path(".", "figures", "heatmaps")
-      if(!dir.exists(hmOutPath)){dir.create(hmOutPath, recursive = T)}
-      SaveHmPng(fi_prefix, fi_suffix, hm, topvar = varProbes[tn], outDir = hmOutPath)
-  }
-  cat("\n\n")
+LoopSaveHm <- function(hm, topNum, fi_prefix = "unsuper_hm_top", fi_suffix = "notAnnot"){
+    supervise <- ifelse(stringr::str_detect(fi_prefix, pattern="unsuper"), "unsupervised", "supervised")
+    hmOutPath <- file.path(".", "figures", "heatmaps", supervise)
+    if(!dir.exists(hmOutPath)){dir.create(hmOutPath, recursive = T)}
+    imgFile <- file.path(hmOutPath, paste0(fi_prefix, "_", topNum, "_", fi_suffix, ".png"))
+    if(!file.exists(imgFile)){SaveHmPng(imgFile, hm)}
+    cat("\n\n")
+    txtLink <- paste0("[", topNum, supervise, "](", imgFile, ")")
+    cat(txtLink)
+    cat("\n\n")
 }
                                            
 
-LoopPrintHeatMap <- function(unBetas, ha, geneNams, colSplt=3, hm.db = NULL) {
-  ComplexHeatmap::ht_opt("message" = FALSE)
-  for (topNum in gb$varProbes) {
-      cat(paste("###", "Top", topNum, "\n\n"))
-      hmTitle <- paste("Top", topNum, "Variance Probes Beta Values")
-      bv <- unBetas[1:topNum, ]
-      hm <- gb$getHeatMap(bv, hmTitle, ha, geneNams, colSplt = colSplt)
-      hm
-      hm.db <- c(hm.db, hm)
-      cat('\n\n')
+LoopPrintHeatMap <- function(gb, unBetas, ha, geneNams, colSplt=3,
+                             fi_prefix = "unsuper_hm_top", fi_suffix = "notAnnot") {
+    ComplexHeatmap::ht_opt("message" = FALSE)
+    for (topNum in gb$varProbes) {
+        invisible(gc(verbose=F))
+        cat(paste("###", "Top", topNum, "\n\n"))
+        hmTitle <- paste("Top", topNum, "Variance Probes Beta Values")
+        bv <- unBetas[1:topNum, ]
+        LoopSaveHm(hm=invisible(gb$getHeatMap(bv, hmTitle, ha, geneNams, colSplt = colSplt)), topNum,
+                   fi_prefix, fi_suffix)
+        cat('\n\n')
     }
-    return(hm.db)
 }
 
 
@@ -839,17 +863,18 @@ GetSuperHmData <- function(gb, targets, RGSet) {
 
                                          
 LoopSupervisedHm <- function(gb) {
-  if(gb$supervisedRun){
-      for(i in 1:length(gb$selectedVars)){
-        hmPlotData <- eval(parse(text = paste0("gb$hmPlotData", i)))
-        hm.db <- gb$LoopPrintHeatMap(hmPlotData$unBetas, hmPlotData$ha, geneNams = gb$addGenesHm, colSplt = 5)
-        cat("\n\n")
-        invisible(gc(verbose=F))
-        try(gb$LoopSaveHm(hm.db, gb$varProbes, fi_prefix = paste0("super_", gb$selectedVars[i], "_hm_top")), T)
-        invisible(gc(verbose=F))
-      }
-  } else {
-    cat("\n\nNo supervised HeatMap analysis output\n\n")
-  }
+    if(gb$supervisedRun){
+        for(i in 1:length(gb$selectedVars)){
+          invisible(gc(verbose=F))
+          cat("\n\n")
+          hmPlotData <- eval(parse(text = paste0("gb$hmPlotData", i)))
+          gb$LoopPrintHeatMap(gb, hmPlotData$unBetas, hmPlotData$ha, geneNams = gb$addGenesHm, colSplt = 5,
+                              fi_prefix = paste0("super_", gb$selectedVars[i], "_hm_top"))
+          cat("\n\n")
+          invisible(gc(verbose=F))
+        }
+    } else {
+        cat("\n\nNo supervised HeatMap analysis output\n\n")
+    }
 }
 
