@@ -959,25 +959,99 @@ FixPngList <- function(tumors, pngList) {
 }
 
 
-CheckTumorPngs <- function(samList, outDir){
-    pngOutDir <- file.path(outDir,"cnvpng") # output copy of cnvPNG files
-    if(!dir.exists(pngOutDir)){dir.create(pngOutDir)}
-    pngList <- list.files(pngOutDir, pattern = "*.png", recursive = T, full.names=T)
-    pngList <- pngList[!grepl("^0_", basename(pngList))]
-    if(length(pngList) == 0){
-        message("No CNV PNG Facets found in current directory:\n", pngOutDir)
-        message("Check if the Facet PNG files are available in the output directory:\n",
-                "/Volumes/molecular/Molecular/REDCap/cnv_facets/ or the Desktop")
-        stopifnot(length(pngList) != 0)
+# CheckTumorPngs <- function(samList, outDir){
+#     pngOutDir <- file.path(outDir,"cnvpng") # output copy of cnvPNG files
+#     if(!dir.exists(pngOutDir)){dir.create(pngOutDir)}
+#     pngList <- list.files(pngOutDir, pattern = "*.png", recursive = T, full.names=T)
+#     pngList <- pngList[!grepl("^0_", basename(pngList))]
+#     if(length(pngList) == 0){
+#         message("No CNV PNG Facets found in current directory:\n", pngOutDir)
+#         message("Check if the Facet PNG files are available in the output directory:\n",
+#                 "/Volumes/molecular/Molecular/REDCap/cnv_facets/ or the Desktop")
+#         stopifnot(length(pngList) != 0)
+#     }
+#     tumors <- samList[samList$Paired_Normal != "", ] # drop controls/normals
+#     row.names(tumors) <- 1:nrow(tumors) # correct row numbering
+#     if(length(pngList) != nrow(tumors)){
+#       pngList <- FixPngList(tumors, pngList)
+#     }
+#     ngsPngDir <- file.path(outDir, "ngs_cnv_png")
+#     if(!dir.exists(ngsPngDir)){dir.create(ngsPngDir)}
+#     RenamePngs(tumors, pngList, ngsPngDir)
+# }
+
+ListNonMatching <- function(pngList, tumors, pngOutDir) {
+  if (length(pngList) < nrow(tumors)) {
+    nonContainedIDs <-
+      sapply(tumors$Specimen_ID, function(id){!any(grepl(id, basename(pngList)))})
+    if (any(nonContainedIDs)) {
+      nonMatchedIDs <- tumors$Specimen_ID[nonContainedIDs]
+      message("The following samples are missing from: ", pngOutDir)
+      message(paste0(capture.output(nonMatchedIDs), collapse = "\n"))
     }
-    tumors <- samList[samList$Paired_Normal != "", ] # drop controls/normals
-    row.names(tumors) <- 1:nrow(tumors) # correct row numbering
-    if(length(pngList) != nrow(tumors)){
-      pngList <- FixPngList(tumors, pngList)
+    pngList <- FixPngList(tumors, pngList)
+    return(pngList)
+  } else{
+    nonMatchingFiles <- sapply(basename(pngList), function(baseName) {
+        !any(sapply(tumors$Specimen_ID, function(id) {grepl(id, baseName)}))
+      })
+    if (any(nonMatchingFiles)) {
+      nonMatchedFiles <- pngList[nonMatchingFiles]
+      message("The following PNGs are extra in: ", pngOutDir)
+      message(paste0(capture.output(nonMatchedFiles), collapse = "\n"))
+      return(pngList)
+    } else{
+      baseNames <- basename(pngList)
+      matches <- expand.grid(
+        Specimen_ID = tumors$Specimen_ID,
+        FileName = baseNames,
+        stringsAsFactors = FALSE
+      )
+      matched <- sapply(1:nrow(matches), function(i){
+        grepl(matches$Specimen_ID[i], matches$FileName[i])}
+      )
+      duplicates <- matches[matched, ]
+      duplicates$count <- ave(duplicates$Specimen_ID, duplicates$Specimen_ID, FUN = length)
+      duplicateMatches <- duplicates[duplicates$count > 1, ]
+      message(paste("The sample(s)", paste(unique(duplicateMatches$Specimen_ID)),
+                    "has duplicate matching CNV Facets PNG files:"))
+      message(paste(unique(duplicateMatches$FileName), collapse = "\n"))
+      return(pngList)
     }
-    ngsPngDir <- file.path(outDir, "ngs_cnv_png")
-    if(!dir.exists(ngsPngDir)){dir.create(ngsPngDir)}
-    RenamePngs(tumors, pngList, ngsPngDir)
+  }
+}
+
+
+CheckTumorPngs <- function(samList, outDir) {
+  pngOutDir <- file.path(outDir, "cnvpng") # output copy of cnvPNG files
+  if (!dir.exists(pngOutDir)) {dir.create(pngOutDir)}
+  
+  pngList <- list.files(pngOutDir, pattern = "*.png", recursive = T, full.names = T)
+  pngList <- pngList[!grepl("^0_", basename(pngList))]
+  
+  if (length(pngList) == 0) {
+    message("No CNV PNG Facets found in current directory:\n", pngOutDir)
+    message("Check if the Facet PNG files are available in the output directory:\n",
+            "/Volumes/molecular/Molecular/REDCap/cnv_facets/ or the Desktop")
+    stopifnot(length(pngList) != 0)
+  }
+  
+  tumors <- samList[samList$Paired_Normal != "",] # drop controls/normals
+  dupedNgs <- duplicated(tumors$Test_Number)
+  
+  if(any(dupedNgs)){
+    stop(c("There are duplicated NGS numbers:\n",
+           paste(tumors$Test_Number[dupedNgs], collapse = "\n")))
+  }
+  row.names(tumors) <- 1:nrow(tumors) # correct row numbering
+  
+  if (length(pngList) != nrow(tumors)) {
+    pngList <- ListNonMatching(pngList, tumors, pngOutDir)
+  }
+  
+  ngsPngDir <- file.path(outDir, "ngs_cnv_png")
+  if(!dir.exists(ngsPngDir)) {dir.create(ngsPngDir)}
+  RenamePngs(tumors, pngList, ngsPngDir)
 }
 
 CopyCnvPngs <- function(params) {
