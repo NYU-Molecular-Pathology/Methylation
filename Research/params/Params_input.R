@@ -5,6 +5,7 @@ xlsxFile <- "my_samples.xlsx" # Your main input file
 # Input Variable Parameters
 token = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" # REDCap API token string
 sampleType <- "Tumors"
+gb$yourName <- "Your Name"
 htmlTitle <- paste("Methylation Clusters of", sampleType)
 
 # Input Directory Names  -----------------------------------------------
