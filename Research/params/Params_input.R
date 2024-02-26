@@ -27,9 +27,9 @@ F -> batchEffect  # Are the idats processed in different facilities?
 F -> getNoob      # Do want to perform NOOB minfi preprocessing?
 T -> needFi           # Do you need to create a minfi samplesheet and copy idat files?
 F -> addGenesHm       # Do you want to annotate the gene/probe names on heatmap y-axis?
-T -> supervisedRun    # Will this run have supervised sample clustering?
-T -> generateCNVchunk # Will CNV analysis be performed?
-F -> genPathwaychunk  # Will Pathway analysis be performed?
+F -> supervisedRun    # Will this run have supervised sample clustering?
+F -> genCNchunk # Will CNV analysis be performed?
+F -> genPathChunk  # Will Pathway analysis be performed?
 F -> genPairwise  # Will Pathway analysis be performed?
 
 # Input worksheet column names to subset samples ------------------------------------------------
