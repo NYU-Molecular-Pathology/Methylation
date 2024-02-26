@@ -1,6 +1,6 @@
 gb <- globalenv(); assign("gb", gb)
 # Default Output file names  -----------------------------------------------
-td <- format(Sys.Date(),"%b%d") # today's date Jun17
+td <- format(Sys.Date(),"%b%d") # today's date (i.e., "Jun17")
 rgOut <- file.path(gb$runDir, "data", paste0(td, "_RGset.Rdata"))
 rawBetaFi <- file.path(gb$runDir, "data", paste0(td, "_betaRaw.Rdata"))
 pValsOutFi <- file.path(gb$runDir, "data", paste0(td, "_DetPvals.Rdata"))
@@ -8,25 +8,33 @@ mbfile <- file.path(gb$runDir, "data", paste0(td, "_mSetSq.beta.Rdata"))
 unbetaVariance <- file.path(gb$runDir, "data", paste0(td, "_unbetaVariance.RData"))
 combatOut <- file.path(gb$runDir, "data", paste0(td, "_combatBetas.Rdata"))
 
+# Default Output directory names  -----------------------------------------------------
+tsneOutU = "figures/tsne/unsupervised/"
+tsneOutS = "figures/tsne/supervised/"
+hmOutU = "figures/heatmaps/unsupervised/"
+hmOutS = "figures/heatmaps/supervised/"
 supbetaOut <- file.path(gb$runDir, "data", paste0(td, "_supervisedBetas"))
 annotFi <- file.path(gb$runDir, "data", paste0(td, "_annotations.rds"))
 
-# OutPut Directories
-gb$CheckDirCreate("data")
-gb$CheckDirCreate("figures")
-gb$CheckDirCreate("figures/mds")
-gb$CheckDirCreate("csv")
-gb$CheckDirCreate("figures/tsne/")
-gb$CheckDirCreate("figures/heatmaps/")
-if(gb$generateCNVchunk==T){
-    gb$CheckDirCreate("figures/cnv/")
+CheckDirCreate <- function(pathLocation){
+    dataOutDir <- file.path(getwd(), pathLocation)
+    if (!dir.exists(dataOutDir)) {dir.create(dataOutDir, recursive = T)}
 }
-if(gb$genPathwaychunk==T){
-    gb$CheckDirCreate("figures/pathway/")
-    gb$CheckDirCreate("figures/cluster/")
-}
-if(gb$genPairwise==T){
-    gb$CheckDirCreate("/figures/diffmean/")
+
+# Create OutPut Directories  ----------------------------------------------------------
+CheckDirCreate("data")
+CheckDirCreate("figures/mds")
+CheckDirCreate("csv")
+CheckDirCreate(tsneOutU)
+CheckDirCreate(tsneOutS)
+CheckDirCreate(hmOutU)
+CheckDirCreate(hmOutS)
+if (gb$genCNchunk == T) {CheckDirCreate("figures/cnv/")}
+if (gb$genPairwise == T) {CheckDirCreate("/figures/diffmean/")}
+if (gb$genPathChunk == T) {
+    CheckDirCreate("figures/pathway/")
+    CheckDirCreate("figures/cluster/")
+    CheckDirCreate("figures/heatmaps/gene_cluster/")
 }
 
 # Segments Copy Number Output Files
