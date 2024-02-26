@@ -46,7 +46,7 @@ search.redcap <- function(rd_numbers, ApiToken=NULL) {
     rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", ApiToken)
     flds = c("record_id","b_number","primary_tech","second_tech","run_number","barcode_and_row_column","accession_number","arrived")
     result <- redcapAPI::exportRecordsTyped(
-	    rcon, records = rd_numbers, fields = flds, dag = F, factors = F, labels = F, dates = F, form_complete_auto = F, format = 'csv')
+	    rcon, records = rd_numbers, fields = flds, dag = F, factors = F, form_complete_auto = F, format = 'csv')
     result <- as.data.frame(result)
     return(result)
 }
