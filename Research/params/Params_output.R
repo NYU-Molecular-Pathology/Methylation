@@ -1,3 +1,14 @@
+#!/usr/bin/env Rscript
+## ---------------------------
+## Script name: Params_output.R
+## Purpose: Source global parameters for research report output file naming
+## Date Created: May 17, 2022
+## Date Last Modified: February 26, 2024
+## Version: 1.0.0
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2024
+## ---------------------------
+
 gb <- globalenv(); assign("gb", gb)
 # Default Output file names  -----------------------------------------------
 td <- format(Sys.Date(),"%b%d") # today's date (i.e., "Jun17")
