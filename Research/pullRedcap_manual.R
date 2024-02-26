@@ -139,8 +139,7 @@ search.redcap <- function(rd_numbers, token = NULL, flds = NULL) {
                    "barcode_and_row_column", "accession_number", "arrived")
     }
     
-    result <- redcapAPI::exportRecordsTyped(rcon, records = rd_numbers, fields = flds, dag = F, factors = F,
-                                       labels = F, dates = F, form_complete_auto = F, format = 'csv')
+    result <- redcapAPI::exportRecordsTyped(rcon, records = rd_numbers, fields = flds, dag = F, factors = F, form_complete_auto = F, format = 'csv')
     allFound <- rd_numbers %in% result$record_id
     missing <- which(allFound == FALSE)
 
