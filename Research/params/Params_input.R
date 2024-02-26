@@ -36,14 +36,14 @@ NULL ->   col_batchEffect -> batch_col # Institution names column for batched id
 NULL -> col_arrayType # "ArrayType"
 NULL -> variable_to_filter
 
-# Variable Columns
+# Input Sheet Variable Columns
+"UNKNOWN" -> blank_keywd    # Keyword to replace blank or empty values in the samplesheet
 "record_id" -> col_samNames # Column containing unique sample IDS
-"ethnicity" -> col_samTypes # Column name in samplesheet grouping sample type COLORS
-"sex" -> col_shapes   # Column name for plot point shapes
-"sex" -> samGroup -> col_samGrp #header for sample groups/subtypes SHAPES
-"All Tumors" ->  col_Grouping # Grouping of tumors by type if relevant i.e. list specific names or new
+"ethnicity" -> col_samGrp -> col_samTypes # Column name in samplesheet grouping sample type COLORS
+"sex" -> col_shapes   # Column name for plot point SHAPES\SYMBOLS
+NULL -> col_Grouping # Group samples by type i.e. t-sne cluster each subgroup/sample by type
 "Sentrix_ID" ->  col_sentrix  # header name containing the sentrix ID
-NULL -> col_other # any additional columns you would like to colorize/label in plots
+"diagnosis" -> col_other # any additional columns you would like to colorize/label in plots
 
 selectedVars <- unique(c(col_shapes, col_samTypes)) # vector of names of columns you want to target
 gb$names2Label <- NULL
