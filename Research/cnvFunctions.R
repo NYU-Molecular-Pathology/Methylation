@@ -134,8 +134,8 @@ GetCNVObj <- function(segFile, targets, i, idatPath, custom_anno) {
     
     samGroup <- as.character(targets$Type)
     
-    segPath <- file.path(getwd(), "CNV_segments")
-    cnvPath <- file.path(getwd(), "CNV_plots")
+    segPath <- file.path(getwd(), "data", "CNV_segments")
+    cnvPath <- file.path(getwd(), "figures", "cnv", "interactive_cnv")
     
     if(!dir.exists(segPath)){dir.create(segPath)}
     if(!dir.exists(cnvPath)){dir.create(cnvPath)}
@@ -163,8 +163,8 @@ GetCNVObj <- function(segFile, targets, i, idatPath, custom_anno) {
 
 
 writeSegTab <- function(segFile = NULL, targets = NULL, idatPath = NULL, custom_anno = NULL) {
-    if(is.null(segFile)){segFile <- paste0(format(Sys.Date(),"%b%d"), "_segmentVals.csv")}
-    if(is.null(idatPath)){idatPath <- getwd()}
+    if(is.null(segFile)){segFile <- paste0(format(Sys.Date(),"%b%d"), "_segfile.csv")} #_segmentVals.csv
+    if(is.null(idatPath)){idatPath <- file.path(getwd(), "idats")}
     if(is.null(targets)){targets <- as.data.frame(read.csv("samplesheet.csv"))}
     stopifnot(any(stringr::str_detect(colnames(targets),"SentrixID_Pos")))
     
@@ -178,7 +178,8 @@ writeSegTab <- function(segFile = NULL, targets = NULL, idatPath = NULL, custom_
         GetCNVObj(segFile, targets, i, idatPath, custom_anno)
     }
     
-    segPath <- file.path(getwd(), "CNV_segments")
+    cnvSegDir <- file.path(getwd(), "data", "CNV_segments")
+    segPath <- cnvSegDir
     segFileAll <- file.path(segPath, basename(segFile))
     
     if(!file.exists(segFileAll)){
