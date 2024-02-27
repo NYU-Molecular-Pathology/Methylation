@@ -9,3 +9,8 @@ h4 {
 hr {
     border:3px solid gray
 }
+.main-container {
+    max-width: 1200px !important;
+    margin-left: 10px !important;
+    margin-right: auto !important;
+}
