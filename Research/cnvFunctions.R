@@ -268,15 +268,14 @@ GetFreqData <- function(cnData,plotChr,plotTitle){
     return(freqDat)
 }
 
+
 SaveCnvData <- function(freqDat, plotName){
-    cnvDir <- file.path(getwd(), "cnv")
+    cnvDir <- file.path(getwd(), "figures", "cnv", "data")
     if (!dir.exists(cnvDir)) {dir.create(cnvDir, recursive=T)}
     suppressWarnings(write.csv(
         freqDat,
         file = file.path(cnvDir, paste(plotName, "cnv.csv", sep = "_")),
-        row.names = F,
-        col.names = T
-    ))
+        row.names = F, col.names = T))
     return(cnvDir)
 }
 
