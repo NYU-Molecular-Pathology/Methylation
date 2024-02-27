@@ -24,6 +24,7 @@ tsneOutU = "figures/tsne/unsupervised/"
 tsneOutS = "figures/tsne/supervised/"
 hmOutU = "figures/heatmaps/unsupervised/"
 hmOutS = "figures/heatmaps/supervised/"
+cnvSegDir = file.path(gb$runDir, "data", "CNV_segments")
 
 supbetaOut <- file.path(gb$runDir, "data", paste0(td, "_supervisedBetas"))
 annotFi <- file.path(gb$runDir, "data", paste0(td, "_annotations.rds"))
@@ -39,10 +40,17 @@ CheckDirCreate("idats")
 CheckDirCreate("figures/mds")
 CheckDirCreate("csv")
 CheckDirCreate(tsneOutU)
-CheckDirCreate(tsneOutS)
-CheckDirCreate(hmOutU)
-CheckDirCreate(hmOutS)
-if (gb$genCNchunk == T) {CheckDirCreate("figures/cnv/")}
+if (gb$supervisedRun) {
+    CheckDirCreate(tsneOutS)
+}
+if (gb$genHeatMaps == T) {
+    CheckDirCreate(hmOutU)
+    if (gb$supervisedRun) CheckDirCreate(hmOutS)
+}
+if (gb$genCNchunk == T) {
+    CheckDirCreate("figures/cnv/")
+    CheckDirCreate(cnvSegDir)
+}
 if (gb$genPairwise == T) {CheckDirCreate("/figures/diffmean/")}
 if (gb$genPathChunk == T) {
     CheckDirCreate("figures/pathway/")
@@ -51,8 +59,8 @@ if (gb$genPathChunk == T) {
 }
 
 # Segments Copy Number Output Files
-segFile <- file.path(gb$runDir, "data", paste0(td, "_segfile.csv"))
-seg_clust_file <- file.path(gb$runDir, "data", paste0(td, "_data_seg_clusters.txt"))
+segFile <- file.path(cnvSegDir, paste0(td, "_segfile.csv"))
+seg_clust_file <- file.path(cnvSegDir, paste0(td, "_seg_clusters.txt"))
 gsetFile <- file.path(gb$runDir, "data", paste0(td, "_gsetfunnorm.rds"))
 gBetaFile <- file.path(gb$runDir, "data", paste0(td, "_gsetbeta.rds"))
 ClusfiNam <- file.path(gb$runDir, "data", paste0(td, "_dmp.csv"))
@@ -71,7 +79,8 @@ if (gb$supervisedRun == F) {
 }
 
 varProbes <- c(100, 1000, 10000) # Which top Variance probes to pull i.e. c(100, 1000)
-gb$tsne_titles <- gb$generateTitles(clusType, topTitle=as.character(varProbes), gb$titleMain)
+hmVarProbes <- c(100, 1000, 3000)
+gb$tsne_titles <- gb$generateTitles(clusType, topTitle = as.character(varProbes), gb$titleMain)
 topN = 1000
 topVar = 10000
 mdsTitle <- paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot")
