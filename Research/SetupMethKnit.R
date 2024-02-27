@@ -210,3 +210,5 @@ return(knitr::opts_template$set(
 ))
 }
 
+
+htmlClose <- function(){return(cat("\n\n:::\n\n"))}
