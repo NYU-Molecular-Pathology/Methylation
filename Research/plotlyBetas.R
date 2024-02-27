@@ -273,20 +273,22 @@ selectPlots <- function(doPlotly = F, tplots, ty, tps, outDirs) {
         invisible(gc())
         fig <- tplots[[zz]]
         tabStart <- paste('### Top', tps[ty, 1], outDirs[zz, 3])
-        
         cat(paste(tabStart, '(Interactive)','\n\n'))
+        newLab <- stringr::str_replace_all(tabStart, c("# " = "", "#" = "", "\n" = "", " " = "_"))
+        newLab <- stringr::str_replace_all(newLab, c("\\(" = "", "\\)" = "", "/" = "_"))
+        knitr::opts_chunk$set(label = newLab)
         gc(verbose = F)
         op <- gb$makePlotly(fig)
         supM(print(htmltools::tagList(ggplotly(op))))
         cat('\n\n')
-        
         cat(paste(tabStart, '\n\n'))
         gc(verbose = F)
         options(repr.plot.width=19, repr.plot.height=12, repr.plot.res=350)
+        newLab2 <- stringr::str_replace_all(newLab, 'Interactive', "")
+        knitr::opts_chunk$set(label = newLab2)
         GetFlatPlots(fig)
         cat('\n\n')
     }
-    #return(assign("diagPlot", tplots[[1]]))
 }
 
 
