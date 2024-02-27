@@ -2,6 +2,7 @@
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 output:
   html_document: 
+    self_contained: yes
     code_download: yes
     theme: cerulean
     toc: yes
@@ -65,7 +66,7 @@ gb$ShowAnyMissed(gb)
 :::
 
 # All Groups Unsupervised TSNE
-```{r ,label='Unsupervised_TSNE', opts.label='tsnechunk', fig.path=tsneOutU}
+```{r, label='Unsupervised_TSNE', opts.label='tsnechunk', fig.path=tsneOutU}
 gb$MakeHideButton("unsupertsne")
 targets1 <- gb$SubsetTargets(targets, gb$variable_to_filter)
 gb$GenerateUnsuperTsne(targets1, betas, gb, shapeVariable = gb$col_shapes)
@@ -86,7 +87,9 @@ gb$LoopSupervisedPlots(targets, gb)
 # Unsupervised HeatMaps
 <hr style="border:3px solid gray">
 ```{r, label='HM-unsupervised-annotations', echo=FALSE, include=FALSE}
-if (gb$genHeatMaps == T){
+if (gb$genHeatMaps == T) {
+  varProbes <- gb$hmVarProbes
+  varProbes <<- gb$hmVarProbes # Change top variance for heatmaps
   gb$LoadHeatMapLibs()
   hmPlotData <- gb$GetHeatMapData(targets, betas, RGSet, gb)
 }
@@ -95,8 +98,9 @@ if (gb$genHeatMaps == T){
 ## All groups HeatMap (Unsupervised) {.tabset}
 ```{r, label='Unsupervised-HM-plot', opts.label='hmopts', fig.path=hmOutU}
 gb$MakeHideButton("uheatmaps")
-if (gb$genHeatMaps == T){
-  gb$LoopPrintHeatMap(gb, unBetas = hmPlotData$unBetas, ha = hmPlotData$ha, geneNams = gb$addGenesHm, colSplt = 5)
+if (gb$genHeatMaps == T) {
+  gb$LoopPrintHeatMap(gb, unBetas = hmPlotData$unBetas, ha = hmPlotData$ha,
+                      geneNams = gb$addGenesHm, colSplt = gb$colSplitHm)
 }else{
   cat("No Unsupervised HeatMaps output")
 }
@@ -117,7 +121,7 @@ if (gb$supervisedRun == T & gb$genHeatMaps == T) {
 ## All groups HeatMap (Supervised) {.tabset}
 ```{r, label='supervised-HM-plot', opts.label='hmopts', fig.path = hmOutS, include=TRUE}
 gb$MakeHideButton("sheatmaps")
-if(gb$supervisedRun == T & gb$genHeatMaps == T){
+if (gb$supervisedRun == T & gb$genHeatMaps == T) {
   gb$LoopSupervisedHm(gb)
 } else{
   cat("No Supervised HeatMaps output")
@@ -127,14 +131,15 @@ if(gb$supervisedRun == T & gb$genHeatMaps == T){
 :::
 
 ```{r, label='segfile-generation', opts.label='cn_opts_1', include=FALSE}
-if (gb$genCNchunk){
-    cnData <- gb$grabClusterDat(gb$seg_clust_file, gb$segFile, targets, gb$idatPath)
+if (gb$genCNchunk) {
+    gb$cnData <- gb$grabClusterDat(gb$seg_clust_file, gb$segFile, targets, gb$idatPath)
     gb$loadHtmlTag()
 }
 ```
 
 # Copy Number Variation
 <hr style="border:3px solid gray">
+
 ```{r, label='sample-cnv-generation', opts.label='gencnv', include=TRUE}
 if (gb$genCNchunk) {
   gb$MakeHideButton("plaincnv")
@@ -143,25 +148,23 @@ if (gb$genCNchunk) {
 ```
 
 ```{r, label='CNV-plots', opts.label='cn_opts_2', include=TRUE}
-if (gb$genCNchunk){
-    gb$SaveLoadCnvs(cnData[, 1:(ncol(cnData))], plotName = "All", plotTitle="All")
-  gb$GenCNVdataGroupSave(cnData, targets, gb$col_samGrp)
+if (gb$genCNchunk) {
+  gb$SaveLoadCnvs(gb$cnData[, 1:(ncol(gb$cnData ))], plotName = "All", plotTitle = "All", isGrp = F)
+  if (length(gb$col_samGrp) > 1) {gb$GenCNVdataGroupSave(gb$cnData, targets, gb$col_samGrp)}
 } else{
   cat("No CNV analysis output")
-}
-if (gb$genPathChunk == FALSE) {
-  knitr::knit_exit("</body></html>")
 }
 ```
 
 :::
 
 ```{r, label='cluster profile', opts.label='clustprof', include=TRUE}
-if(gb$genPathChunk == TRUE) {
+if (gb$genPathChunk == TRUE) {
   gb$PrintPathHeader(gb$GroupSubset)
   enrichedData <- gb$GetKeggGeneVals(RGSet, targets, nameGrp = gb$pathwayGrp_Filter, gb = gb)
   gb$geneVals <- enrichedData$geneVals
 } else{
+  cat(rep("<br>", 5), sep = "\n")
   knitr::knit_exit("</body></html>")
 }
 ```
