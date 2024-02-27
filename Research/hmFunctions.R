@@ -745,14 +745,14 @@ LoopPathwayHeatMap <- function(pathWayGenes, RGSet, betas, targets) {
 }
 
                                            
-LoopSaveHm <- function(hm, topNum, fi_prefix = "unsuper_hm_top", fi_suffix = "notAnnot"){
-    supervise <- ifelse(stringr::str_detect(fi_prefix, pattern="unsuper"), "unsupervised", "supervised")
+  LoopSaveHm <- function(hm, topNum, fi_prefix = "unsuper_hm_top", fi_suffix = "notAnnot"){
+    supervise <- ifelse(stringr::str_detect(fi_prefix, pattern = "unsuper"), "unsupervised", "supervised")
     hmOutPath <- file.path(".", "figures", "heatmaps", supervise)
-    if(!dir.exists(hmOutPath)){dir.create(hmOutPath, recursive = T)}
+    if (!dir.exists(hmOutPath)) {dir.create(hmOutPath, recursive = T)}
     imgFile <- file.path(hmOutPath, paste0(fi_prefix, "_", topNum, "_", fi_suffix, ".png"))
-    if(!file.exists(imgFile)){SaveHmPng(imgFile, hm)}
+    if (!file.exists(imgFile)) {SaveHmPng(imgFile, hm)}
     cat("\n\n")
-    txtLink <- paste0("[", topNum, supervise, "](", imgFile, ")")
+    txtLink <- paste0("[", "Click_to_View_", topNum,"_", supervise, "](", imgFile, ")")
     cat(txtLink)
     cat("\n\n")
 }
