@@ -25,7 +25,7 @@ htmlTitle <- paste("Methylation Clusters of", sampleType) # Title of html file
 runDir <- "/Users/serraj10/Documents/Local_Rprojects/Auto_test"
 inputFi <- file.path(runDir, xlsxFile)
 titleMain <- paste("Clustering of", sampleType, ":\nBy Top") # newline (\n) if title is long
-samSheetDir <- file.path(runDir, "csv", samsheet)
+samSheetDir <- file.path(runDir,"csv", samsheet)
 idatPath <- file.path(runDir, "idats") # Default path to idat files
 
 # Hard coded Parameters -------------------------------------------------------------------------
@@ -40,15 +40,15 @@ F -> getNoob      # Do want to perform NOOB minfi preprocessing?
 T -> needFi       # Do you need to create a minfi samplesheet and copy idat files?
 F -> addGenesHm   # Do you want to annotate the gene/probe names on heatmap y-axis?
 F -> supervisedRun # Will this run have supervised sample clustering?
-F -> genHeatMaps   # Should beta value HeatMap plots be output?
-F -> genCNchunk    # Will CNV analysis be performed?
+T -> genHeatMaps   # Should beta value HeatMap plots be output?
+T -> genCNchunk    # Will CNV analysis be performed?
 F -> genPathChunk  # Will Pathway analysis be performed?
 F -> genPairwise   # Will Pathway analysis be performed?
 
 # Input worksheet column names to subset samples ------------------------------------------------
-NULL ->   col_batchEffect -> batch_col # Institution names column for batched idats
-NULL -> col_arrayType # "ArrayType"
-NULL -> variable_to_filter
+NULL -> col_batchEffect -> batch_col # Institution names or batch column if batched idats
+NULL -> col_arrayType # "ArrayType" if the samplesheet is mixed EPIC and 450K
+NULL -> variable_to_filter # is there any variable to cluster samples by?
 
 # Sample Sheet Variable Columns -----------------------------------------------------------------
 
@@ -59,10 +59,10 @@ NULL -> variable_to_filter
 "record_id" -> col_samNames
 
 # Column name in samplesheet grouping sample COLORS
-"ethnicity" -> col_samGrp -> col_samTypes
+"Tissue" -> col_samGrp -> col_samTypes
 
 # Column name for plot point SHAPES\SYMBOLS
-"sex" -> col_shapes
+"Unknown_met" -> col_shapes
 
 # Column to Group samples by type i.e. t-sne cluster each subgroup/sample by type
 NULL -> col_Grouping
@@ -71,13 +71,16 @@ NULL -> col_Grouping
 "Sentrix_ID" ->  col_sentrix
 
 # Any additional column(s) in the samplesheet you would like to colorize/label
-"diagnosis" -> col_other
+NULL -> col_other #"diagnosis"
 
 # Vector of names of columns to target coloring or shapes
 selectedVars <- unique(c(col_shapes, col_samTypes))
 
 # Vector of specific sample IDs to label within the plots
 gb$names2Label <- NULL
+
+# HeatMaps Columns splitting
+colSplitHm <- 3 # Default number of columns to split or separate in heatmaps
 
 # Site-Specific Analysis ------------------------------------------------------------------------
 genesInputFi <-  NULL #file.path(runDir,"site-specific_genes.xlsx")
