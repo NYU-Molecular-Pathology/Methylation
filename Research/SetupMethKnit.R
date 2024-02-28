@@ -213,3 +213,20 @@ return(knitr::opts_template$set(
 
 
 htmlClose <- function(){return(cat("\n\n:::\n\n"))}
+
+library(reticulate)
+
+# Attempt to import the kaleido module
+try_import <- function() {
+  tryCatch({
+    import("kaleido")
+    TRUE  # Return TRUE if import succeeded
+  }, error = function(e) {
+    FALSE  # Return FALSE if import failed
+  })
+}
+
+# Check if kaleido is installed; if not, install it
+if (!try_import()) {
+  py_install("kaleido")
+}
