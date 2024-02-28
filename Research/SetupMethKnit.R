@@ -225,8 +225,8 @@ try_import <- function() {
     FALSE  # Return FALSE if import failed
   })
 }
-
+reticulate::use_python("/usr/local/bin/python", required = TRUE)
 # Check if kaleido is installed; if not, install it
 if (!try_import()) {
-  py_install("kaleido")
+  reticulate::py_install("kaleido")
 }
