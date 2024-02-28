@@ -228,5 +228,5 @@ try_import <- function() {
 reticulate::use_python("/usr/local/bin/python", required = TRUE)
 # Check if kaleido is installed; if not, install it
 if (!try_import()) {
-  reticulate::py_install("kaleido")
+  reticulate::py_install("kaleido", method = "virtualenv")
 }
