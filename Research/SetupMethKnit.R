@@ -52,7 +52,8 @@ pkgs <-
         "conumee",
         "BiocGenerics",
         "Biobase",
-        "cowplot"
+        "cowplot",
+        "reticulate"
     )
 
 scripts = paste0(mainHub, rFiles)
