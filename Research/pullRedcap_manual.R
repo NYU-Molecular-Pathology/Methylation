@@ -123,8 +123,7 @@ loadPacks <- function(){
 
 # API Call functions -----
 grabAllRecords <- function(flds, rcon){
-    params = list(rcon, fields = flds, labels = F, dates = F, survey = F,
-                  dag = F, factors = F, form_complete_auto = F)
+    params = list(rcon, fields = flds, survey = F, dag = F, factors = F, form_complete_auto = F)
     dbCols <- do.call(redcapAPI::exportRecords, c(params))
     return(as.data.frame(dbCols))
 }
