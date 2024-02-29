@@ -824,7 +824,8 @@ MatchHaLegend <- function(ha, selectedVars, targets1){
 }
                                            
 GetHeatMapData <- function(targets, betas, RGSet, gb, getAll=F, varToFilter = NULL){
-
+    varProbes <- gb$hmVarProbes
+    varProbes <<- gb$hmVarProbes # Change top variance for heatmaps
     gb$MsgNullVar(gb, "col_sentrix", "The Sentrix IDs for the samples", '"Sentrix_Pos"')
     gb$MsgNullVar(gb ,"col_samNames", "The unique sample names or IDs", '"RD_number"')
     gb$MsgNullVar(gb, "selectedVars", "The Phenotype or Metadata for the samples", 'c("Cell_type", "Tissue_Type")')
