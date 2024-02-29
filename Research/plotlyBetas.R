@@ -268,27 +268,99 @@ GetFlatPlots <- function(fig){
 }
 
 
-selectPlots <- function(doPlotly = F, tplots, ty, tps, outDirs) {
-    for (zz in 1:nrow(outDirs)) {
-        invisible(gc())
-        fig <- tplots[[zz]]
-        tabStart <- paste('### Top', tps[ty, 1], outDirs[zz, 3])
-        cat(paste(tabStart, '(Interactive)','\n\n'))
-        newLab <- stringr::str_replace_all(tabStart, c("# " = "", "#" = "", "\n" = "", " " = "_"))
-        newLab <- stringr::str_replace_all(newLab, c("\\(" = "", "\\)" = "", "/" = "_"))
-        knitr::opts_chunk$set(label = newLab)
-        gc(verbose = F)
-        op <- gb$makePlotly(fig)
-        supM(print(htmltools::tagList(ggplotly(op))))
-        cat('\n\n')
-        cat(paste(tabStart, '\n\n'))
-        gc(verbose = F)
-        options(repr.plot.width=19, repr.plot.height=12, repr.plot.res=350)
-        newLab2 <- stringr::str_replace_all(newLab, 'Interactive', "")
-        knitr::opts_chunk$set(label = newLab2)
-        GetFlatPlots(fig)
-        cat('\n\n')
+GetFlatPlotOnly <- function(fig){
+  options(repr.plot.width = 19, repr.plot.height = 12, repr.plot.res = 350)
+    fig <- fig +
+        theme(
+            legend.direction = "vertical",
+            legend.margin = ggplot2::margin(t = -25),
+            legend.box.margin = ggplot2::margin(0, 0, 0, 0),
+            legend.justification = "right",
+            legend.position = "bottom"
+        )
+    leg <- supM(cowplot::get_legend(fig))
+    if (length(leg) > 10) {
+        fig <- fig + theme(legend.position = "none")
+        supM(print(fig))
+        grid::grid.newpage()
+        grid::grid.draw(leg)
+    }else{
+        fig <- fig + theme(legend.direction = "vertical",
+                           legend.margin = ggplot2::margin(t = 0))
+        options(repr.plot.width = 19, repr.plot.height = 12, repr.plot.res = 350)
     }
+    return(fig)
+}
+
+
+# Function to clean and format labels
+cleanLabel <- function(label) {
+  label <- stringr::str_replace_all(label, c("# " = "", "#" = "", "\n" = "", " " = "_"))
+  label <- stringr::str_replace_all(label, c("\\(" = "", "\\)" = "", "/" = "_"))
+  label <- stringr::str_replace_all(label, 'Interactive', "")
+  gc(verbose = F)
+  return(label)
+}
+
+
+renamePlotlyPng <- function(label, path) {
+  plotlyFile <- file.path(path, paste0(label, ".png"))
+  currPngs <- dir(path, pattern = ".png", full.names = T)
+  info <- file.info(currPngs)
+  newest_png <- which.max(info$mtime)
+  currPng <- paste(currPngs[newest_png])
+  cat(paste("\ncurrPng:", currPng))
+  original_png <- file.path(path, currPng)
+  cat(paste("from =",original_png,"\n", "to =", plotlyFile,"\n", "dirname", dirname(plotlyFile)))
+  file.rename(from = original_png, to = plotlyFile)
+}
+
+# Function to save ggplot plot
+saveGgplotImage <- function(plot, label, path) {
+  ggplotFile <- file.path(path, paste0(label, ".png"))
+  ggplot2::ggsave(filename = ggplotFile, plot = plot, width = 19, height = 12, dpi = 350)
+}
+
+
+GrabPngPath <- function(op) {
+  currLab <- op[["x"]][["layout"]][["title"]][["text"]]
+  supervise <- ifelse(stringr::str_detect(currLab, pattern = "Unsuper"), 
+                      "unsupervised", "supervised")
+  pngFiPath <- file.path(gb$runDir, "figures", "tsne", supervise)
+  return(pngFiPath)
+}
+
+
+SaveGgplotPng <- function(newLab, pngFiPath, fig) {
+  cat(pngFiPath)
+  newLab2 <- stringr::str_replace_all(newLab, 'Interactive', "")
+  pngFi2 <- file.path(pngFiPath, paste0(newLab2, ".png"))
+  fig2 <- GetFlatPlotOnly(fig)
+  ggplot2::ggsave(filename = pngFi2, plot = fig2, width = 19, height = 12, dpi = 350)
+}
+        
+        
+selectPlots <- function(doPlotly = F, tplots, ty, tps, outDirs) {
+  for (zz in 1:nrow(outDirs)) {
+    invisible(gc())
+    fig <- tplots[[zz]]
+    tabStart <- paste('### Top', tps[ty, 1], outDirs[zz, 3])
+    
+    cat(paste(tabStart, '(Interactive)','\n\n'))
+    newLab <- cleanLabel(tabStart)
+    op <- gb$makePlotly(fig)
+    supM(print(htmltools::tagList(plotly::ggplotly(op))))
+    cat('\n\n')
+    
+    pngFiPath <- GrabPngPath(op)
+    #renamePlotlyPng(newLab, pngFiPath)
+    cat(paste(tabStart, '\n\n'))
+    gc(verbose = F)
+    options(repr.plot.width = 19, repr.plot.height = 12, repr.plot.res = 350)
+    GetFlatPlots(fig)
+    cat('\n\n')
+    SaveGgplotPng(newLab, pngFiPath, fig)
+  }
 }
 
 
