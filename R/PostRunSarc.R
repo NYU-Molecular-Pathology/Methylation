@@ -22,8 +22,7 @@ PullNeedsSarcoma <- function(rd_numbers, token){
     apiUrl = "https://redcap.nyumc.org/apps/redcap/api/"
     pull_flds = c("record_id", "barcode_and_row_column", "needs_sarcoma", "classifier_pdf_other")
     rcon <- redcapAPI::redcapConnection(apiUrl, token)
-    params = list(rcon, records = rd_numbers, fields = pull_flds, labels = F,
-                  dates = F, survey = F, dag = F, factors=F, form_complete_auto=F)
+    params = list(rcon, records = rd_numbers, fields = pull_flds, survey = F, dag = F, factors=F, form_complete_auto=F)
     dbCols <- do.call(redcapAPI::exportRecordsTyped, c(params))
     return(as.data.frame(dbCols))
 }
