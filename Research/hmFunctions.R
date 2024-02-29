@@ -138,17 +138,24 @@ calc_ht_size = function(ht, unit = "inch") {
     c(w, h)
 }
 
-getHeatMap <- function(betaRanges, titleValue, ha, geneNams=F, colSplt = NULL, rwsplt=NULL){
-    col_fun2 <- circlize::colorRamp2(c(0, 0.25, 0.5, 0.75, 1), c("darkblue","deepskyblue", "white", "tomato","red"))  
+getHeatMap <- function(betaRanges,
+                          titleValue,
+                          ha,
+                          geneNams = F,
+                          colSplt = NULL,
+                          rwsplt = NULL,
+                          hideTopAnno = F) {
+    col_fun2 <- circlize::colorRamp2(
+      c(0, 0.25, 0.5, 0.75, 1), c("darkblue","deepskyblue", "white", "tomato","red"))
     titleOfPlot <- paste("Heatmap of", titleValue, sep = " ")
-    toLabRows <- ifelse(nrow(betaRanges)<=60, T, F)
+    toLabRows <- ifelse(nrow(betaRanges) <= 60, T, F)
     geneNams <- ifelse(geneNams == T, toLabRows, F)
-    rowTall <- ifelse(toLabRows==T, 5, 2)
-    shrinkRows <- ifelse(nrow(betaRanges) > 1000, T, F)
-    if(shrinkRows == T){
-        rowTall <- 0.1
+    rowTall <- ifelse(toLabRows == T, 5, 2)
+    shrinkRows <- ifelse(nrow(betaRanges) > 800, T, F)
+    if (shrinkRows == T) {
+      rowTall <- 0.1
     }
-    try(knitr::opts_chunk$set(out.width='100%'), silent=T)
+    try(knitr::opts_chunk$set(out.width = '100%'), silent = T)
     hmTopNumbers <- ComplexHeatmap::Heatmap(
         betaRanges,
         col = gb$col_fun2,  ## Define the color scale
@@ -165,7 +172,7 @@ getHeatMap <- function(betaRanges, titleValue, ha, geneNams=F, colSplt = NULL, r
         show_column_dend = T,
         width = ncol(betaRanges)*unit(5, "mm"),
         height = nrow(betaRanges)*unit(rowTall, "mm"),
-        use_raster=shrinkRows,
+        use_raster = shrinkRows, 
         show_heatmap_legend = T,
         top_annotation = ha,
         column_title = titleOfPlot,
@@ -186,6 +193,11 @@ getHeatMap <- function(betaRanges, titleValue, ha, geneNams=F, colSplt = NULL, r
         column_split = colSplt,
         row_split = rwsplt
     )
+    
+    if (hideTopAnno == T) {
+      hmTopNumbers@top_annotation <- NULL
+    }
+    
     GetHmDimensions(hmTopNumbers)
     #size = gb$calc_ht_size(hmTopNumbers)
     return(gb$drawHeatMap(hmTopNumbers))
@@ -758,18 +770,33 @@ LoopPathwayHeatMap <- function(pathWayGenes, RGSet, betas, targets) {
 }
                                            
 
-LoopPrintHeatMap <- function(gb, unBetas, ha, geneNams, colSplt=3,
-                             fi_prefix = "unsuper_hm_top", fi_suffix = "notAnnot") {
-    ComplexHeatmap::ht_opt("message" = FALSE)
-    for (topNum in gb$varProbes) {
-        invisible(gc(verbose=F))
-        cat(paste("###", "Top", topNum, "\n\n"))
-        hmTitle <- paste("Top", topNum, "Variance Probes Beta Values")
-        bv <- unBetas[1:topNum, ]
-        LoopSaveHm(hm=invisible(gb$getHeatMap(bv, hmTitle, ha, geneNams, colSplt = colSplt)), topNum,
-                   fi_prefix, fi_suffix)
-        cat('\n\n')
-    }
+LoopPrintHeatMap <- function(gb,
+                             unBetas,
+                             ha,
+                             geneNams = NULL,
+                             colSplt = 3,
+                             fi_prefix = "unsuper_hm_top",
+                             fi_suffix = "notAnnot",
+                             hideTopAnno = F) {
+  if (hideTopAnno == T) {
+    fi_suffix = "notAnnot"
+  } else{
+    fi_suffix = "Annotated"
+  }
+  if (!is.null(gb$addGenesHm)) {
+    geneNams <- gb$addGenesHm
+  }
+  ComplexHeatmap::ht_opt("message" = FALSE)
+  for (topNum in gb$varProbes) {
+    invisible(gc(verbose = F))
+    cat(paste("###", "Top", topNum, "\n\n"))
+    hmTitle <- paste("Top", topNum, "Variance Probes Beta Values")
+    bv <- unBetas[1:topNum,]
+    currHm <- invisible(gb$getHeatMap(bv, hmTitle, ha, geneNams, colSplt = colSplt,
+                                      hideTopAnno = hideTopAnno))
+    LoopSaveHm(hm = currHm, topNum, fi_prefix, fi_suffix)
+    cat('\n\n')
+  }
 }
 
 
