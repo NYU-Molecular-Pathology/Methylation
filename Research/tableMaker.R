@@ -1,3 +1,14 @@
+#!/usr/bin/env Rscript
+## ---------------------------
+## Script name: tableMaker.R
+## Purpose: Source global parameters for research report output tables and values
+## Date Created: May 17, 2022
+## Date Last Modified: February 29, 2024
+## Version: 1.0.0
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2024
+## ---------------------------
+
 gb <- globalenv(); assign("gb", gb)
 setDirectory<-function(foldr) {
     bsDir = paste("cd", foldr); mm2 = crayon::white$bgRed("Location Not Found:", foldr)
@@ -427,11 +438,13 @@ sourceParams <- function(X = c("Params_input.R", "Params_output.R")) {
 }
 
 
-GetCsvSheet <- function(needFi, samsheet, token, idatPath=NULL, outputFi="samplesheet_og.csv"){
-  if(is.null(idatPath)){idatPath<- file.path(getwd(),"idats")}
+GetCsvSheet <- function(needFi, samsheet, token, idatPath = NULL, outputFi = "samplesheet_og.csv"){
+  if(is.null(idatPath)){
+      idatPath <- file.path(getwd(), "idats")
+  }
     # Using "pullRedcap_manual.R"
     rds <- gb$readInfo(inputSheet = samsheet) # inputSheet can be xlsx or csv
-    stopifnot(length(rds)>1)
+    stopifnot(length(rds) > 1)
     valid_rd <- stringr::str_detect(rds,"RD-")
     if(any(!valid_rd)){
         message("Some samples do not have valid RD-numbers and will be removed:")
@@ -572,7 +585,7 @@ GetColorShape <- function(var1Col, var2Col){
 ShowAnyMissed <- function(gb){
   cat("\n\n")
   cat("#### Samples Removed from Analysis with Missing or Duplicate idat files:\n\n")
-  oldTargFile <- file.path(getwd(), "csv", "oldTargs.csv")
+  oldTargFile <- file.path(gb$runDir, "csv", "oldTargs.csv")
   oldTargs <- sanitizeSheet(gb$inputFi, oldTargFile, gb)
   oldTargs <- oldTargs[!c(oldTargs[,gb$col_samNames] %in% targets[,gb$col_samNames]),]
   if(nrow(oldTargs)>0){
