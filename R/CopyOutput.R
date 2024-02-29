@@ -672,7 +672,7 @@ grabAllRecords <- function(flds, rcon){
     msgFunName(cpOutLnk, "grabAllRecords")
     message("Pulling REDCap data...")
     library("dplyr")
-    params = list(rcon, fields = flds, labels = F, dates = F, survey = F, dag = F, factors = F, form_complete_auto = F)
+    params = list(rcon, fields = flds, survey = F, dag = F, factors = F, form_complete_auto = F)
     dbCols <- do.call(redcapAPI::exportRecordsTyped, c(params))
     rd_df <- as.data.frame(dbCols)
     rd_df <- rd_df %>% dplyr::mutate_all(~stringr::str_replace_all(., ",", ""))
