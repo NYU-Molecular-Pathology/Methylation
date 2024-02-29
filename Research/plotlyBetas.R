@@ -402,19 +402,12 @@ subsetBetas <- function(targFilter, samGroup, betas, targets, samShapes, samName
 }
 
 
-takeTopVariance <- function(betas, topVar = 1:10000){
-    var_probes <- apply(betas, 1, var) # vars <- apply(gset.funnorm.beta,1,var)
-    select_var <- names(sort(var_probes, decreasing = T)) # select_var <- names(sort(vars,decreasing = TRUE))
-    sorted_betas <- betas[select_var, ] # top_variable_beta <- gset.funnorm.beta[select_var,]
-    top_var_beta <- sorted_betas[topVar, ] # top_variable_beta[1:10000,]
-    return(top_var_beta)
-}
-
 SubsetTargets <- function(targets, varToFilter = NULL){
   if(is.null(varToFilter)){return(targets)}
   targets1 <- targets[varToFilter,] # exclude of targets are subsetted
   rownames(targets1) <- 1:nrow(targets1) # ensures rows are chronological
   return(targets1)
 }
+
 
 assign("subsetBetas", subsetBetas)
