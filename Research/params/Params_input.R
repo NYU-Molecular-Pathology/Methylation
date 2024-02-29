@@ -3,7 +3,7 @@
 ## Script name: Params_input.R
 ## Purpose: Source global parameters and flags for research report inputs
 ## Date Created: May 17, 2022
-## Date Last Modified: February 26, 2024
+## Date Last Modified: February 29, 2024
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2024
@@ -22,7 +22,7 @@ sampleType <- "Tumors" # Name of sample types
 htmlTitle <- paste("Methylation Clusters of", sampleType) # Title of html file
 
 # Input Directory Names -----------------------------------------------
-runDir <- "/Users/serraj10/Documents/Local_Rprojects/Auto_test"
+runDir <- "/Volumes/CBioinformatics/jonathan/Rprojects/breast_mets_feb28"
 inputFi <- file.path(runDir, xlsxFile)
 titleMain <- paste("Clustering of", sampleType, ":\nBy Top") # newline (\n) if title is long
 samSheetDir <- file.path(runDir,"csv", samsheet)
@@ -31,7 +31,6 @@ idatPath <- file.path(runDir, "idats") # Default path to idat files
 # Hard coded Parameters -------------------------------------------------------------------------
 gb$setKnitDir(runDir)
 stopifnot(getwd() == runDir)
-
 
 # Functional Parameter Flags --------------------------------------------------------------------
 F -> mergeProbes  # Do idat files need to be merged 450K + EPIC?
@@ -51,28 +50,20 @@ NULL -> col_arrayType # "ArrayType" if the samplesheet is mixed EPIC and 450K
 NULL -> variable_to_filter # is there any variable to cluster samples by?
 
 # Sample Sheet Variable Columns -----------------------------------------------------------------
-
 # Keyword to replace any blank or empty values in the samplesheet
 "UNKNOWN" -> blank_keywd
-
 # Column containing unique sample IDS
 "record_id" -> col_samNames
-
 # Column name in samplesheet grouping sample COLORS
 "Tissue" -> col_samGrp -> col_samTypes
-
 # Column name for plot point SHAPES\SYMBOLS
 "Unknown_met" -> col_shapes
-
 # Column to Group samples by type i.e. t-sne cluster each subgroup/sample by type
 NULL -> col_Grouping
-
 # header name containing the sentrix ID
 "Sentrix_ID" ->  col_sentrix
-
 # Any additional column(s) in the samplesheet you would like to colorize/label
 NULL -> col_other #"diagnosis"
-
 # Vector of names of columns to target coloring or shapes
 selectedVars <- unique(c(col_shapes, col_samTypes))
 
@@ -81,9 +72,10 @@ gb$names2Label <- NULL
 
 # HeatMaps Columns splitting
 colSplitHm <- 3 # Default number of columns to split or separate in heatmaps
+hideTopAnno <- FALSE # Should the top annotation of the HeatMap be hidden?
 
 # Site-Specific Analysis ------------------------------------------------------------------------
-genesInputFi <-  NULL #file.path(runDir,"site-specific_genes.xlsx")
+genesInputFi <- NULL #file.path(runDir,"site-specific_genes.xlsx")
 pathwayGrp_Filter <- NULL # Filter to select specific sample groups in pathways
 totPaths <- 1:5 # Total Number of top pathways to list and display
 
