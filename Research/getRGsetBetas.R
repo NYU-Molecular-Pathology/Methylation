@@ -499,8 +499,9 @@ GetArrayTypes <- function(targets,
     }
     targets$Basename <- file.path(idatPath, targets[, sentrixID_col])
     sentrix.ids <- as.character(targets[, sentrixID_col])
-    if (!file.exists(outputFi)) {
-        message("Adding ArrayTypes (EPIC vs 450k) to Samplesheet")
+    outCsvDir <- file.path(getwd(), "csv", outputFi)
+    if (!file.exists(outCsvDir)) {
+        message("Adding ArrayTypes (EPIC vs 450k) to Samplesheet saving in:\n", outCsvDir)
         for (i in 1:length(sentrix.ids)) {
             sample_idat <- sentrix.ids[i]
             idat_path <- file.path(idatPath, sample_idat)
@@ -512,9 +513,9 @@ GetArrayTypes <- function(targets,
                 targets[i, arrayColumn] <- "EPIC"
             }
         }
-        write.csv(targets, file = outputFi, row.names = F, quote = F)
+        write.csv(targets, file = outCsvDir, row.names = F, quote = F)
     }
-    targets <- as.data.frame(read.csv(outputFi))
+    targets <- as.data.frame(read.csv(outCsvDir))
     return(targets)
 }
 
