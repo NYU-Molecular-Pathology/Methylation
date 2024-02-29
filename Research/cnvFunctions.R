@@ -1,3 +1,14 @@
+#!/usr/bin/env Rscript
+## ---------------------------
+## Script name: Params_output.R
+## Purpose: Source global functions used for research report output copy number variation
+## Date Created: May 17, 2022
+## Date Last Modified: February 29, 2024
+## Version: 1.0.0
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2024
+## ---------------------------
+
 gb <- globalenv(); assign("gb", gb)
 
 generateSeg <- function(a, b, c) {
@@ -134,8 +145,8 @@ GetCNVObj <- function(segFile, targets, i, idatPath, custom_anno) {
     
     samGroup <- as.character(targets$Type)
     
-    segPath <- file.path(getwd(), "data", "CNV_segments")
-    cnvPath <- file.path(getwd(), "figures", "cnv", "interactive_cnv")
+    segPath <- file.path(gb$runDir, "data", "CNV_segments")
+    cnvPath <- file.path(gb$runDir, "figures", "cnv", "interactive_cnv")
     
     if(!dir.exists(segPath)){dir.create(segPath)}
     if(!dir.exists(cnvPath)){dir.create(cnvPath)}
@@ -164,7 +175,7 @@ GetCNVObj <- function(segFile, targets, i, idatPath, custom_anno) {
 
 writeSegTab <- function(segFile = NULL, targets = NULL, idatPath = NULL, custom_anno = NULL) {
     if(is.null(segFile)){segFile <- paste0(format(Sys.Date(),"%b%d"), "_segfile.csv")} #_segmentVals.csv
-    if(is.null(idatPath)){idatPath <- file.path(getwd(), "idats")}
+    if(is.null(idatPath)){idatPath <- file.path(gb$runDir, "idats")}
     if(is.null(targets)){targets <- as.data.frame(read.csv("samplesheet.csv"))}
     stopifnot(any(stringr::str_detect(colnames(targets),"SentrixID_Pos")))
     
@@ -178,7 +189,7 @@ writeSegTab <- function(segFile = NULL, targets = NULL, idatPath = NULL, custom_
         GetCNVObj(segFile, targets, i, idatPath, custom_anno)
     }
     
-    cnvSegDir <- file.path(getwd(), "data", "CNV_segments")
+    cnvSegDir <- file.path(gb$runDir, "data", "CNV_segments")
     segPath <- cnvSegDir
     segFileAll <- file.path(segPath, basename(segFile))
     
@@ -270,7 +281,7 @@ GetFreqData <- function(cnData,plotChr,plotTitle){
 
 
 SaveCnvData <- function(freqDat, plotName){
-    cnvDir <- file.path(getwd(), "figures", "cnv", "data")
+    cnvDir <- file.path(gb$runDir, "figures", "cnv", "data")
     if (!dir.exists(cnvDir)) {dir.create(cnvDir, recursive=T)}
     suppressWarnings(write.csv(
         freqDat,
@@ -344,7 +355,7 @@ grabClusterDat <- function(seg_clust_file, segFile, targets, idatPath){
 
 
 grabGsetFun <- function(RGSet, targets, gb) {
-  gSetFunData <- file.path(getwd(), gb$gsetFile)
+  gSetFunData <- gb$gsetFile
   if (!file.exists(gSetFunData)) {
     gset.funnorm <- gb$cleanUpProbes(RGSet, targets, gb, getfunorm = T)
     gb$SaveObj(gset.funnorm, file.name = gSetFunData)
@@ -356,7 +367,7 @@ grabGsetFun <- function(RGSet, targets, gb) {
 
 
 grabGsetBeta <- function(gsetbeta, gset.funnorm) {
-    gsetbetaFi <- file.path(getwd(), gsetbeta)
+    gsetbetaFi <- gb$gBetaFile  #file.path(getwd(), gsetbeta)
   if (!file.exists(gsetbetaFi)) {
     gset.funnorm.beta <- supM(minfi::getBeta(gset.funnorm))
     gb$SaveObj(gset.funnorm.beta, file.name = gsetbetaFi)
@@ -435,7 +446,7 @@ writeDetailTab <- function(segFile, targets) {
     addCols = NULL
     for (i in 1:length(sentrix.ids)) {
       sampleEpic <- sentrix.ids[i]
-        pathEpic <- file.path(getwd(), sampleEpic)
+        pathEpic <- file.path(gb$runDir, sampleEpic)
         RGsetEpic <- read.metharray(pathEpic, verbose = T, force=T)
         MsetEpic <- mnp.v11b6::MNPpreprocessIllumina(
           RGsetEpic, bg.correct = TRUE, normalize = "controls")
