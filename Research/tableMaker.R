@@ -572,7 +572,8 @@ GetColorShape <- function(var1Col, var2Col){
 ShowAnyMissed <- function(gb){
   cat("\n\n")
   cat("#### Samples Removed from Analysis with Missing or Duplicate idat files:\n\n")
-  oldTargs <- sanitizeSheet(gb$inputFi, "oldTargs.csv", gb)
+  oldTargFile <- file.path(getwd(), "csv", "oldTargs.csv")
+  oldTargs <- sanitizeSheet(gb$inputFi, oldTargFile, gb)
   oldTargs <- oldTargs[!c(oldTargs[,gb$col_samNames] %in% targets[,gb$col_samNames]),]
   if(nrow(oldTargs)>0){
     return(gb$smallTab(oldTargs))
