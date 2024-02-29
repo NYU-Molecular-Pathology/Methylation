@@ -52,8 +52,7 @@ pkgs <-
         "conumee",
         "BiocGenerics",
         "Biobase",
-        "cowplot",
-        "reticulate"
+        "cowplot"
     )
 
 scripts = paste0(mainHub, rFiles)
@@ -214,19 +213,19 @@ return(knitr::opts_template$set(
 
 htmlClose <- function(){return(cat("\n\n:::\n\n"))}
 
-library(reticulate)
+# library(reticulate)
 
-# Attempt to import the kaleido module
-try_import <- function() {
-  tryCatch({
-    import("kaleido")
-    TRUE  # Return TRUE if import succeeded
-  }, error = function(e) {
-    FALSE  # Return FALSE if import failed
-  })
-}
-reticulate::use_python("/usr/local/bin/python", required = TRUE)
-# Check if kaleido is installed; if not, install it
-if (!try_import()) {
-  reticulate::py_install("kaleido", method = "virtualenv")
-}
+# # Attempt to import the kaleido module
+# try_import <- function() {
+#   tryCatch({
+#     import("kaleido")
+#     TRUE  # Return TRUE if import succeeded
+#   }, error = function(e) {
+#     FALSE  # Return FALSE if import failed
+#   })
+# }
+# reticulate::use_python("/usr/local/bin/python", required = TRUE)
+# # Check if kaleido is installed; if not, install it
+# if (!try_import()) {
+#   reticulate::py_install("kaleido", method = "virtualenv")
+# }
