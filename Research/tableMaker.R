@@ -338,10 +338,10 @@ ValidateColumns <- function(targets, gb) {
       gb$col_samTypes <- gb$col_samGrp
     }
   }
-  stopifnot(
-        gb$col_samNames %in% colnames(targets) == T &
-            gb$col_samTypes %in% colnames(targets) == T
-    )
+  stopifnot(gb$col_samNames %in% colnames(targets) == T)
+  if(gb$col_samTypes %in% colnames(targets) == F){
+    targets[, gb$col_samTypes] <- "Unknown"
+  }
   return(targets)
 }
 
