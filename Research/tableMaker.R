@@ -330,12 +330,12 @@ StripSheetSpaces <- function(samSh, samsheet, gb){
 
 
 ValidateColumns <- function(targets, gb) {
-  if(is.null(gb$col_samTypes)){
-    if(is.null(gb$col_samGrp)){
+  if(is.null(gb$col_samTypes)) {
+    if (is.null(gb$col_samGrp)) {
       targets$Unknown_Samples <- "Unknown"
-      gb$col_samGrp <<- gb$col_samTypes <<- "Unknown_Samples"
-    }else{
-      gb$col_samTypes <<- gb$col_samGrp
+      gb$col_samGrp <- gb$col_samTypes <- "Unknown_Samples"
+    } else{
+      gb$col_samTypes <- gb$col_samGrp
     }
   }
   stopifnot(
