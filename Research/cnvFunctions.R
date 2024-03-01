@@ -148,8 +148,8 @@ GetCNVObj <- function(segFile, targets, i, idatPath, custom_anno) {
     segPath <- file.path(gb$runDir, "data", "CNV_segments")
     cnvPath <- file.path(gb$runDir, "figures", "cnv", "interactive_cnv")
     
-    if(!dir.exists(segPath)){dir.create(segPath)}
-    if(!dir.exists(cnvPath)){dir.create(cnvPath)}
+    #if(!dir.exists(segPath)){dir.create(segPath)}
+    #if(!dir.exists(cnvPath)){dir.create(cnvPath)}
     
     samName <- samplename_data[i]
     sample_id <- sentrix.ids[i]
