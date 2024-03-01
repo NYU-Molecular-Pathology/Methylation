@@ -28,7 +28,7 @@ cnvSegDir = file.path(gb$runDir, "data", "CNV_segments")
 supbetaOut <- file.path(gb$runDir, "data", paste0(td, "_supervisedBetas"))
 annotFi <- file.path(gb$runDir, "data", paste0(td, "_annotations.rds"))
 
-# FUNCTION: Checks if directory exists, if not then creates recursively
+
 CheckDirCreate <- function(pathLocation){
     dataOutDir <- file.path(gb$runDir, pathLocation)
     if (!dir.exists(dataOutDir)) {dir.create(dataOutDir, recursive = T)}
@@ -68,6 +68,7 @@ ClusfiNam <- file.path(gb$runDir, "data", paste0(td, "_dmp.csv"))
 # Pathway Analysis Output Files
 if (gb$genPathChunk) {
     siteSpecific <- as.data.frame(readxl::read_excel(gb$genesInputFi))
+    stopifnot("Gene" %in% colnames(siteSpecific))
     your_genes <- siteSpecific$Gene
     geneListIn <- file.path(gb$runDir, "data", paste0(td,"_Genes_Pathway.csv"))
     pathCsvOut <- file.path(gb$runDir, "data", paste0(td,"-signaling_pathway.csv"))
