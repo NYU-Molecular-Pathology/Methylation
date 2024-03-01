@@ -330,11 +330,21 @@ StripSheetSpaces <- function(samSh, samsheet, gb){
 
 
 ValidateColumns <- function(targets, gb) {
-    stopifnot(
+  if(is.null(gb$col_samTypes)){
+    if(is.null(gb$col_samGrp)){
+      targets$Unknown_Samples <- "Unknown"
+      gb$col_samGrp <<- gb$col_samTypes <<- "Unknown_Samples"
+    }else{
+      gb$col_samTypes <<- gb$col_samGrp
+    }
+  }
+  stopifnot(
         gb$col_samNames %in% colnames(targets) == T &
             gb$col_samTypes %in% colnames(targets) == T
     )
+  return(targets)
 }
+
 
 ReadSheetType <- function(inputFi){
     if (stringr::str_detect(inputFi, ".xlsx")) {
@@ -387,7 +397,7 @@ sanitizeSheet <- function(inputFi, samsheet, gb) {
     library("dplyr")
     samSh <- ReadSheetType(inputFi)
     targets <- StripSheetSpaces(samSh, samsheet, gb)
-    ValidateColumns(targets, gb)
+    targets <- ValidateColumns(targets, gb)
     targets <- ValidateSentrix(targets, gb)
     targets <- StandardizeHeaders(targets, samNames = targets[, gb$col_samNames], sentrixs = targets[, gb$col_sentrix])
     targets <- ValidateSampleIDs(targets)
