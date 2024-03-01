@@ -120,7 +120,7 @@ FormatLegendText <- function(fig){
 }
 
 
-FormatPlotlyLayout <- function(otherPlot) {
+FormatPlotlyLayout <- function(otherPlot, gb) {
     otherPlot$x[["layout"]][["annotations"]] <- NULL
     opLayout <- otherPlot[["x"]][["layout"]]
     opLayout[["font"]][["size"]] <- 12
@@ -227,10 +227,10 @@ FormatPlotlyLegend <- function(otherPlot) {
 }
 
 
-makePlotly <- function(fig) {
+makePlotly <- function(fig, gb) {
   otherPlot <- NULL
   otherPlot <- FormatLegendText(fig)
-  otherPlot <- FormatPlotlyLayout(otherPlot)
+  otherPlot <- FormatPlotlyLayout(otherPlot, gb)
   otherPlot <- FormatHoverInfo(otherPlot)
   uniGrp <- unlist(lapply(
     X = 1:length(otherPlot[["x"]][["data"]]),
@@ -348,7 +348,7 @@ selectPlots <- function(doPlotly = F, tplots, ty, tps, outDirs) {
     
     cat(paste(tabStart, '(Interactive)','\n\n'))
     newLab <- cleanLabel(tabStart)
-    op <- gb$makePlotly(fig)
+    op <- gb$makePlotly(fig, gb)
     supM(print(htmltools::tagList(plotly::ggplotly(op))))
     cat('\n\n')
     
