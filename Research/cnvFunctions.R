@@ -305,7 +305,7 @@ SavePlotPng <- function(cnvDir, plotName, freqPlot, fileEnd="cnv.png"){
 }
 
 
-SaveLoadCnvs <- function(cnData, plotName, plotTitle, plotChr = c(paste0("chr", 1:22)), saveImg = T, isGrp=F) {
+SaveLoadCnvs <- function(cnData, plotName = "All", plotTitle = "All", plotChr = c(paste0("chr", 1:22)), saveImg = T, isGrp=F) {
     SilentLoadLib("ggplot2")
     SilentLoadLib("GenVisR")
     SilentLoadLib("grDevices")
