@@ -90,12 +90,14 @@ FormatLegendText <- function(fig){
     otherPlot[["x"]][["layout"]][["shapes"]][[1]][["line"]][["width"]] <- 2
     
     for (nSam in 1:length(otherPlot[["x"]][["data"]])) {
+      
         lgndGrp <- otherPlot[["x"]][["data"]][[nSam]][["legendgroup"]]
+        if (!is.null(lgndGrp)) {
         nlgndGrp <- stringr::str_remove_all(lgndGrp, "[()]")
         lgndSplt <- stringr::str_split_fixed(nlgndGrp, ",", 2)
         isShape <- lgndSplt[, 2] == 1
         isSingle <- F
-        if(lgndSplt[,1]==""|lgndSplt[,2]==""){
+        if (lgndSplt[, 1] == "" | lgndSplt[, 2] == "") {
             nlgndGrp <- paste0(nlgndGrp,",",nlgndGrp)
             isSingle <- T
         }
@@ -107,14 +109,15 @@ FormatLegendText <- function(fig){
         if (isShape) {
           otherPlot <- FormatShapeColors(isSingle, nlgndGrp, lgndSplt, fig, otherPlot, nSam)
         } else{
-            theSamLabs <- which(nlgndGrp==figGrps)
+          theSamLabs <- which(nlgndGrp == figGrps)
             otherPlot[["x"]][["data"]][[nSam]]$text <- paste("Sample:", fig$data$samples[theSamLabs])
             if (otherPlot[["x"]][["data"]][[nSam]][["marker"]][["symbol"]] != "circle") {
                otherPlot <- FormatShapeData(isSingle, otherPlot, nSam)
             }
         }
         otherPlot[["x"]][["data"]][[nSam]][["name"]] <- otherPlot[["x"]][["data"]][[nSam]][["legendgroup"]] <- nGroupSplit
-    }
+        }
+        }
     otherPlot <- FormatMarkerData(otherPlot)
     return(otherPlot)
 }
@@ -188,25 +191,26 @@ FormatPlotLabels <- function(fig, otherPlot, uniGrp, markerSyms){
   figDat <- fig[["data"]]
   for (grpIdx in 1:length(otherPlot$x$data)) {
     grpNam <- otherPlot$x$data[[grpIdx]]$legendgroup
-    samNames <-
-      stringr::str_split(otherPlot[["x"]][["data"]][[grpIdx]]$text,
-                         "Sample: ", simplify = T)[, 2]
-    theIdx <- match(samNames, fig$data$samples)
-    currGrp <- figDat$symbol == grpNam
-    newText <- paste(
-      paste(otherPlot[["x"]][["data"]][[grpIdx]]$text),
-      paste("x:", round(figDat$x[theIdx], 2)),
-      paste("y:", round(figDat$y[theIdx], 2)),
-      paste("Group:", figDat$GROUPS[theIdx]),
-      paste("Symbol:", figDat$symbol[theIdx]),
-      paste("Color:", figDat$col[theIdx]),
-      #paste("NAME:", figDat$samples[theIdx]),
-      sep = "<br />"
-    )
-    if (grpNam == otherPlot[["x"]][["data"]][[grpIdx]]$name) {
-      otherPlot[["x"]][["data"]][[grpIdx]]$text <- newText
+    if (!is.null(grpNam)) {
+      samNames <- stringr::str_split(otherPlot[["x"]][["data"]][[grpIdx]]$text,
+                                     "Sample: ", simplify = T)[, 2]
+      theIdx <- match(samNames, fig$data$samples)
+      currGrp <- figDat$symbol == grpNam
+      newText <- paste(
+        paste(otherPlot[["x"]][["data"]][[grpIdx]]$text),
+        paste("x:", round(figDat$x[theIdx], 2)),
+        paste("y:", round(figDat$y[theIdx], 2)),
+        paste("Group:", figDat$GROUPS[theIdx]),
+        paste("Symbol:", figDat$symbol[theIdx]),
+        paste("Color:", figDat$col[theIdx]),
+        #paste("NAME:", figDat$samples[theIdx]),
+        sep = "<br />"
+      )
+      if (grpNam == otherPlot[["x"]][["data"]][[grpIdx]]$name) {
+        otherPlot[["x"]][["data"]][[grpIdx]]$text <- newText
+      }
     }
-  }
+    }
   return(otherPlot)
 }
 
@@ -483,3 +487,66 @@ SubsetTargets <- function(targets, varToFilter = NULL){
 
 
 assign("subsetBetas", subsetBetas)
+
+GeneratePlotList <- function(targets1, allBetas1, gb) {
+  lapply(seq_along(allBetas1), function(X) {
+    tsne_plot <-
+      gb$getTsneVal(
+        suppressMessages(gb$generateTvals(allBetas1[[X]])),
+        saNames = targets1$SampleFilter,
+        samGrp = targets1$PointColors,
+        colorGrp = targets1$color,
+        symGrp = targets1$Sym_Shape
+      )
+    return(tsne_plot)
+  })
+}
+
+ProcessAndSavePlots <- function(plotList, custom, outDirs, gb, tsne_titles) {
+    for (plotIndex in seq_along(plotList)) {
+        invisible(gc())
+      fig <- gb$genTsnePlot(
+        tsne_plot = plotList[[plotIndex]],
+        titleLabel = tsne_titles[plotIndex],
+        symbolsLabel = plotList[[plotIndex]]$symbol,
+        colorLabel = plotList[[plotIndex]]$GROUPS,
+        names2Label = gb$names2Label
+      )
+        tabStart <- paste('### Top', custom, outDirs[plotIndex, 3])
+        cat(paste(tabStart, '(Interactive)', '\n\n'))
+        newLab <- gb$cleanLabel(tabStart)
+        op <- gb$makePlotly(fig, gb)
+        print(htmltools::tagList(plotly::ggplotly(op)))
+        cat('\n\n')
+        pngFiPath <- gb$GrabPngPath(op)
+        cat(paste(tabStart, '\n\n'))
+        gc(verbose = F)
+        options(repr.plot.width = 19, repr.plot.height = 12, repr.plot.res = 350)
+        gb$GetFlatPlots(fig)
+        cat('\n\n')
+        gb$SaveGgplotPng(newLab, pngFiPath, fig)
+    }
+}
+
+RunTsneAnalysisAndSavePlots <- function(
+    targets,
+    betas,
+    gb,
+    colorVariable = "Type",
+    shapeVariable = "Shape",
+    sampleGrouping = "Sample_Group",
+    isSuper = FALSE) {
+  gb$CatShapeColor(colorVariable, shapeVariable, 
+                   preFix = ifelse(isSuper, "Supervised", "Unsupervised"))
+    tsne_titles <- if (isSuper) {gb$tsne_titles[4:6]} else {gb$tsne_titles[1:3]}
+    for (custom in unique(targets[[sampleGrouping]])) {
+        targets1 <- targets[targets[[sampleGrouping]] == custom, ]
+        targets1 <- gb$FormatPlotTargets(targets1, colorVariable, shapeVariable,
+                                         gb$col_samNames, sampleGrouping)
+        allBetas1 <- gb$grabAllBeta(targets1, betas, isSuper)
+        outDirs <- gb$grabPngNames(tsne_titles)
+        plotList <- GeneratePlotList(targets1, allBetas1, gb)
+        ProcessAndSavePlots(plotList, custom, outDirs, gb, tsne_titles)
+    }
+}
+
