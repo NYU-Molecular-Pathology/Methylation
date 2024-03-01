@@ -24,10 +24,13 @@ tsneOutU = "figures/tsne/unsupervised/"
 tsneOutS = "figures/tsne/supervised/"
 hmOutU = "figures/heatmaps/unsupervised/"
 hmOutS = "figures/heatmaps/supervised/"
-cnvSegDir = file.path(gb$runDir, "data", "CNV_segments")
-supbetaOut <- file.path(gb$runDir, "data", paste0(td, "_supervisedBetas"))
-annotFi <- file.path(gb$runDir, "data", paste0(td, "_annotations.rds"))
+supbetaOut <- file.path("data", paste0(td, "_supervisedBetas"))
+annotFi <- file.path("data", paste0(td, "_annotations.rds"))
 
+varProbes <- c(100, 1000, 10000) # Which top Variance probes to pull i.e. c(100, 1000)
+hmVarProbes <- c(100, 1000, 3000)
+topN = 1000
+topVar = 10000
 
 CheckDirCreate <- function(pathLocation){
     dataOutDir <- file.path(gb$runDir, pathLocation)
@@ -40,6 +43,7 @@ CheckDirCreate("idats")
 CheckDirCreate("figures/mds")
 CheckDirCreate("csv")
 CheckDirCreate(tsneOutU)
+
 if (gb$supervisedRun) {
     CheckDirCreate(tsneOutS)
 }
@@ -48,8 +52,11 @@ if (gb$genHeatMaps == T) {
     if (gb$supervisedRun) CheckDirCreate(hmOutS)
 }
 if (gb$genCNchunk == T) {
+    cnvSegDir <- file.path("data", "CNV_segments")
+    cnvPath <- file.path("figures", "cnv", "interactive_cnv")
     CheckDirCreate("figures/cnv/")
     CheckDirCreate(cnvSegDir)
+    CheckDirCreate(cnvPath)
 }
 if (gb$genPairwise == T) {CheckDirCreate("/figures/diffmean/")}
 if (gb$genPathChunk == T) {
@@ -80,12 +87,8 @@ if (gb$supervisedRun == F) {
     clusType <- clusType[1]
 }
 
-varProbes <- c(100, 1000, 10000) # Which top Variance probes to pull i.e. c(100, 1000)
-hmVarProbes <- c(100, 1000, 3000)
-
 gb$tsne_titles <- gb$generateTitles(clusType, topTitle = as.character(varProbes), gb$titleMain)
-topN = 1000
-topVar = 10000
+
 
 mdsTitle <- paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot")
 
