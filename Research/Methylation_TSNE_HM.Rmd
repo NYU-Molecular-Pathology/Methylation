@@ -14,7 +14,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-```{r setup, fig.keep='all', fig.path = "figures/", include=FALSE}
+```{r setup, fig.keep='all', fig.path = "figures/", include=FALSE, error=FALSE}
 knitr::opts_chunk$set(echo = FALSE, error = FALSE, message = FALSE, warning = TRUE, cache = FALSE)
 gb <- globalenv(); assign("gb", gb)
 gitUrl <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research"
@@ -101,11 +101,9 @@ gb$htmlClose()
 
 # Supervised HeatMaps
 <hr style="border:2px solid gray">
-```{r, label='HM-supervised-annotations', echo=FALSE, fig.keep='all', fig.path=hmOutS, include=FALSE}
+```{r, label='HM-super', echo=FALSE, fig.keep='all', include=FALSE, eval=gb$supervisedRun}
 if (gb$supervisedRun == T & gb$genHeatMaps == T) {
   gb$GetSuperHmData(gb, targets, RGSet)
-} else{
-  cat("No Supervised HeatMaps output")
 }
 ```
 
@@ -134,7 +132,6 @@ gb$LoopSavePlainCNV(targets)
 
 ```{r, label='CNV-plots', opts.label='cn_opts_2', include=TRUE, eval=gb$genCNchunk}
 gb$SaveLoadCnvs(gb$cnData[, 1:(ncol(gb$cnData))])
-
 if (length(gb$col_samGrp) > 1) {
   gb$GenCNVdataGroupSave(gb$cnData, targets, gb$col_samGrp)
 }
@@ -146,10 +143,7 @@ if (gb$genPathChunk == TRUE) {
   gb$PrintPathHeader(gb$GroupSubset)
   enrichedData <- gb$GetKeggGeneVals(RGSet, targets, nameGrp = gb$pathwayGrp_Filter, gb = gb)
   gb$geneVals <- enrichedData$geneVals
-} else{
-  cat(rep("<br>", 5), sep = "\n")
-  knitr::knit_exit("</body></html>")
-}
+} else{cat(rep("<br>", 5), sep = "\n"); knitr::knit_exit("</body></html>")}
 ```
 
 # Pathway Gene HeatMaps
