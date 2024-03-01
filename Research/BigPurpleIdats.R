@@ -76,8 +76,6 @@ grabAllRecords <- function(flds, rcon) {
     dbCols <- redcapAPI::exportRecordsTyped(
         rcon,
         fields = flds,
-        labels = FALSE,
-        dates = FALSE,
         survey = FALSE,
         dag = FALSE,
         factors = FALSE,
