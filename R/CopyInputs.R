@@ -324,8 +324,7 @@ search.redcap <- function(rd_numbers, token=NULL, flds=NULL) {
         flds = c("record_id", "b_number", "primary_tech", "second_tech", "run_number", "barcode_and_row_column", "accession_number", "arrived")
     }
     result <- redcapAPI::exportRecordsTyped(
-        rcon, records = rd_numbers, fields = flds, dag = F, factors = F,
-        labels = F, dates = F, form_complete_auto = F, format = 'csv'
+        rcon, records = rd_numbers, fields = flds, dag = F, factors = F, form_complete_auto = F, format = 'csv'
     )
     return(as.data.frame(result))
 }
