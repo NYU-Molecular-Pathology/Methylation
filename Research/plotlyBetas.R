@@ -133,7 +133,7 @@ FormatPlotlyLayout <- function(otherPlot, gb) {
     pltTtl <- otherPlot[["x"]][["layout"]][["title"]][["text"]]
     otherPlot[["x"]][["layout"]][["margin"]]$t <- 100
     numList <- 1:length(otherPlot[["x"]][["data"]])
-    shapeText <- paste("Symbols:", R.utils::capitalize(samShapes))
+    shapeText <- paste("Symbols:", R.utils::capitalize(gb$samShapes))
     #colorText <- paste("Colors:", R.utils::capitalize(gb$samGroup))
     for(nSam in numList) {
         if (!is.null(otherPlot[["x"]][["data"]][[nSam]][["visible"]])) {
