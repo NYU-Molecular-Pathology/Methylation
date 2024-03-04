@@ -3,8 +3,13 @@
 ## Script name: make_consensus.sh
 ## Purpose: Generate PACT Consensus HTML report with given input
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2023
+## Date Created: August 21, 2023
+## Date Last Modified: March 4, 2024
+## Author: Jonathan Serrano
+## Version: 1.0.0
+## Copyright (c) NYULH Jonathan Serrano, 2024
 ## ---------------------------
+
 
 # Input args -------------------------------------------------------------------------------------------
 runID=${1-NULL}   # if arg $1 is empty assign NULL as default else i.e. 123456_NB501073_0212_AHT3V7BGXK
@@ -24,15 +29,15 @@ NORMAL=$(tput sgr0)      # resets default text
 
 # Function to exit when any command fails
 trap_error() {
-   local last_command=$1
-   local exit_code=$2
-   local line_no=$3
+    local last_command=$1
+    local exit_code=$2
+    local line_no=$3
 
-   if [[ $exit_code -ne 0 && $error_handled == false ]]; then
-      printf "\n%sERROR on LAST COMMAND%s:\n%s\n" "${BG_RED}" "${NORMAL}" "${last_command}"
-      printf "Command failed at line %s with exit code %s.\n" "${line_no}" "${exit_code}"
-      error_handled=true
-   fi
+    if [[ $exit_code -ne 0 && $error_handled == false ]]; then
+        printf "\n%sERROR on LAST COMMAND%s:\n%s\n" "${BG_RED}" "${NORMAL}" "${last_command}"
+        printf "Command failed at line %s with exit code %s.\n" "${line_no}" "${exit_code}"
+        error_handled=true
+    fi
 }
 
 # Enable strict mode
@@ -79,6 +84,12 @@ msg_code rsync -vrthP --include=\"*.png\" \"${MOLEC_VOL}REDCap/cnv_facets/${pact
 msg_code rsync -vrthP \"${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/${pactRun}-QC.tsv\" \"${DESK_DIR}\"
 msg_code rsync -vrthP \"${MOLEC_VOL}NGS607/${currYear}/${runID}/${pactRun}_Hotspots.tsv\" \"${DESK_DIR}\"
 
+VAF_DIR="${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/VAF_Plots"
+
+if [ -d "${VAF_DIR}" ]; then
+    msg_code rsync -vrthP \"${VAF_DIR}\" \"${DESK_DIR}\"
+fi
+
 printf "\n${BG_GRN}Executing:${NORMAL}\n"
 printf "cp ${DESK_DIR}*.png ${FACET_DIR}"
 cp "${DESK_DIR}"*.png "${FACET_DIR}"
@@ -86,6 +97,12 @@ cp "${DESK_DIR}"*.png "${FACET_DIR}"
 msg_code rsync -vrthP --include=\"*.tsv\" \"${DESK_DIR}\" \"${consensusDir}${pactRun}_consensus\"
 msg_code rsync -vrthP \"$HOME/Desktop/${runID}-SampleSheet.csv\" \"${consensusDir}${pactRun}_consensus\"
 msg_code rsync -vrthP \"$HOME/Desktop/${pactRun}_MethylMatch.xlsx\" \"${consensusDir}${pactRun}_consensus\"
+
+DESK_VAF="${DESK_DIR}VAF_Plots"
+
+if [ -d "${VAF_DIR}" ]; then
+    msg_code rsync -vrP \"${DESK_VAF}\" \"${consensusDir}${pactRun}_consensus/\"
+fi
 
 # Final operations for generating html
 cd "${HOME}" && curl -# -L ${pactGithub}/MakeIndelList.R >"${HOME}/MakeIndelList.R"
