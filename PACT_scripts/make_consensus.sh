@@ -4,7 +4,7 @@
 ## Purpose: Generate PACT Consensus HTML report with given input
 ## Author: Jonathan Serrano
 ## Date Created: August 21, 2023
-## Date Last Modified: March 4, 2024
+## Date Last Modified: March 5, 2024
 ## Author: Jonathan Serrano
 ## Version: 1.0.0
 ## Copyright (c) NYULH Jonathan Serrano, 2024
@@ -64,63 +64,71 @@ create_dir() {
 }
 
 # Main execution
-create_dir "${consensusDir}${pactRun}_consensus"
-cd "${consensusDir}${pactRun}_consensus" || exit
-curl -# -L ${pactGithub}/PACT_consensus.Rmd >"${consensusDir}${pactRun}_consensus/${pactRun}_consensus.Rmd"
+WORK_DIR="${consensusDir}${pactRun}_consensus"
+
+create_dir "${WORK_DIR}"
+cd "${WORK_DIR}" || exit
+curl -# -L ${pactGithub}/PACT_consensus.Rmd >"${WORK_DIR}/${pactRun}_consensus.Rmd"
 
 /Volumes/CBioinformatics/PACT/getMethylMatch.sh "${pactRun}" "${runID}"
 
-cd "${consensusDir}${pactRun}_consensus" || exit
+cd "${WORK_DIR}" || exit
 
-# Consolidated rsync commands
+# Consolidated rsync paths --------------------------------------------------------------------------------
 MOLEC_VOL="/Volumes/molecular/Molecular/"
 DESK_DIR="$HOME/Desktop/${pactRun}/"
-FACET_DIR="${consensusDir}${pactRun}_consensus/cnvpng/"
+PNG_OUT_DIR="${WORK_DIR}/cnvpng/"
+VAF_DIR="${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/VAF_Plots"
+DESK_VAF="${DESK_DIR}VAF_Plots"
 
 create_dir "${DESK_DIR}"
-create_dir "${FACET_DIR}"
+create_dir "${PNG_OUT_DIR}"
 
+# COPY FROM: Z-drive TO: DESKTOP --------------------------------------------------------------------------
 msg_code rsync -vrthP --include=\"*.png\" \"${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/\" \"${DESK_DIR}\"
 msg_code rsync -vrthP \"${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/${pactRun}-QC.tsv\" \"${DESK_DIR}\"
 msg_code rsync -vrthP \"${MOLEC_VOL}NGS607/${currYear}/${runID}/${pactRun}_Hotspots.tsv\" \"${DESK_DIR}\"
 
-VAF_DIR="${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/VAF_Plots"
+# Copy demux-samplesheet.csv to desktop
+msg_code rsync -vrthP \"${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/demux-samplesheet.csv\" \"${DESK_DIR}\"
 
+# Copy VAF QC output files if availible
 if [ -d "${VAF_DIR}" ]; then
     msg_code rsync -vrthP \"${VAF_DIR}\" \"${DESK_DIR}\"
 fi
 
 printf "\n${BG_GRN}Executing:${NORMAL}\n"
-printf "cp ${DESK_DIR}*.png ${FACET_DIR}"
-cp "${DESK_DIR}"*.png "${FACET_DIR}"
+printf "cp ${DESK_DIR}*.png ${PNG_OUT_DIR}"
 
-msg_code rsync -vrthP --include=\"*.tsv\" \"${DESK_DIR}\" \"${consensusDir}${pactRun}_consensus\"
-msg_code rsync -vrthP \"$HOME/Desktop/${runID}-SampleSheet.csv\" \"${consensusDir}${pactRun}_consensus\"
-msg_code rsync -vrthP \"$HOME/Desktop/${pactRun}_MethylMatch.xlsx\" \"${consensusDir}${pactRun}_consensus\"
+# COPY FROM: Desktop TO: Consensus Directory --------------------------------------------------------------
+cp "${DESK_DIR}"*.png "${PNG_OUT_DIR}"
+msg_code rsync -vrthP --include=\"*.tsv\" \"${DESK_DIR}\" \"${WORK_DIR}\"
+msg_code rsync -vrthP \"$HOME/Desktop/${runID}-SampleSheet.csv\" \"${WORK_DIR}\"
+msg_code rsync -vrthP \"$HOME/Desktop/${pactRun}_MethylMatch.xlsx\" \"${WORK_DIR}\"
 
-DESK_VAF="${DESK_DIR}VAF_Plots"
+# Copy demux-samplesheet.csv to consensus
+msg_code rsync -vrthP \"$HOME/Desktop/demux-samplesheet.csv\" \"${WORK_DIR}\"
 
+# Copy VAF QC output files if availible
 if [ -d "${VAF_DIR}" ]; then
-    msg_code rsync -vrP \"${DESK_VAF}\" \"${consensusDir}${pactRun}_consensus/\"
+    msg_code rsync -vrP \"${DESK_VAF}\" \"${WORK_DIR}/\"
 fi
 
-# Final operations for generating html
+# EXECUTE: Rscripts for generating HTML Report ------------------------------------------------------------
 cd "${HOME}" && curl -# -L ${pactGithub}/MakeIndelList.R >"${HOME}/MakeIndelList.R"
 chmod +rwx "${HOME}/MakeIndelList.R"
 
 RScript --verbose "${HOME}/MakeIndelList.R" "${pactRun}"
-cd "${consensusDir}${pactRun}_consensus/" || exit
+cd "${WORK_DIR}/" || exit
 
 echo "Running Rscript:"
+Rscript --verbose -e "rmarkdown::render('${WORK_DIR}/${pactRun}_consensus.Rmd', params=list(pactName='${pactRun}', userName='${kerbero}'))" && open "${WORK_DIR}/${pactRun}_consensus.html"
 
-Rscript --verbose -e "rmarkdown::render('${consensusDir}${pactRun}_consensus/${pactRun}_consensus.Rmd', params=list(pactName='${pactRun}', userName='${kerbero}'))" && open "${consensusDir}${pactRun}_consensus/${pactRun}_consensus.html"
-
+# COPY FINAL Output Report -----------------------------------------------------------------------------
 echo "Trying to copy html file to ouput folder:"
 echo "/Volumes${outputDir}${currYear}/${pactRun}/"
 
-#rsync -vrthP "${consensusDir}${pactRun}_consensus/${pactRun}_consensus.html" "/Volumes${outputDir}${currYear}/${pactRun}/"
-
-CONSENSUS_FILE="${consensusDir}${pactRun}_consensus/${pactRun}_consensus.html"
+CONSENSUS_FILE="${WORK_DIR}/${pactRun}_consensus.html"
 FINAL_DEST="/Volumes${outputDir}${currYear}/${pactRun}/"
 
 # Copy HTML file from consensus directory to DESK_DIR
