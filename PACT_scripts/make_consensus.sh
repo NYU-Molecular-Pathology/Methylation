@@ -107,7 +107,7 @@ msg_code rsync -vrthP \"$HOME/Desktop/${runID}-SampleSheet.csv\" \"${WORK_DIR}\"
 msg_code rsync -vrthP \"$HOME/Desktop/${pactRun}_MethylMatch.xlsx\" \"${WORK_DIR}\"
 
 # Copy demux-samplesheet.csv to consensus
-msg_code rsync -vrthP \"$HOME/Desktop/demux-samplesheet.csv\" \"${WORK_DIR}\"
+msg_code rsync -vrthP \"$HOME/Desktop/${pactRun}/demux-samplesheet.csv\" \"${WORK_DIR}\"
 
 # Copy VAF QC output files if availible
 if [ -d "${VAF_DIR}" ]; then
