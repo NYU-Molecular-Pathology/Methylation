@@ -78,8 +78,8 @@ cd "${WORK_DIR}" || exit
 MOLEC_VOL="/Volumes/molecular/Molecular/"
 DESK_DIR="$HOME/Desktop/${pactRun}/"
 PNG_OUT_DIR="${WORK_DIR}/cnvpng/"
-VAF_DIR="${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/VAF_Plots"
-DESK_VAF="${DESK_DIR}VAF_Plots"
+VAF_DIR="${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/VAF_plots"
+DESK_VAF="${DESK_DIR}VAF_plots"
 
 create_dir "${DESK_DIR}"
 create_dir "${PNG_OUT_DIR}"
