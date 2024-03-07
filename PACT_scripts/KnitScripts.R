@@ -563,6 +563,7 @@ checkDataDump <- function(sam, cnvTab) {
     return(cnvTab)
 }
 
+
 checkTumorPdf <-  function(samList, outDir){
     pngOutDir <- file.path(outDir,"cnvpng") # output copy of cnvPNG files
     if(!dir.exists(pngOutDir)){
@@ -616,6 +617,7 @@ convert.plots <- function(tumors, pdfList) {
         }
     }
 }
+
 
 GetMethCnv <- function(params, methDir){
     methData <- gb$GetMethDf(params$pactName)
@@ -786,6 +788,7 @@ filterAbberations <- function(snvOut){
     return(snvOut)
 }
 
+
 printSnvs <- function(snvCsv){
     snvCsvCol <- c(
         "HGNC_gene", "AberrationType", "Coordinate",
@@ -899,6 +902,7 @@ LoopSampleTabs <- function(params){
             MakeHStab(sam, hsDat, samList, outDir)
         }
         cat("\n\n")
+        MakeVAFtab(sam)
         cat(' </div> ')
     }
 }
@@ -1054,10 +1058,36 @@ CheckTumorPngs <- function(samList, outDir) {
     RenamePngs(tumors, pngList, ngsPngDir)
 }
 
+
 CopyCnvPngs <- function(params) {
     outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus"))
     samList <- gb$GetSamList(params$pactName, 2)
     CheckTumorPngs(samList, outDir)
+}
+
+
+MakeVAFtab <- function(sam){
+  MakeTabColor("VAF Plots")
+  if(dir.exists("VAF_plots")){
+    vaf_pngs <- dir(path = file.path(getwd(), "VAF_plots"), pattern = ".png", full.names = T)
+    sam_find <- grepl(pattern = sam, x = vaf_pngs)
+    cat("Below are VAF distribution plots for MuTect2, Strelka, and LoFreqSomatic.\n\nNot all 3 callers may be plotted if not enough data after filtering variants.\n\n")
+    if(any(sam_find)){
+      foundPngs <- vaf_pngs[sam_find]
+      for (vafPlot in foundPngs) {
+        vaf_png_file <- file.path(".","VAF_plots", paste0(basename(vafPlot)))
+        caller <- stringr::str_split_fixed(basename(vafPlot), "_", 4)[1, 4]
+        callerName <- stringr::str_replace_all(caller, ".png", "")
+        altTxt <- paste("![VAF Distribution for", sam, callerName, "](")
+        cat(paste0(altTxt, vaf_png_file,"){height=400px}"))
+      }
+    }else{
+      cat(paste(sam, "did not have enough VAF data to plot after filtering"))
+    }
+  }else{
+    cat("No VAF Plots were generated for this run")
+  }
+  cat("\n\n")
 }
 
 animation::ani.options(autobrowse = FALSE); options(width = 1600)
