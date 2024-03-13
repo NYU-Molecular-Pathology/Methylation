@@ -2,6 +2,7 @@
 ## ---------------------------
 ## Script name: parsepact.sh
 ## Purpose: Initiate Rscript to parse PACT xlsm worksheet and rsync output to HPC
+## Date Created: February 9, 2023
 ## Author: Jonathan Serrano
 ## Version: 1.0.0
 ## Copyright (c) NYULH Jonathan Serrano, 2024
