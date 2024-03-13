@@ -1067,13 +1067,16 @@ CopyCnvPngs <- function(params) {
 
 
 MakeVAFtab <- function(sam){
-  MakeTabColor("VAF Plots")
+  
   if(dir.exists("VAF_plots")){
     vaf_pngs <- dir(path = file.path(getwd(), "VAF_plots"), pattern = ".png", full.names = T)
     sam_find <- grepl(pattern = sam, x = vaf_pngs)
-    cat("Below are VAF distribution plots for MuTect2, Strelka, and LoFreqSomatic.\n\nNot all 3 callers may be plotted if not enough data after filtering variants.\n\n")
+    
     if(any(sam_find)){
-      foundPngs <- vaf_pngs[sam_find]
+        MakeTabColor("VAF Plots")
+        cat("Below are VAF distribution plots for MuTect2, Strelka, and LoFreqSomatic.\n\nNot all 3 callers may be plotted if not enough data after filtering variants.\n\n")
+        foundPngs <- vaf_pngs[sam_find]
+      
       for (vafPlot in foundPngs) {
         vaf_png_file <- file.path(".","VAF_plots", paste0(basename(vafPlot)))
         caller <- stringr::str_split_fixed(basename(vafPlot), "_", 4)[1, 4]
@@ -1082,10 +1085,12 @@ MakeVAFtab <- function(sam){
         cat(paste0(altTxt, vaf_png_file,"){height=400px}"))
       }
     }else{
-      cat(paste(sam, "did not have enough VAF data to plot after filtering"))
+        cat("\n\n")
+      #cat(paste(sam, "did not have enough VAF data to plot after filtering"))
     }
   }else{
-    cat("No VAF Plots were generated for this run")
+      cat("\n\n")
+    #cat("No VAF Plots were generated for this run")
   }
   cat("\n\n")
 }
