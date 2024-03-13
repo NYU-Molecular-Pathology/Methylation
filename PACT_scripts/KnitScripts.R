@@ -1074,7 +1074,7 @@ MakeVAFtab <- function(sam){
     
     if(any(sam_find)){
         MakeTabColor("VAF Plots")
-        cat("Below are VAF distribution plots for MuTect2, Strelka, and LoFreqSomatic.\n\nNot all 3 callers may be plotted if not enough data after filtering variants.\n\n")
+        cat("Below are VAF distribution plots for MuTect2 and Strelka.\n\nBoth callers may not be plotted if one does not have enough data after filtering.\n\n")
         foundPngs <- vaf_pngs[sam_find]
       
       for (vafPlot in foundPngs) {
