@@ -354,6 +354,7 @@ customCNV2 <- function (Mset, samName = NULL, sex = NULL, customAnno = NULL) {
 
 
 get_cnv_data <- function(Mset, myGenes){
+    library("conumee2.0")
     grangesDF <- gb$GetGeneRanges(myGenes)
     gene_list <- gb$GetGenesListRange(grangesDF)
     isEPIC <- Mset@annotation[["array"]] == "IlluminaHumanMethylationEPIC"
