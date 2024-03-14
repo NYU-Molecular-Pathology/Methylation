@@ -301,3 +301,66 @@ LoadSaveAnno <- function(gene_range_li, array_type = "EPIC", customAnnoFi= NULL,
     }
     return(custom_anno)
 }
+
+
+generateSeg2 <- function(a, b, c) {
+    x <- conumee2.0::CNV.fit(a, b, c)
+    x <- conumee2.0::CNV.bin(x)
+    x <- conumee2.0::CNV.detail(x)
+    x <- conumee2.0::CNV.segment(x)
+    return(x)
+}
+
+customCNV2 <- function (Mset, samName = NULL, sex = NULL, customAnno = NULL) {
+    gb <- globalenv()
+    if(is.null(samName)){samName <- colnames(Mset)[1]}
+
+    chiptype <- minfi::annotation(Mset)[[1]]
+    Rset <- minfi::ratioConvert(Mset, what = "both", keepCN = TRUE)
+    cndata <- conumee2.0::CNV.load(Mset)
+
+    if (chiptype == "IlluminaHumanMethylationEPIC") {
+        require("mnp.v11b6")
+
+        if (is.null(sex)) {
+            sex <- ifelse(mnp.v11b6::MNPgetSex(Rset)$predictedSex == "M", "Male", "Female")
+        }
+        path <- file.path(path.package("mnp.v11b6"), "ext")
+        load(file.path(path,"conumee_annotation_EPIC_B6.2019-11-29.RData"), envir = gb)
+        load(file.path(path,"CNanalysis6_conumee_REF_M.2018-09-19.RData"), envir = gb)
+        load(file.path(path,"CNanalysis6_conumee_REF_F.2018-09-19.RData"), envir = gb)
+        sexRefData <- if(sex == "Male"){gb$refM_epic} else{gb$refF_epic}
+        mainAnno <- gb$annoEPICxy
+    } else {
+        require("mnp.v11b4")
+        if (is.null(sex)) {
+            sex <- ifelse(mnp.v11b4::MNPgetSex(Rset)$predictedSex == "M", "Male", "Female")
+        }
+        path <- file.path(path.package("mnp.v11b4"), "ext")
+        load(file.path(path,"CNanalysis4_conumee_ANNO.vh20150715.RData"), envir = gb)
+        load(file.path(path,"CNanalysis4_conumee_REF-M.vh20150715.RData"), envir = gb)
+        load(file.path(path,"CNanalysis4_conumee_REF-F.vh20150715.RData"), envir = gb)
+        sexRefData <- if(sex == "Male"){gb$refM.data}else{gb$refF.data}
+        mainAnno <- gb$annoXY
+    }
+
+    if(!is.null(customAnno)){
+        return(generateSeg2(cndata, sexRefData, customAnno))
+    } else{
+        return(generateSeg2(cndata, sexRefData, mainAnno))
+    }
+
+}
+
+
+get_cnv_data <- function(Mset, myGenes){
+    grangesDF <- gb$GetGeneRanges(myGenes)
+    gene_list <- gb$GetGenesListRange(grangesDF)
+    isEPIC <- Mset@annotation[["array"]] == "IlluminaHumanMethylationEPIC"
+    array_type <- ifelse(isEPIC, "EPIC", "450k")
+    gb$GetMnpAnno(array_type, gb)
+    custom_anno <- gb$LoadSaveAnno(gene_list, array_type)
+    cnv_seg_data <- customCNV2(Mset, samName = NULL, sex = NULL, customAnno = custom_anno)
+    return(cnv_seg_data)
+}
+
