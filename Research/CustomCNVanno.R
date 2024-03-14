@@ -182,12 +182,19 @@ MakeCustomAnno <- function (bin_minprobes = 15,
     probes450k <- probesEPIC <- GRanges()
     if (is.element(array_type, c("450k", "overlap"))) {
         message("getting 450k annotations")
+        library("IlluminaHumanMethylation450kanno.ilmn12.hg19")
         probes450k <-
             sort(minfi::getLocations(IlluminaHumanMethylation450kanno.ilmn12.hg19::IlluminaHumanMethylation450kanno.ilmn12.hg19))
     }
     if (is.element(array_type, c("EPIC", "overlap"))) {
         message("getting EPIC annotations")
+        library("IlluminaHumanMethylationEPICanno.ilm10b4.hg19")
         probesEPIC <-sort(minfi::getLocations(IlluminaHumanMethylationEPICanno.ilm10b4.hg19::IlluminaHumanMethylationEPICanno.ilm10b4.hg19))
+    }
+    if (is.element(array_type, c("EPICv2", "overlap"))) {
+        message("getting EPIC annotations")
+        library("IlluminaHumanMethylationEPICv2anno.20a1.hg38")
+        probesEPIC <-sort(minfi::getLocations(IlluminaHumanMethylationEPICv2anno.20a1.hg38::IlluminaHumanMethylationEPICv2anno.20a1.hg38))
     }
     if (array_type == "overlap") {
         probes <- sort(subsetByOverlaps(probes450k, probesEPIC))
