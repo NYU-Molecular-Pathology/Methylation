@@ -105,14 +105,14 @@ CopyRmdFile <- function(runID, rmdFile) {
 
 getRGset <- function(runPath, sentrix) {
   msgFunName(pipeLnk,"getRGset")
-  barcode = stringr::str_split_fixed(sentrix, "_",2)[1]
+  barcode = stringr::str_split_fixed(sentrix, "_", 2)[1]
   RGsetEpic <- minfi::read.metharray(file.path(runPath, sentrix), verbose = T, force = T)
-  
   aEpic = c(array = "IlluminaHumanMethylationEPIC", annotation = "ilm10b4.hg19")
   a450k = c(array = "IlluminaHumanMethylation450k", annotation = "ilmn12.hg19")
   arrayAnno <- RGsetEpic@annotation[['array']]
   if (arrayAnno == "IlluminaHumanMethylationEPICv2") {
-    reportMd <<- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
+    requireNamespace("mnp.v12epicv2")
+    reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
     is_validation <- T
     if (is_validation) {
       is_validation <<- T
@@ -439,7 +439,10 @@ do_report <- function(single_data = NULL, genCn = FALSE) {
 
     dat <- getRunData(single_data)
     RGsetEpic <- getRGset(runPath = getwd(), sentrix = dat$senLi)
-
+    arrayAnno <- RGsetEpic@annotation[['array']]
+    if (arrayAnno == "IlluminaHumanMethylationEPICv2") {
+      reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
+    }
     if (genCn == T) {
         generate_cnv_png(RGsetEpic, dat$sampleID)
     }
