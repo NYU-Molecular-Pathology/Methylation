@@ -332,14 +332,14 @@ generateSeg2 <- function(a, b, c) {
 }
 
 
-customCNV2 <- function (Mset, samName = NULL, sex = NULL, customAnno = NULL) {
+customCNV2 <- function(Mset, samName = NULL, sex = NULL, customAnno = NULL) {
     gb <- globalenv()
     if (is.null(samName)) {samName <- colnames(Mset)[1]}
-    
+
     chiptype <- minfi::annotation(Mset)[[1]]
     Rset <- minfi::ratioConvert(Mset, what = "both", keepCN = TRUE)
     cndata <- conumee2.0::CNV.load(Mset)
-    
+
     if (chiptype == "IlluminaHumanMethylationEPIC") {
         require("mnp.v11b6")
         if (is.null(sex)) {
@@ -364,7 +364,7 @@ customCNV2 <- function (Mset, samName = NULL, sex = NULL, customAnno = NULL) {
         sexRefData <- if (sex == "Male") {gb$refM.data} else{gb$refF.data}
         mainAnno <- gb$annoXY
     }
-    
+
     if (chiptype == "IlluminaHumanMethylationEPICv2") {
         require("mnp.v12epicv2")
         if (is.null(sex)) {
@@ -376,7 +376,19 @@ customCNV2 <- function (Mset, samName = NULL, sex = NULL, customAnno = NULL) {
         load(file.path(path,"CNanalysis6_conumee_REF_M.2018-09-19.RData"), envir = gb)
         load(file.path(path,"CNanalysis6_conumee_REF_F.2018-09-19.RData"), envir = gb)
         sexRefData <- if (sex == "Male") {gb$refM_epic} else{gb$gb$refF_epic}
-        mainAnno <- gb$annoEPICv2_xy
+        # Extracting all probe names
+        sexRows <- rownames(sexRefData@intensity)
+        mainProbes <- names(mainAnno@probes)
+        customProbes <- names(customAnno@probes)
+        
+        # Finding common probe names across all three
+        allCommonProbes <- intersect(intersect(sexRows, mainProbes), customProbes)
+        
+        # Filtering each object to keep only rows/columns with common probe names
+        sexRefData@intensity <- sexRefData@intensity[allCommonProbes, , drop = FALSE]
+        mainAnno@probes <- mainAnno@probes[allCommonProbes, , drop = FALSE]
+        customAnno@probes <- customAnno@probes[allCommonProbes, , drop = FALSE]
+        
     }
     
     if (!is.null(customAnno)) {
