@@ -376,6 +376,7 @@ customCNV2 <- function(Mset, samName = NULL, sex = NULL, customAnno = NULL) {
         load(file.path(path,"CNanalysis6_conumee_REF_M.2018-09-19.RData"), envir = gb)
         load(file.path(path,"CNanalysis6_conumee_REF_F.2018-09-19.RData"), envir = gb)
         sexRefData <- if (sex == "Male") {gb$refM_epic} else{gb$gb$refF_epic}
+        mainAnno <- gb$annoEPICv2_xy
         # Extracting all probe names
         sexRows <- rownames(sexRefData@intensity)
         mainProbes <- names(mainAnno@probes)
