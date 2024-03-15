@@ -304,6 +304,11 @@ MakeCustomAnno2 <- function(gene_range_li, array_type, gb = .GlobalEnv){
             array_type = array_type, detail_regions = c(gene_range_li, gb$annoEPICxy@detail))
     }
     if (array_type == "EPICv2") {
+        require("mnp.v12epicv2")
+        pkgPath <- file.path(path.package("mnp.v12epicv2"), "ext")
+        annoFi <- "conumee_annotation_EPIC_v2.2023-02-08.RData"
+        load(file.path(pkgPath, annoFi), envir = gb)
+        gb$annoEPICv2_xy@detail@seqinfo@genome <- rep("hg38", 24)
         custom_anno <- conumee2.0::CNV.create_anno(
             array_type = array_type, detail_regions = c(gene_range_li, gb$annoEPICv2_xy@detail))
     }
