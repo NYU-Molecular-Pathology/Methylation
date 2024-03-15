@@ -80,12 +80,18 @@ GetGeneRanges <- function(myGenes) {
 }
 
 
-GetGenesListRange <- function(grangesDF){
+GetGenesListRange <- function(grangesDF, array_type = "EPIC") {
     mycoords.gr = GenomicRanges::makeGRangesFromDataFrame(grangesDF)
     grNames <- names(mycoords.gr)
-    gene_list <- suppressMessages(GenomicFeatures::genes(TxDb.Hsapiens.UCSC.hg19.knownGene,single.strand.genes.only=T))[grNames,]
+    if (array_type == "EPICv2") {
+        genomeType <- TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene
+    } else{
+        genomeType <- TxDb.Hsapiens.UCSC.hg19.knownGene::TxDb.Hsapiens.UCSC.hg19.knownGene
+    }
+    gene_list <- suppressMessages(GenomicFeatures::genes(genomeType, single.strand.genes.only = T))[grNames,]
     entrezIDs <- gene_list@elementMetadata@listData[["gene_id"]]
-    geneNames <- AnnotationDbi::select(org.Hs.eg.db::org.Hs.eg.db, keys = entrezIDs, keytype = "ENTREZID", columns = "SYMBOL")
+    geneNames <- AnnotationDbi::select(
+        org.Hs.eg.db::org.Hs.eg.db, keys = entrezIDs, keytype = "ENTREZID", columns = "SYMBOL")
     gene_list@elementMetadata@listData[["name"]] = geneNames$SYMBOL
     gene_list@elementMetadata@listData[["gene_id"]] = NULL
     gene_list@elementMetadata@listData[["thick"]] = gene_list@ranges
