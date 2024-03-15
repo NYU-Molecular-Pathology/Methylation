@@ -381,15 +381,17 @@ customCNV2 <- function(Mset, samName = NULL, sex = NULL, customAnno = NULL) {
         sexRows <- rownames(sexRefData@intensity)
         mainProbes <- names(mainAnno@probes)
         customProbes <- names(customAnno@probes)
-        
+        cndataProbes <- names(cndata@intensity)
+
         # Finding common probe names across all three
-        allCommonProbes <- intersect(intersect(sexRows, mainProbes), customProbes)
-        
+        commonProbes <- intersect(intersect(sexRows, mainProbes), customProbes)
+        commonProbes <- intersect(commonProbes, cndataProbes)
+
         # Filtering each object to keep only rows/columns with common probe names
-        sexRefData@intensity <- sexRefData@intensity[allCommonProbes, , drop = FALSE]
-        mainAnno@probes <- mainAnno@probes[allCommonProbes, , drop = FALSE]
-        customAnno@probes <- customAnno@probes[allCommonProbes, , drop = FALSE]
-        
+        sexRefData@intensity <- sexRefData@intensity[commonProbes, ]
+        mainAnno@probes <- mainAnno@probes[commonProbes, ]
+        customAnno@probes <- customAnno@probes[commonProbes, ]
+        cndata@intensity <- cndata@intensity[commonProbes, ]
     }
     
     if (!is.null(customAnno)) {
