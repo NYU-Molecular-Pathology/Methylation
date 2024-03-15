@@ -112,6 +112,7 @@ getRGset <- function(runPath, sentrix) {
   a450k = c(array = "IlluminaHumanMethylation450k", annotation = "ilmn12.hg19")
   arrayAnno <- RGsetEpic@annotation[['array']]
   if (arrayAnno == "IlluminaHumanMethylationEPICv2") {
+    reportMd <<- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
     is_validation <- T
     if (is_validation) {
       is_validation <<- T
