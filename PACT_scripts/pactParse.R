@@ -100,32 +100,6 @@ loadPacks <- function() {
 }
 
 
-# FUN: Returns Path to xlsx file ---------------------------------------------------------------
-getExcelPath <- function(inputSheet, pathType = 1, isNxtSeq = F, isTest = F) {
-    if (stringr::str_detect(inputSheet, "/") == T) {
-        return(inputSheet)
-    }
-    drive = file.path("", "Volumes", "molecular", "MOLECULAR LAB ONLY")
-    folder = file.path("NYU PACT Patient Data", "Workbook")
-
-    runyr <- stringr::str_split_fixed(inputSheet, "-", 3)[, 2]
-
-    yearDir <- paste0("20", runyr)
-    ending <- ifelse(pathType == 1, ".xlsm", "_FinalExportedList.xlsx")
-    xlFi <- paste0(inputSheet, ending)
-    inputFiPath <- file.path(drive, folder, yearDir, inputSheet, xlFi)
-    if (isNxtSeq == T) {
-        folder <- "Validations/PACT new i7-NextSeq2000/Wet Lab/Workbook"
-        inputFiPath <- file.path(drive, folder, yearDir, xlFi)
-    }
-    if (isTest == T) {
-        drive = "/Volumes/molecular/Molecular/Validation/PACT/Test_Sheets"
-        inputFiPath <- file.path(drive, xlFi)
-    }
-    return(inputFiPath)
-}
-
-
 MsgChangesMade <- function(mainSheet, badChars = c("[\r\n]", ",", " ")) {
     for (ptrn in badChars) {
         for (i in seq_along(mainSheet)) {
@@ -378,6 +352,17 @@ ProcessExtraNormals <- function(normSamPair, missingCases, tumorSamPair, mainShe
 }
 
 
+# Insert "missing" at this index to manually pair
+AppendMissingNotes <- function(indexToAdd, normSamPair, mainSheet, sheetTumors) {
+    for (idx in indexToAdd) {
+        normSamPair <-
+            append(normSamPair, "MISSING_NORMAL_PAIR", after = idx - 1)
+    }
+    mainSheet$Paired_Normal[sheetTumors] <- normSamPair
+    return(mainSheet)
+}
+
+
 AddUnmatchNormals <- function(sheetPairNorm, sheetPairTumor, mainSheet,
                               sheetTumors, sheetNormals, philipsExport) {
     extraNormals <- length(sheetPairNorm) > length(sheetPairTumor)
@@ -398,12 +383,7 @@ AddUnmatchNormals <- function(sheetPairNorm, sheetPairTumor, mainSheet,
             return(mainSheet)
         } else{
             indexToAdd <- which(tumorSamPair %in% missingCases)
-            # Insert "missing" at this index to manually pair
-            for (idx in indexToAdd) {
-                normSamPair <-
-                    append(normSamPair, "MISSING_NORMAL_PAIR", after = idx - 1)
-            }
-            mainSheet$Paired_Normal[sheetTumors] <- normSamPair
+            mainSheet <- AppendMissingNotes(indexToAdd, normSamPair, mainSheet, sheetTumors)
             return(mainSheet)
         }
     }
@@ -993,7 +973,7 @@ CheckOtherFiles <- function(inputFi, runID) {
     potentialFi <- list.files(path = parentFolder, full.names = T)
     if (length(potentialFi) > 1) {
         message(crayon::bgRed("Checking other existing files:"), "\n")
-        print(potentialFi)
+        message(paste(potentialFi, sep = "\n"))
         potentialFi <- filterFiles(potentialFi)
     }else{
         stop(paste("No PACT worksheet was found in the directory:", parentFolder))
@@ -1009,7 +989,7 @@ CheckOtherFiles <- function(inputFi, runID) {
     # TODO: Write check for mismatched year
     # runyr <- stringr::str_split_fixed(inputFi, "-", 3)[, 2]
     stopifnot(file.exists(pfile))
-    outVals <- suppressMessages(parseExcelFile(inputFi = pfile, runID))
+    outVals <- parseExcelFile(inputFi = pfile, runID)
     return(outVals)
 }
 
@@ -1092,22 +1072,61 @@ pushToRedcap <- function(outVals, token=NULL) {
 }
 
 
+determineRunType <- function(inputSheet) {
+    if (stringr::str_detect(inputSheet, "2000|NextSeq550")) {
+        runType <- "NextSeq2000"
+    } else if (stringr::str_detect(inputSheet, "TEST")) {
+        runType <- "test"
+    } else if (stringr::str_detect(inputSheet, "ICL")) {
+        runType <- "Illumina"
+    } else {
+        runType <- "regular"
+    }
+
+    return(runType)
+}
+
+
+# FUN: Returns Path to xlsx file ---------------------------------------------------------------
+getExcelPath <- function(inputSheet, runType) {
+    if (stringr::str_detect(inputSheet, .Platform$file.sep)) {
+        return(inputSheet)
+    }
+    drive = file.path("", "Volumes", "molecular", "MOLECULAR LAB ONLY")
+    folder = file.path("NYU PACT Patient Data", "Workbook")
+    runyr <- stringr::str_split_fixed(inputSheet, "-", 3)[, 2]
+
+    yearDir <- paste0("20", runyr)
+
+    xlFi <- paste0(inputSheet, ".xlsm")
+    worksheetPath <- file.path(drive, folder, yearDir, inputSheet, xlFi)
+
+    if (runType == "NextSeq2000") {
+        folder <- "Validations/PACT new i7-NextSeq2000/Wet Lab/Workbook"
+        worksheetPath <- file.path(drive, folder, yearDir, xlFi)
+    }
+
+    if (runType == "test") {
+        drive = "/Volumes/molecular/Molecular/Validation/PACT/Test_Sheets"
+        worksheetPath <- file.path(drive, xlFi)
+    }
+
+    return(worksheetPath)
+}
+
+
 # Gets dataframe and saves as CSV file -----
 writeSampleSheet <- function(inputSheet, token, runID = NULL) {
-    isPath <- stringr::str_detect(inputSheet, .Platform$file.sep) == T
-    isNxtSeq <- ifelse(stringr::str_detect(inputSheet, "2000|NextSeq550"), T, F)
-    isTest <- ifelse(stringr::str_detect(inputSheet, "TEST"), T, F)
-    if (isPath == F) {
-        inputFi <- getExcelPath(inputSheet, 1, isNxtSeq, isTest)
-    }else{
-        inputFi <- inputSheet
-    }
     outVals <- NULL
-    if (file.exists(inputFi)) {
-        outVals <- parseExcelFile(inputFi, runID)
+    runType <- determineRunType(inputSheet)
+    worksheetPath <- getExcelPath(inputSheet, runType)
+
+    if (file.exists(worksheetPath)) {
+        outVals <- parseExcelFile(worksheetPath, runID)
     } else {
-        outVals <- CheckOtherFiles(inputFi, runID)
+        outVals <- CheckOtherFiles(worksheetPath, runID)
     }
+
     if (!is.null(outVals)) {
         pushToRedcap(outVals, token)
     }
