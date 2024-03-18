@@ -987,26 +987,28 @@ filterFiles <- function(potentialFi) {
 
 
 CheckOtherFiles <- function(inputFi, runID) {
-    message(crayon::bgRed("The PACT run worksheet was not found:"),"\n", inputFi, "\n")
-    inputFi <- gsub(paste0("/", basename(inputFi)), "", inputFi)
-    potentialFi <- list.files(path = inputFi, full.names = T)
+    notFoundMsg <- crayon::bgRed("The PACT run worksheet was not found:")
+    message(notFoundMsg,"\n", inputFi, "\n")
+    parentFolder <- dirname(inputFi)
+    potentialFi <- list.files(path = parentFolder, full.names = T)
     if (length(potentialFi) > 1) {
         message(crayon::bgRed("Checking other existing files:"), "\n")
         print(potentialFi)
         potentialFi <- filterFiles(potentialFi)
+    }else{
+        stop(paste("No PACT worksheet was found in the directory:", parentFolder))
     }
     if (file.exists(potentialFi[1])) {
-        message(crayon::bgGreen("Now trying to read:"),"\n", potentialFi[1], "\n")
+        message(crayon::bgGreen("Now trying to read:"), "\n", potentialFi[1], "\n")
         pfile <- potentialFi[1]
     }else{
-        message("\n",crayon::bgRed("The PACT run worksheet was not found:"),"\n", potentialFi[1])
-        message("\nTrying:", potentialFi[2], "\n")
-        stopifnot(file.exists(potentialFi[2]))
+        nextMsg <- paste(notFoundMsg, potentialFi[1], "Trying:", potentialFi[2], sep = "\n")
+        message(nextMsg)
         pfile <- potentialFi[2]
     }
     # TODO: Write check for mismatched year
     # runyr <- stringr::str_split_fixed(inputFi, "-", 3)[, 2]
-
+    stopifnot(file.exists(pfile))
     outVals <- suppressMessages(parseExcelFile(inputFi = pfile, runID))
     return(outVals)
 }
