@@ -10,25 +10,35 @@
 
 library("base"); args <- commandArgs(TRUE); gb <- globalenv(); assign("gb", gb)
 
-# Main arguments input in comandline (Uncomment to Debug or run Locally) -----------------------
-token <- ifelse(length(args) > 0, args[1], NULL) # '8XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' = APITOKEN
-input <- ifelse(length(args) > 1, args[2], NULL)  # 'PACT-YY-##' or "/path/to/sheet.xlsm"
-runID <- ifelse(length(args) > 2, args[3], NULL) #<- 'YYMMDD_NB######_0###_AH7ABCDEFG'
+# Function to assign parameter values based on args ---------------------------------------------
+assign_param <- function(args, idx) {
+    if (length(args) >= idx) args[idx] else stop("arg ", idx, " is NULL")
+}
 
-# Display & Verify the Input args --------------------------------------------------------------
-message("\n================\nParameters input\n================")
-message("token:    ", token)
-message("PACT Run: ", input)
-message("Run ID:   ", runID)
-stopifnot(exists("token") & !is.null(token))
-stopifnot(exists("input") & !is.null(input))
+# Functions to print parameters  ) --------------------------------------------------------------
+brick_message <- function(phrase){
+    dsh <- paste(rep("-", nchar(phrase)), collapse = "")
+    message(paste(dsh, phrase, dsh, sep = "\n"))
+}
 
-# Helper functions to message as data frame and red background --------------------------------
+print_parameters <- function(token, input, runID) {
+    brick_message("Parameters input")
+    message("token:   ", token, "\n")
+    message("PACT Run:", input, "\n")
+    message("Run ID:  ", runID, "\n")
+}
+
+# Assign values to variables & print ------------------------------------------------------------
+token <- assign_param(args, 1)
+input <- assign_param(args, 2)
+runID <- assign_param(args, 3)
+print_parameters(token, input, runID)
+
+# Helper functions to message as data frame and red background ---------------------------------
 MsgDF <- function(data) {
   return(message(paste0(capture.output(as.data.frame(data)), collapse = "\n")))
 }
 boldRed <- function(txt) {return(crayon::white$bgRed$bold(txt))}
-
 
 # FUN: Checks if z-drive is accessible to the Rscript ------------------------------------------
 checkMounts <- function() {
