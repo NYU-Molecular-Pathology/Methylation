@@ -23,8 +23,8 @@ brick_message <- function(phrase){
 
 print_parameters <- function(token, input, runID) {
     brick_message("Parameters input")
-    message("token:   ", token, "\n")
-    message("PACT Run:", input, "\n")
+    message("token:   ", token)
+    message("PACT ID: ", input)
     message("Run ID:  ", runID, "\n")
 }
 
@@ -935,64 +935,75 @@ GrabRunNumber <- function(inputFi, runID) {
 
 
 GetRawSamplesheet <- function(inputFi) {
-  shNames <- readxl::excel_sheets(inputFi)
-  sh <- which(grepl("PACT-", shNames, ignore.case = T))[1]
-  if (is.na(sh)) {
+    shNames <- readxl::excel_sheets(inputFi)
+    sh <- which(grepl("PACT-", shNames, ignore.case = T))[1]
+    if (is.na(sh)) {
     message(crayon::bgRed('Did not detect "PACT" in Excel sheetnames, defaulting to reading sheet 1'))
     sh = 1
-  }
-  msgRd <- paste0('Reading Excel Sheet named \"', shNames[sh], '\" from file:')
-  message(crayon::bgGreen(msgRd),'\n',inputFi)
-  rawData <- GetExcelData(inputFi, sh, shRange = "A6:X200",  cm = T)
-  #toDrop <- which(rawData[, "DNA #"]=="HAPMAP")[1]
-  toDrop <- which(rawData[, 15] == "")[1] - 1
-  rawData <- rawData[1:toDrop, ]
-  rawData$`DNA #` <- stringr::str_replace_all(rawData$`DNA #`, "_", "-")
-  return(rawData)
+    }
+    msgRd <- paste0('Reading Excel Sheet named \"', shNames[sh], '\" from file:')
+    message(crayon::bgGreen(msgRd),'\n',inputFi)
+    rawData <- GetExcelData(inputFi, sh, shRange = "A6:X200",  cm = T)
+    #toDrop <- which(rawData[, "DNA #"]=="HAPMAP")[1]
+    toDrop <- which(rawData[, 15] == "")[1] - 1
+    rawData <- rawData[1:toDrop, ]
+    rawData$`DNA #` <- stringr::str_replace_all(rawData$`DNA #`, "_", "-")
+    return(rawData)
 }
 
+
 WriteMainSheet <- function(mainSheet, sheetHead) {
-  xlRunId <- mainSheet[1, "Run_Number"]
-  runIdFi <- paste(xlRunId,  "SampleSheet.csv", sep = "-")
-  outFile <- file.path(fs::path_home(), "Desktop", runIdFi)
-  write.table(sheetHead, sep = ",", file = outFile, row.names = F, col.names = F, quote = F)
-  message("Writing file output, check your samplesheet here: ", outFile)
-  if (any(mainSheet$Tumor_Type == "NA")) {
-    mainSheet[mainSheet$Tumor_Type == "NA", "Tumor_Type"] <- ""
-  }
-  suppressWarnings(
-    write.table(
-      mainSheet,
-      sep = ",",
-      file = outFile,
-      row.names = F,
-      col.names = T,
-      append = T,
-      quote = F
+    csv_file <- paste(mainSheet[1, "Run_Number"], "SampleSheet.csv", sep = "-")
+    out_path <- file.path(fs::path_home(), "Desktop", csv_file)
+    
+    message("Writing output, check your samplesheet here:\n", outFile)
+    
+    if (any(mainSheet$Tumor_Type == "NA")) {
+        mainSheet[mainSheet$Tumor_Type == "NA", "Tumor_Type"] <- ""
+    }
+    
+    write.table(sheetHead, sep = ",", file = out_path, row.names = F, col.names = F, quote = F)
+    suppressWarnings(
+        write.table(
+            mainSheet,
+            sep = ",",
+            file = out_path,
+            row.names = F,
+            col.names = T,
+            append = T,
+            quote = F
+        )
     )
-  )
-  return(outFile)
+    return(out_path)
 }
+
+# Checks if the user input RunID matches worksheet RunID -------------------------------
+CheckRunIDMatch <- function(sheetRunID, runID){
+    if (sheetRunID != runID) {
+        message(boldRed("SampleSheet and Input RUNID do not match!"))
+        message(sprintf("Samplesheet RunID: %s\nUser input RunID:  %s",
+                        crayon::bgBlue(sheetRunID), crayon::bgGreen(runID)))
+        message("Using runID from inside worksheet: ", sheetRunID)
+    }
+}
+
 
 # Parses File when no samplesheet.csv tab is detected ---------------------------------
 AltParseFormat <- function(inputFi, runID) {
-  rawData <- GetRawSamplesheet(inputFi)
-  sheetRunID <- GrabRunNumber(inputFi, runID)
-  if (sheetRunID != runID) {
-    message(crayon::bgRed("SampleSheet and Input RUNID do not match!"))
-    message(sprintf("Samplesheet RunID: %s\nUser input RunID:  %s",
-                    crayon::bgBlue(sheetRunID), crayon::bgGreen(runID)))
-    message("Using runID from inside worksheet: ", sheetRunID)
-  }
-  philipsExport <- GetPhilipsData(inputFi)
-  pact_run <- stringr::str_split_fixed(base::basename(inputFi), ".xls", 2)[1,1]
-  message(crayon::bgBlue(paste("PACT ID is:", pact_run)))
-  if (is.null(philipsExport)) {
-    mainSheet <- BuildNoPhilips(rawData, sheetRunID, pact_run)
-  }else{
-    mainSheet <- BuildMainSheet(philipsExport, rawData, sheetRunID, pact_run)
-  }
-  return(mainSheet)
+    rawData <- GetRawSamplesheet(inputFi)
+    sheetRunID <- GrabRunNumber(inputFi, runID)
+    CheckRunIDMatch(sheetRunID, runID)
+    philipsExport <- GetPhilipsData(inputFi)
+    
+    pact_run <- stringr::str_split_fixed(base::basename(inputFi), ".xls", 2)[1,1]
+    message(crayon::bgBlue(paste("PACT ID is:", pact_run)))
+    
+    if (is.null(philipsExport)) {
+        mainSheet <- BuildNoPhilips(rawData, sheetRunID, pact_run)
+    }else{
+        mainSheet <- BuildMainSheet(philipsExport, rawData, sheetRunID, pact_run)
+    }
+    return(mainSheet)
 }
 
 # Parses xlsx file and writes as csv file ---------------------------------
