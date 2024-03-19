@@ -485,27 +485,28 @@ CheckControlRows <- function(rawData, runID, newRows) {
 }
 
 
+GetAccessionInfo <- function(rawData) {
+    no_control <- stringr::str_detect(rawData$`DNA #`, "H20|SERACARE|HAPMAP", negate = T)
+    numbs <- rawData[no_control, c("DNA #", "Accession#", "Test_Number")]
+    colnames(numbs) <- c("dna", "acc", "tst")
+    return(numbs)
+}
+
+
 CheckMissingRows <- function(pairedList, rawData, runID) {
-  dnaNumbers <- rawData$`DNA #`
-  no_control <- stringr::str_detect(dnaNumbers, "H20|SERACARE|HAPMAP", negate = T)
-  accessions <- rawData$`Accession#`[no_control]
-  tst_number <- rawData$Test_Number[no_control]
-  dnaNumbers <- dnaNumbers[no_control]
-  missRows <- vapply(dnaNumbers, function(x) {!any(stringr::str_detect(pairedList, x))}, logical(1))
-  if (any(missRows)) {
-    message(crayon::bgGreen("Binding additional rows/filler:"), "\n",
-            paste(accessions[missRows], collapse = "\n"))
-    extraRow <- dnaNumbers %in% dnaNumbers[missRows]
-    tst_number[missRows] <- 0
-    newRows <- paste(tst_number[missRows],
-                     runID,
-                     accessions[extraRow],
-                     dnaNumbers[extraRow], sep = "_")
-  } else {
-    message(crayon::bgGreen("No additional fillers or paired sample rows to bind to sample sheet"))
+    numbs <- GetAccessionInfo(rawData)
+    missRows <- sapply(numbs$dna, function(x) {!any(grepl(x, pairedList))})
     newRows <- NULL
-  }
-  return(newRows)
+    if (any(missRows)) {
+        message(crayon::bgGreen("Binding additional rows/filler:"))
+        MsgDF(data.frame(accession_numbers = numbs$acc[missRows]))
+        xtraRow <- numbs$dna %in% numbs$dna[missRows]
+        newRows <- paste(0, runID, numbs$acc[xtraRow], numbs$dna[xtraRow], sep = "_")
+    } else {
+        message(crayon::bgGreen("No additional fillers or sample rows to bind to output."))
+    }
+
+    return(newRows)
 }
 
 
