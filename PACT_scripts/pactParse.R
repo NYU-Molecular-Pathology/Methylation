@@ -3,6 +3,7 @@
 ## Script name: pactParse.R
 ## Purpose: source of global scripts and generate PACT -SampleSheet.csv file
 ## Author: Jonathan Serrano
+## Date Created: 
 ## Version: 1.0.1
 ## Copyright (c) NYULH Jonathan Serrano, 2023
 ## ---------------------------
@@ -924,7 +925,7 @@ WriteMainSheet <- function(mainSheet, sheetHead) {
   return(outFile)
 }
 
-
+# Parses File when no samplesheet.csv tab is detected ---------------------------------
 AltParseFormat <- function(inputFi, runID) {
   rawData <- GetRawSamplesheet(inputFi)
   sheetRunID <- GrabRunNumber(inputFi, runID)
@@ -945,7 +946,7 @@ AltParseFormat <- function(inputFi, runID) {
   return(mainSheet)
 }
 
-# Parses xlsx file and writes as csv file -----
+# Parses xlsx file and writes as csv file ---------------------------------
 parseExcelFile <- function(worksheetPath, runID = NULL) {
   shNames <- readxl::excel_sheets(worksheetPath)
   MsgDF(data.frame(`Sheet names in Workbook` = shNames))
@@ -1028,9 +1029,8 @@ emailNotify <- function(record, rcon) {
   message(sprintf("\n%sEmail Notification Created%s", newDash, newDash))
 }
 
-
+# Calls API for CSV file ------------------------------------------------------------------
 callApiFileCsv <- function(rcon, recordName, fiPath, ovwr = T) {
-
   if (ovwr == F) {
     gb$writeLogFi(recordName)
   } else{
@@ -1060,7 +1060,7 @@ callApiFileCsv <- function(rcon, recordName, fiPath, ovwr = T) {
 }
 
 
-# Connect to REDCap and send email attachments of csv file ----
+# Connect to REDCap and send email attachments of csv file ---------------------------------
 pushToRedcap <- function(outVals, token=NULL) {
   stopifnot(!is.null(token) & !is.null(outVals))
   runID <- outVals[[1]]
@@ -1085,17 +1085,17 @@ pushToRedcap <- function(outVals, token=NULL) {
 
 
 determineRunType <- function(inputSheet) {
-  if (stringr::str_detect(inputSheet, "2000|NextSeq550")) {
-    runType <- "NextSeq2000"
-  } else if (stringr::str_detect(inputSheet, "TEST")) {
-    runType <- "test"
-  } else if (stringr::str_detect(inputSheet, "ICL")) {
-    runType <- "Illumina"
-  } else {
-    runType <- "regular"
-  }
+    if (stringr::str_detect(inputSheet, "2000|NextSeq550")) {
+        runType <- "NextSeq2000"
+    } else if (stringr::str_detect(inputSheet, "TEST")) {
+        runType <- "test"
+    } else if (stringr::str_detect(inputSheet, "ILC")) {
+        runType <- "Illumina"
+    } else {
+        runType <- "regular"
+    }
 
-  return(runType)
+    return(runType)
 }
 
 
@@ -1117,17 +1117,21 @@ getExcelPath <- function(inputSheet, runType) {
     folder <- "Validations/PACT new i7-NextSeq2000/Wet Lab/Workbook"
     worksheetPath <- file.path(drive, folder, yearDir, xlFi)
   }
-
   if (runType == "test") {
     drive = "/Volumes/molecular/Molecular/Validation/PACT/Test_Sheets"
     worksheetPath <- file.path(drive, xlFi)
   }
+  if (runType == "Illumina") {
+        drive = "/Volumes/molecular/Molecular/Validation/PACT/Test_Sheets"
+        worksheetPath <- file.path(drive, xlFi)
+  }
+
 
   return(worksheetPath)
 }
 
 
-# Gets dataframe and saves as CSV file -----
+# Gets dataframe and saves as CSV file ---------------------------------------------------------
 writeSampleSheet <- function(inputSheet, token, runID = NULL) {
   outVals <- NULL
   runType <- determineRunType(inputSheet)
@@ -1139,7 +1143,7 @@ writeSampleSheet <- function(inputSheet, token, runID = NULL) {
     outVals <- CheckOtherFiles(worksheetPath, runID)
   }
 
-  if (!is.null(outVals) & runType != "test") {
+  if (!is.null(outVals) & runType != "test" & runType != "Illumina") {
     pushToRedcap(outVals, token)
   }
 }
