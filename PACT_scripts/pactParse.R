@@ -3,7 +3,7 @@
 ## Script name: pactParse.R
 ## Purpose: source of global scripts and generate PACT -SampleSheet.csv file
 ## Author: Jonathan Serrano
-## Date Created: 
+## Date Created: August 16, 2021
 ## Version: 1.0.1
 ## Copyright (c) NYULH Jonathan Serrano, 2023
 ## ---------------------------
@@ -23,10 +23,10 @@ message("Run ID:   ", runID)
 stopifnot(exists("token") & !is.null(token))
 stopifnot(exists("inputSheet") & !is.null(inputSheet))
 
+# Helper functions to message as data frame and red background --------------------------------
 MsgDF <- function(data) {
   return(message(paste0(capture.output(as.data.frame(data)), collapse = "\n")))
 }
-
 boldRed <- function(txt) {return(crayon::white$bgRed$bold(txt))}
 
 
