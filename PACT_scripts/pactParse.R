@@ -35,10 +35,10 @@ runID <- assign_param(args, 3)
 print_parameters(token, input, runID)
 
 # Helper functions to message as data frame and red background ---------------------------------
-MsgDF <- function(data) {
-  return(message(paste0(capture.output(as.data.frame(data)), collapse = "\n")))
+MsgDF <- function(...) {
+  return(message(paste0(capture.output(as.data.frame(...)), collapse = "\n")))
 }
-boldRed <- function(txt) {return(crayon::white$bgRed$bold(txt))}
+boldRed <- function(...) {return(crayon::white$bgRed$bold(...))}
 
 # FUN: Checks if z-drive is accessible to the Rscript ------------------------------------------
 checkMounts <- function() {
