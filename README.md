@@ -21,6 +21,7 @@
 
 ## 💻 Essential Downloads
 Download and install the following packages:<br>
+You can automatically install these requirements using `/Volumes/CBioinformatics/Methylation/install_requirements.sh`<br>
 Use **ARM** (-arm64.pkg) package downloads for *M1/M2 Macs* & **Intel** (-x86_64.pkg) for older non-Apple Silicon Chip Based Macs) <br>
 - [X] **R 4.3 or higher**: https://cran.r-project.org/bin/macosx/ <br />
 - [X] **Gfortran** from GitHub use dmg installer: https://github.com/fxcoudert/gfortran-for-macOS/releases/ <br />
