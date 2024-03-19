@@ -11,17 +11,17 @@
 library("base"); args <- commandArgs(TRUE); gb <- globalenv(); assign("gb", gb)
 
 # Main arguments input in comandline (Uncomment to Debug or run Locally) -----------------------
-args[1] -> token        #<- '8XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' = APITOKEN
-args[2] -> inputSheet   #<- 'PACT-YY-##'
-args[3] -> runID        #<- 'YYMMDD_NB######_0###_AH7ABCDEFG'
+token <- ifelse(length(args) > 0, args[1], NULL) # '8XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' = APITOKEN
+input <- ifelse(length(args) > 1, args[2], NULL)  # 'PACT-YY-##' or "/path/to/sheet.xlsm"
+runID <- ifelse(length(args) > 2, args[3], NULL) #<- 'YYMMDD_NB######_0###_AH7ABCDEFG'
 
 # Display & Verify the Input args --------------------------------------------------------------
 message("\n================\nParameters input\n================")
 message("token:    ", token)
-message("PACT Run: ", inputSheet)
+message("PACT Run: ", input)
 message("Run ID:   ", runID)
 stopifnot(exists("token") & !is.null(token))
-stopifnot(exists("inputSheet") & !is.null(inputSheet))
+stopifnot(exists("input") & !is.null(input))
 
 # Helper functions to message as data frame and red background --------------------------------
 MsgDF <- function(data) {
@@ -1094,12 +1094,12 @@ pushToRedcap <- function(outVals, token=NULL) {
 }
 
 
-determineRunType <- function(inputSheet) {
-    if (stringr::str_detect(inputSheet, "2000|NextSeq550")) {
+determineRunType <- function(input) {
+    if (stringr::str_detect(input, "2000|NextSeq550")) {
         runType <- "NextSeq2000"
-    } else if (stringr::str_detect(inputSheet, "TEST")) {
+    } else if (stringr::str_detect(input, "TEST")) {
         runType <- "test"
-    } else if (stringr::str_detect(inputSheet, "ILC")) {
+    } else if (stringr::str_detect(input, "ILC")) {
         runType <- "Illumina"
     } else {
         runType <- "regular"
@@ -1110,18 +1110,18 @@ determineRunType <- function(inputSheet) {
 
 
 # FUN: Returns Path to xlsx file ---------------------------------------------------------------
-getExcelPath <- function(inputSheet, runType) {
-  if (stringr::str_detect(inputSheet, .Platform$file.sep)) {
-    return(inputSheet)
+getExcelPath <- function(input, runType) {
+  if (stringr::str_detect(input, .Platform$file.sep)) {
+    return(input)
   }
   drive = file.path("", "Volumes", "molecular", "MOLECULAR LAB ONLY")
   folder = file.path("NYU PACT Patient Data", "Workbook")
-  runyr <- stringr::str_split_fixed(inputSheet, "-", 3)[, 2]
+  runyr <- stringr::str_split_fixed(input, "-", 3)[, 2]
 
   yearDir <- paste0("20", runyr)
 
-  xlFi <- paste0(inputSheet, ".xlsm")
-  worksheetPath <- file.path(drive, folder, yearDir, inputSheet, xlFi)
+  xlFi <- paste0(input, ".xlsm")
+  worksheetPath <- file.path(drive, folder, yearDir, input, xlFi)
 
   if (runType == "NextSeq2000") {
     folder <- "Validations/PACT new i7-NextSeq2000/Wet Lab/Workbook"
@@ -1142,10 +1142,10 @@ getExcelPath <- function(inputSheet, runType) {
 
 
 # Gets dataframe and saves as CSV file ---------------------------------------------------------
-writeSampleSheet <- function(inputSheet, token, runID = NULL) {
+writeSampleSheet <- function(input, token, runID = NULL) {
   outVals <- NULL
-  runType <- determineRunType(inputSheet)
-  worksheetPath <- getExcelPath(inputSheet, runType)
+  runType <- determineRunType(input)
+  worksheetPath <- getExcelPath(input, runType)
 
   if (file.exists(worksheetPath)) {
     outVals <- parseExcelFile(worksheetPath, runID)
@@ -1161,4 +1161,4 @@ writeSampleSheet <- function(inputSheet, token, runID = NULL) {
 loadPacks()
 checkMounts()
 
-writeSampleSheet(inputSheet, token, runID)
+writeSampleSheet(input, token, runID)
