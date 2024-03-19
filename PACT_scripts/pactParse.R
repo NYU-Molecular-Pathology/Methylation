@@ -259,25 +259,32 @@ CheckControlRows2 <- function(rawData, allBnumber) {
 }
 
 
+CheckBnumbers <- function(rawData, allBnumber){
+    if (all(allBnumber %in% rawData$`DNA #`) == F) {
+        b_txt <- "Not all B-numbers from PhilipsExport are in the 'DNA #' Column!"
+        message(crayon::bgRed(b_txt))
+        missing_Bnumber <- setdiff(allBnumber, rawData$`DNA #`)
+        MsgDF(missing_Bnumber)
+    }
+}
+
+
 FixPairedList <- function(philipsExport, rawData) {
-  mislabelled <- philipsExport$`Tumor DNA/RNA Number` %in% philipsExport$`Normal DNA/RNA Number`
-  if (any(mislabelled)) {
-    message(crayon::bgRed("There are samples potentially mislabelled! in Philips:"),"\n")
-    MsgDF(philipsExport$`Tumor DNA/RNA Number`[mislabelled])
-  }
-  tumorIndex <- GetTypeIndex(philipsExport$`Tumor DNA/RNA Number`, rawData)
-  normalIndex <- GetTypeIndex(philipsExport$`Normal DNA/RNA Number`, rawData)
-  rawData$original_tissue <- rawData$`Type & Tissue`
-  rawData$`Type & Tissue` <- ""
-  rawData$`Type & Tissue`[tumorIndex] <- "Tumor"
-  rawData$`Type & Tissue`[normalIndex] <- "Normal"
-  allBnumber <- c(philipsExport$`Tumor DNA/RNA Number`, philipsExport$`Normal DNA/RNA Number`)
-  if (!all(allBnumber %in% rawData$`DNA #`) == T) {
-    b_txt <- "Not all B-numbers from PhilipsExport tab are in the SampleSheet DNA # Column!"
-    message(crayon::bgRed(b_txt))
-  }
-  rawData <- CheckControlRows2(rawData, allBnumber)
-  return(rawData$`Type & Tissue`)
+    mislabelled <- philipsExport$`Tumor DNA/RNA Number` %in% philipsExport$`Normal DNA/RNA Number`
+    if (any(mislabelled)) {
+        message(crayon::bgRed("There are samples potentially mislabelled! in Philips:"),"\n")
+        MsgDF(philipsExport$`Tumor DNA/RNA Number`[mislabelled])
+    }
+    tumorIndex <- GetTypeIndex(philipsExport$`Tumor DNA/RNA Number`, rawData)
+    normalIndex <- GetTypeIndex(philipsExport$`Normal DNA/RNA Number`, rawData)
+    rawData$original_tissue <- rawData$`Type & Tissue`
+    rawData$`Type & Tissue` <- ""
+    rawData$`Type & Tissue`[tumorIndex] <- "Tumor"
+    rawData$`Type & Tissue`[normalIndex] <- "Normal"
+    allBnumber <- c(philipsExport$`Tumor DNA/RNA Number`, philipsExport$`Normal DNA/RNA Number`)
+    rawData <- CheckControlRows2(rawData, allBnumber)
+    CheckBnumbers(rawData, allBnumber)
+    return(rawData$`Type & Tissue`)
 }
 
 
