@@ -92,6 +92,35 @@ SilentInstall <- function(pkgs){
 }
 
 
+append_log <- function(txt, logFile = NULL) {
+    if (is.null(logFile)) {
+        logFile = paste0(Sys.Date(), "_run_log.tsv")
+    }
+    if (stringr::str_detect(logFile, .Platform$file.sep, T)){
+        logFile <- file.path(fs::path_home(), logFile)
+    }
+    message(paste("Check", logFile))
+    write.table(
+        txt,
+        logFile,
+        append = T,
+        quote = F,
+        sep = '\t',
+        row.names = F,
+        col.names = F
+    )
+}
+
+
+write_to_log <- function(recordName, logFile = NULL) {
+    if (is.null(logFile)) {
+        logFile = paste0(Sys.Date(), "_pact_log.tsv")
+    }
+    txt = paste(recordName[1], "already has an data in REDCap!\n")
+    append_log(txt, logFile)
+}
+
+
 # Functions to load or install missing required packages ---------------------------------------
 loadPacks <- function() {
   SilentInstall("devtools")
@@ -1049,33 +1078,49 @@ emailNotify <- function(record, rcon) {
 }
 
 # Calls API for CSV file ------------------------------------------------------------------
-callApiFileCsv <- function(rcon, recordName, fiPath, ovwr = T) {
-  if (ovwr == F) {
-    gb$writeLogFi(recordName)
-  } else{
-    fld <- "pact_csv_sheet"
-    body <- list(
-      token = rcon$token,
-      content = 'file',
-      action = 'import',
-      record = recordName,
-      field = fld,
-      file = httr::upload_file(fiPath),
-      returnFormat = 'csv'
-    )
-    res <- tryCatch(
-      httr::POST(url = rcon$url, body = body, config = rcon$config),
-      error = function(e) {
-        message(e)
-        return(list(status_code = "400"))
-      }
-    )
-    if (res$status_code == "200") {
-      message("REDCap file upload successful: ", fiPath)
-    }else{
-      message("REDCap file upload failed: ", fiPath)
+
+validateInputs <- function(rcon, recordName, fiPath) {
+    if (is.null(rcon) || !is.list(rcon)) {
+        stop("rcon should be a list")
     }
-  }
+    if (!is.character(recordName) || length(recordName) != 1) {
+        stop("recordName should be a single character string.")
+    }
+    if (!file.exists(fiPath)) {
+        stop("The file specified as fiPath does not exist.")
+    }
+}
+
+
+createRequestBody <- function(rcon, recordName, fiPath) {
+    list(
+        token = rcon$token,
+        content = 'file',
+        action = 'import',
+        record = recordName,
+        field = "pact_csv_sheet",
+        file = httr::upload_file(fiPath),
+        returnFormat = 'csv'
+    )
+}
+
+
+callApiFileCsv <- function(rcon, recordName, fiPath) {
+    validateInputs(rcon, recordName, fiPath)
+    body <- createRequestBody(rcon, recordName, fiPath)
+    response <- tryCatch(
+        httr::POST(url = rcon$url, body = body, config = rcon$config),
+        error = function(e) {
+            message(e)
+            return(NULL)
+        }
+    )
+    
+    if (!is.null(response)) {
+        message("Upload successful: ", fiPath)
+    } else {
+        message("Upload failed: ", fiPath)
+    }
 }
 
 
@@ -1088,7 +1133,7 @@ pushToRedcap <- function(outVals, token=NULL) {
   record = data.frame(record_id = runID, pact_run_number = runID)
   datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox = T)
   PostRedcapCurl(rcon, datarecord, retcon = 'nothing')
-  callApiFileCsv(rcon, runID, outFile, ovwr = T)
+  callApiFileCsv(rcon, runID, outFile)
   tryCatch(
     redcapAPI::importFiles(
       rcon = rcon,
