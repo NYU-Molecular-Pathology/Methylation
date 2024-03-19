@@ -239,23 +239,22 @@ GetTypeIndex <- function(samNumber, rawData) {
 
 
 CheckControlRows2 <- function(rawData, allBnumber) {
-  controlIndex <- which(rawData$`DNA #` %in% allBnumber == F)
-  message(crayon::bgRed("The following samples are Controls or not in Philips:"), "\n",
-          paste(rawData$`DNA #`[controlIndex], collapse = "\n"), "\n")
+    idx <- which(rawData$`DNA #` %in% allBnumber == F)
+    dna <- rawData$`DNA #`[idx]
+    
+    message(boldRed("The following are Controls or not in Philips:"))
+    message(paste(dna, collapse = "\n"))
 
-  rawData$`Type & Tissue`[controlIndex] <- paste(rawData$original_tissue[controlIndex], "Filler")
-  isControl <- unlist(lapply(rawData$`Accession#`, function(sam) {
-    sam == "NTC" | sam == "SC" | sam == "NC"
-  }))
-  rawData$`Type & Tissue`[isControl] <- "Control"
-  message(crayon::bgGreen("Assigned Values:"))
-  message(paste(
-    rawData$`DNA #`[controlIndex],
-    rawData$`Type & Tissue`[controlIndex],
-    sep = " = ",
-    collapse = "\n"
-  ))
-  return(rawData)
+    isControl <- rawData$`Accession#` %in% c("NTC", "SC", "NC") |
+        grepl("Cont", rawData$`Type & Tissue`, ignore.case = TRUE)
+
+    rawData$`Type & Tissue`[idx] <- paste(rawData$original_tissue[idx], "Filler")
+
+    rawData$`Type & Tissue`[isControl] <- "Control"
+
+    message(crayon::bgGreen("Assigned Values:"))
+    message(paste(dna, rawData$`Type & Tissue`[idx], sep = " = ", collapse = "\n"))
+    return(rawData)
 }
 
 
@@ -461,27 +460,30 @@ FixDuplicateControls <- function(controlRows) {
 }
 
 
+GetControlInfo <- function(rawData){
+    idx <- stringr::str_detect(rawData$`Type & Tissue`, "Cont|cont")
+    numbs <- rawData[idx, c("DNA #", "Accession#", "Test_Number")]
+    colnames(numbs) <- c("dna", "acc", "tst")
+    return(numbs)
+}
+
+
+
 CheckControlRows <- function(rawData, runID, newRows) {
-  accessions <- rawData$`Accession#`
-  dnaNumbers <- rawData$`DNA #`
-  controls <- which(stringr::str_detect(rawData$`Type & Tissue`, "Cont|cont"))
-  controlRows <-
-    paste0(rawData$Test_Number[controls], "_",
-           runID, "_", accessions[controls], "_", dnaNumbers[controls])
-  hasControls <- controlRows %in% newRows
+    numbs <- GetControlInfo(rawData)
+    controlRows <- with(numbs, paste(tst, runID, acc, dna, sep = "_"))
 
-  if (any(duplicated(controlRows))) {
-    controlRows <- FixDuplicateControls(controlRows)
-    message(crayon::bgBlue("New control names:"), paste(controlRows, collapse = "\n"))
-  }
+    if (any(duplicated(controlRows))) {
+        controlRows <- FixDuplicateControls(controlRows)
+    }
+    if (any(controlRows %in% newRows)) {
+        controlRows <- NULL
+    } else{
+        message(crayon::bgBlue("New control names:"))
+        MsgDF(controlRows)
+    }
 
-  if (!any(hasControls)) {
-    message(crayon::bgBlue("Binding controls:"),"\n", paste(controlRows, collapse = "\n"))
-  } else{
-    controlRows <- NULL
-  }
-
-  return(controlRows)
+    return(controlRows)
 }
 
 
