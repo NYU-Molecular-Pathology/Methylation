@@ -1042,11 +1042,10 @@ PostRedcapCurl <- function(rcon, datarecord, retcon = 'ids') {
 
 # Generate Email notification and attach csv file
 emailNotify <- function(record, rcon) {
-  record$pact_csv_email <- "pact_csv_email"
-  datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox = T)
-  PostRedcapCurl(rcon, datarecord)
-  newDash <- "\n==========================\n"
-  message(sprintf("\n%sEmail Notification Created%s", newDash, newDash))
+    record$pact_csv_email <- "pact_csv_email"
+    datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox = T)
+    PostRedcapCurl(rcon, datarecord)
+    brick_message("Email Notification Created")
 }
 
 # Calls API for CSV file ------------------------------------------------------------------
