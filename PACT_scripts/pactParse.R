@@ -955,13 +955,13 @@ GetRawSamplesheet <- function(inputFi) {
 WriteMainSheet <- function(mainSheet, sheetHead) {
     csv_file <- paste(mainSheet[1, "Run_Number"], "SampleSheet.csv", sep = "-")
     out_path <- file.path(fs::path_home(), "Desktop", csv_file)
-    
-    message("Writing output, check your samplesheet here:\n", outFile)
-    
+
+    message("Writing output, check your samplesheet here:\n", out_path)
+
     if (any(mainSheet$Tumor_Type == "NA")) {
         mainSheet[mainSheet$Tumor_Type == "NA", "Tumor_Type"] <- ""
     }
-    
+
     write.table(sheetHead, sep = ",", file = out_path, row.names = F, col.names = F, quote = F)
     suppressWarnings(
         write.table(
@@ -976,6 +976,7 @@ WriteMainSheet <- function(mainSheet, sheetHead) {
     )
     return(out_path)
 }
+
 
 # Checks if the user input RunID matches worksheet RunID -------------------------------
 CheckRunIDMatch <- function(sheetRunID, runID){
@@ -1218,7 +1219,7 @@ writeSampleSheet <- function(input, token, runID = NULL) {
     outVals <- CheckOtherFiles(worksheetPath, runID)
   }
 
-  if (!is.null(outVals) & runType != "test" & runType != "Illumina") {
+  if (!is.null(outVals) & runType == "regular") {
     pushToRedcap(outVals, token)
   }
 }
