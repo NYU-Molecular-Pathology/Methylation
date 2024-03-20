@@ -506,8 +506,7 @@ GetControlInfo <- function(rawData){
     return(numbs)
 }
 
-
-
+                                 
 CheckControlRows <- function(rawData, runID, newRows) {
     numbs <- GetControlInfo(rawData)
     controlRows <- with(numbs, paste(tst, runID, acc, dna, sep = "_"))
@@ -516,7 +515,12 @@ CheckControlRows <- function(rawData, runID, newRows) {
         controlRows <- FixDuplicateControls(controlRows)
     }
     if (any(controlRows %in% newRows)) {
-        controlRows <- NULL
+        message("The following control rows are already in newRows to add:")
+        extraRows <- controlRows %in% newRows
+        MsgDF(controlRows[extraRows])
+        controlRows <- controlRows[!extraRows]
+        message("Only the following will be considered controls:")
+        MsgDF(controlRows)
     } else{
         message(crayon::bgBlue("New control names:"))
         MsgDF(controlRows)
