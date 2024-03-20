@@ -880,7 +880,7 @@ GetPhilipsData <- function(inputFi) {
 
     filterColumns <- GetPhilipsColumns()
 
-    if (all(filterColumns %in% colnames(philipsExport))) {
+    if (!all(filterColumns %in% colnames(philipsExport))) {
         stop("PhilipsExport tab is missing headers!")
     }
 
