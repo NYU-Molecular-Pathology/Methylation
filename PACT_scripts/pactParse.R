@@ -917,38 +917,55 @@ Err_runID <- function(runID) {
 }
 
 
+GrabSheetBottom <- function(inputFi){
+    shNames <- readxl::excel_sheets(inputFi)
+    sh <- which(grepl("PACT-", shNames, ignore.case = TRUE))[1]
+    sh <- ifelse(is.na(sh), 1, sh)
+    
+    rawData <- GetExcelData(inputFi, sh, shRange = "A6:X200", cm = T)
+    if (!"Test_Number" %in% colnames(rawData)) {
+        stop("Input Sheet formatting is incorrect, column names are:\n",
+             paste(colnames(rawData), collapse = "\n"))
+    }
+    lastRow <- which(rawData$Test_Number == 0)[1]
+    if(is.na(lastRow)){
+        stop(boldRed("Cannot find ending of samplesheet!"))
+    }
+    sheetBottom <- rawData[c(lastRow:nrow(rawData)), ]
+    return(sheetBottom)
+}
+
+
 GrabRunNumber <- function(inputFi, runID) {
-  shNames <- readxl::excel_sheets(inputFi)
-  sh <- which(grepl("PACT-", shNames, ignore.case = TRUE))[1]
-  sh <- ifelse(is.na(sh), 1, sh)
+    
+    sheetBottom <- GrabSheetBottom(inputFi)
+    runID_row <- which(stringr::str_detect(sheetBottom$`DNA #`, "Run ID:"))
 
-  rawData <- GetExcelData(inputFi, sh, shRange = "A6:X200", cm = T)
-  if (!"Test_Number" %in% colnames(rawData)) {
-    stop("Input Sheet formatting is incorrect, column names are:\n",
-         paste(colnames(rawData), collapse = "\n"))
-  }
-  lastRow <- which(rawData$Test_Number == 0)[1]
-  sheetBottom <- rawData[c(lastRow:nrow(rawData)), ]
+    # If 'Run ID:' keyword not found, use provided runID as default
+    if (length(runID_row) != 1) {
+        message(boldRed("Run ID: not found in column 'DNA #, trying column 8..."))
+        runID_row <- which(stringr::str_detect(sheetBottom[, 8], "Run ID:"))
+        
+        if (length(runID_row) != 1) {
+            Err_runID(runID)
+            return(runID)
+        }else{
+            message("runID_row found in column 8! row: ", runID_row)
+        }
+    }
 
-  # Locate 'Run ID:' and extract relevant run number
-  runID_row <- which(stringr::str_detect(sheetBottom$`DNA #`, "Run ID:"))
+    runID_find <- paste(sheetBottom[runID_row, ])
+    runID_col <- which(stringr::str_detect(runID_find, "NB551709|NB501073|VH01471"))
 
-  # If 'Run ID:' keyword not found, use provided runID as default
-  if (length(runID_row) != 1) {
-    Err_runID(runID)
-    return(runID)
-  }
-
-  runID_find <- paste(sheetBottom[runID_row, ])
-  runID_col <- which(stringr::str_detect(runID_find, "NB551709|NB501073|VH01471"))
-
-  if (length(runID_col) == 0) {
-    Err_runID(runID)
-    return(runID)
-  }
-  run_number <- paste(sheetBottom[runID_row, runID_col])
-  run_number <- stringr::str_replace_all(run_number, c("Run ID:" = "", " " = ""))
-  return(run_number)
+    if (length(runID_col) == 0) {
+        Err_runID(runID)
+        return(runID)
+    }
+    
+    run_number <- paste(sheetBottom[runID_row, runID_col])
+    run_number <- stringr::str_replace_all(run_number, c("Run ID:" = "", " " = ""))
+    
+    return(run_number)
 }
 
 
