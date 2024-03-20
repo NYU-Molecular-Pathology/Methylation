@@ -863,32 +863,46 @@ GetSheetHeading <- function(inputFi) {
 
 
 GetPhilipsData <- function(inputFi) {
-  shNames <- readxl::excel_sheets(inputFi)
-  sh2 <- which(grepl("Philips", shNames, ignore.case = T))[1]
-  philipsExport <- GetExcelData(inputFi, sh2, NULL, 3, cm = T)
-  if (nrow(philipsExport) == 0) {
-    warning("No PhilipsExport tab data found!")
-    return(NULL)
-  }
-  if (length(colnames(philipsExport)) == 0) {
-    stop("PhilipsExport tab is missing headers!")
-  }
-  philipsExport <- philipsExport[philipsExport$`Test Name` != "", ]
-  filterColumns <- GetPhilipsColumns()
-  philipsExport <- philipsExport[,filterColumns]
-  blankOrder <- philipsExport[,"Epic Order Number"] == ""
-  if (any(blankOrder)) {
-    warning("Some Philips Samples are missing MRNs, defaulting to 0")
-    philipsExport[, "Epic Order Number"][blankOrder] <- 0
-  }
-  blankSpecimen <- philipsExport[, "Normal Specimen ID"] == ""
-  if (any(blankSpecimen)) {
-    missingSam <- philipsExport$`Tumor Specimen ID`[blankSpecimen]
-    message(crayon::bgRed("The following Philips Samples are missing a Normal Specimen ID:\n"),
-            paste0(capture.output(missingSam), collapse = "\n"))
-  }
-  philipsExport[philipsExport == ""] <- 0
-  return(philipsExport)
+    shNames <- readxl::excel_sheets(inputFi)
+    sh2 <- which(grepl("Philips", shNames, ignore.case = T))[1]
+
+    if ( is.na(sh2)) {
+        warning("No PhilipsExport tab data found!")
+        return(NULL)
+    }
+
+    philipsExport <- GetExcelData(inputFi, sh2, NULL, 3, cm = T)
+
+    if (nrow(philipsExport) == 0) {
+        warning("No PhilipsExport tab data found!")
+        return(NULL)
+    }
+
+    filterColumns <- GetPhilipsColumns()
+
+    if (all(filterColumns %in% colnames(philipsExport))) {
+        stop("PhilipsExport tab is missing headers!")
+    }
+
+    philipsExport <- philipsExport[philipsExport$`Test Name` != "", ]
+    philipsExport <- philipsExport[, filterColumns]
+    blankOrder <- philipsExport[,"Epic Order Number"] == ""
+
+    if (any(blankOrder)) {
+        warning("Some Philips Samples are missing MRNs, defaulting to 0")
+        philipsExport[, "Epic Order Number"][blankOrder] <- 0
+    }
+
+    blankSpecimen <- philipsExport[, "Normal Specimen ID"] == ""
+
+    if (any(blankSpecimen)) {
+        missingSam <- philipsExport$`Tumor Specimen ID`[blankSpecimen]
+        message(crayon::bgRed("The following Philips Samples are missing a Normal Specimen ID:\n"),
+                paste0(capture.output(missingSam), collapse = "\n"))
+    }
+
+    philipsExport[philipsExport == ""] <- 0
+    return(philipsExport)
 }
 
 
