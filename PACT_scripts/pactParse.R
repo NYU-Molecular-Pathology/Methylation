@@ -1142,7 +1142,7 @@ replace_strings <- function(sheet_df, old_string, new_string) {
 
 
 MakeValidationSheet <- function(sheetHead, mainSheet, has_validation){
-    keywd <- "ILNVAL"
+    keywd <- "ILMNVAL"
     mainSheet_val <- mainSheet[has_validation, ]
     pact_id <- mainSheet_val$Sample_Project[1]
     run_num <- mainSheet_val$Run_Number[1]
