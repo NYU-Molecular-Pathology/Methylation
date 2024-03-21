@@ -32,6 +32,7 @@ print_parameters <- function(token, input, runID) {
 token <- assign_param(args, 1)
 input <- assign_param(args, 2)
 runID <- assign_param(args, 3)
+keywd <- assign_param(args, 3)
 print_parameters(token, input, runID)
 
 # Helper functions to message as data frame and red background ---------------------------------
@@ -1142,7 +1143,7 @@ replace_strings <- function(sheet_df, old_string, new_string) {
 
 
 MakeValidationSheet <- function(sheetHead, mainSheet, has_validation){
-    keywd <- "ILMNVAL"
+    #keywd <- "ILMNVAL"
     mainSheet_val <- mainSheet[has_validation, ]
     pact_id <- mainSheet_val$Sample_Project[1]
     run_num <- mainSheet_val$Run_Number[1]
