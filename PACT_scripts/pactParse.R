@@ -28,11 +28,12 @@ brick_message <- function(phrase){
     message(paste(dsh, phrase, dsh, sep = "\n"))
 }
 
-print_parameters <- function(token, input, runID) {
+print_parameters <- function(token, input, runID, keywd) {
     brick_message("Parameters input")
     message("token:   ", token)
     message("PACT ID: ", input)
     message("Run ID:  ", runID, "\n")
+    message("ILMN-#:  ", keywd, "\n")
 }
 
 # Assign values to variables & print ------------------------------------------------------------
@@ -40,7 +41,7 @@ token <- assign_param(args, 1)
 input <- assign_param(args, 2)
 runID <- assign_param(args, 3)
 keywd <- assign_param(args, 4)
-print_parameters(token, input, runID)
+print_parameters(token, input, runID, keywd)
 
 # Helper functions to message as data frame and red background ---------------------------------
 MsgDF <- function(...) {
@@ -1149,8 +1150,26 @@ replace_strings <- function(sheet_df, old_string, new_string) {
 }
 
 
+check_keyword <- function(keywd){
+    ilm_msg <- "ILMN samples were detected on this run, but no number provided!"
+    pact_sh <- "/Volumes/CBioinformatics/PACT/parsepact.sh"
+    ilm_num <- "ILMNVAL-#"
+    cmd_msg <- paste(pact_sh, input, runID, ilm_num)
+    if (stringr::str_detect(keywd, "-") == F || nchar(keywd) != 9 || is.null(keywd)){
+        message(boldRed(ilm_msg), " ", keywd)
+        message("For example, execute with third arg:\n", cmd_msg)
+        stop(boldRed("Third argument needed: ILMNVAL-#"))
+    }
+}
+
+
 MakeValidationSheet <- function(sheetHead, mainSheet, has_validation){
-    #keywd <- "ILMNVAL"
+    if (!is.null(keywd)){
+        if (substr(keywd, 1, 1) == "-") {
+            keywd <- substring(keywd, 2)
+        }
+    }
+    check_keyword(keywd)
     mainSheet_val <- mainSheet[has_validation, ]
     pact_id <- mainSheet_val$Sample_Project[1]
     run_num <- mainSheet_val$Run_Number[1]
