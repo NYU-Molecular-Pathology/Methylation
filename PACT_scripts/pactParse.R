@@ -16,7 +16,7 @@ assign_param <- function(args, idx) {
         if (length(args) >= idx) {
             return(args[idx])
         } else {
-            return(NULL)
+            return("NONE")
         }
     }
     if (length(args) >= idx) args[idx] else stop("arg ", idx, " is NULL")
@@ -1155,7 +1155,8 @@ check_keyword <- function(keywd){
     pact_sh <- "/Volumes/CBioinformatics/PACT/parsepact.sh"
     ilm_num <- "ILMNVAL-#"
     cmd_msg <- paste(pact_sh, input, runID, ilm_num)
-    if (stringr::str_detect(keywd, "-") == F || nchar(keywd) != 9 || is.null(keywd)){
+    if (stringr::str_detect(keywd, "-") == F || nchar(keywd) != 9){
+        if (nchar(keywd) != 9) {message("Keyword is not 9 characters: ", keywd)}
         message(boldRed(ilm_msg), " ", keywd)
         message("For example, execute with third arg:\n", cmd_msg)
         stop(boldRed("Third argument needed: ILMNVAL-#"))
