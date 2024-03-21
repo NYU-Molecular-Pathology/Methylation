@@ -12,6 +12,13 @@ library("base"); args <- commandArgs(TRUE); gb <- globalenv(); assign("gb", gb)
 
 # Function to assign parameter values based on args ---------------------------------------------
 assign_param <- function(args, idx) {
+    if (idx == 4){
+        if (length(args) >= idx) {
+            return(args[idx])
+        } else {
+            return(NULL)
+        }
+    }
     if (length(args) >= idx) args[idx] else stop("arg ", idx, " is NULL")
 }
 
@@ -32,7 +39,7 @@ print_parameters <- function(token, input, runID) {
 token <- assign_param(args, 1)
 input <- assign_param(args, 2)
 runID <- assign_param(args, 3)
-keywd <- assign_param(args, 3)
+keywd <- assign_param(args, 4)
 print_parameters(token, input, runID)
 
 # Helper functions to message as data frame and red background ---------------------------------
