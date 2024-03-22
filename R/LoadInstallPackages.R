@@ -2,7 +2,7 @@
 ## ---------------------------
 ## Script name: LoadInstallPackages.R
 ## Purpose: Functions that check if the required classifier packages and dependencies are installed and loaded
-## Date Created: January 11, 2021
+## Date Created: August 5, 2022
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2024
@@ -572,7 +572,9 @@ checkEpicV2 <- function(pkg = "mnp.v12epicv2"){
     if (pkg %in% rownames(installed.packages())) {
       message(paste("Package", pkg, "is installed with version:", utils::packageVersion(pkg)))
     } else{
-      source("/Volumes/CBioinformatics/Methylation/Rscripts/install_epic_v2_classifier.R")
+        epicV2script <- "/Volumes/CBioinformatics/Methylation/Rscripts/install_epic_v2_classifier.R"
+        message("Installing package from source:\n", epicV2script)
+        source(epicV2script)
     }
 }
 
@@ -598,7 +600,7 @@ startLoadingAll <- function() {
         checkClassifier(mnpV6)
         checkClassifier(mnpV12)
         checkClassifier(srcV12)
-        checkEpicV2()
+        #checkEpicV2()
     }
     
     uniDpkgs <- c("lumi","ade4","methylumi","mlr")
