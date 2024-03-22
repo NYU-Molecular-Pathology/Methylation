@@ -589,7 +589,7 @@ startLoadingAll <- function() {
         #mgmtstp27 = file.path(yourHome, classPath,"mgmtstp27_0.6-4.tar.gz")
         #if(!require("mgmtstp27")){install.packages(mgmtstp27, repos=NULL, type="source", dependencies=T)}
     }
-    bc.inst("lumi")
+    
     installAll(classPacks, srcInst)
     
     if(Sys.info()[['sysname']] == "Darwin") {
