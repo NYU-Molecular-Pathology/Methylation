@@ -146,7 +146,7 @@ ld <- function(libName) {
 }
 
 up <- function(){update.packages(repos='http://cran.rstudio.com/', type = "source", ask=F, checkBuilt=T)}
-rq <- function(pkgName){return(pkgName %in% row.names(installed.packages()))}
+rq <- function(pkgName) {!requireNamespace(pkgName, quietly = TRUE)}
 mkred <- function(strMsg) {return(crayon::white$bgRed$bold(strMsg))}
 mkblu <- function(strMsg) {return(crayon::white$bgBlue$bold(strMsg))}
 mkGrn <- function(strMsg) {return(crayon::white$bgGreen$bold(strMsg))}
