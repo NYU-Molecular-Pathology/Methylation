@@ -12,7 +12,8 @@ formals(library)$quietly <- T
 formals(library)$warn.conflicts <- F
 formals(require)$warn.conflicts <- F
 if(!require("devtools")){install.packages("devtools", dependencies=T, ask=F)}
-
+message("Your library path(s):")
+message(paste(.libPaths()))
 yourHome <- fs::path_home()
 
 cbioLn <- switch (
