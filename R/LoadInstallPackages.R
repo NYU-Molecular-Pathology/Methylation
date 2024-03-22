@@ -2,7 +2,7 @@
 ## ---------------------------
 ## Script name: LoadInstallPackages.R
 ## Purpose: Functions that check if the required classifier packages and dependencies are installed and loaded
-## Date Last Modified: January 11, 2024
+## Date Created: January 11, 2021
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2024
@@ -589,7 +589,7 @@ startLoadingAll <- function() {
         #mgmtstp27 = file.path(yourHome, classPath,"mgmtstp27_0.6-4.tar.gz")
         #if(!require("mgmtstp27")){install.packages(mgmtstp27, repos=NULL, type="source", dependencies=T)}
     }
-
+    bc.inst("lumi")
     installAll(classPacks, srcInst)
     
     if(Sys.info()[['sysname']] == "Darwin") {
