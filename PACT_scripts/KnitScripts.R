@@ -199,9 +199,10 @@ CheckFiExist <- function(pactName, philipsFtp) {
     qcTsv <- paste0(pactName, "-QC.tsv")
     descrip <- paste0(pactName, "_desc.csv")
     samsheet <- list.files('.', "demux-samplesheet.csv", T)[1]
-    stopifnot(file.exists(samsheet) & file.exists(methSheet))
+    if (!file.exists(methSheet)) {
+      message(crayon::bgRed("No methylation sheet for this run!"))
+    }
     StopMissingFile(samsheet)
-    StopMissingFile(methSheet)
     StopMissingFile(qcTsv)
     StopMissingFile(descrip)
     StopMissingFile(philipsFtp, T)
@@ -237,27 +238,33 @@ CheckMethPaths <- function(methData, methSheet){
 }
 
 
+FixMethDataNA <- function(methData, pactName) {
+    samCsv <- dir(getwd(), "demux-samplesheet.csv", full.names = T)
+    wsData <- as.data.frame(read.csv(samCsv, skip = 19))
+    toFix <- which(is.na(methData$Test_Number))
+    qcData <- gb$ReadQcFile(pactName)
+    for (xRow in toFix) {
+        nSam <- methData$accession_number[xRow]
+        ngsRow <- which(stringr::str_detect(wsData$Specimen_ID, pattern = nSam))[[1]]
+        methData$Test_Number[xRow] <- wsData$Test_Number[ngsRow]
+    }
+    return(methData)
+}
+
+
 GetMethDf <- function(pactName) {
     methSheet <- paste0(pactName, "_MethylMatch.xlsx")
+    if (!file.exists(methSheet)) {
+        return(NULL)
+    }
     methData <- as.data.frame(readxl::read_excel(methSheet))
     methData <- methData[methData$report_complete == "YES", ]
-    if(any(is.na(methData$Test_Number))){
-        samCsv <- dir(getwd(), "demux-samplesheet.csv", full.names = T)
-        wsData <- as.data.frame(read.csv(samCsv, skip = 19))
-        toFix <- which(is.na(methData$Test_Number))
-        qcData <- gb$ReadQcFile(pactName)
-        for(xRow in toFix){
-            nSam <- methData$accession_number[xRow]
-            ngsRow <- which(stringr::str_detect(wsData$Specimen_ID, pattern = nSam))[[1]]
-            methData$Test_Number[xRow] <- wsData$Test_Number[ngsRow]
-        }
-
+    if (any(is.na(methData$Test_Number))) {
+        methData <- FixMethDataNA(methData, pactName)
     }
-
-    if(nrow(methData) > 0){
+    if (nrow(methData) > 0) {
         methData <- CheckMethPaths(methData, methSheet)
     }
-
     return(methData)
 }
 
@@ -872,7 +879,18 @@ GrabHotspots <- function(params){
 }
 
 
-LoopSampleTabs <- function(params){
+CheckMissedSam <- function(sam, snvDt, pactName) {
+    if (!(sam %in% snvDt$Test_Case)) {
+        message(sam, "is missing from your Description File:")
+        message(pactName, "_desc.csv")
+        message("Adding sample as a blank row")
+        snvDt <- makeBlankRow(sam, snvDt)
+    }
+    return(snvDt)
+}
+
+
+LoopSampleTabs <-  function(params) {
     pactName <- params$pactName
     methData <- gb$GetMethDf(params$pactName)
     qcData <- gb$ReadQcFile(pactName)
@@ -880,25 +898,21 @@ LoopSampleTabs <- function(params){
     samples <- gb$GrabSamples(samList)
     hsDat <- gb$GrabHotspots(params)
     snvDt <- read.csv(paste0(pactName, "_desc.csv"))
-    outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus"))
+    outDir <- file.path(params$workDir, paste0(pactName,"_consensus"))
     for (sam in samples) {
-        makeNewTab(sam, samList, qcData, params$pactName)
-        if (!(sam %in% snvDt$Test_Case)) {
-            message(sam, " is missing from your Description input File:\n",
-                    paste0(pactName, "_desc.csv"))
-            message("Adding Sample as a blank row")
-            snvDt <- makeBlankRow(sam, snvDt)
-        }
+        makeNewTab(sam, samList, qcData, pactName)
+        snvDt <- CheckMissedSam(sam, snvDt, pactName) 
         samRows <- snvDt$Test_Case == sam
-        snvTab <- snvDt[samRows & snvDt$Variant == "SNV",]
+        snvTab <- snvDt[samRows & snvDt$Variant == "SNV", ]
         makeDT("In-House FrameShifts/INDEL", objDat = snvTab)
-        cnvSam <- snvDt[samRows & snvDt$Variant == "CNV",]
-        cnvTab <- checkDataDump(sam, cnvSam)
+        cnvTab <- checkDataDump(sam, snvDt[samRows & snvDt$Variant == "CNV", ])
         makeDT("CNV", cnvTab, pdfFi = sam, outDir=outDir)
-        methCn <- snvDt[samRows & snvDt$Variant == "Methylation",]
-        makeMethTab(sam, methCn, methData)
+        if (!is.null(methData)) {
+            methCn <- snvDt[samRows & snvDt$Variant == "Methylation",]
+            makeMethTab(sam, methCn, methData)
+        }
         makeAbTab(sam)
-        if(!is.null(hsDat)){
+        if (!is.null(hsDat)) {
             MakeHStab(sam, hsDat, samList, outDir)
         }
         cat("\n\n")
