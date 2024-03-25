@@ -4,7 +4,6 @@
 ## Purpose: Generate PACT Consensus HTML report with given input
 ## Author: Jonathan Serrano
 ## Date Created: August 21, 2023
-## Date Last Modified: March 5, 2024
 ## Author: Jonathan Serrano
 ## Version: 1.0.0
 ## Copyright (c) NYULH Jonathan Serrano, 2024
@@ -104,7 +103,14 @@ printf "cp ${DESK_DIR}*.png ${PNG_OUT_DIR}"
 cp "${DESK_DIR}"*.png "${PNG_OUT_DIR}"
 msg_code rsync -vrthP --include=\"*.tsv\" \"${DESK_DIR}\" \"${WORK_DIR}\"
 msg_code rsync -vrthP \"$HOME/Desktop/${runID}-SampleSheet.csv\" \"${WORK_DIR}\"
-msg_code rsync -vrthP \"$HOME/Desktop/${pactRun}_MethylMatch.xlsx\" \"${WORK_DIR}\"
+
+# Check if _MethylMatch.xlsx file exists ------------------------------------------------------------------
+METH_MATCH="$HOME/Desktop/${pactRun}_MethylMatch.xlsx"
+if [ -f "${METH_MATCH}" ]; then
+    msg_code rsync -vrthP \"${METH_MATCH}\" \"${WORK_DIR}\"
+else
+    echo -e "${BG_RED}NO METHYLMATCH FILE COPIED${NORMAL}"
+fi
 
 # Copy demux-samplesheet.csv to consensus
 msg_code rsync -vrthP \"$HOME/Desktop/${pactRun}/demux-samplesheet.csv\" \"${WORK_DIR}\"
