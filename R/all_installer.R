@@ -91,11 +91,7 @@ loadLibrary <- function(pkgName) {
 }
 
 checkRequire <- function(pkgName) {
-    return(suppressWarnings(!require(
-        pkgName,
-        character.only = T,
-        warn.conflicts = FALSE
-    )))
+    return(!requireNamespace(pkgName, quietly = TRUE))
 }
 
 if (checkRequire("devtools")) {
@@ -779,15 +775,13 @@ try(librarian::shelf(
     quiet = FALSE
 ), silent = T)
 
-if(checkRequire("wateRmelon"){
+if(checkRequire("wateRmelon")){
     BiocManager::install("wateRmelon", dependencies = T, type = "source", update = F)
 }
 
 if (checkRequire("UniD")) {
-    try(install.packages(file.path(cbioLn, "UniD"),
-                         type = "source",
-                         repos = NULL),
-        silent = T)
+    unidPath <- file.path(cbioLn, "UniD")
+    try(install.packages(unidPath, type = "source", repos = NULL), silent = T)
 }
 
 closeAllConnections()
