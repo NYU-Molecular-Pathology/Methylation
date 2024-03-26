@@ -752,28 +752,19 @@ if (checkRequire("FField")) {
 }
 
 if (checkRequire("GenVisR")) {
-    devtools::install_github("griffithlab/GenVisR",
-                             dependencies = T,
-                             upgrade = "never")
+    devtools::install_github("griffithlab/GenVisR", dependencies = T, upgrade = "never")
 }
-suppressWarnings(librarian::shelf(
-    pkgs,
-    ask = F,
-    update_all = F,
-    quiet = FALSE
-))
+
+suppressWarnings(librarian::shelf(pkgs, ask = F, update_all = F, quiet = FALSE))
 invisible(gc())
 
 cbioLn <- switch(Sys.info()[['sysname']],
                  "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
                  "Linux" = "~/molecpathlab/production/Methylation/classifiers")
 
-try(librarian::shelf(
-    c("mlr", "wateRmelon", "RPMM", "impute"),
-    ask = F,
-    update_all = FALSE,
-    quiet = FALSE
-), silent = T)
+try(librarian::shelf(c("mlr", "wateRmelon", "RPMM", "impute"),
+                     ask = F, update_all = F, quiet = F),
+    silent = T)
 
 if(checkRequire("wateRmelon")){
     BiocManager::install("wateRmelon", dependencies = T, type = "source", update = F)
@@ -786,6 +777,5 @@ if (checkRequire("UniD")) {
 
 closeAllConnections()
 
-devtools::source_url(
-    "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/LoadInstallPackages.R"
-)
+githubMain <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R"
+devtools::source_url(file.path(githubMain, "LoadInstallPackages.R"))
