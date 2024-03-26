@@ -780,7 +780,7 @@ try(librarian::shelf(
 ), silent = T)
 
 if(checkRequire("wateRmelon"){
-    BiocManager::install("wateRmelon", dependencies = T, type = "source")
+    BiocManager::install("wateRmelon", dependencies = T, type = "source", update = F)
 }
 
 if (checkRequire("UniD")) {
