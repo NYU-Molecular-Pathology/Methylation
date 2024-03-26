@@ -120,9 +120,7 @@ if (Sys.info()[['sysname']] == "Darwin") {
         system("brew install openssl")
         system("ln -sf /usr/local/opt/openssl/lib/libcrypto.3.dylib /usr/local/lib/")
         system("ln -sf /usr/local/opt/openssl/lib/libssl.3.dylib /usr/local/lib/")
-        system(
-            "ln -sf /usr/local/Cellar/openssl@3/3.0.5/bin/openssl /usr/local/bin/openssl"
-        )
+        system("ln -sf /usr/local/Cellar/openssl@3/3.0.5/bin/openssl /usr/local/bin/openssl")
     } else{
         if (isOpen != "/usr/bin/openssl") {
             system("ln -sf /usr/local/opt/openssl/lib/libcrypto.3.dylib /usr/local/lib/")
@@ -503,12 +501,7 @@ biocPkgs <-
     )
 
 if (checkRequire("BiocManager")) {
-    install.packages(
-        "BiocManager",
-        dependencies = T,
-        verbose = T,
-        ask = F
-    )
+    install.packages("BiocManager", dependencies = T, verbose = T, ask = F)
 }
 
 loadLibrary("devtools")
@@ -520,16 +513,11 @@ if (checkRequire("Biobase")) {
 loadLibrary("Biobase")
 
 if (checkRequire("mapview")) {
-    remotes::install_github("r-spatial/mapview",
-                            dependencies = T,
-                            upgrade = "never")
+    remotes::install_github("r-spatial/mapview", dependencies = T, upgrade = "never")
 }
 
 # Load/install missing pacakges without asking ----------------------------------------------------
-supM <-
-    function(pk) {
-        return(suppressPackageStartupMessages(suppressWarnings(pk)))
-    }
+supM <- function(pk) {return(suppressPackageStartupMessages(suppressWarnings(pk)))}
 
 message("Loading packages:", paste0(capture.output(corePkgs), collapse = "\n"))
 message("...loading")
