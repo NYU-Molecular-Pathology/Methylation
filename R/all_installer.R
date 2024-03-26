@@ -772,12 +772,16 @@ cbioLn <- switch(Sys.info()[['sysname']],
                  "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
                  "Linux" = "~/molecpathlab/production/Methylation/classifiers")
 
-librarian::shelf(
+try(librarian::shelf(
     c("mlr", "wateRmelon", "RPMM", "impute"),
     ask = F,
     update_all = FALSE,
     quiet = FALSE
-)
+), silent = T)
+
+if(checkRequire("wateRmelon"){
+    BiocManager::install("wateRmelon", dependencies = T, type = "source")
+}
 
 if (checkRequire("UniD")) {
     try(install.packages(file.path(cbioLn, "UniD"),
