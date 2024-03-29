@@ -405,7 +405,7 @@ make_knit_report <- function(dat, reportMd, params_init) {
         input = reportMd, output_format = "html_document",
         output_file = file.path(getwd(), paste0(dat$outFi)),
         output_dir = getwd(), knit_root_dir = getwd(),
-        clean = TRUE, quiet = TRUE,
+        clean = TRUE, quiet = FALSE,
         output_options = list(self_contained = TRUE, clean_supporting = TRUE),
         params = params_init
     )
