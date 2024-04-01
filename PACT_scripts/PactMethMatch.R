@@ -539,19 +539,6 @@ loopCNV <- function(mySentrix, asPNG) {
 }
 
 
-CheckIfPngExists <- function(rds, outFolder = "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG") {
-    outpng <- paste0(rds, "_cnv.png")
-    outFiles <- file.path(outFolder, outpng)
-    finished <- file.exists(outFiles)
-    if (any(finished)) {
-        message(crayon::bgGreen("The following samples are completed and will be skipped:"))
-        message(paste(capture.output(outFiles[finished]), collapse = '\n'))
-        rds <- rds[!finished]
-    }
-    return(rds)
-}
-
-
 gb$SaveConumeePACT <-  function(x, sampleImg, doXY=F) {
     chrAll <- paste0("chr", 1:22)
     if (doXY==T) {
