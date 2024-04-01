@@ -1,4 +1,13 @@
 #!/usr/bin/env Rscript
+## ---------------------------
+## Script name: SetRunParams
+## Purpose: source of global variables and install needed packages
+## Date Created: September 20, 2021
+## Version: 1.0.0
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2024
+## ---------------------------
+
 options(stringsAsFactors = FALSE)
 gb <- globalenv(); assign("gb", gb)
 library("base")
@@ -10,6 +19,44 @@ msgFunName <- function(pthLnk, funNam){
 
 SpSm <- function(pkg){return(suppressPackageStartupMessages(pkg))}
 
+fix_compiler_flags <- function(){
+    # Check if brew installed
+    if (is.na(Sys.which("brew")["brew"][[1]])) {
+        message("Homebrew is not installed. Installing Homebrew...")
+        cmd <-
+            '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+        system(cmd, wait = TRUE)
+    }
+    # Check if LLVM installed
+    llvm_installed <- file.exists("/usr/local/opt/llvm/bin/clang")
+    if (!llvm_installed) {
+        message("LLVM is not installed. Installing LLVM via Homebrew...")
+        system("brew install llvm", intern = TRUE, wait = TRUE)
+    }
+    Sys.setenv(CC = "")
+    Sys.setenv(CFLAGS = "")
+    Sys.setenv(CXX = "")
+    Sys.setenv(CXXFLAGS = "")
+    Sys.setenv(FC = "")
+    Sys.setenv(FFLAGS = "")
+    Sys.setenv(LDFLAGS = "")
+    Sys.setenv(CPPFLAGS = "")
+    Sys.setenv(SHLIB_CXXLD = "")
+    Sys.setenv(SHLIB_LDFLAGS = "")
+    Sys.setenv(OBJC = "")
+    Sys.setenv(PATH = paste("/usr/local/opt/llvm/bin", Sys.getenv("PATH"), sep = ":"))
+    Sys.setenv(CC = "/usr/local/opt/llvm/bin/clang")
+    Sys.setenv(CXX = "/usr/local/opt/llvm/bin/clang++")
+    Sys.setenv(CXX11 = "/usr/local/opt/llvm/bin/clang++")
+    Sys.setenv(CXX14 = "/usr/local/opt/llvm/bin/clang++")
+    Sys.setenv(CXX17 = "/usr/local/opt/llvm/bin/clang++")
+    Sys.setenv(CXX1X = "/usr/local/opt/llvm/bin/clang++")
+    Sys.setenv(OBJC = "/usr/local/opt/llvm/bin/clang")
+    Sys.setenv(LDFLAGS = "-L/usr/local/opt/llvm/lib")
+    Sys.setenv(CPPFLAGS = "-I/usr/local/opt/llvm/include")
+}
+
+
 # FUN: Loads all the packages used in the RMD Methylation QC file
 checkQCpkg <- function(){
     msgFunName(setRunLnk,"checkQCpkg")
@@ -19,15 +66,36 @@ checkQCpkg <- function(){
         "IlluminaHumanMethylation450kmanifest",
         "IlluminaHumanMethylationEPICanno.ilm10b2.hg19",
         "IlluminaHumanMethylationEPICmanifest",
-        "IlluminaHumanMethylationEPICanno.ilm10b4.hg19","Biobase", "RColorBrewer",
-        "limma","ggfortify","Rtsne",
+        "IlluminaHumanMethylationEPICv2manifest",
+        "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
+        "Biobase", "RColorBrewer", "limma","ggfortify","Rtsne",
         "qdapTools","gplots","readxl","stringr","ggrepel","Polychrome",
         "tinytex","gridExtra","rmarkdown", "BiocParallel", "grid"
     )
+    
+    fix_compiler_flags()
     message("Now Loading...\n", paste(methylQCpacks, collapse=" "),"\n")
-    SpSm(easypackages::packages(methylQCpacks,prompt=F))
-    reqPkg <- list("ggplot2","pals","stringr","scales","grid")
-    invisible(lapply(reqPkg, FUN = function(X) {SpSm(do.call("require", list(X)))}))
+    
+    needed_pkgs <- pkgs[!sapply(methylQCpacks, requireNamespace, quietly = TRUE)]
+    params <- list(
+        dependencies = TRUE,
+        ask = FALSE,
+        update = "never",
+        quiet = TRUE,
+        repos = 'http://cran.us.r-project.org',
+        Ncpus = 4
+    )
+    if (length(needed_pkgs) > 0) {
+        do.call(install.packages, c(list(pkgs = needed_pkgs), params))
+    }
+    
+    reqPkg <- list("ggplot2", "pals", "stringr", "scales", "grid")
+    needed_pkgs <- pkgs[!sapply(reqPkg, requireNamespace, quietly = TRUE)]
+    if (length(needed_pkgs) > 0) {
+        do.call(install.packages, c(list(pkgs = needed_pkgs), params))
+    }
+    sapply(pkgs, library, character.only = T, logical.return = T, quietly = T)
+    sapply(reqPkg, library, character.only = T, logical.return = T, quietly = T)
 }
 
 # Helper functions to get and set global variables
