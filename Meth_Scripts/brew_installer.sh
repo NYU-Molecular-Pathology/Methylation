@@ -28,10 +28,22 @@ message_curl() {
 }
 
 # Install packages using Homebrew -----------------------------------------------------------------
-echo -e "\nInstalling packages with brew: libmagic, sqlite, proj, tcl-tk...\n"
-brew install libmagic sqlite proj tcl-tk
-brew install llvm aspell gdal autoconf automake gcc libgit2 openssl@3 zlib go pandoc git libffi
-brew install texinfo pango cairo open-mpi poppler-qt5 graphviz libopenmpt java11 zeromq libomp libtorch openjdk gmp mpfr pkg-config apache-arrow udunits mariadb-connector-c libtiff hdf5
+install_pkgs() {
+    for package in "$@"
+    do
+        if brew ls --versions $package > /dev/null; then
+            echo -e "\n$package is already installed.\n"
+        else
+            echo -e "\nInstalling $package...\n"
+            brew install $package
+        fi
+    done
+}
+
+install_pkgs libmagic sqlite proj tcl-tk
+install_pkgs aspell gdal autoconf automake gcc libgit2 openssl@3 zlib go pandoc git libffi
+install_pkgs texinfo pango cairo open-mpi poppler-qt5 graphviz libopenmpt java11 zeromq libomp libtorch openjdk gmp mpfr pkg-config apache-arrow udunits mariadb-connector-c libtiff hdf5
+
 brew install --cask basictex
 
 # Check if XQuartz is installed -------------------------------------------------------------------
