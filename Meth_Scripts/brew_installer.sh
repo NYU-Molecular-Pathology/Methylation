@@ -43,6 +43,7 @@ install_pkgs() {
 install_pkgs libmagic sqlite proj tcl-tk
 install_pkgs aspell gdal autoconf automake gcc libgit2 openssl@3 zlib go pandoc git libffi
 install_pkgs texinfo pango cairo open-mpi poppler-qt5 graphviz libopenmpt java11 zeromq libomp libtorch openjdk gmp mpfr pkg-config apache-arrow udunits mariadb-connector-c libtiff hdf5
+install_pkgs llvm
 
 brew install --cask basictex
 
