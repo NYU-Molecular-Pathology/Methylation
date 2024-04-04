@@ -232,10 +232,13 @@ srcInst <- function(fn){
 bc.inst <- function(pknm){
     message("Checking ", pknm, "...")
     if(rq(pknm)) {
-        bio.opt <- list(pkgs=pknm, update=F, ask=F)
+        bio.opt <- list(pkgs = pknm, update = F, ask = F, dependencies = T)
         tryCatch(
             expr = {do.call(BiocManager::install, c(bio.opt))},
-            error = function(cond) {message("Package already loaded")},
+            error = function(cond) {
+                message("Error with Package install:\n", pknm)
+                message(cond)
+            },
             finally = {ld(pknm)}
         )
     } else {ld(pknm)}
@@ -527,11 +530,27 @@ checkEpicV2 <- function(pkg = "mnp.v12epicv2"){
 
 
 # Load all Functions ---------------------
+check_uniD_pkg <- function(typeSrc) {
+    
+    uniDpkgs <- c("lumi", "ade4", "methylumi", "mlr")
+    
+    librarian::shelf(uniDpkgs, ask = F, update_all = F, quiet = F)
+    try(bc.inst("impute"), silent = T)
+    try(bc.inst("wateRmelon"), silent = T)
+    
+    if (rq("UniD")) {
+        try(install.packages(uniDpath, type = "source", dependencies = T, repo = NULL),
+            silent = T)
+    }
+}
+
+
 startLoadingAll <- function() {
     setEnviron()
     loadPacks()
-
-    if(Sys.info()[['sysname']]=="Darwin") {
+    isMacOS <- Sys.info()[['sysname']] == "Darwin"
+    
+    if (isMacOS) {
         typeSrc <- "binary"
     } else{
         typeSrc <- "source"
@@ -540,29 +559,14 @@ startLoadingAll <- function() {
     
     installAll(classPacks, srcInst)
     
-    if(Sys.info()[['sysname']] == "Darwin") {
+    if (Sys.info()[['sysname']] == "Darwin") {
         checkClassifier(mnpV4)
         checkClassifier(mnpV6)
         checkClassifier(mnpV12)
         checkClassifier(srcV12)
+        check_uniD_pkg(typeSrc)
         checkEpicV2()
     }
-    
-    uniDpkgs <- c("lumi","ade4","methylumi","mlr")
-    librarian::shelf(uniDpkgs, ask=F, update_all = F, quiet = F)
-    
-    if(!require("impute")){
-        try(BiocManager::install("impute", update=F, ask=F, dependencies=T, type=typeSrc), silent=T)
-    }
-
-    if(!require("wateRmelon")){
-        try(BiocManager::install("wateRmelon", update=F, ask=F, dependencies=T, type=typeSrc), silent=T)
-    }
-    if(Sys.info()[['sysname']]=="Darwin") {
-    if (!requireNamespace("UniD", quietly = T)) {
-        try(install.packages(uniDpath, type = "source", dependencies = T, repo = NULL), silent = T)
-    }
-        }
 
 }
 
