@@ -20,6 +20,7 @@ require("sarc.v12b6")
 library(verbose=F, warn.conflicts = F, quietly = T, package= "dplyr")
 library(verbose=F, warn.conflicts = F, quietly = T, package= "sarc.v12b6")
 library(verbose=F, warn.conflicts = F, quietly = T, package= "htmltools")
+library(verbose=F, warn.conflicts = F, quietly = T, package= "minfi")
 
 PlotSuppInfo <- function(RGset, Mset, sampleID, FFPE = NULL){
     if(is.null(FFPE)) {FFPE <- sarc.v12b6::MNPgetFFPE(RGset)}
