@@ -304,7 +304,7 @@ MakeBlankRun <- function(rd_numbers, token, outputFi="samplesheet.csv"){
 }
 
 MakeSarcomaReport <- function(worksheet = "samplesheet.csv", targets = NULL) {
-                            msgFunName(cpInLnk4,"MakeSarcomaReport")
+    msgFunName(cpInLnk4,"MakeSarcomaReport")
     if (is.null(targets)) {
         if (file.exists(worksheet)) {
             targets <- as.data.frame(read.csv(worksheet))
@@ -316,7 +316,12 @@ MakeSarcomaReport <- function(worksheet = "samplesheet.csv", targets = NULL) {
     for (samIdx in 1:nrow(targets)) {
         message("Running ", samIdx, " of ", nrow(targets))
         RGset <- suppressWarnings(minfi::read.metharray(targets$Basename[samIdx]))
-        SarcomaReport(RGset, sampleID = targets[samIdx, 1])
+        if (RGset@annotation[["array"]] == "IlluminaHumanMethylationEPICv2") {
+            sampleID <- targets[samIdx, 1]
+            message("Sample ", sampleID, " is EPICV2!  Skipping...")
+        } else{
+            SarcomaReport(RGset, sampleID = targets[samIdx, 1])
+        }
     }
 }
 
