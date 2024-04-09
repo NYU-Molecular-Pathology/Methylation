@@ -142,28 +142,25 @@ grabAllRecords <- function(flds, rcon) {
 }
 
 
-searchDb <- function(queryList, db) {
+message_matched <- function(item, dbInfo, ngsNum, i){
+    message(sprintf("Match found for '%s' (%s) for %s in: \"%s\" column", item, dbInfo, ngsNum, i))
+}
+
+searchDb <- function(queryList, db){
     res <- data.frame()
     for (idx in 1:length(queryList)) {
         item <- queryList[idx]
-        ngsNumber <- paste(names(item)[1])
-        for (col_n in colnames(db)) {
-            ngsMatch <- which(grepl(item, db[[col_n]]))
-            if (length(ngsMatch) > 0) {
-                case_num <- db[ngsMatch, col_n]
-                message(sprintf("Match found for \"%s\" (%s) for %s in:\n\"%s\" column",
-                                item, case_num, ngsNumber, col_n))
-                dbMatch <- db[ngsMatch, ]
-                dbMatch$Test_Number <- names(item)
-                if (nrow(res) == 0) {
-                    res <- dbMatch
-                }else{
-                    res <- rbind(res, dbMatch)
-                }
+        ngsNum = paste(names(item)[1])
+        for (i in colnames(db)) {
+            ngsMatch <- which(grepl(item, db[, i]))
+            if(length(ngsMatch) > 0) {
+                message_matched(item, db[ngsMatch, i], ngsNum, i)
+                dbMatch <- db[ngsMatch,]
+                dbMatch$Test_Number <- ngsNum
+                res <- rbind(res, dbMatch)
             }
         }
     }
-
     return(res)
 }
 
@@ -277,21 +274,12 @@ genQuery <- function(dbCol,vals2find) {
 
 
 queryCases <- function(vals2find, db) {
-    # Generate the query list using lapply
-    queryList <- unlist(lapply(1:ncol(vals2find), function(i) genQuery(i, vals2find)))
-
-    # Detect and process TS, TB, TC cases
-    tsTb <- stringr::str_detect(queryList, "TS|TB|TC")
-    ts_cases <- queryList[tsTb]
-    ts_cases <- sapply(ts_cases, function(x) {
-        paste(stringr::str_split_fixed(x, "-", 3)[1, 1:2], collapse = "-")
-    })
-
-    # Combine & remove duplicates then search
-    queryList <- unique(c(queryList, ts_cases))
+    queryList <- unlist(lapply(1:ncol(vals2find), function(i) {genQuery(i, vals2find)}), use.names = TRUE)
+    theTScases <- queryList[stringr::str_detect(queryList, "TS|TB|TC")]
+    theTScases <- sapply(theTScases, function(x) paste(stringr::str_split_fixed(x, "-", 3)[1, 1:2], collapse = "-"))
+    queryList <- unique(c(queryList, theTScases))
     methQuery <- searchDb(queryList, db)
-
-    return(methQuery)
+    return(unique(methQuery))
 }
 
 
