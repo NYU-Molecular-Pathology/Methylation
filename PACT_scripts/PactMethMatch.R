@@ -277,7 +277,8 @@ queryCases <- function(vals2find, db) {
     queryList <- unlist(lapply(1:ncol(vals2find), function(i) {genQuery(i, vals2find)}), use.names = TRUE)
     theTScases <- queryList[stringr::str_detect(queryList, "TS|TB|TC")]
     theTScases <- sapply(theTScases, function(x) paste(stringr::str_split_fixed(x, "-", 3)[1, 1:2], collapse = "-"))
-    queryList <- unique(c(queryList, theTScases))
+    queryList <- c(queryList, theTScases)
+    queryList <- queryList[!duplicated(queryList)]
     methQuery <- searchDb(queryList, db)
     return(unique(methQuery))
 }
