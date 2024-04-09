@@ -142,3 +142,5 @@ cp "${CONSENSUS_FILE}" "${DESK_DIR}"
 
 # Copy HTML file from DESK_DIR to final destination
 cp -X "${DESK_DIR}${pactRun}_consensus.html" "${FINAL_DEST}"
+
+open "${FINAL_DEST}"
