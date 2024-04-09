@@ -908,7 +908,7 @@ LoopSampleTabs <-  function(params) {
         cnvTab <- checkDataDump(sam, snvDt[samRows & snvDt$Variant == "CNV", ])
         makeDT("CNV", cnvTab, pdfFi = sam, outDir=outDir)
         if (!is.null(methData)) {
-            methCn <- snvDt[samRows & snvDt$Variant == "Methylation",]
+            methCn <- methData[methData$Test_Number == sam, ]
             makeMethTab(sam, methCn, methData)
         }
         makeAbTab(sam)
