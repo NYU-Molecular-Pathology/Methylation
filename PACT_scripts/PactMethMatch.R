@@ -285,7 +285,8 @@ queryCases <- function(vals2find, db) {
 
 
 get_year_paths <- function(output) {
-    yearSplit <- stringr::str_split_fixed(output$run_number, "-", 2)[, 1]
+    output_final <- output[!is.na(output$run_number),]
+    yearSplit <- stringr::str_split_fixed(output_final$run_number, "-", 2)[, 1]
     yearSplit <- gsub("MC", "", yearSplit)
     yearPath <- lapply(yearSplit, function(yr) {
         if (nchar(yr) > 2) {
