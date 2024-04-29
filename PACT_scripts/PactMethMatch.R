@@ -554,6 +554,7 @@ sourceFuns2 <- function(workingPath = NULL) {
     scripts <- paste0(mainHub, script.list)
     invisible(lapply(scripts, function(i) {suppressPackageStartupMessages(devtools::source_url(i))}))
     gb$setDirectory(workingPath)
+    library("mnp.v12epicv2")
     return(gb$defineParams())
 }
 
