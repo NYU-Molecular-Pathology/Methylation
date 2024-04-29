@@ -390,8 +390,22 @@ loadPacks()
 if (Sys.info()[['sysname']]=="Darwin") {checkMounts()}
 sourceFuns()
 
+# FUN: Checks if at least one argument is provided ----------------------------
+get_rd_args <- function(args) {
+    rd_numbers <- NULL
+    rd_numbers <- as.vector(args)
+    message("Input RD-number(s):")
+    message(paste0(capture.output(rd_numbers), collapse = "\n"))
+    return(rd_numbers)
+}
+
+
 if(are_valid(inputSheet, token)) {
-    rd_numbers <- readInfo(inputSheet)
+    if(endsWith(inputSheet, ".csv") | endsWith(inputSheet, ".xlsx")) {
+        rd_numbers <- readInfo(inputSheet)
+    } else{
+        rd_numbers <- as.vector(inputSheet)
+    }
     grabRDCopyIdat(rd_numbers = rd_numbers, token = token)
 }
 
