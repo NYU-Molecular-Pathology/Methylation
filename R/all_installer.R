@@ -11,7 +11,9 @@
 options("install.packages.compile.from.source" = "No")
 options("install.packages.check.source" = "no")
 
-if (Sys.info()[['sysname']] == "Darwin") {
+is_macos <- Sys.info()[['sysname']] == "Darwin"
+
+if (is_macos) {
     local({
         path <- sub(":/opt/homebrew/bin", ":/usr/local/homebrew/bin", Sys.getenv("PATH"))
         Sys.setenv(PATH = path)
@@ -20,6 +22,21 @@ if (Sys.info()[['sysname']] == "Darwin") {
     options(repos = c(CRAN = "https://packagemanager.posit.co/cran/2024-02-20"))
     options(warn = -1)
 }
+
+
+# Get system architecture
+arch <- Sys.info()[["machine"]]
+# Check if architecture is 'arm64' or 'x86_64'
+if (arch != "x86_64" & is_macos == T) {
+    # Set JAVA_HOME environment variable
+    #java_home <- system("/usr/libexec/java_home -v 11", intern = TRUE)
+    system("brew tap homebrew/cask-versions && brew install --cask temurin17")
+    java_home <- system("which java", intern = TRUE)
+    Sys.setenv(JAVA_HOME = java_home)
+    message("JAVA_HOME set to ", java_home)
+    install.packages("rJava", type = "binary", dependencies = T, ask = F)
+}
+
 
 if (Sys.info()[['sysname']] == "Darwin" & !dir.exists(file.path("~", ".R"))) {
     message("No Makevars file in ~/.R")
