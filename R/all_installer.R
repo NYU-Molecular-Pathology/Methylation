@@ -38,7 +38,7 @@ if (arch != "x86_64" & is_macos == T) {
 }
 
 
-if (Sys.info()[['sysname']] == "Darwin" & !dir.exists(file.path("~", ".R"))) {
+if (is_macos == T & !dir.exists(file.path("~", ".R"))) {
     message("No Makevars file in ~/.R")
     system("mkdir -p ~/.R")
     system("touch ~/.R/MakeVars")
