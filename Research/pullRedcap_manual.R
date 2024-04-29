@@ -281,6 +281,7 @@ sourceFuns <- function(workingPath = NULL) {
 readInfo <- function(inputSheet) {
     # Detect if file is xlsx or csv
     readFlag <- endsWith(inputSheet, ".csv") == T
+    message("inputSheet: ", inputSheet)
     if (readFlag == T) {
         message("FileType is .csv, executing read.delim...")
         rds <-
