@@ -75,6 +75,12 @@ grab_gene_info <- function(entrezIDs) {
             values = entrezIDs$ENTREZID,
             mart = mart
         )
+    genesInfo <- subset(genesInfo, nchar(genesInfo$chromosome_name) <= 2)
+    dupes <- which(base::duplicated(genesInfo$entrezgene_id))
+    if (any(dupes)) {
+        message("DUPLICATES:")
+        message(paste(genesInfo[dupes,"entrezgene_id"],collapse = "\n"))
+    }
     return(genesInfo)
 }
 
