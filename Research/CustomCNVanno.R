@@ -56,16 +56,12 @@ drop_missing_genes <- function(myGenes, entrezIDs) {
     write.csv(missing_df, file = "missing_genes.csv", quote = F, row.names = F)
     myGenes <- myGenes[!is_missing]
     entrezIDs <- AnnotationDbi::select(org.Hs.eg.db, keys = myGenes, keytype = "SYMBOL", columns = "ENTREZID")
+    rownames(entrezIDs) <- 1:nrow(entrezIDs)
+    return(entrezIDs)
 }
 
 
-GetGeneRanges <- function(myGenes) {
-    entrezIDs <- AnnotationDbi::select(org.Hs.eg.db, keys = myGenes, keytype = "SYMBOL", columns = "ENTREZID")
-    if (any(is.na(entrezIDs$ENTREZID))) {
-        entrezIDs <- drop_missing_genes(myGenes, entrezIDs)
-    }
-    entrezIDs <- entrezIDs[!is.na(entrezIDs$ENTREZID),]
-    rownames(entrezIDs) <- 1:nrow(entrezIDs)
+grab_gene_info <- function(entrezIDs) {
     mart <- biomaRt::useMart("ensembl", dataset = "hsapiens_gene_ensembl")
     genesInfo <-
         biomaRt::getBM(
@@ -79,6 +75,11 @@ GetGeneRanges <- function(myGenes) {
             values = entrezIDs$ENTREZID,
             mart = mart
         )
+    return(genesInfo)
+}
+
+
+grab_granges <- function(genesInfo, entrezIDs){
     granges <- GenomicRanges::GRanges(
         seqnames = genesInfo$chromosome_name,
         ranges = IRanges::IRanges(
@@ -90,6 +91,20 @@ GetGeneRanges <- function(myGenes) {
     granges@elementMetadata@listData[["thick"]] = granges@ranges
     granges@ranges@NAMES <- paste(genesInfo$entrezgene_id)
     return(as.data.frame(granges))
+}
+
+
+GetGeneRanges <- function(myGenes) {
+    entrezIDs <- AnnotationDbi::select(org.Hs.eg.db, keys = myGenes, keytype = "SYMBOL", columns = "ENTREZID")
+    
+    if (any(is.na(entrezIDs$ENTREZID))) {
+        entrezIDs <- drop_missing_genes(myGenes, entrezIDs)
+    }
+
+    genesInfo <- grab_gene_info(entrezIDs)
+    granges_df <- grab_granges(genesInfo, entrezIDs)
+    
+   return(granges_df)
 }
 
 
