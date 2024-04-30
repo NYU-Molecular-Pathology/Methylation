@@ -46,37 +46,49 @@ GetOverlaps <- function(mycoords.gr){
 }
 
 
+drop_missing_genes <- function(myGenes, entrezIDs) {
+    missing <- myGenes[is.na(match(myGenes, entrezIDs$SYMBOL))]
+    message(crayon::bgRed("Gene(s) not found in the database:"))
+    message(paste(missing, collapse = "\n"))
+    missing_df <- data.frame(missing = missing)
+    write.csv(missing_df, file = "missing_genes.csv", quote = F, row.names = F)
+    myGenes <- myGenes[!is.na(match(myGenes, entrezIDs$SYMBOL))]
+    entrezIDs <- AnnotationDbi::select(org.Hs.eg.db, keys = myGenes, keytype = "SYMBOL", columns = "ENTREZID")
+}
+
+
 GetGeneRanges <- function(myGenes) {
-  entrezIDs <- AnnotationDbi::select(org.Hs.eg.db, keys = myGenes, keytype = "SYMBOL", columns = "ENTREZID")
-  if (any(is.na(entrezIDs$ENTREZID))) {
-      missing <- myGenes[is.na(match(myGenes, entrezIDs$SYMBOL))]
-      stop("Gene(s) not found in the database: ",
-           paste(missing, collapse = ", "))
-  }
-  mart <- biomaRt::useMart("ensembl", dataset = "hsapiens_gene_ensembl")
-  genesInfo <-
-      biomaRt::getBM(
-          attributes = c(
-              "entrezgene_id",
-              "chromosome_name",
-              "start_position",
-              "end_position"
-          ),
-          filters = "entrezgene_id",
-          values = entrezIDs$ENTREZID,
-          mart = mart
-      )
-  granges <- GenomicRanges::GRanges(
-      seqnames = genesInfo$chromosome_name,
-      ranges = IRanges::IRanges(
-          start = genesInfo$start_position,
-          end = genesInfo$end_position
-      ),
-      name = entrezIDs$SYMBOL
-  )
-  granges@elementMetadata@listData[["thick"]] = granges@ranges
-  granges@ranges@NAMES <- paste(genesInfo$entrezgene_id)
-  return(as.data.frame(granges))
+    entrezIDs <- AnnotationDbi::select(org.Hs.eg.db, keys = myGenes, keytype = "SYMBOL", columns = "ENTREZID")
+    is_missing <- is.na(entrezIDs$ENTREZID)
+    if (any(is_missing)) {
+        entrezIDs <- drop_missing_genes(myGenes, entrezIDs)
+    }
+    entrezIDs <- entrezIDs[!is.na(entrezIDs$ENTREZID),]
+    rownames(entrezIDs) <- 1:nrow(entrezIDs)
+    mart <- biomaRt::useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+    genesInfo <-
+        biomaRt::getBM(
+            attributes = c(
+                "entrezgene_id",
+                "chromosome_name",
+                "start_position",
+                "end_position"
+            ),
+            filters = "entrezgene_id",
+            values = entrezIDs$ENTREZID,
+            mart = mart
+        )
+    granges <- GenomicRanges::GRanges(
+        seqnames = genesInfo$chromosome_name,
+        ranges = IRanges::IRanges(
+            start = genesInfo$start_position,
+            end = genesInfo$end_position
+        ),
+        name = entrezIDs$SYMBOL
+    )
+    granges@elementMetadata@listData[["thick"]] = granges@ranges
+    granges@ranges@NAMES <- paste(genesInfo$entrezgene_id)
+    return(as.data.frame(granges))
 }
 
 
