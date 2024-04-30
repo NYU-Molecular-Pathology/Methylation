@@ -2,6 +2,7 @@
 ## ---------------------------
 ## Script name: CustomCNVanno.R
 ## Purpose: Functions for taking a list of input genes and output custom CNV annotation for Conumee
+## Date Created: August 10, 2023
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2023
 ## ---------------------------
@@ -47,20 +48,20 @@ GetOverlaps <- function(mycoords.gr){
 
 
 drop_missing_genes <- function(myGenes, entrezIDs) {
-    missing <- myGenes[is.na(match(myGenes, entrezIDs$SYMBOL))]
+    is_missing <- is.na(entrezIDs$ENTREZID)
+    missing <- myGenes[is_missing]
     message(crayon::bgRed("Gene(s) not found in the database:"))
     message(paste(missing, collapse = "\n"))
     missing_df <- data.frame(missing = missing)
     write.csv(missing_df, file = "missing_genes.csv", quote = F, row.names = F)
-    myGenes <- myGenes[!is.na(match(myGenes, entrezIDs$SYMBOL))]
+    myGenes <- myGenes[!is_missing]
     entrezIDs <- AnnotationDbi::select(org.Hs.eg.db, keys = myGenes, keytype = "SYMBOL", columns = "ENTREZID")
 }
 
 
 GetGeneRanges <- function(myGenes) {
     entrezIDs <- AnnotationDbi::select(org.Hs.eg.db, keys = myGenes, keytype = "SYMBOL", columns = "ENTREZID")
-    is_missing <- is.na(entrezIDs$ENTREZID)
-    if (any(is_missing)) {
+    if (any(is.na(entrezIDs$ENTREZID))) {
         entrezIDs <- drop_missing_genes(myGenes, entrezIDs)
     }
     entrezIDs <- entrezIDs[!is.na(entrezIDs$ENTREZID),]
