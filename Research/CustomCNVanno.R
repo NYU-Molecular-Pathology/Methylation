@@ -61,42 +61,65 @@ drop_missing_genes <- function(myGenes, entrezIDs) {
 }
 
 
+drop_dupe_genes <- function(genesInfo, dupes){
+    message("DUPLICATES:")
+    the_extras <- genesInfo[dupes,"entrezgene_id"]
+    extra <- which(genesInfo$entrezgene_id %in% the_extras)
+    extra_df <- data.frame(genesInfo[extra, ])
+    extra_msg <- paste(capture.output(extra_df), collapse = '\n')
+    message(extra_msg)
+    genesInfo <- genesInfo %>% group_by(entrezgene_id) %>% slice(n())
+    rownames(genesInfo) <- 1:nrow(genesInfo)
+    extra_msg <- paste(capture.output(data.frame(genesInfo[genesInfo$entrezgene_id %in% the_extras,])), collapse = '\n')
+    message("Kept Ranges:\n", extra_msg)
+    return(genesInfo)
+}
+
+
 grab_gene_info <- function(entrezIDs) {
-    mart <- biomaRt::useMart("ensembl", dataset = "hsapiens_gene_ensembl")
-    genesInfo <-
-        biomaRt::getBM(
-            attributes = c(
-                "entrezgene_id",
-                "chromosome_name",
-                "start_position",
-                "end_position"
-            ),
-            filters = "entrezgene_id",
-            values = entrezIDs$ENTREZID,
-            mart = mart
+    mart <- biomaRt::useMart(
+        "ensembl", dataset = "hsapiens_gene_ensembl", version = "Ensembl Genes 111"
         )
+
+    genesInfo <- biomaRt::getBM(
+        attributes = c("entrezgene_id", "chromosome_name", "start_position", "end_position"),
+        filters = "entrezgene_id", values = entrezIDs$ENTREZID, mart = mart
+    )
+
     genesInfo <- subset(genesInfo, nchar(genesInfo$chromosome_name) <= 2)
-    dupes <- which(base::duplicated(genesInfo$entrezgene_id))
+    dupes <- base::duplicated(genesInfo$entrezgene_id)
+
     if (any(dupes)) {
-        message("DUPLICATES:")
-        message(paste(genesInfo[dupes,"entrezgene_id"],collapse = "\n"))
+        genesInfo <- drop_dupe_genes(genesInfo, dupes)
     }
+
     return(genesInfo)
 }
 
 
 grab_granges <- function(genesInfo, entrezIDs){
+    genesInfo$entrezgene_id <- as.character(genesInfo$entrezgene_id)
+    entrezIDs$ENTREZID <- as.character(entrezIDs$ENTREZID)
+    mergedData <- dplyr::inner_join(genesInfo, entrezIDs, by = c("entrezgene_id" = "ENTREZID"))
     granges <- GenomicRanges::GRanges(
-        seqnames = genesInfo$chromosome_name,
+        seqnames = Rle(as.character(mergedData$chromosome_name)),
         ranges = IRanges::IRanges(
-            start = genesInfo$start_position,
-            end = genesInfo$end_position
+            start = mergedData$start_position,
+            end = mergedData$end_position
         ),
-        name = entrezIDs$SYMBOL
+        names = mergedData$SYMBOL
     )
+    max_ends <- tapply(end(granges), as.character(seqnames(granges)), max)
+    all_seqnames <- unique(as.character(seqnames(granges)))
+    max_ends_vector <- rep(NA, length(all_seqnames))  # Start with NA for missing chromosomes
+    names(max_ends_vector) <- all_seqnames
+    max_ends_vector[names(max_ends)] <- max_ends
+    seqlengths(granges) <- max_ends_vector
     granges@elementMetadata@listData[["thick"]] = granges@ranges
+    genome(granges) <- "hg19"
     granges@ranges@NAMES <- paste(genesInfo$entrezgene_id)
-    return(as.data.frame(granges))
+    grangesDF <- as.data.frame(granges)
+    return(grangesDF)
 }
 
 
@@ -108,29 +131,32 @@ GetGeneRanges <- function(myGenes) {
     }
 
     genesInfo <- grab_gene_info(entrezIDs)
-    granges_df <- grab_granges(genesInfo, entrezIDs)
-    
-   return(granges_df)
+    grangesDF <- grab_granges(genesInfo, entrezIDs)
+    return(grangesDF)
 }
 
 
 GetGenesListRange <- function(grangesDF, array_type = "EPIC") {
-    mycoords.gr = GenomicRanges::makeGRangesFromDataFrame(grangesDF)
+    mycoords.gr <- GenomicRanges::makeGRangesFromDataFrame(grangesDF)
     grNames <- names(mycoords.gr)
-    if (array_type == "EPICv2") {
-        #genomeType <- TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene
-        genomeType <- TxDb.Hsapiens.UCSC.hg19.knownGene::TxDb.Hsapiens.UCSC.hg19.knownGene
-    } else{
-        genomeType <- TxDb.Hsapiens.UCSC.hg19.knownGene::TxDb.Hsapiens.UCSC.hg19.knownGene
-    }
-    gene_list <- suppressMessages(GenomicFeatures::genes(genomeType, single.strand.genes.only = T))[grNames,]
+    genomeType <- GenomicFeatures::makeTxDbFromUCSC(genome = "hg19")
+    gene_list <- suppressMessages(GenomicFeatures::genes(genomeType, single.strand.genes.only = T))
+
+    grNames <- grNames[grNames %in% names(gene_list)]
+    gene_list <- gene_list[grNames, ]
+
     entrezIDs <- gene_list@elementMetadata@listData[["gene_id"]]
+
     geneNames <- AnnotationDbi::select(
-        org.Hs.eg.db::org.Hs.eg.db, keys = entrezIDs, keytype = "ENTREZID", columns = "SYMBOL")
+        org.Hs.eg.db::org.Hs.eg.db, keys = entrezIDs, keytype = "ENTREZID", columns = "SYMBOL"
+        )
+    
     gene_list@elementMetadata@listData[["name"]] = geneNames$SYMBOL
     gene_list@elementMetadata@listData[["gene_id"]] = NULL
     gene_list@elementMetadata@listData[["thick"]] = gene_list@ranges
-    return(gene_list)
+    seqlevelsStyle(gene_list) <- "UCSC"
+    gene_range_li <- keepStandardChromosomes(gene_list, pruning.mode = "coarse")
+    return(gene_range_li)
 }
 
 
@@ -334,22 +360,34 @@ merge_and_filter_genes <- function(input_directory, gene1 = "MTAP", gene2 = "CDK
 
 
 MakeCustomAnno2 <- function(gene_range_li, array_type, gb = .GlobalEnv){
+
+    chromNames <- paste(gene_range_li@seqnames@values)
+    add_chrXY <-any(stringr::str_detect(chromNames, "chrX|chrY"))
+
     if (array_type == "EPIC") {
-        custom_anno <- conumee2.0::CNV.create_anno(
-            array_type = array_type, detail_regions = c(gene_range_li, gb$annoEPICxy@detail))
+        custom_anno <- conumee2.0::CNV.create_anno(array_type = array_type,
+                                                   detail_regions = gene_range_li,
+                                                   chrXY = add_chrXY)
     }
+
     if (array_type == "EPICv2") {
         require("mnp.v12epicv2")
         pkgPath <- file.path(path.package("mnp.v12epicv2"), "ext")
         annoFi <- "conumee_annotation_EPIC_v2.2023-02-08.RData"
         load(file.path(pkgPath, annoFi), envir = gb)
         gb$annoEPICv2_xy@detail@seqinfo@genome <- rep("hg19", 24)
+
         custom_anno <- conumee2.0::CNV.create_anno(
-            array_type = array_type, detail_regions = c(gene_range_li, gb$annoEPICv2_xy@detail))
+            array_type = array_type,
+            detail_regions = c(gene_range_li, gb$annoEPICv2_xy@detail),
+            chrXY = add_chrXY
+        )
     }
+
     if (array_type == "450k") {
         custom_anno <- conumee2.0::CNV.create_anno(
-            array_type = array_type, detail_regions = c(gene_range_li, gb$anno450k@detail))
+            array_type = array_type, detail_regions = c(gene_range_li, gb$anno450k@detail),
+            chrXY = add_chrXY)
     }
     return(custom_anno)
 }
