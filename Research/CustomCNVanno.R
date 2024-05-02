@@ -97,28 +97,44 @@ grab_gene_info <- function(entrezIDs) {
 }
 
 
+get_anno_overlap <- function(granges){
+    anno <- minfi::getAnnotation(
+        IlluminaHumanMethylationEPICanno.ilm10b4.hg19::IlluminaHumanMethylationEPICanno.ilm10b4.hg19
+    )
+    anno_granges <- GRanges(
+        seqnames = Rle(anno$chr),
+        ranges = IRanges(start = anno$pos, end = anno$pos),
+        strand = if ("strand" %in% colnames(anno)) Rle(anno$strand) else Rle("*")
+    )
+    
+    seqlevelsStyle(granges) <- "UCSC"
+    seqlevelsStyle(anno_granges) <- "UCSC"
+    
+    contained <- anno_granges %within% granges
+    contained_positions <- anno_granges[contained]
+    overlaps <- findOverlaps(granges, contained_positions)
+    overlapping_indices <- queryHits(overlaps)
+    granges <- granges[unique(overlapping_indices)]
+    return(granges)
+}
+
+
 grab_granges <- function(genesInfo, entrezIDs){
     genesInfo$entrezgene_id <- as.character(genesInfo$entrezgene_id)
     entrezIDs$ENTREZID <- as.character(entrezIDs$ENTREZID)
     mergedData <- dplyr::inner_join(genesInfo, entrezIDs, by = c("entrezgene_id" = "ENTREZID"))
+    
     granges <- GenomicRanges::GRanges(
         seqnames = Rle(as.character(mergedData$chromosome_name)),
-        ranges = IRanges::IRanges(
-            start = mergedData$start_position,
-            end = mergedData$end_position
-        ),
-        names = mergedData$SYMBOL
+        ranges = IRanges::IRanges(start = mergedData$start_position, end = mergedData$end_position),
+        gene_id = mergedData$entrezgene_id,
+        symbol = mergedData$SYMBOL
     )
-    max_ends <- tapply(end(granges), as.character(seqnames(granges)), max)
-    all_seqnames <- unique(as.character(seqnames(granges)))
-    max_ends_vector <- rep(NA, length(all_seqnames))  # Start with NA for missing chromosomes
-    names(max_ends_vector) <- all_seqnames
-    max_ends_vector[names(max_ends)] <- max_ends
-    seqlengths(granges) <- max_ends_vector
-    granges@elementMetadata@listData[["thick"]] = granges@ranges
-    genome(granges) <- "hg19"
-    granges@ranges@NAMES <- paste(genesInfo$entrezgene_id)
+    
+    granges <- get_anno_overlap(granges)
+    names(granges) <- granges$gene_id
     grangesDF <- as.data.frame(granges)
+
     return(grangesDF)
 }
 
@@ -137,7 +153,7 @@ GetGeneRanges <- function(myGenes) {
 
 
 GetGenesListRange <- function(grangesDF, array_type = "EPIC") {
-    mycoords.gr <- GenomicRanges::makeGRangesFromDataFrame(grangesDF)
+    mycoords.gr <- GenomicRanges::makeGRangesFromDataFrame(grangesDF, keep.extra.columns = T)
     grNames <- names(mycoords.gr)
     genomeType <- GenomicFeatures::makeTxDbFromUCSC(genome = "hg19")
     gene_list <- suppressMessages(GenomicFeatures::genes(genomeType, single.strand.genes.only = T))
@@ -146,13 +162,11 @@ GetGenesListRange <- function(grangesDF, array_type = "EPIC") {
     gene_list <- gene_list[grNames, ]
 
     entrezIDs <- gene_list@elementMetadata@listData[["gene_id"]]
-
     geneNames <- AnnotationDbi::select(
         org.Hs.eg.db::org.Hs.eg.db, keys = entrezIDs, keytype = "ENTREZID", columns = "SYMBOL"
-        )
-    
+    )
+
     gene_list@elementMetadata@listData[["name"]] = geneNames$SYMBOL
-    gene_list@elementMetadata@listData[["gene_id"]] = NULL
     gene_list@elementMetadata@listData[["thick"]] = gene_list@ranges
     seqlevelsStyle(gene_list) <- "UCSC"
     gene_range_li <- keepStandardChromosomes(gene_list, pruning.mode = "coarse")
