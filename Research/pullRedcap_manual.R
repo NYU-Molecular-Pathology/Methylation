@@ -15,14 +15,14 @@ formals(install.packages)$verbose <- T
 formals(install.packages)$ask <- F
 
 args <- commandArgs(T)
-if (!requireNamespace("devtools")) {
-    install.packages("devtools", quiet=T)
+if (!requireNamespace("devtools", quietly = T)) {
+    install.packages("devtools", dependencies = T, ask = F)
 }
 
 # Input Arguments ------------------------------------------
-try(args[1] -> token)
-try(args[2] -> inputSheet)
-try(args[3] -> copyToFolder)
+args[1] -> token
+args[2] -> inputSheet
+args[3] -> copyToFolder
 
 dsh="\n================"
 dsh2="================\n"
@@ -45,7 +45,7 @@ if(suppressWarnings(!requireNamespace("redcapAPI"))){
 }
 
 if(!(utils::packageVersion("redcapAPI") >= "2.7.4")){
-    install.packages("redcapAPI", ask=F, update=T, dependencies=T)
+    install.packages("redcapAPI", ask = F, update = T, dependencies = T)
 }
 
 are_valid <- function(...) {
