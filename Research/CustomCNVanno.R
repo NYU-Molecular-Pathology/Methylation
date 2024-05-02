@@ -97,6 +97,9 @@ get_gene_manifest <- function(epic_vers) {
     if ("GencodeV41_Name" %in% colnames(man_df)) {
         new_man_df <- new_man_df %>%
             dplyr::mutate(GencodeV41_Name = purrr::map(GencodeV41_Name, process_genes))
+    } else{
+        new_man_df <- new_man_df %>%
+            dplyr::mutate(GencodeCompV12_NAME = purrr::map(GencodeCompV12_NAME, process_genes))
     }
 
     new_man_df <- new_man_df %>% mutate_all(as.character)
