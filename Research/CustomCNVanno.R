@@ -47,6 +47,75 @@ GetOverlaps <- function(mycoords.gr){
 }
 
 
+v2Manifest <- "IlluminaHumanMethylationEPICv2manifest"
+if (!requireNamespace(v2Manifest, quietly = T)) {
+    devtools::install_github(file.path("mwsill", v2Manifest), upgrade = "always")
+    devtools::install_github("mwsill/minfi", upgrade = "always")
+}
+
+
+get_epic_manifest <- function(epic_vers){
+
+    if (epic_vers == 1) {
+        man_db <-
+            IlluminaHumanMethylationEPICanno.ilm10b4.hg19::IlluminaHumanMethylationEPICanno.ilm10b4.hg19
+    } else{
+        man_db <-
+            IlluminaHumanMethylationEPICv2anno.20a1.hg38::IlluminaHumanMethylationEPICv2anno.20a1.hg38
+    }
+
+    anno <- minfi::getAnnotation(man_db)
+    man_df <- as.data.frame(anno@listData)
+    row.names(man_df) <- anno@rownames
+    return(man_df)
+}
+
+# Define a function to process gene names
+process_genes <- function(gene_names) {
+    if (length(gene_names) > 0) {
+        split_names <- stringr::str_split(gene_names, ";")[[1]]
+        gene_names <- paste(unique(split_names), collapse = ";")
+    }
+    return(gene_names)
+}
+
+
+get_gene_manifest <- function(epic_vers) {
+    man_df <- get_epic_manifest(epic_vers)
+
+    new_man_df <- man_df %>%
+        dplyr::mutate(UCSC_RefGene_Name = purrr::map(UCSC_RefGene_Name, process_genes))
+
+    if ("GencodeV41_Name" %in% colnames(man_df)) {
+        new_man_df <- new_man_df %>%
+            dplyr::mutate(GencodeV41_Name = purrr::map(GencodeV41_Name, process_genes))
+    }
+
+    new_man_df <- new_man_df %>% mutate_all(as.character)
+    return(new_man_df)
+}
+
+
+filter_by_gene <- function(gene_names, new_man_df) {
+    new_man_df %>%
+        mutate(match = sapply(str_split(UCSC_RefGene_Name, ";"), function(genes_row)
+            any(genes_row %in% gene_names))) %>%
+        filter(match)
+}
+
+
+get_filtered_man <- function(manifest_out, myGenes, epic_vers = 1){
+    if (!file.exists(manifest_out)) {
+        new_man_df <- get_gene_manifest(epic_vers)
+        filtered_df <- filter_by_gene(gene_names = myGenes, new_man_df)
+        gb$SaveObj(filtered_df, manifest_out)
+    } else{
+        filtered_df <- gb$LoadRdatObj(manifest_out)
+    }
+    return(filtered_df)
+}
+
+
 drop_missing_genes <- function(myGenes, entrezIDs) {
     is_missing <- is.na(entrezIDs$ENTREZID)
     missing <- myGenes[is_missing]
