@@ -54,6 +54,14 @@ if (!requireNamespace(v2Manifest, quietly = T)) {
 }
 
 
+grab_mset <- function(target1){
+    RGSet <- minfi::read.metharray(target1$Basename, force = T)
+    colnames(RGSet) <- target1$Sample_Name
+    #RGSet@annotation[["array"]] <- "IlluminaHumanMethylationEPIC"
+    Mset <- mnp.v12epicv2::MNPpreprocessIllumina(RGSet, normalize = "controls")
+}
+
+
 get_epic_manifest <- function(epic_vers){
 
     if (epic_vers == 1) {
