@@ -142,7 +142,7 @@ DataFrameMessage <- function(dat){
 
 CheckIdatsReal <- function(ssheet, allFi) {
     basesNeeded = as.vector(ssheet$SentrixID_Pos)
-    if (length(unique(basesNeeded)) * 2 == length(unique(basename(allFi)))){
+    if (length(unique(basesNeeded)) * 2 != length(unique(basename(allFi)))){
         message(crayon::bgRed("Still missing idat files not in External folder:"))
         themissed <- stringr::str_split_fixed(basename(allFi), "_", 3)[,1:2]
         themissed <- paste(themissed[, 1], themissed[, 2], sep = "_")
