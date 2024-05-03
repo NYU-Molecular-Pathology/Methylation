@@ -295,9 +295,11 @@ checkSampleSheet <- function(df) {
     dupes <- duplicated(df$Sample_Name)
     dupeMsg <- "Duplicated sample name found: check df$Sample_Name in samplesheet.csv"
     checkForIssues(dupes, dupeMsg, df[, c(1, 3, 8:11)])
-
+    if (df$Sample_Name[1] == "Control") {
+        stop("Error: The first item should be 'control', not 'Control'.")
+    }
     missingControls <- stringr::str_count(df$Sample_Name, "control|RD-") == 0
-    rd_msg <- "Some samples are missing RD-numbers Check df$Sample_Name in samplesheet.csv"
+    rd_msg <- "Some samples are missing RD-numbers or control is missing! Check df$Sample_Name in samplesheet.csv"
     checkForIssues(missingControls, rd_msg, df[, c(1, 3, 8:11)])
 
     if (nrow(df) < 8) {
