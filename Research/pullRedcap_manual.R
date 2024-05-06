@@ -310,8 +310,8 @@ makeSampleSheet <- function(df, samplesheet_ID, bn = NULL, outputFi="samplesheet
     if (is.null(bn)) {bn = file.path(getwd(), df$barcode_and_row_column)}
     message(crayon::bgCyan("~~~Writing from redcap samplesheet.csv using dataframe:"))
     # Drop Null/Missing sentrix IDs
-    df<- df[!is.na(df[, "barcode_and_row_column"]),]
-    df<- df[!is.null(df[, "barcode_and_row_column"]),]
+    df <- df[!is.na(df[, "barcode_and_row_column"]),]
+    df <- df[!is.null(df[, "barcode_and_row_column"]),]
     # Make Data Frame
     samplesheet_csv = data.frame(
         Sample_Name = df[, "record_id"],
@@ -337,11 +337,21 @@ makeSampleSheet <- function(df, samplesheet_ID, bn = NULL, outputFi="samplesheet
     write.csv(samplesheet_csv, file = outputFi, quote = F,row.names = F)
 }
 
-grabRDCopyIdat <- function(rd_numbers, token, copyIdats=T, outputFi="samplesheet_og.csv", idatPath=NULL){
+
+grabRDCopyIdat <- function(rd_numbers,
+                           token,
+                           copyIdats = T,
+                           outputFi = "samplesheet_og.csv",
+                           idatPath = NULL) {
     if(is.null(idatPath)){idatPath<- file.path(getwd(),"idats")}
     ApiToken <- token
     result_raw <- gb$search.redcap(rd_numbers, token)
-    result <- result_raw[!is.na(result_raw$barcode_and_row_column),]
+    toDrop <- is.na(result_raw$barcode_and_row_column)
+    if (any(toDrop)){
+        message("Some samples have no SentrixID and will be dropped:")
+        message(paste0(capture.output(result_raw[toDrop, 1]), collapse="\n"))
+    }
+    result <- result_raw[!toDrop,]
     samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[,"barcode_and_row_column"],"_",2))
     if(nrow(samplesheet_ID)==0) {
         message(
