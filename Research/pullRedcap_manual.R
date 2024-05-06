@@ -406,6 +406,7 @@ if(are_valid(inputSheet, token)) {
     } else{
         rd_numbers <- as.vector(inputSheet)
     }
+    rd_numbers <- rd_numbers[grep("^RD-", rd_numbers)]
     grabRDCopyIdat(rd_numbers = rd_numbers, token = token)
 }
 
