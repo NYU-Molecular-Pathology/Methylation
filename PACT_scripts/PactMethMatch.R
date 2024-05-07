@@ -34,7 +34,7 @@ if (!requireNamespace("devtools", quietly = TRUE)) {
 }
 
 
-fix_compiler_flags <- function(){
+fix_compiler_flags <- function() {
     # Check if brew installed
     if (is.na(Sys.which("brew")["brew"][[1]])) {
         message("Homebrew is not installed. Installing Homebrew...")
@@ -142,18 +142,19 @@ grabAllRecords <- function(flds, rcon) {
 }
 
 
-message_matched <- function(item, dbInfo, ngsNum, i){
+message_matched <- function(item, dbInfo, ngsNum, i) {
     message(sprintf("Match found for '%s' (%s) for %s in: \"%s\" column", item, dbInfo, ngsNum, i))
 }
 
-searchDb <- function(queryList, db){
+
+searchDb <- function(queryList, db) {
     res <- data.frame()
     for (idx in 1:length(queryList)) {
         item <- queryList[idx]
         ngsNum = paste(names(item)[1])
         for (i in colnames(db)) {
             ngsMatch <- which(grepl(item, db[, i]))
-            if(length(ngsMatch) > 0) {
+            if (length(ngsMatch) > 0) {
                 message_matched(item, db[ngsMatch, i], ngsNum, i)
                 dbMatch <- db[ngsMatch,]
                 dbMatch$Test_Number <- ngsNum
@@ -409,6 +410,7 @@ addExcelLink <- function(output, fiLn, wb, runId) {
     openxlsx::writeData(wb, sheet = runId, x = x, startCol = colNum, startRow = fiLn + 1)
 }
 
+
 createXlFile <- function(runId, output) {
     wb <- openxlsx::createWorkbook()
     openxlsx::addWorksheet(wb, runId)
@@ -544,16 +546,28 @@ getOuputData <- function(token, flds, inputSheet, readFlag) {
 }
 
 
-sourceFuns2 <- function(workingPath = NULL) {
-    mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/"
-    script.list <- c(
-        "R/SetRunParams.R",
-        "R/CopyInputs.R"
-    )
-    if (is.null(workingPath)) {workingPath = getwd()}
-    scripts <- paste0(mainHub, script.list)
-    invisible(lapply(scripts, function(i) {suppressPackageStartupMessages(devtools::source_url(i))}))
+source_pkg_vers <- function() {
+    if (!requireNamespace("mnp.v12epicv2", quietly = T)) {
+        script_path <- "/Volumes/CBioinformatics/Methylation/Rscripts"
+        v2_script <- "install_epic_v2_classifier.R"
+        epicV2script <- file.path(script_path, v2_script)
+        source(epicV2script)
+    }
+
+    library("conumee2.0")
+    library("IlluminaHumanMethylationEPICv2manifest")
+}
+
+
+sourceFuns2 <- function(workingPath = getwd()) {
+    mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main"
+    script.list <- c("R/SetRunParams.R", "R/CopyInputs.R")
+    scripts <- file.path(mainHub, script.list)
+    invisible(lapply(scripts, function(i) {
+        suppressPackageStartupMessages(devtools::source_url(i))
+    }))
     gb$setDirectory(workingPath)
+    source_pkg_vers()
     library("mnp.v12epicv2")
     return(gb$defineParams())
 }
@@ -578,7 +592,7 @@ get_pact_rds <- function(rd_numbers, token) {
 
 
 msgCreated <- function(mySentrix) {
-    pngFiles <- paste0(file.path(fs::path_home(),"Desktop",mySentrix[, 1]),"_cnv.png")
+    pngFiles <- paste0(file.path(fs::path_home(), "Desktop", mySentrix[, 1]),"_cnv.png")
     cnvMade <- file.exists(pngFiles)
     if (any(cnvMade == F)) {
         message("The following failed to be created:")
@@ -621,59 +635,34 @@ loopCNV <- function(mySentrix, asPNG) {
 
 
 CheckIfPngExists <- function(rds, outFolder = NULL) {
-    if(is.null(outFolder)){
+    if (is.null(outFolder)) {
         outFolder = "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
     }
     outFiles <- file.path(outFolder, paste0(rds, "_cnv.png"))
     finished <- file.exists(outFiles)
     if (any(finished)) {
-        message(crayon::bgGreen("The following samples are completed and will be skipped:"),
-                "\n",
-                paste(capture.output(outFiles[finished]), collapse = '\n')
-        )
+        message(crayon::bgGreen("The following are completed and will be skipped:"))
+        message(paste(capture.output(outFiles[finished]), collapse = '\n'))
+
         rds <- rds[!finished]
-        return(rds)
+
+        if (length(rds) > 0) {
+            message(crayon::bgGreen("The following CNV PNG will be generated:"))
+            message(paste(capture.output(rds), collapse = '\n'))
+        }
     }
     return(rds)
 }
 
 
-source_pkg_vers <- function(RGsetEpic){
-    if (RGsetEpic@annotation[['array']] == "IlluminaHumanMethylation450k") {
-        library("IlluminaHumanMethylation450kmanifest")
-        library("IlluminaHumanMethylation450kanno.ilmn12.hg19")
-    }
-    if (RGsetEpic@annotation[['array']] == "IlluminaHumanMethylationEPIC") {
-        library("IlluminaHumanMethylationEPICmanifest")
-        library("IlluminaHumanMethylationEPICanno.ilm10b4.hg19")
-    }
-    if (RGsetEpic@annotation[['array']] == "IlluminaHumanMethylationEPICv2") {
-        epicV2script <- "/Volumes/CBioinformatics/Methylation/Rscripts/install_epic_v2_classifier.R"
-        message("Installing package from source:\n", epicV2script)
-        source(epicV2script)
-        library("conumee2.0")
-        library("IlluminaHumanMethylationEPICv2manifest")
-        library("IlluminaHumanMethylationEPICanno.ilm10b4.hg19")
-        library("mnp.v12epicv2")
-    }
-}
-
-
-get_new_pact_cnv <- function(samplename_data, sentrix.ids, i, idatPath = NULL, chrNum = NULL, doXY = F) {
-    if (is.null(idatPath)) {
-        idatPath <- getwd()
-    }
-    samName <- samplename_data[i]
-    sampleEpic <- sentrix.ids[i]
+get_pact_cnv <- function(samName, samEpic, idatPath = getwd()) {
     sam_out_png <- file.path(fs::path_home(), "Desktop", paste0(samName, "_cnv.png"))
-    pathEpic <- file.path(idatPath, sampleEpic)
-    RGsetEpic <- minfi::read.metharray(pathEpic, verbose = T, force = T)
-    if (i == 1){
-        source_pkg_vers(RGsetEpic)
-    }
-    MsetEpic <- minfi::preprocessIllumina(RGsetEpic, bg.correct = T, normalize = "controls")
+    pathEpic <- file.path(idatPath, samEpic)
+    RGsetEpic <- minfi::read.metharray(pathEpic, verbose = TRUE, force = TRUE)
+    MsetEpic <- minfi::preprocessIllumina(RGsetEpic, bg.correct = TRUE, normalize = "controls")
     cnv_obj <- mnp.v12epicv2::MNPcnv(MsetEpic, sex = NULL, main = samName)
     chrAll <- paste0("chr", 1:22)
+
     message("Saving file to:\n", sam_out_png)
     png(filename = sam_out_png, width = 1820, height = 1040, res = 150)
     conumee2.0::CNV.genomeplot(
@@ -686,13 +675,50 @@ get_new_pact_cnv <- function(samplename_data, sentrix.ids, i, idatPath = NULL, c
     invisible(dev.off())
 }
 
+generate_new_cnv <- function(targets) {
+    has_idat <- targets[, "SentrixID_Pos"] %like% "_R0"
+    targets <- targets[has_idat, ]
 
-loop_save_cnvs <- function(myDt) {
-    samplename_data <- as.character(myDt[, 1])
-    sentrix.ids <- as.character(myDt$SentrixID_Pos)
-    for (i in 1:length(sentrix.ids)) {
-        get_new_pact_cnv(samplename_data, sentrix.ids, i)
+    if (nrow(targets) > 0) {
+        sam_names <- as.character(targets[, 1])
+        sentrix.ids <- as.character(targets$SentrixID_Pos)
+        mapply(get_pact_cnv, sam_names, sentrix.ids)
+    } else{
+        message("The RD-number(s) do not have idat files in REDCap:/n")
+        print(targets)
     }
+    msgCreated(targets)
+    while (!is.null(dev.list())) {dev.off()}
+}
+
+
+GetSampleList <- function(rds, sampleSheet="samplesheet.csv") {
+    targets <- read.csv(sampleSheet)
+    toDrop <- targets$Sample_Name %in% rds
+    targets <- targets[toDrop,]
+    rownames(targets) <- 1:nrow(targets)
+    return(targets)
+}
+
+
+try_cnv_make <- function(rds, token) {
+
+    msg_rd_num(rds, token)
+    sourceFuns2()
+    get_pact_rds(rds, token)
+    targets <- GetSampleList(rds)
+
+    tryCatch(
+        expr = {
+            generate_new_cnv(targets)
+        },
+        error = function(e) {
+            message("The following error occured:\n", e)
+            message("\nTry checking the troubleshooting section on GitHub:\n")
+            git_url <- "https://github.com/NYU-Molecular-Pathology/Methylation/"
+            message(git_url, "blob/main/PACT_scripts/README.md\n")
+        }
+    )
 }
 
 
@@ -722,60 +748,17 @@ copy_output_png <- function(outFolder = NULL) {
 }
 
 
-generate_new_cnv <- function(myDt, asPNG = T) {
-    mySentrix <- myDt[myDt[, "SentrixID_Pos"] %like% "_R0", ]
-
-    if (nrow(mySentrix) > 0) {
-        loop_save_cnvs(myDt)
-    } else{
-        message("The RD-number(s) do not have idat files in REDCap:/n")
-        print(myDt)
-    }
-    msgCreated(mySentrix)
-    while (!is.null(dev.list())) {dev.off()}
-}
-
-
-GetSampleList <- function(rds, sampleSheet="samplesheet.csv") {
-    myDt <- read.csv(sampleSheet)
-    toDrop <- myDt$Sample_Name %in% rds
-    myDt <- myDt[toDrop,]
-    rownames(myDt) <- 1:nrow(myDt)
-    return(myDt)
-}
-
-
-try_cnv_make <- function(rds, token) {
-
-    msg_rd_num(rds, token)
-    sourceFuns2()
-    get_pact_rds(rds, token)
-    myDt <- GetSampleList(rds)
-
-    tryCatch(
-        expr = {
-            generate_new_cnv(myDt)
-        },
-        error = function(e) {
-            message("The following error occured:\n", e)
-            message("\nTry checking the troubleshooting section on GitHub:\n")
-            message("https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/PACT_scripts/README.md\n")
-        }
-    )
-}
-
-
 queue_cnv_maker <- function(output, token) {
     rds <- output$record_id[output$report_complete == "YES"]
+    rds <- rds[grep("^RD-", rds)]
 
     if (all(!is.null(rds)) == F | all(!is.na(rds)) == F | length(rds) == 0) {
-        return(message(crayon::bgGreen("The PACT run has no cases with methylation.")))
+        stop(crayon::bgGreen("The PACT run has no cases with methylation."))
     }
 
     rds <- CheckIfPngExists(rds)
 
     if (length(rds) > 0) {
-
         try_cnv_make(rds, token)
         try(copy_output_png(), silent = T)
 
