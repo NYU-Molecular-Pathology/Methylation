@@ -71,7 +71,17 @@ add_pkg_path() {
 
 add_pkg_path "/usr/local/opt/openjdk/bin"
 add_pkg_path "/usr/local/opt/openjdk@11/bin"
-sudo R CMD javareconf
+
+java_config=$(R CMD javareconf -e)
+
+# Check if the Java configuration is properly set ------------------------------------------------
+if [[ $java_config == *"Java interpreter : /usr/bin/java"* ]]; then
+  echo "Java configuration for R is properly set."
+else
+  echo "Java configuration for R will need password to run: 'sudo R CMD javareconf'."
+  sudo R CMD javareconf
+fi
+
 R CMD config --all
 
 # Add sqlite to PATH ------------------------------------------------------------------------------
