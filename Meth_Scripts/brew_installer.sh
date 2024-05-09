@@ -44,7 +44,10 @@ install_pkgs aspell gdal autoconf automake gcc libgit2 openssl@3 zlib go pandoc 
 install_pkgs texinfo pango cairo open-mpi poppler-qt5 graphviz libopenmpt java11 zeromq libomp libtorch openjdk gmp mpfr pkg-config apache-arrow udunits mariadb-connector-c libtiff hdf5
 install_pkgs llvm
 
-brew install --cask basictex
+# Check if basictex is installed ------------------------------------------------------------------
+if ! brew list --cask basictex &>/dev/null; then
+    brew install --cask basictex
+fi
 
 # Check if XQuartz is installed -------------------------------------------------------------------
 if [[ -d "/Applications/Utilities/XQuartz.app" ]]; then
@@ -85,8 +88,13 @@ fi
 brew doctor
 brew upgrade
 
-R_HOME=$(R RHOME)
-mv "$R_HOME/etc/Rprofile.site" "$R_HOME/etc/Rprofile.site.bak"
+# Get the paths to the new versions of the libraries
+ARROW_PATH=$(brew --prefix apache-arrow)
+OPENJDK_PATH=$(brew --prefix openjdk)
+LIBOMP_PATH=$(brew --prefix libomp)
+
+# Update the PKG_CONFIG_PATH environment variable -------------------------------------------------
+export PKG_CONFIG_PATH="$ARROW_PATH/lib/pkgconfig:$OPENJDK_PATH/lib/pkgconfig:$LIBOMP_PATH/lib/pkgconfig:$PKG_CONFIG_PATH"
 
 R CMD config --all
 
