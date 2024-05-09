@@ -82,6 +82,12 @@ else
   sudo R CMD javareconf
 fi
 
+brew doctor
+brew upgrade
+
+R_HOME=$(R RHOME)
+mv "$R_HOME/etc/Rprofile.site" "$R_HOME/etc/Rprofile.site.bak"
+
 R CMD config --all
 
 # Add sqlite to PATH ------------------------------------------------------------------------------
