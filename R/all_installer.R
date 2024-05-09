@@ -762,10 +762,10 @@ if (checkRequire("GenVisR")) {
     devtools::install_github("griffithlab/GenVisR", dependencies = T, upgrade = "never")
 }
 
-install.packages(c('htmltools', 'foghorn'), dependencies = TRUE, type = 'binary')
-
 suppressWarnings(librarian::shelf(pkgs, ask = F, update_all = F, quiet = FALSE))
 invisible(gc())
+
+try(install.packages('foghorn', dependencies = T, type = 'binary'), silent = T)
 
 cbioLn <- switch(Sys.info()[['sysname']],
                  "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
