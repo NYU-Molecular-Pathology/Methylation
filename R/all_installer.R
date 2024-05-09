@@ -19,8 +19,10 @@ if (is_macos) {
         Sys.setenv(PATH = path)
     })
     options(BioC_mirror = "https://packagemanager.rstudio.com/bioconductor")
-    options(repos = c(CRAN = "https://packagemanager.posit.co/cran/2024-02-20"))
+    #options(repos = c(CRAN = "https://packagemanager.posit.co/cran/2024-02-20"))
     options(warn = -1)
+    options(repos = c(CRAN = 'https://cloud.r-project.org'))
+    options(pkgType = "both")
 }
 
 
@@ -537,22 +539,22 @@ if (checkRequire("mapview")) {
 supM <- function(pk) {return(suppressPackageStartupMessages(suppressWarnings(pk)))}
 
 message("Loading packages:", paste0(capture.output(corePkgs), collapse = "\n"))
-message("...loading")
-supM(librarian::shelf(
+
+librarian::shelf(
     corePkgs,
     ask = F,
     update_all = F,
     quiet = FALSE
-))
+)
 
 message("Loading packages:", paste0(capture.output(preReqPkgs), collapse = "\n"))
-message("...loading")
-supM(librarian::shelf(
+
+librarian::shelf(
     preReqPkgs,
     ask = F,
     update_all = F,
     quiet = FALSE
-))
+)
 
 message("Loading BioConductor Packages and IlluminaHumanMethylation Manifest...")
 
@@ -759,6 +761,8 @@ if (checkRequire("FField")) {
 if (checkRequire("GenVisR")) {
     devtools::install_github("griffithlab/GenVisR", dependencies = T, upgrade = "never")
 }
+
+install.packages(c('htmltools', 'foghorn'), dependencies = TRUE, type = 'binary')
 
 suppressWarnings(librarian::shelf(pkgs, ask = F, update_all = F, quiet = FALSE))
 invisible(gc())
