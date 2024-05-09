@@ -2,8 +2,7 @@
 ## ---------------------------
 ## Script name: brew_installer.sh
 ## Purpose: Install methylation pipeline system requirements with curl and execute Rscripts
-## Date Created: Mar 17, 2023
-## Date Last Modified: February 22, 2024
+## Date Created: March 17, 2023
 ## Author: Jonathan Serrano
 ## Version: 1.1.0
 ## Copyright (c) NYULH Jonathan Serrano, 2024
@@ -32,9 +31,9 @@ install_pkgs() {
     for package in "$@"
     do
         if brew ls --versions $package > /dev/null; then
-            echo -e "\n$package is already installed.\n"
+            echo -e "\n$package is already installed."
         else
-            echo -e "\nInstalling $package...\n"
+            echo -e "\nInstalling $package..."
             brew install $package
         fi
     done
@@ -58,23 +57,31 @@ else
 fi
 
 # Add JDK to PATH and link to R -------------------------------------------------------------------
-echo 'export PATH="/usr/local/opt/openjdk/bin:$PATH"' >> ~/.zshrc
-echo 'export PATH="/usr/local/opt/openjdk/bin:$PATH"' >> ~/.bashrc
-echo 'export PATH="/usr/local/opt/openjdk@11/bin:$PATH"' >> ~/.zshrc
-echo 'export PATH="/usr/local/opt/openjdk@11/bin:$PATH"' >> ~/.bashrc
+add_pkg_path() {
+    path=$1
+    for file in ~/.zshrc ~/.bashrc
+    do
+        if ! grep -Fxq "export PATH=\"$path:\$PATH\"" $file
+        then
+            echo "export PATH=\"$path:\$PATH\"" >> $file
+        fi
+    done
+}
+
+
+add_pkg_path "/usr/local/opt/openjdk/bin"
+add_pkg_path "/usr/local/opt/openjdk@11/bin"
 sudo R CMD javareconf
 R CMD config --all
 
 # Add sqlite to PATH ------------------------------------------------------------------------------
-echo 'export PATH="/usr/local/opt/sqlite/bin:$PATH"' >> ~/.zshrc
-echo 'export PATH="/usr/local/opt/sqlite/bin:$PATH"' >> ~/.bashrc
+add_pkg_path "/usr/local/opt/sqlite/bin"
 
-# Ensure CommandLineTools is installed ------------------------------------------------------------
+# Ensure CommandLineTools is installed & Accept the Xcode license ---------------------------------
 if ! xcode-select -p >/dev/null 2>&1; then
     echo -e "\nXcode Command Line Tools not found. Installing Xcode Command Line Tools...\n"
     xcode-select --install
     sudo xcode-select -s /Library/Developer/CommandLineTools
-    # Accept the Xcode license
     sudo xcodebuild -license accept
 fi
 
