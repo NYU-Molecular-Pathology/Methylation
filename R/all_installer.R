@@ -22,7 +22,7 @@ if (is_macos) {
     #options(repos = c(CRAN = "https://packagemanager.posit.co/cran/2024-02-20"))
     options(warn = -1)
     options(repos = c(CRAN = 'https://cloud.r-project.org'))
-    options(pkgType = "binary")
+    #options(pkgType = "binary")
 }
 
 
@@ -36,7 +36,7 @@ if (arch != "x86_64" & is_macos == T) {
     java_home <- system("which java", intern = TRUE)
     Sys.setenv(JAVA_HOME = java_home)
     message("JAVA_HOME set to ", java_home)
-    install.packages("rJava", type = "binary", dependencies = T, ask = F)
+    try(install.packages("rJava", type = "binary", dependencies = T, ask = F), T)
 }
 
 
