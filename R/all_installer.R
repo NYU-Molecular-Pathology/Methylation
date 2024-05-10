@@ -23,6 +23,12 @@ if (is_macos) {
     options(warn = -1)
     options(repos = c(CRAN = 'https://cloud.r-project.org'))
     #options(pkgType = "binary")
+    # Determine the SDK path using a system call in R
+    sdk_path <- system("xcrun --show-sdk-path", intern = TRUE)
+    Sys.setenv(CC = "clang")
+    Sys.setenv(CXX = "clang++")
+    Sys.setenv(CFLAGS = paste("-isysroot", sdk_path))
+    Sys.setenv(CXXFLAGS = paste("-isysroot", sdk_path))
 }
 
 
