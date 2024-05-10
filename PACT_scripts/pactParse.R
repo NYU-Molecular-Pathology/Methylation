@@ -413,7 +413,12 @@ AppendMissingNotes <- function(indexToAdd, normSamPair, mainSheet, sheetTumors) 
         normSamPair <-
             append(normSamPair, "MISSING_NORMAL_PAIR", after = idx - 1)
     }
-    mainSheet$Paired_Normal[sheetTumors] <- normSamPair
+    if(length(sheetTumors) != length(normSamPair)){
+        message("length(sheetTumors) != length(normSamPair)")
+    }else{
+        mainSheet$Paired_Normal[sheetTumors] <- normSamPair
+    }
+
     return(mainSheet)
 }
 
@@ -437,6 +442,11 @@ AddUnmatchNormals <- function(sheetPairNorm, sheetPairTumor, mainSheet,
                                              mainSheet, sheetTumors)
         } else{
             indexToAdd <- which(tumorSamPair %in% missingCases)
+            all_tumors_philips <- philipsExport$`Tumor DNA/RNA Number`
+            if(length(sheetPairTumor) > length(all_tumors_philips)){
+                unpaired_sams <- which(sheetPairTumor %in% all_tumors_philips == F)
+                indexToAdd <- c(indexToAdd, unpaired_sams)
+            }
             mainSheet <- AppendMissingNotes(indexToAdd, normSamPair, mainSheet, sheetTumors)
         }
     }
@@ -464,6 +474,7 @@ AddSampleIndexes <- function(pairedList, rawData, philipsExport) {
 
     # Check if length mismatch between tumor normals and normal samples
     if (length(sheetPairTumor) != length(sheetPairNorm)) {
+        message("length(sheetPairTumor) != length(sheetPairNorm) in AddSampleIndexes()")
         mainSheet <-
             AddUnmatchNormals(
                 sheetPairNorm,
@@ -1197,7 +1208,7 @@ parseExcelFile <- function(worksheetPath, runID = NULL) {
     sh <- which(grepl("SampleSheet", shNames, ignore.case = T))[1]
     if (is.na(sh)) {
         sheetHead <- GetSheetHeading(worksheetPath)
-        mainSheet <- AltParseFormat(worksheetPath, runID)
+        mainSheet <- AltParseFormat(inputFi = worksheetPath, runID)
     } else{
         sheetHead <- GetExcelData(worksheetPath, sheetNum = shNames[sh], shRange = "A1:B17")
         sheetHead <- rbind(sheetHead,c("",""),c("[Data]",""))
