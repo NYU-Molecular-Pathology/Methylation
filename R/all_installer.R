@@ -65,14 +65,13 @@ if (is_macos == T & !dir.exists(file.path("~", ".R"))) {
         'CXX11=/usr/local/gfortran/bin/g++',
         'CXX14=/usr/local/gfortran/bin/g++',
         'CXX17=/usr/local/gfortran/bin/g++',
-        'LLVM_LOC = /usr/local/opt/llvm',
         'CC=/usr/local/gfortran/bin/gcc -fopenmp',
         'CXX=/usr/local/gfortran/bin/g++ -fopenmp',
         'CFLAGS=-g -O3 -w -pedantic -std=gnu99 -mtune=native -pipe',
         'CXXFLAGS=-g -O3 -w -pedantic -std=c++11 -mtune=native -pipe',
-        'LDFLAGS=-L/usr/local/opt/gettext/lib -L$(LLVM_LOC)/lib -Wl,-rpath,$(LLVM_LOC)/lib',
+        'LDFLAGS=-L/usr/local/opt/gettext/lib -L/usr/local/opt/llvm/lib -Wl,-rpath,/usr/local/opt/llvm/lib',
         'LDFLAGS=-L/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib',
-        'CPPFLAGS=-I/usr/local/opt/gettext/include -I$(LLVM_LOC)/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include',
+        'CPPFLAGS=-I/usr/local/opt/gettext/include -I/usr/local/opt/llvm/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include',
         'PROJ_LIBS = /opt/homebrew/opt/proj/lib',
         'SQLITE3_LIBS = /opt/homebrew/opt/sqlite/lib'
     )
