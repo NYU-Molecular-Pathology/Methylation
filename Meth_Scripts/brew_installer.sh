@@ -67,6 +67,7 @@ brew update && brew upgrade
 #         brew unlink "$keg" && brew link --overwrite --force "$keg"
 #     fi
 # done
+brew cleanup
 
 # Add JDK to PATH and link to R -----------------------------------------------
 add_pkg_path() {
@@ -104,7 +105,7 @@ if ! xcode-select -p >/dev/null 2>&1; then
     sudo xcodebuild -license accept
 fi
 
-R CMD config --all
+#R CMD config --all
 
 message_curl ${GITHUBMAIN} "all_installer.R"
 Rscript --verbose "$HOME/all_installer.R"
