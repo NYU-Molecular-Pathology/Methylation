@@ -526,7 +526,7 @@ loadLibrary("devtools")
 loadLibrary("librarian")
 loadLibrary("BiocManager")
 if (checkRequire("Biobase")) {
-    BiocManager::install("Biobase", update = F, ask = F)
+    BiocManager::install("Biobase", update = F, ask = F, type = "binary")
 }
 loadLibrary("Biobase")
 
