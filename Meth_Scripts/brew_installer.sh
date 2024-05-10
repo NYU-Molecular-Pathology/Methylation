@@ -62,9 +62,11 @@ fi
 # Update Homebrew and upgrade outdated kegs -----------------------------------
 brew doctor
 brew update && brew upgrade
-brew list --formula | while read -r keg; do
-    brew link --overwrite --force "$keg" 2>/dev/null
-done
+# brew list --formula | while read -r keg; do
+#     if ! brew link --overwrite --force "$keg" 2>/dev/null; then
+#         brew unlink "$keg" && brew link --overwrite --force "$keg"
+#     fi
+# done
 
 # Add JDK to PATH and link to R -----------------------------------------------
 add_pkg_path() {
@@ -84,7 +86,6 @@ add_pkg_path "/usr/local/opt/openjdk/bin"
 
 # Check if the Java configuration is properly set -----------------------------
 if ! R CMD javareconf -e | grep -q "Java interpreter : /usr/bin/java"; then
-    echo "Java config for R will need password for: 'sudo R CMD javareconf'."
     sudo R CMD javareconf
 fi
 
