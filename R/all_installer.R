@@ -531,7 +531,10 @@ if (checkRequire("Biobase")) {
 loadLibrary("Biobase")
 
 if (checkRequire("mapview")) {
-    remotes::install_github("r-spatial/mapview", dependencies = T, upgrade = "never")
+     tryCatch(
+        expr = remotes::install_github("r-spatial/mapview", dependencies = T, upgrade = "never"),
+        error = install.packages("mapview", dependencies = T, verbose = T, ask = F, type = "binary")
+    )
 }
 
 # Load/install missing pacakges without asking ----------------------------------------------------
