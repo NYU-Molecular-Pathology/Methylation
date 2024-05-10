@@ -85,9 +85,9 @@ add_pkg_path "/usr/local/opt/sqlite/bin"
 add_pkg_path "/usr/local/opt/openjdk/bin"
 
 # Check if the Java configuration is properly set -----------------------------
-if ! R CMD javareconf -e | grep -q "Java interpreter : /usr/bin/java"; then
-    sudo R CMD javareconf
-fi
+# if ! R CMD javareconf -e | grep -q "Java interpreter : /usr/bin/java"; then
+#     sudo R CMD javareconf
+# fi
 
 # Update the PKG_CONFIG_PATH environment variable -----------------------------
 ARROW_PATH=$(brew --prefix apache-arrow)
