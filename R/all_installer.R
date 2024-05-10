@@ -22,7 +22,7 @@ if (is_macos) {
     #options(repos = c(CRAN = "https://packagemanager.posit.co/cran/2024-02-20"))
     options(warn = -1)
     options(repos = c(CRAN = 'https://cloud.r-project.org'))
-    options(pkgType = "both")
+    #options(pkgType = "both")
 }
 
 
