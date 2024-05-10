@@ -41,11 +41,11 @@ install_pkgs() {
 
 install_pkgs libmagic sqlite proj tcl-tk xz
 install_pkgs aspell gdal autoconf automake gcc libgit2 openssl@3 zlib go pandoc git libffi
-install_pkgs texinfo pango cairo open-mpi poppler-qt5 graphviz libopenmpt java11 zeromq libomp libtorch openjdk gmp mpfr pkg-config apache-arrow udunits mariadb-connector-c libtiff hdf5
+install_pkgs texinfo pango cairo open-mpi poppler-qt5 graphviz libopenmpt java11 zeromq libomp pytorch openjdk gmp mpfr pkg-config apache-arrow udunits mariadb-connector-c libtiff hdf5
 install_pkgs llvm
 
 # Check if basictex is installed ------------------------------------------------------------------
-if ! brew list --cask basictex &>/dev/null; then
+if ! brew list --cask basictex &>/dev/null || command -v pdflatex > /dev/null 2>&1; then
     brew install --cask basictex
 fi
 
@@ -59,7 +59,14 @@ else
     echo "XQuartz installation completed."
 fi
 
-# Add JDK to PATH and link to R -------------------------------------------------------------------
+# Update Homebrew and upgrade outdated kegs -----------------------------------
+brew doctor
+brew update && brew upgrade
+brew list --formula | while read -r keg; do
+    brew link --overwrite --force "$keg" 2>/dev/null
+done
+
+# Add JDK to PATH and link to R -----------------------------------------------
 add_pkg_path() {
     path=$1
     for file in ~/.zshrc ~/.bashrc
@@ -71,43 +78,32 @@ add_pkg_path() {
     done
 }
 
-
+# Add sqlite & openjdk to PATH ------------------------------------------------
+add_pkg_path "/usr/local/opt/sqlite/bin"
 add_pkg_path "/usr/local/opt/openjdk/bin"
-add_pkg_path "/usr/local/opt/openjdk@11/bin"
 
-java_config=$(R CMD javareconf -e)
-
-# Check if the Java configuration is properly set ------------------------------------------------
-if [[ $java_config == *"Java interpreter : /usr/bin/java"* ]]; then
-  echo "Java configuration for R is properly set."
-else
-  echo "Java configuration for R will need password to run: 'sudo R CMD javareconf'."
-  sudo R CMD javareconf
+# Check if the Java configuration is properly set -----------------------------
+if ! R CMD javareconf -e | grep -q "Java interpreter : /usr/bin/java"; then
+    echo "Java config for R will need password for: 'sudo R CMD javareconf'."
+    sudo R CMD javareconf
 fi
 
-brew doctor
-brew upgrade
-
-# Get the paths to the new versions of the libraries
+# Update the PKG_CONFIG_PATH environment variable -----------------------------
 ARROW_PATH=$(brew --prefix apache-arrow)
 OPENJDK_PATH=$(brew --prefix openjdk)
 LIBOMP_PATH=$(brew --prefix libomp)
 
-# Update the PKG_CONFIG_PATH environment variable -------------------------------------------------
 export PKG_CONFIG_PATH="$ARROW_PATH/lib/pkgconfig:$OPENJDK_PATH/lib/pkgconfig:$LIBOMP_PATH/lib/pkgconfig:$PKG_CONFIG_PATH"
 
-R CMD config --all
-
-# Add sqlite to PATH ------------------------------------------------------------------------------
-add_pkg_path "/usr/local/opt/sqlite/bin"
-
-# Ensure CommandLineTools is installed & Accept the Xcode license ---------------------------------
+# Ensure CommandLineTools is installed & Accept the Xcode license -------------
 if ! xcode-select -p >/dev/null 2>&1; then
     echo -e "\nXcode Command Line Tools not found. Installing Xcode Command Line Tools...\n"
     xcode-select --install
     sudo xcode-select -s /Library/Developer/CommandLineTools
     sudo xcodebuild -license accept
 fi
+
+R CMD config --all
 
 message_curl ${GITHUBMAIN} "all_installer.R"
 Rscript --verbose "$HOME/all_installer.R"
