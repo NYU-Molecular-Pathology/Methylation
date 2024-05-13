@@ -13,6 +13,124 @@ options("install.packages.check.source" = "no")
 
 is_macos <- Sys.info()[['sysname']] == "Darwin"
 
+# FUN: Check if brew installed ------------------------------------------------
+install_homebrew <- function() {
+    message("Homebrew is not installed. Installing Homebrew...")
+    url <- "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh"
+    cmd <- sprintf('/bin/bash -c "$(curl -fsSL %s)"', url)
+    message("Executing terminal command:\n", cmd)
+    system(cmd, wait = TRUE)
+}
+
+
+# FUN: Install system package using homebrew ----------------------------------
+brew_install <- function(pkg){
+    message(pkg, " is not installed! Installing ", pkg, " via Homebrew...")
+    system(paste("brew install", pkg), intern = TRUE, wait = TRUE)
+}
+
+
+# FUN: Checks if system compilers installed -----------------------------------
+check_brew_pkgs <- function(){
+    # Check if brew installed
+    brew_exists <- file.exists("/usr/local/bin/brew")
+    if (!brew_exists) {
+        install_homebrew()
+    }
+    # Check if GCC installed
+    gfortran_path <- try(Sys.which("gfortran")[[1]], T)
+    if (gfortran_path == "") {
+        message("gfortran is not installed. Please install gfortran.")
+        brew_install("gcc")
+    }
+    # Check if LLVM installed
+    llvm_installed <- file.exists("/usr/local/opt/llvm/bin/clang")
+    if (!llvm_installed) {
+        brew_install("llvm")
+    }
+    # Check if open-mpi installed
+    mpi_installed <- file.exists("/usr/local/opt/open-mpi/bin")
+    if (!mpi_installed) {
+        brew_install("open-mpi")
+    }
+
+    clear_cmd <- "brew update && brew doctor && rm -rf $(brew --cache)"
+    system(clear_cmd, wait = TRUE)
+}
+
+
+# FUN: Clears system environment flags ----------------------------------------
+clear_enviro <- function(){
+    Sys.setenv(CC = "")
+    Sys.setenv(CFLAGS = "")
+    Sys.setenv(CXX = "")
+    Sys.setenv(CXXFLAGS = "")
+    Sys.setenv(FC = "")
+    Sys.setenv(FFLAGS = "")
+    Sys.setenv(LDFLAGS = "")
+    Sys.setenv(CPPFLAGS = "")
+    Sys.setenv(SHLIB_CXXLD = "")
+    Sys.setenv(SHLIB_LDFLAGS = "")
+    Sys.setenv(OBJC = "")
+}
+
+
+# FUN: Sets system gfortran flags ---------------------------------------------
+set_gfortran <- function(){
+    gfortran_path <- Sys.which("gfortran")[[1]]
+
+    tran_info <- system("gfortran -print-search-dirs", intern = TRUE)
+
+    library_paths <- strsplit(tran_info[length(tran_info)], " ")[[1]][-1]
+    flibs_value <- paste(sapply(library_paths, function(path) {
+        paste("-L", path, sep = "")}), collapse = " ")
+
+    Sys.setenv(FC = gfortran_path)
+    Sys.setenv(FLIBS = flibs_value)
+}
+
+
+# FUN: Sets system openmpi flags ----------------------------------------------
+set_openmpi <- function(){
+    prte_path <- "/usr/local/opt/open-mpi/bin/prte"
+    orte_path <- "/usr/local/opt/open-mpi/bin/orted"
+    ln_cmd <- paste("ln -s", prte_path, orte_path)
+    try(system(ln_cmd, wait = T), T)
+
+    mpi_libs <- "-L/usr/local/opt/open-mpi/lib"
+    mpi_flag <- paste(mpi_libs, Sys.getenv("LDFLAGS"))
+    Sys.setenv(LDFLAGS = mpi_flag)
+
+    cpp_libs <- "-I/usr/local/opt/open-mpi/include"
+    cpp_flag <- paste(cpp_libs, Sys.getenv("CPPFLAGS"))
+    Sys.setenv(CPPFLAGS = cpp_flag)
+}
+
+
+# FUN: Sets system compiler flags ---------------------------------------------
+fix_compiler_flags <- function(){
+    check_brew_pkgs()
+    clear_enviro()
+
+    Sys.setenv(CC = "/usr/local/opt/llvm/bin/clang")
+    Sys.setenv(CXX = "/usr/local/opt/llvm/bin/clang++")
+    Sys.setenv(CXX11 = "/usr/local/opt/llvm/bin/clang++")
+    Sys.setenv(CXX14 = "/usr/local/opt/llvm/bin/clang++")
+    Sys.setenv(CXX17 = "/usr/local/opt/llvm/bin/clang++")
+    Sys.setenv(CXX1X = "/usr/local/opt/llvm/bin/clang++")
+    Sys.setenv(OBJC = "/usr/local/opt/llvm/bin/clang")
+    Sys.setenv(LDFLAGS = "-L/usr/local/opt/llvm/lib")
+    Sys.setenv(CPPFLAGS = "-I/usr/local/opt/llvm/include")
+
+    set_openmpi()
+    set_gfortran()
+
+    curr <- paste("/usr/local/opt/llvm/bin", Sys.getenv("PATH"), sep = ":")
+    Sys.setenv(PATH = paste("/usr/local/opt/open-mpi/bin", curr, sep = ":"))
+}
+
+
+
 if (is_macos) {
     local({
         path <- sub(":/opt/homebrew/bin", ":/usr/local/homebrew/bin", Sys.getenv("PATH"))
@@ -24,11 +142,10 @@ if (is_macos) {
     options(repos = c(CRAN = 'https://cloud.r-project.org'))
     #options(pkgType = "binary")
     # Determine the SDK path using a system call in R
-    sdk_path <- system("xcrun --show-sdk-path", intern = TRUE)
-    Sys.setenv(CC = "clang")
-    Sys.setenv(CXX = "clang++")
-    Sys.setenv(CFLAGS = paste("-isysroot", sdk_path))
-    Sys.setenv(CXXFLAGS = paste("-isysroot", sdk_path))
+    fix_compiler_flags()
+    #sdk_path <- system("xcrun --show-sdk-path", intern = TRUE)
+    #Sys.setenv(CFLAGS = paste("-isysroot", sdk_path))
+    #Sys.setenv(CXXFLAGS = paste("-isysroot", sdk_path))
 }
 
 
@@ -43,49 +160,6 @@ if (arch != "x86_64" & is_macos == T) {
     Sys.setenv(JAVA_HOME = java_home)
     message("JAVA_HOME set to ", java_home)
     try(install.packages("rJava", type = "binary", dependencies = T, ask = F), T)
-}
-
-
-if (is_macos == T & !dir.exists(file.path("~", ".R"))) {
-    message("No Makevars file in ~/.R")
-    system("mkdir -p ~/.R")
-    system("touch ~/.R/MakeVars")
-    fileConn <- file("~/.R/MakeVars")
-    message("Creating MakeVars in ~/.R/MakeVars")
-    params <- c(
-        'FLIBS=-L/usr/local/gfortran/lib',
-        'CC = gcc',
-        'CXX = g++',
-        'CXX98 = g++',
-        'CXX11 = g++',
-        'CXX14 = g++',
-        'CXX17 = g++',
-        'CXX20 = g++',
-        'CXXCPP = g++',
-        'FC = gfortran',
-        'F77 = gfortran',
-        'OBJC = gcc',
-        'OBJCXX = g++',
-        'CXX1X=/usr/local/gfortran/bin/g++',
-        'CXX98=/usr/local/gfortran/bin/g++',
-        'CXX11=/usr/local/gfortran/bin/g++',
-        'CXX14=/usr/local/gfortran/bin/g++',
-        'CXX17=/usr/local/gfortran/bin/g++',
-        'CC=/usr/local/gfortran/bin/gcc -fopenmp',
-        'CXX=/usr/local/gfortran/bin/g++ -fopenmp',
-        'CFLAGS=-g -O3 -w -pedantic -std=gnu99 -mtune=native -pipe',
-        'CXXFLAGS=-g -O3 -w -pedantic -std=c++11 -mtune=native -pipe',
-        'LDFLAGS=-L/usr/local/opt/gettext/lib -L/usr/local/opt/llvm/lib -Wl,-rpath,/usr/local/opt/llvm/lib',
-        'LDFLAGS=-L/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib',
-        'CPPFLAGS=-I/usr/local/opt/gettext/include -I/usr/local/opt/llvm/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include',
-        'PROJ_LIBS = /opt/homebrew/opt/proj/lib',
-        'SQLITE3_LIBS = /opt/homebrew/opt/sqlite/lib'
-    )
-    writeLines(params, fileConn)
-    close(fileConn)
-    #closeAllConnections()
-    cmd = 'devtools::source_url("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/all_installer.R")'
-    #rstudioapi::restartSession(cmd)
 }
 
 if (Sys.info()[['sysname']] == "Darwin" &
