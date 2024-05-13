@@ -169,6 +169,25 @@ set_compiler_paths <- function() {
     Sys.setenv(CXXFLAGS = paste("-isysroot", sdk_path))
 }
 
+update_makevars <- function() {
+  makevars_path <- file.path(Sys.getenv("HOME"), ".R", "Makevars")
+  compiler_settings <- c(
+    "CC = /usr/local/opt/llvm/bin/clang",
+    "CXX = /usr/local/opt/llvm/bin/clang++",
+    "CXX11 = /usr/local/opt/llvm/bin/clang++",
+    "CXX14 = /usr/local/opt/llvm/bin/clang++",
+    "CXX17 = /usr/local/opt/llvm/bin/clang++",
+    "CXX1X = /usr/local/opt/llvm/bin/clang++",
+    "OBJC = /usr/local/opt/llvm/bin/clang",
+    "LDFLAGS = -L/usr/local/opt/llvm/lib",
+    "CPPFLAGS = -I/usr/local/opt/llvm/include"
+  )
+  dir.create(dirname(makevars_path), showWarnings = FALSE, recursive = TRUE)
+  writeLines(compiler_settings, makevars_path)
+}
+
+# To use the function:
+update_makevars()
 
 
 if (is_macos) {
@@ -178,9 +197,7 @@ if (is_macos) {
     options(repos = c(CRAN = 'https://cloud.r-project.org'))
     
     fix_compiler_flags()
-    set_compiler_paths()
-    curr <- paste("/usr/local/opt/llvm/bin", Sys.getenv("PATH"), sep = ":")
-    Sys.setenv(PATH = paste("/usr/local/opt/open-mpi/bin", curr, sep = ":"))
+    update_makevars()
 }
 
 
