@@ -154,21 +154,24 @@ update_system_path <- function() {
 }
 
 if (is_macos) {
-    local({
-        path <- sub(":/opt/homebrew/bin", ":/usr/local/homebrew/bin", Sys.getenv("PATH"))
-        Sys.setenv(PATH = path)
-    })
     options(BioC_mirror = "https://packagemanager.rstudio.com/bioconductor")
     #options(repos = c(CRAN = "https://packagemanager.posit.co/cran/2024-02-20"))
     options(warn = -1)
     options(repos = c(CRAN = 'https://cloud.r-project.org'))
-    #options(pkgType = "binary")
-    # Determine the SDK path using a system call in R
+    
     fix_compiler_flags()
-    update_system_path()
-    #sdk_path <- system("xcrun --show-sdk-path", intern = TRUE)
-    #Sys.setenv(CFLAGS = paste("-isysroot", sdk_path))
-    #Sys.setenv(CXXFLAGS = paste("-isysroot", sdk_path))
+    
+    sdk_path <- system("xcrun --sdk macosx --show-sdk-path", intern = TRUE)
+    cc_current <- Sys.getenv("CC")
+    cc_flags <- paste("clang -isysroot", sdk_path)
+    cxx_curr <- Sys.getenv("CXX")
+    cxx_new <- paste("clang++ -isysroot", sdk_path)
+
+    Sys.setenv(CC = paste(cc_current, cc_flags))
+    Sys.setenv(CXX = paste(cxx_new, cxx_curr))
+    Sys.setenv(CXXFLAGS = paste("-isysroot", sdk_path))
+
+    Sys.setenv(PATH = paste("/usr/local/opt/open-mpi/bin", curr, sep = ":"))
 }
 
 
