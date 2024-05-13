@@ -694,8 +694,9 @@ message("Loading BioConductor Packages and IlluminaHumanMethylation Manifest..."
 
 if (checkRequire("IlluminaHumanMethylationEPICmanifest")) {
     tryCatch(
-        expr = devtools::install_github(repo = "mwsill/IlluminaHumanMethylationEPICmanifest", 
-                                        dependencies = T, upgrade = "never"),
+        expr = devtools::install_github(
+            repo = "mwsill/IlluminaHumanMethylationEPICmanifest",
+            auth_token = NULL, dependencies = T, upgrade = "never"),
         error = function(e){
             message(e)
             message("You need to set your Git token to install Github packages")
