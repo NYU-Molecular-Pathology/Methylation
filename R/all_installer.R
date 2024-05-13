@@ -2,7 +2,7 @@
 ## ---------------------------
 ## Script name: all_installer.R
 ## Purpose: Functions to check if all required packages for the pipeline are installed
-## Date Last Modified: January 11, 2024
+## Date Created: August 9, 2022
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2024
@@ -186,24 +186,25 @@ update_makevars <- function() {
   writeLines(compiler_settings, makevars_path)
 }
 
-# To use the function:
-update_makevars()
-
 
 if (is_macos) {
     options(BioC_mirror = "https://packagemanager.rstudio.com/bioconductor")
     #options(repos = c(CRAN = "https://packagemanager.posit.co/cran/2024-02-20"))
     options(warn = -1)
     options(repos = c(CRAN = 'https://cloud.r-project.org'))
-    
+    # Setting US CRAN REPO
+    rlis = getOption("repos")
+    rlis["CRAN"] = "http://cran.us.r-project.org"
+    options(repos = rlis)
     fix_compiler_flags()
     update_makevars()
+    system("export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib")
 }
 
 
-# Get system architecture
+# Check if architecture is 'arm64' or 'x86_64' -------------------------------------
 arch <- Sys.info()[["machine"]]
-# Check if architecture is 'arm64' or 'x86_64'
+
 if (arch != "x86_64" & is_macos == T) {
     # Set JAVA_HOME environment variable
     #java_home <- system("/usr/libexec/java_home -v 11", intern = TRUE)
@@ -214,8 +215,7 @@ if (arch != "x86_64" & is_macos == T) {
     try(install.packages("rJava", type = "binary", dependencies = T, ask = F), T)
 }
 
-if (Sys.info()[['sysname']] == "Darwin" &
-    !file.exists(file.path("~", ".Renviron"))) {
+if (!file.exists(file.path("~", ".Renviron"))) {
     system("touch ~/.Renviron")
     fileConn <- file("~/.Renviron")
     params <- c('PATH="/usr/local/gfortran/bin:${PATH}"')
@@ -223,11 +223,6 @@ if (Sys.info()[['sysname']] == "Darwin" &
     close(fileConn)
     #closeAllConnections()
 }
-
-# Setting US CRAN REPO
-rlis = getOption("repos")
-rlis["CRAN"] = "http://cran.us.r-project.org"
-options(repos = rlis)
 
 
 loadLibrary <- function(pkgName) {
@@ -245,41 +240,14 @@ checkRequire <- function(pkgName) {
 }
 
 if (checkRequire("devtools")) {
-    install.packages(
-        "devtools",
-        dependencies = T,
-        verbose = T,
-        ask = F
-    )
+    install.packages("devtools", dependencies = T, verbose = T, ask = F)
 }
 
 if (checkRequire("librarian")) {
-    install.packages(
-        "librarian",
-        dependencies = T,
-        verbose = T,
-        ask = F
-    )
+    install.packages("librarian", dependencies = T, verbose = T, ask = F)
 }
+
 loadLibrary("devtools")
-
-# if (Sys.info()[['sysname']] == "Darwin") {
-#     isOpen <- system("which openssl", intern = TRUE)
-#     if (!exists("isOpen")) {
-#         system("brew update")
-#         system("brew install openssl")
-#         system("ln -sf /usr/local/opt/openssl/lib/libcrypto.3.dylib /usr/local/lib/")
-#         system("ln -sf /usr/local/opt/openssl/lib/libssl.3.dylib /usr/local/lib/")
-#         system("ln -sf /usr/local/Cellar/openssl@3/3.0.5/bin/openssl /usr/local/bin/openssl")
-#     } else{
-#         if (isOpen != "/usr/bin/openssl") {
-#             system("ln -sf /usr/local/opt/openssl/lib/libcrypto.3.dylib /usr/local/lib/")
-#             system("ln -sf /usr/local/opt/openssl/lib/libssl.3.dylib /usr/local/lib/")
-#             system("ln -sf /usr/local/Cellar/openssl@3/3.0.5/bin/openssl /usr/local/bin/openssl")
-
-#         }
-#     }
-# }
 
 # List Classifier Core Packages -------------------------------------------------------------------
 corePkgs <- c("randomForest", "glmnet", "ggplot2", "gridExtra", "knitr", "pander", "gmp")
@@ -639,16 +607,15 @@ pkgs <- c(
 )
 
 
-biocPkgs <-
-    c(
-        "lumi",
-        "methylumi",
-        "conumee",
-        "minfi",
-        "IlluminaHumanMethylation450kmanifest",
-        "IlluminaHumanMethylation450kanno.ilmn12.hg19",
-        "IlluminaHumanMethylationEPICanno.ilm10b4.hg19"
-    )
+biocPkgs <- c(
+    "lumi",
+    "methylumi",
+    "conumee",
+    "minfi",
+    "IlluminaHumanMethylation450kmanifest",
+    "IlluminaHumanMethylation450kanno.ilmn12.hg19",
+    "IlluminaHumanMethylationEPICanno.ilm10b4.hg19"
+)
 
 if (checkRequire("BiocManager")) {
     install.packages("BiocManager", dependencies = T, verbose = T, ask = F)
@@ -657,9 +624,11 @@ if (checkRequire("BiocManager")) {
 loadLibrary("devtools")
 loadLibrary("librarian")
 loadLibrary("BiocManager")
+
 if (checkRequire("Biobase")) {
     BiocManager::install("Biobase", update = F, ask = F, type = "binary")
 }
+
 loadLibrary("Biobase")
 
 if (checkRequire("mapview")) {
@@ -709,18 +678,13 @@ if (checkRequire("IlluminaHumanMethylationEPICmanifest")) {
 if (checkRequire("FDb.InfiniumMethylation.hg19")) {
     BiocManager::install(
         "FDb.InfiniumMethylation.hg19",
-        update = F,
-        ask = F,
-        dependencies = T
+        update = F, ask = F, dependencies = T
     )
 }
 
 supM(librarian::shelf(
-    biocPkgs,
-    ask = F,
-    update_all = F,
-    quiet = F,
-    dependencies = T
+    biocPkgs, 
+    ask = F, update_all = F, quiet = F, dependencies = T
 ))
 
 if (checkRequire("mgmtstp27")) {
@@ -860,12 +824,9 @@ if (checkRequire("sf")) {
 
 invisible(gc())
 
-if (Sys.info()[['sysname']] == "Darwin") {
-    system("export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib")
-}
-
 options("install.packages.compile.from.source" = "No")
 options("install.packages.check.source" = "no")
+
 loadLibrary("BiocManager")
 loadLibrary("Biobase")
 
