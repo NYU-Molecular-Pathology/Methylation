@@ -693,9 +693,16 @@ librarian::shelf(
 message("Loading BioConductor Packages and IlluminaHumanMethylation Manifest...")
 
 if (checkRequire("IlluminaHumanMethylationEPICmanifest")) {
-    devtools::install_github(repo = "mwsill/IlluminaHumanMethylationEPICmanifest",
-                             dependencies = T,
-                             upgrade = "never")
+    tryCatch(
+        expr = devtools::install_github(repo = "mwsill/IlluminaHumanMethylationEPICmanifest", 
+                                        dependencies = T, upgrade = "never"),
+        error = function(e){
+            message(e)
+            message("You need to set your Git token to install Github packages")
+            message("usethis::create_github_token()")
+            message("Sys.setenv(GITHUB_PAT = 'YOUR_TOKEN')")
+        }
+    )
 }
 
 if (checkRequire("FDb.InfiniumMethylation.hg19")) {
