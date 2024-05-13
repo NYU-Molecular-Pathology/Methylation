@@ -129,7 +129,33 @@ fix_compiler_flags <- function(){
     Sys.setenv(PATH = paste("/usr/local/opt/open-mpi/bin", curr, sep = ":"))
 }
 
-
+update_system_path <- function() {
+    # Retrieve the user's default shell
+    user_shell <- Sys.getenv("SHELL")
+    
+    # Determine the appropriate shell configuration file based on the shell
+    shell_config_file <- if (grepl("zsh", user_shell)) {
+        path.expand("~/.zshrc")
+    } else if (grepl("bash", user_shell)) {
+        if (file.exists(path.expand("~/.bash_profile"))) {
+            path.expand("~/.bash_profile")
+        } else {
+            path.expand("~/.bashrc")
+        }
+    } else {
+        stop("Your shell is not supported for automatic PATH updates by this script.")
+    }
+    
+    # Command to append the PATH update
+    path_command <- sprintf('echo "export PATH=\\"/usr/local/sbin:$PATH\\"" >> %s', shell_config_file)
+    
+    # Execute the command to modify the shell configuration file
+    if (system(path_command, intern = TRUE) == 0) {
+        message(sprintf("Successfully updated %s to include /usr/local/sbin in PATH.", shell_config_file))
+    } else {
+        warning("Failed to update the PATH in the shell configuration file.")
+    }
+}
 
 if (is_macos) {
     local({
@@ -143,6 +169,7 @@ if (is_macos) {
     #options(pkgType = "binary")
     # Determine the SDK path using a system call in R
     fix_compiler_flags()
+    update_system_path()
     #sdk_path <- system("xcrun --show-sdk-path", intern = TRUE)
     #Sys.setenv(CFLAGS = paste("-isysroot", sdk_path))
     #Sys.setenv(CXXFLAGS = paste("-isysroot", sdk_path))
@@ -211,23 +238,23 @@ if (checkRequire("librarian")) {
 }
 loadLibrary("devtools")
 
-if (Sys.info()[['sysname']] == "Darwin") {
-    isOpen <- system("which openssl", intern = TRUE)
-    if (!exists("isOpen")) {
-        system("brew update")
-        system("brew install openssl")
-        system("ln -sf /usr/local/opt/openssl/lib/libcrypto.3.dylib /usr/local/lib/")
-        system("ln -sf /usr/local/opt/openssl/lib/libssl.3.dylib /usr/local/lib/")
-        system("ln -sf /usr/local/Cellar/openssl@3/3.0.5/bin/openssl /usr/local/bin/openssl")
-    } else{
-        if (isOpen != "/usr/bin/openssl") {
-            system("ln -sf /usr/local/opt/openssl/lib/libcrypto.3.dylib /usr/local/lib/")
-            system("ln -sf /usr/local/opt/openssl/lib/libssl.3.dylib /usr/local/lib/")
-            system("ln -sf /usr/local/Cellar/openssl@3/3.0.5/bin/openssl /usr/local/bin/openssl")
+# if (Sys.info()[['sysname']] == "Darwin") {
+#     isOpen <- system("which openssl", intern = TRUE)
+#     if (!exists("isOpen")) {
+#         system("brew update")
+#         system("brew install openssl")
+#         system("ln -sf /usr/local/opt/openssl/lib/libcrypto.3.dylib /usr/local/lib/")
+#         system("ln -sf /usr/local/opt/openssl/lib/libssl.3.dylib /usr/local/lib/")
+#         system("ln -sf /usr/local/Cellar/openssl@3/3.0.5/bin/openssl /usr/local/bin/openssl")
+#     } else{
+#         if (isOpen != "/usr/bin/openssl") {
+#             system("ln -sf /usr/local/opt/openssl/lib/libcrypto.3.dylib /usr/local/lib/")
+#             system("ln -sf /usr/local/opt/openssl/lib/libssl.3.dylib /usr/local/lib/")
+#             system("ln -sf /usr/local/Cellar/openssl@3/3.0.5/bin/openssl /usr/local/bin/openssl")
 
-        }
-    }
-}
+#         }
+#     }
+# }
 
 # List Classifier Core Packages -------------------------------------------------------------------
 corePkgs <- c("randomForest", "glmnet", "ggplot2", "gridExtra", "knitr", "pander", "gmp")
