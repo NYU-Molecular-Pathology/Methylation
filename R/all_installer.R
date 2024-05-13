@@ -107,28 +107,6 @@ set_openmpi <- function(){
 }
 
 
-# FUN: Sets system compiler flags ---------------------------------------------
-fix_compiler_flags <- function(){
-    check_brew_pkgs()
-    clear_enviro()
-
-    Sys.setenv(CC = "/usr/local/opt/llvm/bin/clang")
-    Sys.setenv(CXX = "/usr/local/opt/llvm/bin/clang++")
-    Sys.setenv(CXX11 = "/usr/local/opt/llvm/bin/clang++")
-    Sys.setenv(CXX14 = "/usr/local/opt/llvm/bin/clang++")
-    Sys.setenv(CXX17 = "/usr/local/opt/llvm/bin/clang++")
-    Sys.setenv(CXX1X = "/usr/local/opt/llvm/bin/clang++")
-    Sys.setenv(OBJC = "/usr/local/opt/llvm/bin/clang")
-    Sys.setenv(LDFLAGS = "-L/usr/local/opt/llvm/lib")
-    Sys.setenv(CPPFLAGS = "-I/usr/local/opt/llvm/include")
-
-    set_openmpi()
-    set_gfortran()
-
-    curr <- paste("/usr/local/opt/llvm/bin", Sys.getenv("PATH"), sep = ":")
-    Sys.setenv(PATH = paste("/usr/local/opt/open-mpi/bin", curr, sep = ":"))
-}
-
 update_system_path <- function() {
     user_shell <- Sys.getenv("SHELL")
     
@@ -153,6 +131,46 @@ update_system_path <- function() {
     }
 }
 
+
+# FUN: Sets system compiler flags ---------------------------------------------
+fix_compiler_flags <- function(){
+    check_brew_pkgs()
+    clear_enviro()
+
+    Sys.setenv(CC = "/usr/local/opt/llvm/bin/clang")
+    Sys.setenv(CXX = "/usr/local/opt/llvm/bin/clang++")
+    Sys.setenv(CXX11 = "/usr/local/opt/llvm/bin/clang++")
+    Sys.setenv(CXX14 = "/usr/local/opt/llvm/bin/clang++")
+    Sys.setenv(CXX17 = "/usr/local/opt/llvm/bin/clang++")
+    Sys.setenv(CXX1X = "/usr/local/opt/llvm/bin/clang++")
+    Sys.setenv(OBJC = "/usr/local/opt/llvm/bin/clang")
+    Sys.setenv(LDFLAGS = "-L/usr/local/opt/llvm/lib")
+    Sys.setenv(CPPFLAGS = "-I/usr/local/opt/llvm/include")
+
+    set_openmpi()
+    set_gfortran()
+    system("brew cleanup")
+    update_system_path()
+
+    curr <- paste("/usr/local/opt/llvm/bin", Sys.getenv("PATH"), sep = ":")
+    Sys.setenv(PATH = paste("/usr/local/opt/open-mpi/bin", curr, sep = ":"))
+}
+
+
+set_compiler_paths <- function() {
+    sdk_path <- system("xcrun --sdk macosx --show-sdk-path", intern = TRUE)
+    cc_current <- Sys.getenv("CC")
+    cc_flags <- paste("clang -isysroot", sdk_path)
+    cxx_curr <- Sys.getenv("CXX")
+    cxx_new <- paste("clang++ -isysroot", sdk_path)
+    
+    Sys.setenv(CC = paste(cc_current, cc_flags))
+    Sys.setenv(CXX = paste(cxx_new, cxx_curr))
+    Sys.setenv(CXXFLAGS = paste("-isysroot", sdk_path))
+}
+
+
+
 if (is_macos) {
     options(BioC_mirror = "https://packagemanager.rstudio.com/bioconductor")
     #options(repos = c(CRAN = "https://packagemanager.posit.co/cran/2024-02-20"))
@@ -160,17 +178,8 @@ if (is_macos) {
     options(repos = c(CRAN = 'https://cloud.r-project.org'))
     
     fix_compiler_flags()
-    
-    sdk_path <- system("xcrun --sdk macosx --show-sdk-path", intern = TRUE)
-    cc_current <- Sys.getenv("CC")
-    cc_flags <- paste("clang -isysroot", sdk_path)
-    cxx_curr <- Sys.getenv("CXX")
-    cxx_new <- paste("clang++ -isysroot", sdk_path)
-
-    Sys.setenv(CC = paste(cc_current, cc_flags))
-    Sys.setenv(CXX = paste(cxx_new, cxx_curr))
-    Sys.setenv(CXXFLAGS = paste("-isysroot", sdk_path))
-
+    set_compiler_paths()
+    curr <- paste("/usr/local/opt/llvm/bin", Sys.getenv("PATH"), sep = ":")
     Sys.setenv(PATH = paste("/usr/local/opt/open-mpi/bin", curr, sep = ":"))
 }
 
