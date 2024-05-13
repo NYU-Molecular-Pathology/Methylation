@@ -130,10 +130,8 @@ fix_compiler_flags <- function(){
 }
 
 update_system_path <- function() {
-    # Retrieve the user's default shell
     user_shell <- Sys.getenv("SHELL")
     
-    # Determine the appropriate shell configuration file based on the shell
     shell_config_file <- if (grepl("zsh", user_shell)) {
         path.expand("~/.zshrc")
     } else if (grepl("bash", user_shell)) {
@@ -146,11 +144,9 @@ update_system_path <- function() {
         stop("Your shell is not supported for automatic PATH updates by this script.")
     }
     
-    # Command to append the PATH update
     path_command <- sprintf('echo "export PATH=\\"/usr/local/sbin:$PATH\\"" >> %s', shell_config_file)
     
-    # Execute the command to modify the shell configuration file
-    if (system(path_command, intern = TRUE) == 0) {
+    if (system(path_command, intern = FALSE) == 0) {
         message(sprintf("Successfully updated %s to include /usr/local/sbin in PATH.", shell_config_file))
     } else {
         warning("Failed to update the PATH in the shell configuration file.")
