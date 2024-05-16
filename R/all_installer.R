@@ -245,18 +245,6 @@ if (arch != "x86_64" & is_macos == T) {
     try(install.packages("rJava", type = "binary", dependencies = T, ask = F), T)
 }
 
-environ_path <- file.path(Sys.getenv("HOME"), ".Renviron")
-
-if (!file.exists(environ_path)) {
-    cmd <- paste("touch", environ_path)
-    system(cmd)
-    fileConn <- file(environ_path)
-    params <- c('PATH="/usr/local/gfortran/bin:${PATH}"')
-    writeLines(params, fileConn)
-    close(fileConn)
-}
-
-
 loadLibrary <- function(pkgName) {
     suppressPackageStartupMessages(library(
         pkgName,
