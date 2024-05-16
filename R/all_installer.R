@@ -322,6 +322,9 @@ if (checkPkg("BiocManager")) {
 if (checkPkg("Biobase")) {
     BiocManager::install("Biobase", update = F, ask = F, type = "binary")
 }
+if (loadLibrary("Biobase") == F) {
+    BiocManager::install("Biobase", update = F, ask = F, type = "source")
+}
 
 stopifnot(loadLibrary("devtools"))
 stopifnot(loadLibrary("librarian"))
