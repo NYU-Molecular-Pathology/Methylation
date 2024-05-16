@@ -217,45 +217,6 @@ fixProf <- function() {
     closeAllConnections()
 }
 
-fixNeeds <- function() {
-    sysfile <- system.file("extdata", "promptUser", package = "needs")
-    try(write(0, file = sysfile), silent = T)
-    options(needs.promptUser = FALSE)
-    invisible(needs:::autoload(TRUE))
-    closeAllConnections()
-}
-
-checkNeeds <- function() {
-    tryCatch(
-        expr = {
-            if (!("needs" %in% rownames(installed.packages()))) {
-                install.packages(
-                    "needs",
-                    dependencies = T,
-                    verbose = T,
-                    Ncpus = 2
-                )
-                fixNeeds()
-                try(fixProf(), silent = T)
-            } else{
-                fixNeeds()
-                try(fixProf(), silent = T)
-            }
-        },
-        error = function(cond) {
-            try_github_inst("joshkatz/needs")
-            fixNeeds()
-            try(fixProf(), silent = T)
-        },
-        warning = function(cond) {
-            try_github_inst("joshkatz/needs")
-            fixNeeds()
-            try(fixProf(), silent = T)
-        }
-    )
-}
-
-
 if (is_macos) {
     options(BioC_mirror = "https://packagemanager.rstudio.com/bioconductor")
     #options(repos = c(CRAN = "https://packagemanager.posit.co/cran/2024-02-20"))
@@ -376,6 +337,40 @@ try_github_inst <- function(git_repo){
         },
         error = function(e) {
             local_github_pkg_install(git_repo)
+        }
+    )
+}
+
+
+fixNeeds <- function() {
+    sysfile <- system.file("extdata", "promptUser", package = "needs")
+    try(write(0, file = sysfile), silent = T)
+    options(needs.promptUser = FALSE)
+    invisible(needs:::autoload(TRUE))
+    closeAllConnections()
+}
+
+checkNeeds <- function() {
+    tryCatch(
+        expr = {
+            if (!("needs" %in% rownames(installed.packages()))) {
+                install.packages("needs", dependencies = T, verbose = T, Ncpus = 2)
+                fixNeeds()
+                try(fixProf(), silent = T)
+            } else{
+                fixNeeds()
+                try(fixProf(), silent = T)
+            }
+        },
+        error = function(cond) {
+            try_github_inst("joshkatz/needs")
+            fixNeeds()
+            try(fixProf(), silent = T)
+        },
+        warning = function(cond) {
+            try_github_inst("joshkatz/needs")
+            fixNeeds()
+            try(fixProf(), silent = T)
         }
     )
 }
@@ -807,7 +802,7 @@ if (is_macos) {
     options(needs.promptUser = FALSE)
 }
 
-if (!(require("Rcpp"))) {
+if (checkPkg("Rcpp")) {
     tryCatch(
         expr = {remotes::install_github("RcppCore/Rcpp")},
         error = function(e){
