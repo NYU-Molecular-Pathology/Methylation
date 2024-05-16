@@ -751,7 +751,7 @@ load_install <- function(pkg_list) {
         for (pkg_missed in missing_pkgs) {
             tryCatch(
                 expr = {
-                    BiocManager::install(pkg_missed, update = T, ask = F, dependencies = T, type = "source")
+                    BiocManager::install(pkg_missed, update = F, ask = F, dependencies = T, type = "source")
                 },
                 error = {
                     install.packages(pkg_missed, dependencies = T, verbose = T, type = "source", ask = F)
@@ -849,7 +849,7 @@ if (checkPkg("GenVisR")) {
     try_github_inst("griffithlab/GenVisR")
 }
 
-suppressWarnings(librarian::shelf(pkgs, ask = F, update_all = F, quiet = FALSE))
+load_install(pkgs)
 
 invisible(gc())
 
