@@ -791,24 +791,18 @@ if (checkPkg("mgmtstp27")) {
     )
 }
 
-
 if (is_macos) {
     checkNeeds()
     closeAllConnections()
 } else{
-    if (!("needs" %in% rownames(installed.packages()))) {
+    if (checkPkg("needs")) {
         install.packages("needs", dependencies = T, verbose = T, ask = F)
     }
-    options(needs.promptUser = FALSE)
 }
+try(options(needs.promptUser = FALSE), T)
 
 if (checkPkg("Rcpp")) {
-    tryCatch(
-        expr = {remotes::install_github("RcppCore/Rcpp")},
-        error = function(e){
-            try_github_inst("RcppCore/Rcpp")
-            }
-        )
+    try_github_inst("RcppCore/Rcpp")
 }
 
 spat_config <-
@@ -819,11 +813,8 @@ if (checkPkg("sf")) {
     tryCatch(
         install.packages("sf", type = "source", dependencies = T, verbose = T, Ncpus = 4),
         error = function(e) {
-            remotes::install_github(
-                "r-spatial/sf", configure.args = "--with-proj-lib=/usr/local/lib/",
-                dependencies = T, upgrade = "never")
-        }
-    )
+            remotes::install_github("r-spatial/sf", configure.args = spat_config,
+                                    dependencies = T, upgrade = "never")})
 }
 
 invisible(gc())
