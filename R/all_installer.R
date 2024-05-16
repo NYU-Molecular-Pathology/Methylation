@@ -212,7 +212,7 @@ fixProf <- function() {
         write(txt2, file = siteProf, append = T)
     }
     close(cxn)
-    closeAllConnections()
+    #closeAllConnections()
 }
 
 if (is_macos) {
@@ -331,9 +331,10 @@ try_github_inst <- function(git_repo){
 fixNeeds <- function() {
     sysfile <- system.file("extdata", "promptUser", package = "needs")
     try(write(0, file = sysfile), silent = T)
+    try(close(sysfile), silent = T)
     options(needs.promptUser = FALSE)
     invisible(needs:::autoload(TRUE))
-    closeAllConnections()
+    #closeAllConnections()
 }
 
 checkNeeds <- function() {
@@ -784,7 +785,7 @@ if (checkPkg("FDb.InfiniumMethylation.hg19")) {
     )
 }
 
-supM(librarian::shelf(biocPkgs, ask = F, update_all = F, quiet = F, dependencies = T))
+load_install(biocPkgs)
 
 if (checkPkg("mgmtstp27")) {
     gitLink <-
@@ -793,15 +794,15 @@ if (checkPkg("mgmtstp27")) {
         gitLink, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F
     )
 }
-
 if (is_macos) {
     checkNeeds()
-    closeAllConnections()
+    #closeAllConnections()
 } else{
     if (checkPkg("needs")) {
         install.packages("needs", dependencies = T, verbose = T, ask = F)
     }
 }
+
 try(options(needs.promptUser = FALSE), T)
 
 if (checkPkg("Rcpp")) {
