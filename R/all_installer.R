@@ -8,7 +8,7 @@
 ## Copyright (c) NYULH Jonathan Serrano, 2024
 ## ---------------------------
 
-options("install.packages.compile.from.source" = "No")
+options("install.packages.compile.from.source" = "Yes")
 options("install.packages.check.source" = "no")
 
 is_macos <- Sys.info()[['sysname']] == "Darwin"
@@ -88,17 +88,11 @@ clear_enviro <- function(){
 
 
 # FUN: Sets system gfortran flags ---------------------------------------------
-set_gfortran <- function(){
+set_gfortran <- function() {
     gfortran_path <- Sys.which("gfortran")[[1]]
-
-    tran_info <- system("gfortran -print-search-dirs", intern = TRUE)
-
-    library_paths <- strsplit(tran_info[length(tran_info)], " ")[[1]][-1]
-    flibs_value <- paste(sapply(library_paths, function(path) {
-        paste("-L", path, sep = "")}), collapse = " ")
-
     Sys.setenv(FC = gfortran_path)
-    Sys.setenv(FLIBS = flibs_value)
+    Sys.setenv(FLIBS = "-L/usr/local/lib/gcc/current")
+
 }
 
 
@@ -139,6 +133,8 @@ update_system_path <- function() {
     } else {
         warning("Failed to update the PATH in the shell configuration file.")
     }
+    Sys.setenv(PATH = paste("/usr/local/bin", Sys.getenv("PATH"), sep = ":"))
+    Sys.setenv(LIBRARY_PATH = paste("/usr/local/lib", Sys.getenv("LIBRARY_PATH"), sep = ":"))
 }
 
 
@@ -190,9 +186,11 @@ update_makevars <- function() {
         "CXX1X = /usr/local/opt/llvm/bin/clang++",
         "OBJC = /usr/local/opt/llvm/bin/clang",
         "LDFLAGS = -L/usr/local/opt/llvm/lib",
-        "CPPFLAGS = -I/usr/local/opt/llvm/include"
+        "CPPFLAGS = -I/usr/local/opt/llvm/include",
+        "FC = /usr/local/bin/gfortran",
+        "FLIBS = -L/usr/local/lib/gcc/current"
     )
-    dir.create(dirname(makevars_path), showWarnings = FALSE, recursive = TRUE)
+    dir.create(dirname(makevars_path), showWarnings = F, recursive = T)
     writeLines(compiler_settings, makevars_path)
 }
 
@@ -732,6 +730,8 @@ biocPkgs <- c(
     "IlluminaHumanMethylationEPICanno.ilm10b4.hg19"
 )
 
+# Load/install missing pacakges without asking ----------------------------------------------------
+supM <- function(pk) {return(suppressPackageStartupMessages(suppressWarnings(pk)))}
 
 if (checkPkg("mapview")) {
     tryCatch(
@@ -743,12 +743,27 @@ if (checkPkg("mapview")) {
 # Load/install missing pacakges without asking ----------------------------------------------------
 supM <- function(pk) {return(suppressPackageStartupMessages(suppressWarnings(pk)))}
 
-message("Loading packages:", paste0(capture.output(corePkgs), collapse = "\n"))
+load_install <- function(pkg_list) {
+    message("Loading packages:\n", paste0(capture.output(pkg_list), collapse = "\n"))
+    librarian::shelf(pkg_list, ask = F, update_all = F, quiet = F, dependencies = T)
+    missing_pkgs <- pkg_list[!(pkg_list %in% rownames(installed.packages()))]
+    if (length(missing_pkgs) > 0) {
+        for (pkg_missed in missing_pkgs) {
+            tryCatch(
+                expr = {
+                    BiocManager::install(pkg_missed, update = T, ask = F, dependencies = T, type = "source")
+                },
+                error = {
+                    install.packages(pkg_missed, dependencies = T, verbose = T, type = "source", ask = F)
+                }
+            )
+        }
+    }
+}
 
-librarian::shelf(corePkgs, ask = F, update_all = F, quiet = F, dependencies = T)
 
-message("Loading packages:\n", paste0(capture.output(preReqPkgs), collapse = "\n"))
-librarian::shelf(preReqPkgs, ask = F, update_all = F, quiet = F, dependencies = T)
+load_install(corePkgs)
+load_install(preReqPkgs)
 
 message("Loading BioConductor Packages and IlluminaHumanMethylation Manifest...")
 if (checkPkg("IlluminaHumanMethylationEPICmanifest")) {
