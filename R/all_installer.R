@@ -150,7 +150,7 @@ fix_compiler_flags <- function(){
     Sys.setenv(CXX17 = "/usr/local/opt/llvm/bin/clang++")
     Sys.setenv(CXX1X = "/usr/local/opt/llvm/bin/clang++")
     Sys.setenv(OBJC = "/usr/local/opt/llvm/bin/clang")
-    Sys.setenv(LDFLAGS = "-L/usr/local/opt/llvm/lib")
+    Sys.setenv(LDFLAGS = "L/usr/local/opt/llvm/lib/c++ -Wl,-rpath,/usr/local/opt/llvm/lib/c++")
     Sys.setenv(CPPFLAGS = "-I/usr/local/opt/llvm/include")
 
     set_openmpi()
@@ -185,7 +185,8 @@ update_makevars <- function() {
         "CXX17 = /usr/local/opt/llvm/bin/clang++",
         "CXX1X = /usr/local/opt/llvm/bin/clang++",
         "OBJC = /usr/local/opt/llvm/bin/clang",
-        "LDFLAGS = -L/usr/local/opt/llvm/lib",
+        #"LDFLAGS = -L/usr/local/opt/llvm/lib",
+        "LDFLAGS= -L/usr/local/opt/llvm/lib/c++ -Wl,-rpath,/usr/local/opt/llvm/lib/c++",
         "CPPFLAGS = -I/usr/local/opt/llvm/include",
         "FC = /usr/local/bin/gfortran",
         "FLIBS = -L/usr/local/lib/gcc/current"
