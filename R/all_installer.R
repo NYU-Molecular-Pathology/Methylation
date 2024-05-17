@@ -154,6 +154,8 @@ fix_compiler_flags <- function(){
     Sys.setenv(CPPFLAGS = "-I/usr/local/opt/llvm/include")
     Sys.setenv(PKG_CFLAGS = "-I/usr/local/include -I/usr/local/opt/llvm/include -I/usr/local/opt/apache-arrow/include")
     Sys.setenv(PKG_LIBS = "-L/usr/local/lib -L/usr/local/opt/llvm/lib -L/usr/local/opt/apache-arrow/lib -larrow")
+    Sys.setenv(LD_LIBRARY_PATH = "/usr/local/lib")
+    Sys.setenv(R_LD_LIBRARY_PATH = "/usr/local/lib:/usr/local/opt/llvm/lib/c++")
 
     set_openmpi()
     set_gfortran()
@@ -192,7 +194,9 @@ update_makevars <- function() {
         "PKG_CFLAGS = -I/usr/local/include -I/usr/local/opt/llvm/include -I/usr/local/opt/apache-arrow/include",
         "PKG_LIBS = -L/usr/local/lib -L/usr/local/opt/llvm/lib -L/usr/local/opt/apache-arrow/lib -larrow",
         "FC = /usr/local/gfortran/bin/gfortran",
-        "FLIBS = -L/usr/local/lib/gcc/current"
+        "FLIBS = -L/usr/local/lib/gcc/current",
+        "LD_LIBRARY_PATH = /usr/local/lib",
+        "R_LD_LIBRARY_PATH = /usr/local/lib:/usr/local/opt/llvm/lib/c++"
     )
     dir.create(dirname(makevars_path), showWarnings = F, recursive = T)
     writeLines(compiler_settings, makevars_path)
