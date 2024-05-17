@@ -283,26 +283,35 @@ stopifnot(loadLibrary("librarian"))
 stopifnot(loadLibrary("BiocManager"))
 stopifnot(loadLibrary("Biobase"))
 
+# FUN: Downloads Github repo locally then unzips it ---------------------------
+download_pkg_unzip <- function(git_repo, zip_name = "main.zip") {
+    repo_url <- file.path("https://github.com", git_repo, "archive/refs/heads")
+    url_path <- file.path(repo_url, zip_name)
+    local_dir <- file.path(fs::path_home(), "github_pkgs")
+    out_file <- file.path(local_dir, paste0(basename(git_repo), "-", zip_name))
+    utils::download.file(url = url_path, method = "curl", destfile = out_file)
+    utils::unzip(out_file, exdir = local_dir)
+}
+
+
 # FUN: Downloads Github repo locally then installs ----------------------------
 local_github_pkg_install <- function(git_repo) {
-    repo_url <- file.path("https://github.com", git_repo,
-                          "archive/refs/heads/main.zip")
-    repo_url2 <- file.path("https://github.com", git_repo,
-                          "archive/refs/heads/master.zip")
+    repo_url <- file.path("https://github.com", git_repo, "archive/refs/heads")
     local_dir <- file.path(fs::path_home(), "github_pkgs")
 
     if (!dir.exists(local_dir)) dir.create(local_dir)
-
     tryCatch(
-        expr ={download.file(repo_url, destfile = file.path(local_dir, "repo.zip"))},
+        expr = {
+            download_pkg_unzip(git_repo, zip_name = "main.zip")
+        },
         error = function(e){
-            download.file(repo_url2, destfile = file.path(local_dir, "repo.zip"))
+            download_pkg_unzip(git_repo, zip_name = "master.zip")
         }
     )
-    unzip(file.path(local_dir, "repo.zip"), exdir = local_dir)
 
     unzipped_dir <- list.dirs(local_dir, full.names = TRUE, recursive = FALSE)
     pkg_dir <- unzipped_dir[grepl(basename(git_repo), unzipped_dir)]
+
     install.packages(pkg_dir, repo = NULL, type = "source", dependencies = T)
 }
 
