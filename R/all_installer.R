@@ -187,7 +187,6 @@ update_makevars <- function() {
         "CXX17 = /usr/local/opt/llvm/bin/clang++",
         "CXX1X = /usr/local/opt/llvm/bin/clang++",
         "OBJC = /usr/local/opt/llvm/bin/clang",
-        #"LDFLAGS = -L/usr/local/opt/llvm/lib",
         "LDFLAGS= -L/usr/local/opt/llvm/lib -L/usr/local/opt/llvm/lib/c++ -Wl,-rpath,/usr/local/opt/llvm/lib/c++",
         "CPPFLAGS = -I/usr/local/opt/llvm/include",
         "PKG_CFLAGS = -I/usr/local/include -I/usr/local/opt/llvm/include -I/usr/local/opt/apache-arrow/include",
@@ -760,9 +759,6 @@ if (checkPkg("mapview")) {
     )
 }
 
-# Load/install missing pacakges without asking ----------------------------------------------------
-supM <- function(pk) {return(suppressPackageStartupMessages(suppressWarnings(pk)))}
-
 load_install <- function(pkg_list) {
     message("Loading packages:\n", paste0(capture.output(pkg_list), collapse = "\n"))
     librarian::shelf(pkg_list, ask = F, update_all = F, quiet = F, dependencies = T)
@@ -883,14 +879,14 @@ if (checkPkg("wateRmelon")) {
     BiocManager::install("wateRmelon", dependencies = T, type = "source", update = F)
 }
 
-cbioLn <- switch(
-    Sys.info()[['sysname']],
-    "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
-    "Linux" = "~/molecpathlab/production/Methylation/classifiers"
+class_pkg_path <- ifelse(
+    is_macos,
+    "/Volumes/CBioinformatics/Methylation/classifiers",
+    "/gpfs/data/molecpathlab/production/Methylation/classifiers"
 )
 
 if (checkPkg("UniD")) {
-    unidPath <- file.path(cbioLn, "UniD")
+    unidPath <- file.path(class_pkg_path, "UniD")
     try(install.packages(unidPath, type = "source", repos = NULL), silent = T)
 }
 
