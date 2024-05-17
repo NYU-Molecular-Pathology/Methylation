@@ -152,6 +152,8 @@ fix_compiler_flags <- function(){
     Sys.setenv(OBJC = "/usr/local/opt/llvm/bin/clang")
     Sys.setenv(LDFLAGS = "-L/usr/local/opt/llvm/lib -L/usr/local/opt/llvm/lib/c++ -Wl,-rpath,/usr/local/opt/llvm/lib/c++")
     Sys.setenv(CPPFLAGS = "-I/usr/local/opt/llvm/include")
+    Sys.setenv(PKG_CFLAGS = "-I/usr/local/include -I/usr/local/opt/llvm/include -I/usr/local/opt/arrow/include")
+    Sys.setenv(PKG_LIBS = "-L/usr/local/lib -L/usr/local/opt/llvm/lib -L/usr/local/opt/arrow/lib -larrow")
 
     set_openmpi()
     set_gfortran()
@@ -188,6 +190,8 @@ update_makevars <- function() {
         #"LDFLAGS = -L/usr/local/opt/llvm/lib",
         "LDFLAGS= -L/usr/local/opt/llvm/lib -L/usr/local/opt/llvm/lib/c++ -Wl,-rpath,/usr/local/opt/llvm/lib/c++",
         "CPPFLAGS = -I/usr/local/opt/llvm/include",
+        "PKG_CFLAGS = -I/usr/local/include -I/usr/local/opt/llvm/include -I/usr/local/opt/arrow/include",
+        "PKG_LIBS = -L/usr/local/lib -L/usr/local/opt/llvm/lib -L/usr/local/opt/arrow/lib -larrow",
         "FC = /usr/local/bin/gfortran",
         "FLIBS = -L/usr/local/lib/gcc/current"
     )
