@@ -287,18 +287,23 @@ stopifnot(loadLibrary("Biobase"))
 local_github_pkg_install <- function(git_repo) {
     repo_url <- file.path("https://github.com", git_repo,
                           "archive/refs/heads/main.zip")
+    repo_url2 <- file.path("https://github.com", git_repo,
+                          "archive/refs/heads/master.zip")
     local_dir <- file.path(fs::path_home(), "github_pkgs")
 
     if (!dir.exists(local_dir)) dir.create(local_dir)
 
-    download.file(repo_url, destfile = file.path(local_dir, "repo.zip"))
+    tryCatch(
+        expr ={download.file(repo_url, destfile = file.path(local_dir, "repo.zip"))},
+        error = function(e){
+            download.file(repo_url2, destfile = file.path(local_dir, "repo.zip"))
+        }
+    )
     unzip(file.path(local_dir, "repo.zip"), exdir = local_dir)
 
     unzipped_dir <- list.dirs(local_dir, full.names = TRUE, recursive = FALSE)
     pkg_dir <- unzipped_dir[grepl(basename(git_repo), unzipped_dir)]
-    package_dir <- file.path(unzipped_dir, "conumee2")
-
-    install.packages(package_dir, repo = NULL, type = "source", dependencies = T)
+    install.packages(pkg_dir, repo = NULL, type = "source", dependencies = T)
 }
 
 
