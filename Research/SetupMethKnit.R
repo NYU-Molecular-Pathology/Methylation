@@ -1,10 +1,13 @@
-gb <- globalenv(); assign("gb", gb)
+gb <- globalenv()
+assign("gb", gb)
+
 formals(library)$quietly <- T
 formals(library)$warn.conflicts <- F
 formals(require)$warn.conflicts <- F
+formals(requireNamespace)$quietly <- T
 formals(install.packages)$dependencies <- T
-formals(install.packages)$verbose <- T
 formals(install.packages)$ask <- F
+
 # TODO: add args to load Differential + parrallel envir
 if(!require("devtools", warn.conflicts = F)){install.packages("devtools", dependencies=T)}
 # https://bookdown.org/yihui/rmarkdown-cookbook/custom-knit.html
@@ -85,15 +88,11 @@ check_pkg_install <- function(git_repo) {
     library(pkg, character.only = T, logical.return = T)
 }
 
-check_pkg_install("rmflight/knitrProgressBar")
-check_pkg_install("markgene/maxprobes")
-check_pkg_install("Ryo-N7/tvthemes")
-check_pkg_install("thomas-neitmann/mdthemes")
-librarian::shelf(c("fst", "itertools"), dependencies = T, ask = F)
+
+check_pkg_install("csgillespie/rprofile")
 #check_pkg_install("ijcBIT/cnv.methyl")
 
 if(Sys.info()[['sysname']]=="Linux") {
-    if(!require("rprofile")){devtools::install_github("csgillespie/rprofile", dependencies = T)}
     rprofile::set_startup_options(show.signif.stars = FALSE, useFancyQuotes = FALSE, Ncpus = parallel::detectCores()-2)
     Sys.setenv("R_PROFILE"=file.path(Sys.getenv("HOME"), "Rprofile.site"))
     Sys.setenv(IMAGEMAGICK_V6_HOME="/gpfs/share/apps/imagemagick/6.9.10/bin/convert")
@@ -101,6 +100,7 @@ if(Sys.info()[['sysname']]=="Linux") {
 
 mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/"
 mainLnk = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/LoadInstallPackages.R"
+
 rFiles = c(
     #"all_installer.R",
     "getRGsetBetas.R",
@@ -113,7 +113,7 @@ rFiles = c(
     "pathviews.R",
     "pullRedcap_manual.R",
     "cleanSamples.R"
-    #    "Differential.R"
+    #"Differential.R"
 )
 
 pkgs <-
@@ -132,20 +132,27 @@ pkgs <-
         "conumee",
         "BiocGenerics",
         "Biobase",
-        "cowplot"
+        "cowplot",
+        "fst", 
+        "itertools"
     )
 
 scripts = paste0(mainHub, rFiles)
 scripts = c(mainLnk, scripts)
-suppressWarnings(lapply(scripts, function(i){message("Sourcing: ", i);devtools::source_url(i)}))
+suppressWarnings(lapply(scripts, function(i){devtools::source_url(i)}))
 supSrt(librarian::shelf(pkgs, ask = F, update_all = F, quiet = FALSE))
 
-#supSrt(librarian::shelf(ask = F, update_all = F, quiet = F, dependencies = T, libs=extraDeps))
-#easypackages::packages(extraDeps, prompt = F, Ncpus = 6)
+check_pkg_install("rmflight/knitrProgressBar")
 
-if(!require("minfiData")){BiocManager::install("minfiData", update=F, ask=F, dependencies=T)}
-if(!require("maxprobes")){ devtools::install_github("markgene/maxprobes", dependencies = T, upgrade="never")}
-#if(!require("cnv.methyl")){devtools::install_github("https://github.com/ijcBIT/cnv.methyl.git", dependencies = T, upgrade="never")}
+check_pkg_install("Ryo-N7/tvthemes")
+check_pkg_install("thomas-neitmann/mdthemes")
+
+if (!requireNamespace("minfiData", quietly = T)) {
+    BiocManager::install("minfiData", update = F, ask = F, dependencies = T)
+}
+
+check_pkg_install("markgene/maxprobes")
+#check_pkg_install("ijcBIT/cnv.methyl")
 
 SetKnitOpts <- function(){
     knitOpt <- list(
@@ -290,6 +297,7 @@ return(knitr::opts_template$set(
 ))
 }
 
+gb$knitOpt <- SetKnitOpts()
 
 htmlClose <- function(){return(cat("\n\n:::\n\n"))}
 
