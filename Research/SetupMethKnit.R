@@ -145,7 +145,7 @@ supSrt(librarian::shelf(pkgs, ask = F, update_all = F, quiet = FALSE))
 
 if(!require("minfiData")){BiocManager::install("minfiData", update=F, ask=F, dependencies=T)}
 if(!require("maxprobes")){ devtools::install_github("markgene/maxprobes", dependencies = T, upgrade="never")}
-if(!require("cnv.methyl")){devtools::install_github("https://github.com/ijcBIT/cnv.methyl.git", dependencies = T, upgrade="never")}
+#if(!require("cnv.methyl")){devtools::install_github("https://github.com/ijcBIT/cnv.methyl.git", dependencies = T, upgrade="never")}
 
 SetKnitOpts <- function(){
     knitOpt <- list(
