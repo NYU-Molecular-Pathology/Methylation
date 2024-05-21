@@ -11,7 +11,83 @@ if(!require("devtools", warn.conflicts = F)){install.packages("devtools", depend
 supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
 supPk <- function(sobj){return(suppressPackageStartupMessages(sobj))}
 supSrt <- function(pk){return(suppressPackageStartupMessages(suppressWarnings(pk)))}
-if(!require("knitrProgressBar")){devtools::install_github("rmflight/knitrProgressBar")}
+
+download_pkg_unzip <- function(git_repo, zip_name = "main.zip") {
+    repo_url <- file.path("https://github.com", git_repo, "archive/refs/heads")
+    url_path <- file.path(repo_url, zip_name)
+    local_dir <- file.path(fs::path_home(), "github_pkgs")
+    out_file <- file.path(local_dir, paste0(basename(git_repo), "-", zip_name))
+    utils::download.file(url = url_path, method = "auto", destfile = out_file)
+    utils::unzip(out_file, exdir = local_dir)
+}
+
+
+# FUN: Downloads Github repo locally then installs ----------------------------
+local_github_pkg_install <- function(git_repo) {
+    repo_url <- file.path("https://github.com", git_repo, "archive/refs/heads")
+    local_dir <- file.path(fs::path_home(), "github_pkgs")
+    
+    if (!dir.exists(local_dir)) dir.create(local_dir)
+    tryCatch(
+        expr = {
+            download_pkg_unzip(git_repo, zip_name = "main.zip")
+        },
+        error = function(e){
+            download_pkg_unzip(git_repo, zip_name = "master.zip")
+        }
+    )
+    
+    unzipped_dir <- list.dirs(local_dir, full.names = TRUE, recursive = FALSE)
+    pkg_dir <- unzipped_dir[grepl(basename(git_repo), unzipped_dir)]
+    
+    install.packages(pkg_dir, repo = NULL, type = "source", dependencies = T)
+}
+
+
+# FUN: Installs package from a Github repository ------------------------------
+install_repo <- function(git_repo){
+    tryCatch(
+        expr = {
+            devtools::install_github(
+                git_repo, dependencies = T, upgrade = "always", type = "source",
+                auth_token = NULL, subdir = basename(git_repo))
+        },
+        error = function(e) {
+            devtools::install_github(
+                git_repo, dependencies = T, upgrade = "always", type = "source",
+                auth_token = NULL)
+        }
+    )
+}
+
+
+try_github_inst <- function(git_repo){
+    message("Installing from repo: ", git_repo)
+    tryCatch(
+        expr = {
+            install_repo(git_repo)
+        },
+        error = function(e) {
+            local_github_pkg_install(git_repo)
+        }
+    )
+}
+
+
+check_pkg_install <- function(git_repo) {
+    pkg <- basename(git_repo)
+    if (!requireNamespace(pkg, quietly = T)) {
+        try_github_inst(git_repo)
+    }
+    library(pkg, character.only = T, logical.return = T)
+}
+
+
+check_pkg_install("rmflight/knitrProgressBar")
+check_pkg_install("markgene/maxprobes")
+
+
+
 if(Sys.info()[['sysname']]=="Linux") {
     if(!require("rprofile")){devtools::install_github("csgillespie/rprofile", dependencies = T)}
     rprofile::set_startup_options(show.signif.stars = FALSE, useFancyQuotes = FALSE, Ncpus = parallel::detectCores()-2)
