@@ -89,6 +89,7 @@ check_pkg_install("rmflight/knitrProgressBar")
 check_pkg_install("markgene/maxprobes")
 check_pkg_install("Ryo-N7/tvthemes")
 check_pkg_install("thomas-neitmann/mdthemes")
+librarian::shelf(c("fst", "itertools"), dependencies = T, ask = F)
 check_pkg_install("ijcBIT/cnv.methyl")
 
 if(Sys.info()[['sysname']]=="Linux") {
