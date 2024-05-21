@@ -32,6 +32,9 @@ local_github_pkg_install <- function(git_repo) {
         expr = {
             download_pkg_unzip(git_repo, zip_name = "main.zip")
         },
+        warning = function(e){
+            download_pkg_unzip(git_repo, zip_name = "master.zip")
+        },
         error = function(e){
             download_pkg_unzip(git_repo, zip_name = "master.zip")
         }
@@ -82,11 +85,11 @@ check_pkg_install <- function(git_repo) {
     library(pkg, character.only = T, logical.return = T)
 }
 
-
 check_pkg_install("rmflight/knitrProgressBar")
 check_pkg_install("markgene/maxprobes")
-
-
+check_pkg_install("Ryo-N7/tvthemes")
+check_pkg_install("thomas-neitmann/mdthemes")
+check_pkg_install("ijcBIT/cnv.methyl")
 
 if(Sys.info()[['sysname']]=="Linux") {
     if(!require("rprofile")){devtools::install_github("csgillespie/rprofile", dependencies = T)}
