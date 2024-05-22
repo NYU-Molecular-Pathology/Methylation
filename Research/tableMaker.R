@@ -153,51 +153,51 @@ GetDefaultColors <- function(col_vect = NULL) {
     col_vect[c(6, 4, 18)] = c("#eb7d34", "#ADD8E6", "#5A5A5A") #changing dark forest-black to orange color
     col_vect[c(1, 2, 3)] = c("#3C7EE4", "#FF6D6D", "#1D8932")
     col_vect_extra <-
-        c(
-            "#CCF000",
-            "#0F99FA",
-            "#669999",
-            "#00CCCC",
-            "#660099",
-            "#CC0066",
-            "#ccb2d4",
-            "#FFFF00",
-            "#BF2600",
-            "#FF9999"
-        )
-    col_vect <- c(col_vect, col_vect_extra)
-    extraCols <- c(
-        "#5a6d40",
-        "#a8d9d0",
-        "#deb313",
-        "#68f821",
-        "#019965",
-        "#158b26",
-        "#79889d",
-        "#1669a3",
-        "#795a34",
-        "#a746a3",
-        "#06d667",
-        "#300ed7",
-        "#3d4e40",
-        "#c6123e",
-        "#a4ac34",
-        "#ff93c7",
-        "#a71938",
-        "#78ca61",
-        "#e4303c",
-        "#5d0b75",
-        "#2b330b",
-        "#fdbc7c",
-        "#6aefa7",
-        "#a243c5",
-        "#32fe88",
-        "#4f4ecd",
-        "#3ab8b4",
-        "#f8ef8c",
-        "#bbcbb4",
-        "#111789"
+    c(
+        "#CCF000",  # Bright Yellow
+        "#0F99FA",  # Bright Blue
+        "#FF00FF",  # Magenta
+        "#00FFFF",  # Cyan
+        "#FF5733",  # Bright Red-Orange
+        "#91FF57",  # Bright Lime Green
+        "#8A2BE2",  # Blue Violet
+        "#FFFF00",  # Yellow
+        "#1b4540",  # Orange Red
+        "#FF9999"   # Light Pink
     )
+col_vect <- c(col_vect, col_vect_extra)
+extraCols <- c(
+    "#5A6D40",  # Dark Olive Green
+    "#A8D9D0",  # Pale Aqua
+    "#FFD700",  # Gold
+    "#98F821",  # Bright Green-Yellow
+    "#019965",  # Dark Green
+    "#FF1493",  # Deep Pink
+    "#1E90FF",  # Dodger Blue
+    "#FF6347",  # Tomato
+    "#8B4513",  # Saddle Brown
+    "#FF33FF",  # Fuchsia
+    "#06D667",  # Medium Spring Green
+    "#0000FF",  # Blue
+    "#7FFF00",  # Chartreuse
+    "#C6123E",  # Dark Red
+    "#795a34",  # Brown
+    "#FF93C7",  # Pink
+    "#A71938",  # Crimson
+    "#F08080",  # Light Coral
+    "#fdbc7c",
+    "#FFB6C1",  # Light Pink
+    "#2B330B",  # Dark Olive Green
+    "#79889d",  # Denim
+    "#33CC33",  # Neon Green
+    "#33FFCC",  # Aquamarine
+    "#FF6666",  # Light Red
+    "#4F4ECD",  # Medium Slate Blue
+    "#3AB8B4",  # Medium Turquoise
+    "#F8EF8C",  # Pale Goldenrod
+    "#BBCBB4",  # Pale Green
+    "#111789"   # Dark Blue
+)
     col_vect <- c(col_vect, extraCols)
     col_vect <- unique(col_vect)
     return(col_vect)
