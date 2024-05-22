@@ -395,8 +395,8 @@ CheckMethPaths <- function(methData) {
     anyPathsFalse <- file.exists(checkPaths) == F
     if (any(anyPathsFalse)) {
         message(crayon::bgRed("Some paths to html reports need editing in MethylMatch.xlsx sheet!"))
-        message("Fix the following paths in worksheet 'Report Path' column that do not exist:\n\n")
-        message(paste(checkPaths[anyPathsFalse], collapse = "\n"))
+        message(crayon::bgRed("Fix the following paths in worksheet 'Report Path' column that do not exist:"), "\n")
+        message(paste(checkPaths[anyPathsFalse], collapse = "\n"), "\n")
     }
     return(methData)
 }
