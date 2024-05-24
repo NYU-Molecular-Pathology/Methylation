@@ -1,7 +1,7 @@
+table {white-space: nowrap;padding: 5px; margin-left:0px}
 .myTable td {padding: 5px}
 .myTable tbody tr:nth-child(odd){background-color: #ADD8E6; padding: 3px}
 .myTable col:nth-child(even) {background:#ffffe0; padding: 4px}
-table {white-space: nowrap;padding: 5px; margin-left:0px}
 .myTable {margin-left:0px}
 h4 {
     color: darkgreen;
