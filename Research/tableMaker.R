@@ -147,52 +147,50 @@ FixNullNaVars <- function(targets, varColumns) {
 
 
 GetDefaultColors <- function(col_vect = NULL) {
-    if (is.null(col_vect)) {
-        color_vect <- c(
-            "#FF0733", # Vivid Red
-            "#33CC33", # Lime Green
-            "#004CFF", # Blue Ribbon
-            "#FFD300", # Cyber Yellow
-            "#C6123E", # Ruby Red
-            "#FF6D6D", # Bittersweet
-            "#795a34", # Coffee
-            "#F76e1e", # Flame
-            "#111789", # Ultra Blue
-            "#C8FF00", # Electric Lime
-            "#898A00", # Olive Drab
-            "#858567", # Sage
-            "#FF93C7", # Pink Sherbet
-            "#02AD24", # Green
-            "#F8EF8C", # Banana Mania
-            "#FFFF00", # Yellow
-            "#019965", # Green Sheen
-            "#5A5A5A", # Davy's Grey
-            "#B1CC71", # Olive Green
-            "#DC5E93", # Raspberry Pink
-            "#FF00FF", # Magenta
-            "#ADD8E6", # Light Blue
-            "#1D8932", # Forest Green
-            "#766C95", # Mountbatten Pink
-            "#FDBC7C", # Peach
-            "#A8D9D0", # Light Cyan
-            "#73FFCC", # Aquamarine
-            "#9B4513", # Saddle Brown
-            "#91FF57", # Screamin' Green
-            "#00479E", # Sapphire
-            "#00FFFF", # Cyan
-            "#7F0000", # Maroon
-            "#8A2BE2", # Blue Violet
-            "#2B330B", # Pine Tree
-            "#009FFF", # Vivid Sky Blue
-            "#FFB79F", # Light Salmon Pink
-            "#1F9698", # Blue-Green
-            "#1C4D42", # Charleston Green
-            "#4A6D40", # Fern Green
-            "#FF1493", # Deep Pink
-            "#BBCBB4", # Laurel Green
-            "#FFA200"  # Orange
-        )
-    }
+    color_vect <- c(
+        "#FF0733", # Vivid Red
+        "#33CC33", # Lime Green
+        "#004CFF", # Blue Ribbon
+        "#FFD300", # Cyber Yellow
+        "#C6123E", # Ruby Red
+        "#FF6D6D", # Bittersweet
+        "#795a34", # Coffee
+        "#F76e1e", # Flame
+        "#111789", # Ultra Blue
+        "#C8FF00", # Electric Lime
+        "#898A00", # Olive Drab
+        "#858567", # Sage
+        "#FF93C7", # Pink Sherbet
+        "#02AD24", # Green
+        "#F8EF8C", # Banana Mania
+        "#FFFF00", # Yellow
+        "#019965", # Green Sheen
+        "#5A5A5A", # Davy's Grey
+        "#B1CC71", # Olive Green
+        "#DC5E93", # Raspberry Pink
+        "#FF00FF", # Magenta
+        "#ADD8E6", # Light Blue
+        "#1D8932", # Forest Green
+        "#766C95", # Mountbatten Pink
+        "#FDBC7C", # Peach
+        "#A8D9D0", # Light Cyan
+        "#73FFCC", # Aquamarine
+        "#9B4513", # Saddle Brown
+        "#91FF57", # Screamin' Green
+        "#00479E", # Sapphire
+        "#00FFFF", # Cyan
+        "#7F0000", # Maroon
+        "#8A2BE2", # Blue Violet
+        "#2B330B", # Pine Tree
+        "#009FFF", # Vivid Sky Blue
+        "#FFB79F", # Light Salmon Pink
+        "#1F9698", # Blue-Green
+        "#1C4D42", # Charleston Green
+        "#4A6D40", # Fern Green
+        "#FF1493", # Deep Pink
+        "#BBCBB4", # Laurel Green
+        "#FFA200"  # Orange
+    )
     return(col_vect)
 }
 
