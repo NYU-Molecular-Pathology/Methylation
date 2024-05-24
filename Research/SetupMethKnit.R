@@ -9,7 +9,10 @@ formals(install.packages)$dependencies <- T
 formals(install.packages)$ask <- F
 
 # TODO: add args to load Differential + parrallel envir
-if(!require("devtools", warn.conflicts = F)){install.packages("devtools", dependencies=T)}
+
+if(!require("devtools", warn.conflicts = F)) {
+    install.packages("devtools", dependencies = T, ask = F)
+}
 # https://bookdown.org/yihui/rmarkdown-cookbook/custom-knit.html
 supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
 supPk <- function(sobj){return(suppressPackageStartupMessages(sobj))}
@@ -80,7 +83,7 @@ try_github_inst <- function(git_repo){
 }
 
 
-check_pkg_install <- function(git_repo) {
+check_git_install <- function(git_repo) {
     pkg <- basename(git_repo)
     if (!requireNamespace(pkg, quietly = T)) {
         try_github_inst(git_repo)
@@ -88,12 +91,27 @@ check_pkg_install <- function(git_repo) {
     library(pkg, character.only = T, logical.return = T)
 }
 
+load_pkg <- function(pkg){
+    if (!requireNamespace(pkg, quietly = T)) {
+        tryCatch(
+            install.packages(pkg),
+            error = BiocManager::install(pkg, update = F, ask = F)
+        )
+    }
+    pkg_success <- library(pkg, character.only = T, logical.return = T)
+    return(paste(pkg, "loaded:", pkg_success))
+}
 
-check_pkg_install("csgillespie/rprofile")
-#check_pkg_install("ijcBIT/cnv.methyl")
+cnv_deps <- c("textshaping", "fstcore", "fst", "fstcore")
 
-if(Sys.info()[['sysname']]=="Linux") {
-    rprofile::set_startup_options(show.signif.stars = FALSE, useFancyQuotes = FALSE, Ncpus = parallel::detectCores()-2)
+lapply(cnv_deps, load_pkg)
+try(devtools::install_github("https://github.com/ijcBIT/cnv.methyl.git"), T)
+#check_git_install("ijcBIT/cnv.methyl")
+
+if(Sys.info()[['sysname']] == "Linux") {
+    load_pkg("rprofile")
+    rprofile::set_startup_options(
+        show.signif.stars = FALSE, useFancyQuotes = FALSE, Ncpus = parallel::detectCores() - 2)
     Sys.setenv("R_PROFILE"=file.path(Sys.getenv("HOME"), "Rprofile.site"))
     Sys.setenv(IMAGEMAGICK_V6_HOME="/gpfs/share/apps/imagemagick/6.9.10/bin/convert")
 }
@@ -137,60 +155,54 @@ pkgs <-
         "itertools"
     )
 
-scripts = paste0(mainHub, rFiles)
-scripts = c(mainLnk, scripts)
+scripts <- c(mainLnk, paste0(mainHub, rFiles))
 suppressWarnings(lapply(scripts, function(i){devtools::source_url(i)}))
 supSrt(librarian::shelf(pkgs, ask = F, update_all = F, quiet = FALSE))
 
-check_pkg_install("rmflight/knitrProgressBar")
-
-check_pkg_install("Ryo-N7/tvthemes")
-check_pkg_install("thomas-neitmann/mdthemes")
-
-if (!requireNamespace("minfiData", quietly = T)) {
-    BiocManager::install("minfiData", update = F, ask = F, dependencies = T)
-}
-
-check_pkg_install("markgene/maxprobes")
-#check_pkg_install("ijcBIT/cnv.methyl")
+check_git_install("rmflight/knitrProgressBar")
+check_git_install("Ryo-N7/tvthemes")
+check_git_install("thomas-neitmann/mdthemes")
+load_pkg("minfiData")
+check_git_install("markgene/maxprobes")
+#check_git_install("ijcBIT/cnv.methyl")
 
 SetKnitOpts <- function(){
     knitOpt <- list(
-    echo = FALSE,
-    message = FALSE,
-    warning = FALSE,
-    cache = FALSE,
-    error = TRUE,
-    rows.print = 15,
-    fig.keep = "all",
-    fig.show = "asis",
-    out.width = '100%',
-    class.source = "bg-success",
-    results = 'asis',
-    fig.path = "figures/",
-    opts.label = TRUE,
-    progress = TRUE, verbose = TRUE
-)
+        echo = FALSE,
+        message = FALSE,
+        warning = FALSE,
+        cache = FALSE,
+        error = TRUE,
+        rows.print = 15,
+        fig.keep = "all",
+        fig.show = "asis",
+        out.width = '100%',
+        class.source = "bg-success",
+        results = 'asis',
+        fig.path = "figures/",
+        opts.label = TRUE,
+        progress = TRUE, verbose = TRUE
+    )
     return(knitr::opts_knit$set(knitOpt))
 }
 
 SetChunkOpts <- function(){
     knitOpt <- list(
-    echo = FALSE,
-    message = FALSE,
-    warning = FALSE,
-    cache = FALSE,
-    error = TRUE,
-    rows.print = 15,
-    fig.keep = "all",
-    fig.show = "asis",
-    out.width = '100%',
-    class.source = "bg-success",
-    results = 'asis',
-    fig.path = "figures/",
-    opts.label = TRUE,
-    progress = TRUE, verbose = TRUE
-)
+        echo = FALSE,
+        message = FALSE,
+        warning = FALSE,
+        cache = FALSE,
+        error = TRUE,
+        rows.print = 15,
+        fig.keep = "all",
+        fig.show = "asis",
+        out.width = '100%',
+        class.source = "bg-success",
+        results = 'asis',
+        fig.path = "figures/",
+        opts.label = TRUE,
+        progress = TRUE, verbose = TRUE
+    )
     return(knitr::opts_chunk$set(knitOpt))
 }
 
@@ -198,7 +210,7 @@ try(animation::ani.options(autobrowse = FALSE), silent=T)
 #options(width = 3500)
 library("magrittr")
 library("dplyr")
-require("minfi")
+library("minfi")
 
 setKnitDir <- function(runDir) {
     syscmd <- paste("cd", runDir)
@@ -227,7 +239,7 @@ options(knitr.package.verbose = TRUE)
 
 GrabKnitTemplates <- function(){
     tempOpts <- list(
-mdsPlot = list(
+        mdsPlot = list(
             echo = FALSE,
             fig.height = 6,
             fig.width = 12,
@@ -237,83 +249,85 @@ mdsPlot = list(
             include = TRUE
         )
         ,
-heatmaps = list(
-    echo = FALSE,
-    fig.width = 18, fig.height = 22,
-    dpi = 350,
-    fig.asp = 0.8,
-    out.width='100%',
-    results = 'asis',
-    fig.keep = 'all',
-    fig.path = "figures/heatmaps/"
-)
-,
-tnsePlot = list(
-    echo = FALSE,
-    error = FALSE,
-    dpi = 350,
-    results = 'asis',
-    fig.height=7,
-    fig.width=9,
-    fig.keep = 'all',
-    out.height="100%", out.width="100%",
-    fig.path = "figures/tsne/"
-)
-,
-samcnv = list(
-    echo = FALSE,
-    fig.keep = 'all',
-    fig.height = 8,
-    fig.width = 15,
-    fig.asp = 0.75,
-    results = 'asis',
-    fig.path = "figures/cnv/",
-    include = TRUE
-)
-,
-cnvplots = list(
-    echo = FALSE,
-    fig.keep = 'all',
-    fig.show = 'asis',
-    results = 'asis',
-    fig.height = 8, #10,
-    fig.width = 15, #16,
-    out.width = '100%',
-    dpi = 350,
-    fig.path = 'figures/cnv/',
-    include = TRUE
-)
-,
-clustProf = list(echo=FALSE, dpi=350, fig.height=7, fig.width=9, out.width='800px', fig.path = "figures/cluster/", include=TRUE)
-)
-#return(invisible(lapply(X = names(tempOpts),FUN=function(X){knitr::opts_template$set(tempOpts[[X]])})))
-return(knitr::opts_template$set(
-    cnvplots = tempOpts[["cnvplots"]],
-    mdsPlot = tempOpts[["mdsPlot"]],
-    heatmaps = tempOpts[["heatmaps"]],
-    tnsePlot = tempOpts[["tnsePlot"]],
-    samcnv = tempOpts[["samcnv"]],
-    clustProf = tempOpts[["clustProf"]]
-))
+        heatmaps = list(
+            echo = FALSE,
+            fig.width = 18, fig.height = 22,
+            dpi = 350,
+            fig.asp = 0.8,
+            out.width='100%',
+            results = 'asis',
+            fig.keep = 'all',
+            fig.path = "figures/heatmaps/"
+        )
+        ,
+        tnsePlot = list(
+            echo = FALSE,
+            error = FALSE,
+            dpi = 350,
+            results = 'asis',
+            fig.height=7,
+            fig.width=9,
+            fig.keep = 'all',
+            out.height="100%", out.width="100%",
+            fig.path = "figures/tsne/"
+        )
+        ,
+        samcnv = list(
+            echo = FALSE,
+            fig.keep = 'all',
+            fig.height = 8,
+            fig.width = 15,
+            fig.asp = 0.75,
+            results = 'asis',
+            fig.path = "figures/cnv/",
+            include = TRUE
+        )
+        ,
+        cnvplots = list(
+            echo = FALSE,
+            fig.keep = 'all',
+            fig.show = 'asis',
+            results = 'asis',
+            fig.height = 8, #10,
+            fig.width = 15, #16,
+            out.width = '100%',
+            dpi = 350,
+            fig.path = 'figures/cnv/',
+            include = TRUE
+        )
+        ,
+        clustProf = list(echo=FALSE, dpi=350, fig.height=7, fig.width=9, out.width='800px', fig.path = "figures/cluster/", include=TRUE)
+    )
+    #return(invisible(lapply(X = names(tempOpts),FUN=function(X){knitr::opts_template$set(tempOpts[[X]])})))
+    return(knitr::opts_template$set(
+        cnvplots = tempOpts[["cnvplots"]],
+        mdsPlot = tempOpts[["mdsPlot"]],
+        heatmaps = tempOpts[["heatmaps"]],
+        tnsePlot = tempOpts[["tnsePlot"]],
+        samcnv = tempOpts[["samcnv"]],
+        clustProf = tempOpts[["clustProf"]]
+    ))
 }
 
 gb$knitOpt <- SetKnitOpts()
 
 htmlClose <- function(){return(cat("\n\n:::\n\n"))}
 
-# library(reticulate)
+if(Sys.info()[['sysname']] == "Linux") {
+    library("reticulate")
+    # Attempt to import the kaleido module
+    try_import <- function() {
+      tryCatch({
+        import("kaleido")
+        TRUE
+      }, error = function(e) {
+        FALSE
+      })
+    }
+    reticulate::use_python("/usr/local/bin/python", required = TRUE)
+    # Check if kaleido is installed; if not, install it
+    if (!try_import()) {
+      reticulate::py_install("kaleido", method = "virtualenv")
+    }
+}
 
-# # Attempt to import the kaleido module
-# try_import <- function() {
-#   tryCatch({
-#     import("kaleido")
-#     TRUE  # Return TRUE if import succeeded
-#   }, error = function(e) {
-#     FALSE  # Return FALSE if import failed
-#   })
-# }
-# reticulate::use_python("/usr/local/bin/python", required = TRUE)
-# # Check if kaleido is installed; if not, install it
-# if (!try_import()) {
-#   reticulate::py_install("kaleido", method = "virtualenv")
-# }
