@@ -147,6 +147,9 @@ FixNullNaVars <- function(targets, varColumns) {
 
 
 GetDefaultColors <- function(col_vect = NULL) {
+    if (!is.null(col_vect)) {
+        return(col_vect)
+    }
     color_vect <- c(
         "#FF0733", # Vivid Red
         "#33CC33", # Lime Green
@@ -191,7 +194,7 @@ GetDefaultColors <- function(col_vect = NULL) {
         "#BBCBB4", # Laurel Green
         "#FFA200"  # Orange
     )
-    return(col_vect)
+    return(color_vect)
 }
 
 
