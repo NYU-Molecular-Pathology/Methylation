@@ -148,58 +148,51 @@ FixNullNaVars <- function(targets, varColumns) {
 
 GetDefaultColors <- function(col_vect = NULL) {
     if (is.null(col_vect)) {
-        col_vect <- pals::glasbey()
+        color_vect <- c(
+            "#FF0733", # Vivid Red
+            "#33CC33", # Lime Green
+            "#004CFF", # Blue Ribbon
+            "#FFD300", # Cyber Yellow
+            "#C6123E", # Ruby Red
+            "#FF6D6D", # Bittersweet
+            "#795a34", # Coffee
+            "#F76e1e", # Flame
+            "#111789", # Ultra Blue
+            "#C8FF00", # Electric Lime
+            "#898A00", # Olive Drab
+            "#858567", # Sage
+            "#FF93C7", # Pink Sherbet
+            "#02AD24", # Green
+            "#F8EF8C", # Banana Mania
+            "#FFFF00", # Yellow
+            "#019965", # Green Sheen
+            "#5A5A5A", # Davy's Grey
+            "#B1CC71", # Olive Green
+            "#DC5E93", # Raspberry Pink
+            "#FF00FF", # Magenta
+            "#ADD8E6", # Light Blue
+            "#1D8932", # Forest Green
+            "#766C95", # Mountbatten Pink
+            "#FDBC7C", # Peach
+            "#A8D9D0", # Light Cyan
+            "#73FFCC", # Aquamarine
+            "#9B4513", # Saddle Brown
+            "#91FF57", # Screamin' Green
+            "#00479E", # Sapphire
+            "#00FFFF", # Cyan
+            "#7F0000", # Maroon
+            "#8A2BE2", # Blue Violet
+            "#2B330B", # Pine Tree
+            "#009FFF", # Vivid Sky Blue
+            "#FFB79F", # Light Salmon Pink
+            "#1F9698", # Blue-Green
+            "#1C4D42", # Charleston Green
+            "#4A6D40", # Fern Green
+            "#FF1493", # Deep Pink
+            "#BBCBB4", # Laurel Green
+            "#FFA200"  # Orange
+        )
     }
-    col_vect[c(6, 4, 18)] = c("#eb7d34", "#ADD8E6", "#5A5A5A") #changing dark forest-black to orange color
-    col_vect[c(1, 2, 3)] = c("#3C7EE4", "#FF6D6D", "#1D8932")
-    col_vect_extra <-
-    c(
-        "#CCF000",  # Bright Yellow
-        "#0F99FA",  # Bright Blue
-        "#FF00FF",  # Magenta
-        "#00FFFF",  # Cyan
-        "#FF5733",  # Bright Red-Orange
-        "#91FF57",  # Bright Lime Green
-        "#8A2BE2",  # Blue Violet
-        "#FFFF00",  # Yellow
-        "#1b4540",  # Orange Red
-        "#FF9999"   # Light Pink
-    )
-col_vect <- c(col_vect, col_vect_extra)
-extraCols <- c(
-    "#5A6D40",  # Dark Olive Green
-    "#A8D9D0",  # Pale Aqua
-    "#FFD700",  # Gold
-    "#98F821",  # Bright Green-Yellow
-    "#019965",  # Dark Green
-    "#FF1493",  # Deep Pink
-    "#1E90FF",  # Dodger Blue
-    "#FF6347",  # Tomato
-    "#8B4513",  # Saddle Brown
-    "#FF33FF",  # Fuchsia
-    "#06D667",  # Medium Spring Green
-    "#0000FF",  # Blue
-    "#7FFF00",  # Chartreuse
-    "#C6123E",  # Dark Red
-    "#795a34",  # Brown
-    "#FF93C7",  # Pink
-    "#A71938",  # Crimson
-    "#F08080",  # Light Coral
-    "#fdbc7c",
-    "#FFB6C1",  # Light Pink
-    "#2B330B",  # Dark Olive Green
-    "#79889d",  # Denim
-    "#33CC33",  # Neon Green
-    "#33FFCC",  # Aquamarine
-    "#FF6666",  # Light Red
-    "#4F4ECD",  # Medium Slate Blue
-    "#3AB8B4",  # Medium Turquoise
-    "#F8EF8C",  # Pale Goldenrod
-    "#BBCBB4",  # Pale Green
-    "#111789"   # Dark Blue
-)
-    col_vect <- c(col_vect, extraCols)
-    col_vect <- unique(col_vect)
     return(col_vect)
 }
 
