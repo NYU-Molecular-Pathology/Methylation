@@ -725,6 +725,7 @@ pkgs <- c(
     "tools",
     "torch",
     "tseries",
+    "umap",
     "units",
     "utf8",
     "utils",
