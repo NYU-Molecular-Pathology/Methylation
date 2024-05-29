@@ -82,20 +82,26 @@ check_pkg_install <- function() {
         repos = 'http://cran.us.r-project.org',
         Ncpus = 4
     )
-
+    
     fix_compiler_flags()
-
+    
     pkgs <- c("data.table", "openxlsx", "jsonlite", "RCurl",
               "readxl", "stringr", "tidyverse", "crayon", "tinytex",
               "systemfonts", "remotes")
-
+    
     needed_pkgs <- pkgs[!sapply(pkgs, requireNamespace, quietly = TRUE)]
-
+    
     if (length(needed_pkgs) > 0) {
-        do.call(install.packages, c(list(pkgs = needed_pkgs), params))
+        tryCatch({
+            do.call(install.packages, c(list(pkgs = needed_pkgs), params))
+        }, error = function(e) {
+            message("Initial installation failed, attempting binary installation.")
+            params$type <- "binary"
+            do.call(install.packages, c(list(pkgs = needed_pkgs), params))
+        })
     }
-
-    sapply(pkgs, library, character.only = T, logical.return = T, quietly = T)
+    
+    sapply(pkgs, library, character.only = TRUE, logical.return = TRUE, quietly = TRUE)
 }
 
 
