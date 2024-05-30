@@ -10,6 +10,7 @@
 
 options("install.packages.compile.from.source" = "Yes")
 options("install.packages.check.source" = "no")
+options(Ncpus = 4)
 
 is_macos <- Sys.info()[['sysname']] == "Darwin"
 
@@ -784,6 +785,9 @@ load_install <- function(pkg_list) {
 
 
 load_install(corePkgs)
+if (!requireNamespace("ff", quietly = TRUE)) {
+    install.packages("ff", type = "binary", ask = F, dependencies = T)
+}
 load_install(preReqPkgs)
 
 message("Loading BioConductor Packages and IlluminaHumanMethylation Manifest...")
