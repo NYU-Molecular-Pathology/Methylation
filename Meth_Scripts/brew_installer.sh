@@ -14,6 +14,8 @@ if ! command -v brew >/dev/null 2>&1; then
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
 
+brew update
+
 # Hardcoded URLs and function to curl download scripts ----------------------
 GITHUBMAIN="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/"
 XQUARTZURL="https://github.com/XQuartz/XQuartz/releases/download/XQuartz-2.8.5/"
