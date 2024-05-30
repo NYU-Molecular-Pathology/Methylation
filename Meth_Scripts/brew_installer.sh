@@ -8,13 +8,13 @@
 ## Copyright (c) NYULH Jonathan Serrano, 2024
 ## ---------------------------
 
-# Check if Homebrew is installed ------------------------------------------------------------------
+# Check if Homebrew is installed --------------------------------------------
 if ! command -v brew >/dev/null 2>&1; then
     echo -e "\nHomebrew not found. Installing Homebrew...\n"
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
 
-# Hardcoded URLs and function to curl download scripts --------------------------------------------
+# Hardcoded URLs and function to curl download scripts ----------------------
 GITHUBMAIN="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/"
 XQUARTZURL="https://github.com/XQuartz/XQuartz/releases/download/XQuartz-2.8.5/"
 
@@ -26,7 +26,7 @@ message_curl() {
     chmod +rwx "$HOME/$filename"
 }
 
-# Install packages using Homebrew -----------------------------------------------------------------
+# Install packages using Homebrew -------------------------------------------
 install_pkgs() {
     for package in "$@"
     do
@@ -44,12 +44,18 @@ install_pkgs aspell gdal autoconf automake gcc libgit2 openssl@3 zlib go pandoc 
 install_pkgs texinfo pango cairo open-mpi poppler-qt5 graphviz libopenmpt java11 zeromq libomp pytorch openjdk gmp mpfr pkg-config apache-arrow udunits mariadb-connector-c libtiff hdf5
 install_pkgs llvm z3 libxml2
 
-# Check if basictex is installed ------------------------------------------------------------------
+# Check if basictex is installed ----------------------------------------------
 if ! brew list --cask basictex &>/dev/null || command -v pdflatex > /dev/null 2>&1; then
     brew install --cask basictex
 fi
 
-# Check if XQuartz is installed -------------------------------------------------------------------
+# Check additional requirements for Arm64 Macs --------------------------------
+if [[ $(uname -m) == "arm64" ]]; then
+    brew install --cask adoptopenjdk
+    install_pkgs abseil gd hwloc mpdecimal pcre2 aom icu4c libgpg-error libtool pinentry apache-arrow gdk-pixbuf imath libheif libunistring mpg123 pixman geos isl libidn2 libusb netcdf thrift gettext jasper libkml libuv netpbm pmix tree gflags jpeg-turbo libksba libvmaf nettle udunits aws-sdk-cpp giflib jpeg-xl liblerc libvorbis npth unbound brotli json-c libx11 nspr popt unixodbc bzip2 glib jsoncpp libmpc libxau nss portaudio uriparser c-ares glog krb5 libnghttp2 libxcb numpy utf8proc ca-certificates lame libogg libxdmcp protobuf webp cfitsio gnutls libarchive openexr python@3.12 x265 eigen libassuan libpng libxrender xerces-c epsilon gpgme libavif libpq libyaml openjdk@11 qhull xorgproto expat graphite2 libb2 librsvg little-cms2 openjpeg qt@5 flac libdap librttopo openldap rapidjson fontconfig grpc libde265 libsndfile lz4 re2 freetype gts libevent libsodium lzo opus readline freexl harfbuzz libspatialite m4 p11-kit shared-mime-info zstd fribidi libgcrypt libssh2 sleef highway libgeotiff libtasn1 minizip snappy
+fi
+
+# Check if XQuartz is installed -----------------------------------------------
 if [[ -d "/Applications/Utilities/XQuartz.app" ]]; then
     echo -e "XQuartz is already installed.\n"
 else
