@@ -152,7 +152,9 @@ pkgs <-
         "Biobase",
         "cowplot",
         "fst", 
-        "itertools"
+        "itertools",
+        "Cairo",
+        "tinytex"
     )
 
 scripts <- c(mainLnk, paste0(mainHub, rFiles))
