@@ -65,9 +65,11 @@ if (gb$genPathChunk == T) {
     CheckDirCreate("figures/heatmaps/gene_cluster/")
 }
 
-# Segments Copy Number Output Files
-segFile <- file.path(cnvSegDir, paste0(td, "_segfile.csv"))
-seg_clust_file <- file.path(cnvSegDir, paste0(td, "_seg_clusters.txt"))
+# Segments Copy Number Output Files -------------------------------------------
+if (gb$genCNchunk == T) {
+    segFile <- file.path(cnvSegDir, paste0(td, "_segfile.csv"))
+    seg_clust_file <- file.path(cnvSegDir, paste0(td, "_seg_clusters.txt"))
+}
 gsetFile <- file.path(gb$runDir, "data", paste0(td, "_gsetfunnorm.rds"))
 gBetaFile <- file.path(gb$runDir, "data", paste0(td, "_gsetbeta.rds"))
 ClusfiNam <- file.path(gb$runDir, "data", paste0(td, "_dmp.csv"))
@@ -88,8 +90,6 @@ if (gb$supervisedRun == F) {
 }
 
 gb$tsne_titles <- gb$generateTitles(clusType, topTitle = as.character(varProbes), gb$titleMain)
-
-
 mdsTitle <- paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot")
 
 assignOpts <- function() {
