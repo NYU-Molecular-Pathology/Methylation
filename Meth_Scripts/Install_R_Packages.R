@@ -50,7 +50,7 @@ library_inst <- function(pkg_list) {
 
 inst_load_pkg <- function(pkg){
     if (!is_installed(pkg)) {
-        install_pkgs(pkg, repos = "https://cloud.r-project.org")
+        install_pkgs(pkg, repos = "https://cran.r-project.org")
     }
     library(pkg, character.only = T)
 }
