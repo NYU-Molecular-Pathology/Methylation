@@ -2,7 +2,6 @@
 
 set_environment <- function() {
     if (Sys.info()[['sysname']]=="Darwin") {
-        options(install.packages.compile.from.source = "--no-multiarch")
         options(Ncpus = 4)
         jdk_opt <- "/usr/local/opt/openjdk/bin/java"
         cmd <- "-version 2>&1 | awk '/version/ {print $3}' | tr -d '\"'"
