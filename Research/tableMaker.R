@@ -324,7 +324,7 @@ StripSheetSpaces <- function(samSh, samsheet, gb){
 
 
 ValidateColumns <- function(targets, gb) {
-  if(is.null(gb$col_samTypes)) {
+  if (is.null(gb$col_samTypes)) {
     if (is.null(gb$col_samGrp)) {
       targets$Unknown_Samples <- "Unknown"
       gb$col_samGrp <- gb$col_samTypes <- "Unknown_Samples"
@@ -332,8 +332,12 @@ ValidateColumns <- function(targets, gb) {
       gb$col_samTypes <- gb$col_samGrp
     }
   }
-  stopifnot(gb$col_samNames %in% colnames(targets) == T)
-  if(gb$col_samTypes %in% colnames(targets) == F){
+  if (gb$col_samNames %in% colnames(targets) == F) {
+      stop("\nYour input col_samNames", ' "', gb$col_samNames, '" ', 
+           "was not found in the colnames(targets) available:\n", 
+           paste(colnames(targets), collapse = "\n"))
+  }
+  if (gb$col_samTypes %in% colnames(targets) == F){
     targets[, gb$col_samTypes] <- "Unknown"
   }
   return(targets)
