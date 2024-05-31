@@ -54,6 +54,8 @@ NULL -> variable_to_filter # is there any variable to cluster samples by?
 "UNKNOWN" -> blank_keywd
 # Column containing unique sample IDS
 "record_id" -> col_samNames
+col_samNames <- gsub("-", ".", col_samNames) # dashes are replaced by default
+
 # Column name in samplesheet grouping sample COLORS
 "Tissue" -> col_samGrp -> col_samTypes
 # Column name for plot point SHAPES\SYMBOLS
