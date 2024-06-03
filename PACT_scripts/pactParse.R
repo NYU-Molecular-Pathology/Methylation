@@ -1276,10 +1276,11 @@ determineRunType <- function(input) {
         runType <- "test"
     } else if (stringr::str_detect(input, "ILC")) {
         runType <- "Illumina"
+    } else if (stringr::str_detect(input, "TMB")) {
+        runType <- "TMB"
     } else {
         runType <- "regular"
     }
-
     return(runType)
 }
 
@@ -1292,9 +1293,7 @@ getExcelPath <- function(input, runType) {
     drive = file.path("", "Volumes", "molecular", "MOLECULAR LAB ONLY")
     folder = file.path("NYU PACT Patient Data", "Workbook")
     runyr <- stringr::str_split_fixed(input, "-", 3)[, 2]
-
     yearDir <- paste0("20", runyr)
-
     xlFi <- paste0(input, ".xlsm")
     worksheetPath <- file.path(drive, folder, yearDir, input, xlFi)
 
@@ -1310,8 +1309,10 @@ getExcelPath <- function(input, runType) {
         drive = "/Volumes/molecular/Molecular/Validation/PACT/Test_Sheets"
         worksheetPath <- file.path(drive, xlFi)
     }
-
-
+    if (runType == "TMB") {
+        drive = "/Volumes/molecular/MOLECULAR LAB ONLY/Validations/TMB"
+        worksheetPath <- file.path(drive, xlFi)
+    }
     return(worksheetPath)
 }
 
