@@ -333,4 +333,4 @@ if(Sys.info()[['sysname']] == "Linux") {
     }
 }
 
-tinytex::tlmgr_update(self = TRUE, all = FALSE)
+try(tinytex::tlmgr_update(self = TRUE, all = TRUE), T)
