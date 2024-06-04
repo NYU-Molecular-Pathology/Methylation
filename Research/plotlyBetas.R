@@ -371,7 +371,9 @@ SaveGgplotPng <- function(newLab, pngFiPath, fig) {
     newLab2 <- stringr::str_replace_all(newLab, 'Interactive', "")
     pngFi2 <- file.path(pngFiPath, paste0(newLab2, ".png"))
     fig2 <- GetFlatPlotOnly(fig)
-    ggplot2::ggsave(filename = pngFi2, plot = fig2, width = 19, height = 12, dpi = 350)
+    fig2 <- fig2 + ggplot2::theme(legend.position = "right", legend.box = "vertical")
+    ggplot2::ggsave(filename = pngFi2, plot = fig2, units = "px", width = 1200, height = 800, dpi = 350)
+    
     fi_path <- stringr::str_split_fixed(pngFi2, "/figures/", 2)[1,2]
     fi_path <- file.path(".", "figures", fi_path)
     altTxt <- paste("![File", newLab2,"Plot](")
