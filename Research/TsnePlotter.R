@@ -89,6 +89,7 @@ AddPlotSymbols <- function(tsne_plot, groupTsne, symFlags){
   if(symFlags==F) {
         symShape <- shapeVals <- shapeLabels <- NULL
         uniColors <- tsne_plot[match(unique(tsne_plot$GROUPS), tsne_plot$GROUPS),"col"]
+        names(uniColors) <- tsne_plot[match(unique(tsne_plot$col), tsne_plot$col),"GROUPS"]
         groupTsne <- groupTsne +
             geom_point(aes(x, y, color = tsne_plot$GROUPS, fill=GROUPS), 
                        fill = scales::alpha(tsne_plot$col, 0.5), stroke = 1.5, size = 5) +
