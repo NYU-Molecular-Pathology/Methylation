@@ -347,7 +347,7 @@ GrabPngPath <- function(op) {
 
 
 SaveGgplotPng <- function(newLab, pngFiPath, fig) {
-  cat(pngFiPath)
+  #cat(pngFiPath)
   newLab2 <- stringr::str_replace_all(newLab, 'Interactive', "")
   pngFi2 <- file.path(pngFiPath, paste0(newLab2, ".png"))
   fig2 <- GetFlatPlotOnly(fig)
