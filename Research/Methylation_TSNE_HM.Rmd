@@ -10,18 +10,19 @@ output:
     highlight: tango
     fig_width: 15
     fig_height: 10
-editor_options:
-  chunk_output_type: console
 ---
 
-```{r setup, fig.keep='all', fig.path = "figures/", include=FALSE, error=FALSE}
-knitr::opts_chunk$set(echo = FALSE, error = FALSE, message = FALSE, warning = TRUE, cache = FALSE)
+```{r setup, fig.keep='all', fig.path="figures/", include=FALSE, error=FALSE}
+if (!requireNamespace("knitr", quietly = T)) install.packages("knitr", ask = F, dependencies = T, type = "binary")
+library("knitr")
 gb <- globalenv(); assign("gb", gb)
 gitUrl <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research"
 devtools::source_url(file.path(gitUrl, "SetupMethKnit.R"))
-knitr::opts_knit$set(gb$knitOpt); knitr::opts_chunk$set(gb$knitOpt)
-gb$sourceParams(); gb$loadHtmlTag(); gb$assignOpts()
+gb$SetKnitOpts(); gb$sourceParams(); gb$loadHtmlTag(); gb$assignOpts()
 targets <- gb$GenerateTargets(gb); gc(F)
+```
+
+```{css, echo=FALSE, code=readLines(gb$cssLink)}
 ```
 
 ---
@@ -29,14 +30,11 @@ title: "`r gb$htmlTitle`"
 author: "`r gb$yourName`"
 ---
 
-```{css, echo=FALSE, code=readLines(gb$cssLink)}
-```
-
-```{r,label='Project Info', child='./params/about.Rmd', include=TRUE}
+```{r,label='Project Info', child='params/about.Rmd', include=TRUE, cache=FALSE}
 ```
 
 # Input Sample Sheet Information
-```{r, label='Print Samplesheet', out.width='60%', echo=FALSE, message=FALSE, results='asis'}
+```{r, label='Print Samplesheet', out.width='60%', echo=FALSE, message=FALSE, results='asis', cache=FALSE}
 gb$makeDt(targets, gb, T); gb$htmlClose()
 ```
 
@@ -90,9 +88,7 @@ hmPlotData <- gb$GetHeatMapData(targets, betas, RGSet, gb)
 ```{r, label='Unsupervised-HM-plot', opts.label='hmopts', fig.path=hmOutU}
 gb$MakeHideButton("uheatmaps")
 if (gb$genHeatMaps == T) {
-  gb$LoopPrintHeatMap(gb, unBetas = hmPlotData$unBetas, ha = hmPlotData$ha,
-                      geneNams = gb$addGenesHm, colSplt = gb$colSplitHm, 
-                      hideTopAnno = gb$hideTopAnno)
+  gb$LoopPrintHeatMap(gb, unBetas = hmPlotData$unBetas, ha = hmPlotData$ha)
 } else{
   cat("No Unsupervised HeatMaps output")
 }
@@ -102,9 +98,7 @@ gb$htmlClose()
 # Supervised HeatMaps
 <hr style="border:2px solid gray">
 ```{r, label='HM-super', echo=FALSE, fig.keep='all', include=FALSE, eval=gb$supervisedRun}
-if (gb$supervisedRun == T & gb$genHeatMaps == T) {
-  gb$GetSuperHmData(gb, targets, RGSet)
-}
+if (gb$genHeatMaps == T) gb$GetSuperHmData(gb, targets, RGSet)
 ```
 
 ## All groups HeatMap (Supervised) {.tabset}
