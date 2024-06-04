@@ -18,106 +18,117 @@ grabPngNames <- function(tsne_titles=NULL, keywrd="Top"){
 
 
 FormatMarkerData <- function(otherPlot) {
-  numList <- 1:length(otherPlot[["x"]][["data"]])
-  for (nSam in numList) {
-    fillColor <- otherPlot[["x"]][["data"]][[nSam]][["marker"]][["color"]]
-    if (any(fillColor == 'darkgrey') & length(fillColor) == 1) {
-      lgndGrp <- otherPlot[["x"]][["data"]][[nSam]][["legendgroup"]]
-      otherPlot[["x"]][["data"]][[nSam]][["showlegend"]] <- F
-      for (idx in numList[-nSam]) {
-        lgndGrp2 <- otherPlot[["x"]][["data"]][[idx]][["legendgroup"]]
-        if (lgndGrp == lgndGrp2) {
-          otherPlot[["x"]][["data"]][[nSam]][["marker"]][["color"]] <-
-            otherPlot[["x"]][["data"]][[idx]][["marker"]][["color"]]
-          otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]][["color"]] <-
-            otherPlot[["x"]][["data"]][[idx]][["marker"]][["line"]][["color"]]
+    numList <- 1:length(otherPlot[["x"]][["data"]])
+    for (nSam in numList) {
+        fillColor <- otherPlot[["x"]][["data"]][[nSam]][["marker"]][["color"]]
+        if (any(fillColor == 'darkgrey') & length(fillColor) == 1) {
+            lgndGrp <- otherPlot[["x"]][["data"]][[nSam]][["legendgroup"]]
+            otherPlot[["x"]][["data"]][[nSam]][["showlegend"]] <- F
+            for (idx in numList[-nSam]) {
+                lgndGrp2 <- otherPlot[["x"]][["data"]][[idx]][["legendgroup"]]
+                if (lgndGrp == lgndGrp2) {
+                    otherPlot[["x"]][["data"]][[nSam]][["marker"]][["color"]] <-
+                        otherPlot[["x"]][["data"]][[idx]][["marker"]][["color"]]
+                    otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]][["color"]] <-
+                        otherPlot[["x"]][["data"]][[idx]][["marker"]][["line"]][["color"]]
+                }
+            }
         }
-      }
     }
-  }
-  return(otherPlot)
+    return(otherPlot)
 }
 
 
 FormatShapeData <- function(isSingle, otherPlot, nSam) {
-  if (isSingle == F) {
-    otherPlot[["x"]][["data"]][[nSam]][["showlegend"]] <- F
-    otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]] <- list(width = 2)
     fillColor <- otherPlot[["x"]][["data"]][[nSam]][["marker"]][["color"]]
-    
-    if (any(fillColor == 'darkgrey') &
-        length(fillColor) == 1) {
-      otherPlot[["x"]][["data"]][[nSam]][["showlegend"]] <- F
-    }
+    otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]] <- list(width = 2)
     colSplit <- stringr::str_split_fixed(fillColor, ",", 4)
     colSplit[1, 4] <- "1)"
-    otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]][["color"]] <-
-      paste(colSplit, collapse = ",")
-  } else{
-    #fillColor <- otherPlot[["x"]][["data"]][[nSam]][["marker"]][["color"]]
-    otherPlot[["x"]][["data"]][[nSam]][["showlegend"]] <- F
-    #if(any(fillColor=='darkgrey') & length(fillColor)==1){
-    #otherPlot[["x"]][["data"]][[nSam]][["showlegend"]] <- F}
-  }
-  return(otherPlot)
+    otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]][["color"]] <- paste(colSplit, collapse = ",")
+    if (any(fillColor == 'darkgrey') & length(fillColor) == 1) {
+        otherPlot[["x"]][["data"]][[nSam]][["showlegend"]] <- F
+    }
+    return(otherPlot)
 }
 
 
 FormatShapeColors <- function(isSingle, nlgndGrp, lgndSplt, fig, otherPlot, nSam) {
-    if(isSingle == F){
-    nGroupSplit <- stringr::str_split_fixed(nlgndGrp, ",", 2)[1, 1]
-    theSamLabs <- which(lgndSplt[1,1]==fig$data$symbol)
-    otherPlot[["x"]][["data"]][[nSam]]$text <- paste("Sample:", fig$data$samples[theSamLabs])
-    otherPlot[["x"]][["data"]][[nSam]]$visible <- 'legendonly'
-    otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]][["color"]] <- "black"
-    otherPlot[["x"]][["data"]][[nSam]][["marker"]][["color"]] <- "darkgrey"
-    return(otherPlot)
-    } else{
-      otherPlot[["x"]][["data"]][[nSam]]$visible <- F
-      return(otherPlot)
+    if (isSingle == F) {
+        nGroupSplit <- stringr::str_split_fixed(nlgndGrp, ",", 2)[1, 1]
+        theSamLabs <- which(lgndSplt[1,1] == fig$data$symbol)
+        otherPlot[["x"]][["data"]][[nSam]]$text <- paste("Sample:", fig$data$samples[theSamLabs])
+        otherPlot[["x"]][["data"]][[nSam]]$visible <- 'legendonly'
+        otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]][["color"]] <- "black"
+        otherPlot[["x"]][["data"]][[nSam]][["marker"]][["color"]] <- "darkgrey"
+        # Hides the color legend
+        for (i in seq_along(otherPlot[["x"]][["data"]])) {
+            if (!is.null(otherPlot[["x"]][["data"]][[i]][["name"]])) {
+                fillColor <- otherPlot[["x"]][["data"]][[i]][["marker"]][["color"]]
+                if (fillColor != otherPlot[["x"]][["data"]][[nSam]][["marker"]][["color"]]) {
+                    otherPlot[["x"]][["data"]][[i]][["showlegend"]] <- F
+                }
+            }
+        }
+        return(otherPlot)
+    } else {
+        otherPlot[["x"]][["data"]][[nSam]]$visible <- F
+        return(otherPlot)
     }
 }
 
+
+#gb$SaveObj(fig, "test_fig.Rdata")
+#fig <- gb$LoadRdatObj("test_fig.Rdata")
+#stopifnot(FALSE)
+
 FormatLegendText <- function(fig){
-    #gb$SaveObj(fig, "test_fig.Rdata")
-    #fig <- gb$LoadRdatObj("test_fig.Rdata")
-    #stopifnot(FALSE)
-    fig2 <- fig + geom_point(aes(fig$data$x, fig$data$y, color = "Shape", shape = fig$data$symbol), 
-                             color = fig$data$col, stroke = 2, size = 10)
-    otherPlot <- gb$supM(plotly::ggplotly(fig2, dynamicTicks = T, width = 1200, height = 800, 
-                                          source = "A", layerData = 1))
-    figGrps <- paste(fig$data$GROUPS, fig$data$symbol, sep = ",") #fig$data$x, fig$data$y,
-    otherPlot[["x"]][["layout"]][["shapes"]][[1]][["line"]][["width"]] <- 2
+
+    fig2 <- fig + 
+        geom_point(aes(
+            fig$data$x, fig$data$y, color = "Shape", shape = fig$data$symbol),
+            color = fig$data$col, stroke = 2, size = 10
+            )
+    fig2 <- fig2 + guides(shape = "none")
     
+    if (length(fig2[["layers"]]) > 1) {
+        fig2$layers <- fig2$layers[-2]
+    }
+
+    otherPlot <- gb$supM(plotly::ggplotly(fig2, dynamicTicks = T, width = 1200, height = 800,
+                                          source = "A", layerData = 1))
+    figGrps <- paste(fig$data$GROUPS, fig$data$symbol, sep = ",")
+
+    otherPlot[["x"]][["layout"]][["shapes"]][[1]][["line"]][["width"]] <- 2
+
     for (nSam in 1:length(otherPlot[["x"]][["data"]])) {
-      
         lgndGrp <- otherPlot[["x"]][["data"]][[nSam]][["legendgroup"]]
         if (!is.null(lgndGrp)) {
-        nlgndGrp <- stringr::str_remove_all(lgndGrp, "[()]")
-        lgndSplt <- stringr::str_split_fixed(nlgndGrp, ",", 2)
-        isShape <- lgndSplt[, 2] == 1
-        isSingle <- F
-        if (lgndSplt[, 1] == "" | lgndSplt[, 2] == "") {
-            nlgndGrp <- paste0(nlgndGrp,",",nlgndGrp)
-            isSingle <- T
-        }
-        otherPlot[["x"]][["data"]][[nSam]][["marker"]][["opacity"]] <- 1
-        otherPlot[["x"]][["data"]][[nSam]][["marker"]][["size"]] <- 18
-        otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]][["width"]] <- 2
-        otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]][["opacity"]] <- 1
-        nGroupSplit <- stringr::str_split_fixed(nlgndGrp, ",", 2)[1, 1]
-        if (isShape) {
-          otherPlot <- FormatShapeColors(isSingle, nlgndGrp, lgndSplt, fig, otherPlot, nSam)
-        } else{
-          theSamLabs <- which(nlgndGrp == figGrps)
-            otherPlot[["x"]][["data"]][[nSam]]$text <- paste("Sample:", fig$data$samples[theSamLabs])
-            if (otherPlot[["x"]][["data"]][[nSam]][["marker"]][["symbol"]] != "circle") {
-               otherPlot <- FormatShapeData(isSingle, otherPlot, nSam)
+            nlgndGrp <- stringr::str_remove_all(lgndGrp, "[()]")
+            lgndSplt <- stringr::str_split_fixed(nlgndGrp, ",", 2)
+            isShape <- lgndSplt[, 2] == 1
+            isSingle <- F
+            if (lgndSplt[, 1] == "" | lgndSplt[, 2] == "") {
+                nlgndGrp <- paste0(nlgndGrp, ",", nlgndGrp)
+                isSingle <- T
             }
+            otherPlot[["x"]][["data"]][[nSam]][["marker"]][["opacity"]] <- 1
+            otherPlot[["x"]][["data"]][[nSam]][["marker"]][["size"]] <- 18
+            otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]][["width"]] <- 2
+            otherPlot[["x"]][["data"]][[nSam]][["marker"]][["line"]][["opacity"]] <- 1
+            nGroupSplit <- stringr::str_split_fixed(nlgndGrp, ",", 2)[1, 1]
+            if (isShape) {
+                otherPlot <- FormatShapeColors(isSingle, nlgndGrp, lgndSplt, fig, otherPlot, nSam)
+            } else{
+                theSamLabs <- which(nlgndGrp == figGrps)
+                otherPlot[["x"]][["data"]][[nSam]]$text <- paste("Sample:", fig$data$samples[theSamLabs])
+                curr_shape_type <- otherPlot[["x"]][["data"]][[nSam]][["marker"]][["symbol"]]
+                otherPlot <- FormatShapeData(isSingle, otherPlot, nSam)
+            }
+            otherPlot[["x"]][["data"]][[nSam]][["name"]] <-
+                otherPlot[["x"]][["data"]][[nSam]][["legendgroup"]] <- nGroupSplit
         }
-        otherPlot[["x"]][["data"]][[nSam]][["name"]] <- otherPlot[["x"]][["data"]][[nSam]][["legendgroup"]] <- nGroupSplit
-        }
-        }
+    }
+
     otherPlot <- FormatMarkerData(otherPlot)
     return(otherPlot)
 }
