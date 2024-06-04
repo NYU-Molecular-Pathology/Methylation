@@ -381,10 +381,11 @@ plot.mds <- function(mSetSq.beta, targets, varName, topN) {
     toplot <- data.frame(PCA1 = mds$x, PCA2 = mds$y, Group = factor(names(myColors)))
     outMDSplot <- 
       ggplot2::ggplot(toplot, aes(PCA1, PCA2, colour = Group)) + 
-      ggplot2::geom_point(aes(color = Group), size = 5, alpha=0.65) +
+      ggplot2::geom_point(aes(color = Group), size = 5, alpha = 0.65) +
       ggplot2::scale_color_manual(values = myColors) + ggplot2::theme_bw() + 
       labs(main = paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot")) +
-      theme(plot.margin = ggplot2::margin(1, 1, 1, 1, "cm"))
+      theme(plot.margin = ggplot2::margin(1, 1, 1, 1, "cm"),
+            legend.position = "right", legend.box = "vertical")
     return(outMDSplot)
 }
 
