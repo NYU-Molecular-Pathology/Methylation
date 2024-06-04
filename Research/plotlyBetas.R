@@ -213,6 +213,7 @@ FormatPlotLabels <- function(fig, otherPlot, uniGrp, markerSyms){
             paste("x:", round(currData$x, 2)),
             paste("y:", round(currData$y, 2)),
             paste("Group:", currGrp),
+           paste("Color:", currData$col),
             sep = "<br />"
         )
         otherPlot$x$data[[grpIdx]]$text <- newText
