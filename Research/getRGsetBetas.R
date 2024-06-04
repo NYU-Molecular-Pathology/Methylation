@@ -384,7 +384,7 @@ plot.mds <- function(mSetSq.beta, targets, varName, topN) {
       ggplot2::geom_point(aes(color = Group), size = 5, alpha=0.65) +
       ggplot2::scale_color_manual(values = myColors) + ggplot2::theme_bw() + 
       labs(main = paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot")) +
-      theme(plot.margin = margin(1, 1, 1, 1, "cm"))
+      theme(plot.margin = ggplot2::margin(1, 1, 1, 1, "cm"))
     return(outMDSplot)
 }
 
