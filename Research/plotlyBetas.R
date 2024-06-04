@@ -200,6 +200,26 @@ FormatHoverInfo <- function(otherPlot){
 
 FormatPlotLabels <- function(fig, otherPlot, uniGrp, markerSyms){
   figDat <- fig[["data"]]
+  isNoShapes <- all(markerSyms == "circle")
+  if (isNoShapes) {
+      for (grpIdx in 1:length(otherPlot$x$data)) {
+        currGrp <- otherPlot$x$data[[grpIdx]]$legendgroup
+        matchedRows <- which(figDat$GROUPS == currGrp)
+        currData <- figDat[matchedRows,]
+        otherPlot$x$data[[grpIdx]]$x <- currData$x
+        otherPlot$x$data[[grpIdx]]$y <- currData$y
+        newText <- paste(
+            paste("Sample:", currData$samples),
+            paste("x:", round(currData$x, 2)),
+            paste("y:", round(currData$y, 2)),
+            paste("Group:", currGrp),
+            sep = "<br />"
+        )
+        otherPlot$x$data[[grpIdx]]$text <- newText
+      }
+    return(otherPlot)
+  }
+  
   for (grpIdx in 1:length(otherPlot$x$data)) {
     grpNam <- otherPlot$x$data[[grpIdx]]$legendgroup
     if (!is.null(grpNam)) {
