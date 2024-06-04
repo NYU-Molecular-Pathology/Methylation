@@ -770,22 +770,16 @@ LoopPathwayHeatMap <- function(pathWayGenes, RGSet, betas, targets) {
 }
                                            
 
-LoopPrintHeatMap <- function(gb,
-                             unBetas,
-                             ha,
-                             geneNams = NULL,
-                             colSplt = 3,
-                             fi_prefix = "unsuper_hm_top",
-                             fi_suffix = "notAnnot",
-                             hideTopAnno = F) {
+LoopPrintHeatMap <- function(gb, unBetas, ha, fi_prefix = "unsuper_hm_top") {
+  geneNams <- gb$addGenesHm
+  colSplt <- gb$colSplitHm
+  hideTopAnno <- gb$hideTopAnno
+  
+  fi_suffix <- "Annotated"
   if (hideTopAnno == T) {
-    fi_suffix = "notAnnot"
-  } else{
-    fi_suffix = "Annotated"
-  }
-  if (!is.null(gb$addGenesHm)) {
-    geneNams <- gb$addGenesHm
-  }
+    fi_suffix <- "notAnnot"
+  } 
+  
   ComplexHeatmap::ht_opt("message" = FALSE)
   for (topNum in gb$varProbes) {
     invisible(gc(verbose = F))
@@ -893,13 +887,13 @@ GetSuperHmData <- function(gb, targets, RGSet) {
 LoopSupervisedHm <- function(gb) {
     if(gb$supervisedRun){
         for(i in 1:length(gb$selectedVars)){
-          invisible(gc(verbose=F))
+          invisible(gc(verbose = F))
           cat("\n\n")
           hmPlotData <- eval(parse(text = paste0("gb$hmPlotData", i)))
-          gb$LoopPrintHeatMap(gb, hmPlotData$unBetas, hmPlotData$ha, geneNams = gb$addGenesHm, colSplt = 5,
+          gb$LoopPrintHeatMap(gb, hmPlotData$unBetas, hmPlotData$ha,
                               fi_prefix = paste0("super_", gb$selectedVars[i], "_hm_top"))
           cat("\n\n")
-          invisible(gc(verbose=F))
+          invisible(gc(verbose = F))
         }
     } else {
         cat("\n\nNo supervised HeatMap analysis output\n\n")
