@@ -152,40 +152,39 @@ GetDefaultColors <- function(col_vect = NULL) {
     }
     color_vect <- c(
         "#FF0733", # Vivid Red
+        "#F76e1e", # Flame
+        "#FFD300", # Cyber Yellow
         "#33CC33", # Lime Green
         "#004CFF", # Blue Ribbon
-        "#FFD300", # Cyber Yellow
-        "#C6123E", # Ruby Red
-        "#FF6D6D", # Bittersweet
-        "#795a34", # Coffee
-        "#F76e1e", # Flame
+        "#FF00FF", # Magenta
+        "#66EFFF", # Cyan
+        "#8A2BE2", # Blue Violet
+        "#5A5A5A", # Davy's Grey
         "#111789", # Ultra Blue
         "#C8FF00", # Electric Lime
+        "#795a34", # Coffee
+        "#FF93C7", # Pink Sherbet
         "#898A00", # Olive Drab
         "#858567", # Sage
-        "#FF93C7", # Pink Sherbet
         "#02AD24", # Green
         "#F8EF8C", # Banana Mania
-        "#FFFF00", # Yellow
         "#019965", # Green Sheen
-        "#5A5A5A", # Davy's Grey
+        "#FF6D6D", # Bittersweet
         "#B1CC71", # Olive Green
         "#DC5E93", # Raspberry Pink
-        "#FF00FF", # Magenta
         "#ADD8E6", # Light Blue
         "#1D8932", # Forest Green
         "#766C95", # Mountbatten Pink
         "#FDBC7C", # Peach
         "#A8D9D0", # Light Cyan
+        "#FFFF00", # Yellow
         "#73FFCC", # Aquamarine
         "#9B4513", # Saddle Brown
         "#91FF57", # Screamin' Green
-        "#00479E", # Sapphire
-        "#00FFFF", # Cyan
         "#7F0000", # Maroon
-        "#8A2BE2", # Blue Violet
         "#2B330B", # Pine Tree
         "#009FFF", # Vivid Sky Blue
+        "#C6123E", # Ruby Red
         "#FFB79F", # Light Salmon Pink
         "#1F9698", # Blue-Green
         "#1C4D42", # Charleston Green
