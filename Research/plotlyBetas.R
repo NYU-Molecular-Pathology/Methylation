@@ -566,7 +566,7 @@ ProcessAndSavePlots <- function(plotList, custom, outDirs, gb, tsne_titles) {
     }
 }
 
-RunTsneAnalysisAndSavePlots <- function(
+run_tsne_plots <- function(
     targets,
     betas,
     gb,
