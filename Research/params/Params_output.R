@@ -42,7 +42,7 @@ CheckDirCreate <- function(path_dirs) {
     }
 }
 
-CheckDirCreate(c("data", "idats", "figures/mds", "csv", tsneOutU)
+CheckDirCreate(c("data", "idats", "figures/mds", "csv", tsneOutU))
 if (gb$supervisedRun == T) CheckDirCreate(tsneOutS)
 if (gb$genHeatMaps == T) {
     CheckDirCreate(hmOutU)
