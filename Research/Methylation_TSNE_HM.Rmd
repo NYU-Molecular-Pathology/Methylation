@@ -4,17 +4,11 @@ output:
   html_document: 
     self_contained: yes
     code_download: yes
-    theme: cerulean
     toc: yes
     toc_depth: 2
-    highlight: tango
-    fig_width: 15
-    fig_height: 10
 ---
 
 ```{r setup, fig.keep='all', fig.path="figures/", include=FALSE, error=FALSE}
-if (!requireNamespace("knitr", quietly = T)) install.packages("knitr", ask = F, dependencies = T, type = "binary")
-library("knitr")
 gb <- globalenv(); assign("gb", gb)
 gitUrl <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research"
 devtools::source_url(file.path(gitUrl, "SetupMethKnit.R"))
