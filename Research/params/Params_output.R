@@ -11,7 +11,7 @@ gb$cssLink <-
     "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/Research.css"
 
 # Default Output file names --------------------------------------------------
-td <- format(today(),"%b%d") # today's date (i.e., "Jun17")
+td <- format(Sys.Date(),"%b%d") # today's date (i.e., "Jun17")
 gb$rgOut <- file.path(gb$runDir, "data", paste0(td, "_RGset.Rdata"))
 rawBetaFi <- file.path(gb$runDir, "data", paste0(td, "_betaRaw.Rdata"))
 pValsOutFi <- file.path(gb$runDir, "data", paste0(td, "_DetPvals.Rdata"))
