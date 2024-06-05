@@ -1329,14 +1329,12 @@ writeSampleSheet <- function(input, token, runID = NULL) {
     outVals <- NULL
     runType <- determineRunType(input)
     worksheetPath <- getExcelPath(input, runType)
-
     if (file.exists(worksheetPath)) {
         outVals <- parseExcelFile(worksheetPath, runID)
     } else {
         outVals <- CheckOtherFiles(worksheetPath, runID)
     }
-
-    if (!is.null(outVals) & runType == "regular") {
+    if (!is.null(outVals)) {
         pushToRedcap(outVals, token)
     }
 }
