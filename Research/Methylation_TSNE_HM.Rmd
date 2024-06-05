@@ -1,10 +1,8 @@
 ---
-date: "`r format(Sys.time(), '%B %d, %Y')`"
 output:
   html_document: 
     self_contained: yes
     code_download: yes
-    toc: yes
     toc_depth: 2
 ---
 
@@ -16,16 +14,15 @@ gb$SetKnitOpts(); gb$sourceParams(); gb$loadHtmlTag(); gb$assignOpts()
 targets <- gb$GenerateTargets(gb); gc(F)
 ```
 
-```{css, echo=FALSE, code=readLines(gb$cssLink)}
-```
+`{css, echo=FALSE, code=readLines(gb$cssLink)}`
 
 ---
 title: "`r gb$htmlTitle`"
 author: "`r gb$yourName`"
+date: "`r gb$yourDate`"
 ---
 
-```{r,label='Project Info', child='params/about.Rmd', include=TRUE, cache=FALSE}
-```
+`{r,label='Project Info', child='params/about.Rmd', include=TRUE, cache=FALSE}`
 
 # Input Sample Sheet Information
 ```{r, label='Print Samplesheet', out.width='60%', echo=FALSE, message=FALSE, results='asis', cache=FALSE}
