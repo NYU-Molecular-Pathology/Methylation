@@ -107,7 +107,7 @@ assignOpts <- function() {
     knitr::opts_template$set(tsnechunk = c(figDefOpts, list(
         dpi=350, out.height="650px", out.width="3650px")))
 
-    knitr::opts_template$set(hmopts = c(figDefOpts, list(fig.width=18, fig.height=22, dpi=350)))
+    knitr::opts_template$set(hmopts = c(figDefOpts, list(fig.width=18, fig.height=22, dpi=350, include=TRUE)))
 
     knitr::opts_template$set(cn_opts_1 = c(figDefOpts, list(
         fig.height=8, fig.width=15, fig.asp=0.75, fig.path = "figures/cnv/")))
