@@ -43,6 +43,7 @@ T -> genHeatMaps   # Should beta value HeatMap plots be output?
 T -> genCNchunk    # Will CNV analysis be performed?
 F -> genPathChunk  # Will Pathway analysis be performed?
 F -> genPairwise   # Will Pathway analysis be performed?
+gb$superHeat <- supervisedRun & genHeatMaps
 
 # Input worksheet column names to subset samples ------------------------------------------------
 NULL -> col_batchEffect -> batch_col # Institution names or batch column if batched idats
