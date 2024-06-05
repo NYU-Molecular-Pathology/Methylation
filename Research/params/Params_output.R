@@ -37,7 +37,7 @@ topVar = 10000
 # Create OutPut Directories ---------------------------------------------------
 CheckDirCreate <- function(path_dirs) {
     for (dir_name in path_dirs) {
-        out_dir <- file.path(gb$runDir, path_dirs)
+        out_dir <- file.path(gb$runDir, dir_name)
         if (!dir.exists(out_dir)) dir.create(out_dir, recursive = T)
     }
 }
