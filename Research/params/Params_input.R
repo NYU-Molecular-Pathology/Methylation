@@ -3,7 +3,6 @@
 ## Script name: Params_input.R
 ## Purpose: Source global parameters and flags for research report inputs
 ## Date Created: May 17, 2022
-## Date Last Modified: February 29, 2024
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2024
@@ -17,6 +16,7 @@ samsheet <- "samplesheet.csv" # primary sample sheet name/path
 
 # Input Variable Parameters -----------------------------------------------
 gb$yourName <- "Your Name" # author name for report
+gb$yourDate <- format(today(), '%B %d, %Y')
 token = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX" # REDCap API token string
 sampleType <- "Tumors" # Name of sample types
 htmlTitle <- paste("Methylation Clusters of", sampleType) # Title of html file
