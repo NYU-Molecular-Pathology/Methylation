@@ -830,10 +830,17 @@ BuildNoPhilips <- function(rawData, runID, pact_run) {
     whichNormal <- stringr::str_detect(rawData$`Type & Tissue`, "Norm|norm|cont|Cont")
     onlyNormals <- stringr::str_detect(rawData$`Type & Tissue`, "Norm|norm")
     concat_id <-
-        data.frame(sid = paste(0, runID, rawData$`Accession#`, rawData$`DNA #`,
-                               sep = "_"))
+        data.frame(sid = paste(0, runID, rawData$`Accession#`, rawData$`DNA #`, sep = "_"))
     pairedNorm <- rep("", nrow(concat_id))
-    pairedNorm[!whichNormal] <- concat_id[onlyNormals, 1]
+    whichTumor <- stringr::str_detect(rawData$`Type & Tissue`, "Tum|tum")
+    
+    if (sum(whichTumor) != sum(onlyNormals)) {
+        message("Not all tumors and normals are paired")
+        true_indices <- which(whichTumor)[1:sum(onlyNormals)]
+        pairedNorm[true_indices] <- concat_id[onlyNormals, 1]
+    }else{
+        pairedNorm[whichTumor] <- concat_id[onlyNormals, 1]
+    }
 
     rawData$`Tumor Type` <- ""
     mainSheet <- data.frame(
@@ -1206,14 +1213,14 @@ parseExcelFile <- function(worksheetPath, runID = NULL) {
     shNames <- readxl::excel_sheets(worksheetPath)
     MsgDF(data.frame(`Sheet names in Workbook` = shNames))
     sh <- which(grepl("SampleSheet", shNames, ignore.case = T))[1]
-    if (is.na(sh)) {
+    # if (is.na(sh)) {
         sheetHead <- GetSheetHeading(worksheetPath)
         mainSheet <- AltParseFormat(inputFi = worksheetPath, runID)
-    } else{
-        sheetHead <- GetExcelData(worksheetPath, sheetNum = shNames[sh], shRange = "A1:B17")
-        sheetHead <- rbind(sheetHead,c("",""),c("[Data]",""))
-        mainSheet <- GetExcelData(worksheetPath, shNames[sh], NULL, 19, T)
-    }
+    # } else{
+    #     sheetHead <- GetExcelData(worksheetPath, sheetNum = shNames[sh], shRange = "A1:B17")
+    #     sheetHead <- rbind(sheetHead,c("",""),c("[Data]",""))
+    #     mainSheet <- GetExcelData(worksheetPath, shNames[sh], NULL, 19, T)
+    # }
     mainSheet <- sanitizeSheet(mainSheet)
     try(WritePhilipsGender(mainSheet,worksheetPath, shNames), silent = T)
 
