@@ -13,6 +13,13 @@ formals(install.packages)$ask <- F
 if(!require("devtools", warn.conflicts = F)) {
     install.packages("devtools", dependencies = T, ask = F)
 }
+
+if (!requireNamespace("knitr", quietly = T)) {
+    install.packages("knitr", ask = F, dependencies = T, type = "binary")
+}
+
+library("knitr")
+
 # https://bookdown.org/yihui/rmarkdown-cookbook/custom-knit.html
 supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
 supPk <- function(sobj){return(suppressPackageStartupMessages(sobj))}
