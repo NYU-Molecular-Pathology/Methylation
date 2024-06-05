@@ -267,8 +267,8 @@ LoopSupervisedPlots <- function(targets, gb){
       cat("\n\n")
       for(i in 1:length(gb$selectedVars)){
           gb$superbetas <- eval(parse(text = paste0("gb$superbetas", i)))
-          gb$GenerateUnsuperTsne(targets1, betas = gb$superbetas, gb, colorVariable = gb$col_samGrp,
-                                 shapeVariable = gb$selectedVars[i], isSuper = T)
+          gb$run_tsne_plots(targets1, gb$superbetas, gb,
+                            shapeVariable = gb$selectedVars[i], isSuper = T)
           cat("\n\n")
       }
   } else {cat("No supervised analysis output")}
