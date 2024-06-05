@@ -204,6 +204,7 @@ GenerateTargets <- function(gb){
   targets <- gb$colorTargets(targets, gb$selectedVars)
   write.csv(targets, gb$samsheet, quote=F, row.names=F)
   targets <- as.data.frame(read.csv(gb$samsheet))
+  gc(F)
   return(targets)
 }
 
