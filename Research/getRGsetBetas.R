@@ -396,7 +396,6 @@ LoopPlotMds <- function(mSetSq.beta, targets, selectedVars, topN) {
     cat(paste("## MDS plot of Variable:", selectedVars[varNum]))
     cat("\n\n")
     mdsFi <- plot.mds(mSetSq.beta, targets, selectedVars[varNum], topN)
-    mdsFi[["theme"]][["legend.position"]] <- "bottom"
     mdsFi[["theme"]][["legend.text"]][["size"]] <- 12
     mdsFi[["theme"]][["axis.text"]][["size"]] <- 12
     mdsFi[["theme"]][["axis.title.x"]][["size"]] <- 14
