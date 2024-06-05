@@ -107,24 +107,31 @@ assignOpts <- function() {
     knitr::opts_template$set(tsnechunk = c(figDefOpts, list(
         dpi=350, out.height="650px", out.width="3650px")))
 
-    knitr::opts_template$set(hmopts = c(figDefOpts, list(fig.width=18, fig.height=22, dpi=350, include=TRUE)))
+    knitr::opts_template$set(hmopts = c(figDefOpts, list(
+        fig.width=18, fig.height=22, dpi=350, include=TRUE)))
 
-    knitr::opts_template$set(cn_opts_1 = c(figDefOpts, list(
-        fig.height=8, fig.width=15, fig.asp=0.75, fig.path = "figures/cnv/")))
+    knitr::opts_template$set(cn_opts1 = c(figDefOpts, list(
+        fig.height=8, fig.width=15, fig.asp=0.75,
+        fig.path = "figures/cnv/", include=FALSE)))
 
-    knitr::opts_template$set(gencnv = c(figDefOpts, list(fig.path="figures/cnv/")))
+    knitr::opts_template$set(gencnv = c(figDefOpts, list(
+        fig.path="figures/cnv/")))
 
-    knitr::opts_template$set(cn_opts_2 = c(figDefOpts, list(
-        fig.height=10, fig.width=16, dpi=300, out.width='100%', fig.path='figures/cnv/')))
+    knitr::opts_template$set(cn_opts2 = c(figDefOpts, list(
+        fig.height=10, fig.width=16, dpi=300, out.width='100%',
+        fig.path='figures/cnv/', include=TRUE)))
 
     knitr::opts_template$set(clustprof = c(commonOpts, list(
-        fig.path="figures/cluster/", dpi=300, fig.height=5, fig.width=8, out.width='800px')))
+        fig.path="figures/cluster/", dpi=300,
+        fig.height=5, fig.width=8, out.width='800px')))
 
     knitr::opts_template$set(pathhm = c(figDefOpts, list(
-        fig.path=geneClusPath, fig.align='left', fig.width=18, fig.height=22, dpi=350)))
+        fig.path=geneClusPath, fig.align='left',
+        fig.width=18, fig.height=22, dpi=350)))
 
     knitr::opts_template$set(genepath = c(figDefOpts, list(
-        fig.path = "figures/pathway/", fig.height=7, fig.width=12, out.width='100%', dpi=350)))
+        fig.path = "figures/pathway/", fig.height=7, fig.width=12,
+        out.width='100%', dpi=350)))
 }
 
 
