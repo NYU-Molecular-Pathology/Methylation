@@ -18,6 +18,7 @@ pValsOutFi <- file.path(gb$runDir, "data", paste0(td, "_DetPvals.Rdata"))
 mbfile <- file.path(gb$runDir, "data", paste0(td, "_mSetSq.beta.Rdata"))
 unbetaVariance <- file.path(gb$runDir, "data", paste0(td, "_unbetaVar.RData"))
 combatOut <- file.path(gb$runDir, "data", paste0(td, "_combatBetas.Rdata"))
+samsheet <- "samplesheet.csv" # primary sample sheet name/path
 
 # Default Output Paths -------------------------------------------------------
 tsneOutU = "figures/tsne/unsupervised/"
