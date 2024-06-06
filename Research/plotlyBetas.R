@@ -280,26 +280,35 @@ makePlotly <- function(fig, gb) {
 
 
 GetFlatPlots <- function(fig){
-    options(repr.plot.width=19, repr.plot.height=12, repr.plot.res=350)
+  options(
+    repr.plot.width = 19,
+    repr.plot.height = 12,
+    repr.plot.res = 350
+  )
     fig <- fig +
-        theme(
+        ggplot2::theme(
             legend.direction = "vertical",
             legend.margin = ggplot2::margin(t = -25),
             legend.box.margin = ggplot2::margin(0, 0, 0, 0),
             legend.justification = "right",
-            legend.position = "bottom"
+            legend.position = "right"
         )
     leg <- supM(cowplot::get_legend(fig))
-    if(length(leg)>10){
+    
+    if (length(leg) > 10) {
         fig <- fig + theme(legend.position = "none")
         supM(print(fig))
         grid::grid.newpage()
         grid::grid.draw(leg)
-    }else{
+    } else{
         fig <- fig +
-            theme(legend.direction = "vertical", legend.margin = ggplot2::margin(t = 0))
-            options(repr.plot.width=19, repr.plot.height=12, repr.plot.res=350)
-        supM(print(fig))
+            ggplot2::theme(
+                legend.direction = "vertical",
+                legend.margin = ggplot2::margin(t = 0),
+                legend.position = "right"
+            )
+            
+        #supM(print(fig))
     }
 }
 
