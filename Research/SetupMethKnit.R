@@ -341,3 +341,4 @@ if(Sys.info()[['sysname']] == "Linux") {
 }
 
 #try(tinytex::tlmgr_update(self = TRUE, all = TRUE), T)
+gb$SetKnitOpts(); gb$sourceParams(); gb$loadHtmlTag(); gb$assignOpts()
