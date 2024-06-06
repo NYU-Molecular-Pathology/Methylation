@@ -139,8 +139,12 @@ FINAL_DEST="/Volumes${outputDir}${currYear}/${pactRun}/"
 
 # Copy HTML file from consensus directory to DESK_DIR
 cp "${CONSENSUS_FILE}" "${DESK_DIR}"
+chmod +rwx "${DESK_DIR}${pactRun}_consensus.html"
 
 # Copy HTML file from DESK_DIR to final destination
-cp -X "${DESK_DIR}${pactRun}_consensus.html" "${FINAL_DEST}"
+cd "${FINAL_DEST}" || exit
+rsync -vrthP "${DESK_DIR}${pactRun}_consensus.html" .
 
+echo -e "Opening folder:\n${FINAL_DEST}"
 open "${FINAL_DEST}"
+echo -e "Ensure ${pactRun}_consensus.html is viewable in the output directory"
