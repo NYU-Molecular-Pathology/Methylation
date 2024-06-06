@@ -158,38 +158,34 @@ getSupervise <- function(the_beta, RGSet, topVar = 1:10000, cutOff = 0.05, dmpTy
 
 # Checks if supervised rds data exists to load, else calculates it 
 loadSupervise <- function(RGSet, betas, gb, superVar = NULL, dmpTyp = "categorical") {
-    if (gb$supervisedRun == F) {
-      return(NULL)
-    }
+    if (gb$supervisedRun == F) return(NULL)
+    
     supbetaOutFi <- paste0(gb$supbetaOut, "_", superVar, ".Rdata")
+    
     if (!file.exists(supbetaOutFi)) {
-      rgRows <- RGSet@colData@rownames # ensure poor samples are dropped
+      rgRows <- RGSet@colData@rownames
       rgLiDat <- RGSet@colData@listData
-      if(any(is.na(rgLiDat[["Sample_ID"]]))){
+      if (any(is.na(rgLiDat[["Sample_ID"]]))) {
           rgLiDat[["Sample_ID"]] <- rgLiDat[["Sample_Name"]]
           dropFilter <- rgLiDat[["Sample_Name"]] %in% colnames(betas)
-      }else{
+      } else{
           dropFilter <- rgLiDat[["Sample_ID"]] %in% colnames(betas)
       }
       samFltr <- rgLiDat[["SentrixID_Pos"]][dropFilter]
       newRg <- RGSet[, rgRows %in% samFltr]
       topVar = 1:max(gb$varProbes)
-      # supervised dmp top Variance with getSupervise
-      superbetas <- gb$getSupervise(betas, newRg, topVar, dmpTyp = dmpTyp, superVar = superVar)
-      SaveObj(superbetas, file.name = supbetaOutFi)
-    } else{
-      superbetas <- LoadRdatObj(supbetaOutFi)
-    }
-    return(superbetas)
+      
+      superbetas <- gb$getSupervise(betas, newRg, topVar,
+                                    dmpTyp = dmpTyp, superVar = superVar)
+      gb$SaveObj(superbetas, file.name = supbetaOutFi)
+    } 
 }
 
 
 LoopSuperviseCategory <- function(gb, RGSet, betas) {
-  if(gb$supervisedRun){
-      for(i in 1:length(gb$selectedVars)){
-          superbetas <- gb$loadSupervise(RGSet, betas, gb, gb$selectedVars[i], dmpTyp = "categorical")
-          varName <- paste0("superbetas", i)
-          assign(x = varName, value = superbetas, envir = gb)
+  if (gb$supervisedRun) {
+      for (i in 1:length(gb$selectedVars)) {
+          gb$loadSupervise(RGSet, betas, gb, gb$selectedVars[i])
       }
   }
 }
