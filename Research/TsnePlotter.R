@@ -262,17 +262,19 @@ GenerateUnsuperTsne <- function(targets1, betas, gb, colorVariable = NULL, shape
 
 
 LoopSupervisedPlots <- function(targets, gb){
-  if (gb$supervisedRun) {
-      targets1 <- gb$SubsetTargets(targets, gb$variable_to_filter)
-      cat("\n\n")
-      for(i in 1:length(gb$selectedVars)){
+    if (gb$supervisedRun) {
+        targets1 <- gb$SubsetTargets(targets, gb$variable_to_filter)
+        cat("\n\n")
+      for (i in 1:length(gb$selectedVars)) {
           superVar <- gb$selectedVars[i]
-          supbetaOutFi <- paste0(gb$supbetaOut, "_", superVar, ".Rdata")
-          superbetas <- LoadRdatObj(supbetaOutFi)
+          superFile <- paste0(gb$supbetaOut, "_", superVar, ".Rdata")
+          superbetas <- gb$LoadRdatObj(superFile, msgProg = F)
           gb$run_tsne_plots(targets1, superbetas, gb,
-                                         shapeVariable = gb$selectedVars[i], isSuper = T)
+                            shapeVariable = gb$selectedVars[i], isSuper = T)
           cat("\n\n")
       }
-  } else {cat("No supervised analysis output")}
+    } else {
+      cat("No supervised analysis output")
+    }
 }
 
