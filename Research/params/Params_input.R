@@ -17,7 +17,7 @@ gb$yourDate <- format(Sys.Date(), '%B %d, %Y')  # date for report
 token = "REDCAP_API_METH_TOKEN" # REDCap API token string
 sampleType <- "Sample Type Tumors" # Name of sample types
 htmlTitle <- paste("Methylation Clusters of", sampleType) # Title of html file
-gb$runDir <- runDir <- "/Volumes/CBioinformatics/path/to/Project_folder"
+runDir <- "/Volumes/CBioinformatics/path/to/Project_folder"
 inputFi <- file.path(runDir, xlsxFile)
 
 # T-SNE plot titles (note: add newline (\n) if title is long) -----------------
@@ -26,6 +26,7 @@ samSheetDir <- file.path(runDir, "csv", "samplesheet.csv")
 idatPath <- file.path(runDir, "idats") # Default path to idat files
 
 # Hard coded Parameters -------------------------------------------------------
+gb$runDir <- runDir <- sub("/$", "", runDir)
 gb$setKnitDir(runDir)
 stopifnot(getwd() == runDir)
 stopifnot(file.exists(xlsxFile))
