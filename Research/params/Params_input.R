@@ -10,80 +10,75 @@
 
 gb <- globalenv(); assign("gb", gb)
 
-# Input File Names  -----------------------------------------------
-xlsxFile <- "my_samples.xlsx" # Your main input file
-samsheet <- "samplesheet.csv" # primary sample sheet name/path
-
-# Input Variable Parameters -----------------------------------------------
-gb$yourName <- "Your Name" # author name for report
-gb$yourDate <- format(today(), '%B %d, %Y')
-token = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX" # REDCap API token string
-sampleType <- "Tumors" # Name of sample types
+# Input Variable Parameters ---------------------------------------------------
+xlsxFile <- "myExcelFile.xlsx" # Your main input file
+gb$yourName <- "Your_Name_Here" # author name for report
+gb$yourDate <- format(Sys.Date(), '%B %d, %Y')  # date for report
+token = "REDCAP_API_METH_TOKEN" # REDCap API token string
+sampleType <- "Sample Type Tumors" # Name of sample types
 htmlTitle <- paste("Methylation Clusters of", sampleType) # Title of html file
-
-# Input Directory Names -----------------------------------------------
-runDir <- "/Volumes/CBioinformatics/jonathan/Rprojects/breast_mets_feb28"
+gb$runDir <- runDir <- "/Volumes/CBioinformatics/path/to/Project_folder"
 inputFi <- file.path(runDir, xlsxFile)
-titleMain <- paste("Clustering of", sampleType, ":\nBy Top") # newline (\n) if title is long
-samSheetDir <- file.path(runDir,"csv", samsheet)
+
+# T-SNE plot titles (note: add newline (\n) if title is long) -----------------
+titleMain <- paste("Clustering of", sampleType, ":\nBy Top")
+samSheetDir <- file.path(runDir, "csv", "samplesheet.csv")
 idatPath <- file.path(runDir, "idats") # Default path to idat files
 
-# Hard coded Parameters -------------------------------------------------------------------------
+# Hard coded Parameters -------------------------------------------------------
 gb$setKnitDir(runDir)
 stopifnot(getwd() == runDir)
+stopifnot(file.exists(xlsxFile))
 
-# Functional Parameter Flags --------------------------------------------------------------------
+# Functional Parameter Flags --------------------------------------------------
 F -> mergeProbes  # Do idat files need to be merged 450K + EPIC?
 F -> batchEffect  # Are the idats processed in different facilities?
 F -> getNoob      # Do want to perform NOOB minfi preprocessing?
-T -> needFi       # Do you need to create a minfi samplesheet and copy idat files?
-F -> addGenesHm   # Do you want to annotate the gene/probe names on heatmap y-axis?
-F -> supervisedRun # Will this run have supervised sample clustering?
+T -> needFi       # Create a minfi samplesheet and copy idat files?
+T -> addGenesHm   # Annotate the gene/probe names on heatmap y-axis?
+T -> supervisedRun # Will this run have supervised sample clustering?
 T -> genHeatMaps   # Should beta value HeatMap plots be output?
-T -> genCNchunk    # Will CNV analysis be performed?
+F -> genCNchunk    # Will CNV analysis be performed?
 F -> genPathChunk  # Will Pathway analysis be performed?
 F -> genPairwise   # Will Pathway analysis be performed?
 gb$superHeat <- supervisedRun & genHeatMaps
 
-# Input worksheet column names to subset samples ------------------------------------------------
-NULL -> col_batchEffect -> batch_col # Institution names or batch column if batched idats
+# Input worksheet column names to subset samples ------------------------------
+NULL -> col_batchEffect -> batch_col # Institution names or batch column name
 NULL -> col_arrayType # "ArrayType" if the samplesheet is mixed EPIC and 450K
 NULL -> variable_to_filter # is there any variable to cluster samples by?
 
-# Sample Sheet Variable Columns -----------------------------------------------------------------
-# Keyword to replace any blank or empty values in the samplesheet
-"UNKNOWN" -> blank_keywd
-# Column containing unique sample IDS
-"record_id" -> col_samNames
-col_samNames <- gsub("-", ".", col_samNames) # dashes are replaced by default
+# Sample Sheet Variable Columns -----------------------------------------------
+"UNKNOWN" -> blank_keywd # Replacement for blank/empty values in samplesheet
+"RD-Number" -> col_samNames # Name of the column containing unique sample IDs
+col_samNames <- gsub("-", ".", col_samNames) # readxl drops dashes to dots
+"Dx" -> col_samGrp -> col_samTypes # Column name for grouping sample COLORS
+"Dx" -> col_shapes # Column name for plot point SHAPES\SYMBOLS
+NULL -> col_Grouping # Column to Group samples by sub-type (optional)
+NULL ->  col_sentrix # header name containing the sentrix ID if availible
+NULL -> col_other # Any additional column(s) to colorize/label
+gb$names2Label <- NULL  # Vector of specific samples to label within plots
+selectedVars <- unique(c(col_shapes, col_samTypes)) # All variables to label
 
-# Column name in samplesheet grouping sample COLORS
-"Tissue" -> col_samGrp -> col_samTypes
-# Column name for plot point SHAPES\SYMBOLS
-"Unknown_met" -> col_shapes
-# Column to Group samples by type i.e. t-sne cluster each subgroup/sample by type
-NULL -> col_Grouping
-# header name containing the sentrix ID
-"Sentrix_ID" ->  col_sentrix
-# Any additional column(s) in the samplesheet you would like to colorize/label
-NULL -> col_other #"diagnosis"
-# Vector of names of columns to target coloring or shapes
-selectedVars <- unique(c(col_shapes, col_samTypes))
-
-# Vector of specific sample IDs to label within the plots
-gb$names2Label <- NULL
-
-# HeatMaps Columns splitting
+# HeatMaps Columns splitting --------------------------------------------------
 colSplitHm <- 3 # Default number of columns to split or separate in heatmaps
 hideTopAnno <- FALSE # Should the top annotation of the HeatMap be hidden?
 
-# Site-Specific Analysis ------------------------------------------------------------------------
+# Site-Specific Analysis ------------------------------------------------------
 genesInputFi <- NULL #file.path(runDir,"site-specific_genes.xlsx")
 pathwayGrp_Filter <- NULL # Filter to select specific sample groups in pathways
 totPaths <- 1:5 # Total Number of top pathways to list and display
 
-# Pair-wise Analysis ----------------------------------------------------------------------------
+# Pair-wise Analysis ----------------------------------------------------------
 GroupSubset <- "Sample_Grouping"
 nameGrp1 <- "Sample_A"
 nameGrp2 <- "Sample_B"
 nameGrp3 <- "Sample_C"
+
+if (xlsxFile == "samplesheet.csv" | xlsxFile == "samplesheet_og.csv") {
+    stop("Your input xlsxFile cannot be named: ", xlsxFile)
+}
+
+if (token == "REDCAP_API_METH_TOKEN") {
+    stop("You did not provide a REDCap API token in Params_input.R") 
+}
