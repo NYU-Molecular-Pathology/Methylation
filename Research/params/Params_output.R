@@ -23,10 +23,12 @@ if (gb$supervisedRun == F) clusType <- clusType[1]
 # Generates output plot titles using Params_input.R titleMain and probes
 gb$tsne_titles <- gb$generateTitles(
     clusType, topTitle = as.character(varProbes), gb$titleMain)
+
 # MDS plot title
 mdsTitle <- paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot")
 
 # Default Output file names --------------------------------------------------
+samsheet <- "samplesheet.csv" # default output primary sample sheet name/path
 td <- format(Sys.Date(),"%b%d") # today's date (i.e., "Jun17")
 gb$rgOut <- file.path(gb$runDir, "data", paste0(td, "_RGset.Rdata"))
 rawBetaFi <- file.path(gb$runDir, "data", paste0(td, "_betaRaw.Rdata"))
