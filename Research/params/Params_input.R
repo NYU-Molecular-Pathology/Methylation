@@ -83,3 +83,6 @@ if (xlsxFile == "samplesheet.csv" | xlsxFile == "samplesheet_og.csv") {
 if (token == "REDCAP_API_METH_TOKEN") {
     stop("You did not provide a REDCap API token in Params_input.R") 
 }
+if (batchEffect == T & is.null(col_batchEffect)){
+    stop("If there is a batch effect, col_batchEffect cannot be NULL")
+}
