@@ -10,6 +10,22 @@ gb <- globalenv(); assign("gb", gb)
 gb$cssLink <-
     "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/Research.css"
 
+# Top Variance probe(s) to pull ----------------------------------------------
+varProbes <- c(100, 1000, 10000) # Vector of top N probes to plot T-sne
+hmVarProbes <- c(100, 1000, 3000) # Vector of top N probes to plot HeatMaps
+topN = 1000    # Top N probes to use for MDS plot
+topVar = 10000 # Top Variance probes to pull
+
+# Plot Title Names ------------------------------------------------------------
+clusType <- c("Unsupervised", "Supervised")
+if (gb$supervisedRun == F) clusType <- clusType[1]
+
+# Generates output plot titles using Params_input.R titleMain and probes
+gb$tsne_titles <- gb$generateTitles(
+    clusType, topTitle = as.character(varProbes), gb$titleMain)
+# MDS plot title
+mdsTitle <- paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot")
+
 # Default Output file names --------------------------------------------------
 td <- format(Sys.Date(),"%b%d") # today's date (i.e., "Jun17")
 gb$rgOut <- file.path(gb$runDir, "data", paste0(td, "_RGset.Rdata"))
@@ -18,7 +34,6 @@ pValsOutFi <- file.path(gb$runDir, "data", paste0(td, "_DetPvals.Rdata"))
 mbfile <- file.path(gb$runDir, "data", paste0(td, "_mSetSq.beta.Rdata"))
 unbetaVariance <- file.path(gb$runDir, "data", paste0(td, "_unbetaVar.RData"))
 combatOut <- file.path(gb$runDir, "data", paste0(td, "_combatBetas.Rdata"))
-samsheet <- "samplesheet.csv" # primary sample sheet name/path
 
 # Default Output Paths -------------------------------------------------------
 tsneOutU = "figures/tsne/unsupervised/"
@@ -27,12 +42,6 @@ hmOutU = "figures/heatmaps/unsupervised/"
 hmOutS = "figures/heatmaps/supervised/"
 supbetaOut <- file.path("data", paste0(td, "_supervisedBetas"))
 annotFi <- file.path("data", paste0(td, "_annotations.rds"))
-
-# Top Variance probe(s) to pull ----------------------------------------------
-varProbes <- c(100, 1000, 10000)
-hmVarProbes <- c(100, 1000, 3000)
-topN = 1000
-topVar = 10000
 
 # Create OutPut Directories ---------------------------------------------------
 CheckDirCreate <- function(path_dirs) {
@@ -78,17 +87,6 @@ if (gb$genPathChunk) {
     geneListIn <- file.path(gb$runDir, "data", paste0(td,"_Genes_Pathway.csv"))
     pathCsvOut <- file.path(gb$runDir, "data", paste0(td,"-signal_paths.csv"))
 }
-
-# Plot Title Names ------------------------------------------------------------
-clusType <- c("Unsupervised", "Supervised")
-if (gb$supervisedRun == F) {
-    clusType <- clusType[1]
-}
-
-gb$tsne_titles <- gb$generateTitles(
-    clusType, topTitle = as.character(varProbes), gb$titleMain)
-
-mdsTitle <- paste("Top", topN, "Common", "mSet Sq.beta", "MDS plot")
 
 # Chunk Header Options --------------------------------------------------------
 assignOpts <- function() {
