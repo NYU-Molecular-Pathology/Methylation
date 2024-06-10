@@ -1,13 +1,12 @@
 #!/usr/bin/env Rscript
-## ---------------------------
 ## Script name: all_installer.R
 ## Purpose: Functions to check if all required packages for the pipeline are installed
 ## Date Created: August 9, 2022
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2024
-## ---------------------------
 
+gb <- globalenv(); assign("gb", gb)
 options("install.packages.compile.from.source" = "Yes")
 options("install.packages.check.source" = "no")
 options(Ncpus = 4)
@@ -389,6 +388,10 @@ checkNeeds <- function() {
     )
 }
 
+deps_url <- 
+    "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Meth_Scripts/get_dependencies.R"
+
+devtools::source_url(deps_url)
 
 # List Classifier Core Packages -------------------------------------------------------------------
 corePkgs <- c("randomForest", "glmnet", "ggplot2", "gridExtra", "knitr", "pander", "gmp")
@@ -788,11 +791,14 @@ load_install <- function(pkg_list) {
 }
 
 
-load_install(corePkgs)
+#load_install(corePkgs)
+gb$check_pkg_install(corePkgs)
+
 if (!requireNamespace("ff", quietly = TRUE)) {
     install.packages("ff", type = "binary", ask = F, dependencies = T)
 }
-load_install(preReqPkgs)
+#load_install(preReqPkgs)
+gb$check_pkg_install(preReqPkgs)
 
 message("Loading BioConductor Packages and IlluminaHumanMethylation Manifest...")
 if (checkPkg("IlluminaHumanMethylationEPICmanifest")) {
@@ -813,7 +819,8 @@ if (checkPkg("FDb.InfiniumMethylation.hg19")) {
     )
 }
 
-load_install(biocPkgs)
+#load_install(biocPkgs)
+gb$check_pkg_install(biocPkgs)
 
 if (checkPkg("mgmtstp27")) {
     gitLink <-
