@@ -14,7 +14,7 @@ options(Ncpus = 4)
 
 is_macos <- Sys.info()[['sysname']] == "Darwin"
 
-if (getRversion() < "4.2.2") {
+if (getRversion() <= "4.2.2") {
     stop("Your R version is ", R.version.string, ". Please update to R version 4.4.0 or later.")
 }
 
