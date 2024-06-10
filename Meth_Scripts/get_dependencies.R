@@ -135,7 +135,11 @@ check_pkg_install <- function(pkgs) {
         message("The following missing packages will be installed:\n", 
             paste(pkg_deps, collapse = "\n"))
         for (new_pkg in pkg_deps) {
-            try_install(new_pkg)
+            if (new_pkg %in% avail_bioc_packs){
+                check_bio_install(new_pkg)
+            } else {
+                install_pkgs(new_pkg)
+            }
         }
     }
     invisible(sapply(pkgs, quiet_load))
