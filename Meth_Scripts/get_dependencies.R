@@ -95,9 +95,6 @@ check_pkg_install <- function(pkgs) {
             try_install(new_pkg)
         }
     }
-    for (pkg in pkgs) {
-        try_install(pkg)
-    }
     invisible(sapply(pkgs, quiet_load))
 }
 
