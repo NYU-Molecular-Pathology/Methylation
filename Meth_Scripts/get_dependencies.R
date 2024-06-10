@@ -130,11 +130,11 @@ try_install <- function(new_pkg) {
 
 # FUN: Loads and installs necessary CRAN packages -----------------------------
 check_pkg_install <- function(pkgs) {
-    pkg_deps <- check_needed(pkgs)
-    if (length(pkg_deps) > 0) {
+    pkgs_needed <- check_needed(pkgs)
+    if (length(pkgs_needed) > 0) {
         message("The following missing packages will be installed:\n", 
-            paste(pkg_deps, collapse = "\n"))
-        for (new_pkg in pkg_deps) {
+                paste(pkgs_needed, collapse = "\n"))
+        for (new_pkg in pkgs_needed) {
             if (new_pkg %in% avail_bioc_packs){
                 check_bio_install(new_pkg)
             } else {
