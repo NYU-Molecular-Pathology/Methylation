@@ -145,6 +145,9 @@ update_system_path <- function() {
 # FUN: Sets system compiler flags ---------------------------------------------
 fix_compiler_flags <- function(){
     check_brew_pkgs()
+    system("brew upgrade && brew update", intern = T, ignore.stderr = T)
+    system("brew doctor", intern = T, ignore.stderr = T)
+    system("brew cleanup", intern = T, ignore.stderr = T)
     clear_enviro()
 
     Sys.setenv(CC = "/usr/local/opt/llvm/bin/clang")
@@ -269,20 +272,21 @@ checkPkg <- function(pkgName) {
     return(!requireNamespace(pkgName, quietly = TRUE))
 }
 
-if (checkPkg("devtools")) {
-    install.packages("devtools", dependencies = T, verbose = T, ask = F)
+binary_install <- function(pkg) {
+    if (!requireNamespace(pkg, quietly = TRUE)){
+        install.packages(pkg, dependencies = T, ask = F, type = "binary")
+    }
 }
-if (checkPkg("librarian")) {
-    install.packages("librarian", dependencies = T, verbose = T, ask = F)
-}
+
+binary_install("devtools")
+binary_install("librarian")
+
 if (checkPkg("BiocManager")) {
-    install.packages("BiocManager", dependencies = T, verbose = T, ask = F)
+    binary_install("BiocManager")
 }
+
 if (checkPkg("Biobase")) {
     BiocManager::install("Biobase", update = F, ask = F, type = "binary")
-}
-if (loadLibrary("Biobase") == F) {
-    BiocManager::install("Biobase", update = F, ask = F, type = "source")
 }
 
 stopifnot(loadLibrary("devtools"))
@@ -299,7 +303,6 @@ download_pkg_unzip <- function(git_repo, zip_name = "main.zip") {
     utils::download.file(url = url_path, method = "curl", destfile = out_file)
     utils::unzip(out_file, exdir = local_dir)
 }
-
 
 # FUN: Downloads Github repo locally then installs ----------------------------
 local_github_pkg_install <- function(git_repo) {
