@@ -199,7 +199,7 @@ set_openmpi <- function() {
 
 # FUN: Sets system compiler flags ---------------------------------------------
 fix_compiler_flags <- function() {
-    check_brew_pkgs()
+    #check_brew_pkgs()
     clear_enviro()
 
     Sys.setenv(CC = "/usr/local/opt/llvm/bin/clang")
