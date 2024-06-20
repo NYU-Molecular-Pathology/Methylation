@@ -112,7 +112,8 @@ check_REDCap_vers <- function(min_version = "2.7.4") {
                                  upgrade = "always", ask = F, type = "source")
     }
     current_vers <- as.character(utils::packageVersion("redcapAPI"))
-    if (utils::compareVersion(current_vers, min_version) < 0) {
+    is_current <- utils::compareVersion(current_vers, min_version) >= 0
+    if (!is_current) {
         install.packages("redcapAPI", dependencies = T, ask = F, update = T)
     }
     library("redcapAPI", logical.return = TRUE)
