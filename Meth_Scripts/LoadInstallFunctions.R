@@ -429,24 +429,26 @@ try_github_inst <- function(git_repo) {
 
 # FUN: Checks if package version is correct then installs from Github ---------
 check_pkg_vers <- function(pkg_name, git_repo, min_vers) {
-
+    
     message("Trying to load package: ", pkg_name)
     if (!requireNamespace(pkg_name, quietly = TRUE)) {
         try_github_inst(git_repo)
     }
-
+    
     if (!requireNamespace(pkg_name, quietly = TRUE)) {
         message("The package ", pkg_name, " failed to install from Github")
         try_github_inst(git_repo)
     }
-
+    
     current_vers <- as.character(utils::packageVersion(pkg_name))
     is_current <- utils::compareVersion(current_vers, min_vers) >= 0
-
+    
     if (!is_current) {
+        try(unloadNamespace(pkg_name), T)
+        try(remove.packages(pkg_name), T)
         try_github_inst(git_repo)
     }
-
+    
     quiet_load(pkg_name)
 }
 
