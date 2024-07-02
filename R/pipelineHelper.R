@@ -295,18 +295,18 @@ msgSamSheet <- function(samSh) {
 
 
 getRunData <- function(data) {
-    if (ncol(data)<10) {
+    if (ncol(data) < 10) {
         tech1 <- nTech2 <- ""
-    }else{
-        tech1 <-paste0(data[, 9])
+    } else{
+        tech1 <- paste0(data[, 9])
         nTech2 <- paste0(data[, 10])
     }
     runDt <- data.frame(
-        sampleID = paste0(data[, 1]),
-        bnumber = paste0(data[, 2]),
-        senLi = paste0(data[, 5]),
-        run_id = paste0(data[, 7]),
-        mp_number = paste0(data[, 8]),
+        sampleID = paste0(data[, "Sample_Name"]),
+        bnumber = paste0(data[, "DNA_Number"]),
+        senLi = paste0(data[, "SentrixID_Pos"]),
+        run_id = paste0(data[, "RunID"]),
+        mp_number = paste0(data[, "MP_num"]),
         tech = tech1,
         tech2 = nTech2,
         outFi = paste0(data[, 1], ".html")
