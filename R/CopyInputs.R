@@ -151,7 +151,7 @@ CheckIdatsReal <- function(ssheet, allFi) {
         DataFrameMessage(missing_samples)
         missing_samples_df <- data.frame(Missing_Samples = missing_samples)
         write.csv(missing_samples_df, "missing_idats_log.csv", row.names = F, quote = F)
-        stop(crayon::bgRed("Check the log file to see which idats were not found: missing_idats_log.csv"))
+        message(crayon::bgRed("Check the log file to see which idats were not found: missing_idats_log.csv"))
     }
 }
 
@@ -246,7 +246,7 @@ get.idats <- function(csvNam = "samplesheet.csv", runDir=NULL){
         warning(crayon::bgRed("No .idat files found!"))
         message("Check worksheet for typos and if the barcode folder exists in the search path(s):")
         message(rsch.idat, "\nor\n", clin.idat)
-        stop("No .idat files found for these sample(s)!  The case(s) may have not been run yet.")
+        stop(crayon::bgRed("No .idat files found for these sample(s)!  The case(s) may have not been run yet."))
     }
     message("Files found: "); DataFrameMessage(allFi)
     allFi <- GetExternalIdats(allFi, ssheet, extr.idat)
