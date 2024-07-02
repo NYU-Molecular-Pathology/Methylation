@@ -151,7 +151,7 @@ CheckIdatsReal <- function(ssheet, allFi) {
         DataFrameMessage(missing_samples)
         missing_samples_df <- data.frame(Missing_Samples = missing_samples)
         write.csv(missing_samples_df, "missing_idats_log.csv", row.names = F, quote = F)
-        stop("Check the log file to see which idats were not found: missing_idats_log.csv")
+        stop(crayon::bgRed("Check the log file to see which idats were not found: missing_idats_log.csv"))
     }
 }
 
