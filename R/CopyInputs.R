@@ -246,7 +246,7 @@ get.idats <- function(csvNam = "samplesheet.csv", runDir=NULL){
         warning(crayon::bgRed("No .idat files found!"))
         message("Check worksheet for typos and if the barcode folder exists in the search path(s):")
         message(rsch.idat, "\nor\n", clin.idat)
-        stopifnot(length(allFi) > 0)
+        stop("No .idat files found for these sample(s)!  The case(s) may have not been run yet.")
     }
     message("Files found: "); DataFrameMessage(allFi)
     allFi <- GetExternalIdats(allFi, ssheet, extr.idat)
