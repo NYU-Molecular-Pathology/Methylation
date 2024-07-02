@@ -135,7 +135,7 @@ search.redcap <- function(rd_numbers, token = NULL, flds = NULL) {
     rcon <- redcapAPI::redcapConnection(gb$apiLink, token)
     if (is.null(flds)){
          flds <- c("record_id", "b_number", "primary_tech", "second_tech"," run_number",
-                   "barcode_and_row_column", "accession_number", "arrived")
+                   "barcode_and_row_column", "accession_number", "tm_number", "arrived")
     }
     
     result <- redcapAPI::exportRecordsTyped(rcon, records = rd_numbers, fields = flds, dag = F, factors = F, form_complete_auto = F, format = 'csv')
@@ -321,7 +321,7 @@ makeSampleSheet <- function(df, samplesheet_ID, bn = NULL, outputFi="samplesheet
         SentrixID_Pos = df[, "barcode_and_row_column"],
         Basename = paste0(bn),
         RunID = df$run_number,
-        MP_num = df$accession_number,
+        MP_num = df$tm_number,
         Date = df$arrived
     )
     samplesheet_csv <- samplesheet_csv[!is.na(samplesheet_csv$SentrixID_Pos),]
