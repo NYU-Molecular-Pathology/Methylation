@@ -341,7 +341,7 @@ writeSampleSheet <- function(df, bn = NULL, sampleName, dnaNumber, Sentrix) {
 # FUN: Checks header names of .xlsm sheet for mismatch
 checkHeaders <- function(worksheet) {
     msgFunName(cpInLnk2, "checkHeaders")
-    hdrs = dimnames(worksheet)[[2]]
+    hdrs <- dimnames(worksheet)[[2]]
     message(paste0(capture.output(data.frame(HEADERS = hdrs)), collapse = "\n"))
     Var.names = c(
         sampleName = paste(hdrs[9]), # "Sample_Name"
@@ -350,10 +350,12 @@ checkHeaders <- function(worksheet) {
         mpnum = paste(hdrs[8])       # "MP_number"
     )
     message(paste0(capture.output(data.frame(VarNames = Var.names)), collapse="\n"))
+    
     var.default = c("Sample_Name", "Sentrix_ID", "b_number", "MP_number")
-    if (any(Var.names != var.default)) {
-        rawInput <- paste(var.default[1:4], collapse = " ")
-        stop("Headers in .xlsm 'raw_input' tab are missing or mis-matched:\n", rawInput)
+    if (!(all(var.default %in% hdrs))) {
+        missing_head <- paste(var.default[!var.default %in% hdrs], collapse = "\n")
+        err_msg <- "\nThe following header(s) in the 'raw_input' tab are missing or in the wrong column:\n"
+        stop(err_msg, missing_head)
     }
     return(Var.names)
 }
