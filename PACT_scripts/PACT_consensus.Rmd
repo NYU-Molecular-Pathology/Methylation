@@ -24,7 +24,7 @@ gb$bamURL <- file.path("https://genome.med.nyu.edu/external/clinpathlab", params
 ```{css, echo=FALSE,code=base::readLines("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/consensus.css")}
 ```
 <h4>**Sign in with Kerberos to view all BAM files in**: [`r gb$bamURL`](`r gb$bamURL`)</h4><br>
-```{r, label='Input Parameters', echo=FALSE, message=TRUE, warning=FALSE, error=FALSE, include=FALSE}
+```{r, label='Input Parameters', echo=FALSE, message=TRUE, warning=FALSE, error=TRUE, include=FALSE}
 philipsFtp <- "/Volumes/molecular/Molecular/Philips_SFTP" # Philips datadump path
 methDir <- "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
 critialMnts <- c("/Volumes/CBioinformatics/Methylation/", "/Volumes/molecular/")
@@ -41,6 +41,6 @@ htmltools::tagList(DT::datatable(cars, options=list(pageLength = 100, width="100
 htmltools::tagList(plotly::ggplotly(ggplot2::ggplot()))
 ```
 
-```{r, label='Table Output', echo=FALSE, warning=FALSE, error=FALSE, fig.keep='all', include=TRUE, fig.align="left", fig.show="asis", out.width = '100%', results='asis', message=FALSE}
+```{r, label='Table Output', echo=FALSE, warning=FALSE, error=TRUE, fig.keep='all', include=TRUE, fig.align="left", fig.show="asis", out.width = '100%', results='asis', message=FALSE}
 gb$LoopSampleTabs(params)
 ```
