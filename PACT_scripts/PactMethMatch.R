@@ -782,5 +782,5 @@ output <- getOuputData(token, flds, inputSheet, readFlag)
 
 # CNV PNG Creation -------------------------------------
 if (ncol(output) > 0) {
-    queue_cnv_maker(output, token)
+    try(queue_cnv_maker(output, token), T)
 }
