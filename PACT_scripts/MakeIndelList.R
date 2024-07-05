@@ -1,68 +1,86 @@
 #!/usr/bin/env Rscript
-## ---------------------------
 ## Script name: MakeIndelList.R
-## Purpose: Filter out somatic variants for the PACT consensus report into a csv file
-## Date Last Modified: January 16, 2024
+## Purpose: Filter out somatic variants for PACT consensus into a csv file
+## Date Created: August 19, 2022
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2024
-## ---------------------------
 
 library("base")
 args <- commandArgs(TRUE)
 
-# Parameters Input trailing commandline -------------------------------------------------------
+# Parameters Input trailing command line --------------------------------------
 args[1] -> pactRunName
 args[2] -> concensusDir
 
-if(is.na(concensusDir)){
-    concensusDir <- paste0("/Volumes/CBioinformatics/jonathan/pact/consensus/", pactRunName, "_consensus")
+DEFAULT_DIR <- "/Volumes/CBioinformatics/jonathan/pact/consensus/"
+DEFAULT_OUT <- "/Volumes/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics"
+
+if (is.na(concensusDir)) {
+    concensusDir <- paste0(DEFAULT_DIR, pactRunName, "_consensus")
 }
 
 deps <- c("Depends", "Imports", "LinkingTo")
-if(!requireNamespace("stringr", quietly = TRUE)) {
-    install.packages("stringr", dependencies = deps, ask = F)
+if (!requireNamespace("stringr", quietly = TRUE)) {
+    install.packages("stringr", dependencies = deps, ask = F, type = "binary")
 }
-if(!requireNamespace("dplyr", quietly = TRUE)) {
-    install.packages("dplyr", dependencies = deps, ask = F)
+if (!requireNamespace("dplyr", quietly = TRUE)) {
+    install.packages("dplyr", dependencies = deps, ask = F, type = "binary")
 }
-library("dplyr", mask.ok = T, warn.conflicts = F, quietly = T)
+library("stringr", warn.conflicts = F, quietly = T)
+library("dplyr", warn.conflicts = F, quietly = T)
 
-runYear <- stringr::str_split_fixed(pactRunName, "-", 3)[1,2]
-molecOut <- "/Volumes/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics"
-csvPath <- file.path(molecOut, paste0("20", runYear), pactRunName)
+runYear <- stringr::str_split_fixed(pactRunName, "-", 3)[1, 2]
+csvPath <- file.path(DEFAULT_OUT, paste0("20", runYear), pactRunName)
 
 stopifnot(dir.exists(csvPath))
 
 thisFile <- "somatic_variants.csv"
-inputFile <- inputFile <- dir(path = csvPath, pattern = thisFile, full.names = T)
+inputFile <- dir(path = csvPath, pattern = thisFile, full.names = T)
 
-if(length(inputFile)==0){
-    message("File not found: ", thisFile, "\n" , "Ensure the file was copied here:")
-    message(inputFile)
+if (length(inputFile) == 0) {
+    message("File not found:\n", thisFile)
+    message("Ensure the file was copied here:\n", inputFile)
 }
 
-variantsData <-as.data.frame(read.csv(inputFile, strip.white = T))
-
+variantsData <- as.data.frame(read.csv(inputFile, strip.white = T))
 varColumns <- c("Test_Number", "Gene.refGene", "Variant", "ExonicFunc.refGene")
+
 exonicFilter <- stringr::str_detect(variantsData$ExonicFunc.refGene, "frame|delet|insert")
 indelsList <- variantsData[exonicFilter, varColumns]
-indelsList$Gene.refGene <- stringr::str_replace_all(indelsList$Gene.refGene, ",", " ")
+fix_genes <- stringr::str_replace_all(indelsList$Gene.refGene, ",", " ")
+indelsList$Gene.refGene <- fix_genes
 
-positions <- stringr::str_split_fixed(indelsList$Variant, ":", 3)[,1:2]
-indelsList$Position <- paste(positions[,1], positions[,2], sep="_")
+positions <- stringr::str_split_fixed(indelsList$Variant, ":", 3)[, 1:2]
+indelsList$Position <- paste(positions[, 1], positions[, 2], sep = "_")
 indelsList$nyu <- "Yes"
 indelsList$philips <- ""
 indelsList$Variant <- "SNV"
-indelsList <- indelsList %>% dplyr::distinct(Position, .keep_all =T)
+indelsList <- indelsList %>% dplyr::distinct(Position, .keep_all = T)
 
-for(ngs in unique(variantsData$Test_Number)){
-    if(!(ngs %in% unique(indelsList$Test_Number))){
-        newSNVRow <- c(ngs, "No Indels or FrameShifts called in-house", "", "", "", "", "SNV")
-        indelsList[nrow(indelsList) + 1,] = newSNVRow
+blank_row <- data.frame(
+    Test_Number = "",
+    Gene.refGene = "",
+    Variant = "",
+    ExonicFunc.refGene = "",
+    Position = "",
+    nyu = "",
+    philips = ""
+)
+
+for (ngs in unique(variantsData$Test_Number)) {
+    if (ngs %in% unique(indelsList$Test_Number) == F) {
+        newSNVRow <- blank_row
+        newSNVRow$Test_Number <- ngs
+        newSNVRow$Gene.refGene <- "No Indels or FrameShifts called in-house"
+        newSNVRow$Variant <- "SNV"
+        indelsList <- rbind(indelsList, newSNVRow)
     }
-    newCnvRow <- c(ngs, "", "", "", "NA", "", "", "", "CNV")
-    indelsList[nrow(indelsList) + 1,] = newCnvRow
+    newCnvRow <- blank_row
+    newCnvRow$Test_Number <- ngs
+    newCnvRow$Position <- "NA"
+    newCnvRow$Variant <- "CNV"
+    indelsList <- rbind(indelsList, newCnvRow)
 }
 
 varsToCheck <- data.frame(
@@ -77,7 +95,6 @@ varsToCheck <- data.frame(
     "Variant" = indelsList$Variant
 )
 
-#outPutFile <- file.path(fs::path_home(), "Desktop", paste0(pactRunName, "_desc.csv"))
 outPutFile <- file.path(concensusDir, paste0(pactRunName, "_desc.csv"))
-write.csv(varsToCheck, file=outPutFile, quote=F, row.names=F)
+write.csv(varsToCheck, file = outPutFile, quote = F, row.names = F)
 message("Output file saved: '", outPutFile, "'")
