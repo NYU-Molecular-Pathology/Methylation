@@ -73,7 +73,7 @@ checkQCpkg <- function(){
         "tinytex","gridExtra","rmarkdown", "BiocParallel", "grid"
     )
     
-    fix_compiler_flags()
+    #fix_compiler_flags()
     message("Now Loading...\n", paste(methylQCpacks, collapse=" "),"\n")
     
     needed_pkgs <- pkgs[!sapply(methylQCpacks, requireNamespace, quietly = TRUE)]
@@ -85,15 +85,15 @@ checkQCpkg <- function(){
         repos = 'http://cran.us.r-project.org',
         Ncpus = 4
     )
-    if (length(needed_pkgs) > 0) {
-        do.call(install.packages, c(list(pkgs = needed_pkgs), params))
-    }
+    # if (length(needed_pkgs) > 0) {
+    #     do.call(install.packages, c(list(pkgs = needed_pkgs), params))
+    # }
     
     reqPkg <- list("ggplot2", "pals", "stringr", "scales", "grid")
     needed_pkgs <- pkgs[!sapply(reqPkg, requireNamespace, quietly = TRUE)]
-    if (length(needed_pkgs) > 0) {
-        do.call(install.packages, c(list(pkgs = needed_pkgs), params))
-    }
+    # if (length(needed_pkgs) > 0) {
+    #     do.call(install.packages, c(list(pkgs = needed_pkgs), params))
+    # }
     sapply(pkgs, library, character.only = T, logical.return = T, quietly = T)
     sapply(reqPkg, library, character.only = T, logical.return = T, quietly = T)
 }
