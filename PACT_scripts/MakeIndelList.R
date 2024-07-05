@@ -57,6 +57,7 @@ indelsList$nyu <- "Yes"
 indelsList$philips <- ""
 indelsList$Variant <- "SNV"
 indelsList <- indelsList %>% dplyr::distinct(Position, .keep_all = T)
+rownames(indelsList) <- NULL
 
 blank_row <- data.frame(
     Test_Number = "",
@@ -74,6 +75,8 @@ for (ngs in unique(variantsData$Test_Number)) {
         newSNVRow$Test_Number <- ngs
         newSNVRow$Gene.refGene <- "No Indels or FrameShifts called in-house"
         newSNVRow$Variant <- "SNV"
+        message("\nBinding new row:\n")
+        message(paste0(capture.output(newSNVRow), collapse = "\n"))
         indelsList <- rbind(indelsList, newSNVRow)
     }
     newCnvRow <- blank_row
@@ -97,4 +100,4 @@ varsToCheck <- data.frame(
 
 outPutFile <- file.path(concensusDir, paste0(pactRunName, "_desc.csv"))
 write.csv(varsToCheck, file = outPutFile, quote = F, row.names = F)
-message("Output file saved: '", outPutFile, "'")
+message("Output file saved:\n", outPutFile)
