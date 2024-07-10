@@ -195,7 +195,9 @@ if(!file.exists(redCsv)) {
 }
 mnpOutTb <- as.data.frame(read.csv(redCsv, strip.white = T))
 mnpOutTb <- unique(mnpOutTb)
-stopifnot(nrow(mnpOutTb) > 1)
+if (!nrow(mnpOutTb) > 1) {
+    knitr::knit_exit()
+}
 knitr::asis_output(gb$GetSummaryTab(mnpOutTb))
 ```
 <footer><p>Page 7 of 8</p></footer></div><hr class="solid">
