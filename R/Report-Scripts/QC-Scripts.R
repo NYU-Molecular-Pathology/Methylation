@@ -341,6 +341,7 @@ genSumFail <- function(failPlot, failTex, sf = gb$summaryFail) {
     return(sf)
 }
 
+
 GetSummaryTab <- function(mnpOutTb){
     tableHeader <-
         c("RD-number", "B-Number", "TM-number", "Methylation Class", "Classifier Score",
@@ -353,7 +354,7 @@ GetSummaryTab <- function(mnpOutTb){
     		classifier_value = cell_spec(classifier_value, "html", color = gCel, bold = T),
     		mgmt_status = cell_spec(mgmt_status, "html", color = gCol)) %>%
         dplyr::select(
-            record_id, b_number, tm_number, classifier_score, classifier_value,
+            record_id, b_number, accession_number, classifier_score, classifier_value,
             subgroup, subgroup_score, mgmt_status
             ) %>%
         kable(format = "html", booktabs = T, escape = F,
@@ -366,6 +367,7 @@ GetSummaryTab <- function(mnpOutTb){
     tableSum <- tableSum %>% kable_styling(position="left")
     return(tableSum)
 }
+
 
 GetFailedSams <- function(mnpOutTb){
     rNum = mnpOutTb$record_id
