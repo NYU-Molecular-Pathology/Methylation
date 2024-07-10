@@ -692,28 +692,91 @@ GrabSpecificRecords <- function(flds, rd_num, rcon){
 }
 
 
+rename_reorder_output <- function(output) {
+    rename_map <- c(
+        "RD-number" = "RD.number",
+        "B-number" = "B.number",
+        "TM-number" = "TM.number",
+        "Log2sqrt(M*U)" = "Log2sqrt.M.U.",
+        "Log2(M/U)" = "Log2.M.U.",
+        "log2sqrt(R*G)" = "log2sqrt.R.G.",
+        "log2(R/G)" = "log2.R.G.",
+        "BS_log2sqrt(R*G)" = "BS_log2sqrt.R.G.",
+        "BS_log2(R/G)" = "BS_log2.R.G.",
+        "log2sqrt(H*L)" = "log2sqrt.H.L.",
+        "log2(H/L)" = "log2.H.L."
+    )
+    
+    output <- output %>%
+        rename(!!!rename_map)
+    
+    ordered_cols <- c(
+        "RunID",
+        "RD-number",
+        "B-number",
+        "TM-number",
+        "Log2sqrt(M*U)",
+        "Log2(M/U)",
+        "log2sqrt(R*G)",
+        "log2(R/G)",
+        "BS_log2sqrt(R*G)",
+        "BS_log2(R/G)",
+        "log2sqrt(H*L)",
+        "log2(H/L)",
+        "Pvalue",
+        "record_id",
+        "subgroup_score",
+        "classifier_score",
+        "classifier_value",
+        "subgroup",
+        "b_number",
+        "primary_tech",
+        "run_number",
+        "accession_number",
+        "block",
+        "tm_number",
+        "diagnosis"
+    )
+
+    if (any(is.na(output))) {
+        output[is.na(output)] <- ""
+    }
+    
+    return(output[, ordered_cols])
+}
+
+
 CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull) {
     msgFunName(cpOutLnk, "CheckOutputScoresQC")
+    newCols <- colnames(redcap_db)
+    for (col_id in newCols) {
+        output[col_id] <- ""
+    }
+    rownames(redcap_db) <- redcap_db$record_id
+    
+    for (xrow in 1:nrow(output)) {
+        currRow <- output$`RD.number`[xrow]
+        output[xrow, newCols] <- redcap_db[currRow, newCols]
+    }
+    
     totalNA <- which(is.na(output$classifier_value))
     if(length(totalNA) > 3){
         find_redCsv <- dir(path = getwd(), pattern = "_Redcap.csv")[1]
         if(is.na(find_redCsv)){
-            find_redCsv <- dir(path = file.path(fs::path_home(), "Desktop", runID), pattern = "_Redcap.csv")[1]
+            desk_path <- file.path(fs::path_home(), "Desktop", runID)
+            find_redCsv <- dir(path = desk_path, pattern = "_Redcap.csv")[1]
         }
         redcap_dat <- as.data.frame(read.csv(find_redCsv))
         redcap_dat$block <- ""
         redcap_dat$accession_number <- redcap_db[redcap_dat$record_id, "accession_number"]
         redcap_dat$diagnosis <- redcap_db[redcap_dat$record_id, "diagnosis"]
-        redcapCsvCols <- colnames(redcap_dat)
-        data_subset <- redcap_dat # [ , fieldsToPull]
+        if (is.null(redcap_dat$tm_number)) {
+            redcap_dat$tm_number <- redcap_dat$accession_number
+        }
+        data_subset <- redcap_dat[ , fieldsToPull]
         merged_data <- merge(output, data_subset, by.x = "RD.number", by.y = "record_id")
-        newQcCols <- c("RunID", "RD-number", "B-number", "TM-number", "Log2sqrt(M*U)", "Log2(M/U)",
-                          "log2sqrt(R*G)", "log2(R/G)", "BS_log2sqrt(R*G)", "BS_log2(R/G)",
-                          "log2sqrt(H*L)", "log2(H/L)", "Pvalue")
-        colnames(merged_data) <- c(newQcCols, redcapCsvCols)
-        #output[, fieldsToPull] <- data_subset[output$RD.number, fieldsToPull]
         return(merged_data)
-    }else{
+    } else {
         return(output)
     }
 }
@@ -738,40 +801,26 @@ get_QC_metric_data <- function(output_fi, runDir, runID) {
 CombineClassAndQC <- function(output_fi = NULL, token, runDir = NULL, runID = NULL) {
     msgFunName(cpOutLnk, "CombineClassAndQC")
     
-    fieldsToPull <- c("record_id", "run_number", "b_number", "tm_number", "block", "accession_number",
-                      "subgroup_score", "classifier_value", "subgroup", "classifier_score", "primary_tech", "diagnosis")
-    
-    if(is.null(runDir)){runDir <- getwd()}
-    if(is.null(runID)){runID <- basename(getwd())}
-    
-    output <- get_QC_metric_data(output_fi, runDir, runID)
-    
     apiUrl = "https://redcap.nyumc.org/apps/redcap/api/"
     rcon <- redcapAPI::redcapConnection(apiUrl, token)
+    
+    fieldsToPull <- c(
+        "record_id", "run_number", "b_number", "tm_number", "block",
+        "accession_number", "subgroup_score", "classifier_value", "subgroup",
+        "classifier_score", "primary_tech", "diagnosis"
+        )
+    
+    if (is.null(runDir)) {runDir <- getwd()}
+    if (is.null(runID)) {runID <- basename(getwd())}
+    
+    output <- get_QC_metric_data(output_fi, runDir, runID)
     
     controlRows <- which(output$`RD.number` == "control")
     output[controlRows, "RD.number"] <- paste(output[controlRows, "RunID"], output[controlRows, "RD.number"], sep = "_")
     
     redcap_db <- GrabSpecificRecords(fieldsToPull, rd_num = output$RD.number, rcon)
-    
-    newCols <- colnames(redcap_db)
-    for (col_id in newCols) {
-        output[col_id] <- ""
-    }
-    
-    rownames(redcap_db) <- redcap_db$record_id
-    
-    for (xrow in 1:nrow(output)) {
-        currRow <- output$`RD.number`[xrow]
-        output[xrow, newCols] <- redcap_db[currRow, newCols]
-    }
-    
     output <- CheckOutputScoresQC(output, runID, redcap_db, fieldsToPull)
-    
-    if(any(is.na(output))){
-        output[is.na(output)] <- ""
-    }
-    
+    output <- rename_reorder_output(output)
     outFile <- file.path(runDir, paste(runID, "QC_and_Classifier_Scores.csv", sep = "_"))
     write.csv(output, file = outFile, row.names = F, quote = F)
     
