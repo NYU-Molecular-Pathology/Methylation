@@ -693,6 +693,8 @@ GrabSpecificRecords <- function(flds, rd_num, rcon){
 
 
 rename_reorder_output <- function(output) {
+    library("rlang")
+    library("dplyr")
     rename_map <- c(
         "RD-number" = "RD.number",
         "B-number" = "B.number",
@@ -706,9 +708,8 @@ rename_reorder_output <- function(output) {
         "log2sqrt(H*L)" = "log2sqrt.H.L.",
         "log2(H/L)" = "log2.H.L."
     )
-    
-    output <- output %>%
-        rename(!!!rename_map)
+
+    output <- output %>% dplyr::rename(!!!rename_map)
     
     ordered_cols <- c(
         "RunID",
@@ -742,7 +743,8 @@ rename_reorder_output <- function(output) {
         output[is.na(output)] <- ""
     }
     
-    return(output[, ordered_cols])
+    final_output <- output[, ordered_cols]
+    return(final_output)
 }
 
 
@@ -820,8 +822,9 @@ CombineClassAndQC <- function(output_fi = NULL, token, runDir = NULL, runID = NU
     
     redcap_db <- GrabSpecificRecords(fieldsToPull, rd_num = output$RD.number, rcon)
     output <- CheckOutputScoresQC(output, runID, redcap_db, fieldsToPull)
-    output <- rename_reorder_output(output)
+    final_output <- rename_reorder_output(output)
+    message(paste0(capture.output(final_output), collapse = "\n"))
     outFile <- file.path(runDir, paste(runID, "QC_and_Classifier_Scores.csv", sep = "_"))
-    write.csv(output, file = outFile, row.names = F, quote = F)
+    write.csv(final_output, file = outFile, row.names = F, quote = F)
     
 }
