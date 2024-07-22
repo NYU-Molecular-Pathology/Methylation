@@ -274,7 +274,14 @@ checkPkg <- function(pkgName) {
 
 binary_install <- function(pkg) {
     if (!requireNamespace(pkg, quietly = TRUE)){
-        install.packages(pkg, dependencies = T, ask = F, type = "binary")
+        tryCatch(
+        install.packages(pkg, dependencies = T, ask = F, type = "binary"),
+            error = function(e){
+                message(e)
+                message("trying to install as source")
+                install.packages(pkg, dependencies = T, ask = F)
+            }
+        )
     }
 }
 
