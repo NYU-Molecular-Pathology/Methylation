@@ -27,6 +27,176 @@
 ```
 The API tokens are saved within the shell files where $pactID is the experiment name arg1 input by the user.
 
+The provided script `parsepact.sh` is designed to automate the process of parsing a PACT XLSM worksheet using R, followed by synchronizing the output to a high-performance computing (HPC) environment. Here is a detailed breakdown of the script:
+
+## Script Metadata
+- **Name:** `parsepact.sh`
+- **Purpose:** Initiate an R script to parse PACT XLSM worksheet and sync the output to an HPC.
+- **Date Created:** February 9, 2023
+- **Author:** Jonathan Serrano
+- **Version:** 1.2.0
+- **Copyright:** NYULH Jonathan Serrano, 2024
+
+## Hardcoded Variables
+- **APITOKEN:** `'8XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'`
+- **methAPI:** `'5XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'`
+- **CSVOUTDIR:** `"/gpfs/data/molecpathlab/production/samplesheets/LG-PACT/"`
+- **GITHUBLINK:** `"https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/"`
+
+## Input Arguments
+- **PACTID:** `($1)` - Default: `NULL`
+- **RUN_ID:** `($2)` - Default: `NULL`
+- **VAL_KWD:** `($3)` - Default: `"-ILMNVAL"`
+- **KERBEROS:** `($4)` - Default: `$USER`
+- **MOLECAPI:** `($5)` - Default: `$API_DEFAULT`
+
+## Variable Assignments
+- **kerbero:** `$KERBEROS`
+- **CURR_USER:** `$USER`
+
+## R Version Check
+Ensures the correct R version is used:
+```bash
+RMAINDIR=$(which R)
+[ "$RMAINDIR" != "/usr/local/bin/R" ] && {
+   echo -e "R not loaded from /usr/local/bin/R
+Check ~/.Rprofile"
+   exit 1
+}
+```
+
+## Text Color Variables
+Defines variables for colored and bold text output for better readability:
+```bash
+bold=$(tput bold)
+BG_BLU="$(tput setab 4)"
+BG_GRN="$(tput setab 2)"
+FG_YLW="$(tput setaf 3)"
+NORM=$(tput sgr0)
+```
+
+## Error Handling
+Sets up a trap to notify if the script exits due to an error:
+```bash
+set -Eeuo pipefail
+
+function notify {
+   echo "Bash script exited!"
+   echo "$(caller): ${BASH_COMMAND}"
+}
+
+trap notify ERR
+```
+
+## Utility Functions
+- **`message_curl`**: Downloads a file using `curl` and changes its permissions.
+- **`message_exe`**: Prints which command is executing.
+- **`message_print`**: Prints a message in blue.
+- **`check_directory`**: Checks if a directory exists on the remote HPC and creates it if it does not.
+
+## Argument Validation
+Checks if required arguments are provided, exits if missing:
+```bash
+[ -z "$PACTID" ] && {
+   echo "Missing argument #1: You did not provide a PACTID name (i.e. PACT-22-12)"
+   exit 1
+}
+[ -z "$RUN_ID" ] && {
+   echo "Missing argument #2: PACT Run name (i.e. 250817_NB501073_0999_ABCD2TBGXM)"
+   exit 1
+}
+```
+
+## Main Script Execution
+
+1. **Navigate to Home Folder and Print Input Arguments**
+   ```bash
+   cd "$HOME"
+   message_print "Input Kerberos ID" "$kerbero"
+   message_print "Input RUN_ID" "$RUN_ID"
+   message_print "Input PACTID" "$PACTID"
+   ```
+
+2. **Download Latest R Scripts**
+   ```bash
+   message_curl ${GITHUBURL} "pactParse.R"
+   message_curl ${GITHUBURL} "PactMethMatch.R"
+   ```
+
+3. **Execute R Script for Samplesheet Generation**
+   ```bash
+   message_exe 1 "pactParse.R" "$MOLECAPI $PACTID $RUN_ID"
+   Rscript pactParse.R $MOLECAPI "$PACTID" "$RUN_ID" "$VAL_KWD"
+   ```
+
+4. **Define and Check CSV Files**
+   ```bash
+   NEWCSV="$HOME/Desktop/${RUN_ID}-SampleSheet.csv"
+   PACTDIR="$CSVOUTDIR${RUN_ID}"
+   SHEETDIR="$CURR_USER@bigpurple.nyumc.org:$PACTDIR"
+
+   NEWCSV_VAL="$HOME/Desktop/${RUN_ID}-${VAL_KWD}-SampleSheet.csv"
+
+   if [ -f "${NEWCSV_VAL}" ]; then
+      HAS_VALIDATION=true
+   else
+      HAS_VALIDATION=false
+   fi
+   ```
+
+5. **Check and Create Directories on HPC**
+   ```bash
+   check_directory "$CURR_USER" "$PACTDIR"
+   if $HAS_VALIDATION; then
+      PACTDIR_VAL="$CSVOUTDIR${RUN_ID}-${VAL_KWD}"
+      SHEETDIR_VAL="$CURR_USER@bigpurple.nyumc.org:$PACTDIR_VAL"
+      check_directory "$CURR_USER" "$PACTDIR_VAL"
+   fi
+   ```
+
+6. **Synchronize CSV Files to HPC**
+   ```bash
+   message_print "Executing the following" "rsync -vrthP -e ssh $NEWCSV $SHEETDIR"
+   rsync -vrthP -e ssh "$NEWCSV" "$SHEETDIR"
+   if $HAS_VALIDATION; then
+      rsync -vrthP -e ssh "$NEWCSV_VAL" "$SHEETDIR_VAL"
+   fi
+   ```
+
+7. **Change Permissions on HPC**
+   ```bash
+   message_print "Changing permissions" "ssh $CURR_USER@bigpurple.nyumc.org chmod -R g+rwx $PACTDIR"
+   ssh "$CURR_USER@bigpurple.nyumc.org" "chmod -R g+rwx $PACTDIR"
+   if $HAS_VALIDATION; then
+      ssh "$CURR_USER@bigpurple.nyumc.org" "chmod -R g+rwx $PACTDIR_VAL"
+   fi
+   ```
+
+8. **Download and Execute Additional Scripts**
+   ```bash
+   message_curl ${GITHUBURL} "printPactCommands.sh"
+   message_curl ${GITHUBURL} "make_consensus.sh"
+
+   pactRunID=$(basename "${PACTID%.*}")
+
+   message_print "If needed, modify Desktop samplesheet and rsync again" "rsync -vrthP -e ssh $NEWCSV $SHEETDIR"
+   ```
+
+9. **Generate HTML Commands**
+   ```bash
+   message_print "Saving Html File" "$HOME/printPactCommands.sh $RUN_ID ${pactRunID} NULL ${kerbero} >$HOME/${pactRunID}.html && open $HOME/${pactRunID}.html"
+
+   "$HOME/printPactCommands.sh" "$RUN_ID" "${pactRunID}" NULL "${kerbero}" >"$HOME/${pactRunID}.html" && open "$HOME/${pactRunID}.html"
+   if $HAS_VALIDATION; then
+      "$HOME/printPactCommands.sh" "$RUN_ID-${VAL_KWD}" "${pactRunID}-${VAL_KWD}" NULL "${kerbero}" >"$HOME/${pactRunID}-${VAL_KWD}.html" && open "$HOME/${pactRunID}-${VAL_KWD}.html"
+   fi
+
+   open "$HOME/Desktop/${RUN_ID}-SampleSheet.csv"
+   ```
+
+This script is structured to ensure the correct execution of R scripts, synchronization of results to an HPC, and appropriate notification and handling of any errors that may occur.
+
+
 # 📑 Printing PACT Demultiplexing instructions
 
 1. Save the shell script to a local directory with execute permissions, for example:
