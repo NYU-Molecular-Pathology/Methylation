@@ -33,10 +33,11 @@ install_pkgs() {
     for package in "$@"
     do
         if brew ls --versions $package > /dev/null; then
+            brew install --force $package
             echo -e "$package is already installed."
         else
             echo -e "\nInstalling $package..."
-            brew install $package
+            brew install --force $package
         fi
     done
 }
