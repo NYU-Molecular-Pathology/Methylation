@@ -892,6 +892,17 @@ if (checkPkg("IlluminaHumanMethylationEPICanno.ilm10b4.hg19")) {
     install.packages(bio_url, repos = NULL, type = "source", ask = F, dependencies = T)
 }
 
+if (checkPkg("IlluminaHumanMethylationEPICanno.ilm10b2.hg19")) {
+    bio_url <- "https://bioconductor.org/packages/release/data/annotation/src/contrib/IlluminaHumanMethylationEPICanno.ilm10b2.hg19_0.6.0.tar.gz"
+    install.packages(
+        bio_url,
+        repos = NULL,
+        type = "source",
+        ask = F,
+        dependencies = T
+    )
+}
+
 if (checkPkg("minfi")) {
     try_github_inst("mwsill/minfi")
 }
