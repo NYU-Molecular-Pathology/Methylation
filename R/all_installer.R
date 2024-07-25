@@ -845,6 +845,11 @@ if (checkPkg("Rhtslib")) {
     library("Rhtslib")
 }
 
+if (checkPkg("Rsamtools")) {
+    install.packages("Rsamtools", repos = "http://bioconductor.org/packages/release/bioc", type = "binary", ask = F, dependencies = T)
+    library("Rsamtools")
+}
+
 gb$check_pkg_install(preReqPkgs)
 
 message("Loading BioConductor Packages and IlluminaHumanMethylation Manifest...")
