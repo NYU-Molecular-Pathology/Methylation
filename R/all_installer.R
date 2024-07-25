@@ -536,7 +536,6 @@ pkgs <- c(
     "compiler",
     "config",
     "conquer",
-    "conumee",
     "CopyNumberPlots",
     "cpp11",
     "crayon",
@@ -785,9 +784,9 @@ pkgs <- c(
 
 
 biocPkgs <- c(
+    "conumee",
     "lumi",
     "methylumi",
-    "conumee",
     "IlluminaHumanMethylation450kmanifest",
     "IlluminaHumanMethylation450kanno.ilmn12.hg19",
     "IlluminaHumanMethylationEPICanno.ilm10b4.hg19"
@@ -876,25 +875,24 @@ if (checkPkg("IlluminaHumanMethylationEPICv2manifest")) {
     devtools::install_github("mwsill/IlluminaHumanMethylationEPICv2manifest", upgrade = "never")
 }
 
+if (checkPkg("IlluminaHumanMethylation450kanno.ilmn12.hg19")) {
+    bio_url <- "https://bioconductor.org/packages/release/data/annotation/src/contrib/IlluminaHumanMethylation450kanno.ilmn12.hg19_0.6.1.tar.gz"
+    install.packages(bio_url, repos = NULL, type = "source", ask = F, dependencies = T)
+}
+
+if (checkPkg("IlluminaHumanMethylationEPICmanifest")) {
+    try_github_inst("mwsill/IlluminaHumanMethylationEPICmanifest")
+}
+
 if (checkPkg("minfi")) {
     devtools::install_github("mwsill/minfi", upgrade = "never")
 }
 
-any_fail <- gb$check_pkg_install(preReqPkgs)
-
-message("Loading BioConductor Packages and IlluminaHumanMethylation Manifest...")
-if (checkPkg("IlluminaHumanMethylationEPICmanifest")) {
-    tryCatch(
-        expr = try_github_inst("mwsill/IlluminaHumanMethylationEPICmanifest"),
-        error = function(e){
-            message(e)
-            message("You need to set your Git token to install Github packages")
-            message("usethis::create_github_token()")
-            message("Sys.setenv(GITHUB_PAT = 'YOUR_TOKEN')")
-        }
-    )
+if (checkPkg("conumee2")) {
+    devtools::install_github("hovestadtlab/conumee2", upgrade = "never")
 }
 
+any_fail <- gb$check_pkg_install(preReqPkgs)
 
 any_fail2 <- gb$check_pkg_install(biocPkgs)
 
