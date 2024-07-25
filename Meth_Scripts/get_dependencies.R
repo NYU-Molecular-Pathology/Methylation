@@ -145,7 +145,15 @@ check_pkg_install <- function(pkgs) {
             }
         }
     }
-    return(sapply(pkgs, quiet_load))
+    load_success <- sapply(pkgs, quiet_load)
+    if (any(load_success == F)) {
+        failed_pkgs <- pkgs[load_success == F]
+        message("\n>>The following package(s) failed to install:")
+        message(paste(failed_pkgs, collapse = "\n"))
+        return(failed_pkgs)
+    } else {
+        return(NULL)
+    }
 }
 
 # Example use:
