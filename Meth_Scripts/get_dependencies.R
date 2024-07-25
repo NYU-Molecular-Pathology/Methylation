@@ -21,6 +21,9 @@ quiet_load <- function(pkg_name) {
         library(pkg_name, character.only = T, logical.return = T, quietly = T)
     ))
     message(pkg_name, " loaded... ", libLoad)
+    pkg_vec <- c(pkg_n = libLoad)
+    names(pkg_vec) <-pkg_name
+    return(pkg_vec)
 }
 
 # FUN: Checks required package if not installs binary -------------------------
@@ -142,7 +145,7 @@ check_pkg_install <- function(pkgs) {
             }
         }
     }
-    invisible(sapply(pkgs, quiet_load))
+    return(sapply(pkgs, quiet_load))
 }
 
 # Example use:
