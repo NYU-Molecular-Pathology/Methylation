@@ -828,10 +828,25 @@ load_install <- function(pkg_list) {
 #load_install(corePkgs)
 gb$check_pkg_install(corePkgs)
 
-if (!requireNamespace("ff", quietly = TRUE)) {
+if (checkPkg("ff")) {
     install.packages("ff", type = "binary", ask = F, dependencies = T)
 }
-#load_install(preReqPkgs)
+
+if (checkPkg("GenomeInfoDbData")) {
+    gb$try_github_inst("Bioconductor/GenomeInfoDbData")
+    requireNamespace("GenomeInfoDbData")
+}
+
+if (checkPkg("GenomeInfoDb")) {
+    gb$try_github_inst("Bioconductor/GenomeInfoDb")
+    library("GenomeInfoDb")
+}
+
+if (checkPkg("Rhtslib")) {
+    gb$try_github_inst("Bioconductor/Rhtslib")
+    library("Rhtslib")
+}
+
 gb$check_pkg_install(preReqPkgs)
 
 message("Loading BioConductor Packages and IlluminaHumanMethylation Manifest...")
