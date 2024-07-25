@@ -896,6 +896,14 @@ if (checkPkg("minfi")) {
     try_github_inst("mwsill/minfi")
 }
 
+if (checkPkg("fields")) {
+    manual_bioc("fields")
+}
+
+if (checkPkg("RnBeads")) {
+    manual_bioc("RnBeads")
+}
+
 if (checkPkg("conumee2.0")) {
     try_github_inst("hovestadtlab/conumee2")
 }
