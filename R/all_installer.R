@@ -872,24 +872,32 @@ if (checkPkg("FDb.InfiniumMethylation.hg19")) {
 }
 
 if (checkPkg("IlluminaHumanMethylationEPICv2manifest")) {
-    devtools::install_github("mwsill/IlluminaHumanMethylationEPICv2manifest", upgrade = "never")
+    try_github_inst("mwsill/IlluminaHumanMethylationEPICv2manifest")
 }
+
 
 if (checkPkg("IlluminaHumanMethylation450kanno.ilmn12.hg19")) {
     bio_url <- "https://bioconductor.org/packages/release/data/annotation/src/contrib/IlluminaHumanMethylation450kanno.ilmn12.hg19_0.6.1.tar.gz"
     install.packages(bio_url, repos = NULL, type = "source", ask = F, dependencies = T)
 }
 
-if (checkPkg("IlluminaHumanMethylationEPICmanifest")) {
-    try_github_inst("mwsill/IlluminaHumanMethylationEPICmanifest")
+
+if (checkPkg("IlluminaHumanMethylation450kmanifest")) {
+    bio_url <- "https://bioconductor.org/packages/release/data/annotation/src/contrib/IlluminaHumanMethylation450kmanifest_0.4.0.tar.gz"
+    install.packages(bio_url, repos = NULL, type = "source", ask = F, dependencies = T)
+}
+
+if (checkPkg("IlluminaHumanMethylationEPICanno.ilm10b4.hg19")) {
+    bio_url <- "https://www.bioconductor.org/packages/release/data/annotation/src/contrib/IlluminaHumanMethylationEPICanno.ilm10b4.hg19_0.6.0.tar.gz"
+    install.packages(bio_url, repos = NULL, type = "source", ask = F, dependencies = T)
 }
 
 if (checkPkg("minfi")) {
-    devtools::install_github("mwsill/minfi", upgrade = "never")
+    try_github_inst("mwsill/minfi")
 }
 
-if (checkPkg("conumee2")) {
-    devtools::install_github("hovestadtlab/conumee2", upgrade = "never")
+if (checkPkg("conumee2.0")) {
+    try_github_inst("hovestadtlab/conumee2")
 }
 
 any_fail <- gb$check_pkg_install(preReqPkgs)
