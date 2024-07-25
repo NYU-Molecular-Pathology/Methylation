@@ -468,7 +468,7 @@ preReqPkgs <- c(
     'IRanges',
     'SummarizedExperiment',
     'genefilter',
-    'IlluminaHumanMethylationEPICanno.ilm10b2.hg19',
+    #'IlluminaHumanMethylationEPICanno.ilm10b2.hg19',
     'DNAcopy',
     'rtracklayer',
     'Biostrings',
@@ -788,7 +788,6 @@ biocPkgs <- c(
     "lumi",
     "methylumi",
     "conumee",
-    "minfi",
     "IlluminaHumanMethylation450kmanifest",
     "IlluminaHumanMethylation450kanno.ilmn12.hg19",
     "IlluminaHumanMethylationEPICanno.ilm10b4.hg19"
@@ -840,17 +839,48 @@ if (checkPkg("GenomeInfoDb")) {
     library("GenomeInfoDb")
 }
 
-if (checkPkg("Rhtslib")) {
-    install.packages("Rhtslib", repos = "http://bioconductor.org/packages/release/bioc", type = "binary", ask = F)
-    library("Rhtslib")
+manual_bioc <- function(bio_pkg) {
+    if (checkPkg(bio_pkg)) {
+        install.packages(bio_pkg,
+                         repos = "http://bioconductor.org/packages/release/bioc",
+                         type = "binary",
+                         ask = F)
+    }
+    if (!loadLibrary(bio_pkg)) {
+        gb$try_github_inst(file.path("Bioconductor", bio_pkg))
+    }
+    if (!loadLibrary(bio_pkg)) {
+        BiocManager::install(bio_pkg, update = F, ask = F, dependencies = T)
+    }
+    loadLibrary(bio_pkg)
 }
 
-if (checkPkg("Rsamtools")) {
-    install.packages("Rsamtools", repos = "http://bioconductor.org/packages/release/bioc", type = "binary", ask = F, dependencies = T)
-    library("Rsamtools")
+manual_bioc("rhdf5")
+manual_bioc("Rhtslib")
+manual_bioc("Rhdf5lib")
+manual_bioc("HDF5Array")
+manual_bioc("rhdf5filters")
+manual_bioc("Rsamtools")
+
+if (checkPkg("FDb.InfiniumMethylation.hg19")) {
+    bio_url <- "https://bioconductor.org/packages/release/data/annotation/src/contrib"
+    pkg_url1 <- file.path(bio_url, "org.Hs.eg.db_3.19.1.tar.gz")
+    pkg_url2 <- file.path(bio_url, "TxDb.Hsapiens.UCSC.hg19.knownGene_3.2.2.tar.gz")
+    pkg_url3 <- file.path(bio_url, "FDb.InfiniumMethylation.hg19_2.2.0.tar.gz")
+    install.packages(pkg_url1, repos = NULL, type = "source", ask = F, dependencies = T)
+    install.packages(pkg_url2, repos = NULL, type = "source", ask = F, dependencies = T)
+    install.packages(pkg_url3, repos = NULL, type = "source", ask = F, dependencies = T)
 }
 
-gb$check_pkg_install(preReqPkgs)
+if (checkPkg("IlluminaHumanMethylationEPICv2manifest")) {
+    devtools::install_github("mwsill/IlluminaHumanMethylationEPICv2manifest", upgrade = "never")
+}
+
+if (checkPkg("minfi")) {
+    devtools::install_github("mwsill/minfi", upgrade = "never")
+}
+
+any_fail <- gb$check_pkg_install(preReqPkgs)
 
 message("Loading BioConductor Packages and IlluminaHumanMethylation Manifest...")
 if (checkPkg("IlluminaHumanMethylationEPICmanifest")) {
@@ -865,14 +895,8 @@ if (checkPkg("IlluminaHumanMethylationEPICmanifest")) {
     )
 }
 
-if (checkPkg("FDb.InfiniumMethylation.hg19")) {
-    BiocManager::install(
-        "FDb.InfiniumMethylation.hg19", update = F, ask = F, dependencies = T
-    )
-}
 
-#load_install(biocPkgs)
-gb$check_pkg_install(biocPkgs)
+any_fail2 <- gb$check_pkg_install(biocPkgs)
 
 if (checkPkg("mgmtstp27")) {
     gitLink <-
