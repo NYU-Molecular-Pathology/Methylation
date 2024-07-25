@@ -285,15 +285,39 @@ binary_install <- function(pkg) {
     }
 }
 
-binary_install("devtools")
+bin_pkgs <- c("curl", "jsonlite", "mime", "openssl", "R6", 
+              "covr", "httpuv", "jpeg", "knitr", "png", 
+              "readr", "rmarkdown", "testthat", "xml2")
+
+
+for (pkg in bin_pkgs){
+    if (checkPkg(pkg)) {
+        install.packages(pkg, ask = F, dependencies = T, type = 'binary')
+    }
+}
+
+
+if (checkPkg("httr")) {
+    install.packages("httr", ask = F, dependencies = T)
+}
+
+
+if (checkPkg("devtools")) {
+    install.packages("devtools", ask = F, type = "source", dependencies = T)
+}
+
 binary_install("librarian")
 
 if (checkPkg("BiocManager")) {
     binary_install("BiocManager")
 }
 
+if (checkPkg("BiocGenerics")) {
+    BiocManager::install("BiocGenerics", update = F, ask = F)
+}
+
 if (checkPkg("Biobase")) {
-    BiocManager::install("Biobase", update = F, ask = F, type = "binary")
+    BiocManager::install("Biobase", update = F, ask = F, type = "source")
 }
 
 stopifnot(loadLibrary("devtools"))
