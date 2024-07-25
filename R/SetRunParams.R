@@ -149,7 +149,7 @@ getDefaults <- function() {
        gb$ApiToken <- gb$token
     }
     defaultParams <- data.frame(
-        mnp.pk.loc = paste0(file.path(cbVol, "classifiers/mnp.v11b6")),
+        mnp.pk.loc = paste0(file.path(cbVol, "classifiers/mnp.v12epicv2")),
         ApiToken = gb$ApiToken,
         methDir = paste0(file.path(cbVol, "Clinical_Runs")),
         clinDrv = paste0(file.path(moVol, "MOLECULAR LAB ONLY/NYU-METHYLATION")),
