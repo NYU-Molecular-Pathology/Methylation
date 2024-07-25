@@ -248,17 +248,17 @@ CheckInputArg <- function(varValue, gb, defVal = NULL) {varStr <- deparse(substi
 }
 
 
-LoadAndUnloadPacks <- function(){
-    unloadNamespace("mnp.v11b4"); unloadNamespace("mnp.v12b6"); unloadNamespace("sarc.v12b6")
-    loadNamespace("mnp.v11b6"); require("mnp.v11b6"); library("mnp.v11b6")
-}
+# LoadAndUnloadPacks <- function(){
+#     unloadNamespace("mnp.v11b4"); unloadNamespace("mnp.v12b6"); unloadNamespace("sarc.v12b6")
+#     loadNamespace("mnp.v11b6"); require("mnp.v11b6"); library("mnp.v11b6")
+# }
 
 CheckBaseFolderInput <- function(baseFolder){
     if(!is.null(baseFolder) & !identical(baseFolder, "NULL")) {
         message("Checking if custom run directory is valid: ", baseFolder, "\n")
         stopifnot("Input directory does not exist! Create it with mkdir" = dir.exists(baseFolder) == T)
     } else{baseFolder <- NULL}
-    LoadAndUnloadPacks()
+    #LoadAndUnloadPacks()
     return(baseFolder)
 }
 
