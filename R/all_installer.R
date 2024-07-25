@@ -445,7 +445,6 @@ preReqPkgs <- c(
     'XML',
     'bit64',
     'plyr',
-    'GenomeInfoDbData',
     'base64',
     'GenomicAlignments',
     'readr',
@@ -467,7 +466,6 @@ preReqPkgs <- c(
     'FDb.InfiniumMethylation.hg19',
     'S4Vectors',
     'IRanges',
-    'GenomeInfoDb',
     'SummarizedExperiment',
     'genefilter',
     'IlluminaHumanMethylationEPICanno.ilm10b2.hg19',
@@ -843,7 +841,7 @@ if (checkPkg("GenomeInfoDb")) {
 }
 
 if (checkPkg("Rhtslib")) {
-    gb$try_github_inst("Bioconductor/Rhtslib")
+    install.packages("Rhtslib", repos = "http://bioconductor.org/packages/release/bioc", type = "binary", ask = F)
     library("Rhtslib")
 }
 
