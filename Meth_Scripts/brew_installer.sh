@@ -45,7 +45,7 @@ install_pkgs() {
 install_pkgs libmagic sqlite proj tcl-tk xz
 install_pkgs aspell gdal autoconf automake gcc libgit2 openssl@3 zlib go pandoc git libffi
 install_pkgs texinfo pango cairo open-mpi poppler-qt5 graphviz libopenmpt java11 zeromq libomp pytorch openjdk gmp mpfr pkg-config apache-arrow udunits mariadb-connector-c libtiff hdf5
-install_pkgs llvm z3 libxml2
+install_pkgs llvm z3 libxml2 pcre2 bzip2
 
 # Check if basictex is installed ----------------------------------------------
 if ! brew list --cask basictex &>/dev/null || command -v pdflatex > /dev/null 2>&1; then
