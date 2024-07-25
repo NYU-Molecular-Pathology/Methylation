@@ -414,24 +414,24 @@ GetOutClass <- function(msetDat) {
     return(list("out"=out,"idx"=idx, "out_class_family"=out_class_family))
 }
 
-GetV12score <- function(RGset, FFPE = NULL) {
-    library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v12b6")
-    library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylationEPICmanifest")
-    #    load("/Volumes/CBioinformatics/Methylation/mnp_v12_R-package/mnp.v12b6/R/sysdata.rda")
-    RGset <- RGset[,1]
-    Mset12 <- mnp.v12b6::MNPpreprocessIllumina(RGset)
-    if(is.null(FFPE)) FFPE <- mnp.v12b6::MNPgetFFPE(RGset)
-    Mset12_ba <- mnp.v12b6::MNPbatchadjust(Mset12,FFPE)
-    sex12 <- ifelse(mnp.v12b6::MNPgetSex(Mset12)$predictedSex=="M","Male","Female")
-    super <- mnp.v12b6::MNPpredict(Mset12_ba,MCF_level="superfamily")[,1:2]
-    fam  <- mnp.v12b6::MNPpredict(Mset12_ba,MCF_level="family")[,1:2]
-    class <- mnp.v12b6::MNPpredict(Mset12_ba,MCF_level="class")[,1:2]
-    sclass <- mnp.v12b6::MNPpredict(Mset12_ba,abbreviation=FALSE)[,1:2]
-    out <- rbind(super,fam,class,sclass)
-    rownames(out) <- c("Super Family","Family","Class","Subclass")
-    out$maxscore <- sapply(out$maxscore,function(x)round(pmax(pmin(x,1-1e-4),1e-4),4))
-    return(out)
-}
+# GetV12score <- function(RGset, FFPE = NULL) {
+#     library(verbose=F, warn.conflicts = F, quietly = T, package= "mnp.v12b6")
+#     library(verbose=F, warn.conflicts = F, quietly = T, package= "IlluminaHumanMethylationEPICmanifest")
+#     #    load("/Volumes/CBioinformatics/Methylation/mnp_v12_R-package/mnp.v12b6/R/sysdata.rda")
+#     RGset <- RGset[,1]
+#     Mset12 <- mnp.v12b6::MNPpreprocessIllumina(RGset)
+#     if(is.null(FFPE)) FFPE <- mnp.v12b6::MNPgetFFPE(RGset)
+#     Mset12_ba <- mnp.v12b6::MNPbatchadjust(Mset12,FFPE)
+#     sex12 <- ifelse(mnp.v12b6::MNPgetSex(Mset12)$predictedSex=="M","Male","Female")
+#     super <- mnp.v12b6::MNPpredict(Mset12_ba,MCF_level="superfamily")[,1:2]
+#     fam  <- mnp.v12b6::MNPpredict(Mset12_ba,MCF_level="family")[,1:2]
+#     class <- mnp.v12b6::MNPpredict(Mset12_ba,MCF_level="class")[,1:2]
+#     sclass <- mnp.v12b6::MNPpredict(Mset12_ba,abbreviation=FALSE)[,1:2]
+#     out <- rbind(super,fam,class,sclass)
+#     rownames(out) <- c("Super Family","Family","Class","Subclass")
+#     out$maxscore <- sapply(out$maxscore,function(x)round(pmax(pmin(x,1-1e-4),1e-4),4))
+#     return(out)
+# }
 
 PrintScoreTable <- function(outV12, dat) {
     btso = c("bordered")
@@ -539,19 +539,19 @@ GetUniDTables <- function(predU){
     return(list("tab1"=unitab1,"tab2"=unitab2))
 }
 
-GetMgmtPlot <- function(Mset_raw){
-    be = c(booktabs = T, escape = F, linesep = "")
-    btso = c("bordered")
-    txtc = "text-align:center;"
-    kgb <- c("striped",font_size = 14, bootstrap_options = btso, position = "left")
-    plotmgmt <- as.data.frame(mnp.v12b6::MNPpredict_mgmt(Mset_raw), row.names = NULL)
-    newVals <- sapply(plotmgmt[1,2:5],function(x)plyr::round_any(x,.0001))
-    plotmgmt[1,2:5] <- newVals
-    mgmtPlot <- plotmgmt %>% mutate_all(as.character) %>%
-        knitr::kable("html", be, align = 'clc') %>%
-        kableExtra::kable_styling(kgb, full_width = F, position = "left")
-    return(list("mgmtVal" = plotmgmt, "mgmtPlot" = mgmtPlot))
-}
+# GetMgmtPlot <- function(Mset_raw){
+#     be = c(booktabs = T, escape = F, linesep = "")
+#     btso = c("bordered")
+#     txtc = "text-align:center;"
+#     kgb <- c("striped",font_size = 14, bootstrap_options = btso, position = "left")
+#     plotmgmt <- as.data.frame(mnp.v12b6::MNPpredict_mgmt(Mset_raw), row.names = NULL)
+#     newVals <- sapply(plotmgmt[1,2:5],function(x)plyr::round_any(x,.0001))
+#     plotmgmt[1,2:5] <- newVals
+#     mgmtPlot <- plotmgmt %>% mutate_all(as.character) %>%
+#         knitr::kable("html", be, align = 'clc') %>%
+#         kableExtra::kable_styling(kgb, full_width = F, position = "left")
+#     return(list("mgmtVal" = plotmgmt, "mgmtPlot" = mgmtPlot))
+# }
 
 GetClassProbTables <-  function(outList){
     
