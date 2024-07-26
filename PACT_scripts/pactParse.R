@@ -413,18 +413,71 @@ AppendMissingNotes <- function(indexToAdd, normSamPair, mainSheet, sheetTumors) 
         normSamPair <-
             append(normSamPair, "MISSING_NORMAL_PAIR", after = idx - 1)
     }
-    if(length(sheetTumors) != length(normSamPair)){
+    if (length(sheetTumors) != length(normSamPair)) {
         message("length(sheetTumors) != length(normSamPair)")
+        MsgDF(mainSheet$Paired_Normal[sheetTumors])
     }else{
         mainSheet$Paired_Normal[sheetTumors] <- normSamPair
+        message("Missing Indexes Added: ", paste(indexToAdd, collapse = " "))
+        MsgDF(normSamPair)
     }
 
     return(mainSheet)
 }
 
 
+check_if_unpaired <- function(filler_cases, rawData, indexToAdd, not_philips) {
+    for (idx in 1:nrow(filler_cases)) {
+        curr_test <- filler_cases[idx, "Test_Number"]
+        curr_bnum <- filler_cases[idx, "DNA #"]
+        is_control <- stringr::str_detect(rawData$`Type & Tissue`, pattern = "(?i)cont")
+        non_controls <- rawData[!is_control, ]
+        match_sam <- which(non_controls$Test_Number == curr_test)
+        is_paired <- length(match_sam) > 1
+        if (is_paired) {
+            msg1 <- paste(curr_bnum, "is not on Philips, but seems to be paired:")
+            message(crayon::bgGreen(msg1))
+            MsgDF(non_controls[match_sam, ])
+        } else{
+            msg2 <- paste(curr_bnum, "is not on Philips, and is not paired.")
+            message(crayon::bgGreen(msg2))
+            indexToAdd <- c(indexToAdd, not_philips[idx])
+            message("This case must be paired manually")
+        }
+    }
+    return(indexToAdd)
+}
+
+process_extra_tumors <- function(tumorSamPair,
+                                 missingCases,
+                                 philipsExport,
+                                 sheetPairTumor,
+                                 rawData,
+                                 sheetTumors,
+                                 normSamPair,
+                                 mainSheet) {
+    indexToAdd <- which(tumorSamPair %in% missingCases)
+    all_tumors_philips <- philipsExport$`Tumor DNA/RNA Number`
+    if (length(sheetPairTumor) > length(all_tumors_philips)) {
+        message("More tumors in XLSheet: ", length(all_tumors_philips))
+        message("Less tumors in Philips: ", length(sheetPairTumor))
+        not_philips <- which(sheetPairTumor %in% all_tumors_philips == F)
+        raw_tumors <- rawData[sheetTumors, ]
+        filler_cases <- raw_tumors[not_philips,]
+        indexToAdd <- check_if_unpaired(filler_cases, rawData, indexToAdd, not_philips)
+    }
+    if (length(sheetPairTumor) < length(all_tumors_philips)) {
+        message("More tumors in Philips: ", length(all_tumors_philips))
+        message("Less tumors in XLSheet: ", length(sheetPairTumor))
+    }
+    mainSheet <- AppendMissingNotes(indexToAdd, normSamPair, mainSheet, sheetTumors)
+    return(mainSheet)
+}
+
+
 AddUnmatchNormals <- function(sheetPairNorm, sheetPairTumor, mainSheet,
-                              sheetTumors, sheetNormals, philipsExport) {
+                              sheetTumors, sheetNormals, philipsExport,
+                              rawData) {
     extraNormals <- length(sheetPairNorm) > length(sheetPairTumor)
     dnaMissingPair <- FindMissingPairs(extraNormals, philipsExport, sheetPairTumor,
                                        sheetPairNorm, mainSheet)
@@ -441,16 +494,38 @@ AddUnmatchNormals <- function(sheetPairNorm, sheetPairTumor, mainSheet,
             mainSheet <- ProcessExtraNormals(normSamPair, missingCases, tumorSamPair,
                                              mainSheet, sheetTumors)
         } else{
-            indexToAdd <- which(tumorSamPair %in% missingCases)
-            all_tumors_philips <- philipsExport$`Tumor DNA/RNA Number`
-            if(length(sheetPairTumor) > length(all_tumors_philips)){
-                unpaired_sams <- which(sheetPairTumor %in% all_tumors_philips == F)
-                indexToAdd <- c(indexToAdd, unpaired_sams)
-            }
-            mainSheet <- AppendMissingNotes(indexToAdd, normSamPair, mainSheet, sheetTumors)
+            mainSheet <- process_extra_tumors(
+                tumorSamPair,
+                missingCases,
+                philipsExport,
+                sheetPairTumor,
+                rawData,
+                sheetTumors,
+                normSamPair,
+                mainSheet
+            )
         }
     }
     return(mainSheet)
+}
+
+
+check_old_runs <- function(mainSheet, philipsExport) {
+    has_missing <- which(mainSheet$Paired_Normal == "MISSING_NORMAL_PAIR")
+    if (length(has_missing) > 0) {
+        needed_sams <- mainSheet$Specimen_ID[has_missing]
+        on_philips <- philipsExport$`Tumor Specimen ID` == needed_sams
+        if (any(on_philips)) {
+            norm_msg <- "Missing normal(s) may be paired with previous run(s):"
+            message(crayon::bgBlue(norm_msg))
+            old_ids <- paste(philipsExport$`Epic Order Number`[on_philips],
+                             philipsExport$`Normal Run Number`[on_philips],
+                             philipsExport$`Normal Specimen ID`[on_philips],
+                             philipsExport$`Normal DNA/RNA Number`[on_philips],
+                             sep = "_")
+            message(paste(old_ids, collapse = "\n"))
+        }
+    }
 }
 
 
@@ -463,44 +538,35 @@ AddSampleIndexes <- function(pairedList, rawData, philipsExport) {
     sheetControl <-
         which(stringr::str_detect(tissueType, pattern = "(?i)cont"))
 
-    mainSheet <-
-        data.frame(matrix("", nrow = nrow(pairedList), ncol = 0))
-    mainSheet$Sample_Name <-
-        mainSheet$Sample_ID <- paste(pairedList[, 1])
+    mainSheet <- data.frame(matrix("", nrow = nrow(pairedList), ncol = 0))
+    mainSheet$Sample_Name <- mainSheet$Sample_ID <- paste(pairedList[, 1])
     mainSheet$Paired_Normal <- ""
 
     sheetPairTumor <- rawData$`DNA #`[sheetTumors]
     sheetPairNorm <- rawData$`DNA #`[sheetNormals]
 
-    # Check if length mismatch between tumor normals and normal samples
+    # Check if length is not equal between tumor and normal samples
     if (length(sheetPairTumor) != length(sheetPairNorm)) {
         message("length(sheetPairTumor) != length(sheetPairNorm) in AddSampleIndexes()")
-        mainSheet <-
-            AddUnmatchNormals(
-                sheetPairNorm,
-                sheetPairTumor,
-                mainSheet,
-                sheetTumors,
-                sheetNormals,
-                philipsExport
-            )
+        mainSheet <- AddUnmatchNormals(sheetPairNorm, sheetPairTumor,
+                                       mainSheet, sheetTumors, sheetNormals,
+                                       philipsExport, rawData)
     } else {
         mainSheet$Paired_Normal[sheetTumors] <- mainSheet$Sample_ID[sheetNormals]
     }
 
     if (length(rawData$I7_Index_ID) != nrow(mainSheet)) {
+        message(crayon::bgRed("Check sample sheet I7_Index_ID column!"))
         stop("length(rawData$I7_Index_ID) != nrow(mainSheet)")
     }
     mainSheet$I7_Index_ID <- paste(rawData$I7_Index_ID)
     mainSheet$index <- paste(rawData$index)
     mainSheet$Specimen_ID <- paste(rawData$`Accession#`)
-    mainSheet$Tumor_Content <-
-        mainSheet$Test_Number <- mainSheet$EPIC_ID <- "0"
+    mainSheet$Tumor_Content <- mainSheet$Test_Number <- mainSheet$EPIC_ID <- "0"
     mainSheet$Description <- mainSheet$Tumor_Type <- ""
+    check_old_runs(mainSheet, philipsExport)
     return(mainSheet)
 }
-
-
 
 FixDuplicateControls <- function(controlRows) {
     message("Fixing duplicated controls:\n", paste(controlRows[duplicated(controlRows)], collapse = "\n"))
@@ -914,7 +980,9 @@ GetPhilipsData <- function(inputFi) {
     if (!all(filterColumns %in% colnames(philipsExport))) {
         stop("PhilipsExport tab is missing headers!")
     }
-
+    if ("Normal Run Number" %in% colnames(philipsExport)) {
+        filterColumns <- c(filterColumns, "Normal Run Number")
+    }
     philipsExport <- philipsExport[philipsExport$`Test Name` != "", ]
     philipsExport <- philipsExport[, filterColumns]
     blankOrder <- philipsExport[,"Epic Order Number"] == ""
