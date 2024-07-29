@@ -1021,8 +1021,10 @@ if (arch != "x86_64") {
         dependencies = T
     )
 }
-
-load_install(pkgs)
+if (checkPkg("quantreg")) {
+    install.packages('quantreg', ask = F, type = 'binary', dependencies = T)
+}
+any_failed <- gb$check_pkg_install(pkgs)
 
 invisible(gc())
 
