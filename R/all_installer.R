@@ -859,6 +859,20 @@ manual_bioc("Rhtslib")
 manual_bioc("Rhdf5lib")
 manual_bioc("HDF5Array")
 manual_bioc("rhdf5filters")
+
+bio_url <- "https://cran.r-project.org/src/contrib/Hmisc_5.1-3.tar.gz"
+install.packages(bio_url, repos = NULL, type = "source", ask = F, dependencies = T)
+
+if (checkPkg("karyoploteR")) {
+    if (arch != "x86_64") {
+        bio_url <- "https://www.bioconductor.org/packages/release/bioc/bin/macosx/big-sur-arm64/contrib/4.4/karyoploteR_1.30.0.tgz"
+        install.packages(bio_url, repos = NULL, type = "source", ask = F, dependencies = T)
+    } else{
+        bio_url <- "https://www.bioconductor.org/packages/release/bioc/bin/macosx/big-sur-x86_64/contrib/4.4/karyoploteR_1.30.0.tgz"
+        install.packages(bio_url, repos = NULL, type = "source", ask = F, dependencies = T)
+    }
+}
+
 manual_bioc("Rsamtools")
 
 if (checkPkg("FDb.InfiniumMethylation.hg19")) {
