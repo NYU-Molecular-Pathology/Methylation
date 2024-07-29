@@ -1000,6 +1000,27 @@ if (checkPkg("GenVisR")) {
     try_github_inst("griffithlab/GenVisR")
 }
 
+arm_bin <- "https://cran.r-project.org/bin/macosx/big-sur-arm64/contrib/4.4/forecast_8.23.0.tgz"
+x64_bin <- "https://cran.r-project.org/bin/macosx/big-sur-x86_64/contrib/4.4/forecast_8.23.0.tgz"
+
+if (arch != "x86_64") {
+    install.packages(
+        arm_bin,
+        repos = NULL,
+        type = "source",
+        ask = F,
+        dependencies = T
+    )
+} else {
+    install.packages(
+        x64_bin,
+        repos = NULL,
+        type = "source",
+        ask = F,
+        dependencies = T
+    )
+}
+
 load_install(pkgs)
 
 invisible(gc())
