@@ -232,8 +232,9 @@ bioc_install <- function(pkg) {
 # FUN: Attempts source and binary package installation ------------------------
 install_pkgs <- function(curr_pkg, pkg_type = "source") {
     install_opts$type <- pkg_type
-    if (curr_pkg %in% avail_bioc_packs) {
-        return(bioc_install(curr_pkg))
+    if (any(curr_pkg %in% avail_bioc_packs)) {
+        bio_curr <- curr_pkg[curr_pkg %in% avail_bioc_packs]
+        return(bioc_install(bio_curr))
     }
     message(paste("Installing package:", curr_pkg), "...")
     tryCatch(
