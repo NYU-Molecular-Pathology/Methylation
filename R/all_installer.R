@@ -999,7 +999,8 @@ if (checkPkg("FField")) {
 if (checkPkg("GenVisR")) {
     try_github_inst("griffithlab/GenVisR")
 }
-
+install.packages("urca", ask = F, dependencies = T, verbose = T)
+library("urca")
 arm_bin <- "https://cran.r-project.org/bin/macosx/big-sur-arm64/contrib/4.4/forecast_8.23.0.tgz"
 x64_bin <- "https://cran.r-project.org/bin/macosx/big-sur-x86_64/contrib/4.4/forecast_8.23.0.tgz"
 
