@@ -169,7 +169,7 @@ GetRedcapDF <- function(gb) {
         fscore <- gb$outList$out_class_family$`Class Score`[1]
         subfam <- gb$out$`Methylation Subgroup`[1]
         subScore <- gb$out$`Subgroup Score`[1]
-        mgmtStat1 <- gb$mgmtValues$mgmtVal
+        mgmtStat1 <- as.data.frame(gb$mgmtValues)
     }
     
     mlh_status <- gb$mlh1Pred$theValue$m.reslt
