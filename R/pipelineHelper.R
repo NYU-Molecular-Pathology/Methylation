@@ -440,11 +440,11 @@ do_report <- function(single_data = NULL, genCn = FALSE) {
     dat <- getRunData(single_data)
     RGsetEpic <- getRGset(runPath = getwd(), sentrix = dat$senLi)
     arrayAnno <- RGsetEpic@annotation[['array']]
-    if (arrayAnno == "IlluminaHumanMethylationEPICv2") {
+    #if (arrayAnno == "IlluminaHumanMethylationEPICv2") {
       library("mnp.v12epicv2")
       require("mnp.v12epicv2")
       reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
-    }
+    #}
     if (genCn == T) {
         generate_cnv_png(RGsetEpic, dat$sampleID)
     }
