@@ -157,20 +157,20 @@ GetRedcapDF <- function(gb) {
     array_opt1 <- ifelse(gb$is450k, yes = "450k", no = "EPIC")
     array_opt <- ifelse(gb$RGset@annotation[["array"]] == "IlluminaHumanMethylationEPICv2", yes = "EPICV2", no = array_opt1)
     
-    if (array_opt == "EPICV2") {
-        familia <- gb$outList["family", "predicted"]
-        fscore <- gb$outList["family", "maxscore"]
-        subfam <- gb$outList["subclass", "predicted"]
-        subScore <- gb$outList["subclass", "maxscore"]
-        mgmtStat1 <- as.data.frame(gb$mgmtValues)
-    } else{
-        gb$out <- gb$outList$out
-        familia <- gb$outList$out_class_family$`Methylation Family`[1]
-        fscore <- gb$outList$out_class_family$`Class Score`[1]
-        subfam <- gb$out$`Methylation Subgroup`[1]
-        subScore <- gb$out$`Subgroup Score`[1]
-        mgmtStat1 <- as.data.frame(gb$mgmtValues)
-    }
+     # if (array_opt == "EPICV2") {
+    familia <- gb$outList["family", "predicted"]
+    fscore <- gb$outList["family", "maxscore"]
+    subfam <- gb$outList["subclass", "predicted"]
+    subScore <- gb$outList["subclass", "maxscore"]
+    mgmtStat1 <- as.data.frame(gb$mgmtValues)
+    # } else{
+    #     gb$out <- gb$outList$out
+    #     familia <- gb$outList$out_class_family$`Methylation Family`[1]
+    #     fscore <- gb$outList$out_class_family$`Class Score`[1]
+    #     subfam <- gb$out$`Methylation Subgroup`[1]
+    #     subScore <- gb$out$`Subgroup Score`[1]
+    #     mgmtStat1 <- as.data.frame(gb$mgmtValues)
+    # }
     
     mlh_status <- gb$mlh1Pred$theValue$m.reslt
     mlh_total <- gb$mlh1Pred$theValue$MLH1.pos.loci
