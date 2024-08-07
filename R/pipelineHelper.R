@@ -110,20 +110,17 @@ getRGset <- function(runPath, sentrix) {
   aEpic = c(array = "IlluminaHumanMethylationEPIC", annotation = "ilm10b4.hg19")
   a450k = c(array = "IlluminaHumanMethylation450k", annotation = "ilmn12.hg19")
   arrayAnno <- RGsetEpic@annotation[['array']]
+
   if (arrayAnno == "IlluminaHumanMethylationEPICv2") {
     requireNamespace("mnp.v12epicv2")
-    reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
     is_validation <- T
-    if (is_validation) {
-      is_validation <<- T
-      reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
-      reportMd <<- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
-      gb$CopyRmdFile(gb$runID, reportMd)
-    }
+    is_validation <<- T
+    reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
+    reportMd <<- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
+    gb$CopyRmdFile(gb$runID, reportMd)
     return(RGsetEpic)
   }
   if (arrayAnno == "IlluminaHumanMethylationEPIC") {
-    #requireNamespace("mnp.v12b6")
     return(RGsetEpic)
   }
   if (arrayAnno == "IlluminaHumanMethylation450k") {
@@ -154,7 +151,7 @@ CheckSampleQCmetrics <- function(runID) {
     qcVals$passed_qc <- ifelse(qcVals$passed_qc < 2, "yes", "no")
     final_qc <- data.frame(record_id = qcVals$RD.number, qc_passed = qcVals$passed_qc)
     currVals <- final_qc$passed_qc
-    if(any(is.na(currVals))){
+    if (any(is.na(currVals))){
         final_qc$passed_qc[is.na(currVals)] <- "no"
     }
     return(final_qc)
@@ -319,9 +316,9 @@ NameControl <- function(data, runId) {
     library("data.table")
     if (any(data[, 1] %like% 'control')) {
         cntrl <- which(data[, 1] %like% 'control') #DNA_Number
-        if(length(cntrl) > 1){
+        if (length(cntrl) > 1){
           controlSams <- make.unique(data[cntrl, 1], sep = "_")
-          data[cntrl, 1] <- paste0(runId, "_", controlSams)  
+          data[cntrl, 1] <- paste0(runId, "_", controlSams)
         } else{
           data[cntrl, 1] <- paste0(runId, "_control")
         }
@@ -375,11 +372,11 @@ checkSamSh <- function(samList) {
     wksh <- ReadSamSheet(samList)
     isMC = sjmisc::str_contains(gb$runID, "MGDM")|sjmisc::str_contains(gb$runID, "MC")
     is_validation <- sjmisc::str_contains(gb$runID, "VAL")
-    
+
     if (isMC == T & is_validation == F) {
         wksh <- NameControl(wksh, wksh$run_number[1])
     }
-    if(gb$runID == "23-MGDM_VAL3"){
+    if (gb$runID == "23-MGDM_VAL3"){
         wksh <- NameControl(wksh, wksh$run_number[1])
     }
     stopifnot(!is.null(wksh))
@@ -440,11 +437,9 @@ do_report <- function(single_data = NULL, genCn = FALSE) {
     dat <- getRunData(single_data)
     RGsetEpic <- getRGset(runPath = getwd(), sentrix = dat$senLi)
     arrayAnno <- RGsetEpic@annotation[['array']]
-    #if (arrayAnno == "IlluminaHumanMethylationEPICv2") {
-      library("mnp.v12epicv2")
-      require("mnp.v12epicv2")
-      reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
-    #}
+    library("mnp.v12epicv2")
+    require("mnp.v12epicv2")
+    reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
     if (genCn == T) {
         generate_cnv_png(RGsetEpic, dat$sampleID)
     }
@@ -478,7 +473,7 @@ loopRender <- function(samList = NULL, data, redcapUp = T) {
     if (isMC == T & is_validation == F) {
         data <- NameControl(data, data$RunID[1])
     }
-    if(gb$runID == "23-MGDM_VAL3"){
+    if (gb$runID == "23-MGDM_VAL3"){
         data <- NameControl(data, data$RunID[1])
     }
     if (is.null(samList)) {
@@ -515,7 +510,7 @@ RenderReportsParallel <- function(samList = NULL, data, redcapUp = T) {
     msgFunName(pipeLnk, "loopRenderAndReportParallel")
     if (is.null(data)) stop("Data is NULL")
     library("parallel")
-    
+
     if (grepl("VAL", gb$runID)) {
         reportMd <<- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
         CopyRmdFile(gb$runID, reportMd)
@@ -540,7 +535,7 @@ RenderReportsParallel <- function(samList = NULL, data, redcapUp = T) {
         RGsetEpic <- getRGset(runPath = getwd(), sentrix = dat$senLi)
 
         if (gb$genCn) {generate_cnv_png(RGsetEpic, dat$sampleID)}
-        params_init <- list(token = gb$ApiToken, rundata = dat, 
+        params_init <- list(token = gb$ApiToken, rundata = dat,
                             RGsetEpic = RGsetEpic, knitDir = getwd())
         tryCatch(
             make_knit_report(dat, reportMd, params_init),
@@ -560,13 +555,13 @@ RenderReportsParallel <- function(samList = NULL, data, redcapUp = T) {
 
 RenameFailed <- function(qcVals) {
   msgFunName(pipeLnk, "RenameFailed")
-    
+
   if (!is.null(qcVals)) {
-      
+
       message("qcVals")
       qcVals[is.na(qcVals)] <- "no"
       print(qcVals)
-      
+
         if (any(qcVals$qc_passed == "no")) {
             file.list <- dir(getwd(), pattern = ".html", full.names = T)
             toRename <- qcVals$record_id[qcVals$qc_passed == "no"]
@@ -603,7 +598,7 @@ makeReports.v11b6 <- function(runPath = NULL,
     assign("genCn", genCn, envir = gb)
     data <- read.csv(sheetName, strip.white = T)
     sheetRunID <- paste0(data$RunID[1])
-    if(sheetRunID != gb$runID) {
+    if (sheetRunID != gb$runID) {
       message("Batch ID in sheet is: ", sheetRunID)
       message("Batch ID provided is: ", gb$runID)
       stopifnot(sheetRunID == gb$runID)
@@ -612,16 +607,12 @@ makeReports.v11b6 <- function(runPath = NULL,
 
     isMC = sjmisc::str_contains(runID, "MGDM") | sjmisc::str_contains(runID, "MC")
     is_validation <- sjmisc::str_contains(runID, "VAL")
-    # if (isMC == T & is_validation == F) {
-    #     CreateRedcapRecord(runID, "control")
-    # }
-    
     cntrl <- which(data[, 1] %like% 'control')
-    if(length(cntrl) >= 1){
+    if (length(cntrl) >= 1){
         control_sams <- data[cntrl, 1]
         control_sams <- make.unique(control_sams, sep = "_")
         for(sam in control_sams){
-          CreateRedcapRecord(runID, sam)  
+          CreateRedcapRecord(runID, sam)
         }
     }
 
