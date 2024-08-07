@@ -57,8 +57,8 @@ The report output shoud contain something like: `Personal access token: '<found 
   + Call `usethis::edit_r_environ()` to update that file manually. You can reference additional information here: https://happygitwithr.com/https-pat.html
 
 ### 4. Create new RStudio Git Project ######################################################
-  + In the RStudio Menubar, go to File ➡️ New Project... and select Version Control from the New Project Setup Wizard Menu
-  + On the next page, select the Git option, and paste the link to this repo in the Repository URL field on the next page: 
+  + In the RStudio Menubar, go to File ➡️ New Project... and select *Version Control* from the New Project Setup Wizard Menu
+  + On the next page, select the option *Git* and paste the link to this repo in the *Repository URL* field on the following page: 
   https://github.com/NYU-Molecular-Pathology/Methylation/ </br>
   
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/2db0ce81ecb4bac1be64bf956f29ba16f430bc9c/screenshots/new-git-project-rstudio.png" width="50%"/><br/> 
