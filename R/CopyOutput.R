@@ -265,7 +265,8 @@ importDesktopCsv <- function(rcon, samsheet = NULL) {
     data <- rawCsv
     #data <- CheckImportData(rawCsv)
     if (nrow(data > 0)) {
-        cat(redcapAPI::importRecords(rcon, data, "normal", "ids", logfile = "REDCapImportLog.txt"))
+        res <- redcapAPI::importRecords(rcon, data, "normal", "ids", logfile = "REDCapImportLog.txt")
+        message("REDCap Response:\n", res)
     } else{
         message("No new data to import to REDCap")
     }
