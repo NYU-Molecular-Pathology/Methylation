@@ -56,7 +56,9 @@ reOrderRun <- function(selectRDs, sh=NULL) {
     msgFunName(pipeLnk,"reOrderRun"); msgParams(selectRDs, sh)
 
     if (is.null(selectRDs)) {return(NULL)}
-    if (is.null(sh)) {sh<-"samplesheet.csv"}
+    if (is.null(sh)) {
+      sh <- "samplesheet.csv"
+    }
     allRd <- as.data.frame(read.csv(sh))
     runFirst <- which(allRd[,1] %in% selectRDs)
     runAfter <- which(!(allRd[,1] %in% selectRDs))
@@ -151,7 +153,7 @@ CheckSampleQCmetrics <- function(runID) {
     qcVals$passed_qc <- ifelse(qcVals$passed_qc < 2, "yes", "no")
     final_qc <- data.frame(record_id = qcVals$RD.number, qc_passed = qcVals$passed_qc)
     currVals <- final_qc$passed_qc
-    if (any(is.na(currVals))){
+    if (any(is.na(currVals))) {
         final_qc$passed_qc[is.na(currVals)] <- "no"
     }
     return(final_qc)
@@ -316,7 +318,7 @@ NameControl <- function(data, runId) {
     library("data.table")
     if (any(data[, 1] %like% 'control')) {
         cntrl <- which(data[, 1] %like% 'control') #DNA_Number
-        if (length(cntrl) > 1){
+        if (length(cntrl) > 1) {
           controlSams <- make.unique(data[cntrl, 1], sep = "_")
           data[cntrl, 1] <- paste0(runId, "_", controlSams)
         } else{
@@ -372,11 +374,13 @@ checkSamSh <- function(samList) {
     wksh <- ReadSamSheet(samList)
     isMC = sjmisc::str_contains(gb$runID, "MGDM")|sjmisc::str_contains(gb$runID, "MC")
     is_validation <- sjmisc::str_contains(gb$runID, "VAL")
-
+    is_research <- grepl("MR", gb$runID)
     if (isMC == T & is_validation == F) {
+      if (is_research == F) {
         wksh <- NameControl(wksh, wksh$run_number[1])
+      }
     }
-    if (gb$runID == "23-MGDM_VAL3"){
+    if (gb$runID == "23-MGDM_VAL3") {
         wksh <- NameControl(wksh, wksh$run_number[1])
     }
     stopifnot(!is.null(wksh))
@@ -470,10 +474,13 @@ loopRender <- function(samList = NULL, data, redcapUp = T) {
 
     isMC = sjmisc::str_contains(gb$runID, "MGDM")|sjmisc::str_contains(gb$runID, "MC")
     is_validation <- sjmisc::str_contains(gb$runID, "VAL")
+    is_research <- grepl("MR", gb$runID)
     if (isMC == T & is_validation == F) {
+      if (is_research == F) {
         data <- NameControl(data, data$RunID[1])
+      }
     }
-    if (gb$runID == "23-MGDM_VAL3"){
+    if (gb$runID == "23-MGDM_VAL3") {
         data <- NameControl(data, data$RunID[1])
     }
     if (is.null(samList)) {
@@ -516,10 +523,13 @@ RenderReportsParallel <- function(samList = NULL, data, redcapUp = T) {
         CopyRmdFile(gb$runID, reportMd)
     }
 
-    if ((grepl("MGDM|MC", gb$runID) && !grepl("VAL", gb$runID)) || gb$runID == "23-MGDM_VAL3") {
+  if ((grepl("MGDM|MC", gb$runID) &&
+       !grepl("VAL", gb$runID)) || gb$runID == "23-MGDM_VAL3") {
+      if (grepl("MR", gb$runID) == F) {
         data <- NameControl(data, data$RunID[1])
+      }
     }
-    samList <- if (is.null(samList)) 1:length(data$Sample_Name!=0) else samList
+  samList <- if (is.null(samList)) 1:length(data$Sample_Name != 0) else samList
     wksh <- checkSamSh(samList)
     toRun <- getRunList(data, samList)
 
@@ -608,10 +618,10 @@ makeReports.v11b6 <- function(runPath = NULL,
     isMC = sjmisc::str_contains(runID, "MGDM") | sjmisc::str_contains(runID, "MC")
     is_validation <- sjmisc::str_contains(runID, "VAL")
     cntrl <- which(data[, 1] %like% 'control')
-    if (length(cntrl) >= 1){
+    if (length(cntrl) >= 1) {
         control_sams <- data[cntrl, 1]
         control_sams <- make.unique(control_sams, sep = "_")
-        for(sam in control_sams){
+        for(sam in control_sams) {
           CreateRedcapRecord(runID, sam)
         }
     }

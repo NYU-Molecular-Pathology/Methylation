@@ -81,7 +81,7 @@ listMolecularSheets <- function(runID = gb$runID, getAll = F) {
         wsPath <- file.path(gb$validation_dir, runYear)
         prevMC <- dir(path = wsPath, pattern = "MGDM", full.names = T)
     }
-    if(sjmisc::str_contains(runID, "EPICV1")){
+    if (sjmisc::str_contains(runID, "EPICV1")) {
         message(gb$epicv1_val_dir)
         wsPath <- gb$epicv1_val_dir
         prevMC <- dir(path = wsPath, pattern = "MGDM", full.names = T)
@@ -143,10 +143,10 @@ copyWorksheetFile <- function(runID = NULL, runYear = NULL) {
     mountLoc <- ifelse(isMC, file.path(gb$clinDrv, "WORKSHEETS"), gb$rschSheets)
     if (is_validation) {
         mountLoc <- gb$validation_dir
-    } 
+    }
     if (dir.exists(mountLoc)) {
         fiPath <- file.path(mountLoc, runYear, paste0(runID, ".xlsm"))
-        if(sjmisc::str_contains(runID, "EPICV1")){
+        if (sjmisc::str_contains(runID, "EPICV1")){
             fiPath <- file.path(gb$epicv1_val_dir, paste0(runID, ".xlsm"))
         }
         message("\nCopying file from:\n", fiPath)
@@ -212,7 +212,7 @@ ReadSheetDate <- function(sampleSheet) {
             range = "F4:F4",
             trim_ws = T
         ))[1])
-    names(wsDate)="Date"
+    names(wsDate) = "Date"
     message("DATE: ", wsDate$Date)
     return(wsDate)
 }
@@ -236,17 +236,17 @@ readSampleSheet <- function(run_ID=F, totalSam=F, wks=F) {
 
     wsDate <- ReadSheetDate(sampleSheet)
     worksheet$Date <- paste0(wsDate$Date[1])
-    
-    if(is.null(gb$runID)){
+
+    if (is.null(gb$runID)){
         gb$runID <- paste0(stringr::str_split_fixed(basename(sampleSheet), pattern = ".xlsm", 2)[1,1])
     }
-    
-    if(gb$runID != worksheet$Project[1]){
+
+    if (gb$runID != worksheet$Project[1]){
         message("The Batch ID in the samplesheet: ", worksheet$Project[1])
         message("Does not Match the input Run ID: ", gb$runID)
         stopifnot(gb$runID == worksheet$Project[1])
     }
-    
+
     if (run_ID == T) {
         return(worksheet$Project[1])
     }
@@ -318,7 +318,7 @@ writeSampleSheet <- function(df, bn = NULL, sampleName, dnaNumber, Sentrix) {
     splitSentrix = as.data.frame(stringr::str_split_fixed(df[, "Sentrix_ID"], "_", 2))
     samplesheet_csv = data.frame(
         Sample_Name =  df[, sampleName],
-        DNA_Number =df[, dnaNumber],
+        DNA_Number = df[, dnaNumber],
         Sentrix_ID = splitSentrix[, 1],
         Sentrix_Position = splitSentrix[, 2],
         SentrixID_Pos = df[, Sentrix],
@@ -332,7 +332,7 @@ writeSampleSheet <- function(df, bn = NULL, sampleName, dnaNumber, Sentrix) {
     runID <- paste0(df$Batch)[1]
     is_validation <- sjmisc::str_contains(runID, "VAL")
 
-    if(is_validation){
+    if (is_validation) {
         samplesheet_csv$Sample_Name <- paste(samplesheet_csv$Sample_Name, "VAL", sep = "_")
     }
     write.csv(samplesheet_csv, file = "samplesheet.csv", quote = F, row.names = F)
@@ -350,11 +350,12 @@ checkHeaders <- function(worksheet) {
         mpnum = paste(hdrs[8])       # "MP_number"
     )
     message(paste0(capture.output(data.frame(VarNames = Var.names)), collapse="\n"))
-    
+
     var.default = c("Sample_Name", "Sentrix_ID", "b_number", "MP_number")
     if (!(all(var.default %in% hdrs))) {
         missing_head <- paste(var.default[!var.default %in% hdrs], collapse = "\n")
-        err_msg <- "\nThe following header(s) in the 'raw_input' tab are missing or in the wrong column:\n"
+        err_msg <-
+            "\nThe following header(s) in the 'raw_input' tab are missing or in the wrong column:\n"
         stop(err_msg, missing_head)
     }
     return(Var.names)
