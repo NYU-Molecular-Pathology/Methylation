@@ -282,7 +282,7 @@ checkForIssues <- function(condition, warningMessage, colsToPrint) {
 
 checkSampleSheet <- function(df) {
     msgFunName(cpInLnk2, "checkSampleSheet")
-    message("Params: df = \n", paste0(capture.output(dat), collapse = "\n"))
+    message("Params: df = \n", paste0(capture.output(df), collapse = "\n"))
 
     df <- GenerateSheetWarning("Tech", df)
     df <- GenerateSheetWarning("MP_number", df)
