@@ -294,6 +294,10 @@ msgSamSheet <- function(samSh) {
 
 
 getRunData <- function(data) {
+    if (is.null(data)) {
+        message(bkRed("data is NULL, check your SampleSheet.csv"))
+        stopifnot(!is.null(data))
+    }
     if (ncol(data) < 10) {
         tech1 <- nTech2 <- ""
     } else{
@@ -310,6 +314,7 @@ getRunData <- function(data) {
         tech2 = nTech2,
         outFi = paste0(data[, 1], ".html")
     )
+    message(paste0(capture.output(runDt), collapse = "\n"))
     return(runDt)
 }
 
@@ -433,20 +438,16 @@ do_report <- function(single_data = NULL, genCn = FALSE) {
     msgFunName(pipeLnk, "do_report")
     msgParams("data")
 
-    if (is.null(single_data)) {
-        message(bkRed("single_data is NULL, check your SampleSheet.csv"))
-        stopifnot(!is.null(single_data))
-    }
-
     dat <- getRunData(single_data)
+    
     RGsetEpic <- getRGset(runPath = getwd(), sentrix = dat$senLi)
     arrayAnno <- RGsetEpic@annotation[['array']]
+
     library("mnp.v12epicv2")
     require("mnp.v12epicv2")
     reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
-    if (genCn == T) {
-        generate_cnv_png(RGsetEpic, dat$sampleID)
-    }
+  
+    if (genCn == T) {generate_cnv_png(RGsetEpic, dat$sampleID)}
 
     msgRunUp(dat$sampleID, dat$run_id, dat$senLi)
     message("Knitting report: ", reportMd)
@@ -458,12 +459,59 @@ do_report <- function(single_data = NULL, genCn = FALSE) {
         knitDir = getwd()
     )
 
-    message(paste0(capture.output(dat), collapse = "\n"))
+    
     tryCatch(
         expr = make_knit_report(dat, reportMd, params_init),
         error = function(e) {handle_knit_error(e, dat, params_init)},
         finally = message("\nRunning next sample\n")
     )
+}
+
+
+do_report_v11 <- function(single_data = NULL, genCn = FALSE) {
+    msgFunName(pipeLnk, "do_report_v11")
+    msgParams("data")
+
+    dat <- getRunData(single_data)
+    RGsetEpic <- getRGset(runPath = getwd(), sentrix = dat$senLi)
+    reportMd_v11 <- "/Volumes/CBioinformatics/Methylation/report.Rmd"
+
+    msgRunUp(dat$sampleID, dat$run_id, dat$senLi)
+    message("Knitting report: ", reportMd)
+
+    params_init <- list(
+        token = gb$ApiToken,
+        rundata  = dat,
+        RGsetEpic = RGsetEpic,
+        knitDir = getwd()
+    )
+
+    tryCatch(
+        expr = make_knit_report(dat, reportMd_v11, params_init),
+        error = function(e) {handle_knit_error(e, dat, params_init)},
+        finally = message("\nRunning next sample\n")
+    )
+}
+
+
+get_v11_reports <- function(your_csv){
+    unloadNamespace("mnp.v12epicv2")
+    library("mnp.v11b6")
+    require("mnp.v11b6")
+    library("utils")
+    is_validation <- isMC <- F
+    data <- utils::read.csv(your_csv, strip.white = T)
+    samList <- 1:length(data$Sample_Name != 0)
+    toRun <- gb$getRunList(data, samList)
+
+    for (idx in toRun) {
+        message("Running ", idx, " of ", length(toRun))
+        sheetRunID <- data[idx, "RunID"]
+        gb$runID <- sheetRunID
+        assign("runID", sheetRunID)
+        single_data = data[idx, ]
+        do_report_v11(single_data)
+    }
 }
 
 # FUN: Iterates over each sample in the csv file to generate a report
