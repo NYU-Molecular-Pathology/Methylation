@@ -473,6 +473,8 @@ do_report_v11 <- function(single_data = NULL, genCn = FALSE) {
     msgParams("data")
 
     dat <- getRunData(single_data)
+    new_filename <- sub("(\\.html)$", "_v11\\1", dat$outFi)
+    dat$outFi <- new_filename
     RGsetEpic <- getRGset(runPath = getwd(), sentrix = dat$senLi)
     reportMd_v11 <- "/Volumes/CBioinformatics/Methylation/report.Rmd"
 
