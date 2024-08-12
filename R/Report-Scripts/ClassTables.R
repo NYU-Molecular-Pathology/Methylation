@@ -554,7 +554,6 @@ GetUniDTables <- function(predU){
 # }
 
 GetClassProbTables <-  function(outList){
-    
     xtraCss1 = "border-radius:0px;border-width:1px;border-style:solid;border-color:rgb(192,192,192);"
     xtraCss2 = "border-radius:0px;border-width:3px;border-style:solid;border-color:rgb(26,105,16);"
     xtraCss3 = "border-radius:0px;border-width:3px;border-style:solid;border-color:rgb(16,28,105);"
@@ -563,7 +562,7 @@ GetClassProbTables <-  function(outList){
     kgb <- c("striped",font_size = 14, bootstrap_options = btso, position = "left")
     kgh <- c(booktabs = T, escape = F, linesep = "")
     # all(names(outList) == c("super family", "family", "class", "subclass"))
-    if(all(names(outList) == c("predicted", "maxscore"))){
+    if (all(c("predicted", "maxscore") %in% names(outList))) {
         outList$maxscore <- as.character(outList$maxscore)
         return(outList %>%
                    knitr::kable("html", kgh, align='clc') %>%
@@ -572,7 +571,7 @@ GetClassProbTables <-  function(outList){
                    kableExtra::column_spec(column = 2, background = "rgb(204,230,255)", extra_css = txtc) %>%
                    kableExtra::row_spec(row = 0, font_size = 16, background = "rgb(135,174,237)", color = "black")
                )
-    }else{
+    } else{
         out_class_family=outList$out_class_family
         out <- outList$out
     }
