@@ -1,18 +1,16 @@
 #!/usr/bin/env Rscript
-## ---------------------------
 ## Script name: pactParse.R
 ## Purpose: source of global scripts and generate PACT -SampleSheet.csv file
 ## Author: Jonathan Serrano
 ## Date Created: August 16, 2021
 ## Version: 1.0.1
-## Copyright (c) NYULH Jonathan Serrano, 2023
-## ---------------------------
+## Copyright (c) NYULH Jonathan Serrano, 2024
 
 library("base"); args <- commandArgs(TRUE); gb <- globalenv(); assign("gb", gb)
 
-# Function to assign parameter values based on args ---------------------------------------------
+# Function to assign parameter values based on args ---------------------------
 assign_param <- function(args, idx) {
-    if (idx == 4){
+    if (idx == 4) {
         if (length(args) >= idx) {
             return(args[idx])
         } else {
@@ -22,8 +20,8 @@ assign_param <- function(args, idx) {
     if (length(args) >= idx) args[idx] else stop("arg ", idx, " is NULL")
 }
 
-# Functions to print parameters  ) --------------------------------------------------------------
-brick_message <- function(phrase){
+# Functions to print parameters  ) --------------------------------------------
+brick_message <- function(phrase) {
     dsh <- paste(rep("-", nchar(phrase)), collapse = "")
     message(paste(dsh, phrase, dsh, sep = "\n"))
 }
@@ -36,28 +34,31 @@ print_parameters <- function(token, input, runID, keywd) {
     message("ILMN-#:  ", keywd, "\n")
 }
 
-# Assign values to variables & print ------------------------------------------------------------
+# Assign values to variables & print ------------------------------------------
 token <- assign_param(args, 1)
 input <- assign_param(args, 2)
 runID <- assign_param(args, 3)
 keywd <- assign_param(args, 4)
 print_parameters(token, input, runID, keywd)
 
-# Helper functions to message as data frame and red background ---------------------------------
+# Helper functions to message as data frame and red background ----------------
 MsgDF <- function(...) {
-    return(message(paste0(capture.output(as.data.frame(...)), collapse = "\n")))
+    return(message(paste0(
+        capture.output(as.data.frame(...)), collapse = "\n"
+    )))
 }
-boldRed <- function(...) {return(crayon::white$bgRed$bold(...))}
+mkRed <- function(...) {return(crayon::white$bgRed$bold(...))}
 
-# FUN: Checks if z-drive is accessible to the Rscript ------------------------------------------
+# FUN: Checks if z-drive is accessible to the RScript -------------------------
 checkMounts <- function() {
     molecDrive = "/Volumes/molecular/MOLECULAR LAB ONLY"
     zDrive = "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular"
     failMount <- ifelse(dir.exists(molecDrive), T, F)
     if (failMount != T) {
         mountMsg <- paste(
-            "PATH does not exist, ensure path is mounted:", boldRed(molecDrive),
-            "You must mount the network Z-drive path:", boldRed(zDrive), sep = "\n"
+            "PATH does not exist, ensure path is mounted:", mkRed(molecDrive),
+            "You must mount the network Z-drive path:", mkRed(zDrive),
+            sep = "\n"
         )
         message("\n", mountMsg, "\n")
         stopifnot(!any(failMount == T))
@@ -66,27 +67,27 @@ checkMounts <- function() {
     }
 }
 
-
-# FUN: Returns hardcoded Philips Export Tab Column Names----------------------------------------
+# FUN: Returns hardcoded Philips Export Tab Column Names-----------------------
 GetPhilipsColumns <- function() {
     filterColumns <- c(
-        "MRN", "Test Name", "Tumor Specimen ID", "Normal Specimen ID", "Test Number",
-        "Epic Order Number", "Diagnosis for interpretation", "Tumor DNA/RNA Number",
-        "Normal DNA/RNA Number","Tumor Percentage"
+        "MRN", "Test Name", "Tumor Specimen ID", "Normal Specimen ID",
+        "Test Number","Epic Order Number", "Diagnosis for interpretation",
+        "Tumor DNA/RNA Number", "Normal DNA/RNA Number","Tumor Percentage"
     )
     return(filterColumns)
 }
 
 
-# Function to silently load library without conflict warnings ----------------------------------
+# Function to silently load library without conflict warnings -----------------
 libLoad <- function(libName) {
-    lib.opts <- list(package = libName, character.only = T, verbose = F, warn.conflicts = F)
+    lib.opts <- list(package = libName, character.only = T,
+                     verbose = F, warn.conflicts = F)
     suppressWarnings(suppressPackageStartupMessages(do.call(library, c(lib.opts))))
     message(libName, "...loaded successful")
 }
 
-
-SilentInstall <- function(pkgs){
+# Installs package(s) if not already installed then loads the library ---------
+SilentInstall <- function(pkgs) {
     rlis = getOption("repos")
     rlis["CRAN"] = "http://cran.us.r-project.org"
     options(repos = rlis)
@@ -94,7 +95,8 @@ SilentInstall <- function(pkgs){
     invisible(lapply(pkgs, function(pk) {
         if (suppressWarnings(!requireNamespace(pk, quietly = T))) {
             install.packages(pk, dependencies = T, verbose = T,
-                             repos = "http://cran.us.r-project.org", type = "both")
+                             repos = "http://cran.us.r-project.org",
+                             type = "both")
         }
         libLoad(pk)
     }))
@@ -105,7 +107,7 @@ append_log <- function(txt, logFile = NULL) {
     if (is.null(logFile)) {
         logFile = paste0(Sys.Date(), "_run_log.tsv")
     }
-    if (stringr::str_detect(logFile, .Platform$file.sep, T)){
+    if (stringr::str_detect(logFile, .Platform$file.sep, T)) {
         logFile <- file.path(fs::path_home(), logFile)
     }
     message(paste("Check", logFile))
@@ -130,12 +132,13 @@ write_to_log <- function(recordName, logFile = NULL) {
 }
 
 
-# Functions to load or install missing required packages ---------------------------------------
+# Functions to load or install missing required packages ----------------------
 loadPacks <- function() {
     SilentInstall("devtools")
 
     if (!requireNamespace("redcapAPI", quietly = T)) {
-        params = list('nutterb/redcapAPI', dependencies = T, upgrade = "always", type = "source")
+        params = list('nutterb/redcapAPI', dependencies = T,
+                      upgrade = "never", type = "source")
         do.call(devtools::install_github, c(params))
     }
     libLoad("redcapAPI")
@@ -164,22 +167,23 @@ MsgChangesMade <- function(mainSheet, badChars = c("[\r\n]", ",", " ")) {
 }
 
 
-CountControls <- function(mainSheet, controlNames="NTC_H20|SC_SERACARE|NC_HAPMAP") {
+CountControls <- function(mainSheet,
+                          controlNames = "NTC_H20|SC_SERACARE|NC_HAPMAP") {
     controlSamples <- grepl(pattern = controlNames, mainSheet$Sample_Name)
     if (table(controlSamples)[['TRUE']] != 3) {
         message(crayon::bgRed("There are not 3 Control samples"))
         message("Either NTC_H20, SC_SERACARE, or NC_HAPMAP is missing")
         message("OR\nThere are extra controls added in this run:")
         MsgDF(mainSheet$Sample_Name[controlSamples])
-    }else{
+    } else{
         controlIndexes <- which(controlSamples == T)
-        mainSheet[controlIndexes,'Paired_Normal'] <- ""
+        mainSheet[controlIndexes, 'Paired_Normal'] <- ""
     }
     return(mainSheet)
 }
 
 
-# Removes and fixes newlines, commas, and blanks from samplesheet ------------------------------
+# Removes and fixes newlines, commas, and blanks from samplesheet -------------
 sanitizeSheet <- function(mainSheet) {
     MsgChangesMade(data.frame(Tumor_Type = mainSheet$Tumor_Type), " ")
     mainSheet$Tumor_Type <- gsub(" ", "-", mainSheet$Tumor_Type)
@@ -201,12 +205,13 @@ sanitizeSheet <- function(mainSheet) {
 }
 
 
-# Reads the genders and outputs a tsv file to /Molecular/MethylationClassifier/CNV_PNG ---------
+# Outputs gender to a tsv file in /Molecular/MethylationClassifier/CNV_PNG ----
 WritePhilipsGender <- function(mainSheet, inputFi, shNames) {
     sh2 <- which(grepl("Philips", shNames, ignore.case = T))[1]
     cnvSheet <- mainSheet[,1:15]
     runID <- cnvSheet[1,"Sample_Project"]
-    philipVals <- as.data.frame(readxl::read_excel(inputFi, sheet = sh2, skip = 3, col_types = "text"))
+    philipVals <- as.data.frame(readxl::read_excel(
+        inputFi, sheet = sh2, skip = 3, col_types = "text"))
     cnvSheet$Gender <- philipVals$Gender[match(cnvSheet$Test_Number, philipVals$`Test Number`)]
     cnvPath <- "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
     cnvPath <- file.path(cnvPath, paste0(runID,".tsv"))
@@ -280,9 +285,9 @@ WriteFileHeader <- function(inputFi) {
 
 
 GetTypeIndex <- function(samNumber, rawData) {
-    return(
-        unlist(lapply(samNumber, function(samName) {return(which(samName == rawData$`DNA #`))}))
-    )
+    return(unlist(lapply(samNumber, function(samName) {
+        return(which(samName == rawData$`DNA #`))
+    })))
 }
 
 
@@ -290,25 +295,32 @@ CheckControlRows2 <- function(rawData, allBnumber) {
     idx <- which(rawData$`DNA #` %in% allBnumber == F)
     dna <- rawData$`DNA #`[idx]
 
-    message(boldRed("The following are Controls or not in Philips:"))
+    message(mkRed("The following are Controls or not in Philips:"))
     message(paste(dna, collapse = "\n"))
 
     isControl <- rawData$`Accession#` %in% c("NTC", "SC", "NC") |
         grepl("Cont", rawData$`Type & Tissue`, ignore.case = TRUE)
 
-    rawData$`Type & Tissue`[idx] <- paste(rawData$original_tissue[idx], "Filler")
+    rawData$`Type & Tissue`[idx] <-
+        paste(rawData$original_tissue[idx], "Filler")
 
     rawData$`Type & Tissue`[isControl] <- "Control"
 
     message(crayon::bgGreen("Assigned Values:"))
-    message(paste(dna, rawData$`Type & Tissue`[idx], sep = " = ", collapse = "\n"))
+    message(paste(
+        dna,
+        rawData$`Type & Tissue`[idx],
+        sep = " = ",
+        collapse = "\n"
+    ))
     return(rawData)
 }
 
 
-CheckBnumbers <- function(rawData, allBnumber){
+CheckBnumbers <- function(rawData, allBnumber) {
     if (all(allBnumber %in% rawData$`DNA #`) == F) {
-        b_txt <- "Not all B-numbers from PhilipsExport are in the 'DNA #' Column!"
+        b_txt <-
+            "Not all B-numbers from PhilipsExport are in the 'DNA #' Column!"
         message(crayon::bgRed(b_txt))
         missing_Bnumber <- setdiff(allBnumber, rawData$`DNA #`)
         MsgDF(missing_Bnumber)
@@ -335,7 +347,12 @@ FixPairedList <- function(philipsExport, rawData) {
 }
 
 
-FindMissingPairs <- function(extraNormals, philipsExport, sheetPairTumor, sheetPairNorm, mainSheet) {
+FindMissingPairs <- function(extraNormals,
+                             philipsExport,
+                             sheetPairTumor,
+                             sheetPairNorm,
+                             mainSheet) {
+
     unmatchedSamples <- if (extraNormals) {
         message(crayon::bgRed("More NORMALS than Tumors on this run!"))
         which(!philipsExport$`Tumor DNA/RNA Number` %in% sheetPairTumor)
@@ -358,7 +375,11 @@ FindMissingPairs <- function(extraNormals, philipsExport, sheetPairTumor, sheetP
 }
 
 
-MessageMismatched <- function(extraIndices, extraNormals, mainSheet, dnaMissingPair) {
+MessageMismatched <- function(extraIndices,
+                              extraNormals,
+                              mainSheet,
+                              dnaMissingPair) {
+
     blu_miss <- paste(
         "The following case(s) are missing a paired",
         if (extraNormals) {"Tumor:"} else {"Normal:"}
@@ -375,7 +396,12 @@ MessageMismatched <- function(extraIndices, extraNormals, mainSheet, dnaMissingP
 }
 
 
-ProcessExtraNormals <- function(normSamPair, missingCases, tumorSamPair, mainSheet, sheetTumors) {
+ProcessExtraNormals <- function(normSamPair,
+                                missingCases,
+                                tumorSamPair,
+                                mainSheet,
+                                sheetTumors) {
+
     pairedNormals <- which(!normSamPair %in% missingCases)
     extraNormals <- normSamPair[-pairedNormals]
 
@@ -407,8 +433,11 @@ ProcessExtraNormals <- function(normSamPair, missingCases, tumorSamPair, mainShe
 }
 
 
-# Insert "missing" at this index to manually pair
-AppendMissingNotes <- function(indexToAdd, normSamPair, mainSheet, sheetTumors) {
+# Insert "missing" at this index to manually pair -----------------------------
+AppendMissingNotes <- function(indexToAdd,
+                               normSamPair,
+                               mainSheet,
+                               sheetTumors) {
     for (idx in indexToAdd) {
         normSamPair <-
             append(normSamPair, "MISSING_NORMAL_PAIR", after = idx - 1)
@@ -416,7 +445,7 @@ AppendMissingNotes <- function(indexToAdd, normSamPair, mainSheet, sheetTumors) 
     if (length(sheetTumors) != length(normSamPair)) {
         message("length(sheetTumors) != length(normSamPair)")
         MsgDF(mainSheet$Paired_Normal[sheetTumors])
-    }else{
+    } else{
         mainSheet$Paired_Normal[sheetTumors] <- normSamPair
         message("Missing Indexes Added: ", paste(indexToAdd, collapse = " "))
         MsgDF(normSamPair)
@@ -447,6 +476,7 @@ check_if_unpaired <- function(filler_cases, rawData, indexToAdd, not_philips) {
     }
     return(indexToAdd)
 }
+
 
 process_extra_tumors <- function(tumorSamPair,
                                  missingCases,
@@ -547,12 +577,14 @@ AddSampleIndexes <- function(pairedList, rawData, philipsExport) {
 
     # Check if length is not equal between tumor and normal samples
     if (length(sheetPairTumor) != length(sheetPairNorm)) {
-        message("length(sheetPairTumor) != length(sheetPairNorm) in AddSampleIndexes()")
+        message("Issue in AddSampleIndexes():")
+        message("length(sheetPairTumor) != length(sheetPairNorm)")
         mainSheet <- AddUnmatchNormals(sheetPairNorm, sheetPairTumor,
                                        mainSheet, sheetTumors, sheetNormals,
                                        philipsExport, rawData)
     } else {
-        mainSheet$Paired_Normal[sheetTumors] <- mainSheet$Sample_ID[sheetNormals]
+        mainSheet$Paired_Normal[sheetTumors] <-
+            mainSheet$Sample_ID[sheetNormals]
     }
 
     if (length(rawData$I7_Index_ID) != nrow(mainSheet)) {
@@ -569,7 +601,8 @@ AddSampleIndexes <- function(pairedList, rawData, philipsExport) {
 }
 
 FixDuplicateControls <- function(controlRows) {
-    message("Fixing duplicated controls:\n", paste(controlRows[duplicated(controlRows)], collapse = "\n"))
+    message("Fixing duplicated controls:\n",
+            paste(controlRows[duplicated(controlRows)], collapse = "\n"))
     for (unique_string in unique(controlRows)) {
         indices <- which(controlRows == unique_string)
         n <- length(indices)
@@ -585,7 +618,7 @@ FixDuplicateControls <- function(controlRows) {
 }
 
 
-GetControlInfo <- function(rawData){
+GetControlInfo <- function(rawData) {
     idx <- stringr::str_detect(rawData$`Type & Tissue`, "Cont|cont")
     numbs <- rawData[idx, c("DNA #", "Accession#", "Test_Number")]
     colnames(numbs) <- c("dna", "acc", "tst")
@@ -617,7 +650,8 @@ CheckControlRows <- function(rawData, runID, newRows) {
 
 
 GetAccessionInfo <- function(rawData) {
-    no_control <- stringr::str_detect(rawData$`DNA #`, "H20|SERACARE|HAPMAP", negate = T)
+    no_control <- stringr::str_detect(rawData$`DNA #`,
+                                      "H20|SERACARE|HAPMAP", negate = T)
     numbs <- rawData[no_control, c("DNA #", "Accession#", "Test_Number")]
     colnames(numbs) <- c("dna", "acc", "tst")
     return(numbs)
@@ -667,7 +701,7 @@ BindUnpairedRows <- function(rawData, pairedList, runID) {
                 newIdx <- matchedIdx[i]
                 new_paired_list[newIdx,] <- all_samples[currSam]
             }
-        }else{
+        } else{
             new_paired_list[sam,] <- all_samples[sam_idx]
         }
     }
@@ -677,7 +711,8 @@ BindUnpairedRows <- function(rawData, pairedList, runID) {
 
 
 GetPairedList <- function(philipsExport, runID) {
-    pairedList <- paste(unlist(lapply(X = 1:length(philipsExport$`Tumor Specimen ID`), function(acc) {
+    pairedList <- paste(unlist(lapply(
+        X = 1:length(philipsExport$`Tumor Specimen ID`), function(acc) {
         tumorSam <- paste(
             philipsExport[,"Epic Order Number"][acc],
             runID,
@@ -740,13 +775,15 @@ CheckDupesMatch <- function(nameList, secondCol) {
 }
 
 
-MsgTumNormErr <- function(tums, norms, sheetSide = "Philips"){
+MsgTumNormErr <- function(tums, norms, sheetSide = "Philips") {
     message("Total Tumors: ", length(tums))
     message("Total Normals: ", length(norms))
     if (sheetSide == "Philips") {
-        message(crayon::bgRed("Not all Philips samples are paired with a Tumor/Normal!"))
-    }else{
-        message(crayon::bgRed("Wetlab Tumor/Normal samples are not paired correctly!"))
+        message(crayon::bgRed(
+            "Not all Philips samples are paired with a Tumor/Normal!"))
+    } else{
+        message(crayon::bgRed(
+            "Wetlab Tumor/Normal samples are not paired correctly!"))
     }
 }
 
@@ -757,16 +794,22 @@ CheckTotalIndexes <- function(tumorSam, normalSam, ngsNumbers, sheetType = "Phil
         message("Total Normals: ", length(normalSam))
         tumorLonger <- length(tumorSam) > length(normalSam)
         totalAdd <- abs(length(tumorSam) - length(normalSam))
-        message(crayon::bgRed(paste("Not all",sheetType,"samples are paired with a tumor or normal!")))
+        message(crayon::bgRed(
+            paste("Not all", sheetType,
+                  "samples are paired with a tumor or normal!")
+        ))
         if (tumorLonger == F) {
             totalDrop <- normalSam %in% tumorSam
-            message(crayon::bgRed(paste(totalAdd, "more Normals than Tumors listed in worksheet!")))
-            MsgDF(data.frame(
-                NGS = ngsNumbers[!totalDrop], Potential.Extra = philipsN[!totalDrop]))
-            tumorSam <- c(tumorSam, rep(0,totalAdd))
-        }else{
+            message(crayon::bgRed(paste(
+                totalAdd, "more Normals than Tumors listed in worksheet!"
+            )))
+            MsgDF(data.frame(NGS = ngsNumbers[!totalDrop], Potential.Extra = philipsN[!totalDrop]))
+            tumorSam <- c(tumorSam, rep(0, totalAdd))
+        } else{
             totalDrop <- tumorSam %in% normalSam
-            message(crayon::bgRed(paste(totalAdd, "more Tumors than Normals listed in worksheet!")))
+            message(crayon::bgRed(paste(
+                totalAdd, "more Tumors than Normals listed in worksheet!"
+            )))
             MsgDF(data.frame(
                 NGS = ngsNumbers[!totalDrop], Potential.Extra = philipsT[!totalDrop]))
             normalSam <- c(normalSam, rep(0,totalAdd))
@@ -794,7 +837,7 @@ MsgTotalAdded <- function(totalAdd, ngsNumbers, totalDrop, samExtra, tumorLonger
     if (tumorLonger) {
         MsgDF(data.frame(NGS = ngsNumbers[!totalDrop], Potential.Extra = samExtra[!totalDrop]))
         message("Extra ", length(which(totalDrop == F)), " case(s)...")
-    }else{
+    } else{
         MsgDF(data.frame(NGS = ngsNumbers[totalDrop], Potential.Extra = samExtra[totalDrop]))
         message("Extra ", length(which(totalDrop == T)), " case(s)...")
     }
@@ -824,7 +867,7 @@ GetIndexMatch <- function(rawData, philipsExport) {
             totalDrop <- philipsIdxN %in% philipsIdxT
             philipsIdxT <- c(philipsIdxT, rep(0,totalAdd))
             MsgTotalAdded(totalAdd, ngsNumbers, totalDrop, philipsN, tumorLonger)
-        }else{
+        } else{
             totalDrop <- philipsIdxT %in% philipsIdxN
             philipsIdxN <- c(philipsIdxN, rep(0, totalAdd))
             MsgTotalAdded(totalAdd, ngsNumbers, totalDrop, philipsT, tumorLonger)
@@ -877,10 +920,13 @@ AddPairedColumn <- function(mainSheet, sheetColumn, philipsColumn, idx) {
 FixLastColumns <- function(mainSheet, rawData) {
     mainSheet$Tumor_Type[rawData$`Type & Tissue` == "Normal"] <- ""
     mainSheet$Description <- paste0(rawData[,'Description'])
-    mainSheet$GenomeFolder <- as.character("PhiX\\Illumina\\RTA\\Sequence\\WholeGenomeFASTA")
+    mainSheet$GenomeFolder <-
+        as.character("PhiX\\Illumina\\RTA\\Sequence\\WholeGenomeFASTA")
     dupes <- base::anyDuplicated(mainSheet$I7_Index_ID)
     if (length(dupes) > 0 & dupes != 0) {
-        message(crayon::bgRed("The following rows are duplicated and will be removed:"), "\n")
+        message(crayon::bgRed(
+            "The following rows are duplicated and will be removed:"), "\n"
+            )
         MsgDF(mainSheet[dupes,])
         mainSheet <- mainSheet[-dupes,]
         row.names(mainSheet) <- 1:nrow(mainSheet)
@@ -891,7 +937,9 @@ FixLastColumns <- function(mainSheet, rawData) {
 
 
 BuildNoPhilips <- function(rawData, runID, pact_run) {
-    message("Generating SampleSheet without Philips Data: ALL cases are validation!")
+    message(
+        "Generating SampleSheet without Philips Data: ALL are validation!"
+        )
     seqId <- stringr::str_split_fixed(runID, "_", 4)
     whichNormal <- stringr::str_detect(rawData$`Type & Tissue`, "Norm|norm|cont|Cont")
     onlyNormals <- stringr::str_detect(rawData$`Type & Tissue`, "Norm|norm")
@@ -899,12 +947,12 @@ BuildNoPhilips <- function(rawData, runID, pact_run) {
         data.frame(sid = paste(0, runID, rawData$`Accession#`, rawData$`DNA #`, sep = "_"))
     pairedNorm <- rep("", nrow(concat_id))
     whichTumor <- stringr::str_detect(rawData$`Type & Tissue`, "Tum|tum")
-    
+
     if (sum(whichTumor) != sum(onlyNormals)) {
         message("Not all tumors and normals are paired")
         true_indices <- which(whichTumor)[1:sum(onlyNormals)]
         pairedNorm[true_indices] <- concat_id[onlyNormals, 1]
-    }else{
+    } else{
         pairedNorm[whichTumor] <- concat_id[onlyNormals, 1]
     }
 
@@ -996,8 +1044,10 @@ GetPhilipsData <- function(inputFi) {
 
     if (any(blankSpecimen)) {
         missingSam <- philipsExport$`Tumor Specimen ID`[blankSpecimen]
-        message(crayon::bgRed("The following Philips Samples are missing a Normal Specimen ID:\n"),
-                paste0(capture.output(missingSam), collapse = "\n"))
+        message(crayon::bgRed(
+            "The following Philips Samples are missing a Normal Specimen ID:\n"
+        ))
+        MsgDF(missingSam)
     }
 
     philipsExport[philipsExport == ""] <- 0
@@ -1006,13 +1056,15 @@ GetPhilipsData <- function(inputFi) {
 
 
 Err_runID <- function(runID) {
-    err_msg <- crayon::bgRed('Keyword "Run ID:" not found in SampleSheet "DNA #" column')
+    err_msg <- crayon::bgRed(
+        'Keyword "Run ID:" not found in SampleSheet "DNA #" column'
+        )
     new_id <- paste('\nDefaulting to script input RUNID:', runID)
     message(err_msg, new_id)
 }
 
 
-GrabSheetBottom <- function(inputFi){
+GrabSheetBottom <- function(inputFi) {
     shNames <- readxl::excel_sheets(inputFi)
     sh <- which(grepl("PACT-", shNames, ignore.case = TRUE))[1]
     sh <- ifelse(is.na(sh), 1, sh)
@@ -1023,8 +1075,8 @@ GrabSheetBottom <- function(inputFi){
              paste(colnames(rawData), collapse = "\n"))
     }
     lastRow <- which(rawData$Test_Number == 0)[1]
-    if(is.na(lastRow)){
-        stop(boldRed("Cannot find ending of samplesheet!"))
+    if (is.na(lastRow)) {
+        stop(mkRed("Cannot find ending of samplesheet!"))
     }
     sheetBottom <- rawData[c(lastRow:nrow(rawData)), ]
     return(sheetBottom)
@@ -1032,25 +1084,24 @@ GrabSheetBottom <- function(inputFi){
 
 
 GrabRunNumber <- function(inputFi, runID) {
-
+    key_run_ids <- "NB551709|NB501073|VH01471"
     sheetBottom <- GrabSheetBottom(inputFi)
     runID_row <- which(stringr::str_detect(sheetBottom$`DNA #`, "Run ID:"))
 
     # If 'Run ID:' keyword not found, use provided runID as default
     if (length(runID_row) != 1) {
-        message(boldRed("Run ID: not found in column 'DNA #, trying column 8..."))
+        message(mkRed("Run ID: not found in column 'DNA #, trying column 8..."))
         runID_row <- which(stringr::str_detect(sheetBottom[, 8], "Run ID:"))
-
         if (length(runID_row) != 1) {
             Err_runID(runID)
             return(runID)
-        }else{
+        } else{
             message("runID_row found in column 8! row: ", runID_row)
         }
     }
 
     runID_find <- paste(sheetBottom[runID_row, ])
-    runID_col <- which(stringr::str_detect(runID_find, "NB551709|NB501073|VH01471"))
+    runID_col <- which(stringr::str_detect(runID_find, key_run_ids))
 
     if (length(runID_col) == 0) {
         Err_runID(runID)
@@ -1058,7 +1109,8 @@ GrabRunNumber <- function(inputFi, runID) {
     }
 
     run_number <- paste(sheetBottom[runID_row, runID_col])
-    run_number <- stringr::str_replace_all(run_number, c("Run ID:" = "", " " = ""))
+    run_number <-
+        stringr::str_replace_all(run_number, c("Run ID:" = "", " " = ""))
 
     return(run_number)
 }
@@ -1068,13 +1120,15 @@ GetRawSamplesheet <- function(inputFi) {
     shNames <- readxl::excel_sheets(inputFi)
     sh <- which(grepl("PACT-", shNames, ignore.case = T))[1]
     if (is.na(sh)) {
-        message(crayon::bgRed('Did not detect "PACT" in Excel sheetnames, defaulting to reading sheet 1'))
+        miss_msg <-
+            '"PACT" not detected in Excel sheetnames, defaulting to sheet 1'
+        message(crayon::bgRed(miss_msg))
         sh = 1
     }
-    msgRd <- paste0('Reading Excel Sheet named \"', shNames[sh], '\" from file:')
+    msgRd <-
+        paste0('Reading Excel Sheet named \"', shNames[sh], '\" from file:')
     message(crayon::bgGreen(msgRd),'\n',inputFi)
     rawData <- GetExcelData(inputFi, sh, shRange = "A6:X200",  cm = T)
-    #toDrop <- which(rawData[, "DNA #"]=="HAPMAP")[1]
     toDrop <- which(rawData[, 15] == "")[1] - 1
     rawData <- rawData[1:toDrop, ]
     rawData$`DNA #` <- stringr::str_replace_all(rawData$`DNA #`, "_", "-")
@@ -1092,7 +1146,15 @@ WriteMainSheet <- function(mainSheet, sheetHead) {
         mainSheet[mainSheet$Tumor_Type == "NA", "Tumor_Type"] <- ""
     }
 
-    write.table(sheetHead, sep = ",", file = out_path, row.names = F, col.names = F, quote = F)
+    write.table(
+        sheetHead,
+        sep = ",",
+        file = out_path,
+        row.names = F,
+        col.names = F,
+        quote = F
+    )
+
     suppressWarnings(
         write.table(
             mainSheet,
@@ -1108,10 +1170,10 @@ WriteMainSheet <- function(mainSheet, sheetHead) {
 }
 
 
-# Checks if the user input RunID matches worksheet RunID -------------------------------
-CheckRunIDMatch <- function(sheetRunID, runID){
+# Checks if the user input RunID matches worksheet RunID ----------------------
+CheckRunIDMatch <- function(sheetRunID, runID) {
     if (sheetRunID != runID) {
-        message(boldRed("SampleSheet and Input RUNID do not match!"))
+        message(mkRed("SampleSheet and Input RUNID do not match!"))
         message(sprintf("Samplesheet RunID: %s\nUser input RunID:  %s",
                         crayon::bgBlue(sheetRunID), crayon::bgGreen(runID)))
         message("Using runID from inside worksheet: ", sheetRunID)
@@ -1119,20 +1181,21 @@ CheckRunIDMatch <- function(sheetRunID, runID){
 }
 
 
-# Parses File when no samplesheet.csv tab is detected ---------------------------------
+# Parses File when no samplesheet.csv tab is detected -------------------------
 AltParseFormat <- function(inputFi, runID) {
     rawData <- GetRawSamplesheet(inputFi)
     sheetRunID <- GrabRunNumber(inputFi, runID)
     CheckRunIDMatch(sheetRunID, runID)
     philipsExport <- GetPhilipsData(inputFi)
-
-    pact_run <- stringr::str_split_fixed(base::basename(inputFi), ".xls", 2)[1,1]
+    input_base <- base::basename(inputFi)
+    pact_run <- stringr::str_split_fixed(input_base, ".xls", 2)[1,1]
     message(crayon::bgBlue(paste("PACT ID is:", pact_run)))
 
     if (is.null(philipsExport)) {
         mainSheet <- BuildNoPhilips(rawData, sheetRunID, pact_run)
-    }else{
-        mainSheet <- BuildMainSheet(philipsExport, rawData, sheetRunID, pact_run)
+    } else{
+        mainSheet <-
+            BuildMainSheet(philipsExport, rawData, sheetRunID, pact_run)
     }
     return(mainSheet)
 }
@@ -1143,7 +1206,8 @@ PostRedcapCurl <- function(rcon, datarecord, retcon = 'ids') {
     tryCatch(
         expr = {RCurl::postForm(
             rcon$url, token = rcon$token, content = 'record', format = 'json',
-            type = 'flat', data = datarecord, returnContent = retcon, returnFormat = 'csv')
+            type = 'flat', data = datarecord,
+            returnContent = retcon, returnFormat = 'csv')
         },
         error = function(e) {message("REDCap push failed!\n", e)},
         finally = message(datarecord)
@@ -1151,7 +1215,7 @@ PostRedcapCurl <- function(rcon, datarecord, retcon = 'ids') {
 }
 
 
-# Generate Email notification and attach csv file
+# Generate Email notification and attach csv file -----------------------------
 emailNotify <- function(record, rcon) {
     record$pact_csv_email <- "pact_csv_email"
     datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox = T)
@@ -1159,8 +1223,7 @@ emailNotify <- function(record, rcon) {
     brick_message("Email Notification Created")
 }
 
-# Calls API for CSV file ------------------------------------------------------------------
-
+# Calls API for CSV file ------------------------------------------------------
 validateInputs <- function(rcon, recordName, fiPath) {
     if (is.null(rcon) || !is.list(rcon)) {
         stop("rcon should be a list")
@@ -1197,7 +1260,7 @@ callApiFileCsv <- function(rcon, recordName, fiPath) {
             return(NULL)
         }
     )
-
+    message("Response:\n", response)
     if (!is.null(response)) {
         message("Upload successful: ", fiPath)
     } else {
@@ -1206,16 +1269,21 @@ callApiFileCsv <- function(rcon, recordName, fiPath) {
 }
 
 
-# Connect to REDCap and send email attachments of csv file ---------------------------------
-pushToRedcap <- function(outVals, token=NULL) {
+# Connect to REDCap and send email attachments of csv file --------------------
+pushToRedcap <- function(outVals, token = NULL) {
+
     stopifnot(!is.null(token) & !is.null(outVals))
     runID <- outVals[[1]]
     outFile <- outVals[[2]]
-    rcon <- redcapAPI::redcapConnection("https://redcap.nyumc.org/apps/redcap/api/", token)
+    api_url <- "https://redcap.nyumc.org/apps/redcap/api/"
+
+    rcon <- redcapAPI::redcapConnection(api_url, token)
     record = data.frame(record_id = runID, pact_run_number = runID)
     datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox = T)
+
     PostRedcapCurl(rcon, datarecord, retcon = 'nothing')
     callApiFileCsv(rcon, runID, outFile)
+
     tryCatch(
         redcapAPI::importFiles(
             rcon = rcon,
@@ -1236,22 +1304,22 @@ replace_strings <- function(sheet_df, old_string, new_string) {
 }
 
 
-check_keyword <- function(keywd){
+check_keyword <- function(keywd) {
     ilm_msg <- "ILMN samples were detected on this run, but no number provided!"
     pact_sh <- "/Volumes/CBioinformatics/PACT/parsepact.sh"
     ilm_num <- "ILMNVAL-#"
     cmd_msg <- paste(pact_sh, input, runID, ilm_num)
-    if (stringr::str_detect(keywd, "-") == F || nchar(keywd) != 9){
+    if (stringr::str_detect(keywd, "-") == F || nchar(keywd) != 9) {
         if (nchar(keywd) != 9) {message("Keyword is not 9 characters: ", keywd)}
-        message(boldRed(ilm_msg), " ", keywd)
+        message(mkRed(ilm_msg), " ", keywd)
         message("For example, execute with third arg:\n", cmd_msg)
-        stop(boldRed("Third argument needed: ILMNVAL-#"))
+        stop(mkRed("Third argument needed: ILMNVAL-#"))
     }
 }
 
 
-MakeValidationSheet <- function(sheetHead, mainSheet, has_validation){
-    if (!is.null(keywd)){
+MakeValidationSheet <- function(sheetHead, mainSheet, has_validation) {
+    if (!is.null(keywd)) {
         if (substr(keywd, 1, 1) == "-") {
             keywd <- substring(keywd, 2)
         }
@@ -1268,7 +1336,8 @@ MakeValidationSheet <- function(sheetHead, mainSheet, has_validation){
     sheetHead_val[4, 2] <- new_pact_id
     sheetHead_val[5, 2] <- new_pact_id
     outFile <- WriteMainSheet(mainSheet_val, sheetHead_val)
-    outValsVal <- c(runID = mainSheet_val[1, "Sample_Project"], outFile = outFile)
+    outValsVal <- c(runID = mainSheet_val[1, "Sample_Project"],
+                    outFile = outFile)
     pushToRedcap(outValsVal, token)
     mainSheet <- mainSheet[!has_validation, ]
     row.names(mainSheet) <- 1:nrow(mainSheet)
@@ -1276,26 +1345,18 @@ MakeValidationSheet <- function(sheetHead, mainSheet, has_validation){
 }
 
 
-# Parses xlsx file and writes as csv file ---------------------------------
+# Parses xlsx file and writes as csv file -------------------------------------
 parseExcelFile <- function(worksheetPath, runID = NULL) {
     shNames <- readxl::excel_sheets(worksheetPath)
     MsgDF(data.frame(`Sheet names in Workbook` = shNames))
-    sh <- which(grepl("SampleSheet", shNames, ignore.case = T))[1]
-    # if (is.na(sh)) {
-        sheetHead <- GetSheetHeading(worksheetPath)
-        mainSheet <- AltParseFormat(inputFi = worksheetPath, runID)
-    # } else{
-    #     sheetHead <- GetExcelData(worksheetPath, sheetNum = shNames[sh], shRange = "A1:B17")
-    #     sheetHead <- rbind(sheetHead,c("",""),c("[Data]",""))
-    #     mainSheet <- GetExcelData(worksheetPath, shNames[sh], NULL, 19, T)
-    # }
+    sheetHead <- GetSheetHeading(worksheetPath)
+    mainSheet <- AltParseFormat(inputFi = worksheetPath, runID)
     mainSheet <- sanitizeSheet(mainSheet)
     try(WritePhilipsGender(mainSheet,worksheetPath, shNames), silent = T)
-
     has_validation <- stringr::str_detect(mainSheet$Sample_Name, "-ILC-VAL_")
 
     if (any(has_validation)) {
-        mainSheet <-MakeValidationSheet(sheetHead, mainSheet, has_validation)
+        mainSheet <- MakeValidationSheet(sheetHead, mainSheet, has_validation)
     }
 
     outFile <- WriteMainSheet(mainSheet, sheetHead)
@@ -1303,7 +1364,7 @@ parseExcelFile <- function(worksheetPath, runID = NULL) {
 }
 
 
-# Filters list of possible files in the directory for worksheet
+# Filters list of possible files in the directory for worksheet ---------------
 filterFiles <- function(potentialFi) {
     wbFiles <- stringr::str_which(basename(potentialFi), pattern = "xlsm")
     if (length(wbFiles) == 0) {
@@ -1325,13 +1386,13 @@ CheckOtherFiles <- function(inputFi, runID) {
         message(crayon::bgRed("Checking other existing files:"), "\n")
         message(paste(potentialFi, sep = "\n"))
         potentialFi <- filterFiles(potentialFi)
-    }else{
+    } else{
         stop(paste("No PACT worksheet was found in the directory:", parentFolder))
     }
     if (file.exists(potentialFi[1])) {
         message(crayon::bgGreen("Now trying to read:"), "\n", potentialFi[1], "\n")
         pfile <- potentialFi[1]
-    }else{
+    } else{
         nextMsg <- paste(notFoundMsg, potentialFi[1], "Trying:", potentialFi[2], sep = "\n")
         message(nextMsg)
         pfile <- potentialFi[2]
@@ -1360,7 +1421,7 @@ determineRunType <- function(input) {
 }
 
 
-# FUN: Returns Path to xlsx file ---------------------------------------------------------------
+# FUN: Returns Path to xlsx file ----------------------------------------------
 getExcelPath <- function(input, runType) {
     if (stringr::str_detect(input, .Platform$file.sep)) {
         return(input)
@@ -1392,7 +1453,7 @@ getExcelPath <- function(input, runType) {
 }
 
 
-# Gets dataframe and saves as CSV file ---------------------------------------------------------
+# Gets dataframe and saves as CSV file ----------------------------------------
 writeSampleSheet <- function(input, token, runID = NULL) {
     outVals <- NULL
     runType <- determineRunType(input)
