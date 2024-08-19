@@ -1,13 +1,10 @@
 #!/usr/bin/env Rscript
-## ---------------------------
 ## Script name: pipelineHelper.R
 ## Purpose: source of global scripts to help execute Methylation Pipeline
 ## Date Created: August 5, 2021
-## Date Last Modified: March 8, 2024
 ## Version: 1.0.1
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2023
-## ---------------------------
+## Copyright (c) NYULH Jonathan Serrano, 2024
 gb <- globalenv(); assign("gb", gb)
 dsh = "-----------"
 bky <- function(...) {crayon::black$bgYellow$bold(paste(...))}
@@ -17,12 +14,13 @@ bkBlu <- function(...) {crayon::bgBlue$bold$white(paste(...))}
 
 # Global Variables ----------------------------------
 apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
-reportMd <- file.path(fs::path_home(),"report.Rmd") # From curl github download
-QC_file <- file.path(fs::path_home(),"Methyl_QC.Rmd") # From curl github download
-pipeLnk <- "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/pipelineHelper.R"
-cbioLn <- switch (Sys.info()[['sysname']],
-                  "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
-                  "Linux" = "~/molecpathlab/production/Methylation/classifiers"
+reportMd <- file.path(fs::path_home(),"report.Rmd")
+QC_file <- file.path(fs::path_home(),"Methyl_QC.Rmd")
+pipeLnk <-
+    "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/pipelineHelper.R"
+cbioLn <- switch(Sys.info()[['sysname']],
+                 "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
+                 "Linux" = "~/molecpathlab/production/Methylation/classifiers"
 )
 
 predictionPath <- file.path(cbioLn, "mnp.v11b6/data/rfpred.v11b6.RData")
@@ -65,14 +63,18 @@ reOrderRun <- function(selectRDs, sh=NULL) {
     return(c(runFirst,runAfter))
 }
 
-# Saves the methyl CNV as a png file in the cwd
+# Saves the methyl CNV as a png file in the cwd -------------------------------
 generateCNVpng <- function(RGsetEpic, sampleName) {
     msgFunName(pipeLnk,"generateCNVpng")
 
-    imgName <- paste(sampleName, "cnv.png", sep="_")
+    imgName <- paste(sampleName, "cnv.png", sep = "_")
     MsetEpic <- minfi::preprocessRaw(RGsetEpic)
-    png(filename=imgName,width=1820, height=1040)
-    mnp.v11b6::MNPcnvplot(MsetEpic)
+    cnv_dat <- mnp.v12epicv2::MNPcnv(MsetEpic, sex = sex, main = dat$sampleID)
+    png(filename = imgName,
+        width = 1820,
+        height = 1040)
+    par(mar = c(1, 1, 1, 1))
+    conumee::CNV.genomeplot(cnv_dat, chrY = FALSE)
     dev.off(); message("File saved:\n",imgName,"\n")
 }
 
@@ -108,7 +110,8 @@ CopyRmdFile <- function(runID, rmdFile) {
 getRGset <- function(runPath, sentrix) {
   msgFunName(pipeLnk,"getRGset")
   barcode = stringr::str_split_fixed(sentrix, "_", 2)[1]
-  RGsetEpic <- minfi::read.metharray(file.path(runPath, sentrix), verbose = T, force = T)
+  RGsetEpic <- minfi::read.metharray(file.path(runPath, sentrix),
+                                     verbose = T, force = T)
   aEpic = c(array = "IlluminaHumanMethylationEPIC", annotation = "ilm10b4.hg19")
   a450k = c(array = "IlluminaHumanMethylation450k", annotation = "ilmn12.hg19")
   arrayAnno <- RGsetEpic@annotation[['array']]
@@ -141,7 +144,14 @@ getRGset <- function(runPath, sentrix) {
 CheckSampleQCmetrics <- function(runID) {
   msgFunName(pipeLnk, "CheckSampleQCmetrics")
     qcValsFile <- file.path(getwd(), paste(runID, "qc_data.csv", sep = "_"))
-    qc_cols <- c("RD.number", "Log2sqrt.M.U.", "log2sqrt.R.G.", "BS_log2sqrt.R.G.", "log2sqrt.H.L.", "Pvalue")
+    qc_cols <- c(
+        "RD.number",
+        "Log2sqrt.M.U.",
+        "log2sqrt.R.G.",
+        "BS_log2sqrt.R.G.",
+        "log2sqrt.H.L.",
+        "Pvalue"
+    )
     qcVals <- as.data.frame(read.csv(qcValsFile)[qc_cols])
     qcVals[is.na(qcVals)] <- 0
     qcVals$Passed_SI <- as.integer(qcVals$Log2sqrt.M.U. <= 9.0)
@@ -159,7 +169,7 @@ CheckSampleQCmetrics <- function(runID) {
     return(final_qc)
 }
 
-# QC REPORT maker: knits the QC RMD file
+# QC REPORT maker: knits the QC RMD file --------------------------------------
 generateQCreport <- function(runID = NULL) {
     msgFunName(pipeLnk, "generateQCreport")
     if (is.null(runID)) {
@@ -188,7 +198,8 @@ generateQCreport <- function(runID = NULL) {
         unlink(qcCache, recursive = T) #clear cache
         gb$uploadToRedcap(outQCpath, F)
     } else{
-        message("Skipping QC render: QC file already exists in the directory.  Delete QC rmd and QC.html to generate new output.")
+        message("Skipping QC render: QC file already exists in the directory!")
+        message(bkRed("Delete QC rmd and QC.html to generate new output."))
     }
 }
 
@@ -203,7 +214,7 @@ launchEmailNotify <- function(runID) {
     if (sjmisc::str_contains(runID, "EPICV1")) {
         return(message("Run is Validation. No email will be generated"))
     }
-    com <- ifelse(isMC == T, "sample_qc", "sample_research") # research or clinical notification
+    com <- ifelse(isMC == T, "sample_qc", "sample_research")
     record = data.frame(record_id = paste0(runID, "_QC"), comments = com)
     datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox = T)
     RCurl::postForm(
@@ -217,7 +228,7 @@ launchEmailNotify <- function(runID) {
     cat(bkBlu("Check email to confirm Email Notification Created"), sep = "\n")
 }
 
-# FUN: Creates the QC record for the current run on redcap if it does not exist
+# FUN: Creates the QC record for the current run on REDCap --------------------
 CreateRedcapRecord <- function(runID = NULL, recordWord = "QC") {
     msgFunName(pipeLnk, "CreateRedcapRecord")
     if (is.null(runID)) {
@@ -230,7 +241,7 @@ CreateRedcapRecord <- function(runID = NULL, recordWord = "QC") {
     message(dsh, "Created REDCap Record: ", record[1], dsh, "\n")
 }
 
-# Check if the QC File will be read
+# Checks if the QC File will be read ------------------------------------------
 checkRunOutput <- function(runID) {
     msgFunName(pipeLnk,"checkRunOutput")
     redcapFi <- paste0(runID,"_Redcap.csv")
@@ -238,14 +249,18 @@ checkRunOutput <- function(runID) {
 
     if (!file.exists(csvLocation)) {
         message(bkRed("File not found:")," ", csvLocation)
-        message("QC Report may generate without the Summary Table which needs ", bkGrn(redcapFi))
+        message(
+            "QC Report may generate without the Summary Table which needs ",
+            bkGrn(redcapFi))
     } else{
         outputPath <- getwd()
         if (file.exists(file.path(getwd(), redcapFi))) {
             outputPath <- file.path(getwd(), paste0(Sys.Date(), "_", redcapFi))
         }
         message("Copying file: ", outputPath)
-        fs::file_copy(path=csvLocation, new_path=outputPath, overwrite = T)
+        fs::file_copy(path = csvLocation,
+                      new_path = outputPath,
+                      overwrite = T)
     }
 }
 
@@ -255,7 +270,13 @@ tidyUpFiles <- function(runID) {
     deskDir <- file.path(fs::path_home(),"Desktop",runID)
     backupD <- file.path(gb$methDir,"csvRedcap")
     if (!dir.exists(backupD)) {dir.create(backupD)}
-    file.copy(deskDir, backupD, overwrite=T, recursive = T, copy.mode = T)
+    file.copy(
+        deskDir,
+        backupD,
+        overwrite = T,
+        recursive = T,
+        copy.mode = T
+    )
     unlink(deskDir, T, T)
 }
 
@@ -352,16 +373,22 @@ ReadSamSheet <- function(samList) {
         return(as.data.frame(read.csv("samplesheet.csv")))
     }
     xlSheets <- readxl::excel_sheets(samSh)
-    redSheet <- as.integer(which(grepl("REDCap",xlSheets)==T))
+    redSheet <- as.integer(which(grepl("REDCap", xlSheets) == T))
     message("Excel sheet names:")
     print(xlSheets)
-    if (length(redSheet)==0) {
+    if (length(redSheet) == 0) {
         warning("REDCap sheet not found in Sheet names, setting sheet #3")
         redSheet <- 3
     }
-    message(bkGrn("Sheet Index containing 'REDCap_Import':"), " ", redSheet,"\n")
+    message(bkGrn("Sheet Index containing 'REDCap_Import':"),
+            " ",
+            redSheet,
+            "\n")
 
-    samSh <- readxl::read_excel(samSh, sheet=redSheet, range = "A1:M97", col_types = c("text"))
+    samSh <- readxl::read_excel(samSh,
+                                sheet = redSheet,
+                                range = "A1:M97",
+                                col_types = c("text"))
     message(bkGrn("SampleSheet:"))
 
     samplesSheet <- as.data.frame(samSh)[samList, 1:13]
@@ -369,7 +396,7 @@ ReadSamSheet <- function(samList) {
     return(samplesSheet)
 }
 
-# FUN: Parses the WetLab .xlsm sheet in the current directory
+# FUN: Parses the WetLab .xlsm sheet in the current directory -----------------
 checkSamSh <- function(samList) {
     msgFunName(pipeLnk, "checkSamSh")
     msgParams("samList")
@@ -377,7 +404,8 @@ checkSamSh <- function(samList) {
 
     require(rmarkdown)
     wksh <- ReadSamSheet(samList)
-    isMC = sjmisc::str_contains(gb$runID, "MGDM")|sjmisc::str_contains(gb$runID, "MC")
+    isMC = sjmisc::str_contains(gb$runID, "MGDM") |
+        sjmisc::str_contains(gb$runID, "MC")
     is_validation <- sjmisc::str_contains(gb$runID, "VAL")
     is_research <- grepl("MR", gb$runID)
     if (isMC == T & is_validation == F) {
@@ -389,14 +417,14 @@ checkSamSh <- function(samList) {
         wksh <- NameControl(wksh, wksh$run_number[1])
     }
     stopifnot(!is.null(wksh))
-    rownames(wksh)<- wksh[,1]
+    rownames(wksh) <- wksh[,1]
     return(wksh)
 }
 
 
 getRunList <- function(data, samList) {
     msgFunName(pipeLnk, "getRunList")
-    toRun <- unlist(lapply(samList, FUN=function(i) {
+    toRun <- unlist(lapply(samList, FUN = function(i) {
         nOutDir = file.path(getwd(), paste0(data[i, 1], ".html"))
         if (file.exists(nOutDir)) {
             message(bky(basename(nOutDir), "already exists! Skipping..."),"\n")
@@ -420,7 +448,8 @@ make_knit_report <- function(dat, reportMd, params_init) {
 
 handle_knit_error <- function(e, dat, params) {
     try(beepr::beep(1), silent = TRUE)
-    message("Report generation failed for:", "\n", dat$outFi, "\nThe following error returned:\n", e)
+    message("Report generation failed for:", "\n", dat$outFi,
+            "\nThe following error returned:\n", e)
     home_path <- Sys.getenv("HOME")
     tb <- capture.output(traceback())
     if (length(tb) > 0) {
@@ -439,14 +468,14 @@ do_report <- function(single_data = NULL, genCn = FALSE) {
     msgParams("data")
 
     dat <- getRunData(single_data)
-    
+
     RGsetEpic <- getRGset(runPath = getwd(), sentrix = dat$senLi)
     arrayAnno <- RGsetEpic@annotation[['array']]
 
     library("mnp.v12epicv2")
     require("mnp.v12epicv2")
     reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
-  
+
     if (genCn == T) {generate_cnv_png(RGsetEpic, dat$sampleID)}
 
     msgRunUp(dat$sampleID, dat$run_id, dat$senLi)
@@ -459,7 +488,7 @@ do_report <- function(single_data = NULL, genCn = FALSE) {
         knitDir = getwd()
     )
 
-    
+
     tryCatch(
         expr = make_knit_report(dat, reportMd, params_init),
         error = function(e) {handle_knit_error(e, dat, params_init)},
@@ -522,7 +551,8 @@ loopRender <- function(samList = NULL, data, redcapUp = T) {
     # Debug: data <- read.csv("samplesheet.csv", strip.white=T)
     stopifnot(!is.null(data))
 
-    isMC = sjmisc::str_contains(gb$runID, "MGDM")|sjmisc::str_contains(gb$runID, "MC")
+    isMC = sjmisc::str_contains(gb$runID, "MGDM") |
+      sjmisc::str_contains(gb$runID, "MC")
     is_validation <- sjmisc::str_contains(gb$runID, "VAL")
     is_research <- grepl("MR", gb$runID)
     if (isMC == T & is_validation == F) {
@@ -534,7 +564,7 @@ loopRender <- function(samList = NULL, data, redcapUp = T) {
         data <- NameControl(data, data$RunID[1])
     }
     if (is.null(samList)) {
-        samList <- 1:length(data$Sample_Name!=0)
+        samList <- 1:length(data$Sample_Name != 0)
     }
     wksh <- checkSamSh(samList)
     toRun <- getRunList(data, samList)
@@ -548,7 +578,8 @@ loopRender <- function(samList = NULL, data, redcapUp = T) {
     currIdx = 1
     for (i in toRun) {
         totLeft <- length(toRun) - currIdx
-        message(bkGrn(dsh, totLeft, "of", length(toRun), "samples remaining to run", dsh))
+        message(bkGrn(dsh, totLeft, "of", length(toRun),
+                      "samples remaining to run", dsh))
         msgProgress(1, i, samList)
         single_data = data[i, ]
         do_report(single_data, gb$genCn)
@@ -594,7 +625,9 @@ RenderReportsParallel <- function(samList = NULL, data, redcapUp = T) {
         dat <- getRunData(single_data)
         RGsetEpic <- getRGset(runPath = getwd(), sentrix = dat$senLi)
 
-        if (gb$genCn) {generate_cnv_png(RGsetEpic, dat$sampleID)}
+        if (gb$genCn) {
+            gb$generate_cnv_png(RGsetEpic, dat$sampleID)
+        }
         params_init <- list(token = gb$ApiToken, rundata = dat,
                             RGsetEpic = RGsetEpic, knitDir = getwd())
         tryCatch(
@@ -617,7 +650,6 @@ RenameFailed <- function(qcVals) {
   msgFunName(pipeLnk, "RenameFailed")
 
   if (!is.null(qcVals)) {
-
       message("qcVals")
       qcVals[is.na(qcVals)] <- "no"
       print(qcVals)
@@ -636,15 +668,20 @@ RenameFailed <- function(qcVals) {
 }
 
 
-#' REPORT: Generates Html reports to cwd with samplesheet.csv
+#' REPORT: Generates Html reports to cwd with samplesheet.csv for V12_EPICV2
+#'
 #' @param runPath The location of samplesheet.csv and idats
-#' @param sheetName name of samplesheet if it is not "samplesheet.csv"
-#' @param selectSams vector of integer index of specific samples to run from samplesheet
-#' @param genCn also generate the CNV plot as a PNG file
-#' @param skipQC default is false set as true to skip QC generation
-#' @param email default is true, set to false to avoid email notification
-#' @param cpReport default false, set TRUE to copy the reports to the Zdrive/research output Dir
-#' @param redcapUp default is true, flag will upload output html files and dataframe to redcap
+#' @param sheetName Name of samplesheet if it is not "samplesheet.csv"
+#' @param selectSams Vector of integer index of specific samples to run
+#' @param genCn Default FALSE, set as TRUE to generate the CNV plot as a PNG
+#' @param skipQC Default FALSE, set as TRUE to skip QC generation
+#' @param email Default TRUE, set to FALSE to avoid email notification
+#' @param cpReport Default FALSE, set TRUE to copy the reports to the Zdrive/research output Dir
+#' @param redcapUp Default TRUE, flag will upload output html files and dataframe to redcap
+#'
+#' @return None
+#' @examples
+#' makeReports.v11b6(runPath = "path/to/run", sheetName = "samplesheet.csv")
 makeReports.v11b6 <- function(runPath = NULL,
                               sheetName = "samplesheet.csv",
                               selectSams = NULL,
@@ -656,7 +693,7 @@ makeReports.v11b6 <- function(runPath = NULL,
     msgFunName(pipeLnk, "makeReports.v11b6")
     library("data.table")
     assign("genCn", genCn, envir = gb)
-    data <- read.csv(sheetName, strip.white = T)
+    data <- utils::read.csv(sheetName, strip.white = T)
     sheetRunID <- paste0(data$RunID[1])
     if (sheetRunID != gb$runID) {
       message("Batch ID in sheet is: ", sheetRunID)
@@ -665,13 +702,12 @@ makeReports.v11b6 <- function(runPath = NULL,
     }
     runID <- paste0(data$RunID[1])
 
-    isMC = sjmisc::str_contains(runID, "MGDM") | sjmisc::str_contains(runID, "MC")
-    is_validation <- sjmisc::str_contains(runID, "VAL")
+
     cntrl <- which(data[, 1] %like% 'control')
     if (length(cntrl) >= 1) {
         control_sams <- data[cntrl, 1]
         control_sams <- make.unique(control_sams, sep = "_")
-        for(sam in control_sams) {
+        for (sam in control_sams) {
           CreateRedcapRecord(runID, sam)
         }
     }
@@ -685,18 +721,20 @@ makeReports.v11b6 <- function(runPath = NULL,
         generateQCreport(runID)
         qcVals <- CheckSampleQCmetrics(runID)
         rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
-        redcapAPI::importRecords(rcon, qcVals, "normal", "ids", logfile = "REDCapQCimports.txt")
+        redcapAPI::importRecords(rcon, qcVals, "normal", "ids",
+                                 logfile = "REDCapQCimports.txt")
     }
     if (grepl("TEST", runID)) {
         cpReport = F; redcapUp = F; email = F
     }
     if (redcapUp == T) {
-        file.list <- dir(pattern = ".html", full.names = T)
-        gb$uploadToRedcap(file.list, T)
+        file.list <- dir(pattern = "QC.html", full.names = T)
+        # if (length(file.list) > 0) gb$uploadToRedcap(file.list, T)
     }
     if (email == T) {
         RenameFailed(qcVals)
-        gb$CombineClassAndQC(output_fi = paste0(runID, "_qc_data.csv"), gb$ApiToken, runDir = runPath, runID)
+        gb$CombineClassAndQC(output_fi = paste0(runID, "_qc_data.csv"),
+                             gb$ApiToken, runDir = runPath, runID)
         launchEmailNotify(runID)
     }
 
@@ -704,7 +742,7 @@ makeReports.v11b6 <- function(runPath = NULL,
     tidyUpFiles(runID)
 }
 
-# FUN: Checks if all the paths are accessible to the Rscript location
+# FUN: Checks if all the paths are accessible to the Rscript location ---------
 checkMounts <- function() {
     msgFunName(pipeLnk,"checkMounts")
     failMount <- lapply(critialMnts, function(driveMount) {
@@ -722,31 +760,32 @@ checkMounts <- function() {
     }
 }
 
-# Work Directory Functions ----------------------------------------------------
+# Checks and sets the base directory for executing the pipeline ---------------
 CheckBaseDir <- function(baseFolder) {
     if (is.null(baseFolder)) {
-        gb$baseDir <- gb$methDir <- gb$baseFolder <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
+        gb$baseDir <- gb$methDir <- gb$baseFolder <-
+            "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
     }else{
         gb$baseDir <- gb$methDir <- gb$baseFolder <- baseFolder
         }
     isDesktop <- stringr::str_detect(baseFolder, "Desktop")
     if (length(isDesktop) != 0)
         if (is.null(baseFolder) & isDesktop == T) {
-            warning("Trying to run methylation from Desktop working directory is not allowed")
+            warning("The Methylation pipeline cannot be run from the Desktop")
             message("Try setting baseFolder to '~/Documents/' instead")
             stopifnot(isDesktop == F)
         }
     return(gb$baseFolder)
 }
 
-# Sets the working folder directory
+# Sets the working folder directory -------------------------------------------
 SetBaseFolder <- function(token, baseFolder, runID) {
     baseFolder <- CheckBaseDir(baseFolder)
-    methylPath <- gb$setRunDir(runID=gb$runID, workFolder = baseFolder)
+    methylPath <- gb$setRunDir(runID = gb$runID, workFolder = baseFolder)
     message("Working directory set to:\n", crayon::bgGreen(methylPath), "\n")
     gb$methDir <- gb$workFolder <- baseFolder
     gb$setVar("workFolder", baseFolder)
-    gb$setVar("ApiToken", token) # assign the ApiToken & print params
+    gb$setVar("ApiToken", token)
     newPathRun <- file.path(baseFolder, runID)
     pathCdCmd <- paste("cd", newPathRun)
     message("Changing directory to:", pathCdCmd)
@@ -757,6 +796,8 @@ SetBaseFolder <- function(token, baseFolder, runID) {
     return(baseFolder)
 }
 
+
+# Executes sequence of functions to check and create input and output files ---
 PrepareRun <- function(token, baseFolder=NULL, runID, runLocal=F, rdInput=F) {
     mainHub <- "https://github.com/NYU-Molecular-Pathology/Methylation/main/R"
     gb$msgFunName(file.path(mainHub,"methylExpress.R"),"PrepareRun")
@@ -764,20 +805,21 @@ PrepareRun <- function(token, baseFolder=NULL, runID, runLocal=F, rdInput=F) {
         gb$checkMounts()
         gb$checkValidRun(runID)
         gb$SetBaseFolder(token, baseFolder, runID)
-        gb$copyWorksheetFile(runID = runID) # copies the xlsm file
-        gb$readSheetWrite(runID = runID) # reads xlsm and generates input .csv samplesheet
-        gb$get.idats() # Copy idat files to current folder from molecular and snuderlabspace to cwd
-        gb$moveSampleSheet(baseFolder, runID) #copies outputs temp to desktop for QC.Rmd
+        gb$copyWorksheetFile(runID = runID) # copies the xlsm file to cwd
+        gb$readSheetWrite(runID = runID) # generates input .csv sheet from xlsm
+        gb$get.idats() # Copy idat files to current folder from shared drives
+        gb$moveSampleSheet(baseFolder, runID)  # copies outputs to Desktop for QC.Rmd
     } else{
         baseFolder <- SetBaseFolder(token, baseFolder, runID)
         assign("baseFolder", baseFolder)
-        if (rdInput==F) {
+        if (rdInput == F) {
             gb$RunLocalIdats(runID, token)
         }
     }
 }
 
-# Starts run knitting html reports loop
+
+# Starts run knitting html reports loop ---------------------------------------
 StartRun <- function(selectRDs = NULL, emailNotify = T, redcapUp = T) {
     mainHub <- "https://github.com/NYU-Molecular-Pathology/Methylation/main/R"
     gb$msgFunName(file.path(mainHub,"methylExpress.R"),"startRun")
@@ -793,8 +835,11 @@ StartRun <- function(selectRDs = NULL, emailNotify = T, redcapUp = T) {
 }
 
 
-GetPriorityCases <- function(selectRDs=NULL, samSheet = "samplesheet.csv", kwd="BN0") {
-    msgFunName(pipeLnk,"GetPriorityCases")
+
+GetPriorityCases <- function(selectRDs = NULL,
+                             samSheet = "samplesheet.csv",
+                             kwd = "BN0") {
+    msgFunName(pipeLnk, "GetPriorityCases")
     csvFi <- read.csv(file.path(getwd(), samSheet))
     BN00 <- which(stringr::str_detect(csvFi$MP_num, kwd))
     if (length(BN00) > 0) {
@@ -803,13 +848,20 @@ GetPriorityCases <- function(selectRDs=NULL, samSheet = "samplesheet.csv", kwd="
         }else{
             selectRDs <- c(selectRDs, csvFi$Sample_Name[BN00])
         }
-        message("Prioritizing these cases first:\n", paste(capture.output(selectRDs), collapse=" "))
+        message("Prioritizing these cases first:\n",
+                paste(capture.output(selectRDs), collapse = " "))
     }
     return(selectRDs)
 }
 
 
-AssignArgs <- function(runID, baseFolder = NULL, token = NULL, selectRDs = NULL, redcapUp, gb) {
+AssignArgs <- function(runID,
+                       baseFolder = NULL,
+                       token = NULL,
+                       selectRDs = NULL,
+                       redcapUp,
+                       gb) {
+
     msgFunName(pipeLnk,"AssignArgs")
     stopifnot(!is.null(token)); stopifnot(!is.null(runID))
     assign("token", token, envir = gb); assign("ApiToken", token, envir = gb)
@@ -825,19 +877,25 @@ AssignArgs <- function(runID, baseFolder = NULL, token = NULL, selectRDs = NULL,
 
 CheckIdatsCopied <- function() {
     msgFunName(pipeLnk,"CheckIdatsCopied")
-    idatFiles <- dir(getwd(), pattern=".idat", full.names = T)
+    idatFiles <- dir(getwd(), pattern = ".idat", full.names = T)
     idatSize <- paste(round(file.info(idatFiles)$size/1024.0 ^ 2, 2),"MB")
     idatFiSi <- as.data.frame(table(idatSize))
 
-    if (nrow(idatFiSi)>1) {
+    if (nrow(idatFiSi) > 1) {
         message(crayon::bgRed("Some idat files are not the same size!"))
         message("Make sure Red and Grn .idat pairs are the same file size by re-copying any files again.")
-        message(paste0(capture.output(idatFiSi), collapse="\n"))
+        message(paste0(capture.output(idatFiSi), collapse = "\n"))
     }
 }
 
 
 StartCustomRun <- function(redcapUp = T) {
     msgFunName(pipeLnk,"StartCustomRun")
-    gb$makeReports.v11b6(skipQC = T, email = F, cpReport = F, selectSams = NULL, redcapUp = redcapUp)
+    gb$makeReports.v11b6(
+        skipQC = T,
+        email = F,
+        cpReport = F,
+        selectSams = NULL,
+        redcapUp = redcapUp
+    )
 }
