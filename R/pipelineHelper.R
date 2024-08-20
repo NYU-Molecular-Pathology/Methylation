@@ -19,9 +19,10 @@ QC_file <- file.path(fs::path_home(),"Methyl_QC.Rmd")
 pipeLnk <-
     "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/pipelineHelper.R"
 
-cbioLn <- switch(Sys.info()[['sysname']],
-                 "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
-                 "Linux" = "/gpfs/data/molecpathlab/production/Methylation/classifiers"
+cbioLn <- switch(
+  Sys.info()[['sysname']],
+  "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
+  "Linux" = "/gpfs/data/molecpathlab/production/Methylation/classifiers"
 )
 
 # List of three mount paths needed to run the pipleine
@@ -410,25 +411,29 @@ ReadSamSheet <- function(samList) {
 }
 
 # FUN: Parses the WetLab .xlsm sheet in the current directory -----------------
-checkSamSh <- function(samList) {
-    msgFunName(pipeLnk, "checkSamSh")
+Check_sam_csv <- function(samList) {
+    msgFunName(pipeLnk, "Check_sam_csv")
     msgParams("samList")
     msgParams(samList)
 
     require(rmarkdown)
-    wksh <- ReadSamSheet(samList)
-    isMC = sjmisc::str_contains(gb$runID, "MGDM") |
-        sjmisc::str_contains(gb$runID, "MC")
+
+    isMC <- sjmisc::str_contains(gb$runID, "MGDM") |
+            sjmisc::str_contains(gb$runID, "MC")
     is_validation <- sjmisc::str_contains(gb$runID, "VAL")
     is_research <- grepl("MR", gb$runID)
-    if (isMC == T & is_validation == F) {
-      if (is_research == F) {
-        wksh <- NameControl(wksh, wksh$run_number[1])
-      }
+
+    wksh <- ReadSamSheet(samList)
+    if (is_validation) {
+        reportMd <<-
+            "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
+        CopyRmdFile(gb$runID, reportMd)
     }
-    if (gb$runID == "23-MGDM_VAL3") {
+
+    if (isMC == T & is_validation == F & is_research == F) {
         wksh <- NameControl(wksh, wksh$run_number[1])
     }
+
     stopifnot(!is.null(wksh))
     rownames(wksh) <- wksh[,1]
     return(wksh)
@@ -556,44 +561,25 @@ get_v11_reports <- function(your_csv){
 }
 
 # FUN: Iterates over each sample in the csv file to generate a report ---------
+# DEBUG: data <- read.csv("samplesheet.csv", strip.white=T)
 loopRender <- function(samList = NULL, data, redcapUp = T) {
     msgFunName(pipeLnk, "loopRender")
-    # Debug: data <- read.csv("samplesheet.csv", strip.white=T)
     stopifnot(!is.null(data))
-
-    isMC = sjmisc::str_contains(gb$runID, "MGDM") |
-      sjmisc::str_contains(gb$runID, "MC")
-    is_validation <- sjmisc::str_contains(gb$runID, "VAL")
-    is_research <- grepl("MR", gb$runID)
-
-    if (isMC == T & is_validation == F & is_research == F) {
-        data <- NameControl(data, data$RunID[1])
-    }
-
     if (is.null(samList)) {
         samList <- 1:length(data$Sample_Name != 0)
     }
-    wksh <- checkSamSh(samList)
+    workbook_data <- Check_sam_csv(samList)
     toRun <- getRunList(data, samList)
 
-    is_validation <-  sjmisc::str_contains(gb$runID, "VAL")
-    if (is_validation) {
-        reportMd <<-
-            "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
-        CopyRmdFile(gb$runID, reportMd)
-    }
-
     currIdx = 1
-    for (i in toRun) {
+    for (sam_idx in toRun) {
         totLeft <- length(toRun) - currIdx
-        message(bkGrn(dsh, totLeft, "of", length(toRun),
-                      "samples remaining to run", dsh))
-        msgProgress(1, i, samList)
-        single_data = data[i, ]
-        do_report(single_data, gb$genCn)
-        msgProgress(2, i, samList)
+        message(bkGrn(dsh, totLeft, "of", length(toRun), "samples run", dsh))
+        msgProgress(1, sam_idx, samList)
+        do_report(single_data = data[sam_idx, ], gb$genCn)
+        msgProgress(2, sam_idx, samList)
         if (redcapUp == T) {
-            sh_Dat <- wksh[i, ]
+            sh_Dat <- workbook_data[sam_idx, ]
             gb$importSingle(sh_Dat)
         }
         currIdx = currIdx + 1
@@ -621,7 +607,7 @@ RenderReportsParallel <- function(samList = NULL, data, redcapUp = T) {
       }
     }
     samList <- if (is.null(samList)) 1:length(data$Sample_Name != 0) else samList
-    wksh <- checkSamSh(samList)
+    workbook_data <- Check_sam_csv(samList)
     toRun <- getRunList(data, samList)
     no_cores <- detectCores() - 1
     cl <- makeCluster(no_cores)
@@ -633,9 +619,9 @@ RenderReportsParallel <- function(samList = NULL, data, redcapUp = T) {
         "handle_knit_error",
         "gb",
         "reportMd",
-        "wksh",
+        "workbook_data",
         "redcapUp",
-        "checkSamSh"
+        "Check_sam_csv"
     )
     parallel::clusterExport(cl, cluster_vars)
 
@@ -655,7 +641,7 @@ RenderReportsParallel <- function(samList = NULL, data, redcapUp = T) {
         )
 
         if (redcapUp) {
-            sh_Dat <- wksh[i, ]
+            sh_Dat <- workbook_data[i, ]
             gb$importSingle(sh_Dat)
         }
     })
