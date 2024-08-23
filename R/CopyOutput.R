@@ -703,11 +703,11 @@ GrabSpecificRecords <- function(flds, rd_num, rcon) {
     msgFunName(cpOutLnk, "GrabSpecificRecords")
     message("Pulling REDCap data...")
     library("dplyr")
-    params = list(rcon, records = rd_num, fields = flds, survey = F, dag = F, factors=F, form_complete_auto=F)
+    params = list(rcon, records = rd_num, fields = flds, survey = F, dag = F, factors = F, form_complete_auto = F)
     dbCols <- do.call(redcapAPI::exportRecordsTyped, c(params))
     rd_df <- as.data.frame(dbCols)
-    rd_df <- rd_df %>% dplyr::mutate_all(~stringr::str_replace_all(., ",", ""))
-    return(rd_df)
+    redcap_db <- rd_df %>% dplyr::mutate_all(~stringr::str_replace_all(., ",", ""))
+    return(redcap_db)
 }
 
 
@@ -728,6 +728,7 @@ rename_reorder_output <- function(output) {
         "log2(H/L)" = "log2.H.L."
     )
     MsgDF(output)
+
     output <- output %>% dplyr::rename(!!!rename_map)
 
     ordered_cols <- c(
@@ -761,8 +762,21 @@ rename_reorder_output <- function(output) {
     if (any(is.na(output))) {
         output[is.na(output)] <- ""
     }
-    message("Ordering columns:\n", paste(ordered_cols, collapse = "\n"))
-    message("Current columns:\n", paste(colnames(output), collapse = "\n"))
+    message("\n>>>>Ordering columns:\n",
+            paste(ordered_cols, collapse = "\n"))
+    message("\n>>>>Current columns:\n",
+            paste(colnames(output), collapse = "\n"))
+    if (!"record_id" %in% colnames(output)) {
+        output$record_id <- output$`RD-number`
+    }
+    missing_cols <- !(ordered_cols %in% colnames(output))
+
+    if (any(missing_cols)) {
+        missed_cols <- ordered_cols[missing_cols]
+        message("The following column(s) are missing:\n",
+                paste(missed_cols, collapse = "\n"))
+    }
+
     final_output <- output[, ordered_cols]
     return(final_output)
 }
@@ -771,6 +785,7 @@ rename_reorder_output <- function(output) {
 CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull) {
     msgFunName(cpOutLnk, "CheckOutputScoresQC")
     newCols <- colnames(redcap_db)
+    library("dplyr")
     for (col_id in newCols) {
         output[col_id] <- ""
     }
@@ -792,11 +807,37 @@ CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull) {
         redcap_dat$block <- ""
         redcap_dat$accession_number <- redcap_db[redcap_dat$record_id, "accession_number"]
         redcap_dat$diagnosis <- redcap_db[redcap_dat$record_id, "diagnosis"]
+
         if (is.null(redcap_dat$tm_number)) {
             redcap_dat$tm_number <- redcap_dat$accession_number
         }
+
+        if (all(is.na(output$subgroup_score))) {
+            output$subgroup_score <- redcap_dat$subgroup_score
+        }
+
+        if (all(is.na(output$classifier_score))) {
+            output$classifier_score <- redcap_dat$classifier_score
+        }
+
+        if (all(is.na(output$classifier_value))) {
+            output$classifier_value <- redcap_dat$classifier_value
+        }
+
+        if (all(is.na(output$subgroup))) {
+            output$subgroup <- redcap_dat$subgroup
+        }
+
         data_subset <- redcap_dat[ , fieldsToPull]
-        merged_data <- merge(output, data_subset, by.x = "RD.number", by.y = "record_id")
+        filtered_output <- output %>% select(-one_of(colnames(data_subset)))
+
+        merged_data <- merge(filtered_output,
+                             data_subset ,
+                             by.x = "RD.number",
+                             by.y = "record_id")
+
+        MsgDF(merged_data)
+
         return(merged_data)
     } else {
         return(output)
@@ -841,7 +882,8 @@ CombineClassAndQC <- function(output_fi = NULL, token, runDir = NULL, runID = NU
     output[controlRows, "RD.number"] <-
         paste(output[controlRows, "RunID"], output[controlRows, "RD.number"], sep = "_")
 
-    redcap_db <- GrabSpecificRecords(fieldsToPull, rd_num = output$RD.number, rcon)
+    redcap_db <- GrabSpecificRecords(flds = fieldsToPull, rd_num = output$RD.number, rcon)
+
     output <- CheckOutputScoresQC(output, runID, redcap_db, fieldsToPull)
     final_output <- rename_reorder_output(output)
     MsgDF(final_output)
