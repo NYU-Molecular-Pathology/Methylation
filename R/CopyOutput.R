@@ -727,7 +727,7 @@ rename_reorder_output <- function(output) {
         "log2sqrt(H*L)" = "log2sqrt.H.L.",
         "log2(H/L)" = "log2.H.L."
     )
-
+    MsgDF(output)
     output <- output %>% dplyr::rename(!!!rename_map)
 
     ordered_cols <- c(
@@ -761,7 +761,8 @@ rename_reorder_output <- function(output) {
     if (any(is.na(output))) {
         output[is.na(output)] <- ""
     }
-
+    message("Ordering columns:\n", paste(ordered_cols, collapse = "\n"))
+    message("Current columns:\n", paste(colnames(output), collapse = "\n"))
     final_output <- output[, ordered_cols]
     return(final_output)
 }
