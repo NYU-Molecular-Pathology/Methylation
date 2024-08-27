@@ -283,7 +283,7 @@ colorTargets <- function(targets, varColumns = c("Type","Origin"), col_vect = NU
       }
     }
     
-    targets <- FlipColorVector(targets, colorColNames, col_vect)
+    #targets <- FlipColorVector(targets, colorColNames, col_vect)
     return(targets)
 }
 
