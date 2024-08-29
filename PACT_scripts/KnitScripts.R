@@ -625,32 +625,35 @@ convert.plots <- function(tumors, pdfList) {
     }
 }
 
-
-GetMethCnv <- function(params, methDir){
+# Copies Methylation CNV PNG files from Molecular to CBioinformatics
+GetMethCnv <- function(params, methDir) {
     methData <- gb$GetMethDf(params$pactName)
-    outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus"))
-    pngDir <- file.path(outDir,"methCNV") # output copy of methylation png files
-    methSamples <- paste(methData$record_id,"cnv.png",sep = "_")
-    methSamples <- methSamples[methData$report_complete=="YES"]
-    if(!dir.exists(pngDir)){dir.create(pngDir)}
-    for (mSam in methSamples) {
+    outDir <- file.path(params$workDir, paste0(params$pactName, "_consensus"))
+    pngDir <- file.path(outDir, "methCNV") # output copy of methylation png files
+    methSamples <- paste(methData$record_id, "cnv.png", sep = "_")
+    methSamples <- methSamples[methData$report_complete == "YES"]
+    if (!dir.exists(pngDir)) {
+        dir.create(pngDir)
+    }
+    if (length(methSamples) == 0) {
+        message("No Methylation PNGs on this run!")
+    }
+    to_copy <- methSamples[!file.exists(file.path(pngDir, methSamples))]
+    
+    if (length(to_copy) == 0) return(message("All files have already been copied."))
+    
+    for (mSam in to_copy) {
         methPath <- file.path(methDir, mSam)
         methOut <- file.path(pngDir, mSam)
-        if (!file.exists(methOut)) {
-            message("Now trying to copy cnv file to...\n", methOut)
-            if (file.exists(methPath)) {
-                tryCatch(
-                    fs::file_copy(path = methPath, new_path = file.path(pngDir, mSam)),
-                    error= function(e){
-                        warning("Methylation png failed to copy:\n", "From: ", methPath, "\nTo: ", methOut)
-                        message(e)
-                    }
-                )
-            } else{
-                warning("PNG file not found in Z-drive path:\n", methPath)
-            }
-        } else{
-            message("File already copied to working directory: ", mSam)
+        
+        if (file.exists(methPath)) {
+            tryCatch(fs::file_copy(methPath, methOut),
+                     error = function(e) {
+                         message("Failed to copy: ", basename(methPath))
+                         message("To: ", methOut, "\nError: ", e$message)
+                    })
+        } else {
+            warning("PNG file not found:\n", methPath)
         }
     }
 }
