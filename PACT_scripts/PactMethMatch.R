@@ -82,15 +82,15 @@ check_pkg_install <- function() {
         repos = 'http://cran.us.r-project.org',
         Ncpus = 4
     )
-    
+
     fix_compiler_flags()
-    
+
     pkgs <- c("data.table", "openxlsx", "jsonlite", "RCurl",
               "readxl", "stringr", "tidyverse", "crayon", "tinytex",
               "systemfonts", "remotes")
-    
+
     needed_pkgs <- pkgs[!sapply(pkgs, requireNamespace, quietly = TRUE)]
-    
+
     if (length(needed_pkgs) > 0) {
         tryCatch({
             do.call(install.packages, c(list(pkgs = needed_pkgs), params))
@@ -100,7 +100,7 @@ check_pkg_install <- function() {
             do.call(install.packages, c(list(pkgs = needed_pkgs), params))
         })
     }
-    
+
     sapply(pkgs, library, character.only = TRUE, logical.return = TRUE, quietly = TRUE)
 }
 
@@ -382,6 +382,14 @@ modifyOutput <- function(output, vals2find) {
 }
 
 
+GetVolumePaths <- function(methData) {
+    smb_path <- "smb://shares-cifs.nyumc.org/apps/acc_pathology"
+    checkPaths <- stringr::str_replace_all(methData$`Report Path`, smb_path, "/Volumes")
+    checkPaths <- checkPaths[checkPaths != "" & !is.na(checkPaths)]
+    checkPaths <- checkPaths[stringr::str_detect(checkPaths, "MGDM")]
+    return(checkPaths)
+}
+
 CheckMethPaths <- function(methData) {
     for (i in 1:length(methData$`Report Path`)) {
         currPath <- methData$`Report Path`[i]
@@ -395,16 +403,39 @@ CheckMethPaths <- function(methData) {
         newPath <- paste(currSplit, collapse = "/")
         methData[i, "Report Path"] <- newPath
     }
-    smb_path <- "smb://shares-cifs.nyumc.org/apps/acc_pathology"
-    checkPaths <- stringr::str_replace_all(methData$`Report Path`, smb_path, "/Volumes")
-    checkPaths <- checkPaths[checkPaths != "" & !is.na(checkPaths)]
-    checkPaths <- checkPaths[stringr::str_detect(checkPaths, "MGDM")]
+    checkPaths <- GetVolumePaths(methData)
     anyPathsFalse <- file.exists(checkPaths) == F
     if (any(anyPathsFalse)) {
-        message(crayon::bgRed("Some paths to html reports need editing in MethylMatch.xlsx sheet!"))
-        message(crayon::bgRed("Fix the following paths in worksheet 'Report Path' column that do not exist:"), "\n")
-        message(paste(checkPaths[anyPathsFalse], collapse = "\n"), "\n")
+        toReplace <- basename(checkPaths[anyPathsFalse])
+        mainDirs <- dirname(checkPaths[anyPathsFalse])
+        if (!dir.exists(mainDirs)) {
+            correct_dir <- dir(
+                path = dirname(mainDirs),
+                pattern = basename(mainDirs),
+                full.names = T
+            )
+            mainDirs <- correct_dir
+        }
+        for (missing in toReplace) {
+            patt <- stringr::str_split_fixed(missing, ".html", 2)[1,1]
+            file_found <- dir(path = mainDirs, pattern = patt, full.names = T)
+            if (length(file_found) > 0) {
+                toSwap <- which(grepl(missing, methData$`Report Path`))
+                newPath <- stringr::str_replace(methData$`Report Path`[toSwap], missing, basename(file_found))
+                methData$`Report Path`[toSwap] <- newPath
+            }
+        }
+        checkPaths <- GetVolumePaths(methData)
+        anyPathMissed <- file.exists(checkPaths) == F
+        if (any(anyPathMissed)) {
+            msg1 <- "Some paths to html reports need editing in MethylMatch.xlsx sheet!"
+            msg2 <- "Fix the following paths in worksheet 'Report Path' column that do not exist:"
+            message(crayon::bgRed(msg1))
+            message(crayon::bgRed(msg2), "\n")
+            message(paste(checkPaths[anyPathsFalse], collapse = "\n"), "\n")
+        }
     }
+
     return(methData)
 }
 
@@ -428,7 +459,8 @@ createXlFile <- function(runId, output) {
             addExcelLink(output, fiLn, wb, runId)
         }
     }
-    outFi <-file.path(fs::path_home(),"Desktop", paste0(runId,"_MethylMatch.xlsx"))
+    outFi <- file.path(fs::path_home(),"Desktop",
+                       paste0(runId,"_MethylMatch.xlsx"))
     openxlsx::saveWorkbook(wb, outFi, overwrite = T)
     return(outFi)
 }
@@ -735,8 +767,8 @@ copy_output_png <- function(outFolder = NULL) {
     }
     desk <- file.path(fs::path_home(), "Desktop")
     the.cnvs <- dir(desk, "_cnv.png", full.names = T) %>% file.info() %>%
-        rownames_to_column() %>% filter(as.Date(ctime) == Sys.Date()) %>% pull(rowname)
-
+        rownames_to_column() %>% filter(as.Date(ctime) == Sys.Date()) %>%
+        pull(rowname)
     if (length(the.cnvs) > 0) {
         savePath <- file.path(outFolder, basename(the.cnvs))
         message("\nCopying png files to Molecular folder:\n", outFolder, "\n")
@@ -748,7 +780,6 @@ copy_output_png <- function(outFolder = NULL) {
             message("The following failed to copy from the desktop:\n")
             print(basename(savePath[!file.exists(savePath)]))
         }
-
     } else{
         message("No CNV files found on Desktop to copy")
     }
@@ -768,7 +799,6 @@ queue_cnv_maker <- function(output, token) {
     if (length(rds) > 0) {
         try_cnv_make(rds, token)
         try(copy_output_png(), silent = T)
-
     } else{
         message(crayon::bgGreen("No CNV png images to generate. Check the output directory."))
     }
