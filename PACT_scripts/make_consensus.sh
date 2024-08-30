@@ -25,6 +25,7 @@ outputDir="/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinform
 BG_GRN="$(tput setab 2)" # makes text background green
 BG_RED="$(tput setab 1)" # makes text background green
 NORMAL=$(tput sgr0)      # resets default text
+error_handled=true
 
 # Function to exit when any command fails
 trap_error() {
