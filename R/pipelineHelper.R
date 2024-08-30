@@ -589,7 +589,7 @@ loopRender <- function(samList = NULL, data, redcapUp = T) {
     currIdx = 1
     for (sam_idx in toRun) {
         totLeft <- length(toRun) - currIdx
-        message(bkGrn(dsh, totLeft, "of", length(toRun), "samples run", dsh))
+        message(bkGrn(dsh, totLeft, "of", length(toRun), "samples remain to be run", dsh))
         msgProgress(1, sam_idx, samList)
         do_report(single_data = data[sam_idx, ], gb$genCn)
         msgProgress(2, sam_idx, samList)
