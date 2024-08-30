@@ -454,8 +454,8 @@ addExcelLink <- function(output, fiLn, wb, runId) {
 createXlFile <- function(runId, output) {
     wb <- openxlsx::createWorkbook()
     openxlsx::addWorksheet(wb, runId)
-    openxlsx::writeData(wb, sheet = runId, x = output)
     output <- CheckMethPaths(methData = output)
+    openxlsx::writeData(wb, sheet = runId, x = output)
     for (fiLn in 1:length(output$'Report Link')) {
         if (output$'Report Link'[fiLn]!='') {
             addExcelLink(output, fiLn, wb, runId)
