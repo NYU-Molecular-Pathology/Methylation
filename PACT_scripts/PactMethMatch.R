@@ -406,6 +406,7 @@ CheckMethPaths <- function(methData) {
     checkPaths <- GetVolumePaths(methData)
     anyPathsFalse <- file.exists(checkPaths) == F
     if (any(anyPathsFalse)) {
+        message("Fixing broken file paths...")
         toReplace <- basename(checkPaths[anyPathsFalse])
         mainDirs <- dirname(checkPaths[anyPathsFalse])
         if (!dir.exists(mainDirs)) {
@@ -422,6 +423,7 @@ CheckMethPaths <- function(methData) {
             if (length(file_found) > 0) {
                 toSwap <- which(grepl(missing, methData$`Report Path`))
                 newPath <- stringr::str_replace(methData$`Report Path`[toSwap], missing, basename(file_found))
+                message("Updating file path:\n", newPath)
                 methData$`Report Path`[toSwap] <- newPath
             }
         }
