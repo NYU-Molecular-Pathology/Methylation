@@ -358,6 +358,9 @@ NameControl <- function(data, runId) {
     library("data.table")
     if (any(tolower(data[, 1]) %like% 'control')) {
         cntrl <- which(tolower(data[, 1]) %like% 'control') #DNA_Number
+        if (all(stringr::str_detect(data[cntrl,1], pattern = runId))) {
+            return(data)
+        }
         if (length(cntrl) > 1) {
           controlSams <- make.unique(tolower(data[cntrl, 1]), sep = "_")
           controlSams <- gsub(controlSams, pattern = " ", replacement = "")
@@ -369,6 +372,9 @@ NameControl <- function(data, runId) {
     } else{
         if (any(tolower(data[, 2]) %like% 'control')) {
             cntrl <- which(tolower(data[, 2]) %like% 'control')
+            if (all(stringr::str_detect(data[cntrl,2], pattern = runId))) {
+                return(data)
+            }
             if (length(cntrl) > 1) {
               controlSams <- make.unique(tolower(data[cntrl, 2]), sep = "_")
               controlSams <- gsub(controlSams, pattern = " ", replacement = "")
