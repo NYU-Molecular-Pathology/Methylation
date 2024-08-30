@@ -137,6 +137,7 @@ echo "/Volumes${outputDir}${currYear}/${pactRun}/"
 
 CONSENSUS_FILE="${WORK_DIR}/${pactRun}_consensus.html"
 FINAL_DEST="/Volumes${outputDir}${currYear}/${pactRun}/"
+[ ! -f "$CONSENSUS_FILE" ] && { echo "Consensus failed to generate: make sure all input files are copied to \"${WORK_DIR}\""; exit 1; }
 
 # Copy HTML file from consensus directory to DESK_DIR
 cp "${CONSENSUS_FILE}" "${DESK_DIR}"
