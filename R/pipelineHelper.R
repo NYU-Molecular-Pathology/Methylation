@@ -356,18 +356,27 @@ getRunData <- function(data) {
 
 NameControl <- function(data, runId) {
     library("data.table")
-    if (any(data[, 1] %like% 'control')) {
-        cntrl <- which(data[, 1] %like% 'control') #DNA_Number
+    if (any(tolower(data[, 1]) %like% 'control')) {
+        cntrl <- which(tolower(data[, 1]) %like% 'control') #DNA_Number
         if (length(cntrl) > 1) {
-          controlSams <- make.unique(data[cntrl, 1], sep = "_")
+          controlSams <- make.unique(tolower(data[cntrl, 1]), sep = "_")
+          controlSams <- gsub(controlSams, pattern = " ", replacement = "")
+          controlSams <- gsub(controlSams, pattern = "-", replacement = "_")
           data[cntrl, 1] <- paste0(runId, "_", controlSams)
         } else{
           data[cntrl, 1] <- paste0(runId, "_control")
         }
     } else{
-        if (any(data[, 2] %like% 'control')) {
-            cntrl <- which(data[, 2] %like% 'control') #DNA_Number
-            data[cntrl, 1] <- paste0(runId, "_control")
+        if (any(tolower(data[, 2]) %like% 'control')) {
+            cntrl <- which(tolower(data[, 2]) %like% 'control')
+            if (length(cntrl) > 1) {
+              controlSams <- make.unique(tolower(data[cntrl, 2]), sep = "_")
+              controlSams <- gsub(controlSams, pattern = " ", replacement = "")
+              controlSams <- gsub(controlSams, pattern = "-", replacement = "_")
+              data[cntrl, 2] <- paste0(runId, "_", controlSams)
+            } else{
+              data[cntrl, 1] <- paste0(runId, "_control")
+            }
         } else{
             warning('No word "control" in RD-number found in samplesheet')
         }
