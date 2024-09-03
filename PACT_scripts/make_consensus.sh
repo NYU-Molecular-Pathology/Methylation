@@ -70,7 +70,7 @@ create_dir "${WORK_DIR}"
 cd "${WORK_DIR}" || exit
 curl -# -L ${pactGithub}/PACT_consensus.Rmd >"${WORK_DIR}/${pactRun}_consensus.Rmd"
 
-/Volumes/CBioinformatics/PACT/getMethylMatch.sh "${pactRun}" "${runID}"
+/Volumes/CBioinformatics/PACT/getMethylMatch.sh "${pactRun}" "${runID}" & wait
 
 cd "${WORK_DIR}" || exit
 
