@@ -764,7 +764,7 @@ try_cnv_make <- function(rds, token) {
 
 
 copy_output_png <- function(outFolder = NULL) {
-    library("dyplr")
+    library("dplyr")
     if (is.null(outFolder)) {
         outFolder = "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
     }
