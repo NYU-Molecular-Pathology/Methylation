@@ -19,6 +19,8 @@ inputSheet <- args[2]
 stopifnot(!is.na(token), !is.na(inputSheet))
 readFlag <- grepl("\\.csv$", inputSheet)
 
+message(paste("Now Running $HOME/PactMethMatch.R", token, inputSheet))
+
 # REDCap Fields  --------------------------------------------------------------
 flds <- c("record_id", "b_number", "tm_number", "accession_number", "block",
           "diagnosis", "organ", "tissue_comments", "run_number", "nyu_mrn",
@@ -28,11 +30,9 @@ flds <- c("record_id", "b_number", "tm_number", "accession_number", "block",
 message("\n================ Parameters input ================\n")
 message("token: ", token, "\ninputSheet: ", inputSheet, "\n")
 
-
 if (!requireNamespace("devtools", quietly = TRUE)) {
     install.packages("devtools", ask = F, dependencies = T)
 }
-
 
 fix_compiler_flags <- function() {
     # Check if brew installed
@@ -764,6 +764,7 @@ try_cnv_make <- function(rds, token) {
 
 
 copy_output_png <- function(outFolder = NULL) {
+    library("dyplr")
     if (is.null(outFolder)) {
         outFolder = "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
     }
@@ -776,7 +777,7 @@ copy_output_png <- function(outFolder = NULL) {
         message("\nCopying png files to Molecular folder:\n", outFolder, "\n")
         message(paste(capture.output(the.cnvs), collapse = '\n'))
 
-        try(fs::file_copy(path = the.cnvs, new_path = savePath), T)
+        fs::file_copy(path = the.cnvs, new_path = savePath)
 
         if (any(!file.exists(savePath))) {
             message("The following failed to copy from the desktop:\n")
@@ -800,12 +801,11 @@ queue_cnv_maker <- function(output, token) {
 
     if (length(rds) > 0) {
         try_cnv_make(rds, token)
-        try(copy_output_png(), silent = T)
+        copy_output_png()
     } else{
         message(crayon::bgGreen("No CNV png images to generate. Check the output directory."))
     }
 }
-
 
 check_pkg_install()
 check_REDCap_vers() # Check REDCap API version
@@ -814,5 +814,5 @@ output <- getOuputData(token, flds, inputSheet, readFlag)
 
 # CNV PNG Creation -------------------------------------
 if (ncol(output) > 0) {
-    try(queue_cnv_maker(output, token), T)
+    queue_cnv_maker(output, token)
 }
