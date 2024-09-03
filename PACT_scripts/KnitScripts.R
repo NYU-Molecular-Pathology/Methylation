@@ -672,6 +672,7 @@ GetMethCnv <- function(params, methDir) {
                 stop("PNG file not found:\n", methPath)
             } else {
                 fs::file_copy(new_path, methOut)
+                try(fs::file_copy(new_path, methPath), silent = T)
             }
         }
     }
