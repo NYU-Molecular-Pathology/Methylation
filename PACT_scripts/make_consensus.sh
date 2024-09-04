@@ -90,7 +90,7 @@ msg_code rsync -vrthP \"${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/${pactRun}-QC.t
 msg_code rsync -vrthP \"${MOLEC_VOL}NGS607/${currYear}/${runID}/${pactRun}_Hotspots.tsv\" \"${DESK_DIR}\"
 
 # Copy demux-samplesheet.csv to desktop
-msg_code rsync -vrthP \"${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/demux-samplesheet.csv\" \"${DESK_DIR}\"
+#msg_code rsync -vrthP \"${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/demux-samplesheet.csv\" \"${DESK_DIR}\"
 
 # Copy VAF QC output files if availible
 if [ -d "${VAF_DIR}" ]; then
@@ -103,7 +103,7 @@ printf "cp ${DESK_DIR}*.png ${PNG_OUT_DIR}"
 # COPY FROM: Desktop TO: Consensus Directory --------------------------------------------------------------
 cp "${DESK_DIR}"*.png "${PNG_OUT_DIR}"
 msg_code rsync -vrthP --include=\"*.tsv\" \"${DESK_DIR}\" \"${WORK_DIR}\"
-msg_code rsync -vrthP \"$HOME/Desktop/${runID}-SampleSheet.csv\" \"${WORK_DIR}\"
+#msg_code rsync -vrthP \"$HOME/Desktop/${runID}-SampleSheet.csv\" \"${WORK_DIR}\"
 
 # Check if _MethylMatch.xlsx file exists ------------------------------------------------------------------
 METH_MATCH="$HOME/Desktop/${pactRun}_MethylMatch.xlsx"
