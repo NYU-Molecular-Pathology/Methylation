@@ -804,9 +804,29 @@ CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull) {
             find_redCsv <- dir(path = desk_path, pattern = "_Redcap.csv")[1]
         }
         redcap_dat <- as.data.frame(read.csv(find_redCsv))
-        redcap_dat$block <- ""
-        redcap_dat$accession_number <- redcap_db[redcap_dat$record_id, "accession_number"]
+        redcap_dat$block <- redcap_db$block
+        #redcap_dat$accession_number <- redcap_db[redcap_dat$record_id, "accession_number"]
         redcap_dat$diagnosis <- redcap_db[redcap_dat$record_id, "diagnosis"]
+        redcap_dat$tm_number <- redcap_db$tm_number
+        data_subset <- redcap_dat[ , fieldsToPull]
+
+        newCols <- c(
+            "record_id",
+            "subgroup_score",
+            "classifier_score",
+            "classifier_value",
+            "subgroup",
+            "b_number",
+            "primary_tech",
+            "run_number",
+            "accession_number",
+            "block",
+            "tm_number",
+            "diagnosis"
+        )
+        for (new_col in newCols) {
+            output[, new_col] <- redcap_dat[, new_col]
+        }
 
         if (is.null(redcap_dat$tm_number)) {
             redcap_dat$tm_number <- redcap_dat$accession_number
@@ -827,15 +847,10 @@ CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull) {
         if (all(is.na(output$subgroup))) {
             output$subgroup <- redcap_dat$subgroup
         }
-
-        data_subset <- redcap_dat[ , fieldsToPull]
-        filtered_output <- output %>% select(-one_of(colnames(data_subset)))
-
-        merged_data <- merge(filtered_output,
-                             data_subset ,
-                             by.x = "RD.number",
+        
+        filtered_output <- output %>% dplyr::select(-one_of(colnames(data_subset)))
+        merged_data <- merge(filtered_output, data_subset, by.x = "RD.number",
                              by.y = "record_id")
-
         MsgDF(merged_data)
 
         return(merged_data)
