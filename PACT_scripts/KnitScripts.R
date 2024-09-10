@@ -194,6 +194,18 @@ StopMissingFile <- function(fiNam, isDir = F){
 }
 
 
+get_ngs_path <- function(outPath, sam) {
+    outFileDir <- list.dirs(path = outPath, full.names = T)
+    found_folder <- stringr::str_detect(outFileDir, sam)
+    if (any(found_folder)) {
+        sam_folder <- outFileDir[found_folder]
+        return(sam_folder)
+    } else {
+        return(NULL)
+    }
+}
+
+
 CheckFiExist <- function(pactName, philipsFtp) {
     methSheet <- paste0(pactName, "_MethylMatch.xlsx")
     qcTsv <- paste0(pactName, "-QC.tsv")
@@ -522,8 +534,12 @@ parsePhilipsCn <- function(cnvInfo, sam, cnvTab){
 
 
 parseCNV <- function(outPath, sam, cnvTab){
-    cnvFi = file.path(outPath, sam, "aberration_cnv.csv")
-    if(!file.exists(cnvFi)){
+    sam_folder <- get_ngs_path(outPath, sam)
+    cnvFi <- file.path(outPath, sam, "aberration_cnv.csv")
+    if (!is.null(sam_folder)) {
+        cnvFi <- file.path(sam_folder, "aberration_cnv.csv")
+    }
+    if (!file.exists(cnvFi)) {
         warning("File does not exist:\n", cnvFi, "\nSkipping Philips...")
         cnvTab$Gene <- "No Philips Data Dump CSV file availible, check ISPM for CNV"
         return(cnvTab)
@@ -538,7 +554,7 @@ parseCNV <- function(outPath, sam, cnvTab){
 }
 
 
-getDumpFiles <- function (outPath, sam, cnvTab, philipsFtp = "/Volumes/molecular/Molecular/Philips_SFTP") {
+getDumpFiles <- function(outPath, sam, cnvTab, philipsFtp = "/Volumes/molecular/Molecular/Philips_SFTP") {
   samFiles <- dir(
     path = philipsFtp,
     pattern = sam,
@@ -565,8 +581,12 @@ getDumpFiles <- function (outPath, sam, cnvTab, philipsFtp = "/Volumes/molecular
 
 # Appends any additional cnv abberations from data dump
 checkDataDump <- function(sam, cnvTab) {
-    if(nrow(cnvTab) == 0){
-        cnvTab <- as.data.frame(matrix(nrow=1, ncol=length(cnvTab), dimnames=list(1, names(cnvTab))))
+    if (nrow(cnvTab) == 0) {
+        cnvTab <- as.data.frame(matrix(
+            nrow = 1,
+            ncol = length(cnvTab),
+            dimnames = list(1, names(cnvTab))
+        ))
         cnvTab$Test_Case <- sam
     }
     outPath <- file.path(getwd(), "zipfiles")
@@ -860,11 +880,20 @@ PrintParseErr <- function(csvPath, tabTxt){
 }
 
 # Makes Abberations Tab ------------------------------------------------------------
-makeAbTab <-  function(sam, philipsFtp="/Volumes/molecular/Molecular/Philips_SFTP") {
-    dumpDir <- file.path(getwd(), "zipfiles", sam)
+makeAbTab <- function(sam, philipsFtp="/Volumes/molecular/Molecular/Philips_SFTP") {
+    dumpDir <- get_ngs_path(outPath = file.path(getwd(), "zipfiles"), sam) 
+
+    if (is.null(dumpDir)) {
+        zipFiN <- file.path(philipsFtp, paste0(sam, ".zip"))
+        cat("\n\n## **No Philips Data Dump**\n\n")
+        cat("Data dump not found:\n")
+        return(cat(paste0(zipFiN, format(Sys.Date(), "%Y-%m-%d"),"\n\n")))
+    }
+
     snvCsv <- file.path(dumpDir, "aberration_snv.csv")
     samCsv <- file.path(dumpDir, "specimen.csv")
     diagCsv <- file.path(dumpDir, "diagnosticorder.csv")
+
     if (file.exists(snvCsv) | file.exists(samCsv) | file.exists(diagCsv)) {
         tryCatch(printSnvs(snvCsv), error=function(e){PrintParseErr(snvCsv, "SNV")})
         tryCatch(printSpecInfo(samCsv), error=function(e){PrintParseErr(samCsv, "Sample")})
@@ -912,7 +941,7 @@ CheckMissedSam <- function(sam, snvDt, pactName) {
 }
 
 
-LoopSampleTabs <-  function(params) {
+LoopSampleTabs <- function(params) {
     pactName <- params$pactName
     methData <- gb$GetMethDf(params$pactName)
     qcData <- gb$ReadQcFile(pactName)
@@ -927,7 +956,7 @@ LoopSampleTabs <-  function(params) {
         samRows <- snvDt$Test_Case == sam
         snvTab <- snvDt[samRows & snvDt$Variant == "SNV", ]
         makeDT("In-House FrameShifts/INDEL", objDat = snvTab)
-        cnvTab <- checkDataDump(sam, snvDt[samRows & snvDt$Variant == "CNV", ])
+        cnvTab <- checkDataDump(sam, cnvTab = snvDt[samRows & snvDt$Variant == "CNV", ])
         makeDT("CNV", cnvTab, pdfFi = sam, outDir=outDir)
         if (!is.null(methData)) {
             methCn <- methData[methData$Test_Number == sam, ]
