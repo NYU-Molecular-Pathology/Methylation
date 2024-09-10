@@ -538,29 +538,29 @@ parseCNV <- function(outPath, sam, cnvTab){
 }
 
 
-getDumpFiles <- function(
-        outPath, sam, cnvTab,
-        philipsFtp = "/Volumes/molecular/Molecular/Philips_SFTP"){
-    samFiles <- dir(
-        path = philipsFtp,
-        pattern = sam,
-        all.files = T,
-        full.names = T
-    )
-    if (length(samFiles) > 1) {
-        newest_file <- which.max(file.info(samFiles)$mtime)
-        samFiles <- samFiles[newest_file]
-    }
-    samZip <- basename(samFiles)
-    dumpDir <- file.path(philipsFtp, samZip)
-    destDir <- file.path(outPath, paste0(basename(samZip)))
-    if (file.exists(dumpDir) & !file.exists(destDir)) {
-        try(fs::file_copy(path = dumpDir, new_path = destDir),
-            silent = T)
-        unzip(zipfile = destDir, exdir = outPath)
-    }
-    cnvTab <- parseCNV(outPath, sam, cnvTab)
+getDumpFiles <- function (outPath, sam, cnvTab, philipsFtp = "/Volumes/molecular/Molecular/Philips_SFTP") {
+  samFiles <- dir(
+    path = philipsFtp,
+    pattern = sam,
+    all.files = T,
+    full.names = T
+  )
+  if (length(samFiles) > 1) {
+    newest_file <- which.max(file.info(samFiles)$mtime)
+    samFiles <- samFiles[newest_file]
+  }
+  if (length(samFiles) == 0) {
     return(cnvTab)
+  }
+  samZip <- basename(samFiles)
+  dumpDir <- file.path(philipsFtp, samZip)
+  destDir <- file.path(outPath, paste0(basename(samZip)))
+  if (file.exists(dumpDir) & !file.exists(destDir)) {
+    try(fs::file_copy(path = dumpDir, new_path = destDir), silent = T)
+    unzip(zipfile = destDir, exdir = outPath)
+  }
+  cnvTab <- parseCNV(outPath, sam, cnvTab)
+  return(cnvTab)
 }
 
 # Appends any additional cnv abberations from data dump
