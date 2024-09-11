@@ -983,6 +983,10 @@ BuildNoPhilips <- function(rawData, runID, pact_run) {
 
 BuildMainSheet <- function(philipsExport, rawData, runID, pact_run) {
     epicOrder <- philipsExport[,'Epic Order Number']
+    is_filler <- stringr::str_detect(rawData$`Type & Tissue`, pattern = "(?i)filler")
+    if (any(is_filler)) {
+        message("Run has filler cases to be output with 0_")    
+    }
     testNumber <- philipsExport[,'Test Number']
     tumorPercent <- philipsExport[,'Tumor Percentage']
     diagColumn <- philipsExport[,'Diagnosis for interpretation']
