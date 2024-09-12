@@ -125,7 +125,7 @@ gHubPkgs <- data.frame(
 
 # BioConductor Packages ----
 biocPkgs <- c(
-    'HDF5Array', 'bumphunter','GEOquery', 'minfi', 'lumi', 'rngtools',
+    'HDF5Array', 'bumphunter','GEOquery', 'lumi', 'rngtools',
     'methylumi', 'randomForest', 'glmnet','IlluminaHumanMethylation450kmanifest',
     'IlluminaHumanMethylation450kanno.ilmn12.hg19', 'IlluminaHumanMethylationEPICmanifest', 'Rtsne',
     'IlluminaHumanMethylationEPICanno.ilm10b2.hg19', 'IlluminaHumanMethylationEPICanno.ilm10b4.hg19',
@@ -387,11 +387,21 @@ loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bcPks=biocP
         expr = {
             loadMainPkgs()
             sup(installAll(pkgs, pk.inst))
-            if(!require("BiocManager", warn.conflicts = F)){install.packages("BiocManager", dependencies=T, quiet=F)}
+            if (!requireNamespace("minfi", T)) {
+                devtools::install_github("mwsill/minfi", upgrade = "never", force = T, dependencies = T)
+                devtools::install_github("mwsill/IlluminaHumanMethylationEPICv2manifest", upgrade = "always", force = T, dependencies = T)
+            }
+            if (!require("BiocManager", warn.conflicts = F)) {
+                install.packages("BiocManager", dependencies = T, quiet = F)
+            }
             sup(installAll(ghPk, gh.inst))
             sup(installAll(bcPks, bc.inst))
             readyPkgs(ezLibs)
-
+            minfiVers <- as.character(utils::packageVersion("minfi"))
+            if (minfiVers != "1.43.1") {
+                devtools::install_github("mwsill/minfi", upgrade = "never", force = T, dependencies = T)
+                devtools::install_github("mwsill/IlluminaHumanMethylationEPICv2manifest", upgrade = "always", force = T, dependencies = T)
+            }
             if(!require("MethylAid", warn.conflicts = F)){BiocManager::install("MethylAid",update=F, ask=F)}
             if(!require("librarian", warn.conflicts = F)){
                 install.packages("librarian", dependencies=T, verbose=T, Ncpus = 4, quiet=F)
@@ -409,7 +419,6 @@ loadPacks <- function(pkgs=cranPkgs, ezLibs=easyPkgs, ghPk=gHubPkgs, bcPks=biocP
                 "DT",
                 "plotly",
                 "MethylAid",
-                "minfi",
                 "scales",
                 "Biobase",
                 "RColorBrewer",
