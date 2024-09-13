@@ -1,10 +1,8 @@
 #!/usr/bin/env Rscript
-## ---------------------------
 ## Script name: MakeSampleSheet.R
 ## Purpose: source of global scripts to copy Methylation worksheet and write to csv samplesheet
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2023
-## ---------------------------
 
 gb <- globalenv(); assign("gb", gb)
 apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
@@ -294,6 +292,10 @@ checkSampleSheet <- function(df) {
     missMsg <- "Some samples are missing RD-Numbers or are 0! Check samplesheet.csv"
     checkForIssues(missingName, missMsg, df[, c(1, 3, 8:11)])
 
+    if (any(missingName)) {
+        df <- df[!missingName,]
+    }
+
     dupes <- duplicated(df$Sample_Name)
     dupeMsg <- "Duplicated sample name found: check df$Sample_Name in samplesheet.csv"
     checkForIssues(dupes, dupeMsg, df[, c(1, 3, 8:11)])
@@ -317,7 +319,7 @@ checkSampleSheet <- function(df) {
 writeSampleSheet <- function(df, bn = NULL, sampleName, dnaNumber, Sentrix) {
     msgFunName(cpInLnk2, "writeSampleSheet")
     if (is.null(bn)) {bn = file.path(gb$methDir, df$Batch, df$Sentrix)}
-    toKeep <- df[, sampleName] != 0
+    toKeep <- df[, sampleName] != 0 & !is.na(df[, sampleName])
     df <- df[toKeep,]
     splitSentrix = as.data.frame(stringr::str_split_fixed(df[, "Sentrix_ID"], "_", 2))
     samplesheet_csv = data.frame(
