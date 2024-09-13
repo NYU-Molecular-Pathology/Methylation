@@ -292,9 +292,9 @@ uploadCnPng <- function() {
     sampleNumb <- gb$getTotalSamples()
     sh_Dat <- suppressMessages(as.data.frame(readxl::read_excel(
         samSh, sheet = 3, range = "A1:N97", col_types = c("text")))[1:sampleNumb, 1:13])
-    missing_rd <- sh_Dat$record_id == 0
+    missing_rd <- sh_Dat$record_id == 0 | is.na(sh_Dat$record_id)
     if (any(missing_rd)) {
-        sh_Dat <- sh_Dat[missing_rd,]
+        sh_Dat <- sh_Dat[!missing_rd,]
     }
     sh_Dat <- AddPngFilePath(sh_Dat = sh_Dat)
     records <- sh_Dat$record_id
@@ -358,7 +358,7 @@ importRedcapStart <- function(nfldr) {
     sampleNumb <- getTotalSamples(samSh)
     sh_Dat <- suppressMessages(as.data.frame(readxl::read_excel(
         samSh, sheet = 3, range = "A1:N97", col_types = c("text")))[1:sampleNumb, 1:13])
-    missing_rd <- sh_Dat$record_id == 0
+    missing_rd <- sh_Dat$record_id == 0 | is.na(sh_Dat$record_id)
     if (any(missing_rd)) {
         sh_Dat <- sh_Dat[!missing_rd,]
     }
