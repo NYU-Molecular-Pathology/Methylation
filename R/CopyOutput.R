@@ -1,12 +1,10 @@
 #!/usr/bin/env Rscript
-## ---------------------------
 ## Script name: CopyOutputs.R
 ## Purpose: Functions to copy files output from the current methylation run directory to the output directory
 ## Date Last Modified: January 11, 2024
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2024
-## ---------------------------
 
 options(stringsAsFactors = FALSE)
 gb <- globalenv(); assign("gb", gb)
@@ -294,6 +292,10 @@ uploadCnPng <- function() {
     sampleNumb <- gb$getTotalSamples()
     sh_Dat <- suppressMessages(as.data.frame(readxl::read_excel(
         samSh, sheet = 3, range = "A1:N97", col_types = c("text")))[1:sampleNumb, 1:13])
+    missing_rd <- sh_Dat$record_id == 0
+    if (any(missing_rd)) {
+        sh_Dat <- sh_Dat[missing_rd,]
+    }
     sh_Dat <- AddPngFilePath(sh_Dat = sh_Dat)
     records <- sh_Dat$record_id
     for (idx in 1:length(records)) {
@@ -356,6 +358,10 @@ importRedcapStart <- function(nfldr) {
     sampleNumb <- getTotalSamples(samSh)
     sh_Dat <- suppressMessages(as.data.frame(readxl::read_excel(
         samSh, sheet = 3, range = "A1:N97", col_types = c("text")))[1:sampleNumb, 1:13])
+    missing_rd <- sh_Dat$record_id == 0
+    if (any(missing_rd)) {
+        sh_Dat <- sh_Dat[!missing_rd,]
+    }
     sh_Dat <- AddPngFilePath(sh_Dat)
     runID <- paste0(sh_Dat$run_number[1])
     sh_Dat <- gb$NameControl(sh_Dat, runId = runID)
