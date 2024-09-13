@@ -420,7 +420,7 @@ ReadSamSheet <- function(samList) {
     message(bkGrn("SampleSheet:"))
     print(samplesSheet)
     
-    missing_rd <- samplesSheet$record_id == 0
+    missing_rd <- samplesSheet$record_id == 0 | is.na(samplesSheet$record_id)
     
     if (any(missing_rd)) {
         warning(paste("Sample #", which(missing_rd), "is missing an RD-number!\n"))
