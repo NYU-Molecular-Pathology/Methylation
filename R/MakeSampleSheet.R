@@ -289,13 +289,11 @@ checkSampleSheet <- function(df) {
     df <- GenerateSheetWarning("b_number", df)
 
     missingName <- df$Sample_Name == "0" | is.na(df$Sample_Name)
-    missMsg <- "Some samples are missing RD-Numbers or are 0! Check samplesheet.csv"
-    checkForIssues(missingName, missMsg, df[, c(1, 3, 8:11)])
-
     if (any(missingName)) {
         df <- df[!missingName,]
     }
-
+    missMsg <- "Some samples are missing RD-Numbers or are 0! Check samplesheet.csv"
+    checkForIssues(missingName, missMsg, df[, c(1, 3, 8:11)])
     dupes <- duplicated(df$Sample_Name)
     dupeMsg <- "Duplicated sample name found: check df$Sample_Name in samplesheet.csv"
     checkForIssues(dupes, dupeMsg, df[, c(1, 3, 8:11)])
@@ -372,6 +370,10 @@ FormatSampleData <- function(worksheet, runID, sampleNumb) {
     msgParams(runID, sampleNumb)
     hdrs <- checkHeaders(worksheet)
     df = as.data.frame(worksheet)[1:sampleNumb,]
+    rd_missing <- is.na(df[, 1]) | df[, 1] == 0
+    if (any(rd_missing)) {
+        df <- df[!rd_missing, ]    
+    }
     df$Notes <- paste(df$Notes[1])
     df <- checkSampleSheet(df)
     return(df)
