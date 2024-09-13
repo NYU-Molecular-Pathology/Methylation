@@ -420,12 +420,12 @@ ReadSamSheet <- function(samList) {
     message(bkGrn("SampleSheet:"))
     print(samplesSheet)
     
-    missing_rd <- which(samplesSheet$record_id == 0)
+    missing_rd <- samplesSheet$record_id == 0
     
-    if (length(missing_rd) > 0) {
-        warning(paste("Sample #", missing_rd, "is missing an RD-number!\n"))
-        message(bkRed("Dropping sample #", missing_rd, "from SampleSheet!\n"))
-        samplesSheet <-
+    if (any(missing_rd)) {
+        warning(paste("Sample #", which(missing_rd), "is missing an RD-number!\n"))
+        message(bkRed("Dropping sample #", which(missing_rd), "from SampleSheet!\n"))
+        samplesSheet <- samplesSheet[!missing_rd, ]
     }
     
     return(samplesSheet)
