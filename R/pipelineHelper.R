@@ -50,13 +50,10 @@ msgParams <- function(...) {
 }
 
 # Helper function to return the index of priority selected samples first ------
-reOrderRun <- function(selectRDs, sh=NULL) {
+reOrderRun <- function(selectRDs, sh="samplesheet.csv") {
     msgFunName(pipeLnk,"reOrderRun"); msgParams(selectRDs, sh)
 
     if (is.null(selectRDs)) {return(NULL)}
-    if (is.null(sh)) {
-      sh <- "samplesheet.csv"
-    }
     allRd <- as.data.frame(read.csv(sh))
     runFirst <- which(allRd[,1] %in% selectRDs)
     runAfter <- which(!(allRd[,1] %in% selectRDs))
@@ -396,32 +393,41 @@ ReadSamSheet <- function(samList) {
     msgFunName(pipeLnk, "ReadSamSheet")
     msgParams("samList")
     msgParams(samList)
-
-    samSh <- gb$GrabSampleSheet()
-    if (is.null(samSh)) {
+    
+    wb_path <- gb$GrabSampleSheet()
+    if (is.null(wb_path)) {
         return(as.data.frame(read.csv("samplesheet.csv")))
     }
-    xlSheets <- readxl::excel_sheets(samSh)
+    
+    xlSheets <- readxl::excel_sheets(wb_path)
     redSheet <- as.integer(which(grepl("REDCap", xlSheets) == T))
-    message("Excel sheet names:")
-    print(xlSheets)
+    
+    message("Excel workbook sheet names:\n")
+    message(paste(1:length(xlSheets), xlSheets, collapse = "\n"))
+    
     if (length(redSheet) == 0) {
-        warning("REDCap sheet not found in Sheet names, setting sheet #3")
+        warning('"REDCap" tab name is missing from workbook sheet names!')
+        warning("Defaulting to reading sheet index #3 in:\n", wb_path)
         redSheet <- 3
     }
-    message(bkGrn("Sheet Index containing 'REDCap_Import':"),
-            " ",
-            redSheet,
-            "\n")
-
-    samSh <- readxl::read_excel(samSh,
-                                sheet = redSheet,
-                                range = "A1:M97",
-                                col_types = c("text"))
+    
+    message(bkGrn("Sheet index containing 'REDCap_Import':", redSheet), "\n")
+    
+    raw_data <- readxl::read_excel(wb_path, sheet = redSheet, range = "A1:M97",
+                                   col_types = c("text"))
+    
+    samplesSheet <- as.data.frame(raw_data)[samList, 1:13]
     message(bkGrn("SampleSheet:"))
-
-    samplesSheet <- as.data.frame(samSh)[samList, 1:13]
     print(samplesSheet)
+    
+    missing_rd <- which(samplesSheet$record_id == 0)
+    
+    if (length(missing_rd) > 0) {
+        warning(paste("Sample #", missing_rd, "is missing an RD-number!\n"))
+        message(bkRed("Dropping sample #", missing_rd, "from SampleSheet!\n"))
+        samplesSheet <-
+    }
+    
     return(samplesSheet)
 }
 
