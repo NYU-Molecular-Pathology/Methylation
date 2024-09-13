@@ -233,6 +233,8 @@ readSampleSheet <- function(run_ID=F, totalSam=F, wks=F) {
         col_types = "text",
         trim_ws = T
     ))
+    to_keep <- worksheet$Sample_Name != 0
+    worksheet <- worksheet[to_keep, ]
 
     wsDate <- ReadSheetDate(sampleSheet)
     worksheet$Date <- paste0(wsDate$Date[1])
@@ -315,6 +317,8 @@ checkSampleSheet <- function(df) {
 writeSampleSheet <- function(df, bn = NULL, sampleName, dnaNumber, Sentrix) {
     msgFunName(cpInLnk2, "writeSampleSheet")
     if (is.null(bn)) {bn = file.path(gb$methDir, df$Batch, df$Sentrix)}
+    toKeep <- df[, sampleName] != 0
+    df <- df[toKeep,]
     splitSentrix = as.data.frame(stringr::str_split_fixed(df[, "Sentrix_ID"], "_", 2))
     samplesheet_csv = data.frame(
         Sample_Name =  df[, sampleName],
