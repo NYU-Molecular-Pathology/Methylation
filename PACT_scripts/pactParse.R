@@ -351,16 +351,24 @@ FindMissingPairs <- function(extraNormals,
                              philipsExport,
                              sheetPairTumor,
                              sheetPairNorm,
-                             mainSheet) {
+                             mainSheet, rawData) {
 
-    unmatchedSamples <- if (extraNormals) {
+    if (extraNormals) {
         message(crayon::bgRed("More NORMALS than Tumors on this run!"))
-        which(!philipsExport$`Tumor DNA/RNA Number` %in% sheetPairTumor)
+        unmatchedSamples <- which(!philipsExport$`Tumor DNA/RNA Number` %in% sheetPairTumor)
     } else {
         message(crayon::bgRed("More TUMORS than Normals on this run!"))
-        which(!philipsExport$`Normal DNA/RNA Number` %in% sheetPairNorm)
+        unmatchedSamples <-  which(!philipsExport$`Normal DNA/RNA Number` %in% sheetPairNorm)
     }
-    message("Manually edit sample sheet!")
+
+    if (length(unmatchedSamples) == 0) {
+        unique_values <- rawData$Test_Number[!duplicated(rawData$Test_Number) &
+                                                 !duplicated(rawData$Test_Number, fromLast = TRUE)]
+        unmatchedSamples <- which(rawData$Test_Number == unique_values)
+        missingSams <- mainSheet$Sample_ID[unmatchedSamples]
+        dnaMissingPair <- stringr::str_detect(mainSheet$Sample_ID, pattern = missingSams)
+        return(dnaMissingPair)
+    }
 
     missingSams <-
         paste(if (extraNormals) {
@@ -415,16 +423,18 @@ ProcessExtraNormals <- function(normSamPair,
         tumorSamPair <- append(tumorSamPair, normSamPair[idx], after = idx - 1)
     }
 
-    tumorRowAdd <- which(mainSheet$Sample_ID %in% missingCases)
+    tumorRowAdd <- which(tumorSamPair %in% missingCases)
     indexToAdd <- sort(tumorRowAdd, decreasing = FALSE)
 
-    for (idx in indexToAdd) {
-        sheetTumors <- append(sheetTumors, idx)
+    for (sam in missingCases) {
+        new_idx <- which(mainSheet$Sample_ID == sam)
+        sheetTumors <- append(sheetTumors, new_idx)
     }
+    sheetTumors <- sort(sheetTumors)
 
     for (xSam in extraNormals) {
         toDrop <- normSamPair == xSam
-        normSamPair[toDrop] <- ""
+        normSamPair[toDrop] <- "NORMAL_ONLY_NO_TUMOR_PAIR"
     }
 
     mainSheet$Paired_Normal[sheetTumors] <- normSamPair
@@ -510,7 +520,7 @@ AddUnmatchNormals <- function(sheetPairNorm, sheetPairTumor, mainSheet,
                               rawData) {
     extraNormals <- length(sheetPairNorm) > length(sheetPairTumor)
     dnaMissingPair <- FindMissingPairs(extraNormals, philipsExport, sheetPairTumor,
-                                       sheetPairNorm, mainSheet)
+                                       sheetPairNorm, mainSheet, rawData)
 
     if (any(dnaMissingPair)) {
         extraIndices <- which(dnaMissingPair)
@@ -578,7 +588,7 @@ AddSampleIndexes <- function(pairedList, rawData, philipsExport) {
     # Check if length is not equal between tumor and normal samples
     if (length(sheetPairTumor) != length(sheetPairNorm)) {
         message("Issue in AddSampleIndexes():")
-        message("length(sheetPairTumor) != length(sheetPairNorm)")
+        message(crayon::bgRed("length(sheetPairTumor) != length(sheetPairNorm)"))
         mainSheet <- AddUnmatchNormals(sheetPairNorm, sheetPairTumor,
                                        mainSheet, sheetTumors, sheetNormals,
                                        philipsExport, rawData)
@@ -699,13 +709,16 @@ BindUnpairedRows <- function(rawData, pairedList, runID) {
                 currSam <- sam_idx[i]
                 matchedIdx <- which(b_numbers == b_numbers[sam])
                 newIdx <- matchedIdx[i]
+                if (is.na(newIdx)) {
+                    newIdx <- matchedIdx + 1
+                }
                 new_paired_list[newIdx,] <- all_samples[currSam]
             }
         } else{
             new_paired_list[sam,] <- all_samples[sam_idx]
         }
     }
-    rownames(new_paired_list) <- seq_len(nrow(new_paired_list))
+    rownames(new_paired_list) <- NULL
     return(new_paired_list)
 }
 
@@ -985,7 +998,7 @@ BuildMainSheet <- function(philipsExport, rawData, runID, pact_run) {
     epicOrder <- philipsExport[,'Epic Order Number']
     is_filler <- stringr::str_detect(rawData$`Type & Tissue`, pattern = "(?i)filler")
     if (any(is_filler)) {
-        message("Run has filler cases to be output with 0_")    
+        message("Run has filler cases to be output with 0_")
     }
     testNumber <- philipsExport[,'Test Number']
     tumorPercent <- philipsExport[,'Tumor Percentage']
