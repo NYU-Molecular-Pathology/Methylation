@@ -994,12 +994,34 @@ BuildNoPhilips <- function(rawData, runID, pact_run) {
 }
 
 
+fix_filler_zeros <- function(rawData, mainSheet) {
+    is_filler <- stringr::str_detect(rawData$`Type & Tissue`,
+                                     pattern = "(?i)filler")
+    if (any(is_filler)) {
+        message("Run has filler cases to be output with 0_ below:")
+        MsgDF(rawData[is_filler, 1:5])
+        to_be_zero <- rawData$Test_Number[is_filler]
+        toReplace0 <- which(mainSheet$Test_Number %in% to_be_zero)
+        for (idx in toReplace0) {
+            curr_vals <- mainSheet[idx, c("Sample_ID", "Sample_Name")]
+            new_end <- stringr::str_split_fixed(curr_vals, "_", 2)[, 2]
+            new_zeros <- paste0("0_", new_end)
+            mainSheet[idx, c("Sample_ID", "Sample_Name")] <- new_zeros
+            normals2fix <- grepl(curr_vals[[1]], mainSheet[, "Paired_Normal"] )
+            if (any(normals2fix)) {
+                curr_norm <- mainSheet[normals2fix, "Paired_Normal"]
+                new_end <- stringr::str_split_fixed(curr_norm, "_", 2)[, 2]
+                new_norm <- paste0("0_", new_end)
+                mainSheet[normals2fix, "Paired_Normal"] <- new_norm
+            }
+        }
+    }
+    return(mainSheet)
+}
+
+
 BuildMainSheet <- function(philipsExport, rawData, runID, pact_run) {
     epicOrder <- philipsExport[,'Epic Order Number']
-    is_filler <- stringr::str_detect(rawData$`Type & Tissue`, pattern = "(?i)filler")
-    if (any(is_filler)) {
-        message("Run has filler cases to be output with 0_")
-    }
     testNumber <- philipsExport[,'Test Number']
     tumorPercent <- philipsExport[,'Tumor Percentage']
     diagColumn <- philipsExport[,'Diagnosis for interpretation']
@@ -1013,6 +1035,7 @@ BuildMainSheet <- function(philipsExport, rawData, runID, pact_run) {
     mainSheet <- AddPairedColumn(mainSheet, "Tumor_Content", tumorPercent, idx)
     mainSheet <- AddPairedColumn(mainSheet, "Tumor_Type", diagColumn, idx)
     mainSheet <- FixLastColumns(mainSheet, rawData)
+    mainSheet <- fix_filler_zeros(rawData, mainSheet)
     return(mainSheet)
 }
 
@@ -1199,12 +1222,12 @@ CheckRunIDMatch <- function(sheetRunID, runID) {
 
 
 # Parses File when no samplesheet.csv tab is detected -------------------------
-AltParseFormat <- function(inputFi, runID) {
-    rawData <- GetRawSamplesheet(inputFi)
-    sheetRunID <- GrabRunNumber(inputFi, runID)
+AltParseFormat <- function(worksheetPath, runID) {
+    rawData <- GetRawSamplesheet(worksheetPath)
+    sheetRunID <- GrabRunNumber(worksheetPath, runID)
     CheckRunIDMatch(sheetRunID, runID)
-    philipsExport <- GetPhilipsData(inputFi)
-    input_base <- base::basename(inputFi)
+    philipsExport <- GetPhilipsData(worksheetPath)
+    input_base <- base::basename(worksheetPath)
     pact_run <- stringr::str_split_fixed(input_base, ".xls", 2)[1,1]
     message(crayon::bgBlue(paste("PACT ID is:", pact_run)))
 
@@ -1367,7 +1390,7 @@ parseExcelFile <- function(worksheetPath, runID = NULL) {
     shNames <- readxl::excel_sheets(worksheetPath)
     MsgDF(data.frame(`Sheet names in Workbook` = shNames))
     sheetHead <- GetSheetHeading(worksheetPath)
-    mainSheet <- AltParseFormat(inputFi = worksheetPath, runID)
+    mainSheet <- AltParseFormat(worksheetPath, runID)
     mainSheet <- sanitizeSheet(mainSheet)
     try(WritePhilipsGender(mainSheet,worksheetPath, shNames), silent = T)
     has_validation <- stringr::str_detect(mainSheet$Sample_Name, "-ILC-VAL_")
