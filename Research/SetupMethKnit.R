@@ -165,7 +165,7 @@ pkgs <- c(
     "tinytex"
 )
 
-scripts <- file.path(mainHub, rFiles))
+scripts <- file.path(mainHub, rFiles)
 suppressWarnings(lapply(scripts, devtools::source_url))
 
 
