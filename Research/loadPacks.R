@@ -11,7 +11,7 @@ library("grid")
 if(!require("GenVisR")){BiocManager::install("GenVisR")}
 library("minfi")
 library("conumee")
-library("mnp.v11b6")
+#library("mnp.v11b6")
 library("foreach")
 library("plotly")
 library("graphics")
