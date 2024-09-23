@@ -194,7 +194,11 @@ supSrt(librarian::shelf(pkgs, ask = F, update_all = F, quiet = FALSE))
 
 check_git_install("rmflight/knitrProgressBar")
 check_git_install("Ryo-N7/tvthemes")
-check_git_install("thomas-neitmann/mdthemes")
+if (!requireNamespace("mdthemes", quietly = T)) {
+    remotes::install_github("thomas-neitmann/mdthemes", upgrade = "never")
+    #check_git_install("thomas-neitmann/mdthemes")
+}
+
 load_pkg("minfiData")
 check_git_install("markgene/maxprobes")
 
