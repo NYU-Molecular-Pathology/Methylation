@@ -146,7 +146,6 @@ pkgs <-
         "MEAL",
         "SummarizedExperiment",
         "S4Vectors",
-        "minfi",
         "maxprobes",
         "limma",
         "IRanges",
@@ -166,6 +165,17 @@ pkgs <-
 
 scripts <- c(mainLnk, paste0(mainHub, rFiles))
 suppressWarnings(lapply(scripts, function(i){devtools::source_url(i)}))
+if (!requireNamespace("minfi", T)) {
+    devtools::install_github("mwsill/minfi", upgrade = "never", force = T, dependencies = T)
+    devtools::install_github("mwsill/IlluminaHumanMethylationEPICv2manifest", upgrade = "always", force = T, dependencies = T)
+}
+
+minfiVers <- as.character(utils::packageVersion("minfi"))
+if (minfiVers != "1.43.1") {
+    devtools::install_github("mwsill/minfi", upgrade = "never", force = T, dependencies = T)
+    devtools::install_github("mwsill/IlluminaHumanMethylationEPICv2manifest", upgrade = "always", force = T, dependencies = T)
+}
+
 supSrt(librarian::shelf(pkgs, ask = F, update_all = F, quiet = FALSE))
 
 check_git_install("rmflight/knitrProgressBar")
