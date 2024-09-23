@@ -1,3 +1,11 @@
+#!/usr/bin/env Rscript
+## Script name: SetupMethKnit.R
+## Purpose: source of global scripts and parameters to knit Methyl research projects
+## Date Created: Jan 16, 2023
+## Version: 1.0.0
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2024
+
 gb <- globalenv()
 assign("gb", gb)
 
