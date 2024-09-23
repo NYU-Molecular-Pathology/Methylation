@@ -7,28 +7,28 @@
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2024
 ## ---------------------------
-getScores <- function(Mset=NULL){
-    if(is.null(Mset)){
-        stop("Mset is NULL in getScores()")
-    }
+# getScores <- function(Mset=NULL){
+#     if(is.null(Mset)){
+#         stop("Mset is NULL in getScores()")
+#     }
     
-    betas <- minfi::getBeta(Mset)
-    ex_indices <- which(!names(mnp.v11b6::refset.center) %in% rownames(Mset))
+#     betas <- minfi::getBeta(Mset)
+#     ex_indices <- which(!names(mnp.v11b6::refset.center) %in% rownames(Mset))
     
-    if(length(ex_indices) > 0){
-        refset_center_adj <- mnp.v11b6::refset.center[-ex_indices]
-        pcaloadings_adj <- mnp.v11b6::pcaloadings[-ex_indices, ]
-    }else{
-        refset_center_adj <- mnp.v11b6::refset.center
-        pcaloadings_adj <- mnp.v11b6::pcaloadings
-    }
+#     if(length(ex_indices) > 0){
+#         refset_center_adj <- mnp.v11b6::refset.center[-ex_indices]
+#         pcaloadings_adj <- mnp.v11b6::pcaloadings[-ex_indices, ]
+#     }else{
+#         refset_center_adj <- mnp.v11b6::refset.center
+#         pcaloadings_adj <- mnp.v11b6::pcaloadings
+#     }
     
-    betas_adj <- betas[match(names(mnp.v11b6::refset_center_adj), rownames(betas)), ]
-    sc <- (betas_adj - mnp.v11b6::refset_center_adj) %*% mnp.v11b6::pcaloadings_adj
-    scores <- cbind(mnp.v11b6::pcascores, sc)
+#     betas_adj <- betas[match(names(mnp.v11b6::refset_center_adj), rownames(betas)), ]
+#     sc <- (betas_adj - mnp.v11b6::refset_center_adj) %*% mnp.v11b6::pcaloadings_adj
+#     scores <- cbind(mnp.v11b6::pcascores, sc)
     
-    return(scores)
-}
+#     return(scores)
+# }
 
 
 MNPtsne2 <- function (Mset) {
