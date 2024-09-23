@@ -10,7 +10,7 @@
 ## ---------------------------
 
 gb <- globalenv(); assign("gb", gb)
-setDirectory<-function(foldr) {
+setDirectory <- function(foldr) {
     bsDir = paste("cd", foldr); mm2 = crayon::white$bgRed("Location Not Found:", foldr)
     if (dir.exists(foldr)) {system(bsDir);setwd(foldr);assign("runDir", foldr)} else{warning(mm2)}
 }
@@ -33,11 +33,8 @@ pkgs <- c(
   "DT",
   "kableExtra",
   "foreach",
-  "minfi",
-#  "magick",
   "magrittr",
   "conumee",
-  "mnp.v11b6",
   "enrichplot",
   "limma",
   "stringr",
@@ -55,20 +52,19 @@ pkgs <- c(
   "Cairo",
   "gridExtra"
 )
-librarian::shelf(pkgs, ask=F, warn.conflicts=F,update_all = F)
+
+librarian::shelf(pkgs, ask = F, warn.conflicts = F, update_all = F)
 
 require("gridExtra")
 require("Cairo")
 require("minfi")
 require("ComplexHeatmap")
-#if(!require("GenVisR")){BiocManager::install("GenVisR")}
 
 EndDiv <- function(){
     cat("\n\n")
     cat(":::")
     cat("\n\n")
 }
-
 
 makeDt <- function(targets, gb=NULL, showHide = FALSE) {
     dtOpts <- list(
@@ -405,7 +401,6 @@ sanitizeSheet <- function(inputFi, samsheet, gb) {
 
 #animation::ani.options(autobrowse = FALSE)
 options(width=1200)
-#library("mnp.v11b6")
 library(magrittr) # needs to be run every time you start R and want to use %>%
 library(dplyr)
 require("tidyverse")
