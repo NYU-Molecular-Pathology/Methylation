@@ -173,7 +173,7 @@ pkgs <- c(
     "tinytex"
 )
 
-scripts <- file.path(mainHub, rFiles)
+scripts <- file.path(research_url, rFiles)
 suppressWarnings(lapply(scripts, devtools::source_url))
 
 
