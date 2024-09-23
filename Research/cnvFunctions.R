@@ -29,7 +29,7 @@ customCNV <- function (Mset, samName = NULL, sex = NULL, customAnno = NULL) {
     cndata <- conumee::CNV.load(Mset, samName)
 
     if (chiptype == "IlluminaHumanMethylationEPIC") {
-        require("mnp.v11b6")
+        #require("mnp.v11b6")
 
         if (is.null(sex)) {
             sex <- ifelse(mnp.v11b6::MNPgetSex(Rset)$predictedSex == "M", "Male", "Female")
@@ -128,7 +128,7 @@ SaveHtmlCnv <- function(samName, cnvPath, cnv_data) {
 GrabMsetData <- function(idatBasename){
     rgSet <- minfi::read.metharray(idatBasename, verbose = T, force = T)
     if(rgSet@annotation[["array"]] == "IlluminaHumanMethylationEPIC"){
-        require("mnp.v11b6")
+        #require("mnp.v11b6")
         Mset <- minfi::preprocessIllumina(rgSet, normalize = "controls")
     }else{
         require("mnp.v11b4")
