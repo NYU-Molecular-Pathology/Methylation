@@ -37,7 +37,7 @@ pkgs <- c(
 
 unlist(lapply(pkgs, librarian::shelf))
 
-library("mnp.v11b6")
+#library("mnp.v11b6")
 stopifnot(all(sapply(pkgs, requireNamespace, quietly = TRUE)))
 
 GetOverlaps <- function(mycoords.gr){
@@ -256,7 +256,7 @@ GetGenesListRange <- function(grangesDF, array_type = "EPIC") {
 
 GetMnpAnno <- function(array_type, gb) {
     if (array_type == "EPIC") {
-        require("mnp.v11b6")
+        #require("mnp.v11b6")
         pkgPath <- file.path(path.package("mnp.v11b6"), "ext")
         annoFi <- "IlluminaArrayDBconumee_annotation_EPIC_B4.2017-06-07.RData"
     }
@@ -519,7 +519,7 @@ customCNV2 <- function(Mset, samName = NULL, sex = NULL, customAnno = NULL) {
     cndata <- conumee2.0::CNV.load(Mset)
 
     if (chiptype == "IlluminaHumanMethylationEPIC") {
-        require("mnp.v11b6")
+        #require("mnp.v11b6")
         if (is.null(sex)) {
             sex <- ifelse(mnp.v11b6::MNPgetSex(Rset)$predictedSex == "M", "Male", "Female")
         }
