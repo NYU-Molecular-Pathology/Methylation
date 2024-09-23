@@ -92,8 +92,8 @@ sourceFuns2 <- function(workingPath = NULL) {
     scripts <- paste0(mainHub, script.list)
     invisible(lapply(scripts, function(i){
         suppressPackageStartupMessages(devtools::source_url(i))}))
-    supM(library("sest"))
-    supM(library("mnp.v11b6"))
+    #supM(library("sest"))
+    #supM(library("mnp.v11b6"))
     gb$setDirectory(workingPath)
     return(gb$defineParams())
 }
@@ -205,7 +205,7 @@ gb$SaveCNVplotsPACT <-
         MsetEpic <- mnp.v11b4::MNPpreprocessIllumina(
             RGsetEpic, bg.correct = T, normalize = "controls")
     }else{
-        library("mnp.v11b6")
+        #library("mnp.v11b6")
         MsetEpic <- mnp.v11b6::MNPpreprocessIllumina(
             RGsetEpic, bg.correct = T, normalize = "controls")
     }
