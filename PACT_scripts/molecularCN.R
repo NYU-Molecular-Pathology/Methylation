@@ -175,8 +175,8 @@ sourceFuns2 <- function(workingPath = NULL) {
     if (is.null(workingPath)) {workingPath = getwd()}
     scripts <- paste0(mainHub, script.list)
     invisible(lapply(scripts, function(i){supPk(devtools::source_url(i))}))
-    supPk(library("sest"))
-    supPk(library("mnp.v11b6"))
+    #supPk(library("sest"))
+    #supPk(library("mnp.v11b6"))
     supPk(require("plotly"))
     supPk(require("htmlwidgets"))
     gb$setDirectory(workingPath)
