@@ -112,7 +112,7 @@ load_pkg <- function(pkg){
 cnv_deps <- c("textshaping", "fstcore", "fst", "fstcore")
 
 lapply(cnv_deps, load_pkg)
-try(devtools::install_github("https://github.com/ijcBIT/cnv.methyl.git"), T)
+#try(devtools::install_github("https://github.com/ijcBIT/cnv.methyl.git"), T)
 #check_git_install("ijcBIT/cnv.methyl")
 
 if(Sys.info()[['sysname']] == "Linux") {
