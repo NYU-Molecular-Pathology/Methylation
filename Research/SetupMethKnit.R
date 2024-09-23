@@ -101,7 +101,7 @@ check_git_install <- function(git_repo) {
 load_pkg <- function(pkg){
     if (!requireNamespace(pkg, quietly = T)) {
         tryCatch(
-            install.packages(pkg),
+            install.packages(pkg, dependencies = T, ask = F),
             error = BiocManager::install(pkg, update = F, ask = F)
         )
     }
@@ -115,19 +115,23 @@ lapply(cnv_deps, load_pkg)
 #try(devtools::install_github("https://github.com/ijcBIT/cnv.methyl.git"), T)
 #check_git_install("ijcBIT/cnv.methyl")
 
-if(Sys.info()[['sysname']] == "Linux") {
+if (Sys.info()[['sysname']] == "Linux") {
     load_pkg("rprofile")
     rprofile::set_startup_options(
-        show.signif.stars = FALSE, useFancyQuotes = FALSE, Ncpus = parallel::detectCores() - 2)
-    Sys.setenv("R_PROFILE"=file.path(Sys.getenv("HOME"), "Rprofile.site"))
-    Sys.setenv(IMAGEMAGICK_V6_HOME="/gpfs/share/apps/imagemagick/6.9.10/bin/convert")
+        show.signif.stars = FALSE,
+        useFancyQuotes = FALSE,
+        Ncpus = parallel::detectCores() - 2
+    )
+    Sys.setenv("R_PROFILE" = file.path(Sys.getenv("HOME"), "Rprofile.site"))
+    Sys.setenv(IMAGEMAGICK_V6_HOME = "/gpfs/share/apps/imagemagick/6.9.10/bin/convert")
 }
 
-mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/"
-mainLnk = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/LoadInstallPackages.R"
+mainHub <-
+    "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main"
+research_url <- file.path(mainHub, "Research")
+mainLnk <- file.path(mainHub, "R/LoadInstallPackages.R")
 
 rFiles = c(
-    #"all_installer.R",
     "getRGsetBetas.R",
     "TsnePlotter.R",
     "getIdatFiles.R",
@@ -138,36 +142,46 @@ rFiles = c(
     "pathviews.R",
     "pullRedcap_manual.R",
     "cleanSamples.R"
-    #"Differential.R"
 )
 
-pkgs <-
-    c(
-        "MEAL",
-        "SummarizedExperiment",
-        "S4Vectors",
-        "maxprobes",
-        "limma",
-        "IRanges",
-        "impute",
-        "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
-        "IlluminaHumanMethylation450kanno.ilmn12.hg19",
-        "GenomicRanges",
-        "conumee",
-        "BiocGenerics",
-        "Biobase",
-        "cowplot",
-        "fst", 
-        "itertools",
-        "Cairo",
-        "tinytex"
-    )
+pkgs <- c(
+    "MEAL",
+    "SummarizedExperiment",
+    "S4Vectors",
+    "maxprobes",
+    "limma",
+    "IRanges",
+    "impute",
+    "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
+    "IlluminaHumanMethylation450kanno.ilmn12.hg19",
+    "GenomicRanges",
+    "conumee",
+    "BiocGenerics",
+    "Biobase",
+    "cowplot",
+    "fst",
+    "itertools",
+    "Cairo",
+    "tinytex"
+)
 
-scripts <- c(mainLnk, paste0(mainHub, rFiles))
-suppressWarnings(lapply(scripts, function(i){devtools::source_url(i)}))
+scripts <- file.path(mainHub, rFiles))
+suppressWarnings(lapply(scripts, devtools::source_url))
+
+
 if (!requireNamespace("minfi", T)) {
-    devtools::install_github("mwsill/minfi", upgrade = "never", force = T, dependencies = T)
-    devtools::install_github("mwsill/IlluminaHumanMethylationEPICv2manifest", upgrade = "always", force = T, dependencies = T)
+    devtools::install_github(
+        "mwsill/minfi",
+        upgrade = "never",
+        force = T,
+        dependencies = T
+    )
+    devtools::install_github(
+        "mwsill/IlluminaHumanMethylationEPICv2manifest",
+        upgrade = "always",
+        force = T,
+        dependencies = T
+    )
 }
 
 minfiVers <- as.character(utils::packageVersion("minfi"))
@@ -183,7 +197,6 @@ check_git_install("Ryo-N7/tvthemes")
 check_git_install("thomas-neitmann/mdthemes")
 load_pkg("minfiData")
 check_git_install("markgene/maxprobes")
-#check_git_install("ijcBIT/cnv.methyl")
 
 SetKnitOpts <- function(){
     knitOpt <- list(
@@ -336,19 +349,21 @@ if(Sys.info()[['sysname']] == "Linux") {
     library("reticulate")
     # Attempt to import the kaleido module
     try_import <- function() {
-      tryCatch({
-        import("kaleido")
-        TRUE
-      }, error = function(e) {
-        FALSE
-      })
+        tryCatch({
+            import("kaleido")
+            TRUE
+        }, error = function(e) {
+            FALSE
+        })
     }
     reticulate::use_python("/usr/local/bin/python", required = TRUE)
     # Check if kaleido is installed; if not, install it
     if (!try_import()) {
-      reticulate::py_install("kaleido", method = "virtualenv")
+        reticulate::py_install("kaleido", method = "virtualenv")
     }
 }
 
 #try(tinytex::tlmgr_update(self = TRUE, all = TRUE), T)
-gb$SetKnitOpts(); gb$sourceParams(); gb$assignOpts()
+gb$SetKnitOpts()
+gb$sourceParams()
+gb$assignOpts()
