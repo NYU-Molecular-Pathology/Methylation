@@ -3,7 +3,7 @@
 ## Script name: hmFunctions.R
 ## Purpose: source of global scripts for methylation heatmap analysis
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2023
+## Copyright (c) NYULH Jonathan Serrano, 2024
 ## ---------------------------
 
 gb <- globalenv(); assign("gb", gb)
@@ -19,6 +19,35 @@ LoadHeatMapLibs <- function(){
   suppressMessages(require("grid"))
   suppressMessages(options(bitmapType='cairo'))
   #ht_opt$message = FALSE
+}
+
+create_hm_colors <- function(targets1, varColumns) {
+    if (length(varColumns) <= 1) {
+      if ("Type" %in% varColumns == F) {
+        targets$Type <- targets[, varColumns[1]]
+        varColumns <- c(varColumns, "Type")
+      }
+      
+      if (length(unique(varColumns)) == 1) {
+        targets$NewCol <- targets[, varColumns[1]]
+        varColumns <- c(varColumns, "NewCol")
+      }
+    }
+    dat <- targets1[, varColumns]
+    anno_df <- data.frame(dat)
+    colorValues <- list(varColumns)
+    names(colorValues[[1]]) <- varColumns
+    
+    for (curr_col in colnames(dat)) {
+        color_col <- paste0(curr_col, "_color")
+        curr_vals <- dat[, curr_col]
+        curr_colors <- targets1[, color_col]
+        names(curr_colors) <- curr_vals
+        colorValues[[curr_col]] <- curr_colors
+    }
+  
+    ha <- suppressWarnings(gb$getHeatAnno(colorValues, anno_df))
+    return(ha)
 }
 
 
@@ -79,12 +108,12 @@ drawHeatMap <- function(yourHeatMap) {
     return(
         ComplexHeatmap::draw(
             yourHeatMap,
-            merge_legend = T,
+            merge_legend = F,
             ht_gap = unit(3, "cm"),
             heatmap_legend_side = "left",
-            annotation_legend_side = "left",
-            column_title_gp=grid::gpar(fontsize=10),
-            padding = unit(c(20, 20, 20, 20), "mm")
+            annotation_legend_side = "right",
+            column_title_gp = grid::gpar(fontsize = 10),
+            padding = unit(c(1, 1, 1, 1), "cm")
         )
     )
 }
@@ -139,68 +168,86 @@ calc_ht_size = function(ht, unit = "inch") {
 }
 
 getHeatMap <- function(betaRanges,
-                          titleValue,
-                          ha,
-                          geneNams = F,
-                          colSplt = NULL,
-                          rwsplt = NULL,
-                          hideTopAnno = F) {
-    col_fun2 <- circlize::colorRamp2(
-      c(0, 0.25, 0.5, 0.75, 1), c("darkblue","deepskyblue", "white", "tomato","red"))
-    titleOfPlot <- paste("Heatmap of", titleValue, sep = " ")
-    toLabRows <- ifelse(nrow(betaRanges) <= 60, T, F)
-    geneNams <- ifelse(geneNams == T, toLabRows, F)
-    rowTall <- ifelse(toLabRows == T, 5, 2)
-    shrinkRows <- ifelse(nrow(betaRanges) > 800, T, F)
-    if (shrinkRows == T) {
-      rowTall <- 0.1
+                       titleValue,
+                       ha,
+                       geneNams = F,
+                       colSplt = NULL,
+                       rwsplt = NULL,
+                       hideTopAnno = F,
+                       hideSamName = F,
+                       rowClus = T,
+                       colClus = T) {
+    if (is.null(colSplt)) {
+        hmLevels <- ha@anno_list[[1]]@color_mapping@levels
+        colSplt <- length(unique(hmLevels))
     }
-    try(knitr::opts_chunk$set(out.width = '100%'), silent = T)
+    col_fun2 <- circlize::colorRamp2(
+        c(0, 0.25, 0.5, 0.75, 1),
+        c("darkblue", "deepskyblue", "white", "tomato", "red")
+    )
+    titleOfPlot <- paste("Heatmap of", titleValue, sep = " ")
+    
+    # Determine whether to label rows based on the number of rows
+    toLabRows <- nrow(betaRanges) <= 60
+    geneNams <- geneNams && toLabRows
+    
+    # Adjust row height based on the number of rows
+    rowTall <- if (toLabRows) 5 else 2
+    shrinkRows <- nrow(betaRanges) > 800
+    if (shrinkRows == T) {
+        rowTall <- ifelse(nrow(betaRanges) > 2000, 0.06, 0.6) 
+    }
+    
+    try(knitr::opts_chunk$set(out.width = '100%'), silent = TRUE)
+    
+    # Create the heat map
     hmTopNumbers <- ComplexHeatmap::Heatmap(
         betaRanges,
-        col = gb$col_fun2,  ## Define the color scale
-        cluster_columns = T,  ## Cluster the columns
-        cluster_rows = cluster::diana,
-        show_column_names = T,  ## Show the Column Names (which is sample #)
-        column_names_gp = gpar(fontsize = 12),  ## Column Name Size
-        show_row_names = geneNams,  ## Show Row names (which is probes)
+        col = col_fun2,
+        cluster_columns = colClus,
+        cluster_rows = rowClus,
+        show_column_names = hideSamName,
+        column_names_gp = gpar(fontsize = 12),
+        show_row_names = geneNams,
         row_names_side = "left",
         row_title_side = "left",
         row_names_gp = gpar(fontsize = 10),
         row_title_gp = gpar(fontsize = 12, fontface = "bold"),
-        show_row_dend = F,
-        show_column_dend = T,
-        width = ncol(betaRanges)*unit(5, "mm"),
-        height = nrow(betaRanges)*unit(rowTall, "mm"),
-        use_raster = shrinkRows, 
-        show_heatmap_legend = T,
+        show_row_dend = FALSE,
+        show_column_dend = TRUE,
+        width = ncol(betaRanges) * unit(5, "mm"),
+        height = nrow(betaRanges) * unit(rowTall, "mm"),
+        show_heatmap_legend = TRUE,
         top_annotation = ha,
         column_title = titleOfPlot,
-        column_title_gp = gpar(fontsize = 12,fontface = "bold"),
-        raster_device = "CairoPNG",
-        raster_quality = 1,
-        #raster_resize_mat = TRUE,
+        column_title_gp = gpar(fontsize = 12, fontface = "bold"),
         heatmap_legend_param = list(
             title = "Beta Value",
-            labels_gp = gpar( fontsize = 14),
+            labels_gp = gpar(fontsize = 14),
             title_gp = gpar(fontsize = 14, fontface = "bold"),
             legend_direction = "vertical",
-            heatmap_legend_side = "right", annotation_legend_side = "right",
-            legend_height =  unit(2.5, "in")
+            legend_padding = unit(5, "mm"),
+            annotation_legend_side = "right",
+            legend_height = unit(2.5, "in")
         ),
-        #heatmap_width = unit(hm_width, "cm"),
-        #heatmap_height = unit(hm_ht, "cm"),
         column_split = colSplt,
-        row_split = rwsplt
+        row_split = rwsplt,
+        use_raster = shrinkRows,
+        raster_device = "png",
+        raster_quality = 1,
+        raster_resize_mat = T
     )
     
-    if (hideTopAnno == T) {
-      hmTopNumbers@top_annotation <- NULL
+    if (hideTopAnno) {
+        hmTopNumbers@top_annotation <- NULL
+    }
+    if (hideSamName) {
+        hmTopNumbers@column_names_param[["labels"]] <- NULL
+        hmTopNumbers@column_names_param[["show"]] <- FALSE
     }
     
     GetHmDimensions(hmTopNumbers)
-    #size = gb$calc_ht_size(hmTopNumbers)
-    return(gb$drawHeatMap(hmTopNumbers))
+    return(drawHeatMap(hmTopNumbers))
 }
 
 assignColors2 <- function(targets, varColumns = c("Type","Origin"), col_vect = NULL) {
@@ -774,7 +821,7 @@ LoopPrintHeatMap <- function(gb, unBetas, ha, fi_prefix = "unsuper_hm_top") {
   geneNams <- gb$addGenesHm
   colSplt <- gb$colSplitHm
   hideTopAnno <- gb$hideTopAnno
-  
+  hideSamName <- gb$hideSamName
   fi_suffix <- "Annotated"
   if (hideTopAnno == T) {
     fi_suffix <- "notAnnot"
@@ -786,8 +833,17 @@ LoopPrintHeatMap <- function(gb, unBetas, ha, fi_prefix = "unsuper_hm_top") {
     cat(paste("###", "Top", topNum, "\n\n"))
     hmTitle <- paste("Top", topNum, "Variance Probes Beta Values")
     bv <- unBetas[1:topNum,]
-    currHm <- invisible(gb$getHeatMap(bv, hmTitle, ha, geneNams, colSplt = colSplt,
-                                      hideTopAnno = hideTopAnno))
+    currHm <- invisible(
+        gb$getHeatMap(
+            bv,
+            hmTitle,
+            ha,
+            geneNams,
+            colSplt = colSplt,
+            hideTopAnno = hideTopAnno,
+            hideSamName = hideSamName
+        )
+    )
     LoopSaveHm(hm = currHm, topNum, fi_prefix, fi_suffix)
     cat('\n\n')
   }
@@ -802,11 +858,15 @@ AnnotateHmVars <- function(targets1, varColumns){
 
 
 # Dropping any unwanted column annotation
-FilterHmAnno <- function(ha, varToPlot){
-  toKeep <- names(ha@anno_list) %in% varToPlot
-  ha@anno_list <- ha@anno_list[toKeep] 
-  ha@height <- grid::unit(1, "mm")
-  return(ha)
+FilterHmAnno <- function(ha, varToPlot) {
+    toKeep <- names(ha@anno_list) %in% varToPlot
+    others <- unlist(lapply(names(ha@anno_list), function(anno_name) {
+        length(ha@anno_list[[anno_name]]@color_mapping@levels) > 1
+    }))
+    toKeep <- toKeep & others
+    ha@anno_list <- ha@anno_list[toKeep]
+    ha@height <- grid::unit(1, "mm")
+    return(ha)
 }
 
 
@@ -844,9 +904,9 @@ MatchHaLegend <- function(ha, selectedVars, targets1){
     return(ha)
 }
                                            
-GetHeatMapData <- function(targets, betas, RGSet, gb, getAll=F, varToFilter = NULL){
+GetHeatMapData <-  function(targets, betas, RGSet, gb, getAll = F, varToFilter = NULL){
     varProbes <- gb$hmVarProbes
-    varProbes <<- gb$hmVarProbes # Change top variance for heatmaps
+    varProbes <<- gb$hmVarProbes  # Change top variance for heatmaps
     gb$MsgNullVar(gb, "col_sentrix", "The Sentrix IDs for the samples", '"Sentrix_Pos"')
     gb$MsgNullVar(gb ,"col_samNames", "The unique sample names or IDs", '"RD_number"')
     gb$MsgNullVar(gb, "selectedVars", "The Phenotype or Metadata for the samples", 'c("Cell_type", "Tissue_Type")')
@@ -854,10 +914,10 @@ GetHeatMapData <- function(targets, betas, RGSet, gb, getAll=F, varToFilter = NU
     RGSet@colData@listData$Sample_ID <- RGSet@colData@listData[[gb$col_samNames]]
     targets1 <- gb$SubsetTargets(targets, varToFilter)
     betas1 <- betas[, targets1[, gb$col_samNames]]
-    unBetas <- gb$tierBetas(betas1, gb$col_sentrix, RGSet, getAll=T) # unsupervised betas
+    unBetas <- gb$tierBetas(betas1, gb$col_sentrix, RGSet, getAll = T) # unsupervised betas
     #unBetas <- gb$addGeneName(RGSet, unBetas, gb$addGenesHm)
-    ha <- gb$AnnotateHmVars(targets1, varColumns = gb$selectedVars)
-    ha <- gb$FilterHmAnno(ha, gb$selectedVars) # drop any unwanted columns
+    ha <- create_hm_colors(targets1, varColumns = gb$selectedVars)
+    ha <- gb$FilterHmAnno(ha, varToPlot = gb$selectedVars) # drop any unwanted columns
     ha <- gb$MatchHaLegend(ha, gb$selectedVars, targets1)
     hmPlotData <- list("unBetas" = unBetas, "ha" = ha)
     return(hmPlotData)
