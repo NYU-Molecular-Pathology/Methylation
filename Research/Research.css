@@ -11,9 +11,12 @@ hr {
     margin: 0px !important;
 }
 .main-container {
-    max-width: 1200px !important;
+    max-width: 100% !important;
     margin-left: 10px !important;
     margin-right: auto !important;
+}
+body {
+    max-width: 100% !important;
 }
 h1 {
     font-size: 34px;
