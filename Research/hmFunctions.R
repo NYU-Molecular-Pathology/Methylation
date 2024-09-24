@@ -414,7 +414,7 @@ grabProbes <- function(your_genes, RGSet, region){
 SaveHmPng <- function(imgFile, hm) {
     wd_original <- as.numeric(hm@ht_list_param[["width"]])
     ht_original <- as.numeric(hm@ht_list_param[["height"]])
-    resolution <- 300
+    resolution <- 150
     wd <- round(wd_original * 8)
     ht <- round(ht_original * 8)
     if (ht > 10000 | wd > 10000) {
