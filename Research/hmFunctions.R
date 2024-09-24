@@ -411,40 +411,13 @@ grabProbes <- function(your_genes, RGSet, region){
 }
                                            
 
-# SaveHmPng <- function(fi_prefix, fi_suffix, hm, topvar = "", outDir=NULL) {
-#     if(is.null(outDir)) { outDir <- file.path(".", "figures", "heatmaps") }
-#     if(!dir.exists(outDir)) { dir.create(outDir, recursive = TRUE) }
-#     imgFile <- file.path(outDir, paste0(fi_prefix, "_", topvar, "_", fi_suffix, ".png"))
-#     wd_original <- as.numeric(hm@ht_list_param[["width"]])
-#     ht_original <- as.numeric(hm@ht_list_param[["height"]])
-#     resolution <- 200
-    
-#     wd <- round(wd_original * 8)
-#     ht <- round(ht_original * 8)
-    
-#     if(ht > 10000 | wd > 10000){
-#       wd <- round(wd / 2)
-#       ht <- round(ht / 2)
-#       resolution <- 100
-#     }
-#     grDevices::png(
-#       file = imgFile,
-#       width = wd,
-#       height = ht,
-#       units = "px",
-#       res = resolution
-#     )
-#     ComplexHeatmap::draw(hm)
-#     invisible(dev.off())
-# }
-
 SaveHmPng <- function(imgFile, hm) {
     wd_original <- as.numeric(hm@ht_list_param[["width"]])
     ht_original <- as.numeric(hm@ht_list_param[["height"]])
-    resolution <- 200
+    resolution <- 300
     wd <- round(wd_original * 8)
     ht <- round(ht_original * 8)
-    if(ht > 10000 | wd > 10000){
+    if (ht > 10000 | wd > 10000) {
       wd <- round(wd / 2)
       ht <- round(ht / 2)
       resolution <- 100
@@ -456,7 +429,7 @@ SaveHmPng <- function(imgFile, hm) {
       units = "px",
       res = resolution
     )
-    ComplexHeatmap::draw(hm)
+    gb$drawHeatMap(hm)
     invisible(dev.off())
 }
 
