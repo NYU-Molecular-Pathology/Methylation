@@ -18,6 +18,10 @@ hr {
 body {
     max-width: 100% !important;
 }
+.tab-content {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+}
 h1 {
     font-size: 34px;
     color: black !important;
