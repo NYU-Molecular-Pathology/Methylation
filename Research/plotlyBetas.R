@@ -256,7 +256,7 @@ FormatPlotlyLegend <- function(otherPlot) {
     pad = 4
   )
   ttl <-
-    list(text = "<b>Shapes and Colors Legend</b><br>", font = list(size = 14))
+    list(text = "<b>Sample Groups Legend</b><br>", font = list(size = 14))
   lgnd <- list(title = ttl, font = list(size = 14))
   otherPlot <- otherPlot %>% plotly::layout(margin = mrg, legend = lgnd)
   return(otherPlot)
