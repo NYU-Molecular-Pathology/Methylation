@@ -21,10 +21,12 @@ body {
 .tab-content {
     max-width: 100% !important;
     overflow-x: auto !important;
+    overflow-y: auto !important;
 }
 .tab-pane {
-    max-width: 50% !important;
+    max-width: 100% !important;
     overflow-x: auto !important;
+    overflow-y: auto !important;
 }
 h1 {
     font-size: 34px;
