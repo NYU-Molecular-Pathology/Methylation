@@ -588,19 +588,18 @@ getOuputData <- function(token, flds, inputSheet, readFlag) {
 
 
 minfi_install <- function() {
+    Sys.setenv(R_COMPILE_AND_INSTALL_PACKAGES = "always")
     devtools::install_github(
         "mwsill/minfi",
         upgrade = "always",
         force = T,
-        dependencies = T,
-        ask = F
+        dependencies = T
     )
     devtools::install_github(
         "mwsill/IlluminaHumanMethylationEPICv2manifest",
         upgrade = "always",
         force = T,
-        dependencies = T,
-        ask = F
+        dependencies = T
     )
 }
 
