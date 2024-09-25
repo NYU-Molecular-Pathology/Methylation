@@ -697,13 +697,14 @@ CheckIfPngExists <- function(rds, outFolder = NULL) {
 
 
 get_pact_cnv <- function(samName, samEpic, idatPath = getwd()) {
-    sam_out_png <- file.path(fs::path_home(), "Desktop", paste0(samName, "_cnv.png"))
+    sam_out_png <- file.path(fs::path_home(), "Desktop", 
+                             paste0(samName, "_cnv.png"))
     pathEpic <- file.path(idatPath, samEpic)
     RGsetEpic <- minfi::read.metharray(pathEpic, verbose = TRUE, force = TRUE)
-    MsetEpic <- minfi::preprocessIllumina(RGsetEpic, bg.correct = TRUE, normalize = "controls")
+    MsetEpic <- minfi::preprocessIllumina(RGsetEpic, bg.correct = TRUE, 
+                                          normalize = "controls")
     cnv_obj <- mnp.v12epicv2::MNPcnv(MsetEpic, sex = NULL, main = samName)
     chrAll <- paste0("chr", 1:22)
-
     message("Saving file to:\n", sam_out_png)
     png(filename = sam_out_png, width = 1820, height = 1040, res = 150)
     conumee2.0::CNV.genomeplot(
@@ -716,10 +717,17 @@ get_pact_cnv <- function(samName, samEpic, idatPath = getwd()) {
     invisible(dev.off())
 }
 
+
 generate_new_cnv <- function(targets) {
     has_idat <- targets[, "SentrixID_Pos"] %like% "_R0"
     targets <- targets[has_idat, ]
-
+    if (!requireNamespace("conumee2.0", quietly = TRUE)) {
+        stop("The package 'conumee2.0' is not installed")
+    }
+    if (!requireNamespace("mnp.v12epicv2", quietly = TRUE)) {
+        stop("The package 'mnp.v12epicv2' is not installed")
+    }
+    
     if (nrow(targets) > 0) {
         sam_names <- as.character(targets[, 1])
         sentrix.ids <- as.character(targets$SentrixID_Pos)
@@ -758,6 +766,7 @@ try_cnv_make <- function(rds, token) {
             message("\nTry checking the troubleshooting section on GitHub:\n")
             git_url <- "https://github.com/NYU-Molecular-Pathology/Methylation/"
             message(git_url, "blob/main/PACT_scripts/README.md\n")
+            stop("CNV PNG generation failed")
         }
     )
 }
