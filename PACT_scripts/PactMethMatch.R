@@ -587,8 +587,38 @@ getOuputData <- function(token, flds, inputSheet, readFlag) {
 }
 
 
+minfi_install <- function() {
+    devtools::install_github(
+        "mwsill/minfi",
+        upgrade = "never",
+        force = T,
+        dependencies = T
+    )
+    devtools::install_github(
+        "mwsill/IlluminaHumanMethylationEPICv2manifest",
+        upgrade = "always",
+        force = T,
+        dependencies = T
+    )
+}
+
+
 source_pkg_vers <- function() {
-    if (!requireNamespace("mnp.v12epicv2", quietly = T)) {
+    minfiVers <- as.character(utils::packageVersion("minfi"))
+    if (minfiVers != "1.43.1") {
+        minfi_install()
+    }
+
+    v2_manifest <- "IlluminaHumanMethylationEPICv2manifest"
+    epicVers <- as.character(utils::packageVersion(v2_manifest))
+    if (epicVers != "0.1.0") {
+        minfi_install()
+    }
+
+    v2Pkg_needed <- !requireNamespace("mnp.v12epicv2", quietly = T)
+    v2Con_needed <- !requireNamespace("conumee2.0", quietly = T)
+
+    if (v2Pkg_needed | v2Con_needed) {
         script_path <- "/Volumes/CBioinformatics/Methylation/Rscripts"
         v2_script <- "install_epic_v2_classifier.R"
         epicV2script <- file.path(script_path, v2_script)
@@ -596,7 +626,9 @@ source_pkg_vers <- function() {
     }
 
     library("conumee2.0")
+    library("minfi")
     library("IlluminaHumanMethylationEPICv2manifest")
+    library("mnp.v12epicv2")
 }
 
 
@@ -609,7 +641,6 @@ sourceFuns2 <- function(workingPath = getwd()) {
     }))
     gb$setDirectory(workingPath)
     source_pkg_vers()
-    library("mnp.v12epicv2")
     return(gb$defineParams())
 }
 
