@@ -946,6 +946,12 @@ LoopSampleTabs <- function(params) {
     methData <- gb$GetMethDf(params$pactName)
     qcData <- gb$ReadQcFile(pactName)
     samList <- gb$GetSamList(pactName)
+    toDrop <- grepl("^0_", samList$Paired_Normal)
+    if (any(toDrop)) {
+        ngs_drop <- samList$Test_Number[toDrop]
+        toKeep <- !samList$Test_Number %in% ngs_drop
+        samList <- samList[toKeep, ]
+    }
     samples <- gb$GrabSamples(samList)
     hsDat <- gb$GrabHotspots(params)
     snvDt <- read.csv(paste0(pactName, "_desc.csv"))
