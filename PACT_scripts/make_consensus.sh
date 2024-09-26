@@ -85,16 +85,16 @@ create_dir "${DESK_DIR}"
 create_dir "${PNG_OUT_DIR}"
 
 # COPY FROM: Z-drive TO: DESKTOP --------------------------------------------------------------------------
-msg_code rsync -vrthP --include=\"*.png\" \"${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/\" \"${DESK_DIR}\"
-msg_code rsync -vrthP \"${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/${pactRun}-QC.tsv\" \"${DESK_DIR}\"
-msg_code rsync -vrthP \"${MOLEC_VOL}NGS607/${currYear}/${runID}/${pactRun}_Hotspots.tsv\" \"${DESK_DIR}\"
+msg_code rsync -vrhP --include=\"*.png\" \"${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/\" \"${DESK_DIR}\"
+msg_code rsync -vrhP \"${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/${pactRun}-QC.tsv\" \"${DESK_DIR}\"
+msg_code rsync -vrhP \"${MOLEC_VOL}NGS607/${currYear}/${runID}/${pactRun}_Hotspots.tsv\" \"${DESK_DIR}\"
 
 # Copy demux-samplesheet.csv to desktop
-#msg_code rsync -vrthP \"${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/demux-samplesheet.csv\" \"${DESK_DIR}\"
+#msg_code rsync -vrhP \"${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/demux-samplesheet.csv\" \"${DESK_DIR}\"
 
 # Copy VAF QC output files if availible
 if [ -d "${VAF_DIR}" ]; then
-    msg_code rsync -vrthP \"${VAF_DIR}\" \"${DESK_DIR}\"
+    msg_code rsync -vrhP \"${VAF_DIR}\" \"${DESK_DIR}\"
 fi
 
 printf "\n${BG_GRN}Executing:${NORMAL}\n"
@@ -102,19 +102,19 @@ printf "cp ${DESK_DIR}*.png ${PNG_OUT_DIR}"
 
 # COPY FROM: Desktop TO: Consensus Directory --------------------------------------------------------------
 cp "${DESK_DIR}"*.png "${PNG_OUT_DIR}"
-msg_code rsync -vrthP --include=\"*.tsv\" \"${DESK_DIR}\" \"${WORK_DIR}\"
-#msg_code rsync -vrthP \"$HOME/Desktop/${runID}-SampleSheet.csv\" \"${WORK_DIR}\"
+msg_code rsync -vrhP --include=\"*.tsv\" \"${DESK_DIR}\" \"${WORK_DIR}\"
+#msg_code rsync -vrhP \"$HOME/Desktop/${runID}-SampleSheet.csv\" \"${WORK_DIR}\"
 
 # Check if _MethylMatch.xlsx file exists ------------------------------------------------------------------
 METH_MATCH="$HOME/Desktop/${pactRun}_MethylMatch.xlsx"
 if [ -f "${METH_MATCH}" ]; then
-    msg_code rsync -vrthP \"${METH_MATCH}\" \"${WORK_DIR}\"
+    msg_code rsync -vrhP \"${METH_MATCH}\" \"${WORK_DIR}\"
 else
     echo -e "${BG_RED}NO METHYLMATCH FILE COPIED${NORMAL}"
 fi
 
 # Copy demux-samplesheet.csv to consensus
-msg_code rsync -vrthP \"$HOME/Desktop/${pactRun}/demux-samplesheet.csv\" \"${WORK_DIR}\"
+msg_code rsync -vrhP \"$HOME/Desktop/${pactRun}/demux-samplesheet.csv\" \"${WORK_DIR}\"
 
 # Copy VAF QC output files if availible
 if [ -d "${VAF_DIR}" ]; then
@@ -145,7 +145,7 @@ chmod +rwx "${DESK_DIR}${pactRun}_consensus.html"
 
 # Copy HTML file from DESK_DIR to final destination
 cd "${FINAL_DEST}" || exit
-rsync -vrthP "${DESK_DIR}${pactRun}_consensus.html" .
+rsync -vrhP "${DESK_DIR}${pactRun}_consensus.html" .
 
 echo -e "Opening folder:\n${FINAL_DEST}"
 open "${FINAL_DEST}"
