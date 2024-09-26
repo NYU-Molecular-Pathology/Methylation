@@ -1127,6 +1127,12 @@ CheckTumorPngs <- function(samList, outDir) {
 CopyCnvPngs <- function(params) {
     outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus"))
     samList <- gb$GetSamList(params$pactName, 2)
+    toDrop <- grepl("^0_", samList$Paired_Normal)
+    if (any(toDrop)) {
+        ngs_drop <- samList$Test_Number[toDrop]
+        toKeep <- !samList$Test_Number %in% ngs_drop
+        samList <- samList[toKeep, ]
+    }
     CheckTumorPngs(samList, outDir)
 }
 
