@@ -13,7 +13,7 @@ cpOutLnk = "https://github.com/NYU-Molecular-Pathology/Methylation/blob/main/R/C
 rschDrv = "/Volumes/snudem01labspace/FINAL_PDF_Reports_Brain"
 metrics_dir <-
     "/Volumes/molecular/Molecular/MethylationClassifier/Methylation_QC_metrics"
-
+UPLOAD_LOG_TSV = "redcap_failed_file_uploads.tsv"
 
 # Helper function to print out a function's name and path on Github
 msgFunName <- function(pthLnk, funNam) {
@@ -130,6 +130,7 @@ checkRedcapRecord <- function(recordName, fieldName = 'classifier_pdf') {
 
 
 MakeLogFile <- function(infoData, logFile) {
+    message("Writing log:\n", infoData, "\nTo file: ", logFile)
     write.table(infoData, file = logFile, append = T, quote = F,
                 sep = '\t', row.names = F, col.names = F)
 }
@@ -203,10 +204,10 @@ loopRedcapImport <- function(data) {
         for (n in 1:nrow(data)) {
             record = c(data[n,])
             is_validation <- sjmisc::str_contains(gb$runID, "VAL")
-    is_val <- sjmisc::str_contains(record$record_id, "VAL")
-    if (is_validation == T & is_val == F) {
-        record$record_id <- paste0(record$record_id, "_VAL")
-    }
+            is_val <- sjmisc::str_contains(record$record_id, "VAL")
+            if (is_validation == T & is_val == F) {
+                record$record_id <- paste0(record$record_id, "_VAL")
+            }
             ValidateRedImport(record)
         }
     } else{
@@ -396,7 +397,7 @@ DoRedcapApi <- function(rcon, recordName, runID) {
 
 
 CheckSarcRDnumber <- function(record) {
-     msgFunName(cpOutLnk, "CheckSarcRDnumber")
+    msgFunName(cpOutLnk, "CheckSarcRDnumber")
     isSarc <- ifelse(stringr::str_detect(record, pattern="sarc"), yes = T, no = F)
     if (isSarc == T) {
         record <- stringr::str_split_fixed(record, pattern = "_", 2)[1,1]
@@ -435,27 +436,28 @@ callApiFile <- function(rcon, recordName, ovwr = T) {
         fld <- "classifier_pdf"
         message(paste("fiPath", "=", fiPath))
         if (file.exists(fiPath)) {
-        body <- list(
-            token = rcon$token,
-            content = 'file',
-            action = 'import',
-            record = recordName,
-            field = fld,
-            file = httr::upload_file(fiPath),
-            returnFormat = 'csv'
-        )
-        res <-
-            tryCatch(
-                httr::POST(url = rcon$url, body = body, config = rcon$config),
-                error = function(cond) {
-                    list(status_code = "200")
-                }
+            body <- list(
+                token = rcon$token,
+                content = 'file',
+                action = 'import',
+                record = recordName,
+                field = fld,
+                file = httr::upload_file(fiPath),
+                returnFormat = 'csv'
             )
-        if (res$status_code=="200") {
-            message("REDCap file upload successful: ", fiPath)
-        }else{
-            message("REDCap file upload failed: ", fiPath)
-        }
+            res <-
+                tryCatch(
+                    httr::POST(url = rcon$url, body = body, config = rcon$config),
+                    error = function(cond) {
+                        list(status_code = "200")
+                    }
+                )
+            if (res$status_code == "200") {
+                message("REDCap file upload successful: ", fiPath)
+            }else{
+                message("REDCap file upload failed: ", fiPath)
+                MakeLogFile(fiPath, UPLOAD_LOG_TSV)
+            }
         }else{
             message("REDCap file upload failed: ", fiPath)
         }
@@ -853,7 +855,7 @@ CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull) {
         if (all(is.na(output$subgroup))) {
             output$subgroup <- redcap_dat$subgroup
         }
-        
+
         filtered_output <- output %>% dplyr::select(-one_of(colnames(data_subset)))
         merged_data <- merge(filtered_output, data_subset, by.x = "RD.number",
                              by.y = "record_id")
@@ -892,7 +894,7 @@ CombineClassAndQC <- function(output_fi = NULL, token, runDir = NULL, runID = NU
         "record_id", "run_number", "b_number", "tm_number", "block",
         "accession_number", "subgroup_score", "classifier_value", "subgroup",
         "classifier_score", "primary_tech", "diagnosis"
-        )
+    )
 
     if (is.null(runDir)) {runDir <- getwd()}
     if (is.null(runID)) {runID <- basename(getwd())}
