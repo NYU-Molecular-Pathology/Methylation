@@ -18,11 +18,12 @@ reportMd <- file.path(fs::path_home(),"report.Rmd")
 QC_file <- file.path(fs::path_home(),"Methyl_QC.Rmd")
 pipeLnk <-
     "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/pipelineHelper.R"
+gb$UPLOAD_LOG_TSV <- "redcap_failed_file_uploads.tsv"
 
 cbioLn <- switch(
-  Sys.info()[['sysname']],
-  "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
-  "Linux" = "/gpfs/data/molecpathlab/production/Methylation/classifiers"
+    Sys.info()[['sysname']],
+    "Darwin" = "/Volumes/CBioinformatics/Methylation/classifiers",
+    "Linux" = "/gpfs/data/molecpathlab/production/Methylation/classifiers"
 )
 
 # List of three mount paths needed to run the pipleine
@@ -105,41 +106,41 @@ CopyRmdFile <- function(runID, rmdFile) {
 
 
 getRGset <- function(runPath, sentrix) {
-  msgFunName(pipeLnk,"getRGset")
-  barcode = stringr::str_split_fixed(sentrix, "_", 2)[1]
-  RGsetEpic <- minfi::read.metharray(file.path(runPath, sentrix),
-                                     verbose = T, force = T)
-  aEpic = c(array = "IlluminaHumanMethylationEPIC", annotation = "ilm10b4.hg19")
-  a450k = c(array = "IlluminaHumanMethylation450k", annotation = "ilmn12.hg19")
-  arrayAnno <- RGsetEpic@annotation[['array']]
+    msgFunName(pipeLnk,"getRGset")
+    barcode = stringr::str_split_fixed(sentrix, "_", 2)[1]
+    RGsetEpic <- minfi::read.metharray(file.path(runPath, sentrix),
+                                       verbose = T, force = T)
+    aEpic = c(array = "IlluminaHumanMethylationEPIC", annotation = "ilm10b4.hg19")
+    a450k = c(array = "IlluminaHumanMethylation450k", annotation = "ilmn12.hg19")
+    arrayAnno <- RGsetEpic@annotation[['array']]
 
-  if (arrayAnno == "IlluminaHumanMethylationEPICv2") {
-    requireNamespace("mnp.v12epicv2")
-    is_validation <- T
-    is_validation <<- T
-    reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
-    reportMd <<- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
-    gb$CopyRmdFile(gb$runID, reportMd)
+    if (arrayAnno == "IlluminaHumanMethylationEPICv2") {
+        requireNamespace("mnp.v12epicv2")
+        is_validation <- T
+        is_validation <<- T
+        reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
+        reportMd <<- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
+        gb$CopyRmdFile(gb$runID, reportMd)
+        return(RGsetEpic)
+    }
+    if (arrayAnno == "IlluminaHumanMethylationEPIC") {
+        return(RGsetEpic)
+    }
+    if (arrayAnno == "IlluminaHumanMethylation450k") {
+        RGsetEpic@annotation = a450k
+        return(RGsetEpic)
+    }
+    if (as.numeric(barcode) <= as.numeric("204220033000")) {
+        RGsetEpic@annotation = a450k
+    } else{
+        RGsetEpic@annotation = aEpic
+    }
     return(RGsetEpic)
-  }
-  if (arrayAnno == "IlluminaHumanMethylationEPIC") {
-    return(RGsetEpic)
-  }
-  if (arrayAnno == "IlluminaHumanMethylation450k") {
-    RGsetEpic@annotation = a450k
-    return(RGsetEpic)
-  }
-  if (as.numeric(barcode) <= as.numeric("204220033000")) {
-    RGsetEpic@annotation = a450k
-  } else{
-    RGsetEpic@annotation = aEpic
-  }
-  return(RGsetEpic)
 }
 
 
 CheckSampleQCmetrics <- function(runID) {
-  msgFunName(pipeLnk, "CheckSampleQCmetrics")
+    msgFunName(pipeLnk, "CheckSampleQCmetrics")
     qcValsFile <- file.path(getwd(), paste(runID, "qc_data.csv", sep = "_"))
     qc_cols <- c(
         "RD.number",
@@ -278,9 +279,9 @@ checkRunOutput <- function(runID) {
 # Gets rid of Desktop files if run is successful ------------------------------
 tidyUpFiles <- function(runID) {
     msgFunName(pipeLnk,"tidyUpFiles")
-    deskDir <- file.path(fs::path_home(),"Desktop",runID)
-    backupD <- file.path(gb$methDir,"csvRedcap")
-    if (!dir.exists(backupD)) {dir.create(backupD)}
+    deskDir <- file.path(fs::path_home(), "Desktop", runID)
+    backupD <- file.path(gb$methDir, "csvRedcap")
+    if (!dir.exists(backupD)) dir.create(backupD)
     file.copy(
         deskDir,
         backupD,
@@ -353,37 +354,18 @@ getRunData <- function(data) {
 
 NameControl <- function(data, runId) {
     library("data.table")
-    if (any(tolower(data[, 1]) %like% 'control')) {
-        cntrl <- which(tolower(data[, 1]) %like% 'control') #DNA_Number
-        if (all(stringr::str_detect(data[cntrl,1], pattern = runId))) {
+    cntrl <- which(stringr::str_detect(
+        data[, 1], pattern = regex('control', ignore_case = T)))
+    if (length(cntrl) >= 1) {
+        if (all(stringr::str_detect(data[cntrl, 1], runId))) {
             return(data)
         }
-        if (length(cntrl) > 1) {
-          controlSams <- make.unique(tolower(data[cntrl, 1]), sep = "_")
-          controlSams <- gsub(controlSams, pattern = " ", replacement = "")
-          controlSams <- gsub(controlSams, pattern = "-", replacement = "_")
-          data[cntrl, 1] <- paste0(runId, "_", controlSams)
-        } else{
-          data[cntrl, 1] <- paste0(runId, "_control")
-        }
+        control_sams <- data[cntrl, 1]
+        control_sams <- paste(runId, control_sams, sep = "_")
+        control_sams <- make.unique(control_sams, sep = "_")
+        data[cntrl, 1] <- control_sams
     } else{
-        if (any(tolower(data[, 2]) %like% 'control')) {
-            cntrl <- which(tolower(data[, 2]) %like% 'control')
-            if (all(stringr::str_detect(data[cntrl,2], pattern = runId))) {
-                return(data)
-            }
-            if (length(cntrl) > 1) {
-              controlSams <- make.unique(tolower(data[cntrl, 2]), sep = "_")
-              controlSams <- gsub(controlSams, pattern = " ", replacement = "")
-              controlSams <- gsub(controlSams, pattern = "-", replacement = "_")
-              data[cntrl, 2] <- paste0(runId, "_", controlSams)
-            } else{
-              data[cntrl, 1] <- paste0(runId, "_control")
-            }
-        } else{
-            warning('No word "control" in RD-number found in samplesheet')
-        }
-        return(data)
+        warning('No word "control" in RD-number found in samplesheet')
     }
     return(data)
 }
@@ -393,41 +375,41 @@ ReadSamSheet <- function(samList) {
     msgFunName(pipeLnk, "ReadSamSheet")
     msgParams("samList")
     msgParams(samList)
-    
+
     wb_path <- gb$GrabSampleSheet()
     if (is.null(wb_path)) {
         return(as.data.frame(read.csv("samplesheet.csv")))
     }
-    
+
     xlSheets <- readxl::excel_sheets(wb_path)
     redSheet <- as.integer(which(grepl("REDCap", xlSheets) == T))
-    
+
     message("Excel workbook sheet names:\n")
     message(paste(1:length(xlSheets), xlSheets, collapse = "\n"))
-    
+
     if (length(redSheet) == 0) {
         warning('"REDCap" tab name is missing from workbook sheet names!')
         warning("Defaulting to reading sheet index #3 in:\n", wb_path)
         redSheet <- 3
     }
-    
+
     message(bkGrn("Sheet index containing 'REDCap_Import':", redSheet), "\n")
-    
+
     raw_data <- readxl::read_excel(wb_path, sheet = redSheet, range = "A1:M97",
                                    col_types = c("text"))
-    
+
     samplesSheet <- as.data.frame(raw_data)[samList, 1:13]
     message(bkGrn("SampleSheet:"))
     print(samplesSheet)
-    
+
     missing_rd <- samplesSheet$record_id == 0 | is.na(samplesSheet$record_id)
-    
+
     if (any(missing_rd)) {
         warning(paste("Sample #", which(missing_rd), "is missing an RD-number!\n"))
         message(bkRed("Dropping sample #", which(missing_rd), "from SampleSheet!\n"))
         samplesSheet <- samplesSheet[!missing_rd, ]
     }
-    
+
     return(samplesSheet)
 }
 
@@ -440,7 +422,7 @@ Check_sam_csv <- function(samList) {
     require(rmarkdown)
 
     isMC <- sjmisc::str_contains(gb$runID, "MGDM") |
-            sjmisc::str_contains(gb$runID, "MC")
+        sjmisc::str_contains(gb$runID, "MC")
     is_validation <- sjmisc::str_contains(gb$runID, "VAL")
     is_research <- grepl("MR", gb$runID)
 
@@ -621,11 +603,11 @@ RenderReportsParallel <- function(samList = NULL, data, redcapUp = T) {
         CopyRmdFile(gb$runID, reportMd)
     }
 
-  if ((grepl("MGDM|MC", gb$runID) &&
-       !grepl("VAL", gb$runID)) || gb$runID == "23-MGDM_VAL3") {
-      if (grepl("MR", gb$runID) == F) {
-        data <- NameControl(data, data$RunID[1])
-      }
+    if ((grepl("MGDM|MC", gb$runID) &&
+         !grepl("VAL", gb$runID)) || gb$runID == "23-MGDM_VAL3") {
+        if (grepl("MR", gb$runID) == F) {
+            data <- NameControl(data, data$RunID[1])
+        }
     }
     samList <- if (is.null(samList)) 1:length(data$Sample_Name != 0) else samList
     workbook_data <- Check_sam_csv(samList)
@@ -673,12 +655,12 @@ RenderReportsParallel <- function(samList = NULL, data, redcapUp = T) {
 
 
 RenameFailed <- function(qcVals) {
-  msgFunName(pipeLnk, "RenameFailed")
+    msgFunName(pipeLnk, "RenameFailed")
 
-  if (!is.null(qcVals)) {
-      message("qcVals")
-      qcVals[is.na(qcVals)] <- "no"
-      print(qcVals)
+    if (!is.null(qcVals)) {
+        message("qcVals")
+        qcVals[is.na(qcVals)] <- "no"
+        print(qcVals)
 
         if (any(qcVals$qc_passed == "no")) {
             file.list <- dir(getwd(), pattern = ".html", full.names = T)
@@ -721,21 +703,31 @@ makeReports.v11b6 <- function(runPath = NULL,
     library("data.table")
     assign("genCn", genCn, envir = gb)
     data <- utils::read.csv(sheetName, strip.white = T)
+
+    toKeep <- !(is.na(data[, 1]) | data[, 1] == 0 | data[, 1] == "")
+    if (any(!toKeep)) {
+        data <- data[toKeep, , drop = FALSE]
+        rownames(data) <- NULL
+    }
+
     sheetRunID <- paste0(data$RunID[1])
     if (sheetRunID != gb$runID) {
-      message("Batch ID in sheet is: ", sheetRunID)
-      message("Batch ID provided is: ", gb$runID)
-      stopifnot(sheetRunID == gb$runID)
+        message("Batch ID in sheet is: ", sheetRunID)
+        message("Batch ID provided is: ", gb$runID)
+        stopifnot(sheetRunID == gb$runID)
     }
+
     runID <- paste0(data$RunID[1])
+    cntrl <- which(stringr::str_detect(
+        data[, 1], pattern = regex('control', ignore_case = T)))
 
-
-    cntrl <- which(data[, 1] %like% 'control')
     if (length(cntrl) >= 1) {
         control_sams <- data[cntrl, 1]
+        control_sams <- paste(gb$runID, control_sams, sep = "_")
         control_sams <- make.unique(control_sams, sep = "_")
+        data[cntrl, 1] <- control_sams
         for (sam in control_sams) {
-          CreateRedcapRecord(runID, sam)
+            CreateRedcapRecord(runID, sam)
         }
     }
 
@@ -755,8 +747,13 @@ makeReports.v11b6 <- function(runPath = NULL,
         cpReport = F; redcapUp = F; email = F
     }
     if (redcapUp == T) {
-        file.list <- dir(pattern = ".html", full.names = T)
-        # if (length(file.list) > 0) gb$uploadToRedcap(file.list, T)
+        #file.list <- dir(pattern = ".html", full.names = T)
+        if (file.exists(gb$UPLOAD_LOG_TSV)) {
+            file.list <- read.table(gb$UPLOAD_LOG_TSV)[,1]
+            if (length(file.list) > 0) {
+                gb$uploadToRedcap(file.list, T)
+            }
+        }
     }
     if (email == T) {
         RenameFailed(qcVals)
@@ -774,7 +771,7 @@ checkMounts <- function() {
     msgFunName(pipeLnk,"checkMounts")
     failMount <- lapply(critialMnts, function(driveMount) {
         ifelse(!dir.exists(driveMount), return(T), return(F))
-        })
+    })
     if (any(failMount == T)) {
         toFix <- paste(critialMnts[which(failMount == T)])
         cat("PATH does not exist, ensure network drive is mounted:",
@@ -795,7 +792,7 @@ CheckBaseDir <- function(baseFolder) {
             "/Volumes/CBioinformatics/Methylation/Clinical_Runs"
     } else{
         gb$baseDir <- gb$methDir <- gb$baseFolder <- baseFolder
-        }
+    }
     isDesktop <- stringr::str_detect(baseFolder, "Desktop")
     if (length(isDesktop) != 0)
         if (is.null(baseFolder) & isDesktop == T) {
