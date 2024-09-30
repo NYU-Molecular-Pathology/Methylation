@@ -112,8 +112,6 @@ clear_enviro <- function(){
 set_gfortran <- function() {
     gfortran_path <- Sys.which("gfortran")[[1]]
     Sys.setenv(FC = gfortran_path)
-    Sys.setenv(FLIBS = "-L/usr/local/lib/gcc/current")
-
 }
 
 
