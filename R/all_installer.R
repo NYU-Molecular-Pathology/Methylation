@@ -46,6 +46,13 @@ module_exists <- function(module_name) {
     }
 }
 
+getBrewDir <- function(module_name) {
+    brew_cmd <- paste("brew --prefix", module_name)
+    module_path <- tryCatch(system(brew_cmd, intern = TRUE, ignore.stderr = TRUE),
+                            error = function(e) NULL,
+                            warning = function(e) NULL)
+    return(module_path)
+}
 
 # FUN: Checks if system compilers installed -----------------------------------
 check_brew_pkgs <- function(){
@@ -68,7 +75,7 @@ check_brew_pkgs <- function(){
     }
     # Check if open-mpi installed
     mpi_path <- getBrewDir("open-mpi")
-    if (is.null(mpi_installed)) {
+    if (is.null(mpi_path)) {
         brew_install("open-mpi")
     }
     # Check if GDAL installed
@@ -78,9 +85,10 @@ check_brew_pkgs <- function(){
         brew_install("gdal")
     }
     # Check if proj installed
-    proj_check <- tryCatch(system("which proj", intern = T, ignore.stderr = T),
-                           error = function(e) return(FALSE),
-                           warning = function(w) return(FALSE)
+    proj_check <- tryCatch(
+        system("which proj", intern = T, ignore.stderr = T),
+        error = function(e) return(FALSE),
+        warning = function(w) return(FALSE)
                            )
     if (proj_check == F) {
         brew_install("pkg-config")
@@ -159,15 +167,6 @@ update_system_path <- function() {
     Sys.setenv(LIBRARY_PATH = paste("/usr/local/lib", Sys.getenv("LIBRARY_PATH"), sep = ":"))
 }
 
-
-# Functions as previously defined
-getBrewDir <- function(module_name) {
-    brew_cmd <- paste("brew --prefix", module_name)
-    module_path <- tryCatch(system(brew_cmd, intern = TRUE, ignore.stderr = TRUE),
-                            error = function(e) NULL,
-                            warning = function(e) NULL)
-    return(module_path)
-}
 
 locate_mod <- function(module_name) {
     locate_cmd <- paste("locate", module_name)
