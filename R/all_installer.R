@@ -127,7 +127,7 @@ set_gfortran <- function() {
 set_openmpi <- function() {
     prte_path <- locate_mod("/bin/prte")
     orte_path <- locate_mod("/bin/orted")
-    if (file.exists(prte_path) & file.exists(orte_path)) {
+    if (length(prte_path) > 0 & length(orte_path) > 0) {
         ln_cmd <- paste("ln -s", prte_path, orte_path)
         try(system(ln_cmd, wait = T), T)
     }
