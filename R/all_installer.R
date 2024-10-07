@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 ## Script name: all_installer.R
-## Purpose: Functions to check if all required packages for the pipeline are installed
+## Purpose: Functions to check if required packages are installed
 ## Date Created: August 9, 2022
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
@@ -14,7 +14,7 @@ options(Ncpus = 4)
 is_macos <- Sys.info()[['sysname']] == "Darwin"
 
 if (getRversion() <= "4.2.2") {
-    stop("Your R version is ", R.version.string, ". Please update to R version 4.4.0 or later.")
+    stop("Your R version is ", R.version.string, ". Update to 4.4.0 or later.")
 }
 
 # FUN: Check if brew installed ------------------------------------------------
@@ -100,6 +100,17 @@ check_brew_pkgs <- function(){
 }
 
 
+locate_mod <- function(module_name) {
+    locate_cmd <- paste("locate", module_name)
+    module_path <- system(locate_cmd, intern = TRUE)
+    if (length(module_path) > 1) {
+        match_paths <- grep(paste0(module_name, "$"), module_path, value = TRUE)
+        module_path <- match_paths[1]
+    }
+    return(module_path)
+}
+
+
 # FUN: Clears system environment flags ----------------------------------------
 clear_enviro <- function(){
     Sys.setenv(CC = "")
@@ -146,7 +157,7 @@ set_openmpi <- function() {
 update_system_path <- function() {
     user_shell <- Sys.getenv("SHELL")
 
-    shell_config_file <- if (grepl("zsh", user_shell)) {
+    shell_config <- if (grepl("zsh", user_shell)) {
         path.expand("~/.zshrc")
     } else if (grepl("bash", user_shell)) {
         if (file.exists(path.expand("~/.bash_profile"))) {
@@ -155,28 +166,26 @@ update_system_path <- function() {
             path.expand("~/.bashrc")
         }
     } else {
-        stop("Your shell is not supported for automatic PATH updates by this script.")
+        stop("Your shell does not support automatic PATH updates!")
     }
-    path_command <- sprintf('echo "export PATH=\\"/usr/local/sbin:$PATH\\"" >> %s', shell_config_file)
-    if (system(path_command, intern = FALSE) == 0) {
-        message(sprintf("Updated %s to include /usr/local/sbin in PATH.", shell_config_file))
+
+    profile_contents <- readLines(shell_config)
+    contains_sbin <- any(grepl("/usr/local/sbin", profile_contents))
+    path_command <- sprintf('echo "export PATH=\\"/usr/local/sbin:$PATH\\"" >> %s', shell_config)
+
+    if (!contains_sbin) {
+        system(path_command, intern = FALSE)
+        message(sprintf(
+            "Updated %s to include /usr/local/sbin in PATH.", shell_config))
     } else {
-        warning("Failed to update the PATH in the shell configuration file.")
+        message("PATH already contains sbin in configuration file.")
     }
     Sys.setenv(PATH = paste("/usr/local/bin", Sys.getenv("PATH"), sep = ":"))
     Sys.setenv(LIBRARY_PATH = paste("/usr/local/lib", Sys.getenv("LIBRARY_PATH"), sep = ":"))
 }
 
 
-locate_mod <- function(module_name) {
-    locate_cmd <- paste("locate", module_name)
-    module_path <- system(locate_cmd, intern = TRUE)
-    if (length(module_path) > 1) {
-        match_paths <- grep(paste0(module_name, "$"), module_path, value = TRUE)
-        module_path <- match_paths[1]
-    }
-    return(module_path)
-}
+
 
 # FUN: Sets system compiler flags ---------------------------------------------
 fix_compiler_flags <- function(){
@@ -200,28 +209,28 @@ fix_compiler_flags <- function(){
     Sys.setenv(CXX17 = file.path(llvm_path, "bin/clang++"))
     Sys.setenv(CXX1X = file.path(llvm_path, "bin/clang++"))
     Sys.setenv(OBJC = file.path(llvm_path, "bin/clang"))
-    
+
     Sys.setenv(LDFLAGS = paste0(
         "-L", file.path(llvm_path, "lib"),
         " -L", file.path(llvm_path, "lib/c++"),
         " -Wl,-rpath,", file.path(llvm_path, "lib/c++")
     ))
-    
+
     Sys.setenv(CPPFLAGS = paste0("-I", file.path(llvm_path, "include")))
-    
+
     Sys.setenv(PKG_CFLAGS = paste0(
         "-I/usr/local/include -I", file.path(llvm_path, "include"),
         " -I", file.path(arrow_dir, "include")
     ))
-    
+
     Sys.setenv(PKG_LIBS = paste0(
         "-L/usr/local/lib -L", file.path(llvm_path, "lib"),
         " -L", file.path(arrow_dir, "lib"),
         " -larrow"
     ))
-    
+
     Sys.setenv(LD_LIBRARY_PATH = "/usr/local/lib")
-    
+
     Sys.setenv(R_LD_LIBRARY_PATH = paste0(
         "/usr/local/lib:", file.path(llvm_path, "lib/c++")
     ))
@@ -230,7 +239,7 @@ fix_compiler_flags <- function(){
     set_openmpi()
     set_gfortran()
     system("brew cleanup")
-    update_system_path()
+    #update_system_path()
     mpi_path <- getBrewDir("open-mpi")
     curr <- paste(file.path(llvm_path, "bin"), Sys.getenv("PATH"), sep = ":")
     Sys.setenv(PATH = paste(file.path(mpi_path, "bin"), curr, sep = ":"))
@@ -257,7 +266,7 @@ update_makevars <- function() {
     gcc_dir <- getBrewDir("gcc")
     gtran_path <- locate_mod("/bin/gfortran")
     flib_dir <- locate_mod("/lib/gcc/current")
-    
+
     # Dynamically constructing the compiler settings vector using file paths
     compiler_settings <- c(
         paste0("CC = ", file.path(llvm_path, "bin/clang")),
@@ -356,8 +365,8 @@ binary_install <- function(pkg) {
     }
 }
 
-bin_pkgs <- c("curl", "jsonlite", "mime", "openssl", "R6", 
-              "covr", "httpuv", "jpeg", "knitr", "png", 
+bin_pkgs <- c("curl", "jsonlite", "mime", "openssl", "R6",
+              "covr", "httpuv", "jpeg", "knitr", "png",
               "readr", "rmarkdown", "testthat", "xml2")
 
 
@@ -493,7 +502,7 @@ checkNeeds <- function() {
     )
 }
 
-deps_url <- 
+deps_url <-
     "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Meth_Scripts/get_dependencies.R"
 
 devtools::source_url(deps_url)
