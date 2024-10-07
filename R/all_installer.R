@@ -17,6 +17,10 @@ if (getRversion() <= "4.2.2") {
     stop("Your R version is ", R.version.string, ". Update to 4.4.0 or later.")
 }
 
+supM <- function(pk) {
+    return(suppressPackageStartupMessages(suppressWarnings(pk)))
+}
+
 # FUN: Check if brew installed ------------------------------------------------
 install_homebrew <- function() {
     message("Homebrew is not installed. Installing Homebrew...")
@@ -353,7 +357,7 @@ checkPkg <- function(pkgName) {
 }
 
 binary_install <- function(pkg) {
-    if (!requireNamespace(pkg, quietly = TRUE)){
+    if (!requireNamespace(pkg, quietly = TRUE)) {
         tryCatch(
         install.packages(pkg, dependencies = T, ask = F, type = "binary"),
             error = function(e){
@@ -370,7 +374,7 @@ bin_pkgs <- c("curl", "jsonlite", "mime", "openssl", "R6",
               "readr", "rmarkdown", "testthat", "xml2")
 
 
-for (pkg in bin_pkgs){
+for (pkg in bin_pkgs) {
     if (checkPkg(pkg)) {
         install.packages(pkg, ask = F, dependencies = T, type = 'binary')
     }
@@ -438,7 +442,7 @@ local_github_pkg_install <- function(git_repo) {
 
 
 # FUN: Installs package from a Github repository ------------------------------
-install_repo <- function(git_repo){
+install_repo <- function(git_repo) {
     tryCatch(
         expr = {
             devtools::install_github(
@@ -455,7 +459,7 @@ install_repo <- function(git_repo){
 
 
 # FUN: TryCatch for installing with devtools and install.packages -------------
-try_github_inst <- function(git_repo){
+try_github_inst <- function(git_repo) {
     message("Installing from repo: ", git_repo)
     tryCatch(
         expr = {
@@ -502,15 +506,57 @@ checkNeeds <- function() {
     )
 }
 
+
+load_install <- function(pkg_list) {
+    message("Loading packages:\n", paste0(capture.output(pkg_list), collapse = "\n"))
+    librarian::shelf(pkg_list, ask = F, update_all = F, quiet = F, dependencies = T)
+    missing_pkgs <- pkg_list[!(pkg_list %in% rownames(installed.packages()))]
+    if (length(missing_pkgs) > 0) {
+        for (pkg_missed in missing_pkgs) {
+            tryCatch(
+                expr = {
+                    BiocManager::install(pkg_missed, update = F, ask = F, dependencies = T, type = "source")
+                },
+                error = {
+                    install.packages(pkg_missed, dependencies = T, verbose = T, type = "source", ask = F)
+                }
+            )
+        }
+    }
+}
+
+
+manual_bioc <- function(bio_pkg) {
+    if (checkPkg(bio_pkg)) {
+        install.packages(bio_pkg,
+                         repos = "http://bioconductor.org/packages/release/bioc",
+                         type = "binary",
+                         ask = F)
+    }
+    if (!loadLibrary(bio_pkg)) {
+        gb$try_github_inst(file.path("Bioconductor", bio_pkg))
+    }
+    if (!loadLibrary(bio_pkg)) {
+        BiocManager::install(bio_pkg, update = F, ask = F, dependencies = T)
+    }
+    loadLibrary(bio_pkg)
+}
+
 deps_url <-
     "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Meth_Scripts/get_dependencies.R"
 
 devtools::source_url(deps_url)
 
-# List Classifier Core Packages -------------------------------------------------------------------
-corePkgs <- c("randomForest", "glmnet", "ggplot2", "gridExtra", "knitr", "pander", "gmp")
+# List Classifier Core Packages -----------------------------------------------
+corePkgs <- c("randomForest",
+              "glmnet",
+              "ggplot2",
+              "gridExtra",
+              "knitr",
+              "pander",
+              "gmp")
 
-# List Prerequisite Packages ----------------------------------------------------------------------
+# List Prerequisite Packages --------------------------------------------------
 preReqPkgs <- c(
     'MASS',
     'ade4',
@@ -548,7 +594,6 @@ preReqPkgs <- c(
     'IRanges',
     'SummarizedExperiment',
     'genefilter',
-    #'IlluminaHumanMethylationEPICanno.ilm10b2.hg19',
     'DNAcopy',
     'rtracklayer',
     'Biostrings',
@@ -564,7 +609,7 @@ preReqPkgs <- c(
     'BiocParallel'
 )
 
-# List Remaining Packages -------------------------------------------------------------------------
+# List Remaining Packages -----------------------------------------------------
 pkgs <- c(
     "abind",
     "animation",
@@ -872,8 +917,6 @@ biocPkgs <- c(
     "IlluminaHumanMethylationEPICanno.ilm10b4.hg19"
 )
 
-# Load/install missing pacakges without asking ----------------------------------------------------
-supM <- function(pk) {return(suppressPackageStartupMessages(suppressWarnings(pk)))}
 
 if (checkPkg("mapview")) {
     tryCatch(
@@ -882,27 +925,17 @@ if (checkPkg("mapview")) {
     )
 }
 
-load_install <- function(pkg_list) {
-    message("Loading packages:\n", paste0(capture.output(pkg_list), collapse = "\n"))
-    librarian::shelf(pkg_list, ask = F, update_all = F, quiet = F, dependencies = T)
-    missing_pkgs <- pkg_list[!(pkg_list %in% rownames(installed.packages()))]
-    if (length(missing_pkgs) > 0) {
-        for (pkg_missed in missing_pkgs) {
-            tryCatch(
-                expr = {
-                    BiocManager::install(pkg_missed, update = F, ask = F, dependencies = T, type = "source")
-                },
-                error = {
-                    install.packages(pkg_missed, dependencies = T, verbose = T, type = "source", ask = F)
-                }
-            )
-        }
-    }
-}
-
 
 #load_install(corePkgs)
 gb$check_pkg_install(corePkgs)
+
+
+if (!requireNamespace("urca", quietly = T)) {
+    install.packages("urca", ask = F, dependencies = T, verbose = T)
+}
+
+library("urca")
+
 
 if (checkPkg("ff")) {
     install.packages("ff", type = "binary", ask = F, dependencies = T)
@@ -918,21 +951,7 @@ if (checkPkg("GenomeInfoDb")) {
     library("GenomeInfoDb")
 }
 
-manual_bioc <- function(bio_pkg) {
-    if (checkPkg(bio_pkg)) {
-        install.packages(bio_pkg,
-                         repos = "http://bioconductor.org/packages/release/bioc",
-                         type = "binary",
-                         ask = F)
-    }
-    if (!loadLibrary(bio_pkg)) {
-        gb$try_github_inst(file.path("Bioconductor", bio_pkg))
-    }
-    if (!loadLibrary(bio_pkg)) {
-        BiocManager::install(bio_pkg, update = F, ask = F, dependencies = T)
-    }
-    loadLibrary(bio_pkg)
-}
+any_failed <- gb$check_pkg_install(pkgs)
 
 manual_bioc("rhdf5")
 manual_bioc("Rhtslib")
@@ -941,7 +960,10 @@ manual_bioc("HDF5Array")
 manual_bioc("rhdf5filters")
 
 bio_url <- "https://cran.r-project.org/src/contrib/Hmisc_5.1-3.tar.gz"
-install.packages(bio_url, repos = NULL, type = "source", ask = F, dependencies = T)
+if (!requireNamespace("Hmisc", quietly = T)) {
+    install.packages(bio_url, repos = NULL, type = "source", ask = F, dependencies = T)
+}
+
 
 if (checkPkg("karyoploteR")) {
     if (arch != "x86_64") {
@@ -1079,8 +1101,7 @@ if (checkPkg("FField")) {
 if (checkPkg("GenVisR")) {
     try_github_inst("griffithlab/GenVisR")
 }
-install.packages("urca", ask = F, dependencies = T, verbose = T)
-library("urca")
+
 arm_bin <- "https://cran.r-project.org/bin/macosx/big-sur-arm64/contrib/4.4/forecast_8.23.0.tgz"
 x64_bin <- "https://cran.r-project.org/bin/macosx/big-sur-x86_64/contrib/4.4/forecast_8.23.0.tgz"
 
@@ -1101,10 +1122,11 @@ if (arch != "x86_64") {
         dependencies = T
     )
 }
+
 if (checkPkg("quantreg")) {
     install.packages('quantreg', ask = F, type = 'binary', dependencies = T)
 }
-any_failed <- gb$check_pkg_install(pkgs)
+
 
 invisible(gc())
 
