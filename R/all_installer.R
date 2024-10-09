@@ -43,8 +43,8 @@ brew_install <- function(pkg){
 module_exists <- function(module_name) {
     mod_vers <- paste(module_name, "--version")
     mod_check <- tryCatch(system(mod_vers, intern = TRUE, ignore.stderr = TRUE),
-                           error = function(e) return(FALSE),
-                           warning = function(w) return(FALSE)
+                          error = function(e) return(FALSE),
+                          warning = function(w) return(FALSE)
     )
     if (mod_check == FALSE) {
         return(FALSE)
@@ -96,14 +96,14 @@ check_brew_pkgs <- function(){
         system("which proj", intern = T, ignore.stderr = T),
         error = function(e) return(FALSE),
         warning = function(w) return(FALSE)
-                           )
+    )
     if (proj_check == F) {
         brew_install("pkg-config")
         brew_install("proj")
     }
 
     clear_cmd <- "brew update && brew doctor && rm -rf $(brew --cache)"
-    system(clear_cmd, wait = TRUE)
+    #system(clear_cmd, wait = TRUE)
 }
 
 
@@ -191,15 +191,12 @@ update_system_path <- function() {
     Sys.setenv(LIBRARY_PATH = paste("/usr/local/lib", Sys.getenv("LIBRARY_PATH"), sep = ":"))
 }
 
-
-
-
 # FUN: Sets system compiler flags ---------------------------------------------
 fix_compiler_flags <- function(){
     check_brew_pkgs()
-    system("brew upgrade && brew update", intern = T, ignore.stderr = T)
-    system("brew doctor", intern = T, ignore.stderr = T)
-    system("brew cleanup", intern = T, ignore.stderr = T)
+    #system("brew upgrade && brew update", intern = T, ignore.stderr = T)
+    #system("brew doctor", intern = T, ignore.stderr = T)
+    #system("brew cleanup", intern = T, ignore.stderr = T)
     clear_enviro()
 
     # Get paths dynamically using the previously defined functions
@@ -245,7 +242,7 @@ fix_compiler_flags <- function(){
 
     set_openmpi()
     set_gfortran()
-    system("brew cleanup")
+    #system("brew cleanup")
     #update_system_path()
     mpi_path <- getBrewDir("open-mpi")
     curr <- paste(file.path(llvm_path, "bin"), Sys.getenv("PATH"), sep = ":")
@@ -298,6 +295,7 @@ update_makevars <- function() {
         paste0("R_LD_LIBRARY_PATH = /usr/local/lib:",
                file.path(llvm_path, "lib/c++"))
     )
+    if (file.exists(makevars_path)) file.remove(makevars_path)
     dir.create(dirname(makevars_path), showWarnings = F, recursive = T)
     writeLines(compiler_settings, makevars_path)
 }
@@ -466,7 +464,7 @@ quiet_load <- function(pkg_name) {
     ))
     message(pkg_name, " loaded... ", libLoad)
     pkg_vec <- c(pkg_n = libLoad)
-    names(pkg_vec) <-pkg_name
+    names(pkg_vec) <- pkg_name
     return(pkg_vec)
 }
 
@@ -650,7 +648,7 @@ if (is_macos) {
     options(repos = rlis)
     fix_compiler_flags()
     update_makevars()
-    system("export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib")
+    #system("export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib")
 }
 
 # Check if architecture is 'arm64' or 'x86_64' --------------------------------
@@ -659,11 +657,13 @@ arch <- Sys.info()[["machine"]]
 if (arch != "x86_64" & is_macos == T) {
     # Set JAVA_HOME environment variable
     #java_home <- system("/usr/libexec/java_home -v 11", intern = TRUE)
-    system("brew tap homebrew/cask-versions && brew install --cask temurin17")
+    #system("brew tap homebrew/cask-versions && brew install --cask temurin17")
     java_home <- system("which java", intern = TRUE)
     Sys.setenv(JAVA_HOME = java_home)
     message("JAVA_HOME set to ", java_home)
-    try(install.packages("rJava", type = "binary", dependencies = T, ask = F), T)
+    if (!requireNamespace("rJava", quietly = T)) {
+        try(install.packages("rJava", type = "binary", dependencies = T, ask = F), T)
+    }
 }
 
 bin_pkgs <- c(
@@ -741,7 +741,6 @@ preReqPkgs <- c(
     'XML',
     'bit64',
     'plyr',
-    'base64',
     'GenomicAlignments',
     'readr',
     'dplyr',
@@ -860,7 +859,6 @@ pkgs <- c(
     "fastmap",
     "fBasics",
     "fontawesome",
-    "forecast",
     "foreign",
     "formattable",
     "Formula",
@@ -1093,15 +1091,11 @@ if (checkPkg("mapview")) {
 }
 
 
-check_pkg_install(corePkgs)
-
+any_failed0 <- check_pkg_install(corePkgs)
 
 if (checkPkg("urca")) {
     install.packages("urca", ask = F, dependencies = T, verbose = T)
 }
-
-any_failed <- gb$check_pkg_install(pkgs)
-
 library("urca")
 
 manual_bioc("rhdf5")
@@ -1109,10 +1103,6 @@ manual_bioc("Rhtslib")
 manual_bioc("Rhdf5lib")
 manual_bioc("HDF5Array")
 manual_bioc("rhdf5filters")
-
-if (checkPkg("ff")) {
-    install.packages("ff", type = "binary", ask = F, dependencies = T)
-}
 
 if (checkPkg("GenomeInfoDbData")) {
     gb$try_github_inst("Bioconductor/GenomeInfoDbData")
@@ -1124,13 +1114,14 @@ if (checkPkg("GenomeInfoDb")) {
     library("GenomeInfoDb")
 }
 
-
+if (checkPkg("ff")) {
+    install.packages("ff", type = "binary", ask = F, dependencies = T)
+}
 
 bio_url <- "https://cran.r-project.org/src/contrib/Hmisc_5.1-3.tar.gz"
 if (!requireNamespace("Hmisc", quietly = T)) {
     install.packages(bio_url, repos = NULL, type = "source", ask = F, dependencies = T)
 }
-
 
 if (checkPkg("karyoploteR")) {
     bio_url <- "https://www.bioconductor.org/packages/release/bioc/bin/macosx"
@@ -1266,27 +1257,26 @@ if (checkPkg("FField")) {
     )
 }
 
+if (checkPkg("vdiffr")) {
+    install.packages("vdiffr", dependencies = T, ask = F, type = "binary")
+}
+manual_bioc("UCSC.utils")
+
 if (checkPkg("GenVisR")) {
+    manual_bioc("VariantAnnotation")
     try_github_inst("griffithlab/GenVisR")
 }
 
-cran_url <- "https://cran.r-project.org/bin/macosx"
-forcast_pkg <- "forecast_8.23.0.tgz"
-
-arm_bin <- file.path(cran_url, "big-sur-arm64/contrib/4.4", forcast_pkg)
-x64_bin <- file.path(cran_url, "big-sur-x86_64/contrib/4.4", forcast_pkg)
-
-if (arch != "x86_64") {
+if (checkPkg("forecast")) {
+    cran_url <- "https://cran.r-project.org/bin/macosx"
+    forcast_pkg <- "forecast_8.23.0.tgz"
+    if (arch != "x86_64") {
+        pkg_bin <- file.path(cran_url, "big-sur-arm64/contrib/4.4", forcast_pkg)
+    } else {
+        pkg_bin <- file.path(cran_url, "big-sur-x86_64/contrib/4.4", forcast_pkg)
+    }
     install.packages(
-        arm_bin,
-        repos = NULL,
-        type = "source",
-        ask = F,
-        dependencies = T
-    )
-} else {
-    install.packages(
-        x64_bin,
+        pkg_bin,
         repos = NULL,
         type = "source",
         ask = F,
@@ -1298,6 +1288,7 @@ if (checkPkg("quantreg")) {
     install.packages('quantreg', ask = F, type = 'binary', dependencies = T)
 }
 
+any_failed <- gb$check_pkg_install(pkgs)
 
 invisible(gc())
 
@@ -1321,6 +1312,5 @@ if (checkPkg("UniD")) {
     unidPath <- file.path(class_pkg_path, "UniD")
     try(install.packages(unidPath, type = "source", repos = NULL), silent = T)
 }
-
 
 devtools::source_url(file.path(github_main, "R", "LoadInstallPackages.R"))
