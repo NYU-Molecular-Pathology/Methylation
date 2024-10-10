@@ -571,7 +571,7 @@ startLoadingAll <- function() {
     if (Sys.info()[['sysname']] == "Darwin") {
         #checkClassifier(mnpV4)
         #checkClassifier(mnpV6)
-        #checkClassifier(mnpV12)
+        checkClassifier(mnpV12)
         checkClassifier(srcV12)
         check_uniD_pkg(typeSrc)
         checkEpicV2()
