@@ -661,7 +661,9 @@ if (is_macos) {
 
 # Check if architecture is 'arm64' or 'x86_64' --------------------------------
 arch <- Sys.info()[["machine"]]
-
+if (!requireNamespace("rJava", quietly = T)) {
+    try(install.packages("rJava", type = "binary", dependencies = T, ask = F), T)
+}
 if (arch != "x86_64" & is_macos == T) {
     # Set JAVA_HOME environment variable
     #java_home <- system("/usr/libexec/java_home -v 11", intern = TRUE)
@@ -669,9 +671,6 @@ if (arch != "x86_64" & is_macos == T) {
     java_home <- system("which java", intern = TRUE)
     Sys.setenv(JAVA_HOME = java_home)
     message("JAVA_HOME set to ", java_home)
-    if (!requireNamespace("rJava", quietly = T)) {
-        try(install.packages("rJava", type = "binary", dependencies = T, ask = F), T)
-    }
 }
 
 bin_pkgs <- c(
