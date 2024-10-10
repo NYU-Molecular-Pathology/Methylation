@@ -361,6 +361,8 @@ NameControl <- function(data, runId) {
             return(data)
         }
         control_sams <- data[cntrl, 1]
+        isNamed <- stringr::str_detect(string = control_sams, pattern = runId)
+        if (any(isNamed)) return (control_sams)
         control_sams <- paste(runId, control_sams, sep = "_")
         control_sams <- make.unique(control_sams, sep = "_")
         data[cntrl, 1] <- control_sams
@@ -703,7 +705,6 @@ makeReports.v11b6 <- function(runPath = NULL,
     library("data.table")
     assign("genCn", genCn, envir = gb)
     data <- utils::read.csv(sheetName, strip.white = T)
-
     toKeep <- !(is.na(data[, 1]) | data[, 1] == 0 | data[, 1] == "")
     if (any(!toKeep)) {
         data <- data[toKeep, , drop = FALSE]
@@ -720,12 +721,14 @@ makeReports.v11b6 <- function(runPath = NULL,
     runID <- paste0(data$RunID[1])
     cntrl <- which(stringr::str_detect(
         data[, 1], pattern = regex('control', ignore_case = T)))
-
     if (length(cntrl) >= 1) {
         control_sams <- data[cntrl, 1]
-        control_sams <- paste(gb$runID, control_sams, sep = "_")
-        control_sams <- make.unique(control_sams, sep = "_")
-        data[cntrl, 1] <- control_sams
+        isNamed <- stringr::str_detect(string = control_sams, pattern = runId)
+        if (!any(isNamed)) {
+            control_sams <- paste(gb$runID, control_sams, sep = "_")
+            control_sams <- make.unique(control_sams, sep = "_")
+            data[cntrl, 1] <- control_sams
+        }
         for (sam in control_sams) {
             CreateRedcapRecord(runID, sam)
         }
