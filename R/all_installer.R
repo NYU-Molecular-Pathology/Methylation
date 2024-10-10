@@ -80,6 +80,11 @@ check_brew_pkgs <- function() {
     if (is.null(llvm_path)) {
         brew_install("llvm")
     }
+    # Check if LLD installed
+    lld_path <- getBrewDir("lld")
+    if (is.null(lld_path)) {
+        brew_install("lld")
+    }
     # Check if open-mpi installed
     mpi_path <- getBrewDir("open-mpi")
     if (is.null(mpi_path)) {
@@ -153,8 +158,12 @@ set_openmpi <- function() {
     mpi_path <- getBrewDir("open-mpi")
     mpi_libs <- paste0("-L", mpi_path, "/lib")
     mpi_flag <- paste(mpi_libs, Sys.getenv("LDFLAGS"))
-    Sys.setenv(LDFLAGS = mpi_flag)
-
+    curr_flags <- Sys.getenv("LDFLAGS")
+    if (curr_flags != "") {
+        Sys.setenv(LDFLAGS = paste(curr_flags, mpi_flag))
+    } else {
+        Sys.setenv(LDFLAGS = mpi_flag)
+    }
     cpp_libs <-  paste0("-I", mpi_path,"include")
     cpp_flag <- paste(cpp_libs, Sys.getenv("CPPFLAGS"))
     Sys.setenv(CPPFLAGS = cpp_flag)
@@ -217,7 +226,8 @@ fix_compiler_flags <- function() {
     Sys.setenv(LDFLAGS = paste0(
         "-L", file.path(llvm_path, "lib"),
         " -L", file.path(llvm_path, "lib/c++"),
-        " -Wl,-rpath,", file.path(llvm_path, "lib/c++")
+        " -Wl,-rpath,", file.path(llvm_path, "lib/c++"),
+        " -L", file.path(llvm_path, "lib/unwind -lunwind")
     ))
 
     Sys.setenv(CPPFLAGS = paste0("-I", file.path(llvm_path, "include")))
