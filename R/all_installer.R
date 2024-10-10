@@ -581,7 +581,7 @@ check_pkg_install <- function(pkgs) {
             if (new_pkg %in% avail_bioc_packs) {
                 check_bio_install(new_pkg)
             } else {
-                install_pkgs(new_pkg)
+                try_install(new_pkg)
             }
         }
     }
@@ -716,13 +716,15 @@ stopifnot(loadLibrary("Biobase"))
 
 
 # List Classifier Core Packages -----------------------------------------------
-corePkgs <- c("randomForest",
-              "glmnet",
-              "ggplot2",
-              "gridExtra",
-              "knitr",
-              "pander",
-              "gmp")
+corePkgs <- c(
+    "randomForest",
+    "glmnet",
+    "ggplot2",
+    "gridExtra",
+    "knitr",
+    "pander",
+    "gmp"
+)
 
 # List Prerequisite Packages --------------------------------------------------
 preReqPkgs <- c(
@@ -823,6 +825,7 @@ pkgs <- c(
     "cmprsk",
     "cn.mops",
     "codetools",
+    "coro",
     "colorspace",
     "commonmark",
     "compiler",
@@ -1103,12 +1106,12 @@ manual_bioc("HDF5Array")
 manual_bioc("rhdf5filters")
 
 if (checkPkg("GenomeInfoDbData")) {
-    gb$try_github_inst("Bioconductor/GenomeInfoDbData")
+    try_github_inst("Bioconductor/GenomeInfoDbData")
     requireNamespace("GenomeInfoDbData")
 }
 
 if (checkPkg("GenomeInfoDb")) {
-    gb$try_github_inst("Bioconductor/GenomeInfoDb")
+    try_github_inst("Bioconductor/GenomeInfoDb")
     library("GenomeInfoDb")
 }
 
@@ -1310,7 +1313,7 @@ if (checkPkg("quantreg")) {
     install.packages('quantreg', ask = F, type = 'binary', dependencies = T)
 }
 
-any_failed <- gb$check_pkg_install(pkgs)
+any_failed <- check_pkg_install(pkgs)
 
 invisible(gc())
 
