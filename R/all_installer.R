@@ -35,7 +35,7 @@ install_homebrew <- function() {
 
 
 # FUN: Install system package using homebrew ----------------------------------
-brew_install <- function(pkg){
+brew_install <- function(pkg) {
     message(pkg, " is not installed! Installing ", pkg, " via Homebrew...")
     system(paste("brew install", pkg), intern = TRUE, wait = TRUE)
 }
@@ -62,7 +62,7 @@ getBrewDir <- function(module_name) {
 }
 
 # FUN: Checks if system compilers installed -----------------------------------
-check_brew_pkgs <- function(){
+check_brew_pkgs <- function() {
     # Check if brew installed
     brew_installed <- module_exists("brew")
     if (!brew_installed) {
@@ -119,7 +119,7 @@ locate_mod <- function(module_name) {
 
 
 # FUN: Clears system environment flags ----------------------------------------
-clear_enviro <- function(){
+clear_enviro <- function() {
     Sys.setenv(CC = "")
     Sys.setenv(CFLAGS = "")
     Sys.setenv(CXX = "")
@@ -192,7 +192,7 @@ update_system_path <- function() {
 }
 
 # FUN: Sets system compiler flags ---------------------------------------------
-fix_compiler_flags <- function(){
+fix_compiler_flags <- function() {
     check_brew_pkgs()
     #system("brew upgrade && brew update", intern = T, ignore.stderr = T)
     #system("brew doctor", intern = T, ignore.stderr = T)
@@ -238,8 +238,6 @@ fix_compiler_flags <- function(){
     Sys.setenv(R_LD_LIBRARY_PATH = paste0(
         "/usr/local/lib:", file.path(llvm_path, "lib/c++")
     ))
-
-
     set_openmpi()
     set_gfortran()
     #system("brew cleanup")
@@ -340,7 +338,7 @@ binary_install <- function(pkg) {
     if (!requireNamespace(pkg, quietly = TRUE)) {
         tryCatch(
             install.packages(pkg, dependencies = T, ask = F, type = "binary"),
-            error = function(e){
+            error = function(e) {
                 message(e)
                 message("trying to install as source")
                 install.packages(pkg, dependencies = T, ask = F)
@@ -370,7 +368,7 @@ local_github_pkg_install <- function(git_repo) {
         expr = {
             download_pkg_unzip(git_repo, zip_name = "main.zip")
         },
-        error = function(e){
+        error = function(e) {
             download_pkg_unzip(git_repo, zip_name = "master.zip")
         }
     )
@@ -490,7 +488,7 @@ pkg_info <- utils::available.packages(repos = biocRepos)
 
 
 # FUN: Returns all packages that are not installed ----------------------------
-check_needed <- function(pkgs){
+check_needed <- function(pkgs) {
     return(pkgs[!sapply(pkgs, requireNamespace, quietly = TRUE)])
 }
 
@@ -527,7 +525,7 @@ install_bio_pkg <- function(pkg_deps) {
         message("Installing BioCpackage dependency:")
         tryCatch(
             do.call(BiocManager::install, c(list(pkgs = pkg), params)),
-            error = function(e){
+            error = function(e) {
                 params$type <- "binary"
                 do.call(BiocManager::install, c(list(pkgs = pkg), params))
             }
@@ -562,7 +560,7 @@ try_install <- function(new_pkg) {
         message("The following missing dependencies will be installed:\n",
                 paste(pkg_deps, collapse = "\n"))
         for (pkg in pkg_deps) {
-            if (pkg %in% avail_bioc_packs){
+            if (pkg %in% avail_bioc_packs) {
                 check_bio_install(pkg)
             } else {
                 install_pkgs(pkg)
@@ -580,7 +578,7 @@ check_pkg_install <- function(pkgs) {
         message("The following missing packages will be installed:\n",
                 paste(pkgs_needed, collapse = "\n"))
         for (new_pkg in pkgs_needed) {
-            if (new_pkg %in% avail_bioc_packs){
+            if (new_pkg %in% avail_bioc_packs) {
                 check_bio_install(new_pkg)
             } else {
                 install_pkgs(new_pkg)
@@ -1187,6 +1185,30 @@ if (checkPkg("fields")) {
 }
 
 if (checkPkg("RnBeads")) {
+    install.packages("gplots", type = "binary", dependencies = T, ask = F)
+    rn_deps <- c(
+        "BiocGenerics",
+        "S4Vectors",
+        "GenomicRanges",
+        "MASS",
+        "cluster",
+        "fields",
+        "ggplot2",
+        "grid",
+        "gridExtra",
+        "limma",
+        "matrixStats",
+        "methods",
+        "illuminaio",
+        "methylumi",
+        "plyr",
+        "IRanges"
+    )
+    for (dp in rn_deps) {
+        if (checkPkg(dp)) {
+            try_install(dp)
+        }
+    }
     manual_bioc("RnBeads")
 }
 
