@@ -343,7 +343,7 @@ msg_code "/gpfs/data/molecpathlab/scripts/bash_helpers/deploy_607_submit.sh ${pa
 #msg_step 3 "#ffffba" "Update and then submit the slurm job and check your logs using squeue -u ${kerbero} && lt logs/*"
 #msg_code "make update && make submit"
 #msg_code "squeue -u ${kerbero} && lt logs/*"
-msg_step 3 "#ffffba" "ssh pgm@pgmlcdcpvm01.nyumc.org to the isg-uploads folder to ensure the files are accessible and check the pgm log to verify uploading to Philips every 30 min"
+msg_step 3 "#ffffba" "ssh pgm@pgmapllcdcpvm01.nyumc.org to the isg-uploads folder to ensure the files are accessible and check the pgm log to verify uploading to Philips every 30 min"
 #msg_code "chmod -R g+rwx ${productionDir}/isg-uploads/${runID}"
 #msg_code "ssh pgm@pgmlcdcpvm01.nyumc.org"
 #msg_note "NOTE:" "If you forget the pgm password, we have it saved in Evernote"
