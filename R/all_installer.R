@@ -1180,6 +1180,7 @@ if (checkPkg("IlluminaHumanMethylationEPICanno.ilm10b2.hg19")) {
 }
 
 if (checkPkg("minfi")) {
+    manual_bioc("sparseMatrixStats")
     try_github_inst("mwsill/minfi")
 }
 
