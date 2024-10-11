@@ -63,7 +63,7 @@ srcV12 <- data.frame(mnpVers = "sarc.v12b6", mnpPath = "sarc.v12b6", mnpNumb = "
 # Custom Classifier packages:
 if (isMacOS) {
     classPacks <- c(
-        sest = "https://github.com/jungch/sest/raw/master/sest.tar",
+       # sest = "https://github.com/jungch/sest/raw/master/sest.tar",
         mgmtstp27 = "https://github.com/badozor/mgmtstp27/raw/master/archive/mgmtstp27_0.6-3.tar.gz",
         mnpqc = paste0(file.path(cbioLn, "mnpqc_0.1.0.tar.gz"))
     )
