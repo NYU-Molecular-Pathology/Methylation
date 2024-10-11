@@ -723,7 +723,7 @@ makeReports.v11b6 <- function(runPath = NULL,
         data[, 1], pattern = regex('control', ignore_case = T)))
     if (length(cntrl) >= 1) {
         control_sams <- data[cntrl, 1]
-        isNamed <- stringr::str_detect(string = control_sams, pattern = runId)
+        isNamed <- stringr::str_detect(string = control_sams, pattern = runID)
         if (!any(isNamed)) {
             control_sams <- paste(gb$runID, control_sams, sep = "_")
             control_sams <- make.unique(control_sams, sep = "_")
