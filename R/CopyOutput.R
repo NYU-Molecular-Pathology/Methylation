@@ -790,7 +790,7 @@ rename_reorder_output <- function(output) {
 }
 
 
-CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull) {
+CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull, rcon) {
     msgFunName(cpOutLnk, "CheckOutputScoresQC")
     newCols <- colnames(redcap_db)
     library("dplyr")
@@ -813,7 +813,7 @@ CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull) {
         }
         redcap_dat <- as.data.frame(read.csv(find_redCsv))
         redcap_dat <- unique(redcap_dat)
-        
+        redcapAPI::importRecords(rcon, redcap_dat, "normal", "ids", logfile = "REDCapImportLog.txt")
         if (nrow(redcap_dat) != nrow(redcap_db)) {
             if (nrow(redcap_dat) > nrow(redcap_db)) {
             missing_sam <- which(!redcap_dat$record_id %in% redcap_db$record_id)
@@ -925,7 +925,7 @@ CombineClassAndQC <- function(output_fi = NULL, token, runDir = NULL, runID = NU
 
     redcap_db <- GrabSpecificRecords(flds = fieldsToPull, rd_num = output$RD.number, rcon)
 
-    output <- CheckOutputScoresQC(output, runID, redcap_db, fieldsToPull)
+    output <- CheckOutputScoresQC(output, runID, redcap_db, fieldsToPull, rcon)
     final_output <- rename_reorder_output(output)
     MsgDF(final_output)
     outFile <- file.path(runDir, paste(runID, "QC_and_Classifier_Scores.csv", sep = "_"))
