@@ -798,12 +798,12 @@ CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull) {
         output[col_id] <- ""
     }
     rownames(redcap_db) <- redcap_db$record_id
-
+    
     for (xrow in 1:nrow(output)) {
         currRow <- output$`RD.number`[xrow]
         output[xrow, newCols] <- redcap_db[currRow, newCols]
     }
-
+    
     totalNA <- which(is.na(output$classifier_value))
     if (length(totalNA) > 3) {
         find_redCsv <- dir(path = getwd(), pattern = "_Redcap.csv")[1]
@@ -812,12 +812,30 @@ CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull) {
             find_redCsv <- dir(path = desk_path, pattern = "_Redcap.csv")[1]
         }
         redcap_dat <- as.data.frame(read.csv(find_redCsv))
+        redcap_dat <- unique(redcap_dat)
+        
+        if (nrow(redcap_dat) != nrow(redcap_db)) {
+            if (nrow(redcap_dat) > nrow(redcap_db)) {
+            missing_sam <- which(!redcap_dat$record_id %in% redcap_db$record_id)
+            message("Sample is missing from REDCap Pull:",
+                    redcap_dat$record_id[missing_sam])
+                redcap_dat <- redcap_dat[-missing_sam,]
+                
+            }else{
+                missing_sam <- which(!redcap_db$record_id %in% redcap_dat$record_id)
+                message("Sample is missing from REDCap Pull:",
+                        redcap_db$record_id[missing_sam])
+                redcap_db <- redcap_db[-missing_sam,]
+            }
+            
+            
+        }
         redcap_dat$block <- redcap_db$block
         #redcap_dat$accession_number <- redcap_db[redcap_dat$record_id, "accession_number"]
         redcap_dat$diagnosis <- redcap_db[redcap_dat$record_id, "diagnosis"]
         redcap_dat$tm_number <- redcap_db$tm_number
         data_subset <- redcap_dat[ , fieldsToPull]
-
+        
         newCols <- c(
             "record_id",
             "subgroup_score",
@@ -835,32 +853,32 @@ CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull) {
         for (new_col in newCols) {
             output[, new_col] <- redcap_dat[, new_col]
         }
-
+        
         if (is.null(redcap_dat$tm_number)) {
             redcap_dat$tm_number <- redcap_dat$accession_number
         }
-
+        
         if (all(is.na(output$subgroup_score))) {
             output$subgroup_score <- redcap_dat$subgroup_score
         }
-
+        
         if (all(is.na(output$classifier_score))) {
             output$classifier_score <- redcap_dat$classifier_score
         }
-
+        
         if (all(is.na(output$classifier_value))) {
             output$classifier_value <- redcap_dat$classifier_value
         }
-
+        
         if (all(is.na(output$subgroup))) {
             output$subgroup <- redcap_dat$subgroup
         }
-
+        
         filtered_output <- output %>% dplyr::select(-one_of(colnames(data_subset)))
         merged_data <- merge(filtered_output, data_subset, by.x = "RD.number",
                              by.y = "record_id")
         MsgDF(merged_data)
-
+        
         return(merged_data)
     } else {
         return(output)
