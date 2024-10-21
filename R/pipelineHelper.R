@@ -362,9 +362,11 @@ NameControl <- function(data, runId) {
         }
         control_sams <- data[cntrl, 1]
         isNamed <- stringr::str_detect(string = control_sams, pattern = runId)
-        if (any(isNamed)) return (control_sams)
+        if (!any(isNamed)) return (control_sams)
         control_sams <- paste(runId, control_sams, sep = "_")
-        control_sams <- make.unique(control_sams, sep = "_")
+        if (length(control_sams) > 1) {
+            control_sams <- make.unique(control_sams, sep = "_")
+        }
         data[cntrl, 1] <- control_sams
     } else{
         warning('No word "control" in RD-number found in samplesheet')
@@ -733,12 +735,15 @@ makeReports.v11b6 <- function(runPath = NULL,
         isNamed <- stringr::str_detect(string = control_sams, pattern = runID)
         if (!any(isNamed)) {
             control_sams <- paste(gb$runID, control_sams, sep = "_")
-            control_sams <- make.unique(control_sams, sep = "_")
+            if (length(control_sams) > 1) {
+                control_sams <- make.unique(control_sams, sep = "_")
+            }
             data[cntrl, 1] <- control_sams
-        }
-        for (sam in control_sams) {
+            for (sam in control_sams) {
             CreateRedcapRecord(runID, sam)
+            }
         }
+        
     }
 
     loopRender(selectSams, data, redcapUp)
