@@ -447,10 +447,14 @@ Check_sam_csv <- function(samList) {
 
 getRunList <- function(data, samList) {
     msgFunName(pipeLnk, "getRunList")
+    all_html <- dir(pattern = ".html")
+    if (length(all_html) == 0) {
+        return(samList)
+    }
     toRun <- unlist(lapply(samList, FUN = function(i) {
-        nOutDir = file.path(getwd(), paste0(data[i, 1], ".html"))
-        if (file.exists(nOutDir)) {
-            message(bky(basename(nOutDir), "already exists! Skipping..."),"\n")
+        currSam <- data[i, 1]
+        if (any(stringr::str_detect(all_html, pattern = currSam))) {
+            message(bky(basename(currSam), "already exists! Skipping..."),"\n")
         }else{return(i)}
     }))
     return(toRun)
@@ -658,21 +662,24 @@ RenderReportsParallel <- function(samList = NULL, data, redcapUp = T) {
 
 RenameFailed <- function(qcVals) {
     msgFunName(pipeLnk, "RenameFailed")
-
+    
     if (!is.null(qcVals)) {
         message("qcVals")
         qcVals[is.na(qcVals)] <- "no"
         print(qcVals)
-
+        
         if (any(qcVals$qc_passed == "no")) {
             file.list <- dir(getwd(), pattern = ".html", full.names = T)
             toRename <- qcVals$record_id[qcVals$qc_passed == "no"]
             for (rd_num in toRename) {
                 findFile <- stringr::str_detect(file.list, pattern = rd_num)
                 old_name <- file.list[findFile]
+                is_renamed <- stringr::str_detect(old_name, pattern = "_QC_FAILED.html")
+                if (!is_renamed) {
                 new_name <- stringr::str_replace_all(
                     old_name, ".html", "_QC_FAILED.html")
                 base::file.rename(old_name, new_name)
+                }
             }
         }
     }
