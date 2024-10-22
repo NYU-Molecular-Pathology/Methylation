@@ -592,14 +592,12 @@ minfi_install <- function() {
     devtools::install_github(
         "mwsill/minfi",
         upgrade = "always",
-        force = T,
-        dependencies = T
+        force = T, dependencies = T, type = "source", auth_token = NULL
     )
     devtools::install_github(
         "mwsill/IlluminaHumanMethylationEPICv2manifest",
         upgrade = "always",
-        force = T,
-        dependencies = T
+        force = T, dependencies = T, type = "source", auth_token = NULL
     )
 }
 
@@ -626,10 +624,10 @@ source_pkg_vers <- function() {
         source(epicV2script)
     }
 
-    library("conumee2.0")
-    library("minfi")
-    library("IlluminaHumanMethylationEPICv2manifest")
-    library("mnp.v12epicv2")
+    stopifnot(library("conumee2.0", logical.return = T))
+    stopifnot(library("minfi", logical.return = T))
+    stopifnot(library("IlluminaHumanMethylationEPICv2manifest", logical.return = T))
+    stopifnot(library("mnp.v12epicv2", logical.return = T))
 }
 
 
