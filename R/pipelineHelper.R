@@ -762,13 +762,14 @@ makeReports.v11b6 <- function(runPath = NULL,
         cpReport = F; redcapUp = F; email = F
     }
     if (redcapUp == T) {
-        #file.list <- dir(pattern = ".html", full.names = T)
         if (file.exists(gb$UPLOAD_LOG_TSV)) {
             file.list <- read.table(gb$UPLOAD_LOG_TSV)[,1]
             if (length(file.list) > 0) {
                 gb$uploadToRedcap(file.list, T)
             }
         }
+        file.list <- dir(getwd(), pattern = ".html", full.names = T)
+        gb$uploadToRedcap(file.list, F)
     }
     if (email == T) {
         RenameFailed(qcVals)
