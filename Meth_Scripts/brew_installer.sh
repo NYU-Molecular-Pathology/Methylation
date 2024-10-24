@@ -74,14 +74,16 @@ brew cleanup
 
 # Add JDK to PATH and link to R -----------------------------------------------
 add_pkg_path() {
-    path=$1
-    for file in ~/.zshrc ~/.bashrc
-    do
-        if ! grep -Fxq "export PATH=\"$path:\$PATH\"" $file
-        then
-            echo "export PATH=\"$path:\$PATH\"" >> $file
-        fi
-    done
+    pkg_path=$1
+    if ! grep -Fxq "export PATH=\"$pkg_path:\$PATH\"" ~/.zshrc
+    then
+        echo "export PATH=\"$pkg_path:\$PATH\"" >> ~/.zshrc
+    fi
+
+    if ! grep -Fxq "export PATH=\"$pkg_path:\$PATH\"" ~/.bashrc
+    then
+        echo "export PATH=\"$pkg_path:\$PATH\"" >> ~/.bashrc
+    fi
 }
 
 # Add sqlite & openjdk to PATH ------------------------------------------------
@@ -98,7 +100,7 @@ if [ $JAVA_STAT -eq 0 ]; then
     echo "rJava is installed"
 else 
     echo "Executing: sudo R CMD javareconf"
-    sudo R CMD javareconf
+    sudo R CMD javareconf || true
 fi
 
 # Update the PKG_CONFIG_PATH environment variable -----------------------------
