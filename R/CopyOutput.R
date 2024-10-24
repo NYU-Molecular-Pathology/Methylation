@@ -142,9 +142,7 @@ writeLogFi <- function(recordName, isHtml = T, logFile = "upload_log.tsv") {
         i = paste(recordName[1], "already has an html file in REDCap\n")
         MakeLogFile(i, logFile)
     } else{
-        i = "\n\nThe following data fields already have classifier_value filled in REDCap:\n"
-        MakeLogFile(i, logFile)
-        i = paste(names(recordName), recordName, sep = ":", collapse = " ")
+        i = paste(recordName[1], "already has a classifier_value filled in REDCap\n")
         MakeLogFile(i, logFile)
     }
 }
