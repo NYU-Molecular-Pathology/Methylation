@@ -423,18 +423,21 @@ callApiImport <- function(rcon, recordName, runID) {
 }
 
 
-callApiFile <- function(rcon, recordName, ovwr = T) {
+callApiFile <- function(rcon, recordName, ovwr = T, fiPath = NULL) {
     msgFunName(cpOutLnk, "callApiFile")
-    recordFi <- paste0(recordName, ".html")
-    message("\n", gb$mkBlue("Importing Record File:"), paste0(" ", recordFi))
-    fiPath <- file.path(getwd(), recordFi)
+    if (is.null(fiPath)) {
+        recordFi <- paste0(recordName, ".html")
+        message("\n", gb$mkBlue("Importing Record File:"), recordFi)
+        fiPath <- file.path(getwd(), recordFi)
+    }
     if (ovwr == F) {
         log_fi_out <- paste(gb$runID, "import_log.tsv", sep = "_")
         writeLogFi(recordName, logFile = log_fi_out)
     } else{
-
+        
         fld <- "classifier_pdf"
-        message(paste("fiPath", "=", fiPath))
+        message("Uploading file:\n", fiPath)
+        message("To REDCap Record: ", recordName)
         if (file.exists(fiPath)) {
             body <- list(
                 token = rcon$token,
@@ -471,9 +474,12 @@ uploadToRedcap <- function(file.list, deskCSV = T, runNumb = NULL) {
     rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
     runID <- ifelse(is.null(runNumb), gb$runID, runNumb)
     message(paste(file.list))
-    htmlLi <- stringr::str_replace_all(basename(file.list), ".html", "")
-    message(paste(htmlLi))
-    for (recordName in htmlLi) {
+    htmlLi <- stringr::str_replace_all(basename(file.list), "_QC_FAILED", "")
+    htmlLi <- stringr::str_replace_all(basename(htmlLi), ".html", "")
+    names(file.list) <- htmlLi
+    for (n_file in 1:length(file.list)) {
+        recordName <- names(file.list)[n_file]
+        fiPath <- file.list[[n_file]]
         is_validation <- sjmisc::str_contains(runNumb, "VAL")
         has_val <- sjmisc::str_contains(recordName, "VAL")
         if (is_validation == T & has_val == F) {
@@ -486,7 +492,13 @@ uploadToRedcap <- function(file.list, deskCSV = T, runNumb = NULL) {
         }
         callApiImport(rcon, recordName2, runID)
         isEmpty <- checkRedcapRecord(recordName2) == ''
-        callApiFile(rcon, recordName, isEmpty)
+        
+        if (isEmpty == F) {
+            message(paste(recordName, "already has a file in REDCap"))
+            message("Overwrite uploading will be set to FALSE")
+        }
+        
+        callApiFile(rcon, recordName, isEmpty, fiPath)
     }
     if (deskCSV == T) {
         try(importDesktopCsv(rcon), outFile = "importDesktopRedcapLog.txt")
