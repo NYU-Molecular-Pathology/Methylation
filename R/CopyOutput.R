@@ -130,7 +130,7 @@ checkRedcapRecord <- function(recordName, fieldName = 'classifier_pdf') {
 
 
 MakeLogFile <- function(infoData, logFile) {
-    message("Writing log:\n", infoData, "\nTo file: ", logFile)
+    message("Writing log:\n", infoData, "To file: ", logFile)
     write.table(infoData, file = logFile, append = T, quote = F,
                 sep = '\t', row.names = F, col.names = F)
 }
