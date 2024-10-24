@@ -654,6 +654,12 @@ if (is_macos) {
     rlis = getOption("repos")
     rlis["CRAN"] = "http://cran.us.r-project.org"
     options(repos = rlis)
+    bins_file <- file.path(path.expand("~"), "bins_installed.txt")
+    if (!file.exists(bins_file)) {
+        source("https://mac.R-project.org/bin/install.R")
+        install.libs('all')
+        file.create(bins_file)
+    }
     fix_compiler_flags()
     update_makevars()
     #system("export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib")
@@ -793,7 +799,7 @@ pkgs <- c(
     "animation",
     "ape",
     "aplot",
-    "arrow",
+    #"arrow",
     "askpass",
     "assertr",
     "assertthat",
@@ -1321,6 +1327,11 @@ if (checkPkg("forecast")) {
 
 if (checkPkg("quantreg")) {
     install.packages('quantreg', ask = F, type = 'binary', dependencies = T)
+}
+
+if (checkPkg("arrow")) {
+    install.packages('arrow', type = "binary", ask = F, dependencies = T,
+                     repos = c('https://apache.r-universe.dev', 'https://cloud.r-project.org'))
 }
 
 any_failed <- check_pkg_install(pkgs)
