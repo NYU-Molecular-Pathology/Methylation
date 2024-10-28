@@ -84,7 +84,7 @@ loop_targets <- function(targets, reportMd){
     gb$moveSampleSheet(gb$baseFolder, gb$runID)
     gb$TryLoadUniD()
     try(silent=T, unloadNamespace("sarc.v12b6"))
-    gb$LoadMnpData(F)
+    #gb$LoadMnpData(F)
     targets$RunID <- gb$runID
     for(i in 1:nrow(targets)){
         message("Sample ", i, " of ", nrow(targets))
