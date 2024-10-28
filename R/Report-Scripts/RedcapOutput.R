@@ -69,7 +69,7 @@ SetDesktopOutput <- function(run_id){
         second_tech = character(),
         primary_tech = character(),
         run_number = character(),
-        accession_number = character()
+        tm_number = character()
     )
     if (!dir.exists(redfolder)) {dir.create(redfolder)}
     if (!file.exists(redcsv)) {write.csv(x = redcapDF, file = redcsv, row.names = F)}
@@ -191,7 +191,7 @@ GetRedcapDF <- function(gb) {
         second_tech = paste0(gb$dat$tech2),
         primary_tech = paste0(gb$dat$tech),
         run_number =  paste0(gb$dat$run_id),
-        accession_number = paste0(gb$dat$mp_number)
+        tm_number = paste0(gb$dat$mp_number)
     )
     stopifnot(nrow(dfNewRed) > 0 & !is.null(dfNewRed$run_number))
     return(dfNewRed)
