@@ -28,16 +28,16 @@ writeRedcapPred <- function(run_id = NULL, dfNewRed) {
   stopifnot(length(run_id) > 0 & !is.na(run_id) & !is.null(run_id))
   redDir <- file.path(fs::path_home(), "Desktop", run_id)
   if(!dir.exists(redDir)){dir.create(redDir, recursive = T)}
-  redcsv <- file.path(redDir, paste0(run_id, "_v11_Redcap.csv"))
-  if (file.exists(redcsv)) {
-    dfRedcap = read.csv(redcsv, header = T, row.names = NULL)
-    dfRedcap <- as.data.frame(dfRedcap, row.names = NULL)
-    redDF <- rbind(dfRedcap, dfNewRed)
-  } else{
-    redDF <- dfNewRed
-  }
-  row.names(redDF) = NULL
-  write.csv(redDF, redcsv, row.names = F)
+  # redcsv <- file.path(redDir, paste0(run_id, "_v11_Redcap.csv"))
+  # if (file.exists(redcsv)) {
+  #   dfRedcap = read.csv(redcsv, header = T, row.names = NULL)
+  #   dfRedcap <- as.data.frame(dfRedcap, row.names = NULL)
+  #   redDF <- rbind(dfRedcap, dfNewRed)
+  # } else{
+  #   redDF <- dfNewRed
+  # }
+  # row.names(redDF) = NULL
+  # write.csv(redDF, redcsv, row.names = F)
   redcsv <- file.path(redDir, paste0(run_id, "_Redcap.csv"))
   if (file.exists(redcsv)) {
     dfRedcap = read.csv(redcsv, header = T, row.names = NULL)
