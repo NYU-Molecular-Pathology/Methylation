@@ -837,11 +837,8 @@ CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull, rcon) {
                         redcap_db$record_id[missing_sam])
                 redcap_db <- redcap_db[-missing_sam,]
             }
-            
-            
         }
         redcap_dat$block <- redcap_db$block
-        #redcap_dat$accession_number <- redcap_db[redcap_dat$record_id, "accession_number"]
         redcap_dat$diagnosis <- redcap_db[redcap_dat$record_id, "diagnosis"]
         redcap_dat$tm_number <- redcap_db$tm_number
         data_subset <- redcap_dat[ , fieldsToPull]
@@ -864,9 +861,9 @@ CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull, rcon) {
             output[, new_col] <- redcap_dat[, new_col]
         }
         
-        if (is.null(redcap_dat$tm_number)) {
-            redcap_dat$tm_number <- redcap_dat$accession_number
-        }
+        # if (is.null(redcap_dat$tm_number)) {
+        #     redcap_dat$tm_number <- output$tm_number
+        # }
         
         if (all(is.na(output$subgroup_score))) {
             output$subgroup_score <- redcap_dat$subgroup_score
@@ -888,7 +885,6 @@ CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull, rcon) {
         merged_data <- merge(filtered_output, data_subset, by.x = "RD.number",
                              by.y = "record_id")
         MsgDF(merged_data)
-        
         return(merged_data)
     } else {
         return(output)
