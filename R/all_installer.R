@@ -164,40 +164,9 @@ set_openmpi <- function() {
     } else {
         Sys.setenv(LDFLAGS = mpi_flag)
     }
-    cpp_libs <-  paste0("-I", mpi_path,"include")
-    cpp_flag <- paste(cpp_libs, Sys.getenv("CPPFLAGS"))
+    cpp_libs <-  paste0("-I", mpi_path,"/include")
+    cpp_flag <- paste(Sys.getenv("CPPFLAGS"), cpp_libs)
     Sys.setenv(CPPFLAGS = cpp_flag)
-}
-
-
-update_system_path <- function() {
-    user_shell <- Sys.getenv("SHELL")
-
-    shell_config <- if (grepl("zsh", user_shell)) {
-        path.expand("~/.zshrc")
-    } else if (grepl("bash", user_shell)) {
-        if (file.exists(path.expand("~/.bash_profile"))) {
-            path.expand("~/.bash_profile")
-        } else {
-            path.expand("~/.bashrc")
-        }
-    } else {
-        stop("Your shell does not support automatic PATH updates!")
-    }
-
-    profile_contents <- readLines(shell_config)
-    contains_sbin <- any(grepl("/usr/local/sbin", profile_contents))
-    path_command <- sprintf('echo "export PATH=\\"/usr/local/sbin:$PATH\\"" >> %s', shell_config)
-
-    if (!contains_sbin) {
-        system(path_command, intern = FALSE)
-        message(sprintf(
-            "Updated %s to include /usr/local/sbin in PATH.", shell_config))
-    } else {
-        message("PATH already contains sbin in configuration file.")
-    }
-    Sys.setenv(PATH = paste("/usr/local/bin", Sys.getenv("PATH"), sep = ":"))
-    Sys.setenv(LIBRARY_PATH = paste("/usr/local/lib", Sys.getenv("LIBRARY_PATH"), sep = ":"))
 }
 
 # FUN: Sets system compiler flags ---------------------------------------------
@@ -243,15 +212,20 @@ fix_compiler_flags <- function() {
         " -larrow"
     ))
 
-    Sys.setenv(LD_LIBRARY_PATH = "/usr/local/lib")
+    arch <- Sys.info()["machine"]
+    if (arch != "x86_64") {
+        # Apple Silicon
+        Sys.setenv(LD_LIBRARY_PATH = "/opt/homebrew/lib")
+    } else  {
+        # Intel
+        Sys.setenv(LD_LIBRARY_PATH = "/usr/local/lib")
+    }
 
     Sys.setenv(R_LD_LIBRARY_PATH = paste0(
-        "/usr/local/lib:", file.path(llvm_path, "lib/c++")
+        Sys.getenv("LD_LIBRARY_PATH"), ":", file.path(llvm_path, "lib/c++")
     ))
     set_openmpi()
     set_gfortran()
-    #system("brew cleanup")
-    #update_system_path()
     mpi_path <- getBrewDir("open-mpi")
     curr <- paste(file.path(llvm_path, "bin"), Sys.getenv("PATH"), sep = ":")
     Sys.setenv(PATH = paste(file.path(mpi_path, "bin"), curr, sep = ":"))
@@ -299,9 +273,8 @@ update_makevars <- function() {
                " -L", file.path(arrow_dir, "lib"), " -larrow"),
         paste0("FC = ", gtran_path),
         paste0("FLIBS = -L", flib_dir),
-        "LD_LIBRARY_PATH = /usr/local/lib",
-        paste0("R_LD_LIBRARY_PATH = /usr/local/lib:",
-               file.path(llvm_path, "lib/c++"))
+        "LD_LIBRARY_PATH = ", Sys.getenv("LD_LIBRARY_PATH"),
+        paste0("R_LD_LIBRARY_PATH = ", Sys.getenv("R_LD_LIBRARY_PATH"))
     )
     if (file.exists(makevars_path)) file.remove(makevars_path)
     dir.create(dirname(makevars_path), showWarnings = F, recursive = T)
@@ -647,7 +620,6 @@ manual_bioc <- function(bio_pkg) {
 
 if (is_macos) {
     options(BioC_mirror = "https://packagemanager.rstudio.com/bioconductor")
-    #options(repos = c(CRAN = "https://packagemanager.posit.co/cran/2024-02-20"))
     options(warn = -1)
     options(repos = c(CRAN = 'https://cloud.r-project.org'))
     # Setting US CRAN REPO
@@ -662,7 +634,6 @@ if (is_macos) {
     }
     fix_compiler_flags()
     update_makevars()
-    #system("export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib")
 }
 
 # Check if architecture is 'arm64' or 'x86_64' --------------------------------
@@ -678,6 +649,14 @@ if (arch != "x86_64" & is_macos == T) {
     Sys.setenv(JAVA_HOME = java_home)
     message("JAVA_HOME set to ", java_home)
 }
+
+
+if (checkPkg("arrow")) {
+    install.packages('arrow', type = "binary", ask = F, dependencies = T,
+                     repos = c('https://apache.r-universe.dev',
+                               'https://cloud.r-project.org'))
+}
+
 
 bin_pkgs <- c(
     "curl",
@@ -1329,10 +1308,7 @@ if (checkPkg("quantreg")) {
     install.packages('quantreg', ask = F, type = 'binary', dependencies = T)
 }
 
-if (checkPkg("arrow")) {
-    install.packages('arrow', type = "binary", ask = F, dependencies = T,
-                     repos = c('https://apache.r-universe.dev', 'https://cloud.r-project.org'))
-}
+
 
 any_failed <- check_pkg_install(pkgs)
 
