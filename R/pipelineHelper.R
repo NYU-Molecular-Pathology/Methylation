@@ -355,14 +355,14 @@ getRunData <- function(data) {
 NameControl <- function(data, runId) {
     library("data.table")
     cntrl <- which(stringr::str_detect(
-        data[, 1], pattern = regex('control', ignore_case = T)))
+        data[, 1], pattern = stringr::regex('control', ignore_case = T)))
     if (length(cntrl) >= 1) {
         if (all(stringr::str_detect(data[cntrl, 1], runId))) {
             return(data)
         }
         control_sams <- data[cntrl, 1]
         isNamed <- stringr::str_detect(string = control_sams, pattern = runId)
-        if (!any(isNamed)) return (control_sams)
+        if (!any(isNamed)) return(control_sams)
         control_sams <- paste(runId, control_sams, sep = "_")
         if (length(control_sams) > 1) {
             control_sams <- make.unique(control_sams, sep = "_")
@@ -599,77 +599,14 @@ loopRender <- function(samList = NULL, data, redcapUp = T) {
 }
 
 
-# Sets up parallel processing for knitting reports ----------------------------
-RenderReportsParallel <- function(samList = NULL, data, redcapUp = T) {
-    msgFunName(pipeLnk, "loopRenderAndReportParallel")
-    if (is.null(data)) stop("Data is NULL")
-    library("parallel")
-
-    if (grepl("VAL", gb$runID)) {
-        reportMd <<-
-            "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
-        CopyRmdFile(gb$runID, reportMd)
-    }
-
-    if ((grepl("MGDM|MC", gb$runID) &&
-         !grepl("VAL", gb$runID)) || gb$runID == "23-MGDM_VAL3") {
-        if (grepl("MR", gb$runID) == F) {
-            data <- NameControl(data, data$RunID[1])
-        }
-    }
-    samList <- if (is.null(samList)) 1:length(data$Sample_Name != 0) else samList
-    workbook_data <- Check_sam_csv(samList)
-    toRun <- getRunList(data, samList)
-    no_cores <- detectCores() - 1
-    cl <- makeCluster(no_cores)
-    cluster_vars <- c(
-        "getRunData",
-        "getRGset",
-        "generate_cnv_png",
-        "make_knit_report",
-        "handle_knit_error",
-        "gb",
-        "reportMd",
-        "workbook_data",
-        "redcapUp",
-        "Check_sam_csv"
-    )
-    parallel::clusterExport(cl, cluster_vars)
-
-    parLapply(cl, toRun, function(i) {
-        single_data <- data[i, ]
-        dat <- getRunData(single_data)
-        RGsetEpic <- getRGset(runPath = getwd(), sentrix = dat$senLi)
-
-        if (gb$genCn) {
-            gb$generate_cnv_png(RGsetEpic, dat$sampleID)
-        }
-        params_init <- list(token = gb$ApiToken, rundata = dat,
-                            RGsetEpic = RGsetEpic, knitDir = getwd())
-        tryCatch(
-            make_knit_report(dat, reportMd, params_init),
-            error = function(e) {handle_knit_error(e, dat, params_init)}
-        )
-
-        if (redcapUp) {
-            sh_Dat <- workbook_data[i, ]
-            gb$importSingle(sh_Dat)
-        }
-    })
-
-    stopCluster(cl)
-    message("RUN COMPLETE")
-}
-
-
 RenameFailed <- function(qcVals) {
     msgFunName(pipeLnk, "RenameFailed")
-    
+
     if (!is.null(qcVals)) {
         message("qcVals")
         qcVals[is.na(qcVals)] <- "no"
         print(qcVals)
-        
+
         if (any(qcVals$qc_passed == "no")) {
             file.list <- dir(getwd(), pattern = ".html", full.names = T)
             toRename <- qcVals$record_id[qcVals$qc_passed == "no"]
@@ -689,20 +626,7 @@ RenameFailed <- function(qcVals) {
 
 
 #' REPORT: Generates Html reports to cwd with samplesheet.csv for V12_EPICV2
-#'
-#' @param runPath The location of samplesheet.csv and idats
-#' @param sheetName Name of samplesheet if it is not "samplesheet.csv"
-#' @param selectSams Vector of integer index of specific samples to run
-#' @param genCn Default FALSE, set as TRUE to generate the CNV plot as a PNG
-#' @param skipQC Default FALSE, set as TRUE to skip QC generation
-#' @param email Default TRUE, set to FALSE to avoid email notification
-#' @param cpReport Default FALSE, set TRUE to copy output to the shared drives
-#' @param redcapUp Default TRUE, uploads output files and data to REDCap
-#'
-#' @return None
-#' @examples
-#' makeReports.v11b6(runPath = "path/to/run", sheetName = "samplesheet.csv")
-makeReports.v11b6 <- function(runPath = NULL,
+makeHtmlReports <- function(runPath = NULL,
                               sheetName = "samplesheet.csv",
                               selectSams = NULL,
                               genCn = F,
@@ -710,7 +634,7 @@ makeReports.v11b6 <- function(runPath = NULL,
                               email = T,
                               cpReport = T,
                               redcapUp = T) {
-    msgFunName(pipeLnk, "makeReports.v11b6")
+    msgFunName(pipeLnk, "makeHtmlReports")
     library("data.table")
     assign("genCn", genCn, envir = gb)
     data <- utils::read.csv(sheetName, strip.white = T)
@@ -729,7 +653,7 @@ makeReports.v11b6 <- function(runPath = NULL,
 
     runID <- paste0(data$RunID[1])
     cntrl <- which(stringr::str_detect(
-        data[, 1], pattern = regex('control', ignore_case = T)))
+        data[, 1], pattern = stringr::regex('control', ignore_case = T)))
     if (length(cntrl) >= 1) {
         control_sams <- data[cntrl, 1]
         isNamed <- stringr::str_detect(string = control_sams, pattern = runID)
@@ -743,7 +667,7 @@ makeReports.v11b6 <- function(runPath = NULL,
             CreateRedcapRecord(runID, sam)
             }
         }
-        
+
     }
 
     loopRender(selectSams, data, redcapUp)
@@ -873,7 +797,7 @@ StartRun <- function(selectRDs = NULL, emailNotify = T, redcapUp = T) {
     if (!is.null(selectRDs)) {
         runOrder <- gb$reOrderRun(selectRDs)
     }
-    gb$makeReports.v11b6(
+    gb$makeHtmlReports(
         skipQC = F,            # Don't skip QC generation
         email = emailNotify,   # to email after Run complete
         cpReport = T,          # Flag to copy files to network drive
@@ -941,7 +865,7 @@ CheckIdatsCopied <- function() {
 
 StartCustomRun <- function(redcapUp = T) {
     msgFunName(pipeLnk,"StartCustomRun")
-    gb$makeReports.v11b6(
+    gb$makeHtmlReports(
         skipQC = T,
         email = F,
         cpReport = F,

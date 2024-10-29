@@ -330,7 +330,7 @@ StartRun <- function(selectRDs = NULL, emailNotify = T, redcapUp = T) {
     gb$msgFunName(paste0(mainHub,"methylExpress.R"),"startRun")
     # Re-order sample report generation for priority
     if (!is.null(selectRDs)) {runOrder <- gb$reOrderRun(selectRDs) }else{runOrder <- NULL}
-    gb$makeReports.v11b6(
+    gb$makeHtmlReports(
         skipQC = F,            # Don't skip QC generation
         email = emailNotify,   # to email after Run complete
         cpReport = F,          # Flag to copy files to network drive
