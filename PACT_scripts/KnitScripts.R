@@ -404,8 +404,7 @@ PrintHotspotTable <- function(objDat) {
 
 makeQCTab <- function(objDat){
     qcHeader <- c(
-        "Sample", "Mapped Reads QC", "Deduplicated Reads QC",
-        "Targets <50 Coverage", "Avg & Med Coverage", "Overlapped HOMO SNP"
+        "Sample", "Mapped Reads QC", "Deduplicated Reads QC", "Deduplication Rate QC", "Targets <50 Coverage", "Avg & Med Coverage", "Overlapped HOMO SNP"
     )
     colnames(objDat) <- qcHeader
     newTa <- knitr::kable(objDat, row.names = F, "html")
