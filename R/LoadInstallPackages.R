@@ -54,12 +54,6 @@ if (isMacOS) {
 
 uniDpath <- file.path(cbioLn, "UniD")
 
-# Classifier Packages and Versions
-mnpV4 <- data.frame(mnpVers = "mnp.v11b4", mnpPath = "mnp.v11b4", mnpNumb = "0.1.126")
-mnpV6 <- data.frame(mnpVers = "mnp.v11b6", mnpPath = "mnp.v11b6", mnpNumb = "0.1.140")
-mnpV12 <- data.frame(mnpVers = "mnp.v12b6", mnpPath = "mnp.v12b6", mnpNumb = "0.1.132")
-srcV12 <- data.frame(mnpVers = "sarc.v12b6", mnpPath = "sarc.v12b6", mnpNumb = "0.1.129")
-
 # Custom Classifier packages:
 if (isMacOS) {
     classPacks <- c(
@@ -692,10 +686,6 @@ startLoadingAll <- function() {
     installAll(classPacks, srcInst)
 
     if (isMacOS) {
-        #checkClassifier(mnpV4)
-        #checkClassifier(mnpV6)
-        #checkClassifier(mnpV12)
-        #checkClassifier(srcV12)
         check_uniD_pkg(typeSrc)
         checkEpicV2()
     }
