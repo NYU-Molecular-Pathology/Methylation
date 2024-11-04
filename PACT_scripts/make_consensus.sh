@@ -76,18 +76,29 @@ cd "${WORK_DIR}" || exit
 
 # Consolidated rsync paths --------------------------------------------------------------------------------
 MOLEC_VOL="/Volumes/molecular/Molecular/"
+RESULTS_DIR="/Volumes/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics"
+TMB_MSI_DIR="${RESULTS_DIR}/${currYear}/${pactRun}/TMB_MSI"
+MSI_TSV="msi_validation.tsv"
+TMB_TSV="annotations.paired.tmb.validation.2callers.tsv"
+
 DESK_DIR="$HOME/Desktop/${pactRun}/"
 PNG_OUT_DIR="${WORK_DIR}/cnvpng/"
 VAF_DIR="${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/VAF_plots"
 DESK_VAF="${DESK_DIR}VAF_plots"
+TMB_MSI_OUT="${WORK_DIR}/TMB_MSI/"
 
 create_dir "${DESK_DIR}"
+create_dir "${DESK_DIR}TMB_MSI"
 create_dir "${PNG_OUT_DIR}"
+create_dir "${TMB_MSI_OUT}"
 
 # COPY FROM: Z-drive TO: DESKTOP --------------------------------------------------------------------------
 msg_code rsync -vrhP --include=\"*.png\" \"${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/\" \"${DESK_DIR}\"
 msg_code rsync -vrhP \"${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/${pactRun}-QC.tsv\" \"${DESK_DIR}\"
 msg_code rsync -vrhP \"${MOLEC_VOL}NGS607/${currYear}/${runID}/${pactRun}_Hotspots.tsv\" \"${DESK_DIR}\"
+
+msg_code rsync -vrhP \"${TMB_MSI_DIR}/${MSI_TSV}\" \"${DESK_DIR}TMB_MSI/${MSI_TSV}\"
+msg_code rsync -vrhP \"${TMB_MSI_DIR}/${TMB_TSV}\" \"${DESK_DIR}TMB_MSI/${TMB_TSV}\"
 
 # Copy demux-samplesheet.csv to desktop
 #msg_code rsync -vrhP \"${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/demux-samplesheet.csv\" \"${DESK_DIR}\"
@@ -103,6 +114,7 @@ printf "cp ${DESK_DIR}*.png ${PNG_OUT_DIR}"
 # COPY FROM: Desktop TO: Consensus Directory --------------------------------------------------------------
 cp "${DESK_DIR}"*.png "${PNG_OUT_DIR}"
 msg_code rsync -vrhP --include=\"*.tsv\" \"${DESK_DIR}\" \"${WORK_DIR}\"
+msg_code rsync -vrhP --include=\"*.tsv\" \"${DESK_DIR}/TMB_MSI/\" \"${TMB_MSI_OUT}\"
 #msg_code rsync -vrhP \"$HOME/Desktop/${runID}-SampleSheet.csv\" \"${WORK_DIR}\"
 
 # Check if _MethylMatch.xlsx file exists ------------------------------------------------------------------
