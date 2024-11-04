@@ -513,6 +513,32 @@ MakeHStab <- function(sam, hsDat, samList, outDir){
     makeDT(tabNam = "Hotspots", objDat = hsMain, NULL, NULL, sam)
 }
 
+# Adds MSI and TMB info under QC tab
+make_msi_tmb_tab <- function(tmb_row, msi_row){
+    tmb_cols <- c("SampleID", "VariantCaller")
+    msi_cols <- c("SampleID", "Status", "TumorType")
+    
+    idx2drop_tmb <- which(colnames(tmb_row) %in% tmb_cols) * -1
+    
+    newTa1 <- knitr::kable(tmb_row[, idx2drop_tmb], row.names = F, "html")
+    tmbTable <- kableExtra::kable_styling(
+        newTa1, bootstrap_options = c("condensed"), full_width = F, position = "left"
+    )
+    cat("\n*TMB DATA*\n")
+    print(tmbTable)
+    cat("\n\n")
+    
+    idx2drop_msi <- which(colnames(msi_row) %in% msi_cols) * -1
+    
+    newTa2 <- knitr::kable(msi_row[, idx2drop_msi], row.names = F, "html")
+    msiTable <- kableExtra::kable_styling(
+        newTa2, bootstrap_options = c("condensed"), full_width = F, position = "left"
+    )
+    cat("\n*MSI DATA*\n")
+    print(msiTable)
+    cat("\n\n")
+}
+
 # Parses the philips CNV abberations export from Philips dump csv file
 parsePhilipsCn <- function(cnvInfo, sam, cnvTab){
     cnvInfo$Test_Case <- sam
@@ -940,7 +966,7 @@ CheckMissedSam <- function(sam, snvDt, pactName) {
 }
 
 
-LoopSampleTabs <- function(params) {
+LoopSampleTabs <-  function(params) {
     pactName <- params$pactName
     methData <- gb$GetMethDf(params$pactName)
     qcData <- gb$ReadQcFile(pactName)
@@ -955,8 +981,28 @@ LoopSampleTabs <- function(params) {
     hsDat <- gb$GrabHotspots(params)
     snvDt <- read.csv(paste0(pactName, "_desc.csv"))
     outDir <- file.path(params$workDir, paste0(pactName,"_consensus"))
+    demux_sh <- as.data.frame(read.csv("demux-samplesheet.csv", skip = 19))
+    toKeep <- demux_sh$Paired_Normal != ""
+    tumorSams <- demux_sh[toKeep, ]
+    rownames(tumorSams) <- NULL
+    
+    tmb_tsv <- "./TMB_MSI/annotations.paired.tmb.validation.2callers.tsv"
+    msi_tsv <- "./TMB_MSI/msi_validation.tsv"
+    
+    tmb_dat <- as.data.frame(read.table(tmb_tsv, sep = "\t", header = T))
+    msi_dat <- as.data.frame(read.table(msi_tsv, sep = "\t", header = T))
+    
     for (sam in samples) {
         makeNewTab(sam, samList, qcData, pactName)
+        sam_match <- which(sam == tumorSams$Test_Number)
+        if (length(sam_match > 0)) {
+          sam_id <- tumorSams$Sample_ID[sam_match]
+          tmb_match <- tmb_dat$SampleID == sam_id
+          msi_match <- msi_dat$SampleID == sam_id
+          tmb_row <- tmb_dat[tmb_match, ]
+          msi_row <- msi_dat[msi_match, ]
+          make_msi_tmb_tab(tmb_row, msi_row)
+        }
         snvDt <- CheckMissedSam(sam, snvDt, pactName) 
         samRows <- snvDt$Test_Case == sam
         snvTab <- snvDt[samRows & snvDt$Variant == "SNV", ]
