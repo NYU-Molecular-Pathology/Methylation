@@ -673,8 +673,7 @@ check_uniD_pkg <- function(typeSrc) {
     try(bc.inst("wateRmelon"), silent = T)
 
     if (rq("UniD")) {
-        try(install.packages(uniDpath, type = "source", dependencies = T, repo = NULL),
-            silent = T)
+        try(install.packages(uniDpath, type = "source", dependencies = T, repo = NULL), silent = T)
     }
 }
 
