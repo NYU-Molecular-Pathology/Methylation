@@ -497,6 +497,13 @@ do_report <- function(single_data = NULL, genCn = FALSE) {
     msgParams("data")
 
     dat <- getRunData(single_data)
+
+    is_control <- stringr::str_detect(
+        dat$sampleID, pattern = stringr::regex('control', ignore_case = T))
+    if (is_control) {
+        CreateRedcapRecord(runID = paste(dat$run_id), recordWord = "control")
+    }
+
     RGsetEpic <- getRGset(runPath = getwd(), sentrix = dat$senLi)
     reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
 
@@ -513,7 +520,6 @@ do_report <- function(single_data = NULL, genCn = FALSE) {
         RGsetEpic = RGsetEpic,
         knitDir = getwd()
     )
-
 
     tryCatch(
         expr = make_knit_report(dat, reportMd, params_init),
