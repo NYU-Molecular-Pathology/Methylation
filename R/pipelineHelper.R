@@ -356,13 +356,14 @@ NameControl <- function(data, runId) {
     library("data.table")
     cntrl <- which(stringr::str_detect(
         data[, 1], pattern = stringr::regex('control', ignore_case = T)))
+
     if (length(cntrl) >= 1) {
-        if (all(stringr::str_detect(data[cntrl, 1], runId))) {
+        control_sams <- data[cntrl, 1]
+        if (any(stringr::str_detect(control_sams, runId))) {
             return(data)
         }
-        control_sams <- data[cntrl, 1]
         isNamed <- stringr::str_detect(string = control_sams, pattern = runId)
-        if (!any(isNamed)) return(control_sams)
+        if (any(isNamed)) return(data)
         control_sams <- paste(runId, control_sams, sep = "_")
         if (length(control_sams) > 1) {
             control_sams <- make.unique(control_sams, sep = "_")
@@ -497,12 +498,6 @@ do_report <- function(single_data = NULL, genCn = FALSE) {
     msgParams("data")
 
     dat <- getRunData(single_data)
-
-    is_control <- stringr::str_detect(
-        dat$sampleID, pattern = stringr::regex('control', ignore_case = T))
-    if (is_control) {
-        CreateRedcapRecord(runID = paste(dat$run_id), recordWord = "control")
-    }
 
     RGsetEpic <- getRGset(runPath = getwd(), sentrix = dat$senLi)
     reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
@@ -667,15 +662,15 @@ makeHtmlReports <- function(runPath = NULL,
             control_sams <- paste(gb$runID, control_sams, sep = "_")
             if (length(control_sams) > 1) {
                 control_sams <- make.unique(control_sams, sep = "_")
+                for (n_sam in 1:length(control_sams)) {
+                    CreateRedcapRecord(runID, paste("control", n_sam, sep = "_"))
+                }
+            } else {
+                 CreateRedcapRecord(runID, "control")    
             }
             data[cntrl, 1] <- control_sams
-            for (sam in control_sams) {
-            CreateRedcapRecord(runID, sam)
-            }
         }
-
     }
-
     loopRender(selectSams, data, redcapUp)
     checkRunOutput(runID)
 
