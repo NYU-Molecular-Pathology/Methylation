@@ -841,6 +841,14 @@ CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull, rcon) {
         redcap_dat$block <- redcap_db$block
         redcap_dat$diagnosis <- redcap_db[redcap_dat$record_id, "diagnosis"]
         redcap_dat$tm_number <- redcap_db$tm_number
+        missing_cols <- setdiff(fieldsToPull, colnames(redcapDt))
+
+        if (length(missing_cols) > 0) {
+            for (n_col in missing_cols) {
+                redcapDt[, n_col] <- redcap_db[, n_col]
+            }
+        }
+        
         data_subset <- redcap_dat[ , fieldsToPull]
         
         newCols <- c(
