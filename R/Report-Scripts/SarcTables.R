@@ -1,8 +1,8 @@
 #!/usr/bin/env Rscript
 ## ---------------------------
 ## Script name: SarcTables.R
-## Purpose: source of global scripts imported for methylation Sarcoma analysis report tables
-## Date Last Modified: January 19, 2024
+## Purpose: Source Global scripts for Sarcoma analysis report tables
+## Date Created: January 19, 2024
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2024
@@ -11,63 +11,6 @@
 library("base")
 gb <- globalenv(); assign("gb", gb)
 options(width = 320, scipen = 5, knitr.kable.NA = '')
-try(unloadNamespace("mnp.v11b4"), silent=T)
-try(unloadNamespace("mnp.v11b6"), silent=T)
-try(unloadNamespace("mnp.v12b6"), silent=T)
-try(unloadNamespace("mnp.v12epicv2"), silent=T)
-loadNamespace("sarc.v12b6")
-require("sarc.v12b6")
-library(verbose=F, warn.conflicts = F, quietly = T, package= "dplyr")
-library(verbose=F, warn.conflicts = F, quietly = T, package= "sarc.v12b6")
-library(verbose=F, warn.conflicts = F, quietly = T, package= "htmltools")
-library(verbose=F, warn.conflicts = F, quietly = T, package= "minfi")
-
-PlotSuppInfo <- function(RGset, Mset, sampleID, FFPE = NULL){
-    if(is.null(FFPE)) {FFPE <- sarc.v12b6::MNPgetFFPE(RGset)}
-    sex = ifelse(sarc.v12b6::MNPgetSex(Mset)$predictedSex == "M", "Male", "Female")
-    suppinfo = c(sampleID, colnames(RGset), annotation(RGset)[1], FFPE, sex)
-    names(suppinfo)<- c("ID","Sentrix ID","Array type","Material type","Gender")
-    suppinfo <- as.data.frame(suppinfo)
-    colnames(suppinfo) <- " "
-    suppinfo <- as.data.frame(t(suppinfo))
-    rownames(suppinfo) <- NULL
-    xtraCss1="border-radius:0px;border-width:1px;border-style:solid;border-color:rgb(75,0,130);"
-    kgb <- c("striped",font_size = 9, bootstrap_options = c("bordered"), position = "float_left")
-    suppTab <- suppinfo %>% 
-    	knitr::kable("html",c(booktabs = T, escape = F, linesep = ""),align='clc') %>%
-    	kableExtra::kable_styling(kgb, full_width = F, position="left") %>% 
-        column_spec(column = c(1:5), width = "200px") %>%
-        column_spec(1, border_left = "3px solid white") %>%
-        column_spec(5, border_right = "3px solid white") %>%
-        kableExtra::row_spec(row = 0, font_size = 12, background="rgb(255, 235, 205)", color = "black") %>%
-        kableExtra::row_spec(row = 0, background="rgb(255, 235, 205)") %>%
-        kableExtra::row_spec(row = 1, font_size = 11)
-    return(suppTab)
-}
-
-GetSarcPred <- function(predRaw){
-    pred <-predRaw[,1:2]
-    pred$abbrevation <- sarc.v12b6::reflist[match(pred$predicted, sarc.v12b6::reflist$internal_identifier),"abbreviation"]
-    pred$maxscore <- round(pmax(pmin(pred$maxscore,1-1e-4),1e-4),4)
-    pred$name <- sarc.v12b6::reflist[match(pred$predicted, sarc.v12b6::reflist$internal_identifier),"name"]
-    pred <- as.data.frame(pred)
-    pred$maxscore <- as.character(pred$maxscore)
-    rownames(pred) <- NULL
-    colnames(pred) <- c("Predicted", "Max Score", "Abbrevation", "Class Name")
-    
-    predNex <- predRaw[1,3:ncol(predRaw)]
-    predTop <- as.data.frame(t(predNex))
-    predTop$Class <- rownames(predTop)
-    oo <- order(predTop[,1], decreasing = T)
-    predTop <- predTop[oo,1:2]
-    predTop <- predTop[2:4,1:2]
-    predTop[1:3,1] <- as.character(round(pmax(pmin(predTop[1:3,1],1-1e-4),1e-4),4))
-    colnames(predTop) <- c("Other Top Scores", "Class")
-    predTop$Name <- sarc.v12b6::reflist[match(predTop$Class, sarc.v12b6::reflist$internal_identifier),"name"]
-    rownames(predTop) <- NULL
-    des <- sarc.v12b6::reflist[match(pred$Predicted, sarc.v12b6::reflist$internal_identifier),"description"]
-    return(list("des"=des, "pred"=pred, "predTop"=predTop))
-}
 
 PredTable <- function(predLi){
     kgb <- c("striped", font_size = 9, bootstrap_options = c("bordered"))
