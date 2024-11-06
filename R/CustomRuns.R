@@ -10,7 +10,7 @@
 
 gb <- globalenv(); assign("gb", gb)
 reportMd <- file.path(fs::path_home(),"report.Rmd") # From curl github download
-sarcRmdFile = "/Volumes/CBioinformatics/Methylation/SarcReport.Rmd"
+sarcRmdFile = "/Volumes/CBioinformatics/Methylation/SarcReport13.Rmd"
 cpInLnk4 = "https://github.com/NYU-Molecular-Pathology/Methylation/main/R/CustomRuns.R"
 
 msgFunName <- function(pthLnk, funNam) {
@@ -313,6 +313,7 @@ MakeSarcomaReport <- function(worksheet = "samplesheet.csv", targets = NULL) {
             targets <- MakeBlankRun(rd_numbers, gb$token, worksheet)
             }
     }
+
     for (samIdx in 1:nrow(targets)) {
         message("Running ", samIdx, " of ", nrow(targets))
         RGset <- suppressWarnings(minfi::read.metharray(targets$Basename[samIdx]))
