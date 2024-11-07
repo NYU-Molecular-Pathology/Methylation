@@ -640,13 +640,18 @@ CallApiFileForce <- function(rcon, recordName) {
 
 ForceCallApiFile <- function(rcon, recordName, ovwr = T) {
     msgFunName(cpOutLnk, "ForceCallApiFile")
+    
     uploadField = "classifier_pdf"
     if (stringr::str_detect(recordName, "_sarc")) {
         uploadField = "classifier_pdf_other"
     }
-    recordFi <- paste0(recordName, ".html")
-    message("\n", mkBlue("Importing Record File:"), paste0(" ", recordFi))
     recordName <- CheckSarcRDnumber(recordName)
+    
+    recordFi <- dir(getwd(), ignore.case = T, full.names = T,
+                    pattern = paste0(recordName, ".*\\.html$"))[1]
+
+    message("\n", mkBlue("Importing Record File:"), paste0(" ", recordFi))
+    
     if (ovwr == F) {
         log_fi_out <- paste(gb$runID, "import_log.tsv", sep = "_")
         writeLogFi(recordName, logFile = log_fi_out)
@@ -656,7 +661,7 @@ ForceCallApiFile <- function(rcon, recordName, ovwr = T) {
                 suppressWarnings(
                     redcapAPI::importFiles(
                         rcon = rcon,
-                        file = file.path(getwd(), recordFi),
+                        file = recordFi,
                         record = recordName,
                         field = uploadField,
                         overwrite = ovwr,
@@ -690,10 +695,10 @@ ForceUploadToRedcap <- function(file.list, token = NULL, deskCSV = T) {
     msgFunName(cpOutLnk, "ForceUploadToRedcap")
     stopifnot(!is.null(token))
     print(as.data.frame(file.list))
-    msgFunName(cpOutLnk, "uploadToRedcap")
-    MsgDF(file.list)
+    
     rcon <- redcapAPI::redcapConnection(apiLink, token)
     htmlLi <- stringr::str_replace_all(basename(file.list), ".html", "")
+    
     MsgDF(htmlLi)
     for (recordName in htmlLi) {
         ForceCallApiFile(rcon, recordName, T)
