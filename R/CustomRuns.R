@@ -109,13 +109,16 @@ loop_local <- function(RGSet){
 }
 
 PromptInputCsv <- function(runID) {
-                        msgFunName(cpInLnk4,"PromptInputCsv")
-    message('No idat files in current directory and no .xlsm file was found with the runID named "', runID,'"')
-    message("Enter the full path name to a local csv file without quotes that has a list of RD-numbers and press return")
-    message("The file should have no header and just list RD-numbers in Column A (Example: /Users/myName/Desktop/myFileList_rd_numbers.csv)")
-    csvFilePath <- readline("Paste the full path to your csv file and hit return/Enter: ")
+    msgFunName(cpInLnk4,"PromptInputCsv")
+    message('No idat files in current directory and no .xlsm with the runID"',
+            runID,'"')
+    message("Enter full path to csv file listing RD-numbers and press return")
+    message("The CSV should have no header and list RD-numbers in Column A")
+    message("Example: /Users/myName/Desktop/myFileList_rd_numbers.csv")
+    csvFilePath <- 
+        readline("Paste the full path to your csv file and hit return/Enter: ")
     csvFilePath <- as.character(csvFilePath)
-    if(!file.exists(csvFilePath)){
+    if (!file.exists(csvFilePath)) {
         warning("The file ",csvFilePath," does not exist!")
         cat("Try pasting the full path again and hit return/Enter: ")
         csvFilePath <- readLines(file("stdin"),1)
@@ -123,27 +126,29 @@ PromptInputCsv <- function(runID) {
         message(csvFilePath)
         stopifnot(file.exists(csvFilePath))
     }
-    rd_numbers <- suppressWarnings(read.csv(file = csvFilePath, header = F, colClasses="character"))[,1]
+    rd_numbers <- suppressWarnings(
+        read.csv(file = csvFilePath, header = F, colClasses = "character"))[,1]
     rd_numbers <- as.data.frame(rd_numbers)
     message("The following RD-numbers were entered:")
     print(rd_numbers$rd_numbers)
     return(rd_numbers$rd_numbers)
 }
 
-
-ParseInputCsvPath <- function(samSheetIn){
+ParseInputCsvPath <- function(samSheetIn) {
     csvFilePath <- as.character(samSheetIn)
-    if(!file.exists(csvFilePath)){
+    if (!file.exists(csvFilePath)) {
         warning("The file ", csvFilePath, " does not exist!")
         message(csvFilePath)
         stopifnot(file.exists(csvFilePath))
     }
-    rd_numbers <- suppressWarnings(read.csv(file = csvFilePath, header = F, colClasses="character"))[,1]
+    rd_numbers <- suppressWarnings(
+        read.csv(file = csvFilePath, header = F, colClasses = "character"))[,1]
     rd_numbers <- as.data.frame(rd_numbers)
     message("The following RD-numbers were entered:")
-    message(paste0(capture.output(rd_numbers), collapse="\n"))
+    message(paste0(capture.output(rd_numbers), collapse = "\n"))
     return(rd_numbers$rd_numbers)
 }
+
 
 # Delete existing samplesheet in current directory to generates new one with RD-number input
 MakeLocalSampleSheet <- function(runID, token, samSheetIn=NULL, rd_numbers=NULL, outputFi = NULL){
