@@ -938,7 +938,7 @@ CombineClassAndQC <- function(output_fi = NULL, token, runDir = NULL, runID = NU
 
     output <- get_QC_metric_data(output_fi, runDir, runID)
 
-    controlRows <- which(output$`RD.number` == "control")
+    controlRows <- which(stringr::str_detect(output$`RD.number`, "control"))
     output[controlRows, "RD.number"] <-
         paste(output[controlRows, "RunID"], output[controlRows, "RD.number"], sep = "_")
 
