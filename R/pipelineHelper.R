@@ -151,6 +151,7 @@ CheckSampleQCmetrics <- function(runID) {
         "Pvalue"
     )
     qcVals <- as.data.frame(read.csv(qcValsFile)[qc_cols])
+    qcVals <- gb$NameControl(qcVals, runID)
     qcVals[is.na(qcVals)] <- 0
     qcVals$Passed_SI <- as.integer(qcVals$Log2sqrt.M.U. <= 9.0)
     qcVals$Passed_BP <- as.integer(qcVals$log2sqrt.R.G. <= 11.0)
@@ -692,6 +693,7 @@ makeHtmlReports <- function(runPath = NULL,
         generateQCreport(runID)
         qcVals <- CheckSampleQCmetrics(runID)
         rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
+        qcVals <- gb$NameControl(qcVals, runID)
         redcapAPI::importRecords(rcon, qcVals, "normal", "ids",
                                  logfile = "REDCapQCimports.txt")
     }
