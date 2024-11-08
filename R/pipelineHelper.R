@@ -625,15 +625,28 @@ RenameFailed <- function(qcVals) {
 }
 
 
+CreateControlRecords <- function(cntrl, runID, control_sams) {
+    if (length(cntrl) == 1) {
+        CreateRedcapRecord(runID, "control")
+    } else {
+        for (c_sam in 1:length(cntrl)) {
+            curr_sam <- control_sams[c_sam]
+            curr_splt <- stringr::str_split_fixed(curr_sam, "_", 2)
+            CreateRedcapRecord(curr_splt[1,1], curr_splt[1,2])
+        }
+    }
+}
+
+
 #' REPORT: Generates Html reports to cwd with samplesheet.csv for V12_EPICV2
 makeHtmlReports <- function(runPath = NULL,
-                              sheetName = "samplesheet.csv",
-                              selectSams = NULL,
-                              genCn = F,
-                              skipQC = F,
-                              email = T,
-                              cpReport = T,
-                              redcapUp = T) {
+                            sheetName = "samplesheet.csv",
+                            selectSams = NULL,
+                            genCn = F,
+                            skipQC = F,
+                            email = T,
+                            cpReport = T,
+                            redcapUp = T) {
     msgFunName(pipeLnk, "makeHtmlReports")
     library("data.table")
     assign("genCn", genCn, envir = gb)
@@ -657,17 +670,17 @@ makeHtmlReports <- function(runPath = NULL,
     if (length(cntrl) >= 1) {
         control_sams <- data[cntrl, 1]
         isNamed <- stringr::str_detect(string = control_sams, pattern = runID)
-        if (!any(isNamed)) {
-            control_sams <- paste(gb$runID, control_sams, sep = "_")
+        if (!all(isNamed)) {
+            notNamed <- !stringr::str_detect(string = control_sams, pattern = runID)
+            newCntrls <- paste(runID, control_sams[notNamed], sep = "_")
+            control_sams[notNamed] <- newCntrls
             if (length(control_sams) > 1) {
                 control_sams <- make.unique(control_sams, sep = "_")
-                for (n_sam in 1:length(control_sams)) {
-                    CreateRedcapRecord(runID, paste("control", n_sam, sep = "_"))
-                }
-            } else {
-                 CreateRedcapRecord(runID, "control")    
             }
             data[cntrl, 1] <- control_sams
+            CreateControlRecords(cntrl, runID, control_sams)
+        } else{
+            CreateControlRecords(cntrl, runID, control_sams)
         }
     }
     loopRender(selectSams, data, redcapUp)
