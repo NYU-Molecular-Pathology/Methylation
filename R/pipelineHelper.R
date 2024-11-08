@@ -356,15 +356,14 @@ NameControl <- function(data, runId) {
     library("data.table")
     cntrl <- which(stringr::str_detect(
         data[, 1], pattern = stringr::regex('control', ignore_case = T)))
-
     if (length(cntrl) >= 1) {
         control_sams <- data[cntrl, 1]
-        if (any(stringr::str_detect(control_sams, runId))) {
+        if (all(stringr::str_detect(control_sams, runId))) {
             return(data)
         }
-        isNamed <- stringr::str_detect(string = control_sams, pattern = runId)
-        if (any(isNamed)) return(data)
-        control_sams <- paste(runId, control_sams, sep = "_")
+        notNamed <- !stringr::str_detect(string = control_sams, pattern = runId)
+        newCntrls <- paste(runId, control_sams[notNamed], sep = "_")
+        control_sams[notNamed] <- newCntrls
         if (length(control_sams) > 1) {
             control_sams <- make.unique(control_sams, sep = "_")
         }
