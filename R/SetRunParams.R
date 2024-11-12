@@ -1,12 +1,10 @@
 #!/usr/bin/env Rscript
-## ---------------------------
 ## Script name: SetRunParams
 ## Purpose: source of global variables and install needed packages
 ## Date Created: September 20, 2021
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2024
-## ---------------------------
 
 options(stringsAsFactors = FALSE)
 gb <- globalenv(); assign("gb", gb)
@@ -17,12 +15,31 @@ msgFunName <- function(pthLnk, funNam){
     message("Executing function: ", crayon::black$bgYellow(funNam), " from RScript in:\n", pthLnk,"\n")
 }
 
-SpSm <- function(pkg){return(suppressPackageStartupMessages(pkg))}
+if (!requireNamespace("pak", quietly = T)) {
+    install.packages(
+        "pak",
+        repos = sprintf(
+            "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
+            .Platform$pkgType,
+            R.Version()$os,
+            R.Version()$arch
+        )
+    )
+}
 
-# FUN: Loads all the packages used in the RMD Methylation QC file
+
+check_missing_pkgs <- function(pkgList) {
+    needed_pkgs <- !sapply(pkgList, requireNamespace, quietly = TRUE)
+    if (any(needed_pkgs)) {
+        missing_pkg <- pkgList[needed_pkgs]
+        pak::pkg_install(missing_pkg, ask = F, upgrade = F)
+    }
+}
+
+
 checkQCpkg <- function(){
     msgFunName(setRunLnk,"checkQCpkg")
-    methylQCpacks <- c(
+    methylQCpkgs <- c(
         "kableExtra","magick","webshot","plyr","ggplot2","knitr","reshape2",
         "data.table","DT","plotly", "MethylAid","minfi","scales",
         "IlluminaHumanMethylation450kmanifest",
@@ -32,25 +49,11 @@ checkQCpkg <- function(){
         "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
         "Biobase", "RColorBrewer", "limma","ggfortify","Rtsne",
         "qdapTools","gplots","readxl","stringr","ggrepel","Polychrome",
-        "tinytex","gridExtra","rmarkdown", "BiocParallel", "grid"
+        "tinytex","gridExtra","rmarkdown", "BiocParallel", "grid", "pals"
     )
-    
-    #fix_compiler_flags()
-    message("Now Loading...\n", paste(methylQCpacks, collapse=" "),"\n")
-    
-    needed_pkgs <- pkgs[!sapply(methylQCpacks, requireNamespace, quietly = TRUE)]
-    params <- list(
-        dependencies = TRUE,
-        ask = FALSE,
-        update = "never",
-        quiet = TRUE,
-        repos = 'http://cran.us.r-project.org',
-        Ncpus = 4
-    )
-    
     reqPkg <- list("ggplot2", "pals", "stringr", "scales", "grid")
-    needed_pkgs <- pkgs[!sapply(reqPkg, requireNamespace, quietly = TRUE)]
-    sapply(pkgs, library, character.only = T, logical.return = T, quietly = T)
+    message("Checking QC Packages...\n", paste(methylQCpkgs, collapse=" "),"\n")
+    check_missing_pkgs(methylQCpkgs)
     sapply(reqPkg, library, character.only = T, logical.return = T, quietly = T)
 }
 
@@ -80,14 +83,20 @@ ckNull <- function(nullVar, subVar, varName){
 }
 
 # FUN: Loads the main packages and dependencies checks if any are not installed
-loadClassifierPacks <- function(){
-    msgFunName(setRunLnk,"loadClassifierPacks")
+loadClassifierPacks <- function() {
+    msgFunName(setRunLnk, "loadClassifierPacks")
     ldPkg <- tryCatch(
-        expr={checkQCpkg()},
-        error=function(cond){message("error in loading QC package dependency:\n")
-                             message(cond)},
-        warning=function(cond){message("Warning in loading QC package dependency:\n")
-                               message(cond)}
+        expr = {
+            checkQCpkg()
+        },
+        error = function(cond) {
+            message("error in loading QC package dependency:\n")
+            message(cond)
+        },
+        warning = function(cond) {
+            message("Warning in loading QC package dependency:\n")
+            message(cond)
+        }
     )
     return(ldPkg)
 }
@@ -174,36 +183,51 @@ defineParams <- function(mnp.pk.loc = NULL,
             defVars[1,x] <- inVars[[x]]
         }
     }
-    invisible(lapply(i,function(x){if(!is.null(inVars[[x]])){setVar(names(defVars[x]), inVars[[x]])}}))
-    if(loadClassifier==T){loadClassifierPacks()}
-    i=1:length(defVars)
-    invisible(sapply(i,FUN=function(i){assignVar(names((defVars[i])), paste0(defVars[,i]))}))
-    cbVol <- switch (Sys.info()[['sysname']],
-                  "Darwin" = "/Volumes/CBioinformatics/",
-                  "Linux" = "~/molecpathlab/production/"
+    invisible(lapply(i, function(x) {if (!is.null(inVars[[x]])) {setVar(names(defVars[x]), inVars[[x]])}}))
+    if (loadClassifier==T) {
+        loadClassifierPacks()
+    }
+    i = 1:length(defVars)
+    invisible(sapply(i, FUN = function(i){
+        assignVar(names((defVars[i])), paste0(defVars[,i]))
+    }))
+    cbVol <- switch(
+        Sys.info()[['sysname']],
+        "Darwin" = "/Volumes/CBioinformatics/",
+        "Linux" = "~/molecpathlab/production/"
     )
-    if(!isMC) {methDir=rschOut;assign("workDir", cbVol)}
+    if (!isMC) {
+        methDir = rschOut
+        assign("workDir", cbVol)
+    }
 }
 
 # Changes the working directory using the system CD command
 setDirectory <- function(foldr) {
     msgFunName(setRunLnk,"setDirectory")
     bsDir = paste("cd", foldr)
-    mm2 = crayon::white$bgRed("Location Not Found:", foldr)
     if (dir.exists(foldr)) {
         system(bsDir)
         setwd(foldr)
         assign("workDir", foldr)
     } else{
+        mm2 = crayon::white$bgRed("Location Not Found:", foldr)
         warning(mm2)
     }
 }
 
 # Check Input Parameters -----------------------------------------------------------------------
 CheckInputArg <- function(varValue, gb, defVal = NULL) {varStr <- deparse(substitute(varValue))
-    if (length(varValue) == 0 | identical(varValue, NULL) | identical(varValue, "NULL")) {gb[[varStr]] <- varValue <- defVal} else{ varValue <- ifelse(is.na(varValue), NULL, varValue)}
-    if(varStr=="token"){message("\n~~~~~~~~~~~~~~~~~~~~~Parameters input~~~~~~~~~~~~~~~~~~~~~")}
-    message(varStr, ": " , ifelse(is.null(varValue), "NULL", varValue)); return(assign(varStr, varValue, envir = gb))
+    if (length(varValue) == 0 | identical(varValue, NULL) | identical(varValue, "NULL")) {
+        gb[[varStr]] <- varValue <- defVal
+    } else{ 
+        varValue <- ifelse(is.na(varValue), NULL, varValue)
+    }
+    if (varStr=="token") {
+        message("\n~~~~~~~~~~~~~~~~~~~~~Parameters input~~~~~~~~~~~~~~~~~~~~~")
+    }
+    message(varStr, ": " , ifelse(is.null(varValue), "NULL", varValue))
+    return(assign(varStr, varValue, envir = gb))
 }
 
 
