@@ -706,7 +706,7 @@ ShowKnitProgress <- function() {
   
   options(
     knitr.progress.fun = function(total, labels) {
-      p <- progressr::progressor(total, on_exit = FALSE)
+      p <- progressr::progressor(100, on_exit = FALSE)
       list(
         update = function(i) p(sprintf("chunk: %s", labels[i])),
         done = function() p(type = "finish")
