@@ -640,11 +640,14 @@ CallApiFileForce <- function(rcon, recordName) {
 
 ForceCallApiFile <- function(rcon, recordName, ovwr = T) {
     msgFunName(cpOutLnk, "ForceCallApiFile")
-    
-    uploadField = "classifier_pdf"
+    uploadField <- "classifier_pdf" # Default Value
     if (stringr::str_detect(recordName, "_sarc")) {
-        uploadField = "classifier_pdf_other"
+        uploadField <- "classifier_pdf_other"
     }
+    if (stringr::str_detect(recordName, "_sarcV13")) {
+        uploadField <- "sarcoma_v13_report"
+    }
+    
     recordName <- CheckSarcRDnumber(recordName)
     
     recordFi <- dir(getwd(), ignore.case = T, full.names = T,
