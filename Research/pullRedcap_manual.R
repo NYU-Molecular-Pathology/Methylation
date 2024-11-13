@@ -352,7 +352,7 @@ grabRDCopyIdat <- function(rd_numbers,
         dropped_df <- result_raw[toDrop, 1]
         message(paste0(capture.output(dropped_df), collapse="\n"))
         message("Saving list to file: \"samples_missing_sentrix.csv\"")
-        write.csv("samples_missing_sentrix.csv", dropped_df, quote = F, row.names = F)
+        write.csv(dropped_df, "samples_missing_sentrix.csv", quote = F, row.names = F)
     }
     result <- result_raw[!toDrop,]
     samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[,"barcode_and_row_column"],"_",2))
