@@ -349,7 +349,10 @@ grabRDCopyIdat <- function(rd_numbers,
     toDrop <- is.na(result_raw$barcode_and_row_column)
     if (any(toDrop)){
         message("Some samples have no SentrixID and will be dropped:")
-        message(paste0(capture.output(result_raw[toDrop, 1]), collapse="\n"))
+        dropped_df <- result_raw[toDrop, 1]
+        message(paste0(capture.output(dropped_df), collapse="\n"))
+        message("Saving list to file: \"samples_missing_sentrix.csv\"")
+        write.csv("samples_missing_sentrix.csv", dropped_df, quote = F, row.names = F)
     }
     result <- result_raw[!toDrop,]
     samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[,"barcode_and_row_column"],"_",2))
