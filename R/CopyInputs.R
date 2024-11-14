@@ -253,10 +253,12 @@ get.idats <- function(csvNam = "samplesheet.csv", runDir=NULL){
     bcds <- paste0(basename(allFi))
     message("Checking if idats exist in run directory...")
     cur.idat <- basename(dir(path=runDir, pattern = "*.idat$", recursive = F))
-    if (all(bcds %in% cur.idat)) {
+    idats_found <- bcds %in% cur.idat
+    if (all(idats_found)) {
         message(".idat files already copied to run directory")
-    }else{
-        copyBaseIdats(allFi[!(bcds %in% cur.idat)])
+    } else{
+        idats_needed <- allFi[!idats_found]
+        copyBaseIdats(idats_needed)
     }
 }
 
