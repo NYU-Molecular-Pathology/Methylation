@@ -326,7 +326,7 @@ makeSampleSheet <- function(df, samplesheet_ID, bn = NULL, outputFi="samplesheet
     )
     samplesheet_csv <- samplesheet_csv[!is.na(samplesheet_csv$SentrixID_Pos),]
     toDrop <- stringr::str_detect(samplesheet_csv$SentrixID_Pos, "DUPLICATE")
-    if(any(toDrop)==T){
+    if (any(toDrop) == T) {
         message("Dropping duplicated samples!!")
         otherCsv <- samplesheet_csv[toDrop,]
         message(paste0(capture.output(otherCsv), collapse="\n"))
@@ -343,32 +343,39 @@ grabRDCopyIdat <- function(rd_numbers,
                            copyIdats = T,
                            outputFi = "samplesheet_og.csv",
                            idatPath = NULL) {
-    if(is.null(idatPath)){idatPath<- file.path(getwd(),"idats")}
+    if (is.null(idatPath)) {
+        idatPath <- file.path(getwd(), "idats")
+    }
     ApiToken <- token
     result_raw <- gb$search.redcap(rd_numbers, token)
     toDrop <- is.na(result_raw$barcode_and_row_column)
-    if (any(toDrop)){
+    if (any(toDrop)) {
         message("Some samples have no SentrixID and will be dropped:")
         dropped_df <- result_raw[toDrop, 1]
         message(paste0(capture.output(dropped_df), collapse="\n"))
         message("Saving list to file: \"samples_missing_sentrix.csv\"")
         write.csv(dropped_df, "samples_missing_sentrix.csv", quote = F, row.names = F)
     }
+    
     result <- result_raw[!toDrop,]
     samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[,"barcode_and_row_column"],"_",2))
-    if(nrow(samplesheet_ID)==0) {
-        message(
-            "The RD-numbers you entered have not been run yet or do not have idat files in REDCap:\n\n",
-            paste(capture.output(result_raw), collapse = "\n")
-        )
-        stopifnot(nrow(samplesheet_ID)>0)
+    
+    if (nrow(samplesheet_ID) == 0) {
+        message("Input cases have not been run or do not have Sentrix ID in REDCap:")
+        message(paste(capture.output(result_raw), collapse = "\n"))
+        stopifnot(nrow(samplesheet_ID) > 0)
     }
-    gb$makeSampleSheet(result, samplesheet_ID, bn = NULL, outputFi=outputFi) # writes API export as minfi dataframe sheet
+    
+    # writes API export as minfi dataframe sheet
+    gb$makeSampleSheet(result, samplesheet_ID, bn = NULL, outputFi = outputFi) 
+    
     # copies idat files from return to current directory
-    if(copyIdats==T){
-        supM(gb$get.idats(csvNam = outputFi, runDir=idatPath))
+    if (copyIdats) {
+        Sys.sleep(5)
+        gb$get.idats(csvNam = outputFi, runDir = idatPath)
     }
 }
+
 
 fillMissingDat <- function(targets, col_samNames="Sample_Name", originalFi="samplesheet_og.csv"){
     newTarg <- read.csv(originalFi, strip.white=T, row.names=NULL)
