@@ -276,6 +276,7 @@ genQuery <- function(dbCol,vals2find) {
     currCol <- vals2find[, dbCol]
     toKeep <- which(currCol != 0 & !is.na(currCol) & currCol != "")
     q1 <- currCol[toKeep]
+    stopifnot("Test Number" %in% colnames(vals2find))
     names(q1) <- vals2find$`Test Number`[toKeep]
     return(q1)
 }
