@@ -365,8 +365,8 @@ modifyOutput <- function(output, vals2find) {
     if (length(vals2find$`Test Number`) == 0) {
         vals2find$`Test Number` <- ""
     }
-
-    if (all(vals2find$`Test Number` %in% output$Test_Number)) {
+    # Fixes NA's if any found matches did not have NGS numbers
+    if (all(output$Test_Number %in% vals2find$`Test Number`)) {
         NGSmissing <- F
         message("All NGS Test Numbers Found in Methylation Database")
     } else{
