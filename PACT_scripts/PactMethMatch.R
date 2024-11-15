@@ -366,7 +366,7 @@ modifyOutput <- function(output, vals2find) {
         vals2find$`Test Number` <- ""
     }
 
-    if (all(output$Test_Number %in% vals2find$`Test Number`)) {
+    if (all(vals2find$`Test Number` %in% output$Test_Number)) {
         NGSmissing <- F
         message("All NGS Test Numbers Found in Methylation Database")
     } else{
