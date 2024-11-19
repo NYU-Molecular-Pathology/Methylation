@@ -777,13 +777,16 @@ CheckMissingPairs <- function(ngsNumbers, philipsT, philipsN) {
 CheckDupesMatch <- function(nameList, secondCol) {
     matchIdx <- MatchIndex(secondCol, nameList)
     if (any(duplicated(matchIdx))) {
-        message(crayon::bgRed("The sample sheet may contain duplicate accession Numbers!"))
+        message(crayon::bgRed(
+            "The sample sheet may contain duplicate accession Numbers!"))
         dupesIdx <- matchIdx[duplicated(matchIdx)]
-        message("Duplicate at row Index: ", dupesIdx)
-        MsgDF(nameList[dupesIdx])
-        MsgDF(secondCol[dupesIdx])
+        message("Duplicated in row(s): ", paste(dupesIdx, collapse = " "))
+        df_x <- setNames(as.data.frame(nameList[dupesIdx]), deparse(substitute(nameList)))
+        dupes <- secondCol %in% nameList[dupesIdx]
+        df_y <- setNames(as.data.frame(secondCol[dupes]), deparse(substitute(secondCol)))
+        MsgDF(df_x)
+        MsgDF(df_y)
     }
-
     return(matchIdx)
 }
 
