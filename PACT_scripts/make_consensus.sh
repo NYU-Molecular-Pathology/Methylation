@@ -155,7 +155,7 @@ rsync -vrhP "${DESK_DIR}${pactRun}_consensus.html" .
 
 # Generate TMB_Variants xlsx files --------------------------------------------
 echo -e "Trying to Generate TMB_Variants xlsx files..."
-Rscript --verbose -e "/Volumes/molecular/Molecular/Validation/Scripts/Save_TMB_anno.R" "${runID}" "${pactRun}" || true
+Rscript --verbose "/Volumes/molecular/Molecular/Validation/Scripts/Save_TMB_anno.R" "${runID}" "${pactRun}" || true
 
 echo -e "Opening folder:\n${FINAL_DEST}"
 open "${FINAL_DEST}"
