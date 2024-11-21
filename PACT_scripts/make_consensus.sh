@@ -1,5 +1,4 @@
 #!/bin/bash
-## ---------------------------
 ## Script name: make_consensus.sh
 ## Purpose: Generate PACT Consensus HTML report with given input
 ## Author: Jonathan Serrano
@@ -7,12 +6,11 @@
 ## Author: Jonathan Serrano
 ## Version: 1.0.0
 ## Copyright (c) NYULH Jonathan Serrano, 2024
-## ---------------------------
 
 
-# Input args -------------------------------------------------------------------------------------------
-runID=${1-NULL}   # if arg $1 is empty assign NULL as default else i.e. 123456_NB501073_0212_AHT3V7BGXK
-pactRun=${2-NULL} # if arg $2 is empty assign NULL as default else i.e. PACT-21-28
+# Input args ------------------------------------------------------------------
+runID=${1-NULL}   # i.e. 123456_NB501073_0212_AHT3V7BGXK
+pactRun=${2-NULL} # i.e. PACT-YY-28
 DEFAULTVALUE="/Volumes/CBioinformatics/jonathan/pact/consensus/"
 consensusDir="${3:-$DEFAULTVALUE}"
 kerbero=${4-$USER} # if arg $3 is empty assign $USER as default else i.e. whoami kerberosid
@@ -21,7 +19,7 @@ kerbero=${4-$USER} # if arg $3 is empty assign $USER as default else i.e. whoami
 pactGithub="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts"
 outputDir="/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics/"
 
-# Color Variables --------------------------------------------------------------------------------------
+# Color Variables -------------------------------------------------------------
 BG_GRN="$(tput setab 2)" # makes text background green
 BG_RED="$(tput setab 1)" # makes text background green
 NORMAL=$(tput sgr0)      # resets default text
@@ -45,7 +43,7 @@ set -Eeuo pipefail
 trap 'last_command=$BASH_COMMAND; last_line=$LINENO' DEBUG
 trap 'trap_error "${BASH_COMMAND}" $? "${LINENO}"' ERR EXIT
 
-# Current Year Calculation -----------------------------------------------------------------------------
+# Current Year Calculation ----------------------------------------------------
 yearPart=${pactRun:5:2}
 # Concatenate "20" with the extracted part
 currYear="20${yearPart}"
@@ -63,7 +61,7 @@ create_dir() {
     mkdir -p "$1"
 }
 
-# Main execution
+# Main execution --------------------------------------------------------------
 WORK_DIR="${consensusDir}${pactRun}_consensus"
 
 create_dir "${WORK_DIR}"
@@ -74,7 +72,7 @@ curl -# -L ${pactGithub}/PACT_consensus.Rmd >"${WORK_DIR}/${pactRun}_consensus.R
 
 cd "${WORK_DIR}" || exit
 
-# Consolidated rsync paths --------------------------------------------------------------------------------
+# Consolidated rsync paths ----------------------------------------------------
 MOLEC_VOL="/Volumes/molecular/Molecular/"
 RESULTS_DIR="/Volumes/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics"
 TMB_MSI_DIR="${RESULTS_DIR}/${currYear}/${pactRun}/TMB_MSI"
@@ -92,16 +90,13 @@ create_dir "${DESK_DIR}TMB_MSI"
 create_dir "${PNG_OUT_DIR}"
 create_dir "${TMB_MSI_OUT}"
 
-# COPY FROM: Z-drive TO: DESKTOP --------------------------------------------------------------------------
+# COPY FROM: Z-drive TO: DESKTOP ----------------------------------------------
 msg_code rsync -vrhP --include=\"*.png\" \"${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/\" \"${DESK_DIR}\"
 msg_code rsync -vrhP \"${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/${pactRun}-QC.tsv\" \"${DESK_DIR}\"
 msg_code rsync -vrhP \"${MOLEC_VOL}NGS607/${currYear}/${runID}/${pactRun}_Hotspots.tsv\" \"${DESK_DIR}\"
 
 msg_code rsync -vrhP \"${TMB_MSI_DIR}/${MSI_TSV}\" \"${DESK_DIR}TMB_MSI/${MSI_TSV}\"
 msg_code rsync -vrhP \"${TMB_MSI_DIR}/${TMB_TSV}\" \"${DESK_DIR}TMB_MSI/${TMB_TSV}\"
-
-# Copy demux-samplesheet.csv to desktop
-#msg_code rsync -vrhP \"${MOLEC_VOL}REDCap/cnv_facets/${pactRun}/demux-samplesheet.csv\" \"${DESK_DIR}\"
 
 # Copy VAF QC output files if availible
 if [ -d "${VAF_DIR}" ]; then
@@ -111,13 +106,12 @@ fi
 printf "\n${BG_GRN}Executing:${NORMAL}\n"
 printf "cp ${DESK_DIR}*.png ${PNG_OUT_DIR}"
 
-# COPY FROM: Desktop TO: Consensus Directory --------------------------------------------------------------
+# COPY FROM: Desktop TO: Consensus Directory ----------------------------------
 cp "${DESK_DIR}"*.png "${PNG_OUT_DIR}"
 msg_code rsync -vrhP --include=\"*.tsv\" \"${DESK_DIR}\" \"${WORK_DIR}\"
 msg_code rsync -vrhP --include=\"*.tsv\" \"${DESK_DIR}/TMB_MSI/\" \"${TMB_MSI_OUT}\"
-#msg_code rsync -vrhP \"$HOME/Desktop/${runID}-SampleSheet.csv\" \"${WORK_DIR}\"
 
-# Check if _MethylMatch.xlsx file exists ------------------------------------------------------------------
+# Check if _MethylMatch.xlsx file exists --------------------------------------
 METH_MATCH="$HOME/Desktop/${pactRun}_MethylMatch.xlsx"
 if [ -f "${METH_MATCH}" ]; then
     msg_code rsync -vrhP \"${METH_MATCH}\" \"${WORK_DIR}\"
@@ -133,7 +127,7 @@ if [ -d "${VAF_DIR}" ]; then
     msg_code rsync -vrP \"${DESK_VAF}\" \"${WORK_DIR}/\"
 fi
 
-# EXECUTE: Rscripts for generating HTML Report ------------------------------------------------------------
+# EXECUTE: Rscripts for generating HTML Report --------------------------------
 cd "${HOME}" && curl -# -L ${pactGithub}/MakeIndelList.R >"${HOME}/MakeIndelList.R"
 chmod +rwx "${HOME}/MakeIndelList.R"
 
@@ -143,7 +137,7 @@ cd "${WORK_DIR}/" || exit
 echo "Running Rscript:"
 Rscript --verbose -e "rmarkdown::render('${WORK_DIR}/${pactRun}_consensus.Rmd', params=list(pactName='${pactRun}', userName='${kerbero}'))" && open "${WORK_DIR}/${pactRun}_consensus.html"
 
-# COPY FINAL Output Report -----------------------------------------------------------------------------
+# COPY FINAL Output Report ----------------------------------------------------
 echo "Trying to copy html file to ouput folder:"
 echo "/Volumes${outputDir}${currYear}/${pactRun}/"
 
@@ -158,6 +152,10 @@ chmod +rwx "${DESK_DIR}${pactRun}_consensus.html"
 # Copy HTML file from DESK_DIR to final destination
 cd "${FINAL_DEST}" || exit
 rsync -vrhP "${DESK_DIR}${pactRun}_consensus.html" .
+
+# Generate TMB_Variants xlsx files --------------------------------------------
+echo -e "Trying to Generate TMB_Variants xlsx files..."
+Rscript --verbose -e "/Volumes/molecular/Molecular/Validation/Scripts/Save_TMB_anno.R" "${runID}" "${pactRun}" || true
 
 echo -e "Opening folder:\n${FINAL_DEST}"
 open "${FINAL_DEST}"
