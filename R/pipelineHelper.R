@@ -75,7 +75,7 @@ SetKnitProgress <- function() {
         p <- progressr::progressor(steps = total, along = labels, trace = TRUE,
                                    auto_finish = FALSE, on_exit = FALSE)
         list(
-            update = function(i) {p(message = sprintf('Curent Chunk: %s', labels[i]))},
+            update = function(i) {p(message = sprintf('Curent Chunk: %s', labels[i]), class = "sticky")},
             done = function() {p(type = 'finish')}
         )
     })
