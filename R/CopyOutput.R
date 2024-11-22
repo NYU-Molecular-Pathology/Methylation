@@ -649,11 +649,12 @@ ForceCallApiFile <- function(rcon, recordName, ovwr = T) {
     }
     
     recordName <- CheckSarcRDnumber(recordName)
-    
     recordFi <- dir(getwd(), ignore.case = T, full.names = T,
                     pattern = paste0(recordName, ".*\\.html$"))[1]
 
-    message("\n", mkBlue("Importing Record File:"), paste0(" ", recordFi))
+    message("\n", mkBlue("Uploading File:"), " ", recordFi)
+    message(mkBlue("To Record:"), " ", recordName)
+    message(mkBlue("In Field:"), " ", uploadField)
     
     if (ovwr == F) {
         log_fi_out <- paste(gb$runID, "import_log.tsv", sep = "_")
