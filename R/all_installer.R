@@ -24,261 +24,79 @@ supM <- function(pk) {
     return(suppressPackageStartupMessages(suppressWarnings(pk)))
 }
 
-# FUN: Check if brew installed ------------------------------------------------
-install_homebrew <- function() {
-    message("Homebrew is not installed. Installing Homebrew...")
-    url <- "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh"
-    cmd <- sprintf('/bin/bash -c "$(curl -fsSL %s)"', url)
-    message("Executing terminal command:\n", cmd)
-    system(cmd, wait = TRUE)
+command_exists <- function(cmd) nzchar(Sys.which(cmd))
+
+# Install Homebrew and packages if necessary
+ensure_homebrew <- function() {
+    pkgs <- c("gcc", "llvm", "lld", "open-mpi", "pkg-config", "gdal", "proj")
+    
+    if (!command_exists("brew")) {
+        message("Installing Homebrew...")
+        system('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"', wait = TRUE)
+    }
+    
+    installed_pkgs <- system2("brew", c("list", "--formula"), stdout = TRUE, stderr = FALSE)
+    
+    for (pkg in pkgs) {
+        if (!(pkg %in% installed_pkgs)) {
+            message("Installing ", pkg, " via Homebrew...")
+            system2("brew", c("install", pkg), wait = TRUE)
+        }
+    }
 }
 
-
-# FUN: Install system package using homebrew ----------------------------------
-brew_install <- function(pkg) {
-    message(pkg, " is not installed! Installing ", pkg, " via Homebrew...")
-    system(paste("brew install", pkg), intern = TRUE, wait = TRUE)
+get_prefix <- function(pkg = "") {
+    system2("brew", c("--prefix", pkg), stdout = TRUE, stderr = FALSE)
 }
 
-module_exists <- function(module_name) {
-    mod_vers <- paste(module_name, "--version")
-    mod_check <- tryCatch(system(mod_vers, intern = TRUE, ignore.stderr = TRUE),
-                          error = function(e) return(FALSE),
-                          warning = function(w) return(FALSE)
+# Set environment variables dynamically
+set_env_vars <- function() {
+    brew_prefix = get_prefix()
+    llvm_path = get_prefix("llvm")
+    mpi_path = get_prefix("open-mpi")
+    arrow_path = get_prefix("apache-arrow")
+    Sys.setenv(
+        CC = file.path(llvm_path, "bin/clang"),
+        CXX = file.path(llvm_path, "bin/clang++"),
+        OBJC = file.path(llvm_path, "bin/clang"),
+        LDFLAGS = paste(
+            paste0("-L", file.path(llvm_path, "lib")),
+            paste0("-L", file.path(llvm_path, "lib/c++")),
+            paste0("-Wl,-rpath,", file.path(llvm_path, "lib/c++")),
+            paste0("-L", file.path(llvm_path, "lib/unwind"), "-lunwind")
+        ),
+        CPPFLAGS = paste0("-I", file.path(llvm_path, "include")),
+        PKG_CFLAGS = paste(
+            paste0("-I", file.path(brew_prefix, "include")),
+            if (nzchar(arrow_path))
+                paste0("-I", file.path(arrow_path, "include"))
+            else
+                NULL
+        ),
+        PKG_LIBS = paste(
+            paste0("-L", file.path(brew_prefix, "lib")),
+            paste0("-L", file.path(llvm_path, "lib")),
+            if (nzchar(arrow_path)) {
+                paste0("-L", file.path(arrow_path, "lib"), " -larrow")
+            }else { NULL }
+        ),
+        LD_LIBRARY_PATH = file.path(brew_prefix, "lib"),
+        R_LD_LIBRARY_PATH = paste(
+            file.path(brew_prefix, "lib"),
+            file.path(llvm_path, "lib/c++"),
+            sep = ":"
+        ),
+        PATH = paste(file.path(mpi_path, "bin"), Sys.getenv("PATH"), sep = ":")
     )
-    if (mod_check == FALSE) {
-        return(FALSE)
-    }else {
-        return(TRUE)
-    }
+    if (command_exists("gfortran")) Sys.setenv(FC = Sys.which("gfortran"))
 }
 
-getBrewDir <- function(module_name) {
-    brew_cmd <- paste("brew --prefix", module_name)
-    module_path <- tryCatch(system(brew_cmd, intern = TRUE, ignore.stderr = TRUE),
-                            error = function(e) NULL,
-                            warning = function(e) NULL)
-    return(module_path)
-}
-
-# FUN: Checks if system compilers installed -----------------------------------
-check_brew_pkgs <- function() {
-    # Check if brew installed
-    brew_installed <- module_exists("brew")
-    if (!brew_installed) {
-        install_homebrew()
-    }
-    # Check if GCC installed
-    gfortran_path <- try(Sys.which("gfortran")[[1]], T)
-    if (gfortran_path == "") {
-        message("gfortran is not installed.")
-        brew_install("gcc")
-    }
-    # Check if LLVM installed
-    llvm_path <- getBrewDir("llvm")
-    # Check if LLVM installed
-    if (is.null(llvm_path)) {
-        brew_install("llvm")
-    }
-    # Check if LLD installed
-    lld_path <- getBrewDir("lld")
-    if (is.null(lld_path)) {
-        brew_install("lld")
-    }
-    # Check if open-mpi installed
-    mpi_path <- getBrewDir("open-mpi")
-    if (is.null(mpi_path)) {
-        brew_install("open-mpi")
-    }
-    # Check if GDAL installed
-    gdal_installed <- module_exists("gdalinfo")
-    if (!gdal_installed) {
-        brew_install("pkg-config")
-        brew_install("gdal")
-    }
-    # Check if proj installed
-    proj_check <- tryCatch(
-        system("which proj", intern = T, ignore.stderr = T),
-        error = function(e) return(FALSE),
-        warning = function(w) return(FALSE)
-    )
-    if (proj_check == F) {
-        brew_install("pkg-config")
-        brew_install("proj")
-    }
-
-    clear_cmd <- "brew update && brew doctor && rm -rf $(brew --cache)"
-    #system(clear_cmd, wait = TRUE)
-}
-
-
-locate_mod <- function(module_name) {
-    locate_cmd <- paste("locate", module_name)
-    module_path <- system(locate_cmd, intern = TRUE)
-    if (length(module_path) > 1) {
-        match_paths <- grep(paste0(module_name, "$"), module_path, value = TRUE)
-        module_path <- match_paths[1]
-    }
-    return(module_path)
-}
-
-
-# FUN: Clears system environment flags ----------------------------------------
-clear_enviro <- function() {
-    Sys.setenv(CC = "")
-    Sys.setenv(CFLAGS = "")
-    Sys.setenv(CXX = "")
-    Sys.setenv(CXXFLAGS = "")
-    Sys.setenv(FC = "")
-    Sys.setenv(FFLAGS = "")
-    Sys.setenv(LDFLAGS = "")
-    Sys.setenv(CPPFLAGS = "")
-    Sys.setenv(SHLIB_CXXLD = "")
-    Sys.setenv(SHLIB_LDFLAGS = "")
-    Sys.setenv(OBJC = "")
-}
-
-
-# FUN: Sets system gfortran flags ---------------------------------------------
-set_gfortran <- function() {
-    gfortran_path <- Sys.which("gfortran")[[1]]
-    Sys.setenv(FC = gfortran_path)
-}
-
-
-# FUN: Sets system openmpi flags ----------------------------------------------
-set_openmpi <- function() {
-    prte_path <- locate_mod("/bin/prte")
-    orte_path <- locate_mod("/bin/orted")
-    if (length(prte_path) > 0 & length(orte_path) > 0) {
-        ln_cmd <- paste("ln -s", prte_path, orte_path)
-        try(system(ln_cmd, wait = T), T)
-    }
-
-    mpi_path <- getBrewDir("open-mpi")
-    mpi_libs <- paste0("-L", mpi_path, "/lib")
-    mpi_flag <- paste(mpi_libs, Sys.getenv("LDFLAGS"))
-    curr_flags <- Sys.getenv("LDFLAGS")
-    if (curr_flags != "") {
-        Sys.setenv(LDFLAGS = paste(curr_flags, mpi_flag))
-    } else {
-        Sys.setenv(LDFLAGS = mpi_flag)
-    }
-    cpp_libs <-  paste0("-I", mpi_path,"/include")
-    cpp_flag <- paste(Sys.getenv("CPPFLAGS"), cpp_libs)
-    Sys.setenv(CPPFLAGS = cpp_flag)
-}
-
-# FUN: Sets system compiler flags ---------------------------------------------
-fix_compiler_flags <- function() {
-    check_brew_pkgs()
-    #system("brew upgrade && brew update", intern = T, ignore.stderr = T)
-    #system("brew doctor", intern = T, ignore.stderr = T)
-    #system("brew cleanup", intern = T, ignore.stderr = T)
-    clear_enviro()
-
-    # Get paths dynamically using the previously defined functions
-    llvm_path <- getBrewDir("llvm")
-    arrow_dir <- getBrewDir("apache-arrow")
-    gtran_path <- locate_mod("/bin/gfortran")
-    flib_dir <- locate_mod("/lib/gcc/current")
-
-    # Setting environment variables using dynamic paths
-    Sys.setenv(CC = file.path(llvm_path, "bin/clang"))
-    Sys.setenv(CXX = file.path(llvm_path, "bin/clang++"))
-    Sys.setenv(CXX11 = file.path(llvm_path, "bin/clang++"))
-    Sys.setenv(CXX14 = file.path(llvm_path, "bin/clang++"))
-    Sys.setenv(CXX17 = file.path(llvm_path, "bin/clang++"))
-    Sys.setenv(CXX1X = file.path(llvm_path, "bin/clang++"))
-    Sys.setenv(OBJC = file.path(llvm_path, "bin/clang"))
-
-    Sys.setenv(LDFLAGS = paste0(
-        "-L", file.path(llvm_path, "lib"),
-        " -L", file.path(llvm_path, "lib/c++"),
-        " -Wl,-rpath,", file.path(llvm_path, "lib/c++"),
-        " -L", file.path(llvm_path, "lib/unwind -lunwind")
-    ))
-
-    Sys.setenv(CPPFLAGS = paste0("-I", file.path(llvm_path, "include")))
-
-    Sys.setenv(PKG_CFLAGS = paste0(
-        "-I/usr/local/include -I", file.path(llvm_path, "include"),
-        " -I", file.path(arrow_dir, "include")
-    ))
-
-    Sys.setenv(PKG_LIBS = paste0(
-        "-L/usr/local/lib -L", file.path(llvm_path, "lib"),
-        " -L", file.path(arrow_dir, "lib"),
-        " -larrow"
-    ))
-
-    arch <- Sys.info()["machine"]
-    if (arch != "x86_64") {
-        # Apple Silicon
-        Sys.setenv(LD_LIBRARY_PATH = "/opt/homebrew/lib")
-    } else  {
-        # Intel
-        Sys.setenv(LD_LIBRARY_PATH = "/usr/local/lib")
-    }
-
-    Sys.setenv(R_LD_LIBRARY_PATH = paste0(
-        Sys.getenv("LD_LIBRARY_PATH"), ":", file.path(llvm_path, "lib/c++")
-    ))
-    set_openmpi()
-    set_gfortran()
-    mpi_path <- getBrewDir("open-mpi")
-    curr <- paste(file.path(llvm_path, "bin"), Sys.getenv("PATH"), sep = ":")
-    Sys.setenv(PATH = paste(file.path(mpi_path, "bin"), curr, sep = ":"))
-}
-
-
-set_compiler_paths <- function() {
-    sdk_path <- system("xcrun --sdk macosx --show-sdk-path", intern = TRUE)
-    cc_current <- Sys.getenv("CC")
-    cc_flags <- paste("clang -isysroot", sdk_path)
-    cxx_curr <- Sys.getenv("CXX")
-    cxx_new <- paste("clang++ -isysroot", sdk_path)
-
-    Sys.setenv(CC = paste(cc_current, cc_flags))
-    Sys.setenv(CXX = paste(cxx_new, cxx_curr))
-    Sys.setenv(CXXFLAGS = paste("-isysroot", sdk_path))
-}
-
-update_makevars <- function() {
-    makevars_path <- file.path(Sys.getenv("HOME"), ".R", "Makevars")
-    # Get paths for llvm, apache-arrow, gcc, gfortran, and gcc current lib directory
-    llvm_path <- getBrewDir("llvm")
-    arrow_dir <- getBrewDir("apache-arrow")
-    gcc_dir <- getBrewDir("gcc")
-    gtran_path <- locate_mod("/bin/gfortran")
-    flib_dir <- locate_mod("/lib/gcc/current")
-
-    # Dynamically constructing the compiler settings vector using file paths
-    compiler_settings <- c(
-        paste0("CC = ", file.path(llvm_path, "bin/clang")),
-        paste0("CXX = ", file.path(llvm_path, "bin/clang++")),
-        paste0("CXX11 = ", file.path(llvm_path, "bin/clang++")),
-        paste0("CXX14 = ", file.path(llvm_path, "bin/clang++")),
-        paste0("CXX17 = ", file.path(llvm_path, "bin/clang++")),
-        paste0("CXX1X = ", file.path(llvm_path, "bin/clang++")),
-        paste0("OBJC = ", file.path(llvm_path, "bin/clang")),
-        paste0("LDFLAGS = -L", file.path(llvm_path, "lib"),
-               " -L", file.path(llvm_path, "lib/c++"),
-               " -Wl,-rpath,", file.path(llvm_path, "lib/c++")),
-        paste0("CPPFLAGS = -I", file.path(llvm_path, "include")),
-        paste0("PKG_CFLAGS = -I/usr/local/include -I",
-               file.path(llvm_path, "include"),
-               " -I", file.path(arrow_dir, "include")),
-        paste0("PKG_LIBS = -L/usr/local/lib -L", file.path(llvm_path, "lib"),
-               " -L", file.path(arrow_dir, "lib"), " -larrow"),
-        paste0("FC = ", gtran_path),
-        paste0("FLIBS = -L", flib_dir),
-        "LD_LIBRARY_PATH = ", Sys.getenv("LD_LIBRARY_PATH"),
-        paste0("R_LD_LIBRARY_PATH = ", Sys.getenv("R_LD_LIBRARY_PATH"))
-    )
-    if (file.exists(makevars_path)) file.remove(makevars_path)
-    dir.create(dirname(makevars_path), showWarnings = F, recursive = T)
-    writeLines(compiler_settings, makevars_path)
+# Main setup
+setup_compilers <- function() {
+    ensure_homebrew()
+    Sys.unsetenv(c("CC", "CXX", "OBJC", "LDFLAGS", "CPPFLAGS", "PKG_CFLAGS",
+                   "PKG_LIBS", "LD_LIBRARY_PATH", "R_LD_LIBRARY_PATH"))
+    set_env_vars()
 }
 
 
@@ -345,7 +163,7 @@ download_pkg_unzip <- function(git_repo, zip_name = "main.zip") {
 local_github_pkg_install <- function(git_repo) {
     repo_url <- file.path("https://github.com", git_repo, "archive/refs/heads")
     local_dir <- file.path(fs::path_home(), "github_pkgs")
-
+    
     if (!dir.exists(local_dir)) dir.create(local_dir)
     tryCatch(
         expr = {
@@ -355,10 +173,10 @@ local_github_pkg_install <- function(git_repo) {
             download_pkg_unzip(git_repo, zip_name = "master.zip")
         }
     )
-
+    
     unzipped_dir <- list.dirs(local_dir, full.names = TRUE, recursive = FALSE)
     pkg_dir <- unzipped_dir[grepl(basename(git_repo), unzipped_dir)]
-
+    
     install.packages(pkg_dir, repo = NULL, type = "source", dependencies = T)
 }
 
@@ -520,7 +338,7 @@ install_bio_pkg <- function(pkg_deps) {
 # FUN: Checks if package installed from BioConductor --------------------------
 check_bio_install <- function(pkgs) {
     needed_pkgs <- check_needed(pkgs)
-
+    
     if (length(needed_pkgs) > 0) {
         for (new_pkg in needed_pkgs) {
             pkg_deps <- get_pkg_deps(new_pkg)
@@ -530,7 +348,7 @@ check_bio_install <- function(pkgs) {
             install_bio_pkg(new_pkg)
         }
     }
-
+    
     sapply(pkgs, quiet_load)
 }
 
@@ -619,21 +437,7 @@ manual_bioc <- function(bio_pkg) {
 # Start execution -------------------------------------------------------------
 
 if (is_macos) {
-    options(BioC_mirror = "https://packagemanager.rstudio.com/bioconductor")
-    options(warn = -1)
-    options(repos = c(CRAN = 'https://cloud.r-project.org'))
-    # Setting US CRAN REPO
-    rlis = getOption("repos")
-    rlis["CRAN"] = "http://cran.us.r-project.org"
-    options(repos = rlis)
-    bins_file <- file.path(path.expand("~"), "bins_installed.txt")
-    if (!file.exists(bins_file)) {
-        source("https://mac.R-project.org/bin/install.R")
-        install.libs('all')
-        file.create(bins_file)
-    }
-    fix_compiler_flags()
-    update_makevars()
+    setup_compilers()
 }
 
 # Check if architecture is 'arm64' or 'x86_64' --------------------------------
