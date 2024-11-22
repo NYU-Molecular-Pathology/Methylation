@@ -61,6 +61,31 @@ reOrderRun <- function(selectRDs, sh="samplesheet.csv") {
     return(c(runFirst,runAfter))
 }
 
+
+SetKnitProgress <- function() {
+    library("progressr")
+    library("cli")
+    knitr::opts_knit$set(verbose = TRUE)
+    options(knitr.package.verbose = FALSE)
+    options(knitr.progress.simple = FALSE)
+    knitr::opts_knit$set(verbose = TRUE)
+    options(knitr.progress.simple = FALSE)
+    progressr::handlers(global = TRUE)
+    progressr::handlers("cli")
+    options(knitr.progress.fun = function(total, labels) {
+        p <- progressr::progressor(steps = total, along = labels, trace = TRUE,
+                                   auto_finish = FALSE, on_exit = FALSE)
+        list(
+            update = function(i) {
+                p(message = sprintf('Curent Chunk: %s', labels[i]), class =  "sticky")
+            },
+            done = function() {
+                p(type = 'finish')
+            }
+        )
+    })
+}
+
 # Saves the methyl CNV as a png file in the cwd -------------------------------
 generateCNVpng <- function(RGsetEpic, sampleName) {
     msgFunName(pipeLnk,"generateCNVpng")
@@ -582,7 +607,7 @@ loopRender <- function(samList = NULL, data, redcapUp = T) {
     }
     workbook_data <- Check_sam_csv(samList)
     toRun <- getRunList(data, samList)
-
+    SetKnitProgress()
     currIdx = 1
     for (sam_idx in toRun) {
         totLeft <- length(toRun) - currIdx
