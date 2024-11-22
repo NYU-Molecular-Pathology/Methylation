@@ -63,12 +63,13 @@ reOrderRun <- function(selectRDs, sh="samplesheet.csv") {
 
 
 SetKnitProgress <- function() {
+    library("knitr")
     library("progressr")
     library("cli")
-    library("knitr")
     knitr::opts_knit$set(verbose = TRUE)
     options(knitr.package.verbose = FALSE)
     options(knitr.progress.simple = FALSE)
+    knitr::opts_knit$set(verbose = TRUE)
     progressr::handlers(global = TRUE)
     progressr::handlers("cli")
     options(knitr.progress.fun = function(total, labels) {
