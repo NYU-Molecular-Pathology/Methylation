@@ -65,10 +65,9 @@ reOrderRun <- function(selectRDs, sh="samplesheet.csv") {
 SetKnitProgress <- function() {
     library("progressr")
     library("cli")
+    library("knitr")
     knitr::opts_knit$set(verbose = TRUE)
     options(knitr.package.verbose = FALSE)
-    options(knitr.progress.simple = FALSE)
-    knitr::opts_knit$set(verbose = TRUE)
     options(knitr.progress.simple = FALSE)
     progressr::handlers(global = TRUE)
     progressr::handlers("cli")
@@ -76,12 +75,8 @@ SetKnitProgress <- function() {
         p <- progressr::progressor(steps = total, along = labels, trace = TRUE,
                                    auto_finish = FALSE, on_exit = FALSE)
         list(
-            update = function(i) {
-                p(message = sprintf('Curent Chunk: %s', labels[i]), class =  "sticky")
-            },
-            done = function() {
-                p(type = 'finish')
-            }
+            update = function(i) {p(message = sprintf('Curent Chunk: %s', labels[i]))},
+            done = function() {p(type = 'finish')}
         )
     })
 }
