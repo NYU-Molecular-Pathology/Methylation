@@ -68,18 +68,30 @@ SetKnitProgress <- function() {
     library("cli")
     knitr::opts_knit$set(verbose = TRUE)
     options(knitr.package.verbose = FALSE)
-    options(knitr.progress.simple = FALSE)
-    knitr::opts_knit$set(verbose = TRUE)
     progressr::handlers(global = TRUE)
     progressr::handlers("cli")
-    options(knitr.progress.fun = function(total, labels) {
-        p <- progressr::progressor(steps = total, along = labels, trace = TRUE,
-                                   auto_finish = FALSE, on_exit = FALSE)
-        list(
-            update = function(i) {p(message = sprintf('Curent Chunk: %s', labels[i]), class = "sticky")},
-            done = function() {p(type = 'finish')}
-        )
-    })
+
+    options(
+        knitr.progress.fun = function(total, labels) {
+            p <- progressr::progressor(
+                steps = total,
+                along = labels,
+                trace = TRUE,
+                auto_finish = FALSE,
+                on_exit = FALSE
+            )
+            list(
+                update = function(i) {
+                    p(message = sprintf('Current Chunk: %s......', labels[i]),
+                      class = "sticky")
+                    newLab <- ifelse(labels[i] == "", "In-line Code", labels[i])
+                    message("Chunk #", i, ": ", newLab, " - ",
+                            round((i / total) * 100), "% complete")
+                },
+                done = function() p(type = 'finish')
+            )
+        }
+    )
 }
 
 # Saves the methyl CNV as a png file in the cwd -------------------------------
