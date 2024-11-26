@@ -38,10 +38,7 @@ scriptList <- c(
     "LoadInstallPackages.R", "SetRunParams.R", "MakeSampleSheet.R",
     "CopyInputs.R", "CopyOutput.R", "pipelineHelper.R", "CustomRuns.R"
     )
-rmdScripts <- c(
-    "ClassTables.R", "MLH1_Functions.R", "PipeLineU.R", "RedcapOutput.R",
-    "TsneFunctions.R", "cnvggplotly.R"
-    )
+rmdScripts <- c("ClassTables.R", "MLH1_Functions.R", "RedcapOutput.R")
 suppressPackageStartupMessages(LoadGitHubScripts(mainHub, scriptList))
 invisible(suppressWarnings(LoadGitHubScripts(
     file.path(mainHub, "Report-Scripts"), rmdScripts
