@@ -1,12 +1,10 @@
 #!/usr/bin/env Rscript
-## ---------------------------
 ## Script name: CustomRuns.R
 ## Purpose: Source of functions to execute a customized methylation run
-## Date Last Modified: January 11, 2024
+## Date Created:  August 29, 2022
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2024
-## ---------------------------
 
 gb <- globalenv(); assign("gb", gb)
 reportMd <- file.path(fs::path_home(),"report.Rmd") # From curl github download
@@ -150,34 +148,50 @@ ParseInputCsvPath <- function(samSheetIn) {
 }
 
 
-# Delete existing samplesheet in current directory to generates new one with RD-number input
-MakeLocalSampleSheet <- function(runID, token, samSheetIn=NULL, rd_numbers=NULL, outputFi = NULL){
-    if (is.null(outputFi)){
+# Overwrite any existing samplesheet in current directory with new RD-number or file input and copy idats
+MakeLocalSampleSheet <- function(runID,
+                                 token,
+                                 samSheetIn = NULL,
+                                 rd_numbers = NULL,
+                                 outputFi = NULL) {
+    if (is.null(outputFi)) {
         outputFi <- "samplesheet_sarc.csv"
     }
-    msgFunName(cpInLnk4,"MakeLocalSampleSheet")
+    msgFunName(cpInLnk4, "MakeLocalSampleSheet")
     stopifnot(!is.null(token))
     token2 <- token
     idatScript <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/pullRedcap_manual.R"
-    if(!is.null(rd_numbers)){
-        rd_numbers <- rd_numbers
-        if(length(rd_numbers)==1){
-            rd_numbers <- c(rd_numbers, rd_numbers)
+    if (is.null(rd_numbers)) {
+        file_data <- NULL
+        if (is.null(samSheetIn)) {
+            file_data <- PromptInputCsv(runID)
+        } else{
+            if (grepl("\\.csv$", samSheetIn)) {
+                file_data <- ParseInputCsvPath(samSheetIn)
+            }
+            if (grepl("\\.(xlsm|xlsx)$", samSheetIn)) {
+                library("readxl")
+                file_data <- read_excel(samSheetIn, sheet = 1, col_names = FALSE)[[1]]
+            }
         }
-    }else{
-        if(is.null(samSheetIn)){
-            rd_numbers <- PromptInputCsv(runID)
-        }else{
-            rd_numbers <- ParseInputCsvPath(samSheetIn)
-        }
+        rd_numbers <- grep("^RD-", file_data, value = TRUE)
     }
-    stopifnot(
-        length(rd_numbers) >= 1 & stringr::str_detect(rd_numbers[1], "RD-")
-    )
+
+    stopifnot(length(rd_numbers) >= 1)
+    if (length(rd_numbers) == 1) {
+        rd_numbers <- c(rd_numbers, rd_numbers)
+    }
+    stopifnot(all(grepl("^RD-", rd_numbers)))
+    
     message("Sourcing: ", idatScript)
     devtools::source_url(idatScript)
+    
     gb$token <- gb$ApiToken <- token <- token2
-    gb$grabRDCopyIdat(rd_numbers, token2, copyIdats = T, outputFi = outputFi)
+    
+    gb$grabRDCopyIdat(rd_numbers,
+                      token2,
+                      copyIdats = T,
+                      outputFi = outputFi)
 }
 
 
