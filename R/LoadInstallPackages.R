@@ -1,74 +1,60 @@
 #!/usr/bin/env Rscript
-## ---------------------------
 ## Script name: LoadInstallPackages.R
-## Purpose: Functions that check if the required classifier packages and dependencies are installed and loaded
+## Purpose: Check if the required dependencies are installed and loaded
 ## Date Created: August 5, 2022
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2024
-## ---------------------------
 
 formals(library)$quietly <- T
 formals(library)$warn.conflicts <- F
 formals(require)$warn.conflicts <- F
+
 if (!require("devtools")) {
     install.packages("devtools", dependencies = T, ask = F)
 }
-message("Your library path(s):")
-message(paste(.libPaths()))
+
+message("Your R library path(s):\n", paste(.libPaths(), collapse = "\n"))
 yourHome <- fs::path_home()
 
 isMacOS <- Sys.info()[['sysname']] == "Darwin"
 
-if (isMacOS) {
-    cbioLn <-  "/Volumes/CBioinformatics/Methylation/classifiers"
-}else {
-    cbioLn <- "/Volumes/CBioinformatics/Methylation/classifiers"
-}
-
 getBrewDir <- function(module_name) {
     brew_cmd <- paste("brew --prefix", module_name)
-    module_path <- tryCatch(system(brew_cmd, intern = TRUE, ignore.stderr = TRUE),
-                            error = function(e) NULL,
-                            warning = function(e) NULL)
+    module_path <- tryCatch(
+        system(brew_cmd, intern = TRUE, ignore.stderr = TRUE),
+        error = function(e) NULL,
+        warning = function(e) NULL
+        )
     return(module_path)
 }
 
-
+cbioLn <- "/Volumes/CBioinformatics/Methylation/classifiers"
 proj_path <- getBrewDir("proj")
 sqli_path <- getBrewDir("sqlite")
+uniD_path <- file.path(cbioLn, "UniD")
 
+# Additional Classifier package Dependencies:
 if (isMacOS) {
-    Sys.setenv(PROJ_LIBS = file.path(proj_path,"lib"))
-    Sys.setenv(SQLITE3_LIBS = file.path(sqli_path,"lib"))
-} else{
-    options(BioC_mirror = "https://packagemanager.rstudio.com/bioconductor")
-    options(repos = c(CRAN = "https://packagemanager.rstudio.com/cran/__linux__/jammy/latest"))
-}
-
-if (isMacOS) {
+    Sys.setenv(PROJ_LIBS = file.path(proj_path, "lib"))
+    Sys.setenv(SQLITE3_LIBS = file.path(sqli_path, "lib"))
     typeSrc <- "binary"
-} else{
-    typeSrc <- "source"
-}
-
-uniDpath <- file.path(cbioLn, "UniD")
-
-# Custom Classifier packages:
-if (isMacOS) {
+    bothType <- "both"
     classPacks <- c(
-       # sest = "https://github.com/jungch/sest/raw/master/sest.tar",
         mgmtstp27 = "https://github.com/badozor/mgmtstp27/raw/master/archive/mgmtstp27_0.6-3.tar.gz",
         mnpqc = paste0(file.path(cbioLn, "mnpqc_0.1.0.tar.gz"))
     )
 } else{
+    options(BioC_mirror = "https://packagemanager.rstudio.com/bioconductor")
+    options(repos = c(CRAN = "https://packagemanager.rstudio.com/cran/__linux__/jammy/latest"))
+    bothType <- typeSrc <- "source"
     classPacks <- c(
         sest = "https://github.com/jungch/sest/raw/master/sest.tar",
         mgmtstp27 = "https://github.com/badozor/mgmtstp27/raw/master/archive/mgmtstp27_0.6-3.tar.gz"
     )
 }
 
-# Cran Packages ----
+# Cran Packages ---------------------------------------------------------------
 cranPkgs <- c(
     'devtools',
     'remotes',
@@ -121,7 +107,7 @@ cranPkgs <- c(
     "shiny"
 )
 
-# GitHub Packages ----
+# GitHub Packages -------------------------------------------------------------
 gHubPkgs <- data.frame(
     rmarkdown = 'rstudio/rmarkdown',
     docstring = 'dasonk/docstring',
@@ -132,24 +118,39 @@ gHubPkgs <- data.frame(
     redcap = "epicentre-msf/redcap"
 )
 
-# BioConductor Packages ----
+# BioConductor Packages  ------------------------------------------------------
 biocPkgs <- c(
-    'HDF5Array', 'bumphunter','GEOquery', 'lumi', 'rngtools',
+    'HDF5Array', 'bumphunter','GEOquery', 'lumi', 'rngtools', 'Rtsne',
     'methylumi', 'randomForest', 'glmnet','IlluminaHumanMethylation450kmanifest',
-    'IlluminaHumanMethylation450kanno.ilmn12.hg19', 'IlluminaHumanMethylationEPICmanifest', 'Rtsne',
-    'IlluminaHumanMethylationEPICanno.ilm10b2.hg19', 'IlluminaHumanMethylationEPICanno.ilm10b4.hg19',
-    'MethylAid', 'conumee','BiocParallel', "Biobase", "limma","MatrixGenerics", "GenomeInfoDb"
+    'IlluminaHumanMethylation450kanno.ilmn12.hg19',
+    'IlluminaHumanMethylationEPICmanifest',
+    'IlluminaHumanMethylationEPICanno.ilm10b2.hg19',
+    'IlluminaHumanMethylationEPICanno.ilm10b4.hg19',
+    'MethylAid', 'conumee','BiocParallel', "Biobase", "limma","MatrixGenerics",
+    "GenomeInfoDb"
 )
 
-# Extra Libraries ----
-cpuPacks <- c("parallel","doSNOW","doParallel", "foreach","compiler")
-easyPkgs <- c('tidyverse','sjmisc','stringi','digest','RCurl','gridExtra')
+# Extra Libraries -------------------------------------------------------------
+extraPks <- c(
+    "doSNOW",
+    "doParallel",
+    "foreach",
+    "compiler",
+    "tidyverse",
+    "plyr",
+    "mdthemes",
+    "dplyr",
+    "sqldf",
+    "mlr",
+    "wateRmelon",
+    "RPMM",
+    "impute"
+)
 
-# Helper Functions ----
-sup <- function(x) {return(suppressWarnings(suppressPackageStartupMessages(x)))}
-sw <- function(pkgOb) {
-    try(return(suppressMessages(suppressWarnings(pkgOb))), silent = T)
-}
+# Helper Functions ------------------------------------------------------------
+sup <- function(x) return(suppressWarnings(suppressPackageStartupMessages(x)))
+
+sw <- function(pkgOb) try(return(suppressMessages(suppressWarnings(pkgOb))), T)
 
 ld <- function(libName) {
     lib.opts <- list(package = libName, character.only = T,verbose = T, warn.conflicts = F, quietly = F)
@@ -157,14 +158,7 @@ ld <- function(libName) {
     message(libName, " ...load successful")
 }
 
-up <- function() {
-    update.packages(
-        repos = 'http://cran.rstudio.com/',
-        type = "source",
-        ask = F,
-        checkBuilt = T
-    )
-}
+
 rq <- function(pkgName) {
     !requireNamespace(pkgName, quietly = TRUE)
 }
@@ -186,12 +180,6 @@ msgCheck <- function(pkg, warn = F) {
     }
 }
 
-
-if (isMacOS) {
-    bothType <- "both"
-} else{
-    bothType <- "source"
-}
 
 #' pk.inst will load a package library or install it if it does not exist
 pk.inst <- function(pkg) {
@@ -255,7 +243,7 @@ gh.inst <- function(pkNam, ...) {
 }
 
 # FUN: Installs package from Source link
-srcInst <- function(fn) {
+source_inst <- function(fn) {
     msgCheck(names(fn))
     if (rq(names(fn))) {
         params <- list(pkgs = fn[[1]], repos = NULL, type = "source", dependencies = T)
@@ -277,188 +265,125 @@ srcInst <- function(fn) {
 bc.inst <- function(pknm) {
     message("Checking ", pknm, "...")
     if (rq(pknm)) {
-        bio.opt <- list(pkgs = pknm, update = F, ask = F, dependencies = T)
+        bio.opt <- list(
+            pkgs = pknm,
+            update = F,
+            ask = F,
+            dependencies = T
+        )
         tryCatch(
-            expr = {do.call(BiocManager::install, c(bio.opt))},
+            expr = {
+                do.call(BiocManager::install, c(bio.opt))
+            },
             error = function(cond) {
                 message("Error with Package install:\n", pknm)
                 message(cond)
             },
-            finally = {ld(pknm)}
-        )
-    } else {ld(pknm)}
-}
-
-
-fixProf <- function() {
-    txt1 <- "^[:blank:]*autoload\\(\"needs\", \"needs\"\\)"
-    txt2 <- "\n\nautoload(\"needs\", \"needs\")\n\n"
-    profPath <- Sys.getenv("R_PROFILE", unset = NA)
-    siteProf <- if (is.na(profPath)) {
-        file.path(Sys.getenv("R_HOME"), "etc", "Rprofile.site")
-    } else {
-        Sys.getenv("R_PROFILE")
-    }
-    if (siteProf == "") {
-
-        siteProf <- file.path(Sys.getenv("HOME"), "Rprofile.site")
-    } else{
-        if (!file.exists(siteProf)) {
-            try(file.create(siteProf), silent = T)
-        }
-    }
-    if (!file.exists(siteProf)) {
-        siteProf <- file.path(Sys.getenv("HOME"), "Rprofile.site")
-        if (!file.exists(siteProf)) {
-            try(file.create(siteProf), silent = T)
-        }
-    }
-    if (file.exists(siteProf)) {
-        cxn <- file(siteProf)
-        lines <- base::readLines(cxn)
-        if (!any(grepl(txt1, lines))) {
-            try(write(txt2, file = siteProf, append = T), silent = T)
-        }
-        close(cxn)
-    }
-}
-
-fixNeeds <- function() {
-    sysfile <- system.file("extdata", "promptUser", package = "needs")
-    options(needs.promptUser = FALSE)
-    invisible(needs:::autoload(TRUE))
-    if (file.exists(sysfile)) {
-        try(write(0, file = sysfile), silent = T)
-    }
-}
-
-
-checkNeeds <- function() {
-    tryCatch(
-        expr = {
-            if (!("needs" %in% rownames(installed.packages()))) {
-                install.packages(
-                    "needs",
-                    dependencies = T,
-                    verbose = T,
-                    Ncpus = 6
-                )
-                invisible(needs:::autoload(TRUE))
-                fixNeeds()
-                try(fixProf(), T)
-            } else{
-                fixNeeds()
-                try(fixProf(), T)
+            finally = {
+                ld(pknm)
             }
-        },
-        error = function(cond) {
-            devtools::install_github(
-                "joshkatz/needs",
-                ref = "development",
-                dependencies = T,
-                verbose = T,
-                upgrade = "always"
-            )
-            invisible(needs:::autoload(TRUE))
-            fixNeeds()
-            try(fixProf(), T)
-        },
-        warning = function(cond) {
-            devtools::install_github(
-                "joshkatz/needs",
-                ref = "development",
-                dependencies = T,
-                verbose = T,
-                upgrade = "always"
-            )
-            invisible(needs:::autoload(TRUE))
-            fixNeeds()
-            try(fixProf(), T)
-        }
-    )
-}
-
-setOptions <- function() {
-    options(needs.promptUser = F)
-    options("needs.promptUser" = F)
-    options("promptUser" = F)
-    options("device.ask.default" = FALSE)
-    options("install.packages.compile.from.source" = "Yes")
-    options("install.packages.check.source" = "yes")
-    fixProf()
-}
-
-cpMakeV <- function(editFile = F) {
-    if (!dir.exists(file.path(yourHome, ".R/"))) {
-        message("No Makevars file in ~/.R/")
-        #dir.create("~/.R/")
-    } else{
-        system("rm -R ~/.R/")
-    }
-}
-
-
-# FUN: Install or Load the Required Classifier Version(s) ---------------------
-classifierInstall <- function(pathtoFile = NULL,
-                              instNew = T,
-                              rmpkg = F) {
-    mnp.pk.loc <- file.path(cbioLn, pathtoFile)
-    if (rmpkg) {
-        remove.packages(basename(mnp.pk.loc), lib = .libPaths()[[1]][1])
-    }
-    if (instNew) {
-        message("Installing package: ", basename(mnp.pk.loc))
-        message("Classifier install may take several minutes!")
-        message("Note the stage '** inst' may take the longest.")
-        install.packages(
-            mnp.pk.loc,
-            repos = NULL,
-            type = "source",
-            force = T,
-            Ncpus = 6
         )
-        classifierInstall(pathtoFile, F, F)
     } else {
-        ld(basename(mnp.pk.loc))
+        ld(pknm)
     }
 }
 
-checkBioC <- function() {
-    if (sw(suppressPackageStartupMessages((!require(
-        "BiocManager", warn.conflicts = F
-    ))))) {
-        install.packages("BiocManager", Ncpus = 4)
-    } else{
-        ld("BiocManager")
+
+manageNeeds <- function() {
+
+    updateRProfile <- function() {
+        txt1 <- "^[:blank:]*autoload\\(\"needs\", \"needs\"\\)"
+        txt2 <- "\n\nautoload(\"needs\", \"needs\")\n\n"
+        profPath <- Sys.getenv("R_PROFILE", unset = NA)
+        siteProf <- ifelse(
+            is.na(profPath) || profPath == "",
+            file.path(Sys.getenv("HOME"), "Rprofile.site"),
+            profPath
+        )
+
+        if (!file.exists(siteProf)) try(file.create(siteProf), silent = TRUE)
+
+        if (file.exists(siteProf)) {
+            lines <- readLines(siteProf, warn = FALSE)
+            if (!any(grepl(txt1, lines))) {
+                try(write(txt2, file = siteProf, append = TRUE), silent = TRUE)
+            }
+        }
     }
 
-    if (rq("zip")) {
-        install.packages("zip", dependencies = T, type = typeSrc)
-    } else{
-        ld("zip")
+    configureNeeds <- function() {
+        sysfile <- system.file("extdata", "promptUser", package = "needs")
+        options(needs.promptUser = FALSE)
+        invisible(needs:::autoload(TRUE))
+        if (file.exists(sysfile)) {
+            if (length(readLines(sysfile, warn = FALSE)) == 0) {
+                try(write(0, file = sysfile), silent = TRUE)
+            }
+        }
     }
+
+    installNeeds <- function() {
+        tryCatch(
+            install.packages("needs", dependencies = TRUE, verbose = TRUE,
+                             Ncpus = 4, ask = FALSE, type = "binary"),
+            error = function(cond) {
+                devtools::install_github(
+                    "joshkatz/needs",
+                    ref = "development",
+                    dependencies = TRUE,
+                    verbose = TRUE,
+                    upgrade = "always"
+                )
+            }
+        )
+    }
+
+    if (!("needs" %in% rownames(installed.packages()))) {
+        installNeeds()
+        configureNeeds()
+        updateRProfile()
+    }
+
 }
+
 
 loadMainPkgs <- function() {
-    setOptions()
-    if (rq("devtools")) {
-        install.packages("devtools",
-                         dependencies = T,
-                         verbose = T)
-    } else{
-        ld("devtools")
+    if (!requireNamespace("devtools", quietly = TRUE)) {
+        install.packages("devtools", dependencies = TRUE, ask = F)
     }
-    checkNeeds()
+    if (!requireNamespace("BiocManager", quietly = TRUE)) {
+        install.packages("BiocManager", dependencies = TRUE, ask = F)
+    }
+    ld("BiocManager")
+    if (!requireNamespace("zip", quietly = TRUE)) {
+        install.packages("zip", dependencies = TRUE, ask = F)
+    }
+    ld("zip")
+    if (!requireNamespace("pak", quietly = T)) {
+        install.packages(
+            "pak",
+            repos = sprintf(
+                "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
+                .Platform$pkgType,
+                R.Version()$os,
+                R.Version()$arch
+            ), ask = F, dependencies = T
+        )
+    }
+
+    manageNeeds()
+    options(needs.promptUser = FALSE)
+    options(promptUser = FALSE)
+    options(device.ask.default = FALSE)
+    options(install.packages.check.source = "yes")
+
     gh.inst(data.frame(easypackages = "jakesherman/easypackages"))
-    pk.inst("tidyverse")
-    suppressPackageStartupMessages(easypackages::packages(cpuPacks, prompt = F))
-    checkBioC()
+
+    if (!requireNamespace("tidyverse", quietly = T)) {
+        pak::pkg_install("tidyverse", ask = F)
+    }
 }
 
-readyPkgs <- function(ezLibs) {
-    ready <- ezLibs %in% sessioninfo::package_info()[["package"]]
-    if (any(!ready)) {lapply(ezLibs[!ready], require, character.only = TRUE)}
-}
 
 installAll <- function(pkgList, instFun) {
     invisible(lapply(X = 1:length(pkgList), function(X) {
@@ -466,189 +391,99 @@ installAll <- function(pkgList, instFun) {
     }))
 }
 
-# Loads default packages or custom if input provided
-loadPacks <- function(pkgs = cranPkgs,
-                      ezLibs = easyPkgs,
-                      ghPk = gHubPkgs,
-                      bcPks = biocPkgs) {
 
-    tryCatch(
-        expr = {
-            loadMainPkgs()
-            sup(installAll(pkgs, pk.inst))
-            if (!require("minfi")) {
-                devtools::install_github(
-                    "mwsill/minfi",
-                    upgrade = "never",
-                    force = T,
-                    dependencies = T
-                )
-                devtools::install_github(
-                    "mwsill/IlluminaHumanMethylationEPICv2manifest",
-                    upgrade = "always",
-                    force = T,
-                    dependencies = T
-                )
-            }
-            if (!require("BiocManager", warn.conflicts = F)) {
-                install.packages("BiocManager", dependencies = T, quiet = F)
-            }
-            sup(installAll(ghPk, gh.inst))
-            sup(installAll(bcPks, bc.inst))
-            readyPkgs(ezLibs)
-            minfiVers <- as.character(utils::packageVersion("minfi"))
-            if (minfiVers != "1.43.1") {
-                devtools::install_github(
-                    "mwsill/minfi",
-                    upgrade = "never",
-                    force = T,
-                    dependencies = T
-                )
-                devtools::install_github(
-                    "mwsill/IlluminaHumanMethylationEPICv2manifest",
-                    upgrade = "always",
-                    force = T,
-                    dependencies = T
-                )
-            }
-            if (!require("MethylAid", warn.conflicts = F)) {
-                BiocManager::install("MethylAid", update = F, ask = F)
-            }
-            if (!require("librarian", warn.conflicts = F)) {
-                install.packages(
-                    "librarian",
-                    dependencies = T,
-                    verbose = T,
-                    Ncpus = 4,
-                    quiet = F
-                )
-            }
-            pkgs <- c(
-                "knitr",
-                "kableExtra",
-                "magick",
-                "webshot",
-                "plyr",
-                "ggplot2",
-                "knitr",
-                "reshape2",
-                "data.table",
-                "DT",
-                "plotly",
-                "MethylAid",
-                "scales",
-                "Biobase",
-                "RColorBrewer",
-                "limma",
-                "ggfortify",
-                "Rtsne",
-                "qdapTools",
-                "gplots",
-                "readxl",
-                "stringr",
-                "ggrepel",
-                "Polychrome",
-                "tinytex",
-                "BiocParallel",
-                'grid',
-                'grDevices',
-                "mdthemes",
-                "dplyr",
-                "sqldf",
-                "gridExtra",
-                "reshape",
-                "mlr", "wateRmelon", "RPMM", "impute"
-            )
-            librarian::shelf(pkgs, ask = F,  update_all = FALSE, quiet = FALSE)
-            require('grid')
-            require("ggplot2")
-            require("pals")
-            require("scales")
-            require("stringr")
-            require("scales")
-        },
-        error = function(cond) {
-            message("\n~~~You encountered the following error during install:\n", cond)
-        }
+install_minfi <- function() {
+    devtools::install_github(
+        "mwsill/minfi",
+        upgrade = "never",
+        force = T,
+        dependencies = T
+    )
+    devtools::install_github(
+        "mwsill/IlluminaHumanMethylationEPICv2manifest",
+        upgrade = "always",
+        force = T,
+        dependencies = T
     )
 }
 
-colorMsg <- function() {
-    ms1 <-
-        paste(
-            mkGrn("Updating in-house classifier to current version:"),
-            mkblu("classifierInstall(pathtoFile=NULL, instNew=F, rmpkg=F)"),
-            sep = "\n"
-        )
-    ms2 <- paste0(mkred("Classifier package is not installed installing classifier"),"\n")
-    ms3 <- paste0(mkGrn("Your classifier package is up-to-date and loading"),"\n")
-    return(c(ms1,ms2,ms3))
+
+check_minfi <- function(){
+        minfiVers <- as.character(utils::packageVersion("minfi"))
+    if (minfiVers != "1.43.1") {
+        if (isNamespaceLoaded("minfi")) {
+            try(unloadNamespace("minfi"), silent = TRUE)
+        }
+        install_minfi()
+    }
 }
 
-startmsg <- function() {
-    cbio = "/Volumes/CBioinformatics/"; zdriv = "/Volumes/molecular/Molecular"
-    wmm = "You do not have this path mounted:\n"
-    wmm2 = "If any are missing, try running:\ndiskutil mountdisk "
+
+checkNeeded <- function(pkgList) {
+    neededPkgs <- pkgList[!sapply(pkgList, requireNamespace, quietly = TRUE)]
+    return(neededPkgs)
+}
+
+
+loadPacks <- function() {
+
+    loadMainPkgs()
+
+    neededPkgs <- checkNeeded(cranPkgs)
+
+    if (length(neededPkgs) > 0) {
+        pak::pkg_install(neededPkgs, ask = F)
+    }
+
+    if (rq("minfi")) {
+        install_minfi()
+    }
+    sup(installAll(gHubPkgs, gh.inst))
+
+    neededPkgs <- checkNeeded(biocPkgs)
+    if (length(neededPkgs) > 0) {
+        sup(installAll(neededPkgs, bc.inst))
+    }
+    check_minfi()
+    if (rq("MethylAid")) {
+        BiocManager::install("MethylAid", dependencies = T, ask = F, update = F)
+    }
+    if (rq("librarian")) {
+        install.packages("librarian", dependencies = T, ask = F)
+    }
+    neededPkgs <- checkNeeded(extraPks)
+    if (length(neededPkgs) > 0) {
+        pak::pkg_install(neededPkgs, ask = F)
+    }
+    library('grid')
+    library("ggplot2")
+    library("pals")
+    library("scales")
+    library("stringr")
+
+}
+
+checkMounts <- function() {
+    paths <- c(
+        "/Volumes/CBioinformatics/" = "CBioinformatics",
+        "/Volumes/molecular/Molecular" = "Molecular"
+    )
+
     message("You have the following drives mounted:")
     system("ls /Volumes")
-    if (!dir.exists(cbio)) {
-        message(paste(wmm, cbio))
-        message(paste(wmm2, cbio))
-    }
-    if (!dir.exists(zdriv)) {
-        message(paste(wmm, zdriv))
-        message(paste(wmm2, zdriv))
-    }
-}
 
-setEnviron <- function() {
-    options(Ncpus = 6)
-    startmsg()
-    library("base")
-    #try(cpMakeV(),silent=T)
-    rlis = getOption("repos")
-    rlis["CRAN"] = "http://cran.us.r-project.org"
-    options(repos = rlis)
-    if (isMacOS) {
-        Sys.setenv(RSTUDIO_PANDOC = "/Applications/RStudio.app/Contents/MacOS/pandoc")
-        system("export RSTUDIO_PANDOC=/Applications/RStudio.app/Contents/MacOS/pandoc")
-        system("export RSTUDIO_WHICH_R=/usr/local/bin/R")
-        Sys.setenv(RSTUDIO_WHICH_R = "/usr/local/bin/R")
-        try(options(gsubfn.engine = "R"), T)
-    }
-    options("install.packages.compile.from.source" = "never")
-    options("install.packages.check.source"="no")
-    if (!require("devtools", warn.conflicts = F)) {
-        install.packages("devtools", dependencies = T)
-    }
-}
-
-# classifier mnpPath currVers
-checkClassifier <- function(mnpClass) {
-    ms <- colorMsg()
-    isInstalled <- mnpClass[,1] %in% rownames(installed.packages())
-    if (isInstalled==F) {
-        cat(ms[2])
-        cat(mnpClass[, 1], sep = "\n")
-        classifierInstall(mnpClass[, 2], T, F)
-    } else {
-        currentVers <- as.character(utils::packageVersion(mnpClass[, 1]))
-        latestVers <- as.character(mnpClass[, 3])
-        message("Current Version Installed: ", currentVers, "\nNewest Package Version: ",latestVers,"\n")
-        if (currentVers==latestVers) {
-            cat(ms[3])
-            classifierInstall(mnpClass[, 2], F, F)
-        } else {
-            cat(ms[1])
-            classifierInstall(mnpClass[, 2], T, T)
-        }
+    missingPaths <- names(paths)[!dir.exists(names(paths))]
+    if (length(missingPaths) > 0) {
+        message("You do not have the following drives mounted:")
+        message(paste(missingPaths, collapse = "\n"))
     }
 }
 
 
 checkEpicV2 <- function(pkg = "mnp.v12epicv2") {
     if (pkg %in% rownames(installed.packages())) {
-        message(paste("Package", pkg, "is installed with version:", utils::packageVersion(pkg)))
+        message(paste("Package", pkg, "is installed with version:",
+                      utils::packageVersion(pkg)))
     } else{
         epicV2script <- "/Volumes/CBioinformatics/Methylation/Rscripts/install_epic_v2_classifier.R"
         message("Installing package from source:\n", epicV2script)
@@ -658,38 +493,30 @@ checkEpicV2 <- function(pkg = "mnp.v12epicv2") {
 
 
 # Load all Functions ---------------------
-check_uniD_pkg <- function(typeSrc) {
-
-    uniDpkgs <- c("lumi", "ade4", "methylumi", "mlr")
-
+check_uniD_pkg <- function() {
+    uniDpkgs <- c("ade4", "methylumi", "mlr")
     librarian::shelf(uniDpkgs, ask = F, update_all = F, quiet = F)
     try(bc.inst("impute"), silent = T)
     try(bc.inst("wateRmelon"), silent = T)
-
     if (rq("UniD")) {
-        try(install.packages(uniDpath, type = "source", dependencies = T, repo = NULL), silent = T)
+        try(install.packages(uniD_path, type = "source", dependencies = T,
+                             repo = NULL), silent = T)
     }
 }
 
 
-startLoadingAll <- function() {
-    setEnviron()
+startLoadingAll <- function(isMacOS, typeSrc) {
+    options(Ncpus = 6)
+    checkMounts()
+    library("base")
+    options(repos = c(CRAN = "http://cran.us.r-project.org"))
     loadPacks()
-
+    installAll(classPacks, source_inst)
     if (isMacOS) {
-        typeSrc <- "binary"
-    } else{
-        typeSrc <- "source"
-        classPath = "molecpathlab/production/Methylation/classifiers/"
-    }
-
-    installAll(classPacks, srcInst)
-
-    if (isMacOS) {
-        check_uniD_pkg(typeSrc)
+        check_uniD_pkg()
         checkEpicV2()
     }
 
 }
 
-startLoadingAll()
+startLoadingAll(isMacOS, typeSrc)
