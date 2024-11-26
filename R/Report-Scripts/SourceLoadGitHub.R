@@ -40,8 +40,36 @@ clear_sarc_dir <- function(outputFi) {
   }
 }
 
-minfiVers <- as.character(utils::packageVersion("minfi"))
-if (minfiVers != "1.43.1") {
-    devtools::install_github("mwsill/minfi", upgrade = "never", force = T, dependencies = T)
-    devtools::install_github("mwsill/IlluminaHumanMethylationEPICv2manifest", upgrade = "always", force = T, dependencies = T)
+
+SetKnitProgress <- function() {
+    library("knitr")
+    library("progressr")
+    library("cli")
+    knitr::opts_knit$set(verbose = TRUE)
+    options(knitr.package.verbose = FALSE)
+    progressr::handlers(global = TRUE)
+    progressr::handlers("cli")
+    
+    options(
+        knitr.progress.fun = function(total, labels) {
+            p <- progressr::progressor(
+                steps = total,
+                along = labels,
+                trace = TRUE,
+                auto_finish = FALSE,
+                on_exit = FALSE
+            )
+            list(
+                update = function(i) {
+                    p(message = sprintf('Current Chunk: %s......', labels[i]),
+                      class = "sticky")
+                    newLab <-
+                        ifelse(labels[i] == "", "In-line Code", labels[i])
+                    message("Chunk #", i, ": ", newLab, " - ",
+                            round((i / total) * 100), "% complete")
+                },
+                done = function() p(type = 'finish')
+            )
+        }
+    )
 }
