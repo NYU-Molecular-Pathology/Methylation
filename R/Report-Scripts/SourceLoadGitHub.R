@@ -18,8 +18,7 @@ mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation
 scriptList <- c("LoadInstallPackages.R", "SetRunParams.R", "MakeSampleSheet.R",
                 "CopyInputs.R", "CopyOutput.R", "pipelineHelper.R", "CustomRuns.R")
 
-rmdScripts <- c("ClassTables.R", "MLH1_Functions.R", "PipeLineU.R", "RedcapOutput.R",
-                "TsneFunctions.R", "cnvggplotly.R")
+rmdScripts <- c("ClassTables.R", "MLH1_Functions.R", "RedcapOutput.R")
 
 LoadGitHubScripts(mainHub, scriptList)
 LoadGitHubScripts(file.path(mainHub,"Report-Scripts"), rmdScripts)
