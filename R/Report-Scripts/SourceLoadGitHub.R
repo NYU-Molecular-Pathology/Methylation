@@ -30,11 +30,13 @@ clear_sarc_dir <- function(outputFi) {
   if (file.exists(file.path(getwd(), outputFi))) {
       file.remove(file.path(getwd(), outputFi))
   }
-  
   file.list <- dir(getwd(), pattern = ".html|.idat", full.names = T)
-  
   if (length(file.list) > 0) {
+    response <- readline(prompt = "Do you want to remove previous idat and html files in the current directory? (yes/no): ")
+    if (tolower(response) == "yes") {
+      message("Deleting existing .idat and .html files...")
       file.remove(file.list)
+    }
   }
 }
 
