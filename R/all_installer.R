@@ -2,18 +2,13 @@
 ## Script name: all_installer.R
 ## Purpose: Functions to check if required packages are installed
 ## Date Created: August 9, 2022
-## Version: 1.0.0
+## Version: 1.1.0
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2024
 
-gb <- globalenv(); assign("gb", gb)
-options("install.packages.compile.from.source" = "Yes")
-options("install.packages.check.source" = "no")
-options(Ncpus = 4)
-
 github_main <-
     "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main"
-
+arch <- Sys.info()[["machine"]]
 is_macos <- Sys.info()[['sysname']] == "Darwin"
 
 if (getRversion() <= "4.2.2") {
@@ -28,15 +23,17 @@ command_exists <- function(cmd) nzchar(Sys.which(cmd))
 
 # Install Homebrew and packages if necessary
 ensure_homebrew <- function() {
-    pkgs <- c("gcc", "llvm", "lld", "open-mpi", "pkg-config", "gdal", "proj")
-    
+    pkgs <- c("gcc", "llvm", "lld", "open-mpi", "pkg-config", "gdal", "proj",
+              "apache-arrow")
+
     if (!command_exists("brew")) {
         message("Installing Homebrew...")
         system('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"', wait = TRUE)
     }
-    
-    installed_pkgs <- system2("brew", c("list", "--formula"), stdout = TRUE, stderr = FALSE)
-    
+
+    installed_pkgs <- system2("brew", c("list", "--formula"),
+                              stdout = T, stderr = F)
+
     for (pkg in pkgs) {
         if (!(pkg %in% installed_pkgs)) {
             message("Installing ", pkg, " via Homebrew...")
@@ -86,6 +83,7 @@ set_env_vars <- function() {
             file.path(llvm_path, "lib/c++"),
             sep = ":"
         ),
+        DYLD_LIBRARY_PATH = file.path(arrow_path, "lib"),
         PATH = paste(file.path(mpi_path, "bin"), Sys.getenv("PATH"), sep = ":")
     )
     if (command_exists("gfortran")) Sys.setenv(FC = Sys.which("gfortran"))
@@ -97,27 +95,7 @@ setup_compilers <- function() {
     Sys.unsetenv(c("CC", "CXX", "OBJC", "LDFLAGS", "CPPFLAGS", "PKG_CFLAGS",
                    "PKG_LIBS", "LD_LIBRARY_PATH", "R_LD_LIBRARY_PATH"))
     set_env_vars()
-}
-
-
-fixProf <- function() {
-    txt1 <- "^[:blank:]*autoload\\(\"needs\", \"needs\"\\)"
-    txt2 <- "\n\nautoload(\"needs\", \"needs\")\n\n"
-    siteProf <- if (is.na(Sys.getenv("R_PROFILE", unset = NA))) {
-        file.path(Sys.getenv("R_HOME"), "etc", "Rprofile.site")
-    } else {
-        Sys.getenv("R_PROFILE")
-    }
-    if (!file.exists(siteProf)) {
-        try(file.create(siteProf), silent = T)
-    }
-    cxn <- try(file(siteProf), silent = T)
-    lines <- try(base::readLines(cxn), silent = T)
-    if (!any(grepl(txt1, lines))) {
-        write(txt2, file = siteProf, append = T)
-    }
-    close(cxn)
-    #closeAllConnections()
+    options(Ncpus = 6)
 }
 
 
@@ -163,7 +141,7 @@ download_pkg_unzip <- function(git_repo, zip_name = "main.zip") {
 local_github_pkg_install <- function(git_repo) {
     repo_url <- file.path("https://github.com", git_repo, "archive/refs/heads")
     local_dir <- file.path(fs::path_home(), "github_pkgs")
-    
+
     if (!dir.exists(local_dir)) dir.create(local_dir)
     tryCatch(
         expr = {
@@ -173,10 +151,10 @@ local_github_pkg_install <- function(git_repo) {
             download_pkg_unzip(git_repo, zip_name = "master.zip")
         }
     )
-    
+
     unzipped_dir <- list.dirs(local_dir, full.names = TRUE, recursive = FALSE)
     pkg_dir <- unzipped_dir[grepl(basename(git_repo), unzipped_dir)]
-    
+
     install.packages(pkg_dir, repo = NULL, type = "source", dependencies = T)
 }
 
@@ -212,48 +190,13 @@ try_github_inst <- function(git_repo) {
 }
 
 
-fixNeeds <- function() {
-    sysfile <- system.file("extdata", "promptUser", package = "needs")
-    try(write(0, file = sysfile), silent = T)
-    try(close(sysfile), silent = T)
-    options(needs.promptUser = FALSE)
-    invisible(needs:::autoload(TRUE))
-    #closeAllConnections()
-}
-
-checkNeeds <- function() {
-    tryCatch(
-        expr = {
-            if (!("needs" %in% rownames(installed.packages()))) {
-                install.packages("needs", dependencies = T, verbose = T, Ncpus = 2)
-                fixNeeds()
-                try(fixProf(), silent = T)
-            } else{
-                fixNeeds()
-                try(fixProf(), silent = T)
-            }
-        },
-        error = function(cond) {
-            try_github_inst("joshkatz/needs")
-            fixNeeds()
-            try(fixProf(), silent = T)
-        },
-        warning = function(cond) {
-            try_github_inst("joshkatz/needs")
-            fixNeeds()
-            try(fixProf(), silent = T)
-        }
-    )
-}
-
-
 install_opts <- list(
     dependencies = c("Depends", "Imports", "LinkingTo"),
     ask = FALSE,
     update = "never",
     quiet = TRUE,
     repos = 'http://cran.us.r-project.org',
-    Ncpus = 4
+    Ncpus = 6
 )
 
 # FUN: Quietly loads package library without messages -------------------------
@@ -338,7 +281,7 @@ install_bio_pkg <- function(pkg_deps) {
 # FUN: Checks if package installed from BioConductor --------------------------
 check_bio_install <- function(pkgs) {
     needed_pkgs <- check_needed(pkgs)
-    
+
     if (length(needed_pkgs) > 0) {
         for (new_pkg in needed_pkgs) {
             pkg_deps <- get_pkg_deps(new_pkg)
@@ -348,7 +291,6 @@ check_bio_install <- function(pkgs) {
             install_bio_pkg(new_pkg)
         }
     }
-    
     sapply(pkgs, quiet_load)
 }
 
@@ -379,13 +321,10 @@ check_pkg_install <- function(pkgs) {
         message("The following missing packages will be installed:\n",
                 paste(pkgs_needed, collapse = "\n"))
         for (new_pkg in pkgs_needed) {
-            if (new_pkg %in% avail_bioc_packs) {
-                check_bio_install(new_pkg)
-            } else {
-                try_install(new_pkg)
-            }
+            pak::install(new_pkg, ask = F)
         }
     }
+
     load_success <- sapply(pkgs, quiet_load)
     if (any(load_success == F)) {
         failed_pkgs <- pkgs[load_success == F]
@@ -399,19 +338,35 @@ check_pkg_install <- function(pkgs) {
 
 
 load_install <- function(pkg_list) {
-    message("Loading packages:\n", paste0(capture.output(pkg_list), collapse = "\n"))
-    librarian::shelf(pkg_list, ask = F, update_all = F, quiet = F, dependencies = T)
+    message("Loading packages:\n",
+            paste0(capture.output(pkg_list), collapse = "\n"))
+    librarian::shelf(
+        pkg_list,
+        ask = F,
+        update_all = F,
+        quiet = F,
+        dependencies = T
+    )
     missing_pkgs <- pkg_list[!(pkg_list %in% rownames(installed.packages()))]
     if (length(missing_pkgs) > 0) {
         for (pkg_missed in missing_pkgs) {
-            tryCatch(
-                expr = {
-                    BiocManager::install(pkg_missed, update = F, ask = F, dependencies = T, type = "source")
-                },
-                error = {
-                    install.packages(pkg_missed, dependencies = T, verbose = T, type = "source", ask = F)
-                }
-            )
+            tryCatch(expr = {
+                BiocManager::install(
+                    pkg_missed,
+                    update = F,
+                    ask = F,
+                    dependencies = T,
+                    type = "source"
+                )
+            }, error = {
+                install.packages(
+                    pkg_missed,
+                    dependencies = T,
+                    verbose = T,
+                    type = "source",
+                    ask = F
+                )
+            })
         }
     }
 }
@@ -440,27 +395,24 @@ if (is_macos) {
     setup_compilers()
 }
 
-# Check if architecture is 'arm64' or 'x86_64' --------------------------------
-arch <- Sys.info()[["machine"]]
 if (!requireNamespace("rJava", quietly = T)) {
-    try(install.packages("rJava", type = "binary", dependencies = T, ask = F), T)
-}
-if (arch != "x86_64" & is_macos == T) {
-    # Set JAVA_HOME environment variable
-    #java_home <- system("/usr/libexec/java_home -v 11", intern = TRUE)
-    #system("brew tap homebrew/cask-versions && brew install --cask temurin17")
-    java_home <- system("which java", intern = TRUE)
-    Sys.setenv(JAVA_HOME = java_home)
-    message("JAVA_HOME set to ", java_home)
+    try(install.packages("rJava", type = "binary",
+                         dependencies = T, ask = F), T)
 }
 
+java_inst <- system("java -version", ignore.stdout = T, ignore.stderr = T) == 0
+if (!java_inst) {
+    temurin <- "brew tap homebrew/cask-versions && brew install --cask temurin"
+    system(temurin, ignore.stdout = TRUE, ignore.stderr = TRUE)
+}
+java_home <- system("/usr/libexec/java_home", intern = TRUE)
+Sys.setenv(JAVA_HOME = java_home)
 
 if (checkPkg("arrow")) {
     install.packages('arrow', type = "binary", ask = F, dependencies = T,
                      repos = c('https://apache.r-universe.dev',
                                'https://cloud.r-project.org'))
 }
-
 
 bin_pkgs <- c(
     "curl",
@@ -512,6 +464,14 @@ stopifnot(loadLibrary("librarian"))
 stopifnot(loadLibrary("BiocManager"))
 stopifnot(loadLibrary("Biobase"))
 
+if (!requireNamespace("pak", quietly = T)) {
+    install.packages("pak", repos = sprintf(
+        "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
+        .Platform$pkgType, R.Version()$os, R.Version()$arch),
+        dependencies = T, ask = F
+        )
+}
+stopifnot(loadLibrary("pak"))
 
 # List Classifier Core Packages -----------------------------------------------
 corePkgs <- c(
@@ -582,7 +542,6 @@ pkgs <- c(
     "animation",
     "ape",
     "aplot",
-    #"arrow",
     "askpass",
     "assertr",
     "assertthat",
@@ -652,7 +611,6 @@ pkgs <- c(
     "enrichplot",
     "ensembldb",
     "evaluate",
-    "exomeCopy",
     "extrafont",
     "extrafontdb",
     "fastmap",
@@ -704,7 +662,6 @@ pkgs <- c(
     "hexbin",
     "highr",
     "Hmisc",
-    "maptools",
     "hrbrthemes",
     "htmlTable",
     "htmltools",
@@ -842,7 +799,6 @@ pkgs <- c(
     "targets",
     "tcltk",
     "tensorflow",
-    "terra",
     "testit",
     "testthat",
     "tibble",
@@ -884,42 +840,66 @@ biocPkgs <- c(
 
 if (checkPkg("mapview")) {
     tryCatch(
-        expr = remotes::install_github("r-spatial/mapview", dependencies = T, upgrade = "never"),
-        error = install.packages("mapview", dependencies = T, verbose = T, ask = F, type = "binary")
+        remotes::install_github("r-spatial/mapview", dependencies = T,
+                                upgrade = "never", auth_token = NULL),
+        error = install.packages("mapview", dependencies = T, verbose = T,
+                                 ask = F, type = "binary")
     )
 }
-
 
 any_failed0 <- check_pkg_install(corePkgs)
 
 if (checkPkg("urca")) {
-    install.packages("urca", ask = F, dependencies = T, verbose = T)
+    pak::pkg_install("urca", ask = F)
+    #install.packages("urca", ask = F, dependencies = T, verbose = T)
 }
 library("urca")
 
-manual_bioc("rhdf5")
-manual_bioc("Rhtslib")
-manual_bioc("Rhdf5lib")
-manual_bioc("HDF5Array")
-manual_bioc("rhdf5filters")
+rhd_pkgs <- c("rhdf5", "Rhtslib", "Rhdf5lib", "HDF5Array", "rhdf5filters")
+any_failed_rhd <- check_pkg_install(rhd_pkgs)
+
+# manual_bioc("rhdf5")
+# manual_bioc("Rhtslib")
+# manual_bioc("Rhdf5lib")
+# manual_bioc("HDF5Array")
+# manual_bioc("rhdf5filters")
 
 if (checkPkg("GenomeInfoDbData")) {
-    try_github_inst("Bioconductor/GenomeInfoDbData")
-    requireNamespace("GenomeInfoDbData")
+    tryCatch(
+        pak::pkg_install("GenomeInfoDbData", ask = F),
+        error = function(cond){
+            try_github_inst("Bioconductor/GenomeInfoDbData")
+        }
+    )
 }
+requireNamespace("GenomeInfoDbData")
 
 if (checkPkg("GenomeInfoDb")) {
-    try_github_inst("Bioconductor/GenomeInfoDb")
-    library("GenomeInfoDb")
+    tryCatch(
+        pak::pkg_install("GenomeInfoDb", ask = F),
+        error = function(cond){
+            try_github_inst("Bioconductor/GenomeInfoDb")
+        }
+    )
 }
+library("GenomeInfoDb")
 
 if (checkPkg("ff")) {
     install.packages("ff", type = "binary", ask = F, dependencies = T)
 }
 
-bio_url <- "https://cran.r-project.org/src/contrib/Hmisc_5.1-3.tar.gz"
 if (!requireNamespace("Hmisc", quietly = T)) {
-    install.packages(bio_url, repos = NULL, type = "source", ask = F, dependencies = T)
+    tryCatch(
+        pak::pkg_install("Hmisc", ask = F),
+        error = function(cond){
+            bio_url <- "https://cran.r-project.org/src/contrib/Hmisc_5.1-3.tar.gz"
+            install.packages(bio_url, repos = NULL, type = "source", ask = F, dependencies = T)
+        }
+    )
+}
+
+if (checkPkg("karyoploteR")) {
+    try(pak::pkg_install("karyoploteR", ask = F), silent = TRUE)
 }
 
 if (checkPkg("karyoploteR")) {
@@ -933,23 +913,54 @@ if (checkPkg("karyoploteR")) {
     install.packages(tgz_url, repos = NULL, type = "source", ask = F, dependencies = T)
 }
 
-manual_bioc("Rsamtools")
+if (checkPkg("Rsamtools")) {
+    tryCatch(
+        manual_bioc("Rsamtools"),
+        error = function(cond) {
+            pak::pkg_install("Rsamtools", ask = F)
+        }
+    )
+}
 
 if (checkPkg("FDb.InfiniumMethylation.hg19")) {
-    bio_url <-
-        "https://bioconductor.org/packages/release/data/annotation/src/contrib"
-    pkg_url1 <- file.path(bio_url, "org.Hs.eg.db_3.19.1.tar.gz")
-    pkg_url2 <- file.path(bio_url, "TxDb.Hsapiens.UCSC.hg19.knownGene_3.2.2.tar.gz")
-    pkg_url3 <- file.path(bio_url, "FDb.InfiniumMethylation.hg19_2.2.0.tar.gz")
-    install.packages(pkg_url1, repos = NULL, type = "source", ask = F, dependencies = T)
-    install.packages(pkg_url2, repos = NULL, type = "source", ask = F, dependencies = T)
-    install.packages(pkg_url3, repos = NULL, type = "source", ask = F, dependencies = T)
+    tryCatch(
+        pak::pkg_install("FDb.InfiniumMethylation.hg19", ask = F),
+        error = function(cond) {
+            bio_url <-
+                "https://bioconductor.org/packages/release/data/annotation/src/contrib"
+            pkg_url1 <- file.path(bio_url, "org.Hs.eg.db_3.19.1.tar.gz")
+            pkg_url2 <- file.path(bio_url,
+                                  "TxDb.Hsapiens.UCSC.hg19.knownGene_3.2.2.tar.gz")
+            pkg_url3 <- file.path(bio_url,
+                                  "FDb.InfiniumMethylation.hg19_2.2.0.tar.gz")
+            install.packages(
+                pkg_url1,
+                repos = NULL,
+                type = "source",
+                ask = F,
+                dependencies = T
+            )
+            install.packages(
+                pkg_url2,
+                repos = NULL,
+                type = "source",
+                ask = F,
+                dependencies = T
+            )
+            install.packages(
+                pkg_url3,
+                repos = NULL,
+                type = "source",
+                ask = F,
+                dependencies = T
+            )
+        }
+    )
 }
 
 if (checkPkg("IlluminaHumanMethylationEPICv2manifest")) {
     try_github_inst("mwsill/IlluminaHumanMethylationEPICv2manifest")
 }
-
 
 if (checkPkg("IlluminaHumanMethylation450kanno.ilmn12.hg19")) {
     bio_url <- "https://bioconductor.org/packages/release/data/annotation/src/contrib/IlluminaHumanMethylation450kanno.ilmn12.hg19_0.6.1.tar.gz"
@@ -958,11 +969,6 @@ if (checkPkg("IlluminaHumanMethylation450kanno.ilmn12.hg19")) {
 
 if (checkPkg("IlluminaHumanMethylation450kmanifest")) {
     bio_url <- "https://bioconductor.org/packages/release/data/annotation/src/contrib/IlluminaHumanMethylation450kmanifest_0.4.0.tar.gz"
-    install.packages(bio_url, repos = NULL, type = "source", ask = F, dependencies = T)
-}
-
-if (checkPkg("IlluminaHumanMethylationEPICanno.ilm10b4.hg19")) {
-    bio_url <- "https://www.bioconductor.org/packages/release/data/annotation/src/contrib/IlluminaHumanMethylationEPICanno.ilm10b4.hg19_0.6.0.tar.gz"
     install.packages(bio_url, repos = NULL, type = "source", ask = F, dependencies = T)
 }
 
@@ -977,17 +983,31 @@ if (checkPkg("IlluminaHumanMethylationEPICanno.ilm10b2.hg19")) {
     )
 }
 
+if (checkPkg("IlluminaHumanMethylationEPICanno.ilm10b4.hg19")) {
+    bio_url <- "https://www.bioconductor.org/packages/release/data/annotation/src/contrib/IlluminaHumanMethylationEPICanno.ilm10b4.hg19_0.6.0.tar.gz"
+    install.packages(bio_url, repos = NULL, type = "source", ask = F, dependencies = T)
+}
+
 if (checkPkg("minfi")) {
-    manual_bioc("sparseMatrixStats")
+    if (checkPkg("sparseMatrixStats")) {
+        pak::pkg_install("sparseMatrixStats", ask = F)
+        }
     try_github_inst("mwsill/minfi")
 }
 
 if (checkPkg("fields")) {
-    manual_bioc("fields")
+    tryCatch(
+        pak::pkg_install("gplots", ask = F),
+        error = function(cond) {
+            manual_bioc("fields")
+        }
+    )
 }
 
 if (checkPkg("RnBeads")) {
-    install.packages("gplots", type = "binary", dependencies = T, ask = F)
+    if (checkPkg("gplots")) {
+        pak::pkg_install("gplots", ask = F)
+    }
     rn_deps <- c(
         "BiocGenerics",
         "S4Vectors",
@@ -1006,12 +1026,9 @@ if (checkPkg("RnBeads")) {
         "plyr",
         "IRanges"
     )
-    for (dp in rn_deps) {
-        if (checkPkg(dp)) {
-            try_install(dp)
-        }
-    }
-    manual_bioc("RnBeads")
+    check_pkg_install(rn_deps)
+    pak::pkg_install("RnBeads", ask = F)
+    #manual_bioc("RnBeads")
 }
 
 if (checkPkg("conumee2.0")) {
@@ -1029,19 +1046,14 @@ if (checkPkg("mgmtstp27")) {
         gitLink, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F
     )
 }
-if (is_macos) {
-    checkNeeds()
-    #closeAllConnections()
-} else{
-    if (checkPkg("needs")) {
-        install.packages("needs", dependencies = T, verbose = T, ask = F)
-    }
-}
-
-try(options(needs.promptUser = FALSE), T)
 
 if (checkPkg("Rcpp")) {
-    try_github_inst("RcppCore/Rcpp")
+    tryCatch(
+        pak::pkg_install("Rcpp", ask = F),
+        error = function(cond) {
+            try_github_inst("RcppCore/Rcpp")
+        }
+    )
 }
 
 spat_config <-
@@ -1050,93 +1062,101 @@ options(configure.args = c("sf" = spat_config))
 
 if (checkPkg("sf")) {
     tryCatch(
-        install.packages("sf", type = "source", dependencies = T, verbose = T, Ncpus = 4),
+        install.packages(
+            "sf",
+            type = "source",
+            dependencies = T,
+            verbose = T,
+            Ncpus = 6
+        ),
         error = function(e) {
-            remotes::install_github("r-spatial/sf", configure.args = spat_config,
-                                    dependencies = T, upgrade = "never")})
+            remotes::install_github(
+                "r-spatial/sf",
+                configure.args = spat_config,
+                dependencies = T,
+                upgrade = "never"
+            )
+        }
+    )
 }
 
 invisible(gc())
-
-options("install.packages.compile.from.source" = "No")
-options("install.packages.check.source" = "no")
 
 loadLibrary("BiocManager")
 loadLibrary("Biobase")
 
 terraDep <- c('tinytest', 'ncdf4', 'leaflet')
-suppressWarnings(librarian::shelf(terraDep, ask = F, update_all = F, quiet = F))
+check_pkg_install(terraDep)
 
 if (checkPkg("terra")) {
-    install.packages(
-        'terra', repos = 'https://rspatial.r-universe.dev', ask = F,
-        dependencies = T, verbose = T, Ncpus = 4)
+    tryCatch(
+        pak::pkg_install("terra", ask = F),
+        error = function(cond){
+            install.packages(
+                'terra', repos = 'https://rspatial.r-universe.dev', ask = F,
+                dependencies = T, verbose = T, Ncpus = 6)
+        }
+    )
 }
 
 if (checkPkg("FField")) {
-    cran_link <-
-        "https://cran.r-project.org/src/contrib/Archive/FField/FField_0.1.0.tar.gz"
-    install.packages(
-        cran_link, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F
+    tryCatch(
+        pak::pkg_install("FField", ask = F),
+        error = function(cond) {
+            cran_link <-
+                "https://cran.r-project.org/src/contrib/Archive/FField/FField_0.1.0.tar.gz"
+            install.packages(
+                cran_link,
+                repos = NULL,
+                dependencies = T,
+                verbose = T,
+                type = "source",
+                ask = F
+            )
+        }
     )
 }
 
 if (checkPkg("vdiffr")) {
-    install.packages("vdiffr", dependencies = T, ask = F, type = "binary")
+    pak::pkg_install("vdiffr", ask = F)
 }
-manual_bioc("UCSC.utils")
+
+if (checkPkg("UCSC.utils")) {
+    pak::pkg_install("UCSC.utils", ask = F)
+}
 
 if (checkPkg("GenVisR")) {
-    manual_bioc("VariantAnnotation")
-    try_github_inst("griffithlab/GenVisR")
-}
-
-if (checkPkg("forecast")) {
-    cran_url <- "https://cran.r-project.org/bin/macosx"
-    forcast_pkg <- "forecast_8.23.0.tgz"
-    if (arch != "x86_64") {
-        pkg_bin <- file.path(cran_url, "big-sur-arm64/contrib/4.4", forcast_pkg)
-    } else {
-        pkg_bin <- file.path(cran_url, "big-sur-x86_64/contrib/4.4", forcast_pkg)
-    }
-    install.packages(
-        pkg_bin,
-        repos = NULL,
-        type = "source",
-        ask = F,
-        dependencies = T
+    tryCatch(
+        manual_bioc("VariantAnnotation"),
+        error = function(cond){
+            pak::pkg_install("VariantAnnotation", ask = F)
+        }
+    )
+    tryCatch(
+        try_github_inst("griffithlab/GenVisR"),
+        error = function(cond){
+            pak::pkg_install("GenVisR", ask = F)
+        }
     )
 }
 
-if (checkPkg("quantreg")) {
-    install.packages('quantreg', ask = F, type = 'binary', dependencies = T)
+if (checkPkg("forecast")) {
+    pak::pkg_install("forecast", ask = F)
 }
 
+if (checkPkg("quantreg")) {
+    pak::pkg_install("quantreg", ask = F)
+}
 
-
-any_failed <- check_pkg_install(pkgs)
+any_fail3 <- check_pkg_install(pkgs)
 
 invisible(gc())
 
-try(install.packages('foghorn', dependencies = T, type = 'binary'), silent = T)
-
-try(librarian::shelf(
-    c("mlr", "wateRmelon", "RPMM", "impute"),
-    ask = F, update_all = F, quiet = F), silent = T)
-
-if (checkPkg("wateRmelon")) {
-    BiocManager::install("wateRmelon", dependencies = T, type = "source", update = F)
+if (checkPkg("foghorn")) {
+    pak::pkg_install("foghorn", ask = F)
 }
 
-class_pkg_path <- ifelse(
-    is_macos,
-    "/Volumes/CBioinformatics/Methylation/classifiers",
-    "/gpfs/data/molecpathlab/production/Methylation/classifiers"
-)
-
-if (checkPkg("UniD")) {
-    unidPath <- file.path(class_pkg_path, "UniD")
-    try(install.packages(unidPath, type = "source", repos = NULL), silent = T)
-}
+water_pkgs <- c("mlr", "wateRmelon", "RPMM", "impute")
+any_fail4 <- check_pkg_install(water_pkgs)
 
 devtools::source_url(file.path(github_main, "R", "LoadInstallPackages.R"))
