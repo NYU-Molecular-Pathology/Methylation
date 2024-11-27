@@ -1279,35 +1279,22 @@ validateInputs <- function(rcon, recordName, fiPath) {
     }
 }
 
-
-createRequestBody <- function(rcon, recordName, fiPath) {
-    list(
-        token = rcon$token,
-        content = 'file',
-        action = 'import',
-        record = recordName,
-        field = "pact_csv_sheet",
-        file = httr::upload_file(fiPath),
-        returnFormat = 'csv'
-    )
-}
-
-
+# Uploads CSV file to REDCap --------------------------------------------------
 callApiFileCsv <- function(rcon, recordName, fiPath) {
     validateInputs(rcon, recordName, fiPath)
-    body <- createRequestBody(rcon, recordName, fiPath)
-    response <- tryCatch(
-        httr::POST(url = rcon$url, body = body, config = rcon$config),
-        error = function(e) {
-            message(e)
-            return(NULL)
-        }
-    )
-    message("Response:\n", response)
-    if (!is.null(response)) {
-        message("Upload successful: ", fiPath)
+    
+    upload_success <- try(redcapAPI::importFileToRecord(
+        rcon,
+        file = fiPath,
+        record = recordName,
+        event = NULL,
+        field = "pact_csv_sheet"
+    ), silent = T)
+    
+    if (upload_success == T) {
+        message("File uploaded to REDCap successfully:\n", fiPath)
     } else {
-        message("Upload failed: ", fiPath)
+        message("File failed to upload to REDCap in callApiFileCsv:\n", fiPath)
     }
 }
 
