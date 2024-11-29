@@ -68,6 +68,7 @@ cranPkgs <- c(
     'gridExtra',
     'knitr',
     'kableExtra',
+    'htmltools',
     'ggplot2',
     'plotly',
     'ggfortify',
