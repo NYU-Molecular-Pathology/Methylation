@@ -5,6 +5,7 @@
 ## Version: 1.0.1
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2024
+
 gb <- globalenv(); assign("gb", gb)
 dsh = "-----------"
 bky <- function(...) {crayon::black$bgYellow$bold(paste(...))}
@@ -94,21 +95,6 @@ SetKnitProgress <- function() {
     )
 }
 
-# Saves the methyl CNV as a png file in the cwd -------------------------------
-generateCNVpng <- function(RGsetEpic, sampleName) {
-    msgFunName(pipeLnk,"generateCNVpng")
-
-    imgName <- paste(sampleName, "cnv.png", sep = "_")
-    MsetEpic <- minfi::preprocessRaw(RGsetEpic)
-    cnv_dat <- mnp.v12epicv2::MNPcnv(MsetEpic, sex = sex, main = dat$sampleID)
-    png(filename = imgName,
-        width = 1820,
-        height = 1040)
-    par(mar = c(1, 1, 1, 1))
-    conumee::CNV.genomeplot(cnv_dat, chrY = FALSE)
-    dev.off(); message("File saved:\n",imgName,"\n")
-}
-
 
 CopyRmdFile <- function(runID, rmdFile) {
     msgFunName(pipeLnk, "CopyRmdFile")
@@ -146,14 +132,9 @@ getRGset <- function(runPath, sentrix) {
     aEpic = c(array = "IlluminaHumanMethylationEPIC", annotation = "ilm10b4.hg19")
     a450k = c(array = "IlluminaHumanMethylation450k", annotation = "ilmn12.hg19")
     arrayAnno <- RGsetEpic@annotation[['array']]
-
     if (arrayAnno == "IlluminaHumanMethylationEPICv2") {
-        requireNamespace("mnp.v12epicv2")
         is_validation <- T
         is_validation <<- T
-        reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
-        reportMd <<- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
-        gb$CopyRmdFile(gb$runID, reportMd)
         return(RGsetEpic)
     }
     if (arrayAnno == "IlluminaHumanMethylationEPIC") {
@@ -525,6 +506,7 @@ handle_knit_error <- function(e, dat, params) {
     stop("Check error_log.txt, params.rds, and chunk_env.rds for details.")
 }
 
+
 # Knits the output HTML reports given single row of data from samplesheet -----
 do_report <- function(single_data = NULL, genCn = FALSE) {
     msgFunName(pipeLnk, "do_report")
@@ -616,6 +598,7 @@ loopRender <- function(samList = NULL, data, redcapUp = T) {
     workbook_data <- Check_sam_csv(samList)
     toRun <- getRunList(data, samList)
     SetKnitProgress()
+    requireNamespace("mnp.v12epicv2")
     currIdx = 1
     for (sam_idx in toRun) {
         totLeft <- length(toRun) - currIdx
@@ -649,9 +632,9 @@ RenameFailed <- function(qcVals) {
                 old_name <- file.list[findFile]
                 is_renamed <- stringr::str_detect(old_name, pattern = "_QC_FAILED.html")
                 if (!is_renamed) {
-                new_name <- stringr::str_replace_all(
-                    old_name, ".html", "_QC_FAILED.html")
-                base::file.rename(old_name, new_name)
+                    new_name <- stringr::str_replace_all(
+                        old_name, ".html", "_QC_FAILED.html")
+                    base::file.rename(old_name, new_name)
                 }
             }
         }
@@ -717,6 +700,8 @@ makeHtmlReports <- function(runPath = NULL,
             CreateControlRecords(cntrl, runID, control_sams)
         }
     }
+    reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
+    CopyRmdFile(gb$runID, reportMd)
     loopRender(selectSams, data, redcapUp)
     checkRunOutput(runID)
 
