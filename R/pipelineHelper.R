@@ -655,7 +655,7 @@ CreateControlRecords <- function(cntrl, runID, control_sams) {
 }
 
 
-#' REPORT: Generates Html reports to cwd with samplesheet.csv for V12_EPICV2
+# MAIN: Generates Html reports with samplesheet.csv for V12_EPICV2 ----
 makeHtmlReports <- function(runPath = NULL,
                             sheetName = "samplesheet.csv",
                             selectSams = NULL,
@@ -702,6 +702,10 @@ makeHtmlReports <- function(runPath = NULL,
     }
     reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
     CopyRmdFile(gb$runID, reportMd)
+    library('mnp.v12epicv2')
+    library("pander")
+    library("htmltools")
+    
     loopRender(selectSams, data, redcapUp)
     checkRunOutput(runID)
 
