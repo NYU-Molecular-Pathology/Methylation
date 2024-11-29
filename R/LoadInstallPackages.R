@@ -144,7 +144,9 @@ extraPks <- c(
     "mlr",
     "wateRmelon",
     "RPMM",
-    "impute"
+    "impute",
+    "cli",
+    "progressr"
 )
 
 # Helper Functions ------------------------------------------------------------
