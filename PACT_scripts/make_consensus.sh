@@ -151,11 +151,11 @@ chmod +rwx "${DESK_DIR}${pactRun}_consensus.html"
 
 # Copy HTML file from DESK_DIR to final destination
 cd "${FINAL_DEST}" || exit
-rsync -vrhP "${DESK_DIR}${pactRun}_consensus.html" .
+rsync -vrP "${DESK_DIR}${pactRun}_consensus.html" .
 
 # Generate TMB_Variants xlsx files --------------------------------------------
-echo -e "Trying to Generate TMB_Variants xlsx files..."
-Rscript --verbose "/Volumes/molecular/Molecular/Validation/Scripts/Save_TMB_anno.R" "${runID}" "${pactRun}" || true
+#echo -e "Trying to Generate TMB_Variants xlsx files..."
+#Rscript --verbose "/Volumes/molecular/Molecular/Validation/Scripts/Save_TMB_anno.R" "${runID}" "${pactRun}" || true
 
 echo -e "Opening folder:\n${FINAL_DEST}"
 open "${FINAL_DEST}"
