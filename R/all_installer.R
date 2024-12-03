@@ -19,21 +19,31 @@ supM <- function(pk) {
     return(suppressPackageStartupMessages(suppressWarnings(pk)))
 }
 
+
+
+bins_file <- file.path(path.expand("~"), "bins_installed.txt")
+if (!file.exists(bins_file)) {
+    source("https://mac.R-project.org/bin/install.R")
+    install.libs('all')
+    try(file.create(bins_file), silent = TRUE)
+}
+
+
 command_exists <- function(cmd) nzchar(Sys.which(cmd))
 
 # Install Homebrew and packages if necessary
 ensure_homebrew <- function() {
     pkgs <- c("gcc", "llvm", "lld", "open-mpi", "pkg-config", "gdal", "proj",
               "apache-arrow")
-
+    
     if (!command_exists("brew")) {
         message("Installing Homebrew...")
         system('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"', wait = TRUE)
     }
-
+    
     installed_pkgs <- system2("brew", c("list", "--formula"),
                               stdout = T, stderr = F)
-
+    
     for (pkg in pkgs) {
         if (!(pkg %in% installed_pkgs)) {
             message("Installing ", pkg, " via Homebrew...")
@@ -141,7 +151,7 @@ download_pkg_unzip <- function(git_repo, zip_name = "main.zip") {
 local_github_pkg_install <- function(git_repo) {
     repo_url <- file.path("https://github.com", git_repo, "archive/refs/heads")
     local_dir <- file.path(fs::path_home(), "github_pkgs")
-
+    
     if (!dir.exists(local_dir)) dir.create(local_dir)
     tryCatch(
         expr = {
@@ -151,10 +161,10 @@ local_github_pkg_install <- function(git_repo) {
             download_pkg_unzip(git_repo, zip_name = "master.zip")
         }
     )
-
+    
     unzipped_dir <- list.dirs(local_dir, full.names = TRUE, recursive = FALSE)
     pkg_dir <- unzipped_dir[grepl(basename(git_repo), unzipped_dir)]
-
+    
     install.packages(pkg_dir, repo = NULL, type = "source", dependencies = T)
 }
 
@@ -281,7 +291,7 @@ install_bio_pkg <- function(pkg_deps) {
 # FUN: Checks if package installed from BioConductor --------------------------
 check_bio_install <- function(pkgs) {
     needed_pkgs <- check_needed(pkgs)
-
+    
     if (length(needed_pkgs) > 0) {
         for (new_pkg in needed_pkgs) {
             pkg_deps <- get_pkg_deps(new_pkg)
@@ -324,7 +334,7 @@ check_pkg_install <- function(pkgs) {
             pak::install(new_pkg, ask = F)
         }
     }
-
+    
     load_success <- sapply(pkgs, quiet_load)
     if (any(load_success == F)) {
         failed_pkgs <- pkgs[load_success == F]
@@ -441,10 +451,6 @@ if (checkPkg("httr")) {
     install.packages("httr", ask = F, dependencies = T)
 }
 
-if (checkPkg("devtools")) {
-    install.packages("devtools", ask = F, type = "source", dependencies = T)
-}
-
 binary_install("librarian")
 
 if (checkPkg("BiocManager")) {
@@ -469,7 +475,7 @@ if (!requireNamespace("pak", quietly = T)) {
         "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
         .Platform$pkgType, R.Version()$os, R.Version()$arch),
         dependencies = T, ask = F
-        )
+    )
 }
 stopifnot(loadLibrary("pak"))
 
@@ -858,12 +864,6 @@ library("urca")
 rhd_pkgs <- c("rhdf5", "Rhtslib", "Rhdf5lib", "HDF5Array", "rhdf5filters")
 any_failed_rhd <- check_pkg_install(rhd_pkgs)
 
-# manual_bioc("rhdf5")
-# manual_bioc("Rhtslib")
-# manual_bioc("Rhdf5lib")
-# manual_bioc("HDF5Array")
-# manual_bioc("rhdf5filters")
-
 if (checkPkg("GenomeInfoDbData")) {
     tryCatch(
         pak::pkg_install("GenomeInfoDbData", ask = F),
@@ -991,7 +991,7 @@ if (checkPkg("IlluminaHumanMethylationEPICanno.ilm10b4.hg19")) {
 if (checkPkg("minfi")) {
     if (checkPkg("sparseMatrixStats")) {
         pak::pkg_install("sparseMatrixStats", ask = F)
-        }
+    }
     try_github_inst("mwsill/minfi")
 }
 
