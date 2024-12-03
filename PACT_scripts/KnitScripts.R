@@ -580,12 +580,13 @@ parseCNV <- function(outPath, sam, cnvTab){
 
 
 getDumpFiles <- function(outPath, sam, cnvTab, philipsFtp = "/Volumes/molecular/Molecular/Philips_SFTP") {
-  samFiles <- dir(
-    path = philipsFtp,
-    pattern = sam,
-    all.files = T,
-    full.names = T
-  )
+    sam_pat <- paste0(sam, "_")
+    samFiles <- dir(
+        path = philipsFtp,
+        pattern = sam_pat,
+        all.files = T,
+        full.names = T
+    )
   if (length(samFiles) > 1) {
     newest_file <- which.max(file.info(samFiles)$mtime)
     samFiles <- samFiles[newest_file]
