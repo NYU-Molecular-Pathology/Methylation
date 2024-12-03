@@ -427,7 +427,7 @@ if (!requireNamespace("rJava", quietly = T)) {
 
 java_inst <- system("java -version", ignore.stdout = T, ignore.stderr = T) == 0
 if (!java_inst) {
-    temurin <- "brew tap homebrew/cask-versions && brew install --cask temurin"
+    temurin <- "brew install --cask temurin"
     system(temurin, ignore.stdout = TRUE, ignore.stderr = TRUE)
 }
 java_home <- system("/usr/libexec/java_home", intern = TRUE)
