@@ -57,7 +57,7 @@ ensure_homebrew <- function() {
     }
     
     installed_pkgs <- system2("brew", c("list", "--formula"),
-                              stdout = T, stderr = F)
+                              stdout = T, stderr = NULL)
     
     for (pkg in pkgs) {
         if (!(pkg %in% installed_pkgs)) {
