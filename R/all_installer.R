@@ -31,6 +31,20 @@ if (!file.exists(bins_file)) {
 
 command_exists <- function(cmd) nzchar(Sys.which(cmd))
 
+setup_brew <- function() {
+  # Define the commands
+  commands <- c(
+    'echo >> "$HOME/.zprofile"',
+    'echo \'eval "$(/opt/homebrew/bin/brew shellenv)"\' >> "$HOME/.zprofile"',
+    'eval "$(/opt/homebrew/bin/brew shellenv)"'
+  )
+  
+  # Execute the commands
+  for (cmd in commands) {
+    system(cmd)
+  }
+}
+
 # Install Homebrew and packages if necessary
 ensure_homebrew <- function() {
     pkgs <- c("gcc", "llvm", "lld", "open-mpi", "pkg-config", "gdal", "proj",
@@ -39,6 +53,7 @@ ensure_homebrew <- function() {
     if (!command_exists("brew")) {
         message("Installing Homebrew...")
         system('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"', wait = TRUE)
+        setup_brew()
     }
     
     installed_pkgs <- system2("brew", c("list", "--formula"),
