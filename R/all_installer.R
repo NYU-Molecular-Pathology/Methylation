@@ -519,7 +519,6 @@ preReqPkgs <- c(
     'RCurl',
     'biomaRt',
     'XML',
-    'bit64',
     'plyr',
     'GenomicAlignments',
     'readr',
