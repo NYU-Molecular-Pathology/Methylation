@@ -341,14 +341,19 @@ try_install <- function(new_pkg) {
 
 # FUN: Loads and installs necessary CRAN packages -----------------------------
 check_pkg_install <- function(pkgs) {
-    pkgs_needed <- check_needed(pkgs)
-    if (length(pkgs_needed) > 0) {
-        message("The following missing packages will be installed:\n",
-                paste(pkgs_needed, collapse = "\n"))
-        for (new_pkg in pkgs_needed) {
-            pak::pkg_install(new_pkg, ask = F)
+  pkgs_needed <- check_needed(pkgs)
+  if (length(pkgs_needed) > 0) {
+    message("The following missing packages will be installed:\n",
+            paste(pkgs_needed, collapse = "\n"))
+    for (new_pkg in pkgs_needed) {
+      tryCatch(
+        pak::pkg_install(new_pkg, ask = F),
+        error = function(cond){
+          try_install(new_pkg)
         }
+      )
     }
+  }
     
     load_success <- sapply(pkgs, quiet_load)
     if (any(load_success == F)) {
