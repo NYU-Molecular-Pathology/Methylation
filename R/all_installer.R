@@ -346,7 +346,7 @@ check_pkg_install <- function(pkgs) {
         message("The following missing packages will be installed:\n",
                 paste(pkgs_needed, collapse = "\n"))
         for (new_pkg in pkgs_needed) {
-            pak::install(new_pkg, ask = F)
+            pak::pkg_install(new_pkg, ask = F)
         }
     }
     
