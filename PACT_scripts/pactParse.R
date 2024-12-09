@@ -952,6 +952,19 @@ FixLastColumns <- function(mainSheet, rawData) {
 }
 
 
+GetExtraNormalRows <- function(rawData){
+
+    non_paired_sam <- !duplicated(rawData$Test_Number) &
+        !duplicated(rawData$Test_Number, fromLast = TRUE)
+    unique_values <- rawData$Test_Number[non_paired_sam]
+    message("The following samples are unpaired:\n",
+            paste(unique_values, collapse = "\n"))
+    unmatched_idx <- which(rawData$Test_Number %in% unique_values)
+    return(unmatched_idx)
+}
+
+
+
 BuildNoPhilips <- function(rawData, runID, pact_run) {
     message(
         "Generating SampleSheet without Philips Data: ALL are validation!"
@@ -966,8 +979,24 @@ BuildNoPhilips <- function(rawData, runID, pact_run) {
 
     if (sum(whichTumor) != sum(onlyNormals)) {
         message("Not all tumors and normals are paired")
-        true_indices <- which(whichTumor)[1:sum(onlyNormals)]
-        pairedNorm[true_indices] <- concat_id[onlyNormals, 1]
+        if (sum(whichTumor) > sum(onlyNormals)) {
+            true_indices <- which(whichTumor)[1:sum(onlyNormals)]
+            pairedNorm[true_indices] <- concat_id[onlyNormals, 1]
+        }else {
+            message("Run has multiple normal-only samples")
+            true_indices <- which(whichTumor)
+            extra_idx <- GetExtraNormalRows(rawData)
+
+            pairsToFind <- rawData$`Accession#`[extra_idx]
+            newPairs <- concat_id[onlyNormals, 1]
+
+            unmatched <- unlist(lapply(pairsToFind, function(sam) {
+                which(grepl(sam , newPairs))
+            }))
+            newPairs[unmatched] <- ""  # Un-pair Normal-only samples
+            true_indices <- sort(c(true_indices, extra_idx))
+            pairedNorm[true_indices] <- newPairs
+        }
     } else{
         pairedNorm[whichTumor] <- concat_id[onlyNormals, 1]
     }
@@ -995,6 +1024,7 @@ BuildNoPhilips <- function(rawData, runID, pact_run) {
     mainSheet[!whichNormal, "Tumor_Content"] <- 70
     return(mainSheet)
 }
+
 
 
 fix_filler_zeros <- function(rawData, mainSheet) {
