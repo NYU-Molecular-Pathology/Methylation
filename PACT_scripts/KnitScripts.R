@@ -548,13 +548,12 @@ parsePhilipsCn <- function(cnvInfo, sam, cnvTab){
     cnvInfo$Comments <- substr(cnvInfo$CopyNumber,1,3)
     cnvInfo$In.NYU <- cnvInfo$In.Philips <- NA
     cnvInfo$IGV <- "Copy Number"
-    newTab <- cnvInfo[,names(cnvTab)]
-    newTab <- rbind(cnvTab,newTab)
-    cnvTab <- newTab
-    dropMut <- cnvTab$Mutation.Type!="Hemizygous Loss"
+    cnvTab <- cnvInfo
+    dropMut <- cnvTab$Mutation.Type != "Hemizygous Loss"
     cnvTab <- cnvTab[dropMut,]
-    cnvTab <- cnvTab[cnvTab$Mutation.Type!="",]
-    return(cnvTab[order(cnvTab$Mutation.Type),])
+    cnvTab <- cnvTab[cnvTab$Mutation.Type != "", ]
+    cnvTab <- cnvTab[order(cnvTab$Mutation.Type),]
+    return(cnvTab)
 }
 
 
