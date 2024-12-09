@@ -364,7 +364,7 @@ FindMissingPairs <- function(extraNormals,
     if (length(unmatchedSamples) == 0) {
         unique_values <- rawData$Test_Number[!duplicated(rawData$Test_Number) &
                                                  !duplicated(rawData$Test_Number, fromLast = TRUE)]
-        unmatchedSamples <- which(rawData$Test_Number == unique_values)
+        unmatchedSamples <- which(rawData$Test_Number %in% unique_values)
         missingSams <- mainSheet$Sample_ID[unmatchedSamples]
         dnaMissingPair <- stringr::str_detect(mainSheet$Sample_ID, pattern = missingSams)
         return(dnaMissingPair)
