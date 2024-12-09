@@ -966,6 +966,14 @@ CheckMissedSam <- function(sam, snvDt, pactName) {
 }
 
 
+cleanTabCols <- function(snvTab) {
+  snvTab <- subset(snvTab, select = -Variant)
+  snvTab <- subset(snvTab, select = -IGV)
+  snvTab <- subset(snvTab, select = -Comments)
+  return(snvTab)
+}
+
+
 LoopSampleTabs <-  function(params) {
     pactName <- params$pactName
     methData <- gb$GetMethDf(params$pactName)
@@ -995,6 +1003,7 @@ LoopSampleTabs <-  function(params) {
     for (sam in samples) {
         makeNewTab(sam, samList, qcData, pactName)
         sam_match <- which(sam == tumorSams$Test_Number)
+        
         if (length(sam_match > 0)) {
           sam_id <- tumorSams$Sample_ID[sam_match]
           tmb_match <- tmb_dat$SampleID == sam_id
@@ -1003,16 +1012,22 @@ LoopSampleTabs <-  function(params) {
           msi_row <- msi_dat[msi_match, ]
           make_msi_tmb_tab(tmb_row, msi_row)
         }
+        
         snvDt <- CheckMissedSam(sam, snvDt, pactName) 
         samRows <- snvDt$Test_Case == sam
         snvTab <- snvDt[samRows & snvDt$Variant == "SNV", ]
+        snvTab <- cleanTabCols(snvTab)
         makeDT("In-House FrameShifts/INDEL", objDat = snvTab)
+        
         cnvTab <- checkDataDump(sam, cnvTab = snvDt[samRows & snvDt$Variant == "CNV", ])
+        cnvTab <- subset(cnvTab, select = -Variant)
         makeDT("CNV", cnvTab, pdfFi = sam, outDir=outDir)
+        
         if (!is.null(methData)) {
             methCn <- methData[methData$Test_Number == sam, ]
             makeMethTab(sam, methCn, methData)
         }
+        
         makeAbTab(sam)
         if (!is.null(hsDat)) {
             MakeHStab(sam, hsDat, samList, outDir)
