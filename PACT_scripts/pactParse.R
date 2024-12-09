@@ -953,16 +953,14 @@ FixLastColumns <- function(mainSheet, rawData) {
 
 
 GetExtraNormalRows <- function(rawData){
-
     non_paired_sam <- !duplicated(rawData$Test_Number) &
         !duplicated(rawData$Test_Number, fromLast = TRUE)
     unique_values <- rawData$Test_Number[non_paired_sam]
-    message("The following samples are unpaired:\n",
-            paste(unique_values, collapse = "\n"))
+    mkRed("The following samples are unpaired:")
+    message(paste(unique_values, collapse = "\n"))
     unmatched_idx <- which(rawData$Test_Number %in% unique_values)
     return(unmatched_idx)
 }
-
 
 
 BuildNoPhilips <- function(rawData, runID, pact_run) {
