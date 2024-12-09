@@ -16,6 +16,7 @@ args[2] -> concensusDir
 DEFAULT_DIR <- "/Volumes/CBioinformatics/jonathan/pact/consensus/"
 DEFAULT_OUT <- "/Volumes/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics"
 
+
 if (is.na(concensusDir)) {
     concensusDir <- paste0(DEFAULT_DIR, pactRunName, "_consensus")
 }
@@ -44,12 +45,28 @@ if (length(inputFile) == 0) {
 }
 
 variantsData <- as.data.frame(read.csv(inputFile, strip.white = T))
-varColumns <- c("Test_Number", "Gene.refGene", "Variant", "ExonicFunc.refGene")
+
+varColumns <- c(
+    "Test_Number",
+    "Tumor",
+    "Normal",
+    "Gene.refGene",
+    "Variant",
+    "DP",
+    "AF",
+    "MuTect2",
+    "LoFreqSomatic",
+    "ExonicFunc.refGene",
+    "AAChange.refGene"
+)
 
 exonicFilter <- stringr::str_detect(variantsData$ExonicFunc.refGene, "frame|delet|insert")
 indelsList <- variantsData[exonicFilter, varColumns]
 fix_genes <- stringr::str_replace_all(indelsList$Gene.refGene, ",", " ")
 indelsList$Gene.refGene <- fix_genes
+
+fix_aa <- stringr::str_replace_all(indelsList$AAChange.refGene, ",", "|")
+indelsList$AAChange.refGene <- fix_aa
 
 positions <- stringr::str_split_fixed(indelsList$Variant, ":", 3)[, 1:2]
 indelsList$Position <- paste(positions[, 1], positions[, 2], sep = "_")
@@ -61,9 +78,16 @@ rownames(indelsList) <- NULL
 
 blank_row <- data.frame(
     Test_Number = "",
+    Tumor = "",
+    Normal = "",
     Gene.refGene = "",
     Variant = "",
+    DP = "",
+    AF = "",
+    MuTect2 = "",
+    LoFreqSomatic = "",
     ExonicFunc.refGene = "",
+    AAChange.refGene = "",
     Position = "",
     nyu = "",
     philips = ""
@@ -88,13 +112,20 @@ for (ngs in unique(variantsData$Test_Number)) {
 
 varsToCheck <- data.frame(
     "Test_Case" = indelsList$Test_Number,
+    "Tumor" = indelsList$Tumor,
+    "Normal" = indelsList$Normal,
     "Gene" = indelsList$Gene.refGene,
     "Mutation Type" = indelsList$ExonicFunc.refGene,
     "Other" = indelsList$Position,
     "In NYU" = indelsList$nyu,
     "In Philips" = indelsList$philips,
+    "Depth" = indelsList$DP,
+    "AF" = indelsList$AF,
+    "MuTect2" = indelsList$MuTect2,
+    "LoFreqSomatic" = indelsList$LoFreqSomatic,
     "IGV" = '',
     "Comments" = '',
+    "AAChange" = indelsList$AAChange.refGene,
     "Variant" = indelsList$Variant
 )
 
