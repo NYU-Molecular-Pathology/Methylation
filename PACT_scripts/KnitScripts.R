@@ -453,13 +453,41 @@ MakeTabColor <- function(tabNam) {
     }
 }
 
+
+makeColorfulTab <- function(objDat) {
+  cat(
+            "<span style='color: red;'>",
+            "INDEL/Frameshift calls have the following filters:",
+            "</span>\n\n",
+            "<span style='color: black;'>",
+            "**Tumor freq >= 5%**, **Normal freq <2%**,",
+            " and **Tumor Depth >50**",
+            "</span>\n\n"
+        )
+  
+  
+   objDat <- ColorTable(objDat)
+    knitr::kable(objDat, "html", escape = FALSE) %>%
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  kableExtra::row_spec(0, extra_css = "font-weight: bold;") %>%
+  kableExtra::scroll_box(height = "100%", width = "100%") %>%
+  print()
+    cat("\n\n")
+}
+
+
 MakeRegularTab <- function(tabNam, objDat) {
     if (!is.null(objDat) & stringr::str_detect(tabNam, "Methylation") == F) {
         if (tabNam == "QC") {
             makeQCTab(objDat)
         } else{
             CheckTabName(tabNam)
+          if (tabNam == "In-House Philips Variants") {
+            makeColorfulTab(objDat)
+          }else{
             makeDefaultDt(objDat)
+          }
+            
         }
     } else{
         cat("\n\nNo additonal results for this case yet\n\n")
@@ -905,29 +933,35 @@ PrintParseErr <- function(csvPath, tabTxt){
 }
 
 # Makes Abberations Tab ------------------------------------------------------------
-makeAbTab <- function(sam, philipsFtp="/Volumes/molecular/Molecular/Philips_SFTP") {
+makeAbTab <- function(sam, philipsFtp = "/Volumes/molecular/Molecular/Philips_SFTP") {
+  
     dumpDir <- get_ngs_path(outPath = file.path(getwd(), "zipfiles"), sam) 
 
     if (is.null(dumpDir)) {
-        zipFiN <- file.path(philipsFtp, paste0(sam, ".zip"))
+        td <- format(Sys.Date(), "%Y-%m-%d")
+        zipFiN <- file.path(philipsFtp, paste0(sam, "_", td, ".zip"))
         cat("\n\n## **No Philips Data Dump**\n\n")
         cat("Data dump not found:\n")
-        return(cat(paste0(zipFiN, format(Sys.Date(), "%Y-%m-%d"),"\n\n")))
+        return(cat(paste0(zipFiN, "\n\n")))
     }
 
     snvCsv <- file.path(dumpDir, "aberration_snv.csv")
-    samCsv <- file.path(dumpDir, "specimen.csv")
-    diagCsv <- file.path(dumpDir, "diagnosticorder.csv")
+    #samCsv <- file.path(dumpDir, "specimen.csv")
+    #diagCsv <- file.path(dumpDir, "diagnosticorder.csv")
 
-    if (file.exists(snvCsv) | file.exists(samCsv) | file.exists(diagCsv)) {
-        tryCatch(printSnvs(snvCsv), error=function(e){PrintParseErr(snvCsv, "SNV")})
-        tryCatch(printSpecInfo(samCsv), error=function(e){PrintParseErr(samCsv, "Sample")})
-        tryCatch(printDiagInfo(diagCsv), error=function(e){PrintParseErr(diagCsv, "Diagnostics")})
+    if (file.exists(snvCsv)) {
+        #tryCatch(printSnvs(snvCsv), error=function(e){PrintParseErr(snvCsv, "SNV")})
+        #tryCatch(printSpecInfo(samCsv), error=function(e){PrintParseErr(samCsv, "Sample")})
+        #tryCatch(printDiagInfo(diagCsv), error=function(e){PrintParseErr(diagCsv, "Diagnostics")})
+      
+      philipsIndels <- tryCatch(printSnvs(snvCsv, TRUE), error=function(e){PrintParseErr(snvCsv, "SNV")})
+      return(philipsIndels)
     } else{
-        zipFiN <- file.path(philipsFtp, paste0(sam, ".zip"))
-        cat("\n\n## **No Philips Data Dump**\n\n")
-        cat("Data dump not found:\n")
-        cat(paste0(zipFiN, "\n\n"))
+        #zipFiN <- file.path(philipsFtp, paste0(sam, ".zip"))
+        #cat("\n\n## **No Philips Data Dump**\n\n")
+        #cat("Data dump not found:\n")
+        #cat(paste0(zipFiN, "\n\n"))
+        return(NULL)
     }
 }
 
@@ -970,8 +1004,68 @@ cleanTabCols <- function(snvTab) {
   snvTab <- subset(snvTab, select = -Variant)
   snvTab <- subset(snvTab, select = -IGV)
   snvTab <- subset(snvTab, select = -Comments)
+  snvTab <- snvTab %>% rename(Position = Other)
+  snvTab$Position <- gsub("_", ":", snvTab$Position) 
   return(snvTab)
 }
+
+
+cleanPhilTab <- function(philipsIndels) {
+  philipsIndels <- philipsIndels %>% rename(Position = Coordinate,
+                                            Gene = HGNC_gene ,
+                                            Mutation.Type = AberrationType)
+  return(philipsIndels)
+}
+
+compare_philips <- function(snvTab, philipsIndels) {
+  snvTab$Same <- "Yes"
+  snvTab$Not.In.House <- "No"
+  snvTab$In.Philips <- "No"
+  genCols <- c("Gene", "Position")
+  
+  matched_rows <- apply(snvTab, 1, function(row) {
+    any(apply(philipsIndels, 1, function(indel_row) {
+      all(row[genCols] == indel_row[genCols])
+    }))
+  })
+  
+  snvTab$Same[!matched_rows] <- "No"
+  snvTab$In.Philips[matched_rows] <- "Yes"
+  
+  new_rows <- philipsIndels[!apply(philipsIndels[, genCols], 1, function(row) {
+    any(apply(snvTab[, genCols], 1, function(snv_row) {
+      all(row == snv_row)
+    }))
+  }), ]
+  
+  if (nrow(new_rows) > 0) {
+    new_df <- data.frame(
+      Test_Case = snvTab$Test_Case[1],
+      Tumor = snvTab$Tumor[1],
+      Normal =   snvTab$Normal[1],
+      Gene = new_rows$Gene,
+      Mutation.Type = new_rows$Mutation.Type,
+      Position = new_rows$Position,
+      In.NYU = "No",
+      In.Philips = "Yes",
+      Depth = new_rows$tumor_dp,
+      AF = new_rows$tumor_freq,
+      MuTect2 = "",
+      LoFreqSomatic = "",
+      AAChange = new_rows$HGVSp_Short,
+      Same = "No",
+      Not.In.House = "Yes"
+    )
+    
+    snvTab <- rbind(snvTab, new_df)
+  }
+  
+  combTab <- snvTab[order(snvTab$Not.In.House == "Yes",
+                             snvTab$Same == "No", decreasing = TRUE), ]
+  
+  return(combTab)
+}
+
 
 
 LoopSampleTabs <-  function(params) {
@@ -1017,7 +1111,20 @@ LoopSampleTabs <-  function(params) {
         samRows <- snvDt$Test_Case == sam
         snvTab <- snvDt[samRows & snvDt$Variant == "SNV", ]
         snvTab <- cleanTabCols(snvTab)
-        makeDT("In-House FrameShifts/INDEL", objDat = snvTab)
+        
+        philipsIndels <- makeAbTab(sam)
+        
+        if (!is.null(philipsIndels)) {
+            philipsIndels <- cleanPhilTab(philipsIndels)
+            combTab <- compare_philips(snvTab, philipsIndels)
+            columns_to_front <- c("Same", "Not.In.House")
+            combTab <- combTab[, c(columns_to_front, setdiff(names(combTab), columns_to_front))]
+
+            makeDT("In-House Philips Variants", objDat = combTab)
+           
+        } else{
+          makeDT("In-House FrameShifts/INDEL", objDat = snvTab)
+        }
         
         cnvTab <- checkDataDump(sam, cnvTab = snvDt[samRows & snvDt$Variant == "CNV", ])
         cnvTab <- subset(cnvTab, select = -Variant)
@@ -1028,7 +1135,6 @@ LoopSampleTabs <-  function(params) {
             makeMethTab(sam, methCn, methData)
         }
         
-        makeAbTab(sam)
         if (!is.null(hsDat)) {
             MakeHStab(sam, hsDat, samList, outDir)
         }
