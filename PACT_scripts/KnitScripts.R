@@ -1017,6 +1017,8 @@ cleanTabCols <- function(snvTab) {
   snvTab <- subset(snvTab, select = -Variant)
   snvTab <- subset(snvTab, select = -IGV)
   snvTab <- subset(snvTab, select = -Comments)
+    snvTab <- subset(snvTab, select = -MuTect2)
+    snvTab <- subset(snvTab, select = -LoFreqSomatic)
   snvTab <- snvTab %>% rename(Position = Other)
   snvTab$Position <- gsub("_", ":", snvTab$Position) 
   return(snvTab)
