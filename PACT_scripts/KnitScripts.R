@@ -482,7 +482,7 @@ MakeRegularTab <- function(tabNam, objDat) {
             makeQCTab(objDat)
         } else{
             CheckTabName(tabNam)
-          if (tabNam == "In-House Philips Variants") {
+          if (tabNam == "In-House Somatic Variant Calls") {
             makeColorfulTab(objDat)
           }else{
             makeDefaultDt(objDat)
