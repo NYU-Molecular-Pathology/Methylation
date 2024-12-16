@@ -619,6 +619,7 @@ getDumpFiles <- function(outPath, sam, cnvTab, philipsFtp = "/Volumes/molecular/
     samFiles <- samFiles[newest_file]
   }
   if (length(samFiles) == 0) {
+      message("No data dump found for pattern: ", sam_pat)
     return(cnvTab)
   }
   samZip <- basename(samFiles)
@@ -1032,40 +1033,38 @@ compare_philips <- function(snvTab, philipsIndels) {
   snvTab$Same[!matched_rows] <- "No"
   snvTab$In.Philips[matched_rows] <- "Yes"
   
-  new_rows <- philipsIndels[!apply(philipsIndels[, genCols], 1, function(row) {
-    any(apply(snvTab[, genCols], 1, function(snv_row) {
-      all(row == snv_row)
-    }))
-  }), ]
+  # new_rows <- philipsIndels[!apply(philipsIndels[, genCols], 1, function(row) {
+  #   any(apply(snvTab[, genCols], 1, function(snv_row) {
+  #     all(row == snv_row)
+  #   }))
+  # }), ]
   
-  if (nrow(new_rows) > 0) {
-    new_df <- data.frame(
-      Test_Case = snvTab$Test_Case[1],
-      Tumor = snvTab$Tumor[1],
-      Normal =   snvTab$Normal[1],
-      Gene = new_rows$Gene,
-      Mutation.Type = new_rows$Mutation.Type,
-      Position = new_rows$Position,
-      In.NYU = "No",
-      In.Philips = "Yes",
-      Depth = new_rows$tumor_dp,
-      AF = new_rows$tumor_freq,
-      MuTect2 = "",
-      LoFreqSomatic = "",
-      AAChange = new_rows$HGVSp_Short,
-      Same = "No",
-      Not.In.House = "Yes"
-    )
+  # if (nrow(new_rows) > 0) {
+  #   new_df <- data.frame(
+  #     Test_Case = snvTab$Test_Case[1],
+  #     Tumor = snvTab$Tumor[1],
+  #     Normal =   snvTab$Normal[1],
+  #     Gene = new_rows$Gene,
+  #     Mutation.Type = new_rows$Mutation.Type,
+  #     Position = new_rows$Position,
+  #     In.NYU = "No",
+  #     In.Philips = "Yes",
+  #     Depth = new_rows$tumor_dp,
+  #     AF = new_rows$tumor_freq,
+  #     MuTect2 = "",
+  #     LoFreqSomatic = "",
+  #     AAChange = new_rows$HGVSp_Short,
+  #     Same = "No",
+  #     Not.In.House = "Yes"
+  #   )
     
-    snvTab <- rbind(snvTab, new_df)
-  }
+  #   snvTab <- rbind(snvTab, new_df)
+  # }
   
-  combTab <- snvTab[order(snvTab$Not.In.House == "Yes",
-                             snvTab$Same == "No", decreasing = TRUE), ]
+  combTab <- snvTab[order(snvTab$Same == "No", decreasing = TRUE), ]
   
   return(combTab)
 }
-
 
 
 LoopSampleTabs <-  function(params) {
@@ -1109,6 +1108,9 @@ LoopSampleTabs <-  function(params) {
         
         snvDt <- CheckMissedSam(sam, snvDt, pactName) 
         samRows <- snvDt$Test_Case == sam
+
+        cnvTab <- checkDataDump(sam, cnvTab = snvDt[samRows & snvDt$Variant == "CNV", ])
+        
         snvTab <- snvDt[samRows & snvDt$Variant == "SNV", ]
         snvTab <- cleanTabCols(snvTab)
         
@@ -1126,7 +1128,6 @@ LoopSampleTabs <-  function(params) {
           makeDT("In-House FrameShifts/INDEL", objDat = snvTab)
         }
         
-        cnvTab <- checkDataDump(sam, cnvTab = snvDt[samRows & snvDt$Variant == "CNV", ])
         cnvTab <- subset(cnvTab, select = -Variant)
         makeDT("CNV", cnvTab, pdfFi = sam, outDir=outDir)
         
