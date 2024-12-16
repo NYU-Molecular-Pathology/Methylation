@@ -459,7 +459,7 @@ ColorTable <- function(df) {
     if (col %in% c("Same")) {
       ifelse(
         df$Same == "No",
-        kableExtra::cell_spec(df[[col]], "html", background = "#d33443"),
+        kableExtra::cell_spec(df[[col]], "html", background = "#F06C78"),
         df[[col]]
       )
     } else {
