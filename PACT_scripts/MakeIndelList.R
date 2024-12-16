@@ -60,8 +60,8 @@ varColumns <- c(
     "AAChange.refGene"
 )
 
-exonicFilter <- stringr::str_detect(variantsData$ExonicFunc.refGene, "frame|delet|insert")
-indelsList <- variantsData[exonicFilter, varColumns]
+#exonicFilter <- stringr::str_detect(variantsData$ExonicFunc.refGene, "frame|delet|insert")
+indelsList <- variantsData[, varColumns] # exonicFilter rows
 fix_genes <- stringr::str_replace_all(indelsList$Gene.refGene, ",", " ")
 indelsList$Gene.refGene <- fix_genes
 
