@@ -473,7 +473,7 @@ ColorTable <- function(df) {
 makeColorfulTab <- function(objDat) {
   cat(
             "<span style='color: red;'>",
-            "INDEL/Frameshift calls have the following filters:",
+            "All Variant calls have the following filters:",
             "</span>\n\n",
             "<span style='color: black;'>",
             "**Tumor freq >= 5%**, **Normal freq <2%**,",
@@ -481,9 +481,8 @@ makeColorfulTab <- function(objDat) {
             "</span>\n\n"
         )
   
-  
    objDat <- ColorTable(objDat)
-    knitr::kable(objDat, "html", escape = FALSE) %>%
+    knitr::kable(objDat, "html", escape = FALSE, row.names = FALSE) %>%
   kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
   kableExtra::row_spec(0, extra_css = "font-weight: bold;") %>%
   kableExtra::scroll_box(height = "100%", width = "100%") %>%
