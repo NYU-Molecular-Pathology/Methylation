@@ -949,13 +949,15 @@ makeAbTab <- function(sam, philipsFtp = "/Volumes/molecular/Molecular/Philips_SF
     snvCsv <- file.path(dumpDir, "aberration_snv.csv")
     #samCsv <- file.path(dumpDir, "specimen.csv")
     #diagCsv <- file.path(dumpDir, "diagnosticorder.csv")
-
     if (file.exists(snvCsv)) {
         #tryCatch(printSnvs(snvCsv), error=function(e){PrintParseErr(snvCsv, "SNV")})
         #tryCatch(printSpecInfo(samCsv), error=function(e){PrintParseErr(samCsv, "Sample")})
         #tryCatch(printDiagInfo(diagCsv), error=function(e){PrintParseErr(diagCsv, "Diagnostics")})
-      
-      philipsIndels <- tryCatch(printSnvs(snvCsv, TRUE), error=function(e){PrintParseErr(snvCsv, "SNV")})
+      philipsIndels <- tryCatch(
+          printSnvs(snvCsv), 
+            error = function(e){
+                PrintParseErr(snvCsv, "SNV")}
+      )
       return(philipsIndels)
     } else{
         #zipFiN <- file.path(philipsFtp, paste0(sam, ".zip"))
