@@ -433,7 +433,7 @@ CheckTabName <- function(tabNam) {
     if (grepl("Indels|INDEL", tabNam)) {
         cat(
             "<span style='color: red;'>",
-            "INDEL/Frameshift calls have the following filters:",
+            "All Variant calls have the following filters:",
             "</span>\n\n",
             "<span style='color: black;'>",
             "**Tumor freq >= 5%**, **Normal freq <2%**,",
