@@ -1020,7 +1020,7 @@ cleanPhilTab <- function(philipsIndels) {
 
 compare_philips <- function(snvTab, philipsIndels) {
   snvTab$Same <- "Yes"
-  snvTab$Not.In.House <- "No"
+  #snvTab$Not.In.House <- "No"
   snvTab$In.Philips <- "No"
   genCols <- c("Gene", "Position")
   
@@ -1119,7 +1119,7 @@ LoopSampleTabs <-  function(params) {
         if (!is.null(philipsIndels)) {
             philipsIndels <- cleanPhilTab(philipsIndels)
             combTab <- compare_philips(snvTab, philipsIndels)
-            columns_to_front <- c("Same", "Not.In.House")
+            columns_to_front <- c("Same")
             combTab <- combTab[, c(columns_to_front, setdiff(names(combTab), columns_to_front))]
 
             makeDT("In-House Philips Variants", objDat = combTab)
