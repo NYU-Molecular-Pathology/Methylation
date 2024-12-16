@@ -454,6 +454,22 @@ MakeTabColor <- function(tabNam) {
 }
 
 
+ColorTable <- function(df) {
+  df[] <- lapply(names(df), function(col) {
+    if (col %in% c("Same")) {
+      ifelse(
+        df$Same == "No",
+        kableExtra::cell_spec(df[[col]], "html", background = "#d33443"),
+        df[[col]]
+      )
+    } else {
+      df[[col]]
+    }
+  })
+  as.data.frame(df, stringsAsFactors = FALSE)
+}
+
+
 makeColorfulTab <- function(objDat) {
   cat(
             "<span style='color: red;'>",
