@@ -902,6 +902,7 @@ printSnvs <- function(snvCsv){
     snvOut <- filterAbberations(snvOutDf)
     makeDT("Philips Filtered Indels", snvOut)
     cat("\n\n")
+    return(snvOutDf)
 }
 
 printSpecInfo <- function(samCsv) {
@@ -947,23 +948,16 @@ makeAbTab <- function(sam, philipsFtp = "/Volumes/molecular/Molecular/Philips_SF
     }
 
     snvCsv <- file.path(dumpDir, "aberration_snv.csv")
-    #samCsv <- file.path(dumpDir, "specimen.csv")
-    #diagCsv <- file.path(dumpDir, "diagnosticorder.csv")
+
     if (file.exists(snvCsv)) {
-        #tryCatch(printSnvs(snvCsv), error=function(e){PrintParseErr(snvCsv, "SNV")})
-        #tryCatch(printSpecInfo(samCsv), error=function(e){PrintParseErr(samCsv, "Sample")})
-        #tryCatch(printDiagInfo(diagCsv), error=function(e){PrintParseErr(diagCsv, "Diagnostics")})
       philipsIndels <- tryCatch(
-          printSnvs(snvCsv), 
-            error = function(e){
-                PrintParseErr(snvCsv, "SNV")}
+        printSnvs(snvCsv),
+        error = function(e) {
+          PrintParseErr(snvCsv, "SNV")
+        }
       )
       return(philipsIndels)
     } else{
-        #zipFiN <- file.path(philipsFtp, paste0(sam, ".zip"))
-        #cat("\n\n## **No Philips Data Dump**\n\n")
-        #cat("Data dump not found:\n")
-        #cat(paste0(zipFiN, "\n\n"))
         return(NULL)
     }
 }
@@ -1069,7 +1063,7 @@ compare_philips <- function(snvTab, philipsIndels) {
 }
 
 
-LoopSampleTabs <-  function(params) {
+LoopSampleTabs <- function(params) {
     pactName <- params$pactName
     methData <- gb$GetMethDf(params$pactName)
     qcData <- gb$ReadQcFile(pactName)
@@ -1124,10 +1118,11 @@ LoopSampleTabs <-  function(params) {
             columns_to_front <- c("Same")
             combTab <- combTab[, c(columns_to_front, setdiff(names(combTab), columns_to_front))]
 
-            makeDT("In-House Philips Variants", objDat = combTab)
+            makeDT("In-House Somatic Variant Calls", objDat = combTab)
            
         } else{
-          makeDT("In-House FrameShifts/INDEL", objDat = snvTab)
+          snvTab$In.Philips <- "No"
+          makeDT("In-House Somatic Variant Calls", objDat = snvTab)
         }
         
         cnvTab <- subset(cnvTab, select = -Variant)
