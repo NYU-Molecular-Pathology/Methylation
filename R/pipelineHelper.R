@@ -603,6 +603,10 @@ loopRender <- function(samList = NULL, data, redcapUp = T) {
     for (sam_idx in toRun) {
         totLeft <- length(toRun) - currIdx
         message(bkGrn(dsh, totLeft, "of", length(toRun), "samples remain to be run", dsh))
+        
+        #perc_comp <- paste0(round((totLeft/length(toRun)) * 100 ), "%")
+        #message(bkGrn("Approximately", perc_comp, "complete"))
+        
         msgProgress(1, sam_idx, samList)
         do_report(single_data = data[sam_idx, ], gb$genCn)
         msgProgress(2, sam_idx, samList)
