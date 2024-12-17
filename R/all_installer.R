@@ -77,6 +77,15 @@ set_env_vars <- function() {
     llvm_path = get_prefix("llvm")
     mpi_path = get_prefix("open-mpi")
     arrow_path = get_prefix("apache-arrow")
+
+    # Dynamically find any versioned libarrow.*.dylib file
+    libarrow_files <- Sys.glob(file.path(arrow_path, "lib", "libarrow.*.dylib"))
+    if (length(libarrow_files) == 0) stop("No versioned libarrow.*.dylib file found in apache-arrow lib path.")
+    
+    # Select the latest version of libarrow.*.dylib (lexicographically last)
+    libarrow_versioned <- sort(libarrow_files, decreasing = TRUE)[1]
+
+    
     Sys.setenv(
         CC = file.path(llvm_path, "bin/clang"),
         CXX = file.path(llvm_path, "bin/clang++"),
@@ -108,7 +117,11 @@ set_env_vars <- function() {
             file.path(llvm_path, "lib/c++"),
             sep = ":"
         ),
-        DYLD_LIBRARY_PATH = file.path(arrow_path, "lib"),
+        DYLD_LIBRARY_PATH = paste(
+            file.path(arrow_path, "lib"),
+            libarrow_versioned,
+            sep = ":"
+        ),
         PATH = paste(file.path(mpi_path, "bin"), Sys.getenv("PATH"), sep = ":")
     )
     if (command_exists("gfortran")) Sys.setenv(FC = Sys.which("gfortran"))
