@@ -415,7 +415,8 @@ check_minfi <- function(){
 
 
 checkNeeded <- function(pkgList) {
-    neededPkgs <- pkgList[!sapply(pkgList, requireNamespace, quietly = TRUE)]
+    installedPkgs <- rownames(installed.packages())
+    neededPkgs <- pkgList[!pkgList %in% installedPkgs]
     return(neededPkgs)
 }
 
