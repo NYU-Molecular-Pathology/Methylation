@@ -363,15 +363,7 @@ loadMainPkgs <- function() {
     }
     ld("zip")
     if (!requireNamespace("pak", quietly = T)) {
-        install.packages(
-            "pak",
-            repos = sprintf(
-                "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
-                .Platform$pkgType,
-                R.Version()$os,
-                R.Version()$arch
-            ), ask = F, dependencies = T
-        )
+        install.packages("pak", type = "binary", ask = F, dependencies = T)
     }
 
     manageNeeds()
