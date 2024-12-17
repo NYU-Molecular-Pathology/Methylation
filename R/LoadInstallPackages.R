@@ -116,7 +116,8 @@ gHubPkgs <- data.frame(
     easypackages = 'jakesherman/easypackages',
     redcapAPI = 'nutterb/redcapAPI',
     crayon = "r-lib/crayon",
-    redcap = "epicentre-msf/redcap"
+    redcap = "epicentre-msf/redcap",
+    mdthemes = "thomas-neitmann/mdthemes"
 )
 
 # BioConductor Packages  ------------------------------------------------------
@@ -139,7 +140,7 @@ extraPks <- c(
     "compiler",
     "tidyverse",
     "plyr",
-    "mdthemes",
+    #"mdthemes",
     "dplyr",
     "sqldf",
     "mlr",
