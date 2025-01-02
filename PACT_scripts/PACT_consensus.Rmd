@@ -7,7 +7,7 @@ output:
         code_download: true
 toc_collapsed: true
 params:
-  pactName: "PACT-22-##"
+  pactName: "PACT-YY-##"
   userName: "Jonathan Serrano"
   workDir: "/Volumes/CBioinformatics/jonathan/pact/consensus"
 title: "Consensus `r params$pactName`"
