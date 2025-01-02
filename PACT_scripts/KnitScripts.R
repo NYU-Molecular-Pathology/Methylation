@@ -1003,7 +1003,7 @@ GrabHotspots <- function(params){
 
 CheckMissedSam <- function(sam, snvDt, pactName) {
     if (!(sam %in% snvDt$Test_Case)) {
-        message(sam, "is missing from your Description File:")
+        message(sam, " is missing from your Description File:")
         message(pactName, "_desc.csv")
         message("Adding sample as a blank row")
         snvDt <- makeBlankRow(sam, snvDt)
@@ -1094,7 +1094,7 @@ LoopSampleTabs <- function(params) {
     samples <- gb$GrabSamples(samList)
     hsDat <- gb$GrabHotspots(params)
     snvDt <- read.csv(paste0(pactName, "_desc.csv"))
-    outDir <- file.path(params$workDir, paste0(pactName,"_consensus"))
+    outDir <- file.path(params$workDir, paste0(pactName, "_consensus"))
     demux_sh <- as.data.frame(read.csv("demux-samplesheet.csv", skip = 19))
     toKeep <- demux_sh$Paired_Normal != ""
     tumorSams <- demux_sh[toKeep, ]
@@ -1107,22 +1107,24 @@ LoopSampleTabs <- function(params) {
     msi_dat <- as.data.frame(read.table(msi_tsv, sep = "\t", header = T))
     
     for (sam in samples) {
+        message("SAMPLE: ", sam)
         makeNewTab(sam, samList, qcData, pactName)
         sam_match <- which(sam == tumorSams$Test_Number)
         
         if (length(sam_match > 0)) {
-          sam_id <- tumorSams$Sample_ID[sam_match]
-          tmb_match <- tmb_dat$SampleID == sam_id
-          msi_match <- msi_dat$SampleID == sam_id
-          tmb_row <- tmb_dat[tmb_match, ]
-          msi_row <- msi_dat[msi_match, ]
-          make_msi_tmb_tab(tmb_row, msi_row)
+            sam_id <- tumorSams$Sample_ID[sam_match]
+            tmb_match <- tmb_dat$SampleID == sam_id
+            msi_match <- msi_dat$SampleID == sam_id
+            tmb_row <- tmb_dat[tmb_match, ]
+            msi_row <- msi_dat[msi_match, ]
+            make_msi_tmb_tab(tmb_row, msi_row)
         }
         
-        snvDt <- CheckMissedSam(sam, snvDt, pactName) 
+        snvDt <- CheckMissedSam(sam, snvDt, pactName)
         samRows <- snvDt$Test_Case == sam
-
-        cnvTab <- checkDataDump(sam, cnvTab = snvDt[samRows & snvDt$Variant == "CNV", ])
+        
+        cnvTab <- checkDataDump(sam, cnvTab = snvDt[samRows &
+                                                        snvDt$Variant == "CNV", ])
         
         snvTab <- snvDt[samRows & snvDt$Variant == "SNV", ]
         snvTab <- cleanTabCols(snvTab)
@@ -1131,19 +1133,24 @@ LoopSampleTabs <- function(params) {
         
         if (!is.null(philipsIndels)) {
             philipsIndels <- cleanPhilTab(philipsIndels)
-            combTab <- compare_philips(snvTab, philipsIndels)
-            columns_to_front <- c("Same")
-            combTab <- combTab[, c(columns_to_front, setdiff(names(combTab), columns_to_front))]
-
-            makeDT("In-House Somatic Variant Calls", objDat = combTab)
-           
+            if (nrow(snvTab) == 0) {
+                makeDT("In-House Somatic Variant Calls", objDat = snvTab)
+            } else {
+                combTab <- compare_philips(snvTab, philipsIndels)
+                columns_to_front <- c("Same")
+                combTab <- combTab[, c(columns_to_front,
+                                       setdiff(names(combTab), columns_to_front))]
+                makeDT("In-House Somatic Variant Calls", objDat = combTab)
+            }
         } else{
-          snvTab$In.Philips <- "No"
-          makeDT("In-House Somatic Variant Calls", objDat = snvTab)
+            if (nrow(snvTab) > 0) {
+                snvTab$In.Philips <- "No"
+            }
+            makeDT("In-House Somatic Variant Calls", objDat = snvTab)
         }
         
         cnvTab <- subset(cnvTab, select = -Variant)
-        makeDT("CNV", cnvTab, pdfFi = sam, outDir=outDir)
+        makeDT("CNV", cnvTab, pdfFi = sam, outDir = outDir)
         
         if (!is.null(methData)) {
             methCn <- methData[methData$Test_Number == sam, ]
@@ -1158,7 +1165,6 @@ LoopSampleTabs <- function(params) {
         cat(' </div> ')
     }
 }
-
 
 loadHtmlTag <- function(){
     require("tidyverse")
