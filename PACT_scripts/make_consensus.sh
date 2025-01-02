@@ -151,7 +151,9 @@ chmod +rwx "${DESK_DIR}${pactRun}_consensus.html"
 
 # Copy HTML file from DESK_DIR to final destination
 cd "${FINAL_DEST}" || exit
-rsync -vrP "${DESK_DIR}${pactRun}_consensus.html" .
+
+echo -e "Try manually copying or running command:"
+echo -e "rsync -vrP \"${DESK_DIR}${pactRun}_consensus.html\" ."
 
 # Generate TMB_Variants xlsx files --------------------------------------------
 #echo -e "Trying to Generate TMB_Variants xlsx files..."
