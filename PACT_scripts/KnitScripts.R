@@ -1,24 +1,25 @@
 #!/usr/bin/env Rscript
-## ---------------------------
 ## Script name: KnitScripts.R
 ## Purpose: Source of global scripts used by the PACT_consensus.Rmd file
-## Date Last Modified: March 7, 2024
+## Date Created: August 10, 2022
 ## Version: 1.0.1
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2024
-## ---------------------------
 
-gb <- globalenv(); assign("gb", gb)
+gb <- globalenv()
+assign("gb", gb)
 
+# Check if Brew and Latex is installed
 CheckBrewLatex <- function() {
-    # Checks if Brew is installed
     tryCatch(
         system("which brew", intern = T),
         warning = function(ww) {
-            system('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"')
+            system(
+                '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+            )
         }
     )
-    # Checks if Latex is installed
+
     tryCatch(
         system("which latex", intern = T),
         warning = function(ww) {
@@ -41,7 +42,7 @@ CheckBrewLatex <- function() {
 # Function to check if a command exists
 command_exists <- function(cmd) {
     exit_status <- system(paste("which", cmd, ">/dev/null 2>&1"))
-    return (exit_status == 0)
+    return(exit_status == 0)
 }
 
 # Function to check and install fontconfig via Homebrew
@@ -72,13 +73,22 @@ check_fontconfig <- function() {
     }
 }
 
-if (Sys.info()[['sysname']]=="Darwin") {
+if (Sys.info()[['sysname']] == "Darwin") {
     invisible(check_fontconfig())
     invisible(CheckBrewLatex())
 }
 
 # Librarian shelf loads or installs package from CRAN, BioConductor, & GitHub
-if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 4, quiet=T)}
+if (!require("librarian")) {
+    install.packages(
+        "librarian",
+        dependencies = T,
+        verbose = T,
+        Ncpus = 4,
+        quiet = T
+    )
+}
+
 pkgs <-
     c(
         "animation",
@@ -151,13 +161,26 @@ pdfToolsPkgs <-
         'testthat'
     )
 
-librarian::shelf(pkgs, ask=F, update_all = F, quiet = F, dependencies=T)
-librarian::shelf(pdfToolsPkgs, ask=F, update_all = F, quiet = F, dependencies=T)
+librarian::shelf(
+    pkgs,
+    ask = F,
+    update_all = F,
+    quiet = F,
+    dependencies = T
+)
+librarian::shelf(
+    pdfToolsPkgs,
+    ask = F,
+    update_all = F,
+    quiet = F,
+    dependencies = T
+)
 
 library("kableExtra")
 
+
 CheckMntDirs <- function(critialMnts, params) {
-    outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus"))
+    outDir <- file.path(params$workDir, paste0(params$pactName, "_consensus"))
     failMount <-
         lapply(critialMnts, function(mnt) {
             ifelse(!dir.exists(mnt), return(T), return(F))
@@ -165,9 +188,12 @@ CheckMntDirs <- function(critialMnts, params) {
     if (any(failMount == T)) {
         toFix <- paste(critialMnts[which(failMount == T)])
         cat("PATH does not exist, ensure drive is mounted:",
-            toFix, sep = "\n")
+            toFix,
+            sep = "\n")
         message(paste(
-            "\nTry executing:\nsystem('diskutil mountdisk",toFix,"')"
+            "\nTry executing:\nsystem('diskutil mountdisk",
+            toFix,
+            "')"
         ))
         stopifnot(!any(failMount == T))
     } else{
@@ -182,15 +208,17 @@ CheckMntDirs <- function(critialMnts, params) {
     message("Working directory changed to:\n", outDir)
 }
 
-StopMissingFile <- function(fiNam, isDir = F){
-    if(isDir==F){
-        if(!file.exists(fiNam)){
+StopMissingFile <- function(fiNam, isDir = F) {
+    if (isDir == F) {
+        if (!file.exists(fiNam)) {
             stop(fiNam, " does not exist in the working directory!")
-        }}else{
-            if(!dir.exists(fiNam)){
-                stop(fiNam, " does not exist as a directory! Check directory path name.")
-            }
         }
+    } else{
+        if (!dir.exists(fiNam)) {
+            stop(fiNam,
+                 " does not exist as a directory! Check directory path name.")
+        }
+    }
 }
 
 
@@ -212,7 +240,7 @@ CheckFiExist <- function(pactName, philipsFtp) {
     descrip <- paste0(pactName, "_desc.csv")
     samsheet <- list.files('.', "demux-samplesheet.csv", T)[1]
     if (!file.exists(methSheet)) {
-      message(crayon::bgRed("No methylation sheet for this run!"))
+        message(crayon::bgRed("No methylation sheet for this run!"))
     }
     StopMissingFile(samsheet)
     StopMissingFile(qcTsv)
@@ -221,29 +249,34 @@ CheckFiExist <- function(pactName, philipsFtp) {
 }
 
 
-CheckMethPaths <- function(methData, methSheet){
-    for(i in 1:length(methData$`Report Path`)){
+CheckMethPaths <- function(methData, methSheet) {
+    for (i in 1:length(methData$`Report Path`)) {
         currPath <- methData$`Report Path`[i]
-        currSplit <- stringr::str_split_fixed(currPath, "/",11)[1,]
-        if(stringr::str_detect(currSplit[10], "MGDM")==F) {
+        currSplit <- stringr::str_split_fixed(currPath, "/", 11)[1, ]
+        if (stringr::str_detect(currSplit[10], "MGDM") == F) {
             next
         }
-        runYear <- stringr::str_split_fixed(currSplit[10],"-", 2)[1,1]
+        runYear <- stringr::str_split_fixed(currSplit[10], "-", 2)[1, 1]
         runYear <- paste0("20", runYear)
         currSplit[9] <- runYear
         newPath <- paste(currSplit, collapse = "/")
         methData[i, "Report Path"] <- newPath
     }
 
-    checkPaths <- stringr::str_replace_all(methData$`Report Path`,
-                                           "smb://shares-cifs.nyumc.org/apps/acc_pathology", "/Volumes")
+    checkPaths <- stringr::str_replace_all(
+        methData$`Report Path`,
+        "smb://shares-cifs.nyumc.org/apps/acc_pathology",
+        "/Volumes"
+    )
     checkPaths <- checkPaths[checkPaths != ""]
     anyPathsFalse <- file.exists(checkPaths) == F
 
-    if(any(anyPathsFalse)){
-        message("Some paths need to be fixed 'Report Path' column of in ", methSheet, ":" )
+    if (any(anyPathsFalse)) {
+        message("Some paths need to be fixed 'Report Path' column of in ",
+                methSheet,
+                ":")
         cat("Paths don't exist:\n")
-        cat(paste(checkPaths[anyPathsFalse], collapse="\n"))
+        cat(paste(checkPaths[anyPathsFalse], collapse = "\n"))
     }
     stopifnot(all(file.exists(checkPaths)))
     return(methData)
@@ -283,33 +316,39 @@ GetMethDf <- function(pactName) {
 
 GetSamList <- function(pactName, listType = 1) {
     colFltr <- c("Test_Number", "Specimen_ID", "Tumor_Content")
-    if(listType == 2){
+    if (listType == 2) {
         colFltr <- c(colFltr, "Paired_Normal")
     }
     samsheet <- list.files('.', "demux-samplesheet.csv", T)[1]
     message("Reading file: ", samsheet)
-    samList <- read.csv(samsheet, skip=19)[, colFltr]
+    samList <- read.csv(samsheet, skip = 19)[, colFltr]
     isNGS <- !is.na(stringr::str_extract(samList$Test_Number, 'NGS'))
-    toKeep <- samList$Test_Number!="0" & isNGS
-    if(any(toKeep==F)){
-        message(crayon::bgRed("The following cases have no NGS number and are being excluded:"),"\n")
-        message(paste(utils::capture.output(as.data.frame(samList[!toKeep,])), collapse = "\n"))
-        samList <- samList[toKeep,]
+    toKeep <- samList$Test_Number != "0" & isNGS
+    if (any(toKeep == F)) {
+        message(
+            crayon::bgRed(
+                "The following cases have no NGS number and are being excluded:"
+            ),
+            "\n"
+        )
+        message(paste(utils::capture.output(as.data.frame(samList[!toKeep, ])), collapse = "\n"))
+        samList <- samList[toKeep, ]
     }
     stopifnot(nrow(samList) > 2)
     return(samList)
 }
 
 
-GrabSamples <- function(samList){
+GrabSamples <- function(samList) {
     sam <- unique(samList$Test_Number)
-    samples <- sam[sam!=0 & !is.na(sam) & sam!="0"]
+    samples <- sam[sam != 0 & !is.na(sam) & sam != "0"]
     return(samples)
 }
 
-ReadQcFile <- function(pactName){
+
+ReadQcFile <- function(pactName) {
     qcTsv <- paste0(pactName, "-QC.tsv")
-    qcData <- read.delim(file=qcTsv)
+    qcData <- read.delim(file = qcTsv)
     row.names(qcData) <- qcData$Row
     return(qcData)
 }
@@ -325,7 +364,10 @@ makePdfTab <- function(pdfFi, cnvTab, outDir) {
     cat(paste0("![In-house Facets Plot (Above)](", ngsPng, "){width=100%}"))
     cat("\n\n")
     if (nrow(cnvTab) > 0) {
-        newTa <- knitr::kable(cnvTab, row.names = F, "html", align="c")
+        newTa <- knitr::kable(cnvTab,
+                              row.names = F,
+                              "html",
+                              align = "c")
         newTa <-
             kableExtra::kable_styling(
                 newTa,
@@ -346,19 +388,23 @@ makePdfTab <- function(pdfFi, cnvTab, outDir) {
 
 
 makeRdTab <- function(rdNumb, sam) {
-    cnvFi <- file.path(".","methCNV", paste0(rdNumb, "_cnv.png"))
-    altTxt <- paste("![Methylation",rdNumb,sam,"CNV Plot](")
-    cat(paste0(altTxt,cnvFi,"){height=400px}"))
+    cnvFi <- file.path(".", "methCNV", paste0(rdNumb, "_cnv.png"))
+    altTxt <- paste("![Methylation", rdNumb, sam, "CNV Plot](")
+    cat(paste0(altTxt, cnvFi, "){height=400px}"))
     cat("\n\n")
 }
 
 makeSpecimenTab <- function(objDat) {
     newTa <- knitr::kable(objDat, row.names = F, "html")
     newTa <- kableExtra::kable_styling(
-        newTa, bootstrap_options = c("condensed"), full_width = T, position = "left")
-    if(ncol(objDat) > 3){
+        newTa,
+        bootstrap_options = c("condensed"),
+        full_width = T,
+        position = "left"
+    )
+    if (ncol(objDat) > 3) {
         newTa <- kableExtra::column_spec(newTa, 1:5, width = "2cm")
-    }else{
+    } else{
         newTa <- kableExtra::column_spec(newTa, 1:ncol(objDat), width = "1cm")
     }
     print(newTa)
@@ -367,15 +413,24 @@ makeSpecimenTab <- function(objDat) {
 
 
 PrintHotspotTable <- function(objDat) {
-    cat("<span style='color: red;'>",
-        "**Note**: The Hotspot calls below are from the unfiltered VCF files.  Any called (YES) will be listed first</span>\n\n")
+    cat(
+        "<span style='color: red;'>",
+        "**Note**: The Hotspot calls below are from the unfiltered VCF files.  Any called (YES) will be listed first</span>\n\n"
+    )
 
     # Reorder the data frame so that rows with "YES" are at the top
     rows_with_yes <- rowSums(objDat[, c("Strelka", "LoFreqSomatic", "Mutect")] == "YES") > 0
-    sorted_objDat <- objDat[order(-rows_with_yes),]
+    sorted_objDat <- objDat[order(-rows_with_yes), ]
 
-    dtOpts <- list(scrollX = T, scrollY=T, info = F, autoWidth = F, pageLength = 25,
-                   lengthChange = T, searchable = T)
+    dtOpts <- list(
+        scrollX = T,
+        scrollY = T,
+        info = F,
+        autoWidth = F,
+        pageLength = 25,
+        lengthChange = T,
+        searchable = T
+    )
 
     datTab <- DT::datatable(
         sorted_objDat,
@@ -388,8 +443,11 @@ PrintHotspotTable <- function(objDat) {
 
     # Apply the color to cells with "YES" in the specified columns
     datTab <- datTab %>%
-        formatStyle(columns = c("Strelka", "LoFreqSomatic", "Mutect"),
-                    backgroundColor = styleEqual("YES", "#64a463"), target = 'cell')
+        formatStyle(
+            columns = c("Strelka", "LoFreqSomatic", "Mutect"),
+            backgroundColor = styleEqual("YES", "#64a463"),
+            target = 'cell'
+        )
 
     # format "Common COSMIC Variant" column in italics
     variantCol <- which(stringr::str_detect(names(sorted_objDat), "Variant"))
@@ -402,14 +460,23 @@ PrintHotspotTable <- function(objDat) {
 }
 
 
-makeQCTab <- function(objDat){
+makeQCTab <- function(objDat) {
     qcHeader <- c(
-        "Sample", "Mapped Reads QC", "Deduplicated Reads QC", "Deduplication Rate QC", "Targets <50 Coverage", "Avg & Med Coverage", "Overlapped HOMO SNP"
+        "Sample",
+        "Mapped Reads QC",
+        "Deduplicated Reads QC",
+        "Deduplication Rate QC",
+        "Targets <50 Coverage",
+        "Avg & Med Coverage",
+        "Overlapped HOMO SNP"
     )
     colnames(objDat) <- qcHeader
     newTa <- knitr::kable(objDat, row.names = F, "html")
     newTa <- kableExtra::kable_styling(
-        newTa, bootstrap_options = c("condensed"), full_width = F, position = "left"
+        newTa,
+        bootstrap_options = c("condensed"),
+        full_width = F,
+        position = "left"
     )
     newTa <- kableExtra::column_spec(newTa, 1:5, width = "5cm")
     print(newTa)
@@ -418,13 +485,25 @@ makeQCTab <- function(objDat){
 
 makeDefaultDt <- function(objDat) {
     dtOpts <- list(
-        scrollX = T, scrollY=T, info = F, autoWidth = F, pageLength = 100,
-        rownames=T, lengthChange = T, searchable = T
+        scrollX = T,
+        scrollY = T,
+        info = F,
+        autoWidth = F,
+        pageLength = 100,
+        rownames = T,
+        lengthChange = T,
+        searchable = T
     )
-    dtTab <- htmltools::tagList(DT::datatable(
-        objDat, style="bootstrap", rownames = F,
-        options = dtOpts, height = "120%", width = "120%"
-    ))
+    dtTab <- htmltools::tagList(
+        DT::datatable(
+            objDat,
+            style = "bootstrap",
+            rownames = F,
+            options = dtOpts,
+            height = "120%",
+            width = "120%"
+        )
+    )
     print(dtTab)
     cat("\n\n")
 }
@@ -455,54 +534,55 @@ MakeTabColor <- function(tabNam) {
 
 
 ColorTable <- function(df) {
-  df[] <- lapply(names(df), function(col) {
-    if (col %in% c("Same")) {
-      ifelse(
-        df$Same == "No",
-        kableExtra::cell_spec(df[[col]], "html", background = "#F06C78"),
-        df[[col]]
-      )
-    } else {
-      df[[col]]
-    }
-  })
-  as.data.frame(df, stringsAsFactors = FALSE)
+    df[] <- lapply(names(df), function(col) {
+        if (col %in% c("Same")) {
+            ifelse(
+                df$Same == "No",
+                kableExtra::cell_spec(df[[col]], "html", background = "#F06C78"),
+                df[[col]]
+            )
+        } else {
+            df[[col]]
+        }
+    })
+    as.data.frame(df, stringsAsFactors = FALSE)
 }
 
 
 makeColorfulTab <- function(objDat) {
-  cat(
-            "<span style='color: red;'>",
-            "All Variant calls have the following filters:",
-            "</span>\n\n",
-            "<span style='color: black;'>",
-            "**Tumor freq >= 5%**, **Normal freq <2%**,",
-            " and **Tumor Depth >50**",
-            "</span>\n\n"
-        )
-  
-   objDat <- ColorTable(objDat)
+    cat(
+        "<span style='color: red;'>",
+        "All Variant calls have the following filters:",
+        "</span>\n\n",
+        "<span style='color: black;'>",
+        "**Tumor freq >= 5%**, **Normal freq <2%**,",
+        " and **Tumor Depth >50**",
+        "</span>\n\n"
+    )
+
+    objDat <- ColorTable(objDat)
     knitr::kable(objDat, "html", escape = FALSE, row.names = FALSE) %>%
-  kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
-  kableExtra::row_spec(0, extra_css = "font-weight: bold;") %>%
-  kableExtra::scroll_box(height = "100%", width = "100%") %>%
-  print()
+        kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
+        kableExtra::row_spec(0, extra_css = "font-weight: bold;") %>%
+        kableExtra::scroll_box(height = "100%", width = "100%") %>%
+        print()
     cat("\n\n")
 }
 
 
 MakeRegularTab <- function(tabNam, objDat) {
-    if (!is.null(objDat) & stringr::str_detect(tabNam, "Methylation") == F) {
+    if (!is.null(objDat) &
+        stringr::str_detect(tabNam, "Methylation") == F) {
         if (tabNam == "QC") {
             makeQCTab(objDat)
         } else{
             CheckTabName(tabNam)
-          if (tabNam == "In-House Somatic Variant Calls") {
-            makeColorfulTab(objDat)
-          }else{
-            makeDefaultDt(objDat)
-          }
-            
+            if (tabNam == "In-House Somatic Variant Calls") {
+                makeColorfulTab(objDat)
+            } else{
+                makeDefaultDt(objDat)
+            }
+
         }
     } else{
         cat("\n\nNo additonal results for this case yet\n\n")
@@ -511,11 +591,16 @@ MakeRegularTab <- function(tabNam, objDat) {
 }
 
 
-# Prints out the table tab headings and tab information based on object parameters provided
-makeDT <- function(tabNam, objDat, pdfFi = NULL, rdNumb = NULL, sam = NULL, outDir=NULL){
+# Prints out the table tab headings and tab information based on object params
+makeDT <- function(tabNam,
+                   objDat,
+                   pdfFi = NULL,
+                   rdNumb = NULL,
+                   sam = NULL,
+                   outDir = NULL) {
     MakeTabColor(tabNam)
     if (!is.null(pdfFi)) {
-        return(makePdfTab(pdfFi, cnvTab=objDat, outDir))
+        return(makePdfTab(pdfFi, cnvTab = objDat, outDir))
     }
     if (!is.null(rdNumb)) {
         return(makeRdTab(rdNumb, sam))
@@ -528,10 +613,15 @@ makeDT <- function(tabNam, objDat, pdfFi = NULL, rdNumb = NULL, sam = NULL, outD
 }
 
 
-makeDT <- function(tabNam, objDat, pdfFi = NULL, rdNumb = NULL, sam = NULL, outDir=NULL){
+makeDT <- function(tabNam,
+                   objDat,
+                   pdfFi = NULL,
+                   rdNumb = NULL,
+                   sam = NULL,
+                   outDir = NULL) {
     MakeTabColor(tabNam)
     if (!is.null(pdfFi)) {
-        return(makePdfTab(pdfFi, cnvTab=objDat, outDir))
+        return(makePdfTab(pdfFi, cnvTab = objDat, outDir))
     }
     if (!is.null(rdNumb)) {
         return(makeRdTab(rdNumb, sam))
@@ -547,35 +637,42 @@ makeDT <- function(tabNam, objDat, pdfFi = NULL, rdNumb = NULL, sam = NULL, outD
 }
 
 
-MakeHStab <- function(sam, hsDat, samList, outDir){
+MakeHStab <- function(sam, hsDat, samList, outDir) {
     ngsRows <- samList$Test_Number == sam
-    ts_number <- samList$Specimen_ID[samList$Tumor_Content!=0 & ngsRows]
+    ts_number <- samList$Specimen_ID[samList$Tumor_Content != 0 &
+                                         ngsRows]
     hotspot_tsv <- file.path(outDir, 'hotspots', paste0(ts_number, "_Hotspots.tsv"))
-    hsMain <- hsDat[hsDat$Test_Number == sam,]
+    hsMain <- hsDat[hsDat$Test_Number == sam, ]
     names(hsMain)[names(hsMain) == 'Variant'] <- 'Common COSMIC Variant'
     makeDT(tabNam = "Hotspots", objDat = hsMain, NULL, NULL, sam)
 }
 
 # Adds MSI and TMB info under QC tab
-make_msi_tmb_tab <- function(tmb_row, msi_row){
+make_msi_tmb_tab <- function(tmb_row, msi_row) {
     tmb_cols <- c("SampleID", "VariantCaller")
     msi_cols <- c("SampleID", "Status", "TumorType")
-    
+
     idx2drop_tmb <- which(colnames(tmb_row) %in% tmb_cols) * -1
-    
+
     newTa1 <- knitr::kable(tmb_row[, idx2drop_tmb], row.names = F, "html")
     tmbTable <- kableExtra::kable_styling(
-        newTa1, bootstrap_options = c("condensed"), full_width = F, position = "left"
+        newTa1,
+        bootstrap_options = c("condensed"),
+        full_width = F,
+        position = "left"
     )
     cat("\n*TMB DATA*\n")
     print(tmbTable)
     cat("\n\n")
-    
+
     idx2drop_msi <- which(colnames(msi_row) %in% msi_cols) * -1
-    
+
     newTa2 <- knitr::kable(msi_row[, idx2drop_msi], row.names = F, "html")
     msiTable <- kableExtra::kable_styling(
-        newTa2, bootstrap_options = c("condensed"), full_width = F, position = "left"
+        newTa2,
+        bootstrap_options = c("condensed"),
+        full_width = F,
+        position = "left"
     )
     cat("\n*MSI DATA*\n")
     print(msiTable)
@@ -583,24 +680,24 @@ make_msi_tmb_tab <- function(tmb_row, msi_row){
 }
 
 # Parses the philips CNV abberations export from Philips dump csv file
-parsePhilipsCn <- function(cnvInfo, sam, cnvTab){
+parsePhilipsCn <- function(cnvInfo, sam, cnvTab) {
     cnvInfo$Test_Case <- sam
     cnvInfo$Variant <- "CNV"
     cnvInfo$Mutation.Type <- cnvInfo$AberrationType
     cnvInfo$Other <- cnvInfo$Chrom
-    cnvInfo$Comments <- substr(cnvInfo$CopyNumber,1,3)
+    cnvInfo$Comments <- substr(cnvInfo$CopyNumber, 1, 3)
     cnvInfo$In.NYU <- cnvInfo$In.Philips <- NA
     cnvInfo$IGV <- "Copy Number"
     cnvTab <- cnvInfo
     dropMut <- cnvTab$Mutation.Type != "Hemizygous Loss"
-    cnvTab <- cnvTab[dropMut,]
+    cnvTab <- cnvTab[dropMut, ]
     cnvTab <- cnvTab[cnvTab$Mutation.Type != "", ]
-    cnvTab <- cnvTab[order(cnvTab$Mutation.Type),]
+    cnvTab <- cnvTab[order(cnvTab$Mutation.Type), ]
     return(cnvTab)
 }
 
 
-parseCNV <- function(outPath, sam, cnvTab){
+parseCNV <- function(outPath, sam, cnvTab) {
     sam_folder <- get_ngs_path(outPath, sam)
     cnvFi <- file.path(outPath, sam, "aberration_cnv.csv")
     if (!is.null(sam_folder)) {
@@ -611,9 +708,7 @@ parseCNV <- function(outPath, sam, cnvTab){
         cnvTab$Gene <- "No Philips Data Dump CSV file availible, check ISPM for CNV"
         return(cnvTab)
     }
-    cnvInfo <- as.data.frame(readr::read_csv(
-        cnvFi, col_types = readr::cols(.default = readr::col_character())
-    ))
+    cnvInfo <- as.data.frame(readr::read_csv(cnvFi, col_types = readr::cols(.default = readr::col_character())))
     if (nrow(cnvInfo) > 0) {
         cnvTab <- parsePhilipsCn(cnvInfo, sam, cnvTab)
     }
@@ -629,23 +724,24 @@ getDumpFiles <- function(outPath, sam, cnvTab, philipsFtp = "/Volumes/molecular/
         all.files = T,
         full.names = T
     )
-  if (length(samFiles) > 1) {
-    newest_file <- which.max(file.info(samFiles)$mtime)
-    samFiles <- samFiles[newest_file]
-  }
-  if (length(samFiles) == 0) {
-      message("No data dump found for pattern: ", sam_pat)
+    if (length(samFiles) > 1) {
+        newest_file <- which.max(file.info(samFiles)$mtime)
+        samFiles <- samFiles[newest_file]
+    }
+    if (length(samFiles) == 0) {
+        message("No data dump found for pattern: ", sam_pat)
+        return(cnvTab)
+    }
+    samZip <- basename(samFiles)
+    dumpDir <- file.path(philipsFtp, samZip)
+    destDir <- file.path(outPath, paste0(basename(samZip)))
+    if (file.exists(dumpDir) & !file.exists(destDir)) {
+        try(fs::file_copy(path = dumpDir, new_path = destDir),
+            silent = T)
+        unzip(zipfile = destDir, exdir = outPath)
+    }
+    cnvTab <- parseCNV(outPath, sam, cnvTab)
     return(cnvTab)
-  }
-  samZip <- basename(samFiles)
-  dumpDir <- file.path(philipsFtp, samZip)
-  destDir <- file.path(outPath, paste0(basename(samZip)))
-  if (file.exists(dumpDir) & !file.exists(destDir)) {
-    try(fs::file_copy(path = dumpDir, new_path = destDir), silent = T)
-    unzip(zipfile = destDir, exdir = outPath)
-  }
-  cnvTab <- parseCNV(outPath, sam, cnvTab)
-  return(cnvTab)
 }
 
 # Appends any additional cnv abberations from data dump
@@ -659,38 +755,50 @@ checkDataDump <- function(sam, cnvTab) {
         cnvTab$Test_Case <- sam
     }
     outPath <- file.path(getwd(), "zipfiles")
-    if (!dir.exists(outPath)) {dir.create(outPath)}
+    if (!dir.exists(outPath)) {
+        dir.create(outPath)
+    }
     cnvTab <- getDumpFiles(outPath, sam , cnvTab)
     drpCol <- which(stringr::str_detect(colnames(cnvTab), "In.|IGV"))
-    cnvTab <- cnvTab[,-drpCol]
+    cnvTab <- cnvTab[, -drpCol]
     names(cnvTab)[names(cnvTab) == 'Comments'] <- 'Copy Number'
     names(cnvTab)[names(cnvTab) == 'Other'] <- 'Chromosome'
     cnvTab$`Copy Number` <- as.numeric(cnvTab$`Copy Number`)
-    cnvTab <- cnvTab[!is.na(cnvTab$Test_Case),]
+    cnvTab <- cnvTab[!is.na(cnvTab$Test_Case), ]
     return(cnvTab)
 }
 
 
-checkTumorPdf <-  function(samList, outDir){
-    pngOutDir <- file.path(outDir,"cnvpng") # output copy of cnvPNG files
-    if(!dir.exists(pngOutDir)){
+checkTumorPdf <-  function(samList, outDir) {
+    pngOutDir <- file.path(outDir, "cnvpng") # output copy of cnvPNG files
+    if (!dir.exists(pngOutDir)) {
         dir.create(pngOutDir)
     }
-    pdfList <- list.files(outDir, pattern = "*.pdf", recursive = T, full.names=T)
-    if(length(pdfList)==0){
-        message("No PDFs found in current directory:\n",getwd())
-        message("Make sure this Runs Facet PDFs are availible in the directory:\n",
-                "/Volumes/molecular/Molecular/REDCap/cnv_facets\n",
-                "or copy facetpdf files to working directory")
+    pdfList <- list.files(
+        outDir,
+        pattern = "*.pdf",
+        recursive = T,
+        full.names = T
+    )
+    if (length(pdfList) == 0) {
+        message("No PDFs found in current directory:\n", getwd())
+        message(
+            "Make sure this Runs Facet PDFs are availible in the directory:\n",
+            "/Volumes/molecular/Molecular/REDCap/cnv_facets\n",
+            "or copy facetpdf files to working directory"
+        )
         stopifnot(length(pdfList) != 0)
     }
     toDrop <- samList$Paired_Normal != ""
     tumors <- samList[toDrop, ] # drop controls/normals
-    row.names(tumors)<- 1:nrow(tumors) # re-number rows
-    if(length(pdfList) != nrow(tumors)){
-        message("Number of sample rows ", nrow(tumors),
-                " does not equal length of pdf files: ", length(pdfList),
-                "\nCheck if any are missing:\n"
+    row.names(tumors) <- 1:nrow(tumors) # re-number rows
+    if (length(pdfList) != nrow(tumors)) {
+        message(
+            "Number of sample rows ",
+            nrow(tumors),
+            " does not equal length of pdf files: ",
+            length(pdfList),
+            "\nCheck if any are missing:\n"
         )
         message("Tumors:")
         print(tumors$Specimen_ID)
@@ -701,25 +809,41 @@ checkTumorPdf <-  function(samList, outDir){
     return(tumors)
 }
 
-# Converts FACETS PDF cnv facets to PNG format renamed as NGS name----------------------------------
+# Converts FACETS PDF cnv facets to PNG format renamed as NGS name-------------
 convert.plots <- function(tumors, pdfList) {
-    stopifnot(class(tumors)=="data.frame")
-    ngsOrder <- unlist(lapply(X=tumors$Paired_Normal, FUN=function(X){base::which(stringr::str_detect(pdfList, X))}))
+    stopifnot(class(tumors) == "data.frame")
+    ngsOrder <- unlist(lapply(
+        X = tumors$Paired_Normal,
+        FUN = function(X) {
+            base::which(stringr::str_detect(pdfList, X))
+        }
+    ))
     ngsOrder = base::which(sapply(tumors$Specimen_ID, grepl, pdfList), arr.ind = T)[, "row"]
-    for(X in 1:nrow(tumors)){
+    for (X in 1:nrow(tumors)) {
         currCase <- tumors$Paired_Normal[X]
         fileFind <- stringr::str_detect(pdfList, pattern = currCase)
         pdfFile <- pdfList[fileFind]
         pngName <- paste0(tumors$Test_Number[X], ".png")
         message("PDF file: ", basename(pdfFile))
-        message("Matching NGS: ", tumors$Test_Number[X], " ", tumors$Paired_Normal[X])
+        message("Matching NGS: ",
+                tumors$Test_Number[X],
+                " ",
+                tumors$Paired_Normal[X])
         outputFile <- file.path("cnvpng", pngName)
-        if(!file.exists(outputFile)){
+        if (!file.exists(outputFile)) {
             tryCatch(
-                expr = {suppressWarnings(pdftools::pdf_convert(pdfFile, filenames = outputFile, dpi = 300))},
+                expr = {
+                    suppressWarnings(pdftools::pdf_convert(
+                        pdfFile,
+                        filenames = outputFile,
+                        dpi = 300
+                    ))
+                },
                 error = function(e) {
-                    message(e,"\nTry running:\nbrew install fontconfig --universal")
-                    system("brew update --auto-update")}
+                    message(e,
+                            "\nTry running:\nbrew install fontconfig --universal")
+                    system("brew update --auto-update")
+                }
             )
         }
     }
@@ -739,14 +863,14 @@ GetMethCnv <- function(params, methDir) {
         return(message("No Methylation PNGs on this run!"))
     }
     to_copy <- methSamples[!file.exists(file.path(pngDir, methSamples))]
-    
+
     if (length(to_copy) == 0)
         return(message("All files have already been copied."))
-    
+
     for (mSam in to_copy) {
         methPath <- file.path(methDir, mSam)
         methOut <- file.path(pngDir, mSam)
-        
+
         if (file.exists(methPath)) {
             tryCatch(
                 fs::file_copy(methPath, methOut),
@@ -769,52 +893,56 @@ GetMethCnv <- function(params, methDir) {
 
 # Checks if the facets pdfs have been converted to png ------------------------------------
 CopyPdfsPngs <- function(params) {
-    outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus"))
+    outDir <- file.path(params$workDir, paste0(params$pactName, "_consensus"))
     samList <- gb$GetSamList(params$pactName, 2)
-    pdfDir <- file.path(outDir,"FACETpdfs") # input facet pdf directory
+    pdfDir <- file.path(outDir, "FACETpdfs") # input facet pdf directory
     tumors <- checkTumorPdf(samList, outDir)
     pdfList <- list.files(pattern = "*.pdf", recursive = T)
     pdfList <- pdfList[!grepl("^0_", pdfList)]
-    if (length(pdfList)>0) {
+    if (length(pdfList) > 0) {
         convert.plots(tumors, pdfList)
-        if(!dir.exists(pdfDir)){dir.create(pdfDir)}
+        if (!dir.exists(pdfDir)) {
+            dir.create(pdfDir)
+        }
         try(fs::file_move(pdfList, pdfDir), silent = T)
     }
 }
 
 
-CheckHotspots <- function(params){
-    outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus"))
-    hotspot_tsv <- file.path(outDir, paste0(params$pactName,"_Hotspots.tsv"))
-    if(file.exists(hotspot_tsv)){
+CheckHotspots <- function(params) {
+    outDir <- file.path(params$workDir, paste0(params$pactName, "_consensus"))
+    hotspot_tsv <- file.path(outDir, paste0(params$pactName, "_Hotspots.tsv"))
+    if (file.exists(hotspot_tsv)) {
         message("Hotspots exist")
-    }else{
+    } else{
         message("Hotspots Missing:\n", hotspot_tsv)
     }
 }
 
 
 # Generates the link to the BAM file based on PACT run ------------------------------------
-makeBamLink <- function(sam, pactID){
+makeBamLink <- function(sam, pactID) {
     samsheet <- list.files(".", "demux-samplesheet.csv", T)[1]
     samCSVfi <- as.data.frame(read.csv(samsheet, skip = 19))
-    allNames <- samCSVfi[,1]
+    allNames <- samCSVfi[, 1]
     rowNGS <- which(samCSVfi$Test_Number == sam)
     bamFiNam <- paste0(allNames[rowNGS], ".dd.ra.rc.bam")
-    bamFiUrl <- file.path("https://genome.med.nyu.edu/external/clinpathlab", pactID, bamFiNam)
+    bamFiUrl <- file.path("https://genome.med.nyu.edu/external/clinpathlab",
+                          pactID,
+                          bamFiNam)
     cat(paste0("```\nIGV Load from URL: ", bamFiUrl, "\n```\n\n"))
 }
 
 
 # Generates a new Sample Tabbed row in html ------------------------------------------------
-makeNewTab <- function(sam, samList, qcData, pactID){
-    currSam <- samList[samList$Test_Number==sam,"Specimen_ID"]
+makeNewTab <- function(sam, samList, qcData, pactID) {
+    currSam <- samList[samList$Test_Number == sam, "Specimen_ID"]
     cat(' <div class="boxed"> ')
-    cat(paste0("\n\n# **", sam, "** {.tabset}","\n\n"))
+    cat(paste0("\n\n# **", sam, "** {.tabset}", "\n\n"))
     cat(paste0("(", currSam[1], ")\n\n"))
     makeBamLink(sam, pactID)
-    currQC <- grepl(paste(currSam, collapse="|"), qcData$Sample)
-    qcTab <- qcData[currQC,2:ncol(qcData)]
+    currQC <- grepl(paste(currSam, collapse = "|"), qcData$Sample)
+    qcTab <- qcData[currQC, 2:ncol(qcData)]
     if (nrow(qcTab) == 0) {
         warning(sam, " is missing from qcTsv file")
     } else{
@@ -823,19 +951,26 @@ makeNewTab <- function(sam, samList, qcData, pactID){
 }
 
 
-GetMethMatchInfo <- function(methData, theRd){
+GetMethMatchInfo <- function(methData, theRd) {
     rdDtRows <- methData[methData$record_id == theRd, ]
     cat("\n\n")
     newTa <- knitr::kable(rdDtRows, row.names = F, "html")
-    newTa <- kableExtra::kable_styling(newTa, bootstrap_options = c("bordered","condensed"), full_width = F, position = "left")
+    newTa <- kableExtra::kable_styling(
+        newTa,
+        bootstrap_options = c("bordered", "condensed"),
+        full_width = F,
+        position = "left"
+    )
     newTa <- kableExtra::column_spec(newTa, 1:5, width = "5cm")
     cat("#### Methylation Full Report Link:")
     cat("\n\n")
     txtLink <- paste0("[", theRd, "](", rdDtRows$`Report Path`, ")")
     cat(txtLink)
     cat("\n\n")
-    pathLink <- file.path(stringr::str_split_fixed(dirname(rdDtRows$`Report Path`), "acc_pathology", 2)[1, 2],
-                          basename(rdDtRows$`Report Path`))
+    pathLink <- file.path(
+        stringr::str_split_fixed(dirname(rdDtRows$`Report Path`), "acc_pathology", 2)[1, 2],
+        basename(rdDtRows$`Report Path`)
+    )
     cat("The link should lead to the file here:", pathLink)
     cat("\n\n")
     print(newTa)
@@ -856,14 +991,18 @@ makeMethTab <- function(sam, methCn, methData) {
         currRD <- methData$record_id[methData$Test_Number == sam]
         passFail <- methData$qc_passed[methData$Test_Number == sam]
         if (length(currRD) > 1) {
-            message(sam, " has more than one RD-number:\n", paste(currRD, sep = " ", collapse = " "))
+            message(sam,
+                    " has more than one RD-number:\n",
+                    paste(currRD, sep = " ", collapse = " "))
             for (rd in 1:length(currRD)) {
                 rdTab <- paste0("Methylation_", rd)
                 if (!is.na(passFail[rd])) {
                     if (passFail[rd] == "No") {
                         rdTab <- paste0(rdTab, "_QC_FAILED")
                         curr_html <- methData$`Report Path`[methData$Test_Number == sam][rd]
-                        new_html <- stringr::str_replace_all(curr_html, ".html", "_QC_FAILED.html")
+                        new_html <- stringr::str_replace_all(curr_html,
+                                                             ".html",
+                                                             "_QC_FAILED.html")
                         methData$`Report Path`[methData$Test_Number == sam][rd] <- new_html
                         methData$`Report Link`[methData$Test_Number == sam][rd] <- basename(new_html)
                     }
@@ -890,28 +1029,34 @@ makeMethTab <- function(sam, methCn, methData) {
 
 
 # Filters out Philips Abberations Tab -----------------------------
-filterAbberations <- function(snvOut){
+filterAbberations <- function(snvOut) {
     snvOut$tumor_freq <- readr::parse_number(snvOut$tumor_freq)
-    snvOut <- snvOut[!is.na(snvOut$tumor_freq),]
-    snvOut <- snvOut[snvOut$tumor_freq>=5,]
-    fltrStr <- stringr::str_detect(
-        snvOut$AberrationType, pattern = "frame|delet|insert|indel")
+    snvOut <- snvOut[!is.na(snvOut$tumor_freq), ]
+    snvOut <- snvOut[snvOut$tumor_freq >= 5, ]
+    fltrStr <- stringr::str_detect(snvOut$AberrationType, pattern = "frame|delet|insert|indel")
     snvOut <- snvOut[fltrStr, ]
-    drpFlt <- as.numeric(sub("%","",snvOut$normal_freq)) < 2.0
-    snvOut <- snvOut[drpFlt,]
-    drpFlt <- as.numeric(sub("%","",snvOut$tumor_freq)) >= 5.0
-    snvOut <- snvOut[drpFlt,]
+    drpFlt <- as.numeric(sub("%", "", snvOut$normal_freq)) < 2.0
+    snvOut <- snvOut[drpFlt, ]
+    drpFlt <- as.numeric(sub("%", "", snvOut$tumor_freq)) >= 5.0
+    snvOut <- snvOut[drpFlt, ]
     drpFlt <- snvOut$tumor_dp >= 50
-    snvOut <- snvOut[drpFlt,]
+    snvOut <- snvOut[drpFlt, ]
     return(snvOut)
 }
 
 
-printSnvs <- function(snvCsv){
+printSnvs <- function(snvCsv) {
     snvCsvCol <- c(
-        "HGNC_gene", "AberrationType", "Coordinate",
-        "tumor_freq", "normal_freq", "tumor_dp", "normal_dp",
-        "THERAPY_AVAILABILITY", "HGVSp_Short", "SomaticStatus"
+        "HGNC_gene",
+        "AberrationType",
+        "Coordinate",
+        "tumor_freq",
+        "normal_freq",
+        "tumor_dp",
+        "normal_dp",
+        "THERAPY_AVAILABILITY",
+        "HGVSp_Short",
+        "SomaticStatus"
     )
     snvOutDf <- as.data.frame(read.delim(snvCsv, sep = ","))[, snvCsvCol]
     snvOut <- filterAbberations(snvOutDf)
@@ -926,12 +1071,18 @@ printSpecInfo <- function(samCsv) {
     cat("\n\n")
 }
 
-printDiagInfo <- function(diagCsv){
+printDiagInfo <- function(diagCsv) {
     diagCsvCols <- c(
-        "Diagnostic Order", "Orderer Name", "Orderer NPI",
-        "Patient Name", "Gender", "Diagnosis Code", "Diagnosis",
+        "Diagnostic Order",
+        "Orderer Name",
+        "Orderer NPI",
+        "Patient Name",
+        "Gender",
+        "Diagnosis Code",
+        "Diagnosis",
         "Diagnosis for interpretation code",
-        "Diagnosis for interpretation", "Tumor Stage"
+        "Diagnosis for interpretation",
+        "Tumor Stage"
     )
     samOut <- as.data.frame(read.csv(diagCsv, header = F))
     filterCol <- paste0(samOut[1, ]) %in% diagCsvCols
@@ -943,16 +1094,15 @@ printDiagInfo <- function(diagCsv){
 }
 
 # Renders error when csv file fails to be parsed ------------------------------------------------------------
-PrintParseErr <- function(csvPath, tabTxt){
+PrintParseErr <- function(csvPath, tabTxt) {
     eTxt = "\n\n## **Failed to read Philips CSV File"
-    snvErr = paste(eTxt, tabTxt, "**\n`", csvPath,"`\n\n")
+    snvErr = paste(eTxt, tabTxt, "**\n`", csvPath, "`\n\n")
     return(cat(snvErr))
 }
 
 # Makes Abberations Tab ------------------------------------------------------------
 makeAbTab <- function(sam, philipsFtp = "/Volumes/molecular/Molecular/Philips_SFTP") {
-  
-    dumpDir <- get_ngs_path(outPath = file.path(getwd(), "zipfiles"), sam) 
+    dumpDir <- get_ngs_path(outPath = file.path(getwd(), "zipfiles"), sam)
 
     if (is.null(dumpDir)) {
         td <- format(Sys.Date(), "%Y-%m-%d")
@@ -965,13 +1115,13 @@ makeAbTab <- function(sam, philipsFtp = "/Volumes/molecular/Molecular/Philips_SF
     snvCsv <- file.path(dumpDir, "aberration_snv.csv")
 
     if (file.exists(snvCsv)) {
-      philipsIndels <- tryCatch(
-        printSnvs(snvCsv),
-        error = function(e) {
-          PrintParseErr(snvCsv, "SNV")
-        }
-      )
-      return(philipsIndels)
+        philipsIndels <- tryCatch(
+            printSnvs(snvCsv),
+            error = function(e) {
+                PrintParseErr(snvCsv, "SNV")
+            }
+        )
+        return(philipsIndels)
     } else{
         return(NULL)
     }
@@ -988,12 +1138,12 @@ makeBlankRow <- function(sam, snvDt) {
 }
 
 
-GrabHotspots <- function(params){
-    outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus"))
+GrabHotspots <- function(params) {
+    outDir <- file.path(params$workDir, paste0(params$pactName, "_consensus"))
     hsTsv <- file.path(outDir, paste0(params$pactName, "_Hotspots.tsv"))
-    if(file.exists(hsTsv)){
-        hsDat <- as.data.frame(read.csv(hsTsv, sep='\t'))
-    }else{
+    if (file.exists(hsTsv)) {
+        hsDat <- as.data.frame(read.csv(hsTsv, sep = '\t'))
+    } else{
         message("No file found here:", hsTsv)
         hsDat <- NULL
     }
@@ -1013,70 +1163,76 @@ CheckMissedSam <- function(sam, snvDt, pactName) {
 
 
 cleanTabCols <- function(snvTab) {
-  snvTab <- subset(snvTab, select = -Variant)
-  snvTab <- subset(snvTab, select = -IGV)
-  snvTab <- subset(snvTab, select = -Comments)
+    snvTab <- subset(snvTab, select = -Variant)
+    snvTab <- subset(snvTab, select = -IGV)
+    snvTab <- subset(snvTab, select = -Comments)
     snvTab <- subset(snvTab, select = -MuTect2)
     snvTab <- subset(snvTab, select = -LoFreqSomatic)
-  snvTab <- snvTab %>% rename(Position = Other)
-  snvTab$Position <- gsub("_", ":", snvTab$Position) 
-  return(snvTab)
+    snvTab <- snvTab %>% rename(Position = Other)
+    snvTab$Position <- gsub("_", ":", snvTab$Position)
+    return(snvTab)
 }
 
 
 cleanPhilTab <- function(philipsIndels) {
-  philipsIndels <- philipsIndels %>% rename(Position = Coordinate,
-                                            Gene = HGNC_gene ,
-                                            Mutation.Type = AberrationType)
-  return(philipsIndels)
+    philipsIndels <- philipsIndels %>% rename(Position = Coordinate,
+                                              Gene = HGNC_gene ,
+                                              Mutation.Type = AberrationType)
+    return(philipsIndels)
 }
 
 compare_philips <- function(snvTab, philipsIndels) {
-  snvTab$Same <- "Yes"
-  #snvTab$Not.In.House <- "No"
-  snvTab$In.Philips <- "No"
-  genCols <- c("Gene", "Position")
-  
-  matched_rows <- apply(snvTab, 1, function(row) {
-    any(apply(philipsIndels, 1, function(indel_row) {
-      all(row[genCols] == indel_row[genCols])
-    }))
-  })
-  
-  snvTab$Same[!matched_rows] <- "No"
-  snvTab$In.Philips[matched_rows] <- "Yes"
-  
-  # new_rows <- philipsIndels[!apply(philipsIndels[, genCols], 1, function(row) {
-  #   any(apply(snvTab[, genCols], 1, function(snv_row) {
-  #     all(row == snv_row)
-  #   }))
-  # }), ]
-  
-  # if (nrow(new_rows) > 0) {
-  #   new_df <- data.frame(
-  #     Test_Case = snvTab$Test_Case[1],
-  #     Tumor = snvTab$Tumor[1],
-  #     Normal =   snvTab$Normal[1],
-  #     Gene = new_rows$Gene,
-  #     Mutation.Type = new_rows$Mutation.Type,
-  #     Position = new_rows$Position,
-  #     In.NYU = "No",
-  #     In.Philips = "Yes",
-  #     Depth = new_rows$tumor_dp,
-  #     AF = new_rows$tumor_freq,
-  #     MuTect2 = "",
-  #     LoFreqSomatic = "",
-  #     AAChange = new_rows$HGVSp_Short,
-  #     Same = "No",
-  #     Not.In.House = "Yes"
-  #   )
-    
-  #   snvTab <- rbind(snvTab, new_df)
-  # }
-  
-  combTab <- snvTab[order(snvTab$Same == "No", decreasing = TRUE), ]
-  
-  return(combTab)
+    snvTab$Same <- "Yes"
+    snvTab$In.Philips <- "No"
+    genCols <- c("Gene", "Position")
+
+    matched_rows <- apply(snvTab, 1, function(row) {
+        any(apply(philipsIndels, 1, function(indel_row) {
+            all(row[genCols] == indel_row[genCols])
+        }))
+    })
+
+    snvTab$Same[!matched_rows] <- "No"
+    snvTab$In.Philips[matched_rows] <- "Yes"
+
+    combTab <- snvTab[order(snvTab$Same == "No", decreasing = TRUE), ]
+
+    return(combTab)
+}
+
+
+MakeVAFtab <- function(sam) {
+    if (dir.exists("VAF_plots")) {
+        vaf_pngs <- dir(
+            path = file.path(getwd(), "VAF_plots"),
+            pattern = ".png",
+            full.names = T
+        )
+        sam_find <- grepl(pattern = sam, x = vaf_pngs)
+
+        if (any(sam_find)) {
+            MakeTabColor("VAF Plots")
+            cat(
+                "Below are VAF distribution plots for MuTect2 and Strelka.\n\nBoth callers may not be plotted if one does not have enough data after filtering.\n\n"
+            )
+            foundPngs <- vaf_pngs[sam_find]
+
+            for (vafPlot in foundPngs) {
+                vaf_png_file <- file.path(".", "VAF_plots", paste0(basename(vafPlot)))
+                caller <- stringr::str_split_fixed(basename(vafPlot), "_", 4)[1, 4]
+                callerName <- stringr::str_replace_all(caller, ".png", "")
+                altTxt <- paste("![VAF Distribution for", sam, callerName, "](")
+                cat(paste0(altTxt, vaf_png_file, "){height=400px}"))
+            }
+        } else{
+            cat("\n\n")
+            #cat(paste(sam, "did not have enough VAF data to plot after filtering"))
+        }
+    } else{
+        cat("\n\n")
+        #cat("No VAF Plots were generated for this run")
+    }
+    cat("\n\n")
 }
 
 
@@ -1099,18 +1255,18 @@ LoopSampleTabs <- function(params) {
     toKeep <- demux_sh$Paired_Normal != ""
     tumorSams <- demux_sh[toKeep, ]
     rownames(tumorSams) <- NULL
-    
+
     tmb_tsv <- "./TMB_MSI/annotations.paired.tmb.validation.2callers.tsv"
     msi_tsv <- "./TMB_MSI/msi_validation.tsv"
-    
+
     tmb_dat <- as.data.frame(read.table(tmb_tsv, sep = "\t", header = T))
     msi_dat <- as.data.frame(read.table(msi_tsv, sep = "\t", header = T))
-    
+
     for (sam in samples) {
         message("SAMPLE: ", sam)
         makeNewTab(sam, samList, qcData, pactName)
         sam_match <- which(sam == tumorSams$Test_Number)
-        
+
         if (length(sam_match > 0)) {
             sam_id <- tumorSams$Sample_ID[sam_match]
             tmb_match <- tmb_dat$SampleID == sam_id
@@ -1119,18 +1275,18 @@ LoopSampleTabs <- function(params) {
             msi_row <- msi_dat[msi_match, ]
             make_msi_tmb_tab(tmb_row, msi_row)
         }
-        
+
         snvDt <- CheckMissedSam(sam, snvDt, pactName)
         samRows <- snvDt$Test_Case == sam
-        
+
         cnvTab <- checkDataDump(sam, cnvTab = snvDt[samRows &
                                                         snvDt$Variant == "CNV", ])
-        
+
         snvTab <- snvDt[samRows & snvDt$Variant == "SNV", ]
         snvTab <- cleanTabCols(snvTab)
-        
+
         philipsIndels <- makeAbTab(sam)
-        
+
         if (!is.null(philipsIndels)) {
             philipsIndels <- cleanPhilTab(philipsIndels)
             if (nrow(snvTab) == 0) {
@@ -1148,15 +1304,15 @@ LoopSampleTabs <- function(params) {
             }
             makeDT("In-House Somatic Variant Calls", objDat = snvTab)
         }
-        
+
         cnvTab <- subset(cnvTab, select = -Variant)
         makeDT("CNV", cnvTab, pdfFi = sam, outDir = outDir)
-        
+
         if (!is.null(methData)) {
             methCn <- methData[methData$Test_Number == sam, ]
             makeMethTab(sam, methCn, methData)
         }
-        
+
         if (!is.null(hsDat)) {
             MakeHStab(sam, hsDat, samList, outDir)
         }
@@ -1166,17 +1322,22 @@ LoopSampleTabs <- function(params) {
     }
 }
 
-loadHtmlTag <- function(){
+loadHtmlTag <- function() {
     require("tidyverse")
     library("plotly")
     require("plotly")
     require("ggplot2")
     library("ggplot2")
     library("DT")
-    htmltools::tagList(DT::datatable(cars, options=list(pageLength = 100, width="100%")))
-    par(ask=F); devAskNewPage(ask = F)
-    #doParallel::registerDoParallel(cores=2)
-    return(htmltools::tagList(plotly::ggplotly(ggplot2::ggplot())))
+    htmltools::tagList()
+    par(ask = F)
+    devAskNewPage(ask = F)
+    return(htmltools::tagList(
+        DT::datatable(cars, options = list(
+            pageLength = 100, width = "100%"
+        )),
+        plotly::ggplotly(ggplot2::ggplot())
+    ))
 }
 
 
@@ -1190,14 +1351,20 @@ RenamePngs <- function(tumors, pngList, ngsPngDir) {
         isInValid <- length(current_png) == 1
         if (!isInValid) {
             message("File png not found for sample: ", currCase)
-            message("Check Samplesheet CSV file and compare with the demux-samplesheet.csv used")
+            message(
+                "Check Samplesheet CSV file and compare with the demux-samplesheet.csv used"
+            )
         }
         stopifnot(length(current_png) == 1)
         new_pngName <- paste0(tumors$Test_Number[X], ".png")
         message("Current PNG file:\n", basename(current_png))
-        message("Matching NGS name: ", tumors$Test_Number[X], "\n", tumors$Paired_Normal[X], "\n")
+        message("Matching NGS name: ",
+                tumors$Test_Number[X],
+                "\n",
+                tumors$Paired_Normal[X],
+                "\n")
         renamedPng <- file.path(ngsPngDir, new_pngName)
-        if(!file.exists(renamedPng)){
+        if (!file.exists(renamedPng)) {
             file.copy(current_png, renamedPng)
         }
     }
@@ -1206,12 +1373,24 @@ RenamePngs <- function(tumors, pngList, ngsPngDir) {
 
 FixPngList <- function(tumors, pngList) {
     message("Mismatch in tumor samples and FACET PNG files!")
-    message("Sample rows: ", nrow(tumors), ", PNG files: ", length(pngList))
+    message("Sample rows: ",
+            nrow(tumors),
+            ", PNG files: ",
+            length(pngList))
     message("Check if any are missing:\n")
-    message(paste0(capture.output(as.data.frame(tumors$Specimen_ID)), collapse="\n"))
-    message(paste0(capture.output(data.frame(PNG_Files = basename(pngList))), collapse="\n"))
+    message(paste0(capture.output(as.data.frame(
+        tumors$Specimen_ID
+    )), collapse = "\n"))
+    message(paste0(capture.output(data.frame(
+        PNG_Files = basename(pngList)
+    )), collapse = "\n"))
     normLi <- paste(tumors$Paired_Normal, collapse = "|")
-    toKeep <- unlist(lapply(pngList, FUN=function(X){stringr::str_detect(X, pattern = normLi)}))
+    toKeep <- unlist(lapply(
+        pngList,
+        FUN = function(X) {
+            stringr::str_detect(X, pattern = normLi)
+        }
+    ))
     message("Dropping the following:")
     print(pngList[!toKeep])
     stopifnot(any(toKeep))
@@ -1220,32 +1399,12 @@ FixPngList <- function(tumors, pngList) {
     return(pngList)
 }
 
-
-# CheckTumorPngs <- function(samList, outDir){
-#     pngOutDir <- file.path(outDir,"cnvpng") # output copy of cnvPNG files
-#     if(!dir.exists(pngOutDir)){dir.create(pngOutDir)}
-#     pngList <- list.files(pngOutDir, pattern = "*.png", recursive = T, full.names=T)
-#     pngList <- pngList[!grepl("^0_", basename(pngList))]
-#     if(length(pngList) == 0){
-#         message("No CNV PNG Facets found in current directory:\n", pngOutDir)
-#         message("Check if the Facet PNG files are available in the output directory:\n",
-#                 "/Volumes/molecular/Molecular/REDCap/cnv_facets/ or the Desktop")
-#         stopifnot(length(pngList) != 0)
-#     }
-#     tumors <- samList[samList$Paired_Normal != "", ] # drop controls/normals
-#     row.names(tumors) <- 1:nrow(tumors) # correct row numbering
-#     if(length(pngList) != nrow(tumors)){
-#       pngList <- FixPngList(tumors, pngList)
-#     }
-#     ngsPngDir <- file.path(outDir, "ngs_cnv_png")
-#     if(!dir.exists(ngsPngDir)){dir.create(ngsPngDir)}
-#     RenamePngs(tumors, pngList, ngsPngDir)
-# }
-
 ListNonMatching <- function(pngList, tumors, pngOutDir) {
     if (length(pngList) < nrow(tumors)) {
         nonContainedIDs <-
-            sapply(tumors$Specimen_ID, function(id){!any(grepl(id, basename(pngList)))})
+            sapply(tumors$Specimen_ID, function(id) {
+                !any(grepl(id, basename(pngList)))
+            })
         if (any(nonContainedIDs)) {
             nonMatchedIDs <- tumors$Specimen_ID[nonContainedIDs]
             message("The following samples are missing from: ", pngOutDir)
@@ -1255,7 +1414,9 @@ ListNonMatching <- function(pngList, tumors, pngOutDir) {
         return(pngList)
     } else{
         nonMatchingFiles <- sapply(basename(pngList), function(baseName) {
-            !any(sapply(tumors$Specimen_ID, function(id) {grepl(id, baseName)}))
+            !any(sapply(tumors$Specimen_ID, function(id) {
+                grepl(id, baseName)
+            }))
         })
         if (any(nonMatchingFiles)) {
             nonMatchedFiles <- pngList[nonMatchingFiles]
@@ -1269,14 +1430,23 @@ ListNonMatching <- function(pngList, tumors, pngOutDir) {
                 FileName = baseNames,
                 stringsAsFactors = FALSE
             )
-            matched <- sapply(1:nrow(matches), function(i){
-                grepl(matches$Specimen_ID[i], matches$FileName[i])}
-            )
+            matched <- sapply(1:nrow(matches), function(i) {
+                grepl(matches$Specimen_ID[i], matches$FileName[i])
+            })
             duplicates <- matches[matched, ]
-            duplicates$count <- ave(duplicates$Specimen_ID, duplicates$Specimen_ID, FUN = length)
+            duplicates$count <- ave(duplicates$Specimen_ID,
+                                    duplicates$Specimen_ID,
+                                    FUN = length)
             duplicateMatches <- duplicates[duplicates$count > 1, ]
-            message(paste("The sample(s)", paste(unique(duplicateMatches$Specimen_ID)),
-                          "has duplicate matching CNV Facets PNG files:"))
+            message(
+                paste(
+                    "The sample(s)",
+                    paste(unique(
+                        duplicateMatches$Specimen_ID
+                    )),
+                    "has duplicate matching CNV Facets PNG files:"
+                )
+            )
             message(paste(unique(duplicateMatches$FileName), collapse = "\n"))
             return(pngList)
         }
@@ -1286,24 +1456,36 @@ ListNonMatching <- function(pngList, tumors, pngOutDir) {
 
 CheckTumorPngs <- function(samList, outDir) {
     pngOutDir <- file.path(outDir, "cnvpng") # output copy of cnvPNG files
-    if (!dir.exists(pngOutDir)) {dir.create(pngOutDir)}
+    if (!dir.exists(pngOutDir)) {
+        dir.create(pngOutDir)
+    }
 
-    pngList <- list.files(pngOutDir, pattern = "*.png", recursive = T, full.names = T)
+    pngList <- list.files(
+        pngOutDir,
+        pattern = "*.png",
+        recursive = T,
+        full.names = T
+    )
     pngList <- pngList[!grepl("^0_", basename(pngList))]
 
     if (length(pngList) == 0) {
-        message("No CNV PNG Facets found in current directory:\n", pngOutDir)
-        message("Check if the Facet PNG files are available in the output directory:\n",
-                "/Volumes/molecular/Molecular/REDCap/cnv_facets/ or the Desktop")
+        message("No CNV PNG Facets found in current directory:\n",
+                pngOutDir)
+        message(
+            "Check if the Facet PNG files are available in the output directory:\n",
+            "/Volumes/molecular/Molecular/REDCap/cnv_facets/ or the Desktop"
+        )
         stopifnot(length(pngList) != 0)
     }
 
-    tumors <- samList[samList$Paired_Normal != "",] # drop controls/normals
+    tumors <- samList[samList$Paired_Normal != "", ] # drop controls/normals
     dupedNgs <- duplicated(tumors$Test_Number)
 
-    if(any(dupedNgs)){
-        stop(c("There are duplicated NGS numbers:\n",
-               paste(tumors$Test_Number[dupedNgs], collapse = "\n")))
+    if (any(dupedNgs)) {
+        stop(c(
+            "There are duplicated NGS numbers:\n",
+            paste(tumors$Test_Number[dupedNgs], collapse = "\n")
+        ))
     }
     row.names(tumors) <- 1:nrow(tumors) # correct row numbering
 
@@ -1312,13 +1494,15 @@ CheckTumorPngs <- function(samList, outDir) {
     }
 
     ngsPngDir <- file.path(outDir, "ngs_cnv_png")
-    if(!dir.exists(ngsPngDir)) {dir.create(ngsPngDir)}
+    if (!dir.exists(ngsPngDir)) {
+        dir.create(ngsPngDir)
+    }
     RenamePngs(tumors, pngList, ngsPngDir)
 }
 
 
 CopyCnvPngs <- function(params) {
-    outDir <- file.path(params$workDir, paste0(params$pactName,"_consensus"))
+    outDir <- file.path(params$workDir, paste0(params$pactName, "_consensus"))
     samList <- gb$GetSamList(params$pactName, 2)
     toDrop <- grepl("^0_", samList$Paired_Normal)
     if (any(toDrop)) {
@@ -1330,35 +1514,36 @@ CopyCnvPngs <- function(params) {
 }
 
 
-MakeVAFtab <- function(sam){
-  
-  if(dir.exists("VAF_plots")){
-    vaf_pngs <- dir(path = file.path(getwd(), "VAF_plots"), pattern = ".png", full.names = T)
-    sam_find <- grepl(pattern = sam, x = vaf_pngs)
-    
-    if(any(sam_find)){
-        MakeTabColor("VAF Plots")
-        cat("Below are VAF distribution plots for MuTect2 and Strelka.\n\nBoth callers may not be plotted if one does not have enough data after filtering.\n\n")
-        foundPngs <- vaf_pngs[sam_find]
-      
-      for (vafPlot in foundPngs) {
-        vaf_png_file <- file.path(".","VAF_plots", paste0(basename(vafPlot)))
-        caller <- stringr::str_split_fixed(basename(vafPlot), "_", 4)[1, 4]
-        callerName <- stringr::str_replace_all(caller, ".png", "")
-        altTxt <- paste("![VAF Distribution for", sam, callerName, "](")
-        cat(paste0(altTxt, vaf_png_file,"){height=400px}"))
-      }
-    }else{
-        cat("\n\n")
-      #cat(paste(sam, "did not have enough VAF data to plot after filtering"))
-    }
-  }else{
-      cat("\n\n")
-    #cat("No VAF Plots were generated for this run")
-  }
-  cat("\n\n")
+animation::ani.options(autobrowse = FALSE)
+options(width = 1600)
+knitr::opts_chunk$set(echo = FALSE)
+
+if (!require("xfun")) {
+    install.packages("xfun", ask = FALSE)
 }
 
-animation::ani.options(autobrowse = FALSE); options(width = 1600)
-knitr::opts_chunk$set(echo = FALSE)
-if(!require("xfun")){install.packages("xfun", ask=F)}
+knitr::opts_template$set(input_opts = list(
+    echo = FALSE,
+    message = TRUE,
+    warning = FALSE,
+    error = TRUE,
+    include = FALSE
+))
+
+knitr::opts_template$set(
+    tab_opts = list(
+        echo = FALSE,
+        warning = FALSE,
+        message = FALSE,
+        error = TRUE,
+        fig.keep = 'all',
+        include = TRUE,
+        fig.align = "left",
+        fig.show = "asis",
+        out.width = '100%',
+        results = 'asis'
+    )
+)
+
+htmltools::tagList(DT::datatable(cars, options = list(pageLength = 100, width = "100%")))
+htmltools::tagList(plotly::ggplotly(ggplot2::ggplot()))
