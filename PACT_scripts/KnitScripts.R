@@ -1545,5 +1545,11 @@ knitr::opts_template$set(
     )
 )
 
-htmltools::tagList(DT::datatable(cars, options = list(pageLength = 100, width = "100%")))
-htmltools::tagList(plotly::ggplotly(ggplot2::ggplot()))
+GetBamUrl <- function(params) {
+    return(file.path("https://genome.med.nyu.edu/external/clinpathlab",
+                     params$pactName))
+}
+
+gb$css_code <- base::readLines(
+  "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/consensus.css")
+
