@@ -16,7 +16,6 @@ args[2] -> concensusDir
 DEFAULT_DIR <- "/Volumes/CBioinformatics/jonathan/pact/consensus/"
 DEFAULT_OUT <- "/Volumes/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics"
 
-
 if (is.na(concensusDir)) {
     concensusDir <- paste0(DEFAULT_DIR, pactRunName, "_consensus")
 }
@@ -33,19 +32,24 @@ library("dplyr", warn.conflicts = F, quietly = T)
 
 runYear <- stringr::str_split_fixed(pactRunName, "-", 3)[1, 2]
 csvPath <- file.path(DEFAULT_OUT, paste0("20", runYear), pactRunName)
-
 stopifnot(dir.exists(csvPath))
 
-thisFile <- "somatic_variants.csv"
-inputFile <- dir(path = csvPath, pattern = thisFile, full.names = T)
+somatic_file <- "somatic_variants.csv"
+inputFile <- dir(path = csvPath, pattern = somatic_file, full.names = T)
 
 if (length(inputFile) == 0) {
-    message("File not found:\n", thisFile)
+    message("File not found:\n", somatic_file)
     message("Ensure the file was copied here:\n", inputFile)
 }
 
+# Read the somatic variants input file
 variantsData <- as.data.frame(read.csv(inputFile, strip.white = T))
 
+# Filter out Strelka-only calls
+filteredData <- variantsData %>%
+    filter(!(Strelka == "Yes" & MuTect2 == "No" & LoFreqSomatic == "No"))
+
+# Filter select columns and remove commas from rows
 varColumns <- c(
     "Test_Number",
     "Tumor",
@@ -59,22 +63,22 @@ varColumns <- c(
     "ExonicFunc.refGene",
     "AAChange.refGene"
 )
+callsList <- filteredData[, varColumns]
+fix_genes <- stringr::str_replace_all(callsList$Gene.refGene, ",", " ")
+callsList$Gene.refGene <- fix_genes
+fix_aa <- stringr::str_replace_all(callsList$AAChange.refGene, ",", "|")
+callsList$AAChange.refGene <- fix_aa
 
-#exonicFilter <- stringr::str_detect(variantsData$ExonicFunc.refGene, "frame|delet|insert")
-indelsList <- variantsData[, varColumns] # exonicFilter rows
-fix_genes <- stringr::str_replace_all(indelsList$Gene.refGene, ",", " ")
-indelsList$Gene.refGene <- fix_genes
+# Paste gene positions separated by colons and create consensus column defaults
+positions <- stringr::str_split_fixed(callsList$Variant, ":", 3)[, 1:2]
+callsList$Position <- paste(positions[, 1], positions[, 2], sep = "_")
+callsList$nyu <- "Yes"
+callsList$philips <- ""
+callsList$Variant <- "SNV"
 
-fix_aa <- stringr::str_replace_all(indelsList$AAChange.refGene, ",", "|")
-indelsList$AAChange.refGene <- fix_aa
-
-positions <- stringr::str_split_fixed(indelsList$Variant, ":", 3)[, 1:2]
-indelsList$Position <- paste(positions[, 1], positions[, 2], sep = "_")
-indelsList$nyu <- "Yes"
-indelsList$philips <- ""
-indelsList$Variant <- "SNV"
-indelsList <- indelsList %>% dplyr::distinct(Position, .keep_all = T)
-rownames(indelsList) <- NULL
+# Arrange so that Mutect2 DP is used first when both callers are Yes
+callsList <- callsList %>% arrange(desc(MuTect2 == "Yes")) %>%
+    distinct(Position, .keep_all = TRUE)
 
 blank_row <- data.frame(
     Test_Number = "",
@@ -93,40 +97,42 @@ blank_row <- data.frame(
     philips = ""
 )
 
+# Iterate through NGS cases to ensure each is added if not in caller file
 for (ngs in unique(variantsData$Test_Number)) {
-    if (ngs %in% unique(indelsList$Test_Number) == F) {
+    if (ngs %in% unique(callsList$Test_Number) == F) {
         newSNVRow <- blank_row
         newSNVRow$Test_Number <- ngs
         newSNVRow$Gene.refGene <- "No Indels or FrameShifts called in-house"
         newSNVRow$Variant <- "SNV"
         message("\nBinding new row:\n")
         message(paste0(capture.output(newSNVRow), collapse = "\n"))
-        indelsList <- rbind(indelsList, newSNVRow)
+        callsList <- rbind(callsList, newSNVRow)
     }
     newCnvRow <- blank_row
     newCnvRow$Test_Number <- ngs
     newCnvRow$Position <- "NA"
     newCnvRow$Variant <- "CNV"
-    indelsList <- rbind(indelsList, newCnvRow)
+    callsList <- rbind(callsList, newCnvRow)
 }
 
+# Generate final data frame with specific column names and column ordering
 varsToCheck <- data.frame(
-    "Test_Case" = indelsList$Test_Number,
-    "Tumor" = indelsList$Tumor,
-    "Normal" = indelsList$Normal,
-    "Gene" = indelsList$Gene.refGene,
-    "Mutation Type" = indelsList$ExonicFunc.refGene,
-    "Other" = indelsList$Position,
-    "In NYU" = indelsList$nyu,
-    "In Philips" = indelsList$philips,
-    "Depth" = indelsList$DP,
-    "AF" = indelsList$AF,
-    "MuTect2" = indelsList$MuTect2,
-    "LoFreqSomatic" = indelsList$LoFreqSomatic,
+    "Test_Case" = callsList$Test_Number,
+    "Tumor" = callsList$Tumor,
+    "Normal" = callsList$Normal,
+    "Gene" = callsList$Gene.refGene,
+    "Mutation Type" = callsList$ExonicFunc.refGene,
+    "Other" = callsList$Position,
+    "In NYU" = callsList$nyu,
+    "In Philips" = callsList$philips,
+    "Depth" = callsList$DP,
+    "AF" = callsList$AF,
+    "MuTect2" = callsList$MuTect2,
+    "LoFreqSomatic" = callsList$LoFreqSomatic,
     "IGV" = '',
     "Comments" = '',
-    "AAChange" = indelsList$AAChange.refGene,
-    "Variant" = indelsList$Variant
+    "AAChange" = callsList$AAChange.refGene,
+    "Variant" = callsList$Variant
 )
 
 outPutFile <- file.path(concensusDir, paste0(pactRunName, "_desc.csv"))
