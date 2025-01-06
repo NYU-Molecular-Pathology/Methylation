@@ -1181,20 +1181,30 @@ cleanPhilTab <- function(philipsIndels) {
     return(philipsIndels)
 }
 
+
 compare_philips <- function(snvTab, philipsIndels) {
     snvTab$Same <- "Yes"
     snvTab$In.Philips <- "No"
+    
     genCols <- c("Gene", "Position")
-
-    matched_rows <- apply(snvTab, 1, function(row) {
-        any(apply(philipsIndels, 1, function(indel_row) {
-            all(row[genCols] == indel_row[genCols])
-        }))
-    })
-
+    matched_rows <- logical(nrow(snvTab))
+    
+    for (inhouse in seq_len(nrow(snvTab))) {
+        row <- snvTab[inhouse, ]
+        house_gene <- row[["Gene"]]
+        genes <- unlist(stringr::str_split(house_gene, " "))
+        
+        for (phil_row in seq_len(nrow(philipsIndels))) {
+            indel_row <- philipsIndels[phil_row, ]
+            if (any(sapply(genes, function(gene) all(c(gene, row["Position"]) == indel_row[genCols])))) {
+                matched_rows[inhouse] <- TRUE
+                break
+            }
+        }
+    }
+    
     snvTab$Same[!matched_rows] <- "No"
     snvTab$In.Philips[matched_rows] <- "Yes"
-
     combTab <- snvTab[order(snvTab$Same == "No", decreasing = TRUE), ]
 
     return(combTab)
