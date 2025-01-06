@@ -163,3 +163,13 @@ echo -e "rsync -vrP \"${DESK_DIR}${pactRun}_consensus.html\" \"${FINAL_DEST}\""
 echo -e "Opening folder:\n${FINAL_DEST}"
 open "${FINAL_DEST}"
 echo -e "Ensure ${pactRun}_consensus.html is viewable in the output directory"
+
+# Check if PHILIP_LOG exists and open it if it does
+PHILIP_LOG="$HOME/Desktop/${pactRun}_philips_missing.txt"
+
+if [ -f "$PHILIP_LOG" ]; then
+    echo "File $PHILIP_LOG exists. Some samples missing from data dump..."
+    open "$PHILIP_LOG"
+else
+    echo "File $PHILIP_LOG does not exist. All data dump files downloaded"
+fi
