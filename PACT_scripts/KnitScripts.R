@@ -1254,6 +1254,27 @@ MakeVAFtab <- function(sam) {
 }
 
 
+CreateVariantsTabs <- function(philipsIndels, snvTab) {
+  snvTab <- cleanTabCols(snvTab)
+  if (!is.null(philipsIndels)) {
+    philipsIndels <- cleanPhilTab(philipsIndels)
+    if (nrow(snvTab) == 0) {
+      makeDT("In-House Somatic Variant Calls", objDat = snvTab)
+    } else {
+      combTab <- compare_philips(snvTab, philipsIndels)
+      columns_to_front <- c("Same")
+      combTab <- combTab[, c(columns_to_front, setdiff(names(combTab), columns_to_front))]
+      makeDT("In-House Somatic Variant Calls", objDat = combTab)
+    }
+  } else{
+    if (nrow(snvTab) > 0) {
+      snvTab$In.Philips <- "No"
+    }
+    makeDT("In-House Somatic Variant Calls", objDat = snvTab)
+  }
+}
+
+
 LoopSampleTabs <- function(params) {
     pactName <- params$pactName
     methData <- gb$GetMethDf(params$pactName)
@@ -1296,32 +1317,12 @@ LoopSampleTabs <- function(params) {
 
         snvDt <- CheckMissedSam(sam, snvDt, pactName)
         samRows <- snvDt$Test_Case == sam
-
-        cnvTab <- checkDataDump(sam, cnvTab = snvDt[samRows &
-                                                        snvDt$Variant == "CNV", ])
+        cnvTab <- snvDt[samRows & snvDt$Variant == "CNV", ]
+        cnvTab <- checkDataDump(sam, cnvTab)
 
         snvTab <- snvDt[samRows & snvDt$Variant == "SNV", ]
-        snvTab <- cleanTabCols(snvTab)
-
         philipsIndels <- makeAbTab(sam)
-
-        if (!is.null(philipsIndels)) {
-            philipsIndels <- cleanPhilTab(philipsIndels)
-            if (nrow(snvTab) == 0) {
-                makeDT("In-House Somatic Variant Calls", objDat = snvTab)
-            } else {
-                combTab <- compare_philips(snvTab, philipsIndels)
-                columns_to_front <- c("Same")
-                combTab <- combTab[, c(columns_to_front,
-                                       setdiff(names(combTab), columns_to_front))]
-                makeDT("In-House Somatic Variant Calls", objDat = combTab)
-            }
-        } else{
-            if (nrow(snvTab) > 0) {
-                snvTab$In.Philips <- "No"
-            }
-            makeDT("In-House Somatic Variant Calls", objDat = snvTab)
-        }
+        CreateVariantsTabs(philipsIndels, snvTab)
 
         cnvTab <- subset(cnvTab, select = -Variant)
         makeDT("CNV", cnvTab, pdfFi = sam, outDir = outDir)
@@ -1339,6 +1340,7 @@ LoopSampleTabs <- function(params) {
         cat(' </div> ')
     }
 }
+
 
 loadHtmlTag <- function() {
     require("tidyverse")
