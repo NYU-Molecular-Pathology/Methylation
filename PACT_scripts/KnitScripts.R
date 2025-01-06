@@ -697,6 +697,13 @@ parsePhilipsCn <- function(cnvInfo, sam, cnvTab) {
 }
 
 
+logMissingData <- function(sam) {
+  log_file <- paste(gb$pactName, "philips", "missing.txt", sep = "_")
+  log_path <- file.path(Sys.getenv("HOME"), "Desktop", log_file)
+  base::writeLines(sam, log_path)
+}
+
+
 parseCNV <- function(outPath, sam, cnvTab) {
     sam_folder <- get_ngs_path(outPath, sam)
     cnvFi <- file.path(outPath, sam, "aberration_cnv.csv")
@@ -706,6 +713,7 @@ parseCNV <- function(outPath, sam, cnvTab) {
     if (!file.exists(cnvFi)) {
         warning("File does not exist:\n", cnvFi, "\nSkipping Philips...")
         cnvTab$Gene <- "No Philips Data Dump CSV file availible, check ISPM for CNV"
+        try(logMissingData(sam), silent = T)
         return(cnvTab)
     }
     cnvInfo <- as.data.frame(readr::read_csv(cnvFi, col_types = readr::cols(.default = readr::col_character())))
