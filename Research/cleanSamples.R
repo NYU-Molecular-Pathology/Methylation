@@ -130,6 +130,16 @@ FixNullNaVars <- function(targets, varColumns) {
 }
 
 
+FixBaseName <- function(targets, runDir = NULL, col_sentrix) {
+    if (is.null(runDir)) {runDir <- file.path(getwd(), "idats")}
+    if (class(targets) != "data.frame") {targets <- as.data.frame(targets)}
+    stopifnot(col_sentrix %in% colnames(targets))
+    senCol <- min(which(grepl(col_sentrix, colnames(targets)) == T))
+    targets$Basename <- file.path(runDir, targets[, senCol])
+    return(targets)
+}
+
+
 ModifyTargetColumns <- function(targets, gb) {
     if (gb$needFi == T) {
         gb$GetCsvSheet(gb$needFi, gb$samsheet, gb$token, idatPath = gb$idatPath)
