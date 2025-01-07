@@ -414,25 +414,6 @@ fillMissingDat <- function(targets, col_samNames = "Sample_Name", originalFi = "
     return(targets)
 }
 
-
-fixBaseName <- function(targets, runDir, col_sentrix) {
-    if (class(targets) != "data.frame") {targets <- as.data.frame(targets)}
-    stopifnot(col_sentrix %in% colnames(targets))
-    senCol <- min(which(grepl(col_sentrix, colnames(targets)) == T))
-    targets$Basename <- file.path(runDir, targets[, senCol])
-    return(targets)
-}
-
-
-FixBaseName <- function(targets, runDir = NULL, col_sentrix) {
-    if (is.null(runDir)) {runDir <- file.path(getwd(), "idats")}
-    if (class(targets) != "data.frame") {targets <- as.data.frame(targets)}
-    stopifnot(col_sentrix %in% colnames(targets))
-    senCol <- min(which(grepl(col_sentrix, colnames(targets)) == T))
-    targets$Basename <- file.path(runDir, targets[, senCol])
-    return(targets)
-}
-
 # Search REDCap Worksheets for MRN Match for output ---------------------------
 loadPacks()
 if (Sys.info()[['sysname']] == "Darwin") {checkMounts()}
