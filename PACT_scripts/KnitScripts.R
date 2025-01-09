@@ -4,77 +4,70 @@
 ## Date Created: August 10, 2022
 ## Version: 1.0.1
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2024
+## Copyright (c) NYULH Jonathan Serrano, 2025
 
 gb <- globalenv()
 assign("gb", gb)
+
+
+# Ensures the brew command can be seen in the PATH environment
+fix_brew_path <- function() {
+    brew_paths <- c("/opt/homebrew/bin/brew", "/usr/local/bin/brew")
+    brew_dir <- dirname(brew_paths[file.exists(brew_paths)])
+    current_path <- strsplit(Sys.getenv("PATH"), ":")[[1]]
+    updated_path <- unique(c(brew_dir, current_path))
+    Sys.setenv(PATH = paste(updated_path, collapse = ":"))
+    
+    renviron_file <- file.path(Sys.getenv("HOME"), ".Renviron")
+    path_entry <- paste0('PATH="', paste(updated_path, collapse = ":"), '"')
+    renviron_content <- character(0)
+    if (file.exists(renviron_file)) {
+        renviron_content <- readLines(renviron_file, warn = FALSE)
+    }
+    
+    if (!any(grepl("^PATH=", renviron_content))) {
+        new_content <- c(renviron_content, path_entry)
+    } else {
+        new_content <- sub("^PATH=.*", path_entry, renviron_content)
+    }
+    
+    if (!identical(new_content, renviron_content)) {
+        writeLines(new_content, renviron_file)
+    }
+}
+
 
 # Check if Brew and Latex is installed
 CheckBrewLatex <- function() {
     tryCatch(
         system("which brew", intern = T),
         warning = function(ww) {
-            system(
-                '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
-            )
+            system('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"')
         }
     )
-
+    
+    fix_brew_path()
+    
+    if (!"fontconfig" %in% system("brew list", intern = TRUE)) {
+        system("brew install fontconfig")
+    }
+    
     tryCatch(
         system("which latex", intern = T),
         warning = function(ww) {
             system("brew install latex")
         }
     )
-
+    
     tryCatch(
         system("which pdflatex", intern = T),
         warning = function(ww) {
-            system("brew install pdflatex")
+            system("brew install --cask basictex")
         }
     )
-
-    try(system("which pdflatex", intern = T), T)
-    try(system("which latex", intern = T), T)
-}
-
-
-# Function to check if a command exists
-command_exists <- function(cmd) {
-    exit_status <- system(paste("which", cmd, ">/dev/null 2>&1"))
-    return(exit_status == 0)
-}
-
-# Function to check and install fontconfig via Homebrew
-check_brew_fontconfig <- function() {
-    brew_list <- system("brew list", intern = TRUE)
-    if ("fontconfig" %in% brew_list) {
-        message("fontconfig is already installed.")
-    } else {
-        message("fontconfig is not installed. Installing...")
-        system("brew install fontconfig")
-    }
-}
-
-# Function to check and install fontconfig via Homebrew
-check_fontconfig <- function() {
-    if (command_exists("brew")) {
-        check_brew_fontconfig()
-    } else {
-        message("Homebrew is not installed on this system. Installing...")
-        system(
-            '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
-        )
-        if (command_exists("brew")) {
-            check_brew_fontconfig()
-        } else {
-            message("Failed to install Homebrew. Exiting.")
-        }
-    }
 }
 
 if (Sys.info()[['sysname']] == "Darwin") {
-    invisible(check_fontconfig())
     invisible(CheckBrewLatex())
 }
 
@@ -262,7 +255,7 @@ CheckMethPaths <- function(methData, methSheet) {
         newPath <- paste(currSplit, collapse = "/")
         methData[i, "Report Path"] <- newPath
     }
-
+    
     checkPaths <- stringr::str_replace_all(
         methData$`Report Path`,
         "smb://shares-cifs.nyumc.org/apps/acc_pathology",
@@ -270,7 +263,7 @@ CheckMethPaths <- function(methData, methSheet) {
     )
     checkPaths <- checkPaths[checkPaths != ""]
     anyPathsFalse <- file.exists(checkPaths) == F
-
+    
     if (any(anyPathsFalse)) {
         message("Some paths need to be fixed 'Report Path' column of in ",
                 methSheet,
@@ -383,7 +376,7 @@ makePdfTab <- function(pdfFi, cnvTab, outDir) {
         cat("\n\nNo CNV Amplifications >=5 in Philips data dump for this case\n\n")
         cat("\n\n")
     }
-
+    
 }
 
 
@@ -417,11 +410,11 @@ PrintHotspotTable <- function(objDat) {
         "<span style='color: red;'>",
         "**Note**: The Hotspot calls below are from the unfiltered VCF files.  Any called (YES) will be listed first</span>\n\n"
     )
-
+    
     # Reorder the data frame so that rows with "YES" are at the top
     rows_with_yes <- rowSums(objDat[, c("Strelka", "LoFreqSomatic", "Mutect")] == "YES") > 0
     sorted_objDat <- objDat[order(-rows_with_yes), ]
-
+    
     dtOpts <- list(
         scrollX = T,
         scrollY = T,
@@ -431,7 +424,7 @@ PrintHotspotTable <- function(objDat) {
         lengthChange = T,
         searchable = T
     )
-
+    
     datTab <- DT::datatable(
         sorted_objDat,
         style = "bootstrap",
@@ -440,7 +433,7 @@ PrintHotspotTable <- function(objDat) {
         height = "120%",
         width = "120%"
     )
-
+    
     # Apply the color to cells with "YES" in the specified columns
     datTab <- datTab %>%
         formatStyle(
@@ -448,13 +441,13 @@ PrintHotspotTable <- function(objDat) {
             backgroundColor = styleEqual("YES", "#64a463"),
             target = 'cell'
         )
-
+    
     # format "Common COSMIC Variant" column in italics
     variantCol <- which(stringr::str_detect(names(sorted_objDat), "Variant"))
     datTab <- datTab %>% formatStyle(variantCol, fontStyle = "italic")
-
+    
     dtTab <- htmltools::tagList(datTab)
-
+    
     print(dtTab)
     cat("\n\n")
 }
@@ -559,7 +552,7 @@ makeColorfulTab <- function(objDat) {
         " and **Tumor Depth >50**",
         "</span>\n\n"
     )
-
+    
     objDat <- ColorTable(objDat)
     knitr::kable(objDat, "html", escape = FALSE, row.names = FALSE) %>%
         kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
@@ -582,7 +575,7 @@ MakeRegularTab <- function(tabNam, objDat) {
             } else{
                 makeDefaultDt(objDat)
             }
-
+            
         }
     } else{
         cat("\n\nNo additonal results for this case yet\n\n")
@@ -651,9 +644,9 @@ MakeHStab <- function(sam, hsDat, samList, outDir) {
 make_msi_tmb_tab <- function(tmb_row, msi_row) {
     tmb_cols <- c("SampleID", "VariantCaller")
     msi_cols <- c("SampleID", "Status", "TumorType")
-
+    
     idx2drop_tmb <- which(colnames(tmb_row) %in% tmb_cols) * -1
-
+    
     newTa1 <- knitr::kable(tmb_row[, idx2drop_tmb], row.names = F, "html")
     tmbTable <- kableExtra::kable_styling(
         newTa1,
@@ -664,9 +657,9 @@ make_msi_tmb_tab <- function(tmb_row, msi_row) {
     cat("\n*TMB DATA*\n")
     print(tmbTable)
     cat("\n\n")
-
+    
     idx2drop_msi <- which(colnames(msi_row) %in% msi_cols) * -1
-
+    
     newTa2 <- knitr::kable(msi_row[, idx2drop_msi], row.names = F, "html")
     msiTable <- kableExtra::kable_styling(
         newTa2,
@@ -698,9 +691,9 @@ parsePhilipsCn <- function(cnvInfo, sam, cnvTab) {
 
 
 logMissingData <- function(sam) {
-  log_file <- paste(gb$pactName, "philips", "missing.txt", sep = "_")
-  log_path <- file.path(Sys.getenv("HOME"), "Desktop", log_file)
-  base::writeLines(sam, log_path)
+    log_file <- paste(gb$pactName, "philips", "missing.txt", sep = "_")
+    log_path <- file.path(Sys.getenv("HOME"), "Desktop", log_file)
+    base::writeLines(sam, log_path)
 }
 
 
@@ -871,14 +864,14 @@ GetMethCnv <- function(params, methDir) {
         return(message("No Methylation PNGs on this run!"))
     }
     to_copy <- methSamples[!file.exists(file.path(pngDir, methSamples))]
-
+    
     if (length(to_copy) == 0)
         return(message("All files have already been copied."))
-
+    
     for (mSam in to_copy) {
         methPath <- file.path(methDir, mSam)
         methOut <- file.path(pngDir, mSam)
-
+        
         if (file.exists(methPath)) {
             tryCatch(
                 fs::file_copy(methPath, methOut),
@@ -1111,7 +1104,7 @@ PrintParseErr <- function(csvPath, tabTxt) {
 # Makes Abberations Tab ------------------------------------------------------------
 makeAbTab <- function(sam, philipsFtp = "/Volumes/molecular/Molecular/Philips_SFTP") {
     dumpDir <- get_ngs_path(outPath = file.path(getwd(), "zipfiles"), sam)
-
+    
     if (is.null(dumpDir)) {
         td <- format(Sys.Date(), "%Y-%m-%d")
         zipFiN <- file.path(philipsFtp, paste0(sam, "_", td, ".zip"))
@@ -1119,9 +1112,9 @@ makeAbTab <- function(sam, philipsFtp = "/Volumes/molecular/Molecular/Philips_SF
         cat("Data dump not found:\n")
         return(cat(paste0(zipFiN, "\n\n")))
     }
-
+    
     snvCsv <- file.path(dumpDir, "aberration_snv.csv")
-
+    
     if (file.exists(snvCsv)) {
         philipsIndels <- tryCatch(
             printSnvs(snvCsv),
@@ -1214,7 +1207,7 @@ compare_philips <- function(snvTab, philipsIndels) {
     snvTab$Same[!matched_rows] <- "No"
     snvTab$In.Philips[matched_rows] <- "Yes"
     combTab <- snvTab[order(snvTab$Same == "No", decreasing = TRUE), ]
-
+    
     return(combTab)
 }
 
@@ -1227,14 +1220,14 @@ MakeVAFtab <- function(sam) {
             full.names = T
         )
         sam_find <- grepl(pattern = sam, x = vaf_pngs)
-
+        
         if (any(sam_find)) {
             MakeTabColor("VAF Plots")
             cat(
                 "Below are VAF distribution plots for MuTect2 and Strelka.\n\nBoth callers may not be plotted if one does not have enough data after filtering.\n\n"
             )
             foundPngs <- vaf_pngs[sam_find]
-
+            
             for (vafPlot in foundPngs) {
                 vaf_png_file <- file.path(".", "VAF_plots", paste0(basename(vafPlot)))
                 caller <- stringr::str_split_fixed(basename(vafPlot), "_", 4)[1, 4]
@@ -1255,23 +1248,23 @@ MakeVAFtab <- function(sam) {
 
 
 CreateVariantsTabs <- function(philipsIndels, snvTab) {
-  snvTab <- cleanTabCols(snvTab)
-  if (!is.null(philipsIndels)) {
-    philipsIndels <- cleanPhilTab(philipsIndels)
-    if (nrow(snvTab) == 0) {
-      makeDT("In-House Somatic Variant Calls", objDat = snvTab)
-    } else {
-      combTab <- compare_philips(snvTab, philipsIndels)
-      columns_to_front <- c("Same")
-      combTab <- combTab[, c(columns_to_front, setdiff(names(combTab), columns_to_front))]
-      makeDT("In-House Somatic Variant Calls", objDat = combTab)
+    snvTab <- cleanTabCols(snvTab)
+    if (!is.null(philipsIndels)) {
+        philipsIndels <- cleanPhilTab(philipsIndels)
+        if (nrow(snvTab) == 0) {
+            makeDT("In-House Somatic Variant Calls", objDat = snvTab)
+        } else {
+            combTab <- compare_philips(snvTab, philipsIndels)
+            columns_to_front <- c("Same")
+            combTab <- combTab[, c(columns_to_front, setdiff(names(combTab), columns_to_front))]
+            makeDT("In-House Somatic Variant Calls", objDat = combTab)
+        }
+    } else{
+        if (nrow(snvTab) > 0) {
+            snvTab$In.Philips <- "No"
+        }
+        makeDT("In-House Somatic Variant Calls", objDat = snvTab)
     }
-  } else{
-    if (nrow(snvTab) > 0) {
-      snvTab$In.Philips <- "No"
-    }
-    makeDT("In-House Somatic Variant Calls", objDat = snvTab)
-  }
 }
 
 
@@ -1294,18 +1287,18 @@ LoopSampleTabs <- function(params) {
     toKeep <- demux_sh$Paired_Normal != ""
     tumorSams <- demux_sh[toKeep, ]
     rownames(tumorSams) <- NULL
-
+    
     tmb_tsv <- "./TMB_MSI/annotations.paired.tmb.validation.2callers.tsv"
     msi_tsv <- "./TMB_MSI/msi_validation.tsv"
-
+    
     tmb_dat <- as.data.frame(read.table(tmb_tsv, sep = "\t", header = T))
     msi_dat <- as.data.frame(read.table(msi_tsv, sep = "\t", header = T))
-
+    
     for (sam in samples) {
         message("SAMPLE: ", sam)
         makeNewTab(sam, samList, qcData, pactName)
         sam_match <- which(sam == tumorSams$Test_Number)
-
+        
         if (length(sam_match > 0)) {
             sam_id <- tumorSams$Sample_ID[sam_match]
             tmb_match <- tmb_dat$SampleID == sam_id
@@ -1314,24 +1307,24 @@ LoopSampleTabs <- function(params) {
             msi_row <- msi_dat[msi_match, ]
             make_msi_tmb_tab(tmb_row, msi_row)
         }
-
+        
         snvDt <- CheckMissedSam(sam, snvDt, pactName)
         samRows <- snvDt$Test_Case == sam
         cnvTab <- snvDt[samRows & snvDt$Variant == "CNV", ]
         cnvTab <- checkDataDump(sam, cnvTab)
-
+        
         snvTab <- snvDt[samRows & snvDt$Variant == "SNV", ]
         philipsIndels <- makeAbTab(sam)
         CreateVariantsTabs(philipsIndels, snvTab)
-
+        
         cnvTab <- subset(cnvTab, select = -Variant)
         makeDT("CNV", cnvTab, pdfFi = sam, outDir = outDir)
-
+        
         if (!is.null(methData)) {
             methCn <- methData[methData$Test_Number == sam, ]
             makeMethTab(sam, methCn, methData)
         }
-
+        
         if (!is.null(hsDat)) {
             MakeHStab(sam, hsDat, samList, outDir)
         }
@@ -1479,7 +1472,7 @@ CheckTumorPngs <- function(samList, outDir) {
     if (!dir.exists(pngOutDir)) {
         dir.create(pngOutDir)
     }
-
+    
     pngList <- list.files(
         pngOutDir,
         pattern = "*.png",
@@ -1487,7 +1480,7 @@ CheckTumorPngs <- function(samList, outDir) {
         full.names = T
     )
     pngList <- pngList[!grepl("^0_", basename(pngList))]
-
+    
     if (length(pngList) == 0) {
         message("No CNV PNG Facets found in current directory:\n",
                 pngOutDir)
@@ -1497,10 +1490,10 @@ CheckTumorPngs <- function(samList, outDir) {
         )
         stopifnot(length(pngList) != 0)
     }
-
+    
     tumors <- samList[samList$Paired_Normal != "", ] # drop controls/normals
     dupedNgs <- duplicated(tumors$Test_Number)
-
+    
     if (any(dupedNgs)) {
         stop(c(
             "There are duplicated NGS numbers:\n",
@@ -1508,11 +1501,11 @@ CheckTumorPngs <- function(samList, outDir) {
         ))
     }
     row.names(tumors) <- 1:nrow(tumors) # correct row numbering
-
+    
     if (length(pngList) != nrow(tumors)) {
         pngList <- ListNonMatching(pngList, tumors, pngOutDir)
     }
-
+    
     ngsPngDir <- file.path(outDir, "ngs_cnv_png")
     if (!dir.exists(ngsPngDir)) {
         dir.create(ngsPngDir)
@@ -1571,5 +1564,4 @@ GetBamUrl <- function(params) {
 }
 
 gb$css_code <- base::readLines(
-  "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/consensus.css")
-
+    "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts/consensus.css")
