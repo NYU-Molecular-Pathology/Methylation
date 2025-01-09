@@ -432,33 +432,14 @@ callApiFile <- function(rcon, recordName, ovwr = T, fiPath = NULL) {
         log_fi_out <- paste(gb$runID, "import_log.tsv", sep = "_")
         writeLogFi(recordName, logFile = log_fi_out)
     } else{
-        
         fld <- "classifier_pdf"
         message("Uploading file:\n", fiPath)
         message("To REDCap Record: ", recordName)
         if (file.exists(fiPath)) {
-            body <- list(
-                token = rcon$token,
-                content = 'file',
-                action = 'import',
-                record = recordName,
-                field = fld,
-                file = httr::upload_file(fiPath),
-                returnFormat = 'csv'
-            )
-            res <-
-                tryCatch(
-                    httr::POST(url = rcon$url, body = body, config = rcon$config),
-                    error = function(cond) {
-                        list(status_code = "200")
-                    }
-                )
-            if (res$status_code == "200") {
-                message("REDCap file upload successful: ", fiPath)
-            }else{
-                message("REDCap file upload failed: ", fiPath)
-                MakeLogFile(fiPath, UPLOAD_LOG_TSV)
-            }
+            redcapAPI::importFiles(rcon,
+                                   file = fiPath,
+                                   record = recordName,
+                                   field = fld)
         }else{
             message("REDCap file upload failed: ", fiPath)
         }
