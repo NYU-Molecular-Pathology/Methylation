@@ -522,7 +522,7 @@ do_report <- function(single_data = NULL, genCn = FALSE) {
     }
 
     msgRunUp(dat$sampleID, dat$run_id, dat$senLi)
-    message("Knitting report: ", reportMd)
+    #message("Knitting report: ", reportMd)
 
     params_init <- list(
         token = gb$ApiToken,
