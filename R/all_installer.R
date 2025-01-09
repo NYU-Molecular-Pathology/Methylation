@@ -315,6 +315,10 @@ avail_bioc_packs <- suppressMessages(BiocManager::available())
 rbase_pkgs <- rownames(installed.packages(priority = "base"))
 pkg_info <- utils::available.packages(repos = biocRepos)
 
+if (!requireNamespace("pak", quietly = T)) {
+  install.packages("pak", dependencies = T, ask = F)
+}
+stopifnot(loadLibrary("pak"))
 
 # FUN: Returns all packages that are not installed ----------------------------
 check_needed <- function(pkgs) {
@@ -550,10 +554,7 @@ stopifnot(loadLibrary("librarian"))
 stopifnot(loadLibrary("BiocManager"))
 stopifnot(loadLibrary("Biobase"))
 
-if (!requireNamespace("pak", quietly = T)) {
-  install.packages("pak", dependencies = T, ask = F)
-}
-stopifnot(loadLibrary("pak"))
+
 
 # List Classifier Core Packages -----------------------------------------------
 corePkgs <- c(
