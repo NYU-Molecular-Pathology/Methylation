@@ -477,7 +477,7 @@ checkMounts <- function() {
 }
 
 # FUN: Ensures the latest classifier version is installed
-checkEpicV2 <- function(pkg = "mnp.v12epicv2") {
+checkEpicV2 <- function(pkg, epicV2script) {
   if (!pkg %in% rownames(installed.packages())) {
     message(paste("Package", pkg, "is installed with version:",
                   utils::packageVersion(pkg)))
@@ -511,7 +511,7 @@ startLoadingAll <- function(isMacOS, typeSrc, epicV2script) {
   installAll(classPacks, source_inst)
   if (isMacOS) {
     check_uniD_pkg()
-    checkEpicV2(epicV2script)
+    checkEpicV2("mnp.v12epicv2", epicV2script)
   }
 }
 
