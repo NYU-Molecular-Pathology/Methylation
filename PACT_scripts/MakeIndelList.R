@@ -77,8 +77,8 @@ callsList$philips <- ""
 callsList$Variant <- "SNV"
 
 # Arrange so that Mutect2 DP is used first when both callers are Yes
-callsList <- callsList %>% arrange(desc(MuTect2 == "Yes")) %>%
-    distinct(Position, .keep_all = TRUE)
+callsList <- callsList %>% arrange(desc(MuTect2 == "Yes")) %>% 
+    distinct(Test_Number, Position, .keep_all = TRUE)
 
 blank_row <- data.frame(
     Test_Number = "",
