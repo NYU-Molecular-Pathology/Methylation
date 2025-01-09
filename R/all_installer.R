@@ -322,7 +322,8 @@ stopifnot(loadLibrary("pak"))
 
 # FUN: Returns all packages that are not installed ----------------------------
 check_needed <- function(pkgs) {
-  return(pkgs[!sapply(pkgs, requireNamespace, quietly = TRUE)])
+    neededPkgs <- pkgs[!pkgs %in% rownames(installed.packages())]
+    return(neededPkgs)
 }
 
 
