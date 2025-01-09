@@ -478,7 +478,7 @@ checkMounts <- function() {
 
 # FUN: Ensures the latest classifier version is installed
 checkEpicV2 <- function(pkg = "mnp.v12epicv2") {
-  if (pkg %in% rownames(installed.packages())) {
+  if (!pkg %in% rownames(installed.packages())) {
     message(paste("Package", pkg, "is installed with version:",
                   utils::packageVersion(pkg)))
   } else{
