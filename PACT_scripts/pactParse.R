@@ -702,22 +702,31 @@ BindUnpairedRows <- function(rawData, pairedList, runID) {
     new_paired_list <- data.frame("Sample_ID" = c(1:nrow(rawData)))
     b_numbers <- rawData$`DNA #`
     all_samples <- c(pairedList, newRows, controlRows)
-    for (sam in 1:length(b_numbers)) {
-        sam_idx <- which(stringr::str_detect(all_samples, b_numbers[sam]))
+    
+    used_indices <- c()
+    
+    for (sam in seq_along(b_numbers)) {
+        sam_idx <- which(
+            stringr::str_detect(all_samples, b_numbers[sam]) & 
+                !(seq_along(all_samples) %in% used_indices)
+        )
         if (length(sam_idx) > 1) {
-            for (i in 1:length(sam_idx)) {
+            for (i in seq_along(sam_idx)) {
                 currSam <- sam_idx[i]
                 matchedIdx <- which(b_numbers == b_numbers[sam])
                 newIdx <- matchedIdx[i]
                 if (is.na(newIdx)) {
                     newIdx <- matchedIdx + 1
                 }
-                new_paired_list[newIdx,] <- all_samples[currSam]
+                new_paired_list[newIdx, ] <- all_samples[currSam]
+                used_indices <- c(used_indices, currSam)
             }
-        } else{
-            new_paired_list[sam,] <- all_samples[sam_idx]
+        } else if (length(sam_idx) == 1) {
+            new_paired_list[sam, ] <- all_samples[sam_idx]
+            used_indices <- c(used_indices, sam_idx)
         }
     }
+    
     rownames(new_paired_list) <- NULL
     return(new_paired_list)
 }
