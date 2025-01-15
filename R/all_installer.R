@@ -90,7 +90,7 @@ setup_brew <- function() {
 
 # Install Homebrew and packages if necessary
 ensure_homebrew <- function() {
-  pkgs <- c("gcc", "llvm", "lld", "open-mpi", "pkg-config", "gdal", "proj",
+  pkgs <- c("gcc", "llvm", "lld", "open-mpi", "pkgconf", "gdal", "proj",
             "apache-arrow")
   arm_brew <- "/opt/homebrew/bin/brew"
   x64_brew <- "/usr/local/bin/brew"
@@ -195,11 +195,11 @@ loadLibrary <- function(pkgName) {
 }
 
 checkPkg <- function(pkgName) {
-  return(!requireNamespace(pkgName, quietly = TRUE))
+  return(!pkgName %in% rownames(installed.packages()))
 }
 
 binary_install <- function(pkg) {
-  if (!requireNamespace(pkg, quietly = TRUE)) {
+  if (!pkg %in% rownames(installed.packages())) {
     tryCatch(
       install.packages(pkg, dependencies = T, ask = F, type = "binary"),
       error = function(e) {
@@ -949,7 +949,7 @@ if (checkPkg("GenomeInfoDbData")) {
     }
   )
 }
-requireNamespace("GenomeInfoDbData")
+library("GenomeInfoDbData")
 
 if (checkPkg("GenomeInfoDb")) {
   tryCatch(
