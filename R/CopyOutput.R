@@ -1,10 +1,10 @@
 #!/usr/bin/env Rscript
-## Script name: CopyOutputs.R
-## Purpose: Functions to copy files output from the current methylation run directory to the output directory
-## Date Last Modified: January 11, 2024
+## Script name: CopyOutput.R
+## Purpose: Functions to copy methylation output files to zdrive and REDCap
+## Date Created: June 13, 2022
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2024
+## Copyright (c) NYULH Jonathan Serrano, 2025
 
 options(stringsAsFactors = FALSE)
 gb <- globalenv(); assign("gb", gb)
@@ -25,7 +25,11 @@ mkBlue <- function(strVar) {return(crayon::white$bgBlue(strVar))}
 mkGrn <- function(strVar) {return(crayon::white$bgGreen$bold(strVar))}
 mkRed <- function(strVar) {return(crayon::white$bgRed$bold(strVar))}
 
-CheckDirMake <- function(newFolder) {if (!dir.exists(newFolder)) {fs::dir_create(newFolder)}}
+CheckDirMake <- function(newFolder) {
+    if (!dir.exists(newFolder)) {
+        fs::dir_create(newFolder)
+    }
+}
 
 MsgDF <- function(datObj) {
     if (class(datObj) != "data.frame") {
@@ -62,7 +66,7 @@ CopyHtmlFiles <- function(newFolder, runID) {
     msgFunName(cpOutLnk, "CopyHtmlFiles")
     message(mkBlue("Copying Reports to output folder:"), "\n", newFolder)
     fi2copy <- dir(getwd(), pattern = ".html", full.names = T)
-    if (length(fi2copy)>=1) {
+    if (length(fi2copy) >= 1) {
         message(mkGrn("Found the following html reports..."), "\n")
         MsgDF(fi2copy)
     }else{
@@ -81,7 +85,7 @@ copy.to.clinical <- function(clinOut, runID, runYear) {
     if (!dir.exists(newFolder)) {
         message("Output Folder could not be created, htmls not copied to:\n", newFolder)
     }
-    if (length(dir(path = newFolder, pattern=".html", full.names = T)) > 0) {
+    if (length(dir(path = newFolder, pattern = ".html", full.names = T)) > 0) {
         SavePrevDir(newFolder)
     }else{
         CopyHtmlFiles(newFolder, runID)
@@ -94,7 +98,7 @@ redcap_last_edit <- function(rcon, record_id) {
     redcap_logs <- redcapAPI::exportLogging(rcon, logtype = "record", record = record_id)
     last_edit <- redcap_logs[1, "timestamp"]
     last_action <- redcap_logs[1, "action"]
-    last_edit_date <- base::as.Date(last_edit, format="%Y-%m-%d")
+    last_edit_date <- base::as.Date(last_edit, format = "%Y-%m-%d")
     is_today <- last_edit_date == Sys.Date()
     return(data.frame(is_today = is_today, last_action = redcap_logs[1, "action"]))
 }
@@ -254,7 +258,7 @@ CheckImportData <- function(rawCsv) {
 }
 
 
-# REDCap: API call & Upload --------------------------------------------------------------------------------
+# REDCap: API call & Upload ---------------------------------------------------
 # uploads the redcap classifier values must convert to JSON first
 importDesktopCsv <- function(rcon, samsheet = NULL) {
     msgFunName(cpOutLnk, "importDesktopCsv")
@@ -396,7 +400,9 @@ DoRedcapApi <- function(rcon, recordName, runID) {
 
 CheckSarcRDnumber <- function(record) {
     msgFunName(cpOutLnk, "CheckSarcRDnumber")
-    isSarc <- ifelse(stringr::str_detect(record, pattern="sarc"), yes = T, no = F)
+    isSarc <- ifelse(stringr::str_detect(record, pattern = "sarc"),
+                     yes = T,
+                     no = F)
     if (isSarc == T) {
         record <- stringr::str_split_fixed(record, pattern = "_", 2)[1,1]
     }
@@ -421,7 +427,7 @@ callApiImport <- function(rcon, recordName, runID) {
 }
 
 
-callApiFile <- function(rcon, recordName, ovwr = T, fiPath = NULL) {
+callApiFile <- function(rcon, recordName, ovwr = T, fiPath = NULL, fld = NULL) {
     msgFunName(cpOutLnk, "callApiFile")
     if (is.null(fiPath)) {
         recordFi <- paste0(recordName, ".html")
@@ -432,7 +438,9 @@ callApiFile <- function(rcon, recordName, ovwr = T, fiPath = NULL) {
         log_fi_out <- paste(gb$runID, "import_log.tsv", sep = "_")
         writeLogFi(recordName, logFile = log_fi_out)
     } else{
-        fld <- "classifier_pdf"
+        if (is.null(fld)) {
+            fld <- "classifier_pdf"
+        }
         message("Uploading file:\n", fiPath)
         message("To REDCap Record: ", recordName)
         if (file.exists(fiPath)) {
@@ -440,8 +448,10 @@ callApiFile <- function(rcon, recordName, ovwr = T, fiPath = NULL) {
                                    file = fiPath,
                                    record = recordName,
                                    field = fld)
-        }else{
+        } else{
             message("REDCap file upload failed: ", fiPath)
+            log_fi_out <- paste(gb$runID, "import_log.tsv", sep = "_")
+            writeLogFi(recordName, logFile = log_fi_out)
         }
     }
 }
@@ -471,12 +481,12 @@ uploadToRedcap <- function(file.list, deskCSV = T, runNumb = NULL) {
         }
         callApiImport(rcon, recordName2, runID)
         isEmpty <- checkRedcapRecord(recordName2) == ''
-        
+
         if (isEmpty == F) {
             message(paste(recordName, "already has a file in REDCap"))
             message("Overwrite uploading will be set to FALSE")
         }
-        
+
         callApiFile(rcon, recordName, isEmpty, fiPath)
     }
     if (deskCSV == T) {
@@ -517,70 +527,6 @@ MakeOutputDir <- function(runYear, clinDrv, runID, isMC) {
 }
 
 
-RsyncCopyFiles <- function(file.list, newFolder) {
-    msgFunName(cpOutLnk, "CopyFilesOut")
-    if (any(!file.exists(file.list))) {
-        missed <- paste(file.list[!file.exists(file.list)], "\n")
-        message("File(s) do not exist:\n", missed)
-    } else{
-        missed <- !file.exists(file.path(newFolder, basename(file.list)))
-        if (any(missed)) {
-            file.list <- file.list[missed]
-            cmnd = paste("rsync -a", file.list, file.path(newFolder, basename(file.list)))
-            message(cmnd)
-            for (foo in cmnd) {
-                system(foo)
-            }
-        }
-    }
-}
-
-CopyFilesOut <- function(file.list, newFolder, runID) {
-    msgFunName(cpOutLnk, "CopyFilesOut")
-    message("\nCopying Existing Reports to Folder...\n",
-            newFolder, "\n", mkBlue("Files to copy:"), "\n")
-    MsgDF(file.list)
-    file.list <- Copy2TempDir(file.list, runID)
-    tryCatch(
-        expr = {
-            fs::file_copy(file.list, newFolder, overwrite = F)
-        },
-        error = function(e) {
-            message(e, "\n", mkRed("Trying other file copy method:"),"\n")
-            RsyncCopyFiles(file.list, newFolder)
-        }
-    )
-}
-
-
-# FUN: Copies Reports to Z drive
-copy2outFolder <- function(clinDrv = NULL, runID, runYear = NULL) {
-    msgFunName(cpOutLnk, "copy2outFolder")
-
-    runYear <- ifelse(is.null(runYear), paste0(format(Sys.Date(), "%Y")), runYear)
-    clinDrv <- ifelse(is.null(clinDrv), gb$clinDrv, clinDrv)
-    isMC = sjmisc::str_contains(runID, "MGDM") | sjmisc::str_contains(runID, "MC")
-    newFolder <- MakeOutputDir(runYear, clinDrv, runID, isMC)
-    oldFi = dir(path = newFolder, full.names = T)
-    message(mkGrn("Clinical Drive output folder:"), "\n", newFolder)
-    if (length(oldFi) > 0) {
-        SavePrevDir(newFolder) # saves any old files
-    }
-    file.list <- dir(path = getwd(), ".html", full.names = T)
-    CopyFilesOut(file.list, newFolder, runID)
-    if (isMC==T) {
-        clinOut = file.path(stringr::str_split_fixed(clinDrv, " ", 2)[1], "MethylationClassifier")
-        message("Clinical Drive output folder:\n", clinOut)
-        importRedcapStart(clinOut)
-        copy.to.clinical(clinOut, runID, runYear)
-    }
-    if (length(dir(getwd(), "_cnv.png", recursive = F)) > 2) {
-        copy.cnv.files(newFolder, runID, runYear)
-    }
-    return(file.list)
-}
-
-
 CallApiFileForce <- function(rcon, recordName) {
     msgFunName(cpOutLnk, "CallApiFileForce")
     is_validation <- sjmisc::str_contains(gb$runID, "VAL")
@@ -607,10 +553,10 @@ CallApiFileForce <- function(rcon, recordName) {
         tryCatch(
             httr::POST(url = rcon$url, body = body, config = rcon$config),
             error = function(cond) {
-                list(status_code = "200")
+                list(status_code = "400")
             }
         )
-    if (res$status_code=="200") {
+    if (res$status_code == "200") {
         message("REDCap file upload successful: ", fiPath)
     }else{
         message("REDCap file upload failed: ", fiPath)
@@ -628,7 +574,7 @@ ForceCallApiFile <- function(rcon, recordName, ovwr = T) {
     if (stringr::str_detect(recordName, "_sarcV13")) {
         uploadField <- "sarcoma_v13_report"
     }
-    
+
     recordName <- CheckSarcRDnumber(recordName)
     recordFi <- dir(getwd(), ignore.case = T, full.names = T,
                     pattern = paste0(recordName, ".*\\.html$"))[1]
@@ -636,7 +582,7 @@ ForceCallApiFile <- function(rcon, recordName, ovwr = T) {
     message("\n", mkBlue("Uploading File:"), " ", recordFi)
     message(mkBlue("To Record:"), " ", recordName)
     message(mkBlue("In Field:"), " ", uploadField)
-    
+
     if (ovwr == F) {
         log_fi_out <- paste(gb$runID, "import_log.tsv", sep = "_")
         writeLogFi(recordName, logFile = log_fi_out)
@@ -680,10 +626,10 @@ ForceUploadToRedcap <- function(file.list, token = NULL, deskCSV = T) {
     msgFunName(cpOutLnk, "ForceUploadToRedcap")
     stopifnot(!is.null(token))
     print(as.data.frame(file.list))
-    
+
     rcon <- redcapAPI::redcapConnection(apiLink, token)
     htmlLi <- stringr::str_replace_all(basename(file.list), ".html", "")
-    
+
     MsgDF(htmlLi)
     for (recordName in htmlLi) {
         ForceCallApiFile(rcon, recordName, T)
@@ -798,12 +744,12 @@ CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull, rcon) {
         output[col_id] <- ""
     }
     rownames(redcap_db) <- redcap_db$record_id
-    
+
     for (xrow in 1:nrow(output)) {
         currRow <- output$`RD.number`[xrow]
         output[xrow, newCols] <- redcap_db[currRow, newCols]
     }
-    
+
     totalNA <- which(is.na(output$classifier_value))
     if (length(totalNA) > 3) {
         find_redCsv <- dir(path = getwd(), pattern = "_Redcap.csv")[1]
@@ -816,11 +762,11 @@ CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull, rcon) {
         redcapAPI::importRecords(rcon, redcap_dat, "normal", "ids", logfile = "REDCapImportLog.txt")
         if (nrow(redcap_dat) != nrow(redcap_db)) {
             if (nrow(redcap_dat) > nrow(redcap_db)) {
-            missing_sam <- which(!redcap_dat$record_id %in% redcap_db$record_id)
-            message("Sample is missing from REDCap Pull:",
-                    redcap_dat$record_id[missing_sam])
+                missing_sam <- which(!redcap_dat$record_id %in% redcap_db$record_id)
+                message("Sample is missing from REDCap Pull:",
+                        redcap_dat$record_id[missing_sam])
                 redcap_dat <- redcap_dat[-missing_sam,]
-                
+
             }else{
                 missing_sam <- which(!redcap_db$record_id %in% redcap_dat$record_id)
                 message("Sample is missing from REDCap Pull:",
@@ -832,15 +778,15 @@ CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull, rcon) {
         redcap_dat$diagnosis <- redcap_db[redcap_dat$record_id, "diagnosis"]
         redcap_dat$tm_number <- redcap_db$tm_number
         missing_cols <- setdiff(fieldsToPull, colnames(redcap_dat))
-        
+
         if (length(missing_cols) > 0) {
             for (n_col in missing_cols) {
                 redcap_dat[, n_col] <- redcap_db[, n_col]
             }
         }
-        
+
         data_subset <- redcap_dat[ , fieldsToPull]
-        
+
         newCols <- c(
             "record_id",
             "subgroup_score",
@@ -858,27 +804,27 @@ CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull, rcon) {
         for (new_col in newCols) {
             output[, new_col] <- redcap_dat[, new_col]
         }
-        
+
         # if (is.null(redcap_dat$tm_number)) {
         #     redcap_dat$tm_number <- output$tm_number
         # }
-        
+
         if (all(is.na(output$subgroup_score))) {
             output$subgroup_score <- redcap_dat$subgroup_score
         }
-        
+
         if (all(is.na(output$classifier_score))) {
             output$classifier_score <- redcap_dat$classifier_score
         }
-        
+
         if (all(is.na(output$classifier_value))) {
             output$classifier_value <- redcap_dat$classifier_value
         }
-        
+
         if (all(is.na(output$subgroup))) {
             output$subgroup <- redcap_dat$subgroup
         }
-        
+
         filtered_output <- output %>% dplyr::select(-one_of(colnames(data_subset)))
         merged_data <- merge(filtered_output, data_subset, by.x = "RD.number",
                              by.y = "record_id")
