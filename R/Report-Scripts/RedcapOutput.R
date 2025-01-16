@@ -1,53 +1,51 @@
 #!/usr/bin/env Rscript
-## ---------------------------
 ## Script name: RedcapOutput.R
 ## Purpose: source of global functions for methylation REDCap database data import
-## Date Last Modified: January 19, 2024
+## Date Created: August 11, 2022
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2024
-## ---------------------------
+## Copyright (c) NYULH Jonathan Serrano, 2025
+
+library(verbose = F, warn.conflicts = F, quietly = T, package = "jsonlite")
+library(verbose = F, warn.conflicts = F, quietly = T, package = "crayon")
+library(verbose = F, warn.conflicts = F, quietly = T, package = "RCurl")
+library(verbose = F, warn.conflicts = F, quietly = T, package = "redcapAPI")
 
 makePost <- function(dfNewRed, params){
-    library(verbose=F, warn.conflicts = F, quietly = T, package= "jsonlite")
-    library(verbose=F, warn.conflicts = F, quietly = T, package= "crayon")
-    library(verbose=F, warn.conflicts = F, quietly = T, package= "RCurl")
-    ur = "https://redcap.nyumc.org/apps/redcap/api/"
+
+    apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
     tk <- params$token
-    datarecord = jsonlite::toJSON((as.list(dfNewRed[1,])), auto_unbox=T)
+    data <- dfNewRed[1,]
+    datarecord = jsonlite::toJSON((as.list(dfNewRed[1,])), auto_unbox = T)
     message("~~",crayon::bgBlue("Record Uploaded:"),"\n", datarecord)
     RCurl::postForm(
-        ur, token = tk, content = 'record', format = 'csv', type = 'flat',
-        data = datarecord, returnFormat = 'csv', overwriteBehavior='normal'
+        apiLink, token = tk, content = 'record', format = 'csv', type = 'flat',
+        data = datarecord, returnFormat = 'csv', overwriteBehavior = 'normal'
     )
+
+    rcon <- redcapAPI::redcapConnection(apiLink, tk)
+    res <- redcapAPI::importRecords(rcon, data, "normal", "ids", logfile = "REDCapImportLog.txt")
+    message("REDCap Response:\n", res)
 }
+
 supM <- function(objTing){return(suppressMessages(suppressWarnings(objTing)))}
 gb <- globalenv(); assign("gb", gb)
 
 writeRedcapPred <- function(run_id = NULL, dfNewRed) {
-  stopifnot(length(run_id) > 0 & !is.na(run_id) & !is.null(run_id))
-  redDir <- file.path(fs::path_home(), "Desktop", run_id)
-  if(!dir.exists(redDir)){dir.create(redDir, recursive = T)}
-  # redcsv <- file.path(redDir, paste0(run_id, "_v11_Redcap.csv"))
-  # if (file.exists(redcsv)) {
-  #   dfRedcap = read.csv(redcsv, header = T, row.names = NULL)
-  #   dfRedcap <- as.data.frame(dfRedcap, row.names = NULL)
-  #   redDF <- rbind(dfRedcap, dfNewRed)
-  # } else{
-  #   redDF <- dfNewRed
-  # }
-  # row.names(redDF) = NULL
-  # write.csv(redDF, redcsv, row.names = F)
-  redcsv <- file.path(redDir, paste0(run_id, "_Redcap.csv"))
-  if (file.exists(redcsv)) {
-    dfRedcap = read.csv(redcsv, header = T, row.names = NULL)
-    dfRedcap <- as.data.frame(dfRedcap, row.names = NULL)
-    redDF <- rbind(dfRedcap, dfNewRed)
-  } else{
-    redDF <- dfNewRed
-  }
-  row.names(redDF) = NULL
-  write.csv(redDF, redcsv, row.names = F)
+    stopifnot(length(run_id) > 0 & !is.na(run_id) & !is.null(run_id))
+    redDir <- file.path(fs::path_home(), "Desktop", run_id)
+    if (!dir.exists(redDir)) {dir.create(redDir, recursive = T)}
+
+    redcsv <- file.path(redDir, paste0(run_id, "_Redcap.csv"))
+    if (file.exists(redcsv)) {
+        dfRedcap = read.csv(redcsv, header = T, row.names = NULL)
+        dfRedcap <- as.data.frame(dfRedcap, row.names = NULL)
+        redDF <- rbind(dfRedcap, dfNewRed)
+    } else{
+        redDF <- dfNewRed
+    }
+    row.names(redDF) = NULL
+    write.csv(redDF, redcsv, row.names = F)
 }
 
 SetDesktopOutput <- function(run_id){
@@ -92,32 +90,30 @@ FormatSuppInfo <- function(suppinfo){
     return(suppinfo)
 }
 
-LoadMnpData <- function(is450k){
-    message("Loading MNP Data...")
-if(is450k==T){
-    load("/Volumes/CBioinformatics/Methylation/Methylation_classifier_v11b4/mnp.v11b4/data/rfpred.v11b4.RData")
-}else{
-    load("/Volumes/CBioinformatics/Methylation/in_house/mnp.v116/mnp.v11b6/data/rfpred.v11b6.RData")
-}
-}
-
 
 DebugDataFrame <- function(e, gb) {
     eMsg <- crayon::bgRed("Potentially missing variable(s) in REDCap dataframe:")
     message(e,"\n",eMsg,"\n")
-    fixNull <- function(obj) {if (is.null(obj)|length(obj) == 0) {return("NONE or Missing")} else{return(obj)}}
-    
+    fixNull <- function(obj) {
+        if (is.null(obj) |
+            length(obj) == 0) {
+            return("NONE or Missing")
+        } else{
+            return(obj)
+        }
+    }
+
     gb$is450k <- gb$RGset@annotation[["array"]] != "IlluminaHumanMethylationEPIC"
     array_opt1 <- ifelse(gb$is450k, yes = "450k", no = "EPIC")
     array_opt <- ifelse(gb$RGset@annotation[["array"]] == "IlluminaHumanMethylationEPICv2", yes = "EPICV2", no = array_opt1)
-    
+
     if (array_opt == "EPICV2") {
         familia <- gb$outList["family", "predicted"]
         fscore <- gb$outList["family", "maxscore"]
         subfam <- gb$outList["subclass", "predicted"]
         subScore <- gb$outList["subclass", "maxscore"]
         mgmtStat1 <- as.data.frame(gb$mgmtValues)
-        
+
     } else{
         out <- fixNull(gb$outList$out)
         familia <- fixNull(gb$outList$out_class_family$`Methylation Family`[1])
@@ -125,14 +121,14 @@ DebugDataFrame <- function(e, gb) {
         subfam <- fixNull(gb$out$`Methylation Subgroup`[1])
         subScore <- fixNull(gb$out$`Subgroup Score`[1])
         mgmtStat1 <- fixNull(gb$mgmtValues$mgmtVal)
-      }
-    
+    }
+
     mlh_status <- gb$mlh1Pred$theValue$m.reslt
     mlh_total <- gb$mlh1Pred$theValue$MLH1.pos.loci
     mlh1_status <- fixNull(paste0(mlh_status))
     mlh1_pos_loci <- fixNull(paste0(mlh_total))
     run_id <- fixNull(paste(gb$dat$run_id))
-    
+
     message("sampleID: ", gb$dat$sampleID)
     message("paste(dat$bnumber): ", paste(gb$dat$bnumber))
     message("colnames(RGset): ", colnames(gb$RGset))
@@ -156,25 +152,15 @@ GetRedcapDF <- function(gb) {
     gb$is450k <- gb$RGset@annotation[["array"]] != "IlluminaHumanMethylationEPIC"
     array_opt1 <- ifelse(gb$is450k, yes = "450k", no = "EPIC")
     array_opt <- ifelse(gb$RGset@annotation[["array"]] == "IlluminaHumanMethylationEPICv2", yes = "EPICV2", no = array_opt1)
-    
-     # if (array_opt == "EPICV2") {
+
     familia <- gb$outList["family", "predicted"]
     fscore <- gb$outList["family", "maxscore"]
     subfam <- gb$outList["subclass", "predicted"]
     subScore <- gb$outList["subclass", "maxscore"]
     mgmtStat1 <- as.data.frame(gb$mgmtValues)
-    # } else{
-    #     gb$out <- gb$outList$out
-    #     familia <- gb$outList$out_class_family$`Methylation Family`[1]
-    #     fscore <- gb$outList$out_class_family$`Class Score`[1]
-    #     subfam <- gb$out$`Methylation Subgroup`[1]
-    #     subScore <- gb$out$`Subgroup Score`[1]
-    #     mgmtStat1 <- as.data.frame(gb$mgmtValues)
-    # }
-    
     mlh_status <- gb$mlh1Pred$theValue$m.reslt
     mlh_total <- gb$mlh1Pred$theValue$MLH1.pos.loci
-    
+
     dfNewRed <- data.frame(
         record_id = paste0(gb$dat$sampleID),
         b_number = paste0(gb$dat$bnumber),
@@ -199,19 +185,16 @@ GetRedcapDF <- function(gb) {
 
 
 TryREDCap <- function(gb) {
-  tryCatch(
-    gb$writeRedcapPred(gb$dat$run_id, dfNewRed = gb$GetRedcapDF(gb)),
-    error = function(e) {
-      gb$DebugDataFrame(e, gb)
-        stop("REDCap csv saving failed!")
-    }
-  )
+    tryCatch(
+        gb$writeRedcapPred(gb$dat$run_id, dfNewRed = gb$GetRedcapDF(gb)),
+        error = function(e) {
+            gb$DebugDataFrame(e, gb)
+            stop("REDCap csv saving failed!")
+        }
+    )
 }
 
 CheckScoreCsv <- function(targets){
     deskDir <- file.path(fs::path_home(), "Desktop", targets$RunID[1])
-    if(!dir.exists(deskDir)){dir.create(deskDir)}
-    #scoreFile <- file.path(deskDir, paste0(targets$RunID[1], "_v12.csv"))
-    #if(!file.exists(scoreFile)){write.csv(v12df, file = scoreFile, row.names=F)}
+    if (!dir.exists(deskDir)) {dir.create(deskDir)}
 }
-
