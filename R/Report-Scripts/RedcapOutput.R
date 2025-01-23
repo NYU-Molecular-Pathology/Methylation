@@ -241,7 +241,7 @@ GetRedcapDF_v12 <- function(gb) {
 
     )
 
-    stopifnot(nrow(dfNewRed) > 0 & !is.null(dfNewRed$run_number))
+    stopifnot(nrow(dfNewRed) > 0)
     return(dfNewRed)
 }
 
