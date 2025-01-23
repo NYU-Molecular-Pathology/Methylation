@@ -16,27 +16,32 @@ makePost <- function(dfNewRed, params){
     apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
     tk <- params$token
     data <- dfNewRed[1,]
-    datarecord = jsonlite::toJSON((as.list(dfNewRed[1,])), auto_unbox = T)
-    message("~~",crayon::bgBlue("Record Uploaded:"),"\n", datarecord)
-    RCurl::postForm(
-        apiLink, token = tk, content = 'record', format = 'csv', type = 'flat',
-        data = datarecord, returnFormat = 'csv', overwriteBehavior = 'normal'
-    )
+    # datarecord = jsonlite::toJSON((as.list(dfNewRed[1,])), auto_unbox = T)
+    # message("~~",crayon::bgBlue("Record Uploaded:"),"\n", datarecord)
+    # RCurl::postForm(
+    #     apiLink, token = tk, content = 'record', format = 'csv', type = 'flat',
+    #     data = datarecord, returnFormat = 'csv', overwriteBehavior = 'normal'
+    # )
 
     rcon <- redcapAPI::redcapConnection(apiLink, tk)
-    res <- redcapAPI::importRecords(rcon, data, "normal", "ids", logfile = "REDCapImportLog.txt")
-    message("REDCap Response:\n", res)
+    res <- suppressMessages(
+        redcapAPI::importRecords(rcon, data, "normal", "ids",
+                                 logfile = "REDCapImportLog.txt")
+    )
+    message("~~", crayon::bgBlue("Record data uploaded:"), " ", res)
 }
 
 supM <- function(objTing){return(suppressMessages(suppressWarnings(objTing)))}
 gb <- globalenv(); assign("gb", gb)
 
-writeRedcapPred <- function(run_id = NULL, dfNewRed) {
+
+writeRedcapPred <- function(run_id = NULL, dfNewRed, fi_end = "_Redcap.csv") {
     stopifnot(length(run_id) > 0 & !is.na(run_id) & !is.null(run_id))
     redDir <- file.path(fs::path_home(), "Desktop", run_id)
     if (!dir.exists(redDir)) {dir.create(redDir, recursive = T)}
 
-    redcsv <- file.path(redDir, paste0(run_id, "_Redcap.csv"))
+    redcsv <- file.path(redDir, paste0(run_id, fi_end))
+
     if (file.exists(redcsv)) {
         dfRedcap = read.csv(redcsv, header = T, row.names = NULL)
         dfRedcap <- as.data.frame(dfRedcap, row.names = NULL)
@@ -47,6 +52,7 @@ writeRedcapPred <- function(run_id = NULL, dfNewRed) {
     row.names(redDF) = NULL
     write.csv(redDF, redcsv, row.names = F)
 }
+
 
 SetDesktopOutput <- function(run_id){
     redfolder <- file.path(fs::path_home(),"Desktop", run_id)
@@ -151,7 +157,11 @@ DebugDataFrame <- function(e, gb) {
 GetRedcapDF <- function(gb) {
     gb$is450k <- gb$RGset@annotation[["array"]] != "IlluminaHumanMethylationEPIC"
     array_opt1 <- ifelse(gb$is450k, yes = "450k", no = "EPIC")
-    array_opt <- ifelse(gb$RGset@annotation[["array"]] == "IlluminaHumanMethylationEPICv2", yes = "EPICV2", no = array_opt1)
+    array_opt <- ifelse(
+        gb$RGset@annotation[["array"]] == "IlluminaHumanMethylationEPICv2",
+        yes = "EPICV2",
+        no = array_opt1
+    )
 
     familia <- gb$outList["family", "predicted"]
     fscore <- gb$outList["family", "maxscore"]
@@ -184,6 +194,72 @@ GetRedcapDF <- function(gb) {
 }
 
 
+GetRedcapDF_v12 <- function(gb) {
+    gb$is450k <- gb$RGset@annotation[["array"]] != "IlluminaHumanMethylationEPIC"
+    array_opt1 <- ifelse(gb$is450k, yes = "450k", no = "EPIC")
+    array_opt <- ifelse(
+        gb$RGset@annotation[["array"]] == "IlluminaHumanMethylationEPICv2",
+        yes = "EPICV2",
+        no = array_opt1
+    )
+
+    superFam <- gb$outList["super family", "predicted"]
+    familia <- gb$outList["family", "predicted"]
+    classFam <- gb$outList["class", "predicted"]
+    subfam <- gb$outList["subclass", "predicted"]
+
+    super_score <- gb$outList["super family", "maxscore"]
+    fam_score <- gb$outList["family", "maxscore"]
+    class_score <- gb$outList["class", "maxscore"]
+    subScore <- gb$outList["subclass", "maxscore"]
+
+    mgmt_df <- as.data.frame(gb$mgmtValues)
+
+    mlh_status <- gb$mlh1Pred$theValue$m.reslt
+    mlh_total <- gb$mlh1Pred$theValue$MLH1.pos.loci
+
+    dfNewRed <- data.frame(
+        record_id = paste0(gb$dat$sampleID),
+        barcode_and_row_column = paste0(colnames(gb$RGset)),
+        array_type = array_opt,
+
+        v12_super_fam_pred = gsub(",","", superFam),
+        v12_fam_pred = gsub(",","", familia),
+        v12_class_pred = gsub(",","", classFam),
+        v12_subclass_pred = gsub(",","", subfam),
+
+        v12_super_fam_score = paste0(super_score),
+        v12_fam_score = paste0(fam_score),
+        v12_class_score = paste0(class_score),
+        v12_subclass_score = paste0(subScore),
+
+        mgmt_status_v12 = paste0(mgmt_df$Status),
+        mgmt_estimate_v12 = paste0(mgmt_df$Estimated),
+        mgmt_ci_lower_v12 = paste0(mgmt_df$CI_Lower),
+        mgmt_ci_upper_v12 = paste0(mgmt_df$CI_Upper),
+        mgmt_ci_cutoff_v12 = paste0(mgmt_df$Cutoff)
+
+    )
+
+    stopifnot(nrow(dfNewRed) > 0 & !is.null(dfNewRed$run_number))
+    return(dfNewRed)
+}
+
+
+import_description <- function(gb) {
+    dat_in <- data.frame(record_id = paste0(gb$dat$sampleID),
+                         v12_class_desc = as.character(gb$theRefLi))
+    suppressMessages(invisible(
+        redcapAPI::importRecords(
+            gb$rcon,
+            data = dat_in,
+            overwriteBehavior = "normal",
+            returnContent = "nothing"
+        )
+    ))
+}
+
+
 TryREDCap <- function(gb) {
     tryCatch(
         gb$writeRedcapPred(gb$dat$run_id, dfNewRed = gb$GetRedcapDF(gb)),
@@ -193,6 +269,20 @@ TryREDCap <- function(gb) {
         }
     )
 }
+
+
+TryREDCap_v12 <- function(gb) {
+    tryCatch(
+        writeRedcapPred(gb$dat$run_id,
+                           dfNewRed = gb$GetRedcapDF_v12(gb),
+                           fi_end = "_Redcap_v12.csv"),
+        error = function(e) {
+            gb$DebugDataFrame(e, gb)
+            stop("REDCap csv saving failed!")
+        }
+    )
+}
+
 
 CheckScoreCsv <- function(targets){
     deskDir <- file.path(fs::path_home(), "Desktop", targets$RunID[1])
