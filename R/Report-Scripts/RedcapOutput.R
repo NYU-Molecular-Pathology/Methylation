@@ -11,24 +11,13 @@ library(verbose = F, warn.conflicts = F, quietly = T, package = "crayon")
 library(verbose = F, warn.conflicts = F, quietly = T, package = "RCurl")
 library(verbose = F, warn.conflicts = F, quietly = T, package = "redcapAPI")
 
-makePost <- function(dfNewRed, params){
-
-    apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
-    tk <- params$token
+makePost <- function(dfNewRed, rcon){
     data <- dfNewRed[1,]
-    # datarecord = jsonlite::toJSON((as.list(dfNewRed[1,])), auto_unbox = T)
-    # message("~~",crayon::bgBlue("Record Uploaded:"),"\n", datarecord)
-    # RCurl::postForm(
-    #     apiLink, token = tk, content = 'record', format = 'csv', type = 'flat',
-    #     data = datarecord, returnFormat = 'csv', overwriteBehavior = 'normal'
-    # )
-
-    rcon <- redcapAPI::redcapConnection(apiLink, tk)
     res <- suppressMessages(
         redcapAPI::importRecords(rcon, data, "normal", "ids",
                                  logfile = "REDCapImportLog.txt")
     )
-    message("~~", crayon::bgBlue("Record data uploaded:"), " ", res)
+    message("~~",crayon::bgBlue("Record data uploaded:")," ", res)
 }
 
 supM <- function(objTing){return(suppressMessages(suppressWarnings(objTing)))}
@@ -242,6 +231,7 @@ GetRedcapDF_v12 <- function(gb) {
     )
 
     stopifnot(nrow(dfNewRed) > 0)
+    makePost(dfNewRed, gb$rcon)
     return(dfNewRed)
 }
 
