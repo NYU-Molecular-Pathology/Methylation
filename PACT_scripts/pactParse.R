@@ -364,9 +364,24 @@ FindMissingPairs <- function(extraNormals,
     if (length(unmatchedSamples) == 0) {
         unique_values <- rawData$Test_Number[!duplicated(rawData$Test_Number) &
                                                  !duplicated(rawData$Test_Number, fromLast = TRUE)]
-        unmatchedSamples <- which(rawData$Test_Number %in% unique_values)
-        missingSams <- mainSheet$Sample_ID[unmatchedSamples]
-        dnaMissingPair <- stringr::str_detect(mainSheet$Sample_ID, pattern = missingSams)
+
+        if (length(unique_values) > 0) {
+            unmatchedSamples <- which(rawData$Test_Number %in% unique_values)
+            missingSams <- mainSheet$Sample_ID[unmatchedSamples]
+            dnaMissingPair <- stringr::str_detect(mainSheet$Sample_ID, pattern = missingSams)
+        } else {
+            start_with_0 <- grepl("^0_", mainSheet$Sample_ID)
+            missingSams <- mainSheet$Sample_ID[start_with_0]
+            contains_any_b <- function(x, substrings) {
+                if (any(sapply(substrings, function(sub) grepl(sub, x)))) {
+                    return(x)
+                }
+            }
+            extraSams <- unlist(lapply(missingSams, contains_any_b, substrings = sheetPairTumor))
+            extraSams <- paste(extraSams, collapse = "|")
+            dnaMissingPair <- stringr::str_detect(mainSheet$Sample_ID, pattern = extraSams)
+        }
+
         return(dnaMissingPair)
     }
 
@@ -702,31 +717,33 @@ BindUnpairedRows <- function(rawData, pairedList, runID) {
     new_paired_list <- data.frame("Sample_ID" = c(1:nrow(rawData)))
     b_numbers <- rawData$`DNA #`
     all_samples <- c(pairedList, newRows, controlRows)
-    
-    used_indices <- c()
-    
+
+    used_indices <- integer()
+    unique_b <- unique(b_numbers)
+    b_seen <- setNames(integer(length(unique_b)), unique_b)
+
     for (sam in seq_along(b_numbers)) {
+        current_b <- b_numbers[sam]
         sam_idx <- which(
-            stringr::str_detect(all_samples, b_numbers[sam]) & 
+            str_detect(all_samples, fixed(current_b)) &
                 !(seq_along(all_samples) %in% used_indices)
         )
-        if (length(sam_idx) > 1) {
-            for (i in seq_along(sam_idx)) {
-                currSam <- sam_idx[i]
-                matchedIdx <- which(b_numbers == b_numbers[sam])
-                newIdx <- matchedIdx[i]
-                if (is.na(newIdx)) {
-                    newIdx <- matchedIdx + 1
-                }
-                new_paired_list[newIdx, ] <- all_samples[currSam]
-                used_indices <- c(used_indices, currSam)
+        if (length(sam_idx) == 0) {
+            next
+        }
+        for (idx in sam_idx) {
+            b_seen[current_b] <- b_seen[current_b] + 1
+            row_idx <- which(b_numbers == current_b)[b_seen[current_b]]
+            if (length(row_idx) > 0) {
+                new_paired_list[row_idx, ] <- all_samples[idx]
+                used_indices <- c(used_indices, idx)
             }
-        } else if (length(sam_idx) == 1) {
-            new_paired_list[sam, ] <- all_samples[sam_idx]
-            used_indices <- c(used_indices, sam_idx)
+            if (b_seen[current_b] >= sum(b_numbers == current_b)) {
+                break
+            }
         }
     }
-    
+
     rownames(new_paired_list) <- NULL
     return(new_paired_list)
 }
