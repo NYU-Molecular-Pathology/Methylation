@@ -1272,7 +1272,7 @@ LoopSampleTabs <- function(params) {
     pactName <- params$pactName
     methData <- gb$GetMethDf(params$pactName)
     qcData <- gb$ReadQcFile(pactName)
-    samList <- gb$GetSamList(pactName)
+    samList <- gb$GetSamList(pactName, 2)
     toDrop <- grepl("^0_", samList$Paired_Normal)
     if (any(toDrop)) {
         ngs_drop <- samList$Test_Number[toDrop]
