@@ -20,11 +20,11 @@
 <img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/1bcd4fcdb6fb8c1908cb2d38fcfc7cd2ffffe8a2/screenshots/meth_pipeline_uml.png" alt="drawing" width="100%"/><br/>
 
 ## 💻 Essential Downloads
-Download and install the following packages:<br>
-You can automatically install these requirements using 
+You can automatically install these requirements using:
 ```
 /Volumes/CBioinformatics/Methylation/install_requirements.sh
 ```
+Note: you may need to enter your password to enable sudo permissions.
 <br>
 Use **ARM** (-arm64.pkg) package downloads for *M1/M2 Macs* & **Intel** (-x86_64.pkg) for older non-Apple Silicon Chip Based Macs)
 
@@ -35,24 +35,9 @@ Use **ARM** (-arm64.pkg) package downloads for *M1/M2 Macs* & **Intel** (-x86_64
 - [X] **LaTeX** for Mac: https://www.tug.org/mactex/mactex-download.html [Direct DL](https://mirror.ctan.org/systems/mac/mactex/MacTeX.pkg) or `brew install --cask basictex`<br />
 - [X] **Pandoc**: https://pandoc.org/installing.html<br />
 - [X] **XCode command line tools** for Mac OS: in iTerm or Terminal enter `xcode-select --install`<br>
-- [X] **Java 8 JDK**: https://www.oracle.com/java/technologies/downloads/#java8-mac (Intel Macs) or [Java for M1/M2 Macs](https://www.azul.com/downloads/?version=java-8-lts&os=macos&architecture=arm-64-bit&package=jdk)
 - [X] **Homebrew**: https://brew.sh/ <br />
 - [X] **Library Magic, Sqlite and Proj**: `brew install libmagic sqlite proj tcl-tk`<br />
 - [X] **Compilers+**: `brew install llvm aspell gdal autoconf automake gcc libgit2 openssl@3 zlib go pandoc git libffi`<br />
-- [X] **Additional Libraries**: ```brew install texinfo pango cairo open-mpi poppler-qt5 graphviz libopenmpt java11 libomp libtorch openjdk gmp mpfr pkg-config apache-arrow udunits mariadb-connector-c libtiff```<br />
-`echo 'export PATH="/usr/local/opt/openjdk/bin:$PATH"' >> ~/.zshrc`<br />
-`sudo R CMD javareconf`<br />
-`R CMD config --all`<br />
-
-## 𓇲 Additional Steps for Apple Silicon Macs Only
-- [X] **Additional OpenGL**: `brew install --from-source glfw3`<br />
-```
-brew install cmake && brew uninstall glfw
-git clone https://github.com/glfw/glfw.git && cd glfw && \
-cmake -DCMAKE_OSX_ARCHITECTURES=arm64 . && \
-make && \
-sudo make install
-```
 
 <summary>NOTE</summary>
 
