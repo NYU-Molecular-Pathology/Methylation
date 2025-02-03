@@ -156,15 +156,17 @@ RedcapRcurl <- function(datarecord) {
     msgFunName(cpOutLnk, "RedcapRcurl")
 
     message(crayon::bgBlue("Record Data Uploaded:"), datarecord)
-    RCurl::postForm(
-        apiLink,
-        token = gb$ApiToken,
-        content = 'record',
-        format = 'json',
-        type = 'flat',
-        data = datarecord,
-        overwriteBehavior = 'normal'
-    )
+    # RCurl::postForm(
+    #     apiLink,
+    #     token = gb$ApiToken,
+    #     content = 'record',
+    #     format = 'json',
+    #     type = 'flat',
+    #     data = datarecord,
+    #     overwriteBehavior = 'normal'
+    # )
+    rcon <- redcapAPI::redcapConnection(apiLink, token = gb$ApiToken)
+    redcapAPI::importRecords(rcon, data = datarecord, overwriteBehavior = "normal")
 }
 
 
@@ -192,8 +194,9 @@ ValidateRedImport <- function(record) {
     }
     isEmpty <- checkRedcapRecord(record$record_id, "barcode_and_row_column")
     if (isEmpty == "") {
-        json_data <- jsonlite::toJSON(list(as.list(record)), auto_unbox = T)
-        RedcapRcurl(datarecord = json_data)
+        #json_data <- jsonlite::toJSON(list(as.list(record)), auto_unbox = T)
+        datarecord <- as.data.frame(record)
+        RedcapRcurl(datarecord)
     } else{
         WarnSentrix(record, isEmpty)
     }
@@ -427,7 +430,7 @@ callApiImport <- function(rcon, recordName, runID) {
 }
 
 
-callApiFile <- function(rcon, recordName, ovwr = T, fiPath = NULL, fld = NULL) {
+callApiFile <- function(rcon, recordName, ovwr = F, fiPath = NULL, fld = NULL) {
     msgFunName(cpOutLnk, "callApiFile")
     if (is.null(fiPath)) {
         recordFi <- paste0(recordName, ".html")
@@ -511,7 +514,12 @@ importSingle <- function(sh_Dat) {
         message(crayon::white$bgBlue("Record Data not Uploaded:"), "\n", record[1])
     }
 
-    uploadToRedcap(file.list = paste0(record[1], ".html"), deskCSV = F)
+    htmlEmpty <- checkRedcapRecord(paste0(record[1]), fieldName = "classifier_pdf")
+    if (htmlEmpty == '') {
+        uploadToRedcap(file.list = paste0(record[1], ".html"), deskCSV = F)
+    } else{
+        message(crayon::white$bgRed("Record already has an HTML in REDCap:"), "\n", record[1])
+    }
 }
 
 
