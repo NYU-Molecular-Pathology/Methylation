@@ -19,29 +19,66 @@ supM <- function(pk) {
   return(suppressPackageStartupMessages(suppressWarnings(pk)))
 }
 
-bins_file <- file.path(path.expand("~"), "bins_installed.txt")
-if (!file.exists(bins_file)) {
-  source("https://mac.R-project.org/bin/install.R")
-  install.libs('all')
-  try(file.create(bins_file), silent = TRUE)
+mac_tools <- c(
+  'xz', 'tiff', 'libpng', 'openssl', 'jpeg', 'pcre2', 'cairo', 'texinfo',
+  'libdeflate', 'zstd','apr', 'apr-util', 'pkgconfig', 'autoconf', 'm4',
+  'automake', 'bdb', 'boost', 'libb2', 'lz4','freetype', 'fontconfig',
+  'pixman', 'cgl', 'clp', 'osi', 'coinutils', 'dylp', 'emacs', 'expat',
+  'ffi', 'fftw',  'flint', 'mpfr', 'gmp', 'freexl', 'fribidi', 'gdal',
+  'proj', 'openjpeg', 'libwebp', 'libgeotiff', 'sqlite3', 'hdf4', 'hdf5',
+  'szip', 'netcdf', 'geos', 'unixodbc', 'gettext', 'glib', 'pcre', 'glpk',
+  'gsl', 'harfbuzz', 'icu', 'hwloc', 'isl', 'libarchive', 'libgit2', 'libssh2',
+  'libsbml', 'libsndfile', 'mpc', 'nlopt', 'pango', 'poppler', 'poppler-data',
+  'protobuf', 'qpdf', 'QuantLib', 'readline5', 'rsync', 'serf', 'subversion',
+  'utf8proc', 'symphony', 'sys-stubs', 'texinfo', 'tidy', 'udunits', 'zeromq'
+)
+
+# Function to check for installed macOS binaries and install missing ones
+check_and_install_mac_libs <- function(pkgs) {
+
+  base_dir <- switch(Sys.info()[["machine"]],
+                     "arm64" = "/opt/R/arm64",
+                     "x86_64" = "/opt/R/x86_64",
+                     "/usr/local")
+  receipt_dir <- file.path(base_dir, "pkg")
+
+  if (!dir.exists(receipt_dir)) {
+    warning("Receipt directory not found: ", receipt_dir,
+            "\nAssuming none of the binaries are installed.")
+    missing_pkgs <- pkgs
+  } else {
+    installed_files <- dir(receipt_dir, all.files = TRUE)
+    missing_pkgs <- pkgs[!sapply(pkgs, function(pkg) {
+      any(grepl(paste0("^", pkg, "-.*\\.list$"), installed_files))
+    })]
+  }
+
+  if (length(missing_pkgs) > 0) {
+    message("Installing missing macOS binaries...")
+    source("https://mac.R-project.org/bin/install.R")
+    install.libs("all")
+  }
 }
+
+# Execute the function to check and install macOS binaries
+check_and_install_mac_libs(mac_tools)
 
 
 fix_brew_path <- function() {
   # Define the target directories to add to the PATH
   target_dirs <- c("/opt/homebrew/bin", "/usr/local/bin")
-  
+
   # Get the current PATH in the R session
   current_path <- strsplit(Sys.getenv("PATH"), ":")[[1]]
-  
+
   # Add the target directories to the PATH if they are not already present
   new_path <- unique(c(target_dirs, current_path))
   Sys.setenv(PATH = paste(new_path, collapse = ":"))
   message("PATH updated for the current session.")
-  
+
   # Persist the change in ~/.Renviron for future sessions
   renviron_file <- file.path(Sys.getenv("HOME"), ".Renviron")
-  
+
   # Ensure the target directories are reflected in ~/.Renviron
   target_entry <- paste0('PATH="', paste(new_path, collapse = ":"), '"')
   if (file.exists(renviron_file)) {
@@ -49,7 +86,7 @@ fix_brew_path <- function() {
   } else {
     renviron_content <- character(0)
   }
-  
+
   if (!any(grepl("^PATH=", renviron_content))) {
     # Append the new PATH if no PATH is defined
     writeLines(c(renviron_content, target_entry), renviron_file)
@@ -81,7 +118,7 @@ setup_brew <- function() {
     'echo \'eval "$(/opt/homebrew/bin/brew shellenv)"\' >> "$HOME/.zprofile"',
     'eval "$(/opt/homebrew/bin/brew shellenv)"'
   )
-  
+
   # Execute the commands
   for (cmd in commands) {
     system(cmd)
@@ -100,12 +137,12 @@ ensure_homebrew <- function() {
     system('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"', wait = TRUE)
     setup_brew()
   }
-  
+
   fix_brew_path()
-  
+
   installed_pkgs <- system2("brew", c("list", "--formula"),
                             stdout = T, stderr = NULL)
-  
+
   for (pkg in pkgs) {
     if (!(pkg %in% installed_pkgs)) {
       message("Installing ", pkg, " via Homebrew...")
@@ -124,15 +161,15 @@ set_env_vars <- function() {
   llvm_path = get_prefix("llvm")
   mpi_path = get_prefix("open-mpi")
   arrow_path = get_prefix("apache-arrow")
-  
+
   # Dynamically find any versioned libarrow.*.dylib file
   libarrow_files <- Sys.glob(file.path(arrow_path, "lib", "libarrow.*.dylib"))
   if (length(libarrow_files) == 0) stop("No versioned libarrow.*.dylib file found in apache-arrow lib path.")
-  
+
   # Select the latest version of libarrow.*.dylib (lexicographically last)
   libarrow_versioned <- sort(libarrow_files, decreasing = TRUE)[1]
-  
-  
+
+
   Sys.setenv(
     CC = file.path(llvm_path, "bin/clang"),
     CXX = file.path(llvm_path, "bin/clang++"),
@@ -226,7 +263,7 @@ download_pkg_unzip <- function(git_repo, zip_name = "main.zip") {
 local_github_pkg_install <- function(git_repo) {
   repo_url <- file.path("https://github.com", git_repo, "archive/refs/heads")
   local_dir <- file.path(fs::path_home(), "github_pkgs")
-  
+
   if (!dir.exists(local_dir)) dir.create(local_dir)
   tryCatch(
     expr = {
@@ -236,10 +273,10 @@ local_github_pkg_install <- function(git_repo) {
       download_pkg_unzip(git_repo, zip_name = "master.zip")
     }
   )
-  
+
   unzipped_dir <- list.dirs(local_dir, full.names = TRUE, recursive = FALSE)
   pkg_dir <- unzipped_dir[grepl(basename(git_repo), unzipped_dir)]
-  
+
   install.packages(pkg_dir, repo = NULL, type = "source", dependencies = T)
 }
 
@@ -284,11 +321,14 @@ install_opts <- list(
   Ncpus = 6
 )
 
+
 # FUN: Quietly loads package library without messages -------------------------
 quiet_load <- function(pkg_name) {
-  libLoad <- suppressWarnings(suppressPackageStartupMessages(
-    library(pkg_name, character.only = T, logical.return = T, quietly = T)
-  ))
+  if (isNamespaceLoaded(pkg_name) == F){
+    libLoad <- suppressWarnings(suppressPackageStartupMessages(
+      library(pkg_name, character.only = T, logical.return = T, quietly = T)
+    ))
+  }else{libLoad <- TRUE}
   message(pkg_name, " loaded... ", libLoad)
   pkg_vec <- c(pkg_n = libLoad)
   names(pkg_vec) <- pkg_name
@@ -329,12 +369,8 @@ check_needed <- function(pkgs) {
 
 # FUN: Returns all package dependencies that are not installed ----------------
 get_pkg_deps <- function(pkgs) {
-  deps_list <- tools::package_dependencies(
-    pkgs, db = pkg_info, recursive = T,
-    which = c("Depends", "Imports", "LinkingTo")
-  )
-  all_deps <- unique(unlist(deps_list))
-  all_pkgs <- setdiff(all_deps, rbase_pkgs)
+  deps_list <- unique(pak::pkg_deps(pkgs)$package)
+  all_pkgs <- setdiff(deps_list, pkgs)
   return(check_needed(all_pkgs))
 }
 
@@ -371,7 +407,7 @@ install_bio_pkg <- function(pkg_deps) {
 # FUN: Checks if package installed from BioConductor --------------------------
 check_bio_install <- function(pkgs) {
   needed_pkgs <- check_needed(pkgs)
-  
+
   if (length(needed_pkgs) > 0) {
     for (new_pkg in needed_pkgs) {
       pkg_deps <- get_pkg_deps(new_pkg)
@@ -419,7 +455,7 @@ check_pkg_install <- function(pkgs) {
       )
     }
   }
-  
+
   load_success <- sapply(pkgs, quiet_load)
   if (any(load_success == F)) {
     failed_pkgs <- pkgs[load_success == F]
@@ -632,7 +668,7 @@ pkgs <- c(
   "beepr",
   "bezier",
   "Biobase",
-  "BiocCheck",
+  #"BiocCheck",
   "BiocManager",
   "BiocStyle",
   "BiocVersion",
@@ -1072,9 +1108,17 @@ if (checkPkg("minfi")) {
   try_github_inst("mwsill/minfi")
 }
 
+install_deps <- function(pkg) {
+  any_deps <- get_pkg_deps(pkg)
+  if (length(any_deps) > 0) {
+    pak::pkg_install(any_deps, ask = F)
+  }
+}
+
 if (checkPkg("fields")) {
+  install_deps("fields")
   tryCatch(
-    pak::pkg_install("gplots", ask = F),
+    pak::pkg_install("fields", ask = F),
     error = function(cond) {
       manual_bioc("fields")
     }
@@ -1083,6 +1127,7 @@ if (checkPkg("fields")) {
 
 if (checkPkg("RnBeads")) {
   if (checkPkg("gplots")) {
+    install_deps("gplots")
     pak::pkg_install("gplots", ask = F)
   }
   rn_deps <- c(
@@ -1104,6 +1149,7 @@ if (checkPkg("RnBeads")) {
     "IRanges"
   )
   check_pkg_install(rn_deps)
+  install_deps("RnBeads")
   pak::pkg_install("RnBeads", ask = F)
 }
 
@@ -1138,20 +1184,10 @@ options(configure.args = c("sf" = spat_config))
 
 if (checkPkg("sf")) {
   tryCatch(
-    install.packages(
-      "sf",
-      type = "source",
-      dependencies = T,
-      verbose = T,
-      Ncpus = 6
-    ),
+    install.packages("sf", type = "source", dependencies = T, ask = F),
     error = function(e) {
-      remotes::install_github(
-        "r-spatial/sf",
-        configure.args = spat_config,
-        dependencies = T,
-        upgrade = "never"
-      )
+      remotes::install_github("r-spatial/sf", configure.args = spat_config,
+                              dependencies = T, upgrade = "never")
     }
   )
 }
@@ -1202,12 +1238,14 @@ if (checkPkg("UCSC.utils")) {
 }
 
 if (checkPkg("GenVisR")) {
-  tryCatch(
-    manual_bioc("VariantAnnotation"),
-    error = function(cond){
-      pak::pkg_install("VariantAnnotation", ask = F)
+  if (checkPkg("VariantAnnotation")) {
+    tryCatch(
+      manual_bioc("VariantAnnotation"),
+      error = function(cond){
+        pak::pkg_install("VariantAnnotation", ask = F)
+      }
+    )
     }
-  )
   tryCatch(
     try_github_inst("griffithlab/GenVisR"),
     error = function(cond){
@@ -1226,6 +1264,29 @@ if (checkPkg("quantreg")) {
 
 Sys.setenv(TORCH_INSTALL = "1")
 options(needs.auto = TRUE)
+
+
+# Ensure any required libraries are symlinked
+#library_path <- "/usr/local/opt/apache-arrow/lib/libarrow.1801.dylib"
+
+check_symlink <- function(library_path, target_path = "libarrow.1700.dylib") {
+  # Check if the library exists at the expected location
+  if (!file.exists(library_path)) {
+    stop("Library not found at\n", library_path)
+  }
+
+  # Check if the symlink exists and create it if it does not
+  if (!file.exists(target_path)) {
+    message("Creating symlink for ", basename(library_path), "...")
+    system(paste("cd", dirname(library_path)))
+    system(paste("ln -s", library_path, target_path))
+  }
+}
+
+llvm_path = get_prefix("llvm")
+unwind_libpath <- file.path(llvm_path, "lib", "unwind", "libunwind.1.dylib")
+missing_path <- file.path(llvm_path, "lib", "libunwind.1.dylib")
+check_symlink(unwind_libpath, missing_path)
 
 any_fail3 <- check_pkg_install(pkgs)
 
