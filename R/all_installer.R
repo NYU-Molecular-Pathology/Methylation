@@ -1288,6 +1288,12 @@ unwind_libpath <- file.path(llvm_path, "lib", "unwind", "libunwind.1.dylib")
 missing_path <- file.path(llvm_path, "lib", "libunwind.1.dylib")
 check_symlink(unwind_libpath, missing_path)
 
+arrow_path = get_prefix("apache-arrow")
+arrow_libs <- dir(file.path(arrow_path, "lib"), all.files = TRUE, full.names = TRUE)
+arrow_dylib <- arrow_libs[grepl("^libarrow\\.[0-9]{4}\\.dylib$", basename(arrow_libs))]
+miss_arrow <- file.path(arrow_path, "lib", "libarrow.1700.dylib")
+#check_symlink(arrow_dylib, miss_arrow)
+
 any_fail3 <- check_pkg_install(pkgs)
 
 invisible(gc())
