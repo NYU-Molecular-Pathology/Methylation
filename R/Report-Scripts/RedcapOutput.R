@@ -185,7 +185,13 @@ GetRedcapDF <- function(gb) {
 
 GetRedcapDF_v12 <- function(gb) {
     gb$is450k <- gb$RGset@annotation[["array"]] != "IlluminaHumanMethylationEPIC"
-    array_opt1 <- ifelse(gb$is450k, yes = "450k", no = "EPIC")
+    array_opt1 <- "NA"
+    if (gb$is450k == FALSE) { 
+        array_opt1 <- "EPIC"
+    } else {
+        array_opt1 <- "450k"
+    }
+    array_opt <- "NA"
     array_opt <- ifelse(
         gb$RGset@annotation[["array"]] == "IlluminaHumanMethylationEPICv2",
         yes = "EPICV2",
