@@ -189,7 +189,7 @@ GetRedcapDF_v12 <- function(gb) {
     if (gb$is450k == FALSE) { 
         array_opt1 <- "EPIC"
     } else {
-        array_opt1 <- "450k"
+        array_opt1 <- "450K"
     }
     array_opt <- "NA"
     array_opt <- ifelse(
