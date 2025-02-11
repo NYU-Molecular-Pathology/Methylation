@@ -48,7 +48,7 @@ SetKnitProgress <- function() {
     options(knitr.package.verbose = FALSE)
     progressr::handlers(global = TRUE)
     progressr::handlers("cli")
-    
+    options(rmarkdown.render.message = FALSE)
     options(
         knitr.progress.fun = function(total, labels) {
             p <- progressr::progressor(
