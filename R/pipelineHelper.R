@@ -341,29 +341,30 @@ msgSamSheet <- function(samSh) {
 }
 
 
-getRunData <- function(data) {
-    if (is.null(data)) {
-        message(bkRed("data is NULL, check your SampleSheet.csv"))
-        stopifnot(!is.null(data))
-    }
-    if (ncol(data) < 10) {
-        tech1 <- nTech2 <- ""
-    } else{
-        tech1 <- paste0(data[, 9])
-        nTech2 <- paste0(data[, 10])
-    }
-    runDt <- data.frame(
-        sampleID = paste0(data[, "Sample_Name"]),
-        bnumber = paste0(data[, "DNA_Number"]),
-        senLi = paste0(data[, "SentrixID_Pos"]),
-        run_id = paste0(data[, "RunID"]),
-        mp_number = paste0(data[, "MP_num"]),
-        tech = tech1,
-        tech2 = nTech2,
-        outFi = paste0(data[, 1], ".html")
-    )
-    message(paste0(capture.output(runDt), collapse = "\n"))
-    return(runDt)
+getRunData <- function(data = NULL, fi_end = ".html") {
+  if (is.null(data)) {
+    stop((bkRed("data is blank: Check the SampleSheet.csv in the directory")))
+  }
+
+  tech1 <- nTech2 <- ""
+  if (ncol(data) >= 10) {
+    tech1 <- paste0(data[, 9])
+    nTech2 <- paste0(data[, 10])
+  }
+
+  runDt <- data.frame(
+    sampleID  = paste0(data[, "Sample_Name"]),
+    bnumber   = paste0(data[, "DNA_Number"]),
+    senLi     = paste0(data[, "SentrixID_Pos"]),
+    run_id    = paste0(data[, "RunID"]),
+    mp_number = paste0(data[, "MP_num"]),
+    tech      = tech1,
+    tech2     = nTech2,
+    outFi     = paste0(data[, 1], fi_end)
+  )
+
+  message(paste(capture.output(runDt), collapse = "\n"))
+  return(runDt)
 }
 
 
