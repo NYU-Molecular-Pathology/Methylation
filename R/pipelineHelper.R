@@ -316,15 +316,9 @@ msgProgress <- function(msg, i, samList) {
 
 
 msgRunUp <- function(sampleID, run_id, senLi) {
-    message(
-        "\nsamplename_data = ",
-        bkBlu(sampleID),
-        "\nrun_id = ",
-        bkBlu(run_id),
-        "\npathEpic: ",
-        bkBlu(file.path(getwd(), senLi)),
-        "\n"
-    )
+    message("\nsamplename_data = ", bkBlu(sampleID),
+            "\nrun_id = ", bkBlu(run_id),
+            "\npathEpic: ", bkBlu(file.path(getwd(), senLi)))
 }
 
 
@@ -341,30 +335,30 @@ msgSamSheet <- function(samSh) {
 }
 
 
-getRunData <- function(data = NULL, fi_end = ".html") {
-  if (is.null(data)) {
-    stop((bkRed("data is blank: Check the SampleSheet.csv in the directory")))
+getRunData <- function(single_data, fi_end = ".html") {
+  if (is.null(single_data)) {
+    stop((bkRed("single_data is NULL: Check the SampleSheet.csv in the directory")))
   }
 
   tech1 <- nTech2 <- ""
-  if (ncol(data) >= 10) {
-    tech1 <- paste0(data[, 9])
-    nTech2 <- paste0(data[, 10])
+  if (ncol(single_data) >= 10) {
+    tech1 <- paste0(single_data[, 9])
+    nTech2 <- paste0(single_data[, 10])
   }
 
-  runDt <- data.frame(
-    sampleID  = paste0(data[, "Sample_Name"]),
-    bnumber   = paste0(data[, "DNA_Number"]),
-    senLi     = paste0(data[, "SentrixID_Pos"]),
-    run_id    = paste0(data[, "RunID"]),
-    mp_number = paste0(data[, "MP_num"]),
+  dat <- data.frame(
+    sampleID  = paste0(single_data[, "Sample_Name"]),
+    bnumber   = paste0(single_data[, "DNA_Number"]),
+    senLi     = paste0(single_data[, "SentrixID_Pos"]),
+    run_id    = paste0(single_data[, "RunID"]),
+    mp_number = paste0(single_data[, "MP_num"]),
     tech      = tech1,
     tech2     = nTech2,
-    outFi     = paste0(data[, 1], fi_end)
+    outFi     = paste0(single_data[, 1], fi_end)
   )
 
-  message(paste(capture.output(runDt), collapse = "\n"))
-  return(runDt)
+  message(paste(capture.output(dat), collapse = "\n"))
+  return(dat)
 }
 
 
