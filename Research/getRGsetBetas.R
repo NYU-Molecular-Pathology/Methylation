@@ -81,41 +81,97 @@ MsgDropping <- function(keep){
 }
 
 
-DropSexSnpProbes <- function(detP, mSetSq, sexSnps=T){
-    detP <- detP[match(featureNames(mSetSq), rownames(detP)), ]
-    keep <- rowSums(detP < 0.01) == ncol(mSetSq)
-    gset.funnorm <- addSnpInfo(mSetSq[keep, ])
-    if(sexSnps==T){
-      gset.funnorm <- minfi::dropLociWithSnps(gset.funnorm, snps = c("SBE", "CpG"), maf = 0)
-      annot = minfi::getAnnotation(gset.funnorm)
-      sex_probes = annot$Name[annot$chr %in% c("chrX", "chrY")]
-      gset.funnorm = gset.funnorm[!(rownames(gset.funnorm) %in% sex_probes),]
-      }
-    return(gset.funnorm)
+#' Remove Poor-Quality, SNP, and Sex Probes
+#'
+#' This function subsets a MethylSet by keeping only probes with robust detection (using a given p-value threshold),
+#' adds SNP information, and (optionally) removes probes overlapping SNPs (based on SBE and CpG types)
+#' as well as probes on sex chromosomes.
+#'
+#' @param detP A matrix of detection p-values (rownames should correspond to probe names).
+#' @param mSetSq A MethylSet or GenomicMethylSet object (from minfi) with raw or normalized data.
+#' @param sexSnps Logical; if TRUE, probes affected by SNPs (and those on chrX/chrY) are removed.
+#' @param probePval Threshold for per-probe detection p-value (default 0.01).
+#'
+#' @return A cleaned MethylSet/GenomicMethylSet object.
+DropSexSnpProbes <- function(detP, mSetSq, 
+                             sexSnps = TRUE, 
+                             probePval = 0.01) {
+    # Align detection p-values with the features in mSetSq
+    detP <- detP[match(featureNames(mSetSq), rownames(detP)), , drop = FALSE]
+    
+    # Keep only probes that pass the detection threshold in all samples
+    keepProbes <- rowSums(detP < probePval) == ncol(mSetSq)
+    mSetClean <- mSetSq[keepProbes, ]
+    
+    # Add SNP information (using minfi's annotation functions)
+    mSetClean <- minfi::addSnpInfo(mSetClean)
+    
+    if (sexSnps) {
+        # Remove probes with SNPs based on the specified probe types and MAF threshold
+        mSetClean <- minfi::dropLociWithSnps(mSetClean, snps = c("SBE", "CpG"), maf = 0)
+        
+        # Obtain annotation and identify probes on sex chromosomes
+        annot <- minfi::getAnnotation(mSetClean)
+        sexProbes <- annot$Name[annot$chr %in% c("chrX", "chrY")]
+        
+        # Remove sex chromosome probes
+        mSetClean <- mSetClean[! (rownames(mSetClean) %in% sexProbes), ]
+    }
+    
+    return(mSetClean)
 }
 
 
-cleanUpProbes <- function(RGSet, targets, gb, getfunorm = F, getNoob=F, sexSnps = T){
-    library("minfi")  
-    detP <- minfi::detectionP(RGSet)
-    samNameCol <- colnames(targets)[1]
-    colnames(detP) <- RGSet@colData@listData[[samNameCol]]
-    keep <- colMeans(detP) < 0.05
-    RGSet <- RGSet[, keep]
-    targets <- targets[keep,]
-    detP <- detP[, keep]
-    MsgDropping(keep)
-    if(getNoob==T){
-      mSetSq <- suppressWarnings(minfi::preprocessFunnorm(RGSet))
-    }else{
-      mSetSq <- suppressWarnings(minfi::preprocessQuantile(RGSet))
+#' Preprocess and Clean IDAT Data
+#'
+#' Filters samples based on mean detection p-value,
+#' applies a selected normalization method to convert raw RGChannelSet to MethylSet,
+#' and calls \code{DropSexSnpProbes()} to remove poor-quality probes (as well as SNP and sex probes, if desired).
+#' By default, the cleaned Beta-value matrix is returned.
+#'
+#' @param RGSet An RGChannelSet object (from minfi) created from the raw IDAT files.
+#' @param targets A data.frame containing sample information. The first column is assumed to contain sample names.
+#' @param normMethod Character; normalization method to use. One of "quantile", "funnorm", or "noob" (default is "quantile").
+#' @param removeSexSnps Logical; if TRUE, remove SNP-affected and sex chromosome probes.
+#' @param samplePvalThreshold Numeric; threshold for sample filtering based on the mean detection p-value (default 0.05).
+#'
+#' @return A matrix of Beta-values with columns named according to sample IDs.
+cleanUpProbes <- function(RGSet, targets, 
+                          normMethod = c("quantile", "funnorm", "noob"), 
+                          removeSexSnps = TRUE, 
+                          samplePvalThreshold = 0.05) {
+    # Ensure the normalization method is one of the allowed options
+    normMethod <- match.arg(normMethod)
+    
+    # Compute detection p-values for all probes and samples
+    detP <- detectionP(RGSet)
+    
+    # Assume that the first column of 'targets' contains sample names
+    sampleNameCol <- colnames(targets)[1]
+    colnames(detP) <- RGSet@colData[[sampleNameCol]]
+    
+    # Filter samples: keep only those with mean detection p-value below the threshold
+    goodSamples <- colMeans(detP) < samplePvalThreshold
+    RGSet <- RGSet[, goodSamples]
+    targets <- targets[goodSamples, , drop = FALSE]
+    detP <- detP[, goodSamples, drop = FALSE]
+    
+    # Apply normalization according to the chosen method
+    if (normMethod == "noob") {
+        mSetSq <- suppressWarnings(preprocessNoob(RGSet))
+    } else if (normMethod == "funnorm") {
+        mSetSq <- suppressWarnings(preprocessFunnorm(RGSet))
+    } else if (normMethod == "quantile") {
+        mSetSq <- suppressWarnings(preprocessQuantile(RGSet))
     }
-    gset.funnorm <- DropSexSnpProbes(detP, mSetSq, sexSnps)
-    if (getfunorm) {
-        return(gset.funnorm)
-    } 
-    betas <- minfi::getBeta(gset.funnorm)
-    colnames(betas) <- RGSet@colData@listData[[samNameCol]]
+    
+    # Remove probes with poor detection, SNP, and sex effects
+    mSetClean <- DropSexSnpProbes(detP, mSetSq, sexSnps = removeSexSnps)
+    
+    # Extract Beta-values from the cleaned set
+    betas <- getBeta(mSetClean)
+    colnames(betas) <- RGSet@colData[[sampleNameCol]]
+    
     return(betas)
 }
 
