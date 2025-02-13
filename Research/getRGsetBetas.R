@@ -176,39 +176,148 @@ cleanUpProbes <- function(RGSet, targets,
 }
 
 
-# Returns topVar beta probes instead of all probes
-takeTopVariance <- function(betas, topVar){
-    var_probes <- apply(betas, 1.0, var)
-    select_var <- names(sort(var_probes, decreasing = T))[topVar]
-    top_var_beta <- betas[select_var, ]
-    return(top_var_beta)
+#' Select Top Variable Probes from Beta Matrix
+#'
+#' @param betas A numeric matrix of Beta values with probes in rows and samples in columns.
+#' @param topN Integer specifying the number of top variable probes to select.
+#'
+#' @return A matrix containing the Beta values for the selected top variable probes.
+#'
+#' @examples
+#' \dontrun{
+#'   topBetas <- takeTopVariance(betas, topN = 10000)
+#' }
+takeTopVariance <- function(betas, topN) {
+  if (!is.matrix(betas)) {
+    stop("The input 'betas' must be a numeric matrix.")
+  }
+  
+  # Calculate the variance for each probe (row)
+  probeVars <- apply(betas, 1, var, na.rm = TRUE)
+  
+  # Check if requested number exceeds available probes
+  if (topN > length(probeVars)) {
+    warning("topN is greater than the total number of probes; returning all probes.")
+    topN <- length(probeVars)
+  }
+  
+  # Select the probe names corresponding to the highest variance values
+  topProbeNames <- names(sort(probeVars, decreasing = TRUE))[1:topN]
+  
+  # Return the subset of beta matrix corresponding to these probes
+  return(betas[topProbeNames, , drop = FALSE])
 }
 
 
-getSupervise <- function(the_beta, RGSet, topVar = 1:10000, cutOff = 0.05, dmpTyp = "categorical", superVar = NULL){
-    condition <- pData(RGSet)[, superVar]
-    stopifnot(length(condition) == ncol(the_beta))
-    dmp <- minfi::dmpFinder(the_beta, pheno = condition, type = dmpTyp)
-    dmp <- cbind(dmp, ID = rownames(dmp))
-    betas_df <- as.data.frame(the_beta)
-    qVals <- dmp$qval < cutOff
-    if (any(qVals)) {
-      if (table(qVals)[["TRUE"]] >= max(topVar)) {
-        dmp <- dmp[qVals, ]
-      }
+
+# getSupervise <- function(the_beta, RGSet, topVar = 1:10000, cutOff = 0.05, dmpTyp = "categorical", superVar = NULL){
+#     condition <- pData(RGSet)[, superVar]
+#     stopifnot(length(condition) == ncol(the_beta))
+#     dmp <- minfi::dmpFinder(the_beta, pheno = condition, type = dmpTyp)
+#     dmp <- cbind(dmp, ID = rownames(dmp))
+#     betas_df <- as.data.frame(the_beta)
+#     qVals <- dmp$qval < cutOff
+#     if (any(qVals)) {
+#       if (table(qVals)[["TRUE"]] >= max(topVar)) {
+#         dmp <- dmp[qVals, ]
+#       }
+#     }
+#     dmp <- dmp[order(dmp$pval),]
+#     topDmp <- dmp[topVar, ]
+#     topProbes <- rownames(topDmp)
+#     final_sam <- row.names(t(betas_df[row.names(topDmp), ])) #topVar=1:10000
+#     betasDmp <- betas_df[topProbes, colnames(betas_df) %in% final_sam]
+#     dmpOutFi <- paste("top", max(topVar), superVar, "dmp_values.csv", sep = "_")
+#     dmpOutDir <- file.path(".", "figures", "csv")
+#     if(!dir.exists(dmpOutDir)){dir.create(dmpOutDir)}
+#     write.csv(topDmp, file.path(dmpOutDir, dmpOutFi) , quote = F)
+#     write.csv(betasDmp, file.path(dmpOutDir,paste0(superVar,"_dmp_betas.csv")), quote = F)
+#     betasDmp <- as.matrix(betasDmp)
+#     return(betasDmp)
+# }
+
+#' Identify Top Differentially Methylated Probes for Supervised Clustering
+#'
+#' This function performs supervised differential methylation analysis on a beta matrix
+#' using the phenotype variable specified in the RGSet. It then selects the top differentially
+#' methylated probes (based on p-value ordering and a q-value cutoff), writes the results to CSV,
+#' and returns the corresponding subset of Beta values.
+#'
+#' @param betaMatrix A numeric matrix of Beta values with probes as rows and samples as columns.
+#' @param RGSet An RGChannelSet (or similar) object from minfi that contains phenotype data.
+#' @param topN Integer; the number of top probes to select (default 10000).
+#' @param qCutoff Numeric; q-value threshold for significance (default 0.05).
+#' @param dmpType Character; the type parameter for dmpFinder, e.g. "categorical" (default "categorical").
+#' @param superVar Character; the name of the phenotype variable in pData(RGSet) to use for comparison.
+#' @param dmpOutDir Character; directory path to save CSV outputs (default "./figures/csv").
+#'
+#' @return A matrix of Beta values for the top differentially methylated probes.
+#'
+#' @examples
+#' \dontrun{
+#'   topDmpBetas <- getSupervise(betaMatrix = betas, RGSet = rgSet, 
+#'                                topN = 10000, superVar = "Group")
+#' }
+getSupervise <- function(betaMatrix, RGSet, topN = 10000, qCutoff = 0.05, 
+                         dmpType = "categorical", superVar, 
+                         dmpOutDir = file.path(".", "figures", "csv")) {
+    
+    if (missing(superVar) || is.null(superVar)) {
+        stop("Please provide a valid phenotype variable name via 'superVar'.")
     }
-    dmp <- dmp[order(dmp$pval),]
-    topDmp <- dmp[topVar, ]
+    
+    # Extract phenotype data from RGSet and check for the provided variable
+    phenoData <- pData(RGSet)
+    if (!superVar %in% colnames(phenoData)) {
+        stop(paste("The phenotype variable", superVar, "is not found in the RGSet pData."))
+    }
+    condition <- phenoData[[superVar]]
+    
+    if (length(condition) != ncol(betaMatrix)) {
+        stop("The length of the condition vector does not match the number of samples in betaMatrix.")
+    }
+    
+    # Perform differential methylation analysis using dmpFinder
+    dmpResults <- minfi::dmpFinder(betaMatrix, pheno = condition, type = dmpType)
+    # Append probe IDs for reference
+    dmpResults$ID <- rownames(dmpResults)
+    
+    # If there are enough significant probes, filter by q-value cutoff
+    sigIdx <- which(dmpResults$qval < qCutoff)
+    if (length(sigIdx) >= topN) {
+        dmpResults <- dmpResults[sigIdx, ]
+    }
+    
+    # Order the differential methylation results by p-value (ascending)
+    dmpResults <- dmpResults[order(dmpResults$pval), ]
+    
+    # Ensure topN does not exceed available probes
+    topN <- min(topN, nrow(dmpResults))
+    topDmp <- dmpResults[1:topN, ]
+    
+    # Extract the probe IDs for the top differentially methylated probes
     topProbes <- rownames(topDmp)
-    final_sam <- row.names(t(betas_df[row.names(topDmp), ])) #topVar=1:10000
-    betasDmp <- betas_df[topProbes, colnames(betas_df) %in% final_sam]
-    dmpOutFi <- paste("top", max(topVar), superVar, "dmp_values.csv", sep = "_")
-    dmpOutDir <- file.path(".", "figures", "csv")
-    if(!dir.exists(dmpOutDir)){dir.create(dmpOutDir)}
-    write.csv(topDmp, file.path(dmpOutDir, dmpOutFi) , quote = F)
-    write.csv(betasDmp, file.path(dmpOutDir,paste0(superVar,"_dmp_betas.csv")), quote = F)
-    betasDmp <- as.matrix(betasDmp)
-    return(betasDmp)
+    
+    # Subset the beta matrix to include only the selected probes
+    betaSubset <- betaMatrix[topProbes, , drop = FALSE]
+    
+    # Create output directory if it does not exist
+    if (!dir.exists(dmpOutDir)) {
+        dir.create(dmpOutDir, recursive = TRUE)
+    }
+    
+    # Define output filenames
+    outDmpFile <- 
+        file.path(dmpOutDir, 
+                  paste("top", topN, superVar, "dmp_values.csv", sep = "_"))
+    outBetaFile <- file.path(dmpOutDir, paste0(superVar, "_dmp_betas.csv"))
+    
+    # Write CSV files without row names and quotes
+    write.csv(topDmp, outDmpFile, row.names = FALSE, quote = FALSE)
+    write.csv(as.data.frame(betaSubset), outBetaFile, quote = FALSE)
+    
+    # Return the subset beta matrix as a numeric matrix
+    return(as.matrix(betaSubset))
 }
 
 
