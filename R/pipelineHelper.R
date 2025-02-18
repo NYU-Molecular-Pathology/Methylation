@@ -654,7 +654,7 @@ CreateControlRecords <- function(cntrl, runID, control_sams) {
 }
 
 
-check_control_sam <- function(data, cntrl, runID) {
+check_control_sam1 <- function(data, cntrl, runID) {
     control_sams <- data[cntrl, 1]
     isNamed <- stringr::str_detect(string = control_sams, pattern = runID)
     if (!all(isNamed)) {
@@ -669,6 +669,8 @@ check_control_sam <- function(data, cntrl, runID) {
     } else{
         CreateControlRecords(cntrl, runID, control_sams)
     }
+    
+    return(data)
 }
 
 
@@ -703,7 +705,7 @@ makeHtmlReports <- function(runPath = NULL,
         data[, 1], pattern = stringr::regex('control', ignore_case = T)))
 
     if (length(cntrl) >= 1) {
-        check_control_sam(data, cntrl, runID)
+        data <- check_control_sam1(data, cntrl, runID)
     }
 
     reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
@@ -753,6 +755,7 @@ makeHtmlReports <- function(runPath = NULL,
     try(beepr::beep(2), T)
     tidyUpFiles(runID)
 }
+
 
 # FUN: Checks if all the paths are accessible to the Rscript location ---------
 checkMounts <- function() {
