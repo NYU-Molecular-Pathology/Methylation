@@ -4,7 +4,7 @@
 ## Date Created: August 5, 2021
 ## Version: 1.0.1
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2024
+## Copyright (c) NYULH Jonathan Serrano, 2025
 
 gb <- globalenv(); assign("gb", gb)
 dsh = "-----------"
@@ -336,29 +336,29 @@ msgSamSheet <- function(samSh) {
 
 
 getRunData <- function(single_data, fi_end = ".html") {
-  if (is.null(single_data)) {
-    stop((bkRed("single_data is NULL: Check the SampleSheet.csv in the directory")))
-  }
+    if (is.null(single_data)) {
+        stop((bkRed("single_data is NULL: Check the SampleSheet.csv in the directory")))
+    }
 
-  tech1 <- nTech2 <- ""
-  if (ncol(single_data) >= 10) {
-    tech1 <- paste0(single_data[, 9])
-    nTech2 <- paste0(single_data[, 10])
-  }
+    tech1 <- nTech2 <- ""
+    if (ncol(single_data) >= 10) {
+        tech1 <- paste0(single_data[, 9])
+        nTech2 <- paste0(single_data[, 10])
+    }
 
-  dat <- data.frame(
-    sampleID  = paste0(single_data[, "Sample_Name"]),
-    bnumber   = paste0(single_data[, "DNA_Number"]),
-    senLi     = paste0(single_data[, "SentrixID_Pos"]),
-    run_id    = paste0(single_data[, "RunID"]),
-    mp_number = paste0(single_data[, "MP_num"]),
-    tech      = tech1,
-    tech2     = nTech2,
-    outFi     = paste0(single_data[, 1], fi_end)
-  )
+    dat <- data.frame(
+        sampleID  = paste0(single_data[, "Sample_Name"]),
+        bnumber   = paste0(single_data[, "DNA_Number"]),
+        senLi     = paste0(single_data[, "SentrixID_Pos"]),
+        run_id    = paste0(single_data[, "RunID"]),
+        mp_number = paste0(single_data[, "MP_num"]),
+        tech      = tech1,
+        tech2     = nTech2,
+        outFi     = paste0(single_data[, 1], fi_end)
+    )
 
-  message(paste(capture.output(dat), collapse = "\n"))
-  return(dat)
+    message(paste(capture.output(dat), collapse = "\n"))
+    return(dat)
 }
 
 
@@ -601,7 +601,7 @@ loopRender <- function(samList = NULL, data, redcapUp = T) {
         remain_percent <- 100 - round((totLeft/length(toRun)) * 100 )
         perc_comp <- paste0(remain_percent, "%")
         message(bkGrn("Run is approximately", perc_comp, "complete"))
-        
+
         msgProgress(1, sam_idx, samList)
         do_report(single_data = data[sam_idx, ], gb$genCn)
         msgProgress(2, sam_idx, samList)
@@ -654,18 +654,36 @@ CreateControlRecords <- function(cntrl, runID, control_sams) {
 }
 
 
+check_control_sam <- function(data, cntrl, runID) {
+    control_sams <- data[cntrl, 1]
+    isNamed <- stringr::str_detect(string = control_sams, pattern = runID)
+    if (!all(isNamed)) {
+        notNamed <- !stringr::str_detect(string = control_sams, pattern = runID)
+        newCntrls <- paste(runID, control_sams[notNamed], sep = "_")
+        control_sams[notNamed] <- newCntrls
+        if (length(control_sams) > 1) {
+            control_sams <- make.unique(control_sams, sep = "_")
+        }
+        data[cntrl, 1] <- control_sams
+        CreateControlRecords(cntrl, runID, control_sams)
+    } else{
+        CreateControlRecords(cntrl, runID, control_sams)
+    }
+}
+
+
 # MAIN: Generates Html reports with samplesheet.csv for V12_EPICV2 ----
 makeHtmlReports <- function(runPath = NULL,
                             sheetName = "samplesheet.csv",
                             selectSams = NULL,
-                            genCn = F,
                             skipQC = F,
                             email = T,
-                            cpReport = T,
                             redcapUp = T) {
+
     msgFunName(pipeLnk, "makeHtmlReports")
     library("data.table")
-    assign("genCn", genCn, envir = gb)
+    assign("genCn", FALSE, envir = gb)
+
     data <- utils::read.csv(sheetName, strip.white = T)
     toKeep <- !(is.na(data[, 1]) | data[, 1] == 0 | data[, 1] == "")
     if (any(!toKeep)) {
@@ -683,28 +701,18 @@ makeHtmlReports <- function(runPath = NULL,
     runID <- paste0(data$RunID[1])
     cntrl <- which(stringr::str_detect(
         data[, 1], pattern = stringr::regex('control', ignore_case = T)))
+
     if (length(cntrl) >= 1) {
-        control_sams <- data[cntrl, 1]
-        isNamed <- stringr::str_detect(string = control_sams, pattern = runID)
-        if (!all(isNamed)) {
-            notNamed <- !stringr::str_detect(string = control_sams, pattern = runID)
-            newCntrls <- paste(runID, control_sams[notNamed], sep = "_")
-            control_sams[notNamed] <- newCntrls
-            if (length(control_sams) > 1) {
-                control_sams <- make.unique(control_sams, sep = "_")
-            }
-            data[cntrl, 1] <- control_sams
-            CreateControlRecords(cntrl, runID, control_sams)
-        } else{
-            CreateControlRecords(cntrl, runID, control_sams)
-        }
+        check_control_sam(data, cntrl, runID)
     }
+
     reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
     CopyRmdFile(gb$runID, reportMd)
+
     library('mnp.v12epicv2')
     library("pander")
     library("htmltools")
-    
+
     loopRender(selectSams, data, redcapUp)
     checkRunOutput(runID)
 
@@ -715,22 +723,26 @@ makeHtmlReports <- function(runPath = NULL,
         qcVals <- CheckSampleQCmetrics(runID)
         rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
         qcVals <- gb$NameControl(qcVals, runID)
+
         redcapAPI::importRecords(rcon, qcVals, "normal", "ids",
                                  logfile = "REDCapQCimports.txt")
     }
+
     if (grepl("TEST", runID)) {
-        cpReport = F; redcapUp = F; email = F
+        redcapUp = F; email = F
     }
-    if (redcapUp == T) {
-        if (file.exists(gb$UPLOAD_LOG_TSV)) {
-            file.list <- read.table(gb$UPLOAD_LOG_TSV)[,1]
-            if (length(file.list) > 0) {
-                gb$uploadToRedcap(file.list, T)
-            }
+
+
+    if (file.exists(gb$UPLOAD_LOG_TSV)) {
+        file.list <- read.table(gb$UPLOAD_LOG_TSV)[,1]
+        if (length(file.list) > 0) {
+            gb$uploadToRedcap(file.list, T)
         }
-        file.list <- dir(getwd(), pattern = ".html", full.names = T)
-        gb$uploadToRedcap(file.list, F)
     }
+    #file.list <- dir(getwd(), pattern = ".html", full.names = T)
+    #gb$uploadToRedcap(file.list, F)
+
+
     if (email == T) {
         RenameFailed(qcVals)
         gb$CombineClassAndQC(output_fi = paste0(runID, "_qc_data.csv"),
@@ -836,7 +848,6 @@ StartRun <- function(selectRDs = NULL, emailNotify = T, redcapUp = T) {
     gb$makeHtmlReports(
         skipQC = F,            # Don't skip QC generation
         email = emailNotify,   # to email after Run complete
-        cpReport = T,          # Flag to copy files to network drive
         selectSams = runOrder, # Prioritize specific RD-numbers
         redcapUp = redcapUp    # Flag to import files to REDCap
     )
@@ -904,7 +915,6 @@ StartCustomRun <- function(redcapUp = T) {
     gb$makeHtmlReports(
         skipQC = T,
         email = F,
-        cpReport = F,
         selectSams = NULL,
         redcapUp = redcapUp
     )
