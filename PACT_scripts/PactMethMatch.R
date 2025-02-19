@@ -41,38 +41,40 @@ command_exists <- function(cmd) nzchar(Sys.which(cmd))
 
 # Ensures that brew is found in the system R PATH
 fix_brew_path <- function() {
-  # Define the target directories to add to the PATH
-  target_dirs <- c("/opt/homebrew/bin", "/usr/local/bin")
-  
-  # Get the current PATH in the R session
-  current_path <- strsplit(Sys.getenv("PATH"), ":")[[1]]
-  
-  # Add the target directories to the PATH if they are not already present
-  new_path <- unique(c(target_dirs, current_path))
-  Sys.setenv(PATH = paste(new_path, collapse = ":"))
-  message("PATH updated for the current session.")
-  
-  # Persist the change in ~/.Renviron for future sessions
-  renviron_file <- file.path(Sys.getenv("HOME"), ".Renviron")
-  
-  # Ensure the target directories are reflected in ~/.Renviron
-  target_entry <- paste0('PATH="', paste(new_path, collapse = ":"), '"')
-  if (file.exists(renviron_file)) {
-    renviron_content <- readLines(renviron_file, warn = FALSE)
-  } else {
-    renviron_content <- character(0)
-  }
-  
-  if (!any(grepl("^PATH=", renviron_content))) {
-    # Append the new PATH if no PATH is defined
-    writeLines(c(renviron_content, target_entry), renviron_file)
-    message("PATH added to ~/.Renviron.")
-  } else {
-    # Update the PATH entry if it exists
-    renviron_content <- sub("^PATH=.*", target_entry, renviron_content)
-    writeLines(renviron_content, renviron_file)
-    message("PATH updated in ~/.Renviron.")
-  }
+    # Define the target directories to add to the PATH
+    target_dirs <- c("/opt/homebrew/bin", "/usr/local/bin")
+    target_dirs <- target_dirs[dir.exists(target_dirs)]
+    
+    # Get the current PATH in the R session
+    current_path <- strsplit(Sys.getenv("PATH"), ":")[[1]]
+    
+    # Add the target directories to the PATH if they are not already present
+    new_path <- unique(c(target_dirs, current_path))
+    Sys.setenv(PATH = paste(new_path, collapse = ":"))
+    message("PATH updated for the current session.")
+    
+    # Persist the change in ~/.Renviron for future sessions
+    renviron_file <- file.path(Sys.getenv("HOME"), ".Renviron")
+    target_entry <- paste0('PATH="', paste(new_path, collapse = ":"), '"')
+    
+    if (file.exists(renviron_file)) {
+        renviron_content <- readLines(renviron_file, warn = FALSE)
+    } else {
+        renviron_content <- character(0)
+        writeLines(c(renviron_content, target_entry), renviron_file)
+        message("PATH added to ~/.Renviron.")
+    }
+    
+    if (!any(grepl(target_dirs, renviron_content))) {
+        # Append the new PATH if no PATH is defined
+        writeLines(c(renviron_content, target_entry), renviron_file)
+        message("PATH added to ~/.Renviron.")
+    } else {
+        # Update the PATH entry if it exists
+        #renviron_content <- sub("^PATH=.*", target_entry, renviron_content)
+        #writeLines(renviron_content, renviron_file)
+        message("PATH already updated in ~/.Renviron.")
+    }
 }
 
 # Install Homebrew and packages if necessary
