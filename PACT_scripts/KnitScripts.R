@@ -1276,6 +1276,36 @@ CreateVariantsTabs <- function(philipsIndels, snvTab) {
 }
 
 
+makeOncoKbTab <- function(tabNam, objDat) {
+    gb$MakeTabColor(tabNam)
+  dtOpts <- list(
+    info = F,
+    autoWidth = F,
+    lengthChange = F,
+    searching = F,
+    paging = FALSE
+  )
+    
+    if (nrow(objDat) == 0) {
+      cat("No matching OncoKB Level 1 genes called in-house")
+    }else {
+      dtTab <- htmltools::tagList(
+          DT::datatable(
+              objDat,
+              style = "default",
+              rownames = FALSE,
+              options = dtOpts
+          )
+      )
+      
+      cat("OncoKB Level 1 genes called from In-House Somatic Variant tab:")
+      cat("\n\n")
+      print(dtTab)
+    }
+    cat("\n\n")
+}
+
+
 LoopSampleTabs <- function(params) {
     pactName <- params$pactName
     methData <- gb$GetMethDf(params$pactName)
@@ -1298,9 +1328,13 @@ LoopSampleTabs <- function(params) {
     
     tmb_tsv <- "./TMB_MSI/annotations.paired.tmb.validation.2callers.tsv"
     msi_tsv <- "./TMB_MSI/msi_validation.tsv"
+    onco_wsh <- "/Volumes/CBioinformatics/jonathan/pact/OncoKB-Level1-Genes-Feb2025.xlsx"
     
     tmb_dat <- as.data.frame(read.table(tmb_tsv, sep = "\t", header = T))
     msi_dat <- as.data.frame(read.table(msi_tsv, sep = "\t", header = T))
+    onco_dat <- as.data.frame(readxl::read_xlsx(onco_wsh))
+    
+    onco_genes <- unique(onco_dat$Gene)
     
     for (sam in samples) {
         message("SAMPLE: ", sam)
@@ -1338,7 +1372,24 @@ LoopSampleTabs <- function(params) {
         }
         cat("\n\n")
         MakeVAFtab(sam)
+        cat("\n\n")
+        
+        
+        onco_df <- as.data.frame(
+          matrix(nrow = 0, ncol = ncol(onco_dat),
+                 dimnames = list(NULL, colnames(onco_dat)))
+          )
+        
+        if (any(snvTab$Gene %in% onco_genes)) {
+          genes_found <- unique(snvTab$Gene[snvTab$Gene %in% onco_genes])
+          onco_sub <- onco_dat[onco_dat$Gene %in% genes_found,]
+          rownames(onco_sub) <- NULL
+          onco_df <- onco_sub
+        }
+        
+        makeOncoKbTab("OncoKB Level 1 Genes", onco_df)
         cat(' </div> ')
+        
     }
 }
 
