@@ -113,18 +113,64 @@ getAllFiles <- function(idatDir, csvNam=NULL) {
 }
 
 # FUN: Copies .idat files to your current directory using sample sheet
-copyBaseIdats <- function(allFi, idatPath=NULL) {
-    if(is.null(idatPath)){idatPath <- getwd()}
-    msgFunName(cpInLnk, "copyBaseIdats")
-    cat(crayon::white$bgCyan("Copying idats to current directory..."),"\n")
-    fs::file_copy(allFi, file.path(getwd()), overwrite=T)
-    idcs = basename(allFi)
-    idatsCopied <- idcs[idcs != ""]
-    success = file.exists(idatsCopied)
-    all(success)
-    cat("\n.idat files that failed to copy:","\n")
-    if (all(success)) {cat("none","\n")} else {print(idatsCopied[!success])}
+# copyBaseIdats <- function(allFi, idatPath=NULL) {
+#     if(is.null(idatPath)){idatPath <- getwd()}
+#     msgFunName(cpInLnk, "copyBaseIdats")
+#     cat(crayon::white$bgCyan("Copying idats to current directory..."),"\n")
+#     fs::file_copy(allFi, file.path(getwd()), overwrite=T)
+#     idcs = basename(allFi)
+#     idatsCopied <- idcs[idcs != ""]
+#     success = file.exists(idatsCopied)
+#     all(success)
+#     cat("\n.idat files that failed to copy:","\n")
+#     if (all(success)) {cat("none","\n")} else {print(idatsCopied[!success])}
+# }
+
+
+check_success_copy <- function(allFi) {
+  idcs = basename(allFi)
+  idatsCopied <- idcs[idcs != ""]
+  success = file.exists(idatsCopied)
+  all(success)
+  message(".idat files that failed to copy:")
+  if (all(success)) {
+    cat("none", "\n")
+  } else {
+    print(idatsCopied[!success])
+  }
 }
+
+
+make_progress_bar <- function(allFi) {
+  num_files <- length(allFi)
+  pb <- progress::progress_bar$new(
+    format = "  copying [:bar] :current/:total (:percent) in :elapsed",
+    total = num_files, clear = FALSE, width = 80, stream = stdout()
+  )
+  return(pb)
+}
+
+
+copyBaseIdats <- function(allFi, idatPath = NULL) {
+  msgFunName(cpInLnk, "copyBaseIdats")
+  library("progress")
+
+  if (is.null(idatPath)) {
+    idatPath <- getwd()
+  }
+  cat(crayon::white$bgCyan("Copying .idat files to the directory..."), "\n")
+
+  pb <- make_progress_bar(allFi)
+
+  for (f in allFi) {
+    fs::file_copy(f, file.path(getwd(), basename(f)), overwrite = TRUE)
+    pb$tick()
+  }
+
+  check_success_copy(allFi)
+
+}
+
 
 # Helper function called during copying idats to notify if a network mount is not found
 WarnMounts <- function(idat.dir){
