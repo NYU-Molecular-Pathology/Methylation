@@ -1314,11 +1314,16 @@ LoopSampleTabs <- function(params) {
     qcData <- gb$ReadQcFile(pactName)
     samList <- gb$GetSamList(pactName, 2)
     toDrop <- grepl("^0_", samList$Paired_Normal)
+
     if (any(toDrop)) {
         ngs_drop <- samList$Test_Number[toDrop]
         toKeep <- !samList$Test_Number %in% ngs_drop
         samList <- samList[toKeep, ]
     }
+    
+    samsPaired <- names(table(samList$Test_Number))[table(samList$Test_Number) > 1]
+    samList <- samList[samList$Test_Number %in% samsPaired, ]
+    
     samples <- gb$GrabSamples(samList)
     hsDat <- gb$GrabHotspots(params)
     snvDt <- read.csv(paste0(pactName, "_desc.csv"))
