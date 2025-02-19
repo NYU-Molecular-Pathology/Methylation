@@ -141,11 +141,11 @@ check_success_copy <- function(allFi) {
 }
 
 
-make_progress_bar <- function(allFi) {
-  num_files <- length(allFi)
+make_progress_bar <- function(seriesObj, txt = "Progress") {
+  num_files <- length(seriesObj)
   pb <- progress::progress_bar$new(
-    format = "  copying [:bar] :current/:total (:percent) in :elapsed",
-    total = num_files, clear = FALSE, width = 80, stream = stdout()
+    format = paste(txt, "[:bar] :current/:total (:percent) ETA::eta"),
+    total = num_files, clear = FALSE, width = 85, stream = stdout()
   )
   return(pb)
 }
@@ -158,7 +158,7 @@ copyBaseIdats <- function(allFi, idatPath = NULL) {
   if (is.null(idatPath)) {
     idatPath <- getwd()
   }
-  cat(crayon::white$bgCyan("Copying .idat files to the directory..."), "\n")
+  cat(crayon::white$bgBlue("Copying .idat files to the directory..."), "\n")
 
   pb <- make_progress_bar(allFi)
 
