@@ -245,8 +245,10 @@ CheckFiExist <- function(pactName, philipsFtp) {
 MoveFacets <- function(){
   facet_pngs <- list.files(getwd(), pattern = "*.FACETS.cnv.plot.png", full.names = T)
   facet_dirs <- file.path(getwd(), "facet_pngs")
-  if (!dir.exists(facet_dirs)) dir.create(facet_dirs)
-  try(fs::file_move(facet_pngs, facet_dirs), TRUE)
+  if (!dir.exists(facet_dirs)) try(dir.create(facet_dirs, showWarnings = F), T)
+  if (length(facet_pngs) > 0) {
+    try(fs::file_move(facet_pngs, facet_dirs), TRUE)
+  }
 }
 
 
