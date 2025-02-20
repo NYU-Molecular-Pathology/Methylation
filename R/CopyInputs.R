@@ -91,6 +91,31 @@ setRunDir <- function(runID=NULL, workFolder=NULL){
     return(methylPath)
 }
 
+
+# Lists all idat files in the run directory and checks uniform sizes in Mb
+check_idat_sizes <- function(runFolder){
+    msgFunName(cpInLnk, "check_idat_sizes")
+  idat_files <- dir(path = runFolder, pattern = ".idat", full.names = TRUE)
+  idat_sizes <- round(file.size(idat_files) / 1e6, 1)
+  mb_unique <- unique(idat_sizes)
+
+  if (length(mb_unique) > 1) {
+    mb_sizes <- c(13.7, 10.3, 8.1)
+    miss_copied <- !idat_sizes %in% mb_sizes
+    if (any(miss_copied)) {
+      warning(
+        paste(
+          crayon::bgRed("Not all idat files are the same file size!"),
+          "Ensure idat files copied correctly and are uniform in file size:\n",
+          sep = "\n"
+        ),
+        paste(basename(idat_files)[miss_copied], collapse = "\n")
+      )
+    }
+  }
+}
+
+
 # FUN: Returns a list of idat files given an idat drive location -
 getAllFiles <- function(idatDir, csvNam=NULL) {
     msgFunName(cpInLnk, "getAllFiles"); msgParams(idatDir); msgParams(csvNam)
@@ -111,20 +136,6 @@ getAllFiles <- function(idatDir, csvNam=NULL) {
     }
     return(allFi)
 }
-
-# FUN: Copies .idat files to your current directory using sample sheet
-# copyBaseIdats <- function(allFi, idatPath=NULL) {
-#     if(is.null(idatPath)){idatPath <- getwd()}
-#     msgFunName(cpInLnk, "copyBaseIdats")
-#     cat(crayon::white$bgCyan("Copying idats to current directory..."),"\n")
-#     fs::file_copy(allFi, file.path(getwd()), overwrite=T)
-#     idcs = basename(allFi)
-#     idatsCopied <- idcs[idcs != ""]
-#     success = file.exists(idatsCopied)
-#     all(success)
-#     cat("\n.idat files that failed to copy:","\n")
-#     if (all(success)) {cat("none","\n")} else {print(idatsCopied[!success])}
-# }
 
 
 check_success_copy <- function(allFi) {
