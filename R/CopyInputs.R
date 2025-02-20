@@ -100,7 +100,7 @@ check_idat_sizes <- function(runFolder){
   mb_unique <- unique(idat_sizes)
 
   if (length(mb_unique) > 1) {
-    mb_sizes <- c(13.7, 10.3, 8.1)
+    mb_sizes <- c(14.4, 13.7, 10.3, 8.1)
     miss_copied <- !idat_sizes %in% mb_sizes
     if (any(miss_copied)) {
       warning(
