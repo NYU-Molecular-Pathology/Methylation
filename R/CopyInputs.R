@@ -279,6 +279,10 @@ GetExternalIdats <- function(allFi, ssheet, extr.idat){
     return(allFi)
 }
 
+MakeLogFile <- function(infoData, logFile) {
+    write.table(infoData, file = logFile, append = T, quote = F,
+                sep = '\t', row.names = F, col.names = F)
+}
 
 # FUN: Returns a list of idat files that exist on Molecular and Snuderl lab drives -
 get.idats <- function(csvNam = "samplesheet.csv", runDir=NULL){
@@ -295,7 +299,19 @@ get.idats <- function(csvNam = "samplesheet.csv", runDir=NULL){
     }
     ssheet = read.csv(csvNam, strip.white = T)
     allFi <- getAllFiles(idatDir = c(rsch.idat, clin.idat), csvNam = csvNam)
-    allFi = allFi[file.exists(allFi)]
+    #allFi = allFi[file.exists(allFi)]
+    # Check existence
+    exists <- fs::file_exists(allFi)
+    # Check read permission (necessary for copying)
+    readable <- fs::file_access(allFi, mode = "read")
+    if (any(readable == F)) {
+        failed_reads <- allFi[!readable]
+        infoData <- paste("Cannot read idat file:", failed_reads, collapse = "\n")
+        MakeLogFile(infoData, "read_error_idat.txt")
+    }
+    # Filter only valid files
+    allFi <- allFi[exists & readable]
+    
     if (length(allFi) == 0) {
         allFi <- GetExternalIdats(allFi, ssheet, extr.idat)
     }
