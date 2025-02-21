@@ -353,7 +353,6 @@ StartRun <- function(selectRDs = NULL, emailNotify = T, redcapUp = T) {
     gb$makeHtmlReports(
         skipQC = F,            # Don't skip QC generation
         email = emailNotify,   # to email after Run complete
-        cpReport = F,          # Flag to copy files to network drive
         selectSams = runOrder, # Prioritize specific RD-numbers
         redcapUp = redcapUp    # Flag to import files to REDCap
     )
