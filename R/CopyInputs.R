@@ -163,23 +163,28 @@ make_progress_bar <- function(seriesObj, txt = "Progress") {
 
 
 copyBaseIdats <- function(allFi, idatPath = NULL) {
-  msgFunName(cpInLnk, "copyBaseIdats")
-  library("progress")
-
-  if (is.null(idatPath)) {
+    msgFunName(cpInLnk, "copyBaseIdats")
+    #library("progress")
+    library("cli")
+    if (is.null(idatPath)) {
     idatPath <- getwd()
-  }
-  cat(crayon::white$bgBlue("Copying .idat files to the directory..."), "\n")
+    }
+    cli::cli_progress_bar("Copying files", total = length(allFi))
 
-  pb <- make_progress_bar(allFi)
-
-  for (f in allFi) {
-    fs::file_copy(f, file.path(getwd(), basename(f)), overwrite = TRUE)
-    pb$tick()
-  }
-
-  check_success_copy(allFi)
-
+    for (f in allFi) {
+        tryCatch(
+            fs::file_copy(f, file.path(getwd(), basename(f)), overwrite = TRUE),
+            error = function(e) {
+                infoData <- paste("Failed to copy:", f)
+                cli::cli_alert_danger(infoData)
+                gb$MakeLogFile(infoData, "missing_idat_files.txt")
+            }
+        )
+        cli::cli_progress_update()  # Updates progress
+    }
+    
+    cli::cli_progress_done()  # Mark progress as complete
+    check_success_copy(allFi)
 }
 
 
