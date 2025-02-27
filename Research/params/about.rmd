@@ -1,0 +1,61 @@
+---
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+<!-- Horizontal rule -->
+---
+
+<!-- Deadline -->
+**Deadline:** Unknown
+
+# Project Goals {.tabset}
+
+## Hypothesis & Goals
+
+<!-- Hypotheses -->
+**H1.** Generate T-Sne clusters of different sample groups: A B C  
+**H2.** Unknown, Plots generated for samples listed  
+**H3.** Unknown, Plots generated for sample cohort  
+
+
+## Summary
+
+T-sne Analysis:
+
+1. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.  
+
+2. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.  
+
+3. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.  
+
+
+**Reference (control) Groups:**
+- NONE
+  - tumor description
+- **Group Name A**
+  - A description
+- **Group Name B** (description)
+  - Tumor specific subtype info
+
+## Questions
+
+1. DNA methylation landscape of tumors. **A, B, and C** are **Controls** and **D, E, and F** tumor samples: similar or distinct clusters?
+   a. Master heatmap and analysis of methylation using **ABCDEF** samples
+   b. Heatmap and analysis of methylation using only **AB and F** samples
+
+- **Expected results:** ABC# of major clusters based on histological type of tumor. Perhaps sub-clusters of Control groups within each tumor type: this would show that B is already molecularly different from controls.
+
+2. Do the control groups cluster with each tumor type distinctly?
+   a. .... analysis tumor bases (3 heatmaps)
+   b. second point example
+
+- **Expected results:**
+- Chromosomes A, B, C, and D have gains and E and F have loss
+  a. .... analysis specifically chromosomes
+  b. second point example
+
+## References
+
+NONE

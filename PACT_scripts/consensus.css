@@ -1,0 +1,115 @@
+.main-container {margin: 0;margin-left:0px;margin-right:0px;padding:0;align-items: start;
+  display: inline-block;
+  justify-content: left;
+}
+div.main-container {
+  margin: 0;
+  padding:0;
+  align-items: left;
+  display: inline-block;
+  justify-content: left;
+  }
+.tocify{
+  width:"110px";
+  margin: 0;
+  padding:0;
+  align-items: left;
+  display: inline;
+  justify-content: left;
+  float:left;
+  }
+#TOC{width: "100px";}
+#TOC{   
+    margin: 0 !important;
+    height: 100%;
+    border: none;
+    padding: 0;
+    background-color: white;
+    left: 0;
+    border-right: 1px solid #e7e7e7
+    display: inline;
+    justify-content: left;
+    float:left;
+    background: white;
+    z-index: 289;
+    }
+.tocify{
+  background-color: white;
+  border-radius: 0px;
+  background: white;
+  z-index: 289;
+}
+
+.list-group-item{
+  background-color: white;
+}
+div.tocify {
+    width: 110px;
+    max-width: 200px;
+    max-height: 100% !important;
+  z-index: 289;
+}
+.toc-content {
+    padding-left: 20px;
+    padding-right: 20px;
+    margin: 0px;
+    text-align: left;
+    display:block;
+    width:1400px;
+  z-index: 1;
+  
+}
+.row {
+    margin-left: 120px;
+    margin-right: 0px;
+    display: grid;
+}
+
+.datatables, .html-widget, .html-widget-static-bound{
+  width:100%;
+  float: left;
+  display: inline-block;
+  z-index: 1;
+}
+
+.dataTables_wrapper, .dataTables_filter {
+    float: left;
+    text-align:left;
+    padding-left:0px;
+}
+
+h1 {
+    color: #fff;
+    background-image: linear-gradient(to right,#431c53,indigo,indigo,#6500B0,purple,#D396FF);
+    border-radius: 18px;
+    padding: 8px;
+    font-size: 24pt;
+    display:flex;
+    border-spacing: 5px
+}
+p {
+    font-size: 16pt;
+    color: #CC5500;
+    font-weight: bold;
+}
+
+.nav-tabs > li.active > a, 
+.nav-tabs > li.active > a:focus, 
+.nav-tabs > li.active > a:hover {
+  background-color: #ffd680 !important;
+  color: black !important;
+}
+
+table {white-space: nowrap;padding: 5px}
+
+.boxed {
+    background: rgb(240, 237, 237) !important;
+    border: 3px solid black;
+    padding: 10px;
+    border-radius: 10px;
+    width: auto;
+    display: inline-block;
+    white-space: nowrap;
+    font-size:12 !important;
+    margin: 10px;
+}

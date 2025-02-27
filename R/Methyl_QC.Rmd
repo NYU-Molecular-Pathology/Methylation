@@ -1,0 +1,225 @@
+---
+output: 
+  html_document:
+    self_contained: yes
+    mode: selfcontained
+classoption: landscape
+params:
+  runID: NULL
+  sheetNamePath: NULL
+  baseDir: NULL
+  knitDir: NULL
+  author: "Jonathan Serrano"
+---
+
+```{r setup, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+gb <- globalenv(); assign("gb", gb)
+# Source External Functions  ---------------------------------------
+gitPath = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/Report-Scripts"
+devtools::source_url(file.path(gitPath, "QC-Scripts.R"))
+# Check Input Parameters -------------------------------------------
+runID <- gb$CheckParamRunID(params, gb)
+baseDir <- gb$CheckParamBaseDir(params, runID)
+runPath <- gb$CheckParamKnitDir(params, runID)
+gb$runPath <- runPath
+gb$SetKnitPath(runPath, baseDir)
+# Read Sample Data -------------------------------------------------
+sheetNamePath <- gb$GetSheetNamePath(params, baseDir)
+gb$fixerrors <- fixerrors <- gb$GetFixedDf(sheetNamePath, runPath)
+gb$targets <- targets <- gb$GrabTargetsDf(runPath, gb$fixerrors)
+gb$redCsv <- redCsv <- gb$CheckRedCsv(runID)
+# Set Run Data Values ----------------------------------------------
+titleName <- paste("Methylation Assay QC for Batch", runID)
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(global.par = TRUE, ask = F)
+grDevices::devAskNewPage(ask = F)
+R.utils::setOption("device.ask.default", FALSE)
+htmltools::includeCSS(file.path(gitPath,"QC-Style.html"))
+```
+
+```{css, echo = FALSE}
+@page {size: 11in 8.5in;}
+@media only screen {
+ html {font-size: 14px;}
+  :root {
+    --base-font-size: 14px;
+  }
+}
+```
+
+---
+title: "`r titleName`"
+subtitle: "Clinical Methylation Run QC Version 1.2"
+author: "`r paste0(params$author)`"
+date: "`r paste0(gb$fixerrors$Date[1])`"
+always_allow_html: yes
+papersize: a4
+linestretch: 1.2
+fontsize: 10pt
+geometry:
+- top=2mm
+- left=2mm
+- right=2mm
+- bottom=2mm
+classoption:
+- a4paper
+- landscape
+---
+
+<footer><p>Page 1 of 8</p></footer>
+
+```{r, label = "Margin Params", results='hide', echo=FALSE}
+par(mar = c(8, 8, 0, 0)) #it's important to have that in a separate chunk
+``` 
+
+```{r BioCParallel, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, results='hide'}
+gb <- globalenv(); assign("gb", gb)
+# Set Parallel Parameters --------------------------------------
+gb$totNum <- totNum <- gb$GetTotalPairs(gb$fixerrors)
+fixerrors <- as.data.frame(gb$fixerrors)
+
+# MethylAid Summarize ------------------------------------------
+is_validation <- sjmisc::str_contains(gb$runID, "VAL")
+gb$sdata <- sdata <- MethylAid::summarize(fixerrors, verbose = TRUE, force = TRUE)
+assign("sdata", sdata, envir = gb)
+## Get MU Data & Colors ----------------------------------------
+gb$targets <- fixerrors
+MU <- log2(t(sdata@MU))
+targets <- sdata@targets; assign("targets", sdata@targets, envir = gb)
+d <- sdata@plotdata; assign("d", sdata@plotdata, envir = gb)
+## Merge and Rotate Data ----------------------------------------
+mergedMU <- merge(MU, targets, by = "row.names")
+data_rotated <- gb$rotateData(mergedMU, columns = c("Methylated", "Unmethylated"))
+data_rotated$x = data_rotated[, 2]
+data_rotated$y = data_rotated[, 3]
+gb$data_rotated <- data_rotated
+MUvals <- gb$GetNewDt(data_rotated)
+plot.colours <- pals::glasbey()[1:(length(MUvals$final_data$Sample_Name))]
+```
+
+```{r Plot Getter, echo=FALSE, message=FALSE, warning=FALSE, results='hide', paged.print=FALSE}
+gb <- globalenv(); assign("gb", gb)
+## Plot Title Names -------------------------------------- --------------------------------
+pltNames <- c(
+    "Signal Intensity QC- Checks Raw signal quality (*MU > 9* is Passing)",
+    "Biological Positive Control- Overall Amplification (*SBPC > 11* is Passing)",
+    "Bisulfite Conversion Control- Zymo Kit Performance (*BS > 10* is Passing)",
+    "Hybridization Control QC- Checks Probe Binding (*SHC > 12.75* is Passing)",
+    "Negative Control QC- Checks negative probes above background \n(*Pvalue > 0.95* is Passing)"
+    )
+swm <- function(funObj){return(suppressMessages(suppressWarnings(funObj)))}
+totNum <- gb$totNum; plotParams <- gb$plotParams; makeLabels <- gb$makeLabels
+## MU Plot --------------------------------------------------------------------------------
+dat.mu <- swm(gb$GetNewDt(gb$data_rotated))
+plotMU <- swm(plotParams(totNum, dParam = dat.mu, xincept = 9, yincept = 0))
+plotMU <- swm(makeLabels(totNum, plotName = paste0(pltNames[1]),
+                         xName = "Log2 sqrt(M*U)", yName = "Log2 (M/U)", thePlot = plotMU))
+## Plot OP Sample Dependent QC ------------------------------------------------------------
+dat.op <- gb$get.op.dat(gb$targets)
+plotOP <- swm(plotParams(totNum, dParam = dat.op, xincept = 11, yincept = 0))
+plotOP <- swm(makeLabels(totNum, plotName = paste0(pltNames[2]),
+                         xName = "log2 sqrt(R*G)", yName = "log2 (R/G)", thePlot = plotOP))
+## Plot BS Biological Control -------------------------------------------------------------
+dat.bs <- gb$get.bs.dat(gb$targets)
+plotBS <- swm(plotParams(totNum, dParam = dat.bs, xincept = 10, yincept = 0))
+plotBS <- swm(makeLabels(totNum, plotName = paste0(pltNames[3]),
+                         xName = "log2 sqrt(R*G)", yName = "log2 (R/G)", thePlot = plotBS))
+##Plot HC Hybridization Control -----------------------------------------------------------
+dat.hc <- gb$get.hc.dat(gb$targets)
+plotHC <- swm(plotParams(totNum, dParam = gb$GetNewDt(dat.hc), xincept = 12.75, yincept = 0))
+plotHC <- swm(makeLabels(totNum, plotName = paste0(pltNames[4]),
+                         xName = "log2 sqrt(H*L)", yName = "log2 (H/L)", thePlot = plotHC))
+## Plot DP --------------------------------------------------------------------------------
+dat.dp <- gb$get.dp.dat(gb)
+plotDP <- swm(plotParams(totNum, dParam = gb$GetNewDt(dat.dp), xincept = 0, yincept = 0.95))
+plotDP <- swm(makeLabels(totNum, plotName = paste0(pltNames[5]),
+                         xName = "Samples", yName = "Pvalue", thePlot = plotDP))
+## Save Plot Values -----------------------------------------------------------------------
+gb$SaveQCmetrics(gb, dat.mu, dat.op, dat.bs, dat.hc, dat.dp)
+```
+
+```{r "Signal Intensity QC", echo=FALSE, error=FALSE, fig.align="left", fig.margin=TRUE, message=FALSE, warning=FALSE, results='hide', fig.width=14.8, fig.height=9.6}
+gb <- globalenv(); assign("gb", gb)
+summaryFail <- NULL
+pltCap <- paste(gb$runID, "Page 2 of 8")
+pmu <- plotMU + ggplot2::labs(
+    subtitle = "Median methylated vs unmethylated log2 intensity plot checks for the raw signal quality per sample. For each CpG site,\nmethylated and unmethylated measurements are produced. The measure of relative methylation levels depend on these signal intensities.\nSamples falling **above threshold (MU > 9) pass QC** and anything below the threshold are considered QC Failed samples.\n", caption = pltCap)
+failedMU <- plotMU$data$x <= 9
+failedMU <- plotMU$data$MP_num[failedMU]
+summaryFail <- gb$genSumFail(failedMU, "Signal intensity", summaryFail)
+summaryFail <- summaryFail;assign("summaryFail", summaryFail, envir = gb)
+```
+
+```{r "Signal Intensity QC2", echo=FALSE, warning=FALSE, message=FALSE, fig.align="left", fig.margin=TRUE, results='hide', fig.width=14.8, fig.height=9.6}
+plotMU2 <- pmu 
+```
+
+```{r "Signal Intensity & Biological Positive Plot", echo=FALSE, warning=FALSE, fig.align="left", message=FALSE, fig.margin=TRUE, fig.width=14.8, fig.height=9.6}
+plotMU2 + ggplot2::theme(plot.title = ggplot2::element_text(color = "navy", size = 26, face = "bold"))
+pltCap <- paste(gb$runID, "Page 3 of 8")
+plotOP + ggplot2::labs(subtitle = "Sample biological positive control is assessed based on Non-polymorphic (NP) control probes. NP controls are used to test the overall performance of assay from amplification to detection.\nSamples falling **above threshold (SBPC > 11) pass** this QC and anything below the threshold are considered bad samples.\n", caption = pltCap)
+failedOP <- plotOP$data$x <= 11
+failedOP <- plotOP$data$MP_num[failedOP]
+summaryFail <- gb$genSumFail(failedOP, "Positive Control", summaryFail)
+```
+
+```{r "Bisulfite Conversion", echo=FALSE, warning=FALSE, message=FALSE, fig.align="left", fig.margin=TRUE, fig.width=14.8, fig.height=9.6}
+pltCap <- paste(gb$runID, "Page 4 of 8")
+plotBS + ggplot2::labs(subtitle = "Bisulfite conversion quality is assessed based on Bisulfite Conversion I (BSI) control probes. BSI control probes use Infinium I probe design to monitor efficiency of bisulfite conversion.\nSamples falling **above threshold (BS > 10) pass** this QC and anything below the threshold are considered bad samples.\n", caption = pltCap)
+failedBS <- plotBS$data$x <= 10
+failedBS <- plotBS$data$MP_num[failedBS]
+summaryFail <- gb$genSumFail(failedBS, "Bisulfite Conversion", summaryFail)
+```
+
+```{r "Sample hybridization Plot", echo=FALSE, fig.margin=TRUE, warning=FALSE, fig.align="left", message=FALSE, fig.width=14.8, fig.height=9.6}
+pltCap <- paste(gb$runID, "Page 5 of 8")
+plotHC + ggplot2::labs(subtitle = "Sample hybridization is assessed based on Hybridization control (HC) probes.\nHC probes test the overall performance of the entire assay using synthetic targets instead of amplified DNA.\n**Samples falling above threshold (SHC > 12.75) pass this QC** and anything below the threshold are considered QC Failed samples.", caption = pltCap)
+failedHC <- plotHC$data$x <= 12.75
+failedHC <- plotHC$data$MP_num[failedHC]
+summaryFail <- gb$genSumFail(failedHC, "Probe Hybridization", summaryFail)
+```
+
+```{r "Sample negative control Plot", fig.margin=TRUE, echo=FALSE, warning=FALSE, fig.align="left", message=FALSE, fig.width=14.8, fig.height=9.6}
+pltCap <- paste(gb$runID, "Page 6 of 8")
+plotDP + ggplot2::labs(subtitle = "Sample negative control is assessed based on negative control (NC) probes. NC are randomly permuted sequences that should not hybridize to DNA template.\nThe mean signal of these probes defines the background of the system.\nTo be considered as passing this QC, **less than 95%** of probes should be above the background signal.", caption = pltCap)
+failedDP <- plotDP$data$y <= 0.95
+failedDP <- plotDP$data$MP_num[failedDP]
+summaryFail <- gb$genSumFail(failedDP, "Negative Control", summaryFail)
+summarName <- paste("Classifier Report Summary for", runID) # summary table heading
+```
+<hr class="solid"><h2>`r I(as.character(summarName))`</h2><div style="align-content:left;width:950px">
+```{r label="Summary Table", fig.align="left", message=FALSE, echo=FALSE, warning=FALSE}
+redCsv <- file.path(fs::path_home(), "Desktop", runID, paste0(runID, "_Redcap.csv"))
+if(!file.exists(redCsv)) {
+  knitr::knit_exit()
+}
+mnpOutTb <- as.data.frame(read.csv(redCsv, strip.white = T))
+mnpOutTb <- unique(mnpOutTb)
+if (!nrow(mnpOutTb) > 1) {
+    knitr::knit_exit()
+}
+knitr::asis_output(gb$GetSummaryTab(mnpOutTb))
+```
+<footer><p>Page 7 of 8</p></footer></div><hr class="solid">
+```{r, post_note_two, echo=FALSE, results='asis'}
+gb$GetControlSam(mnpOutTb)
+```
+<div><h2>QC Summary</h2>
+```{r, post_note, echo=FALSE, results='asis', out.width="65%", message=TRUE}
+gb$MsgFailedQCs(summaryFail)
+```
+<h2>Classifier Scores Summary</h2><ul class="scrs">
+```{r, post_note2, echo=FALSE, results='asis', out.width="65%"}
+failedSams <- gb$GetFailedSams(mnpOutTb)
+gb$MsgFailedSams(failedSams)
+htmltools::includeHTML(file.path(gitPath,"QC-Style.html"))
+```
+</ul></p><h3>NOTE:</h3><p class="mnpnote"></p><p class="qcnote"></p>
+```{r, label="Summary_notes", echo=FALSE, results='asis', out.width="65%"}
+gb <- globalenv(); assign("gb", gb)
+xlsmSheet <- file.path(gb$runPath, paste0(gb$runID,".xlsm"))
+if(!file.exists(xlsmSheet)){knitr::knit_exit()}
+noteData <- gb$GetNotesData(xlsmSheet)
+knitr::asis_output(noteData)
+```
+<footer><p>Page 8 of 8</p></footer></div>

@@ -1,0 +1,60 @@
+```{r setup_main, include=FALSE, echo=FALSE, warning=FALSE, cache=TRUE, fig.keep='all'}
+gb <- globalenv(); assign("gb", gb)
+# https://bookdown.org/yihui/rmarkdown-cookbook/custom-knit.html
+supM <- function(sobj){return(suppressMessages(suppressWarnings(sobj)))}
+supPk <- function(sobj){return(suppressPackageStartupMessages(sobj))}
+
+# Sourcing Rscripts ------------------------------
+rFiles = c(
+    "loadPacks.R",
+    "getRGsetBetas.R",
+    "TsnePlotter.R",
+    "getIdatFiles.R",
+    "hmFunctions.R",
+    "plotlyBetas.R",
+    "cnvFunctions.R",
+    "tableMaker.R",
+    "pathviews.R",
+    "pullRedcap_manual.R",
+    "cleanSamples.R",
+    "SetupMethKnit.R"
+)
+mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/"
+
+sourceScripts <- function(mainHub, rFiles){
+    scripts = paste0(mainHub, rFiles)
+    suppressWarnings(lapply(scripts, function(i){devtools::source_url(i)}))
+}
+
+sourceScripts(mainHub, rFiles)
+
+# Knitr Options ------------------------------
+knitOpt <- list(
+    echo = FALSE,
+    message = FALSE,
+    warning = FALSE,
+    cache = FALSE,
+    error = TRUE,
+    rows.print = 15,
+    fig.keep = "all",
+    fig.show = "asis",
+    class.source = "bg-success",
+    results = 'asis',
+    fig.path = "figures/"
+)
+
+knitr::opts_knit$set(knitOpt); knitr::opts_chunk$set(knitOpt)
+animation::ani.options(autobrowse = FALSE); options(width=1500)
+library(magrittr)
+library(dplyr)
+
+setKnitDir <- function(runDir) {
+  syscmd <- paste("cd", runDir)
+  system(syscmd); setwd(runDir)
+  knitr::opts_knit$set(root.dir = runDir)
+}
+
+set.seed(1234)
+source('Params_input.R')
+source('Params_output.R')
+```

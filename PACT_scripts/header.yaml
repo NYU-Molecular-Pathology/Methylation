@@ -1,0 +1,19 @@
+---
+output: 
+    html_document:
+        theme: spacelab
+        toc: true
+        number_sections: false
+        toc_float: true
+        code_download: true
+toc_collapsed: true
+editor_options: 
+  chunk_output_type: console
+params:
+  pactName: "PACT-22-##"
+  userName: "Jonathan Serrano"
+  workDir: "/Volumes/CBioinformatics/jonathan/pact/consensus"
+title: "Consensus `r params$pactName`"
+author: "`r params$userName`"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+---

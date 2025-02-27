@@ -1,0 +1,481 @@
+---
+output: 
+    html_document:
+        theme: spacelab
+        toc: true
+        number_sections: false
+        toc_float: true
+        toc_depth: 4
+toc_collapsed: true
+editor_options: 
+  chunk_output_type: console
+params:
+  outDir: "/Volumes/molecular/Molecular/Validation/Genexus/Results/2022/22-GX-011"
+---
+
+```{r, label='PACTNameInput', echo=FALSE, message=TRUE, warning=FALSE, error=FALSE, include=FALSE}
+# Input Parameters
+outDir <-  params$outDir # working Knit directory
+runName <- basename(outDir)
+```
+
+```{css, echo=FALSE}
+<style>
+.main-container {
+  margin: 0;
+  margin-left:0px;
+  margin-right:0px;
+  padding:0;
+  align-items: left;
+  display: inline-block;
+  justify-content: left;
+}
+div.main-container {
+  margin: 0;
+  padding:0;
+  align-items: left;
+  display: inline-block;
+  justify-content: left;
+  }
+.tocify{
+  width:"110px";
+  margin: 0;
+  padding:0;
+  align-items: left;
+  display: inline-block;
+  justify-content: left;
+  }
+#TOC{width: "100px";}
+#TOC{   
+    margin: 0 !important;
+    height: 100%;
+    border: none;
+    padding: 0;
+    background-color: #f8f8f8;
+    left: 0;
+    border-right: 1px solid #e7e7e7
+    }
+.tocify{
+  background-color: #f8f8f8;
+  border-radius: 0px;
+}
+
+.list-group-item{
+  background-color: #f8f8f8;
+}
+div.tocify {
+    width: 10%;
+    max-width: 200px;
+    max-height: 100% !important;
+}
+.toc-content {
+    padding-left: 20px;
+    padding-right: 20px;
+    margin: 0px;
+    text-align: left;
+    display:inline-block;
+    width:1400px;
+}
+.row {
+    margin-left: 120px;
+    margin-right: 0px;
+    display: grid;
+}
+</style>
+```
+
+---
+title: "`r runName`"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+---
+
+```{r setup, include=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+# Librarian checks if package exists, if it cannot load, it tries to install package from CRAN, then BioConductor, & GitHub
+if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 6, quiet=T)}
+pkgs <- c("animation","tidyverse","knitr","kableExtra","stringr","readr","ggplot2","data.table","plotly","DT","pdftools", "htmltools", "magrittr","rJava")
+librarian::shelf(pkgs, ask=F)
+animation::ani.options(autobrowse = FALSE); options(width=1600)
+```
+<script>
+document.getElementById("TOC").style.width = "110px";
+document.getElementById("TOC").style.background = "lightgrey";
+document.getElementById("TOC").style.zIndex = "100";
+document.getElementsByClassName("tocify").style.zIndex = "100";
+</script>
+```{r, label='Input Data', echo=FALSE, message=FALSE, warning=FALSE, error=FALSE}
+nexusCsv <- "snvIndels.csv"
+pactCsv <- "snvPhilips.csv"
+qcCsv <- "qcInfo.csv" # tsv file that is from QC
+```
+
+```{r, label='Read in Data', echo=FALSE, warning=FALSE, error=FALSE, include=FALSE}
+# Checks if you have IGV snapshot, if not, downloads to home directory
+if(!dir.exists("~/IGV_snapshot/")|!file.exists("~/IGV_snapshot/igv.sh")){
+  download.file(url = 'https://data.broadinstitute.org/igv/projects/downloads/snapshot/IGV_snapshot.zip',
+                '~/IGV_snapshot.zip', method='curl')
+  unzip(zipfile='~/IGV_snapshot.zip')
+  # https://www.oracle.com/java/technologies/downloads/#java11-mac
+  system("chmod -R +rwx ~/IGV_snapshot/")
+}
+
+# Changes the working directory and creates output directory
+changeDirectory <- function(outDir) {
+  if (!dir.exists(outDir)) {dir.create(outDir)}
+  sysCmd <- paste("cd", outDir)
+  system(sysCmd); setwd(outDir)
+}
+
+changeDirectory(outDir)
+
+getFile <- function(fiName){
+  fiName <- list.files(path=outDir, pattern = fiName, all.files = T, full.names = T)[1]
+  message(fiName)
+  if(file.exists(fiName)){
+    fiData <- read.csv(fiName, quote = "", row.names = NULL)
+  }else{
+    message(fiName, "Not found!")
+    stopifnot(file.exists(fiName))}
+  return(fiData)
+}
+
+qcData <- getFile(qcCsv)
+nexusSnv <- getFile(nexusCsv)
+pactSnv <- getFile(pactCsv)
+    
+samples <- unique(qcData[,"Sample.Name"])
+samples <- samples[stringr::str_detect(samples, "NGS")==T & !is.na(samples)]
+```
+
+```{r, label='ggplotly loader', include=FALSE, cache=FALSE}
+htmltools::tagList(plotly::ggplotly(ggplot2::ggplot()))
+```
+
+```{r, label='PNG Output', echo=FALSE, message=TRUE, warning=FALSE, results='asis', error=FALSE, fig.keep='all', fig.align="left", fig.show="asis", out.width = '100%', fig.width=15}
+library("kableExtra")
+
+printTab <- function(objDat) {
+  newTa <- objDat %>%
+    knitr::kable("html",booktabs = T, escape = F, linesep = "", row.names = F) %>%
+    kableExtra::kable_styling(bootstrap_options = c("striped", "condensed"), 
+                              full_width = F, position="left")
+    print(newTa)
+    cat("\n\n")
+}
+
+formatCommon <- function(objDat) {
+  objDat[is.na(objDat)] <- ""
+  xtraCss1="color:rgb(255,0,0);border-width:3px;border-style:solid;border-color:rgb(0,0,0)"
+  xtraCss2="color:rgb(0,0,0);background:rgb(199, 221, 237)"
+  xtraCss3="color:rgb(0,0,0);border-width:2px;border-style:solid;background:rgb(255, 175, 122);background-color:rgb(255, 175, 122);border-color:rgb(0,0,0)"
+  newTa <- objDat %>%
+    knitr::kable("html", booktabs = T, escape = F, linesep = "", row.names = F) %>%
+    kableExtra::kable_styling(bootstrap_options = c("striped", "condensed"), 
+                              full_width = F, position="left")
+  color.me <- which(stringr::str_detect(colnames(objDat),"Genexus"))
+  newTa <- newTa  %>% column_spec(color.me, bold = T, extra_css = xtraCss2)
+  color.me <- which(objDat$'Called By Genexus'==objDat$'Called By PACT')
+  newTa <- newTa  %>% kableExtra::row_spec(row=color.me, bold = T, color = "black", 
+                                           background = "lightgreen", extra_css = xtraCss1)
+  color.me <- which(objDat$'Called By Genexus'==T & objDat$'Called By PACT'==F)
+  newTa <- newTa  %>% kableExtra::row_spec(row=color.me, bold = T, 
+                                           color = "black",  extra_css = xtraCss3)
+  print(newTa)
+  cat("\n\n")
+}
+
+formatBoth <- function(objDat){
+  xtraCss <- "color:rgb(0,0,0);border-width:3px;border-style:solid;border-color:rgb(0,0,0);background:rgb(124,194,247);"
+  newTa <- objDat %>%
+    knitr::kable("html", booktabs = T, escape = F, linesep = "", row.names = F) %>%
+    kableExtra::kable_styling(bootstrap_options = c("striped", "condensed"), 
+                              full_width = F, position="left")
+  color.me <- which(stringr::str_detect(colnames(objDat),"Coordinate|Locus"))
+  newTa <- newTa  %>% column_spec(color.me, bold = T, extra_css = xtraCss)
+  print(newTa)
+    cat("\n\n")
+}
+
+makeSpecTab <- function(objDat){
+  newTa <- knitr::kable(objDat, row.names=F, "html",table.attr = "style='width:100%;'") %>%
+      kableExtra::kable_styling(bootstrap_options = c("condensed"), full_width = F, position="left") %>%
+      kableExtra::column_spec(1:5, width = "1.5cm")
+    print(newTa)
+    cat("\n\n")
+}
+
+makeQCTab <- function(objDat) {
+  colnames(objDat) <- gsub("Mean AQ20 Read Length", "Mean AQ20", colnames(objDat))
+  colnames(objDat) <- gsub("Mean Read Length", "Mean", colnames(objDat))
+  colnames(objDat) <- gsub("Average Reads", "Avg Reads", colnames(objDat))
+  colnames(objDat) <- gsub("Mean bp NTC", "NTC(bp)", colnames(objDat))
+  newTa <-knitr::kable(objDat, row.names = F, "html", table.attr = "style='width:70%;'")
+  newTa <-kableExtra::kable_styling(newTa, bootstrap_options = c("striped", "condensed"), full_width = T, position = "left")
+  colVal <- 1:ncol(objDat)
+  newTa <- kableExtra::column_spec(newTa, colVal, width = "1cm")
+  print(newTa)
+}
+```
+
+```{r, label='Data Table Output', echo=FALSE, message=TRUE, warning=FALSE, results='asis', error=FALSE, fig.keep='all', fig.align="left", fig.show="asis", out.width = '100%', fig.width=15}
+#dtTab <- htmltools::tagList(DT::datatable(objDat, rownames = F, options=dtOpts,width = '100%', height = "120%"))
+makeDT <- function(tabNam, objDat, sam = NULL) {
+  note1 = "\n\nNote: Philips SNV filter = tumor_freq >=5% normal_freq >2.0% and tumor depth > 200 \n\n"
+  note2 = "\n\nNo additional data table for this sample tab\n\n"
+  cat(paste0("## **", tabNam, "** \n\n"))
+  if (!is.null(objDat)) {
+    if (stringr::str_detect(tabNam, "Both") == T) {
+      formatBoth(objDat)
+    } else
+    
+    if (stringr::str_detect(tabNam, "Specimen") == T) {
+      makeSpecTab(objDat)
+    } else
+    if (tabNam == "QC") {
+      makeQCTab(objDat[,1:11])
+      makeQCTab(objDat[,12:ncol(objDat)])
+      cat("\n\n")
+    } else{
+      if (tabNam == "Common Calls") {
+        cat(note1)
+        formatCommon(objDat)
+      } else{
+        printTab(objDat)
+      }
+    }
+  } else{
+    cat(note2)
+    cat("\n\n")
+  }
+}
+
+# Generates a new Sample Tabbed row in html
+makeNewTab <- function(sam){
+  cat(paste("\n\n#", sam, "{.tabset}","\n\n"))
+  qcTab <- qcData[qcData$Sample.Name==sam,]
+  return(qcTab)
+}
+```
+
+```{r, label='Format Output', echo=FALSE, message=TRUE, warning=FALSE, results='asis', error=FALSE, fig.keep='all', fig.align="left", fig.show="asis", out.width = '100%', fig.width=15}
+dropDots <- function(tabDf){
+  colnames(tabDf)<- stringr::str_replace_all(colnames(tabDf),"\\.", " ")
+  colnames(tabDf)<- stringr::str_replace_all(colnames(tabDf),"  ", " ")
+  colnames(tabDf)<- stringr::str_replace_all(colnames(tabDf),"_", " ")
+  tabDf <- select(tabDf, -contains("Unnamed"))
+  return(tabDf)
+}
+
+modifyColumns <- function(kwd, modData, selected){
+  modData <- modData[,selected]
+  colList <- paste(kwd, colnames(modData))
+  colnames(modData)<- colList
+  colnames(modData)[1]<- 'Gene'
+  return(modData)
+}
+
+genxCol <- c("Gene","Locus","Allele.Frequency", "Amino.Acid.Change",
+             "Phred.QUAL.Score", "Molecular.Depth") #"AA.Change", "Allele.Fraction"
+
+philCol <- c("HGNC_gene","HGVSp_Short","AberrationType","Coordinate",
+             "tumor_freq","normal_freq","tumor_dp","normal_dp")
+
+getPngOut <- function(sam, outBam, theLocus){
+  outLocus <- gsub(":", "_", theLocus)
+  outBam1 = stringr::str_split(outBam, "_")[[1]]
+  outBam1 = outBam1[length(outBam1) - 1]
+  outBam1 = paste(sam, outBam1, outLocus, '.png', sep = "_")
+  return(outBam1)
+}
+
+addBatLine <- function(line){
+  write(line, file = "IGV_test.bat", append = TRUE)
+}
+
+writeBat <- function(sam, theLocus, bamFiles) {
+  fileConn <- file("IGV_test.bat")
+  outBam1 <- getPngOut(sam, bamFiles[1], theLocus)
+  outBam2 <- getPngOut(sam, bamFiles[2], theLocus)
+  line2 = paste('snapshotDirectory', file.path(outDir, 'IGV'))
+  writeLines(c('new', line2), fileConn)
+  close(fileConn)
+  addBatLine(paste('load', bamFiles[1]))
+  addBatLine(paste('load', bamFiles[2]))
+  addBatLine('genome hg19')
+  addBatLine('maxPanelHeight 800')
+  addBatLine(paste('goto', theLocus))
+  addBatLine(paste('snapshot', outBam1))
+  addBatLine(paste('goto', theLocus))
+  addBatLine(paste('snapshot', outBam2))
+  addBatLine('exit')
+  outTwo <- c(ivg1 = outBam1, igv2 = outBam2)
+  return(outTwo)
+}
+
+getBamFi <- function(specimenCsv){
+  specInfo <- as.data.frame(read.delim(specimenCsv, sep = ","))
+  currYear <- "2022"
+  demuxDir <- '/Volumes/molecular/Molecular/NGS607'
+  currDemux <- file.path(demuxDir, currYear)
+  bamNam <- specInfo$Run.Number[1] #Sample.Type=='tumor',]
+  bamsDir <- file.path(currDemux,bamNam, 'output')
+  bamFiles <- list.files(path = bamsDir, pattern = ".bam",full.names = T)
+  if(length(bamFiles==0)){
+    bamsDir <- file.path(currDemux, bamNam, 'output')
+    bamFiles <- list.files(path = bamsDir, pattern = ".bam",full.names = T, recursive = T)
+  }
+  if(length(bamFiles)==0) {
+    demuxDir <- '/Volumes/molecular/Molecular/NGS607/2021'
+    bamsDir <- file.path(demuxDir, bamNam, 'output')
+    bamFiles <- list.files(path = bamsDir, pattern = ".bam", full.names = T, recursive = T)
+  }
+  if(length(bamFiles)==0) {
+    currYear <- format(Sys.Date(), "%Y")
+    demuxDir <- paste0('/Volumes/molecular/Molecular/NGS607/', currYear)
+    bamsDir <- file.path(demuxDir, bamNam, 'output')
+    bamFiles <- list.files(path = bamsDir, pattern = ".bam", full.names = T, recursive = T)
+  }
+  if(!(length(bamFiles)>0)){
+  warning("Bam files are missing from\n:", bamsDir)
+    stopifnot(length(bamFiles)>0)  
+  }
+  bams <- stringr::str_detect(bamFiles, paste(specInfo$DNA.RNA.Number,collapse = "|"))
+  bamFiles <- bamFiles[bams]
+  bams <- stringr::str_detect(bamFiles, ".bai", negate = T)
+  bamFiles <- bamFiles[bams]
+  bams <- stringr::str_detect(bamFiles, paste(specInfo$Accession.Identifier,collapse = "|"))
+  bamFiles <- bamFiles[bams]
+  
+  return(bamFiles)
+}
+
+makeSnapshot <- function(together,sam, kwd){
+  specimenCsv <- file.path(outDir, "philipsNGS", sam, "specimen.csv")
+  if (file.exists(specimenCsv)) {
+  bamFiles <-getBamFi(specimenCsv)
+  cat(paste0("## **", 'IGV of ',kwd, "**","{.tabset}"," \n\n"))
+  for (gn in unique(together$Gene)) {
+    theLocus <- together[together$Gene == gn, 'Genexus Locus']
+    if(is.null(theLocus)){
+      theLocus <- together[together$Gene == gn, 'Locus']
+    }
+    cat(paste0("### **", gn, "**","{.tabset}","\n\n"))
+    for (locus in theLocus) {
+      cat(paste0("#### **", locus, "**","\n\n"))
+      outFi <- writeBat(sam, locus, bamFiles)
+      sysBin <- "~/IGV_snapshot/igv.sh -b IGV_test.bat"
+      igvOut <- file.path(outDir,'IGV',outFi)
+      if(!file.exists(igvOut[1])) {system(sysBin)}
+      img1 <- paste0('![',outFi[1],'](',igvOut[1],')','{width=500px}')
+      if(file.exists(igvOut[1])){
+      cat("\n\n")
+      cat(img1)
+      cat("\n\n")
+      cat("\n\n**Bam Files Used**:\n\n")
+      cat(bamFiles[1],sep = "\n\n")
+      cat(bamFiles[2],sep = "\n\n")
+      cat("\n\n")
+      }
+    }
+  }
+  }
+}
+
+makeDiffTab <- function(together, sam){
+  onlyNexus <- together$`Called By Genexus` == T & together$`Called By PACT` == F
+  onBoth <- together$`Called By Genexus` == together$`Called By PACT`
+  selec <- stringr::str_detect(colnames(together), 'PACT',negate=T)
+  notPact <- together[onlyNexus,selec]
+  if(nrow(notPact)>0) {
+  makeDT("Not Called by PACT", notPact)
+  cat("\n\n")
+  makeSnapshot(notPact, sam, "Genexus Called")
+  }
+  bothCall <- together[onBoth,]
+  if(nrow(bothCall)>0) {
+    makeDT("Called By Both", bothCall)
+    cat("\n\n")
+    makeSnapshot(bothCall, sam, "Called by both")
+  }
+}
+
+makeTogether <- function(nexus,philips){
+  nexus$Called.By.Genexus <- TRUE
+  philips$Called.By.PACT <- TRUE
+  together <- merge(philips, nexus, by='Gene', all=T)
+  together$Called.By.Genexus[is.na(together$Called.By.Genexus)] <- FALSE
+  together$Called.By.PACT[is.na(together$Called.By.PACT)] <- FALSE
+  together <- together %>% dplyr::relocate(Called.By.PACT,Called.By.Genexus)
+  together <- dropDots(together)
+  return(together)
+}
+
+makeCompare <- function(sam, snvOut) {
+  nexus <- nexusSnv[nexusSnv[, 1] == sam, ]
+   if(nrow(nexus) > 0){
+  tryCatch(
+    expr = {
+      nexus <- modifyColumns(kwd = "Genexus", nexus, genxCol)
+    },
+    error = function(e) {
+      genxCol[3:4] <- c("AA.Change", "Allele.Fraction")
+      nexus <- modifyColumns(kwd = "Genexus", nexus, genxCol)
+    }
+  )
+     philips <- modifyColumns(kwd = "PACT", snvOut, philCol)
+     if(nrow(philips) > 0) {
+       together <- makeTogether(nexus, philips)
+       makeDT("Common Calls", together)
+       cat("\n\n")
+       makeDiffTab(together, sam)
+     }else{
+        nexus <- dropDots(nexus)
+        makeDT("No Philips Data Availible", nexus)
+        cat("\n\n")
+        makeSnapshot(nexus, sam, "Genexus Called")
+       }
+     }else{makeDT("No Genexus Calls", NULL)}
+}
+
+makeVariantsTab <- function(sam) {
+  snvOut <- pactSnv[!is.na(pactSnv$tumor_freq),]
+  snvOut <- snvOut[snvOut$Sample == sam,]
+  makeDT("Philips SNV", dropDots(snvOut))
+  cat("\n\n")
+  makeCompare(sam, snvOut)
+}
+
+makeSpecimenTab <- function(sam){
+  specimenCsv <- file.path(outDir, "philipsNGS", sam, "specimen.csv")
+  if (file.exists(specimenCsv)) {
+    samOut <- as.data.frame(read.delim(specimenCsv, sep = ","))
+    samOut <- dropDots(samOut)
+    makeDT("Philips Specimen Info", samOut[, c(1, 3:13)])
+    cat("\n\n")
+  }
+}
+
+```
+  
+```{r, label='Table Output', echo=FALSE, warning=FALSE, results='asis', error=FALSE, fig.keep='all', include=TRUE, fig.align="left", fig.show="asis", fig.width=15}  
+nonMutant <- data.frame(matrix(ncol = ncol(nexusSnv), nrow = 1))
+colnames(nonMutant) <- colnames(nexusSnv)
+nonMutant[1,]<- "None"
+# Iterates for each NGS sample
+for (sam in samples) {
+  qcTab <- makeNewTab(sam)
+  qcTab <- dropDots(qcTab)
+  makeDT("QC", qcTab)
+  if (sam %in% nexusSnv$Sample.Name) {
+    samRows <- nexusSnv$Sample.Name == sam
+    snvTab <- nexusSnv[samRows, ]
+    makeDT("Genexus SNV/INDEL", objDat = dropDots(snvTab))
+  } else{
+    nonMutant$Test_Case <- sam
+    nonMutant <- dropDots(nonMutant)
+    makeDT("Genexus SNV/INDEL", objDat = nonMutant)
+  }
+  makeVariantsTab(sam)
+  makeSpecimenTab(sam)
+}
+```

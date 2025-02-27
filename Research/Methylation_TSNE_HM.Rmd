@@ -1,0 +1,140 @@
+---
+output:
+  html_document: 
+    self_contained: yes
+    code_download: yes
+    toc_depth: 2
+---
+
+```{r setup, fig.keep='all', fig.path="figures/", include=FALSE, error=FALSE}
+gb <- globalenv(); assign("gb", gb)
+gitUrl <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research"
+devtools::source_url(file.path(gitUrl, "SetupMethKnit.R")); gb$loadHtmlTag()
+targets <- gb$GenerateTargets(gb)
+```
+
+```{css, label='css-code', echo=FALSE, code=readLines(gb$cssLink)}
+```
+
+---
+title: "`r gb$htmlTitle`"
+author: "`r gb$yourName`"
+date: "`r gb$yourDate`"
+---
+
+```{r, Project-Info, child='params/about.Rmd', include=TRUE, cache=FALSE}
+```
+
+# Input Sample Sheet Information
+```{r, Samplesheet, out.width='60%', echo=FALSE, message=FALSE, results='asis'}
+gb$makeDt(targets, gb, T); gb$htmlClose()
+```
+
+## Sample Types from Sample Sheet Above
+```{r, sam-type, echo=FALSE, out.width='25%', results='asis', fig.align='left'}
+gb$MsgSamFreq(targets, gb)
+```
+
+```{r, Load-RGSet-and-Betas, echo=FALSE, include=FALSE}
+RGSet <- gb$GetRgsetDat(csvPath = gb$samsheet, gb)
+targets <- gb$MatchRGtargets(RGSet, targets, gb$samsheet)
+betas <- gb$cleanRawProbes(RGSet, targets, gb)
+theMissing <- gb$dropBadQc(targets, betas, gb$samsheet)
+RGSet <- gb$cleanRgset(RGSet, gb$col_sentrix, betas)
+gb$mSetSq.beta <- gb$GetMsetSq(RGSet, targets, gb$mbfile)
+gb$LoopSuperviseCategory(gb, RGSet, betas)
+```
+
+# MDS Plots {.tabset}
+```{r, MDS-plots, opts.label='mdsopts'}
+gb$MakeHideButton("MDSdata")
+gb$LoopPlotMds(gb$mSetSq.beta, targets, gb$selectedVars, gb$topN)
+gb$MessageBatchMix(targets, gb)
+gb$ShowAnyMissed(gb); gb$htmlClose()
+```
+
+# All Groups Unsupervised TSNE
+```{r, Unsuper-TSNE, opts.label='tsnechunk', fig.path=tsneOutU}
+gb$MakeHideButton("unsupertsne")
+targets1 <- gb$SubsetTargets(targets, gb$variable_to_filter)
+gb$run_tsne_plots(targets1, betas, gb, shapeVariable = gb$col_shapes)
+gb$CatShapeColor(tbset = FALSE)
+gb$run_tsne_plots(targets1, betas, gb, shapeVariable = gb$col_Grouping)
+gb$htmlClose()
+```
+
+# DMP Supervised TSNE
+```{r, Supervised-TSNE, opts.label='tsnechunk', fig.path=tsneOutS}
+gb$MakeHideButton("supertsne")
+gb$LoopSupervisedPlots(targets, gb); gb$htmlClose()
+```
+
+# Unsupervised HeatMaps
+<hr style="border:2px solid gray">
+```{r, HM-unsupervised-anno, echo=FALSE, include=FALSE, eval=gb$genHeatMaps}
+gb$LoadHeatMapLibs()
+hmPlotData <- gb$GetHeatMapData(targets, betas, RGSet, gb)
+```
+
+## All groups HeatMap (Unsupervised) {.tabset}
+```{r, Unsuper-HM, opts.label='hmopts', fig.path=hmOutU, eval=gb$genHeatMaps}
+gb$MakeHideButton("uheatmaps")
+gb$LoopPrintHeatMap(gb, unBetas = hmPlotData$unBetas, ha = hmPlotData$ha)
+gb$htmlClose()
+```
+
+# Supervised HeatMaps
+<hr style="border:2px solid gray">
+```{r, HM-super, echo=FALSE, fig.keep='all', include=FALSE, eval=gb$superHeat}
+gb$GetSuperHmData(gb, targets, RGSet)
+```
+
+## All groups HeatMap (Supervised) {.tabset}
+```{r, supervise-HM, opts.label='hmopts', fig.path = hmOutS, eval=gb$superHeat}
+gb$MakeHideButton("sheatmaps")
+gb$LoopSupervisedHm(gb)
+gb$htmlClose()
+```
+
+```{r, label='segfile-save', opts.label='cn_opts1', eval=gb$genCNchunk}
+gb$cnData <- gb$grabClusterDat(gb$seg_clust_file, gb$segFile, targets, gb$idatPath)
+gb$loadHtmlTag()
+```
+
+# Copy Number Variation
+<hr style="border:2px solid gray">
+```{r, sam-cnv-save, opts.label='gencnv', include=TRUE, eval=gb$genCNchunk}
+gb$MakeHideButton("plaincnv")
+gb$LoopSavePlainCNV(targets)
+```
+
+```{r, label='CNV-plots', opts.label='cn_opts2', eval=gb$genCNchunk}
+gb$SaveLoadCnvs(gb$cnData[, 1:(ncol(gb$cnData))])
+if (length(gb$col_samGrp) > 1) {
+  gb$GenCNVdataGroupSave(gb$cnData, targets, gb$col_samGrp)
+}
+gb$htmlClose()
+```
+
+```{r, label='cluster profile', opts.label='clustprof', include=TRUE}
+if (gb$genPathChunk == TRUE) {
+  gb$PrintPathHeader(gb$GroupSubset)
+  enrichedData <- gb$GetKeggGeneVals(RGSet, targets, gb$pathwayGrp_Filter, gb)
+  gb$geneVals <- enrichedData$geneVals
+} else{cat(rep("<br>", 5), sep = "\n"); knitr::knit_exit("</body></html>")}
+```
+
+# Pathway Gene HeatMaps
+```{r, label='GeneClusterHM', opts.label='pathhm', include=TRUE}
+gb$MakeHideButton("PathHeat")
+gb$pathWayGenes <- gb$WritePathVals(gb$geneVals, gb$geneListIn)
+gb$LoopPathwayHeatMap(gb$pathWayGenes[gb$totPaths,], RGSet, betas, targets)
+gb$htmlClose()
+```
+
+# Pathway Genes
+```{r, label='Top Gene Paths', opts.label='genepath', include=TRUE}
+gb$MakeHideButton("PathGenes")
+gb$PrintPathways(gb$pathWayGenes)
+gb$htmlClose()
+```
