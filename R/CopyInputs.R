@@ -95,7 +95,7 @@ setRunDir <- function(runID=NULL, workFolder=NULL){
 # Lists all idat files in the run directory and checks uniform sizes in Mb
 check_idat_sizes <- function(runFolder){
     msgFunName(cpInLnk, "check_idat_sizes")
-  idat_files <- dir(path = runFolder, pattern = ".idat", full.names = TRUE)
+  idat_files <- dir(path = runFolder, pattern = "\\.idat$", full.names = TRUE)
   idat_sizes <- round(file.size(idat_files) / 1e6, 1)
   mb_unique <- unique(idat_sizes)
 
