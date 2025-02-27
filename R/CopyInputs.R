@@ -95,24 +95,26 @@ setRunDir <- function(runID=NULL, workFolder=NULL){
 # Lists all idat files in the run directory and checks uniform sizes in Mb
 check_idat_sizes <- function(runFolder){
     msgFunName(cpInLnk, "check_idat_sizes")
-  idat_files <- dir(path = runFolder, pattern = "\\.idat$", full.names = TRUE)
-  idat_sizes <- round(file.size(idat_files) / 1e6, 1)
-  mb_unique <- unique(idat_sizes)
+    idat_files <- dir(path = runFolder, pattern = "\\.idat$", full.names = TRUE)
+    idat_sizes <- round(file.size(idat_files) / 1e6, 1)
+    mb_unique <- unique(idat_sizes)
 
   if (length(mb_unique) > 1) {
     mb_sizes <- c(14.4, 13.7, 10.3, 8.1)
     miss_copied <- !idat_sizes %in% mb_sizes
-    if (any(miss_copied)) {
-      warning(
+  if (any(miss_copied)) {
+    file_names <- paste(basename(idat_files)[miss_copied])
+    file_megaB <- paste(" ", idat_sizes[miss_copied], "MB")
+    files_sizes <- c(rbind(file_names, file_megaB, "\n"))
+    message(
         paste(
-          crayon::bgRed("Not all idat files are the same file size!"),
-          "Ensure idat files copied correctly and are uniform in file size:\n",
-          sep = "\n"
-        ),
-        paste(basename(idat_files)[miss_copied], collapse = "\n")
-      )
+            crayon::bgRed("Not all idat files are the same file size!"),
+            "Ensure idat files copied correctly & are uniform in size:\n",
+            sep = "\n"
+        ), files_sizes
+    )
+        }
     }
-  }
 }
 
 
@@ -152,6 +154,13 @@ check_success_copy <- function(allFi) {
 }
 
 
+MakeLogFile <- function(infoData, logFile) {
+    message(crayon::bgBlue("~~~Message logged~~~"), "\n", infoData)
+    message(crayon::bgGreen("To file:"), " ", logFile)
+    write.table(infoData, file = logFile, append = T, quote = F,
+                sep = '\t', row.names = F, col.names = F)
+}
+
 make_progress_bar <- function(seriesObj, txt = "Progress") {
   num_files <- length(seriesObj)
   pb <- progress::progress_bar$new(
@@ -169,6 +178,16 @@ copyBaseIdats <- function(allFi, idatPath = NULL) {
     if (is.null(idatPath)) {
     idatPath <- getwd()
     }
+
+    # Check read permission (necessary for copying)
+    readable <- fs::file_access(allFi, mode = "read")
+    if (any(readable == F)) {
+        failed_reads <- allFi[!readable]
+        infoData <- paste("Cannot read idat file:", failed_reads, collapse = "\n")
+        MakeLogFile(infoData, "read_error_idat.txt")
+        allFi <- allFi[readable]
+    }
+    
     cli::cli_progress_bar("Copying files", total = length(allFi))
 
     for (f in allFi) {
@@ -284,11 +303,6 @@ GetExternalIdats <- function(allFi, ssheet, extr.idat){
     return(allFi)
 }
 
-MakeLogFile <- function(infoData, logFile) {
-    write.table(infoData, file = logFile, append = T, quote = F,
-                sep = '\t', row.names = F, col.names = F)
-}
-
 # FUN: Returns a list of idat files that exist on Molecular and Snuderl lab drives -
 get.idats <- function(csvNam = "samplesheet.csv", runDir=NULL){
     msgFunName(cpInLnk, "get.idats")
@@ -307,15 +321,8 @@ get.idats <- function(csvNam = "samplesheet.csv", runDir=NULL){
     #allFi = allFi[file.exists(allFi)]
     # Check existence
     exists <- fs::file_exists(allFi)
-    # Check read permission (necessary for copying)
-    readable <- fs::file_access(allFi, mode = "read")
-    if (any(readable == F)) {
-        failed_reads <- allFi[!readable]
-        infoData <- paste("Cannot read idat file:", failed_reads, collapse = "\n")
-        MakeLogFile(infoData, "read_error_idat.txt")
-    }
     # Filter only valid files
-    allFi <- allFi[exists & readable]
+    allFi <- allFi[exists]
     
     if (length(allFi) == 0) {
         allFi <- GetExternalIdats(allFi, ssheet, extr.idat)
