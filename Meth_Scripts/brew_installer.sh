@@ -126,7 +126,7 @@ if ! xcode-select -p >/dev/null 2>&1; then
     sudo xcodebuild -license accept
 fi
 
-#R CMD config --all
-
 message_curl ${GITHUBMAIN} "all_installer.R"
 sudo Rscript --verbose "$HOME/all_installer.R"
+
+R CMD config --all
