@@ -377,9 +377,12 @@ importRedcapStart <- function(nfldr) {
 
 DoRedcapApi <- function(rcon, recordName, runID) {
     msgFunName(cpOutLnk, "DoRedcapApi")
-    message(mkBlue("Importing Record:"))
+    
+    message(mkBlue("Importing Record:"), " ", recordName)
+    
     data = data.frame(record_id = recordName, run_number = runID)
     logfi = paste0(recordName, "_redcapLog.txt")
+    
     tryCatch(
         expr = {
             redcapAPI::importRecords(
@@ -398,14 +401,13 @@ DoRedcapApi <- function(rcon, recordName, runID) {
 
 CheckSarcRDnumber <- function(record) {
     msgFunName(cpOutLnk, "CheckSarcRDnumber")
-    isSarc <- ifelse(stringr::str_detect(record, pattern = "sarc"),
-                     yes = T,
-                     no = F)
+    isSarc <- ifelse(stringr::str_detect(record, pattern = "sarc"), yes = T, no = F)
     if (isSarc == T) {
-        record <- stringr::str_split_fixed(record, pattern = "_", 2)[1,1]
+        record <- stringr::str_split_fixed(record, pattern = "_", 2)[1, 1]
     }
     return(record)
 }
+
 
 callApiImport <- function(rcon, recordName, runID) {
     msgFunName(cpOutLnk, "callApiImport")
@@ -530,41 +532,43 @@ MakeOutputDir <- function(runYear, clinDrv, runID, isMC) {
 }
 
 
-CallApiFileForce <- function(rcon, recordName) {
+CallApiFileForce <- function(rcon, recordName, field_name = "classifier_pdf") {
     msgFunName(cpOutLnk, "CallApiFileForce")
+    
     is_validation <- sjmisc::str_contains(gb$runID, "VAL")
     has_val <- sjmisc::str_contains(recordName, "VAL")
+    
     if (is_validation == T & has_val == F) {
         recordName <- paste0(recordName, "_VAL")
     }
-
+    
     recordFi <- paste0(recordName, ".html")
-    message("\n", gb$mkBlue("Importing Record File:"), paste0(" ", recordFi))
     fiPath <- file.path(getwd(), recordFi)
-    fld <- "classifier_pdf"
-
-    body <- list(
-        token = rcon$token,
-        content = 'file',
-        action = 'import',
-        record = recordName,
-        field = fld,
-        file = httr::upload_file(fiPath),
-        returnFormat = 'csv'
+    
+    message("\n", gb$mkBlue("Force Uploading Record File:"), "\n", recordFi)
+    
+    tryCatch(
+        expr = {
+            suppressWarnings(
+                redcapAPI::importFiles(
+                    rcon = rcon,
+                    file = fiPath,
+                    record = recordName,
+                    field = field_name,
+                    overwrite = TRUE,
+                    repeat_instance = 1
+                )
+            )
+        },
+        error = function(e) {
+            infoData <- paste("File failed uploading to REDCap:", fiPath)
+            message(infoData)
+            logName <- paste(gb$runID, "import_log.tsv", sep = "_")
+            MakeLogFile(infoData, logName)
+            message(mkRed(e$message))
+        }
     )
-    res <-
-        tryCatch(
-            httr::POST(url = rcon$url, body = body, config = rcon$config),
-            error = function(cond) {
-                list(status_code = "400")
-            }
-        )
-    if (res$status_code == "200") {
-        message("REDCap file upload successful: ", fiPath)
-    }else{
-        message("REDCap file upload failed: ", fiPath)
-    }
-
+    
 }
 
 
