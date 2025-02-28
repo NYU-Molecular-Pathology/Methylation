@@ -152,21 +152,16 @@ writeLogFi <- function(recordName, isHtml = T, logFile = "upload_log.tsv") {
 }
 
 
-RedcapRcurl <- function(datarecord) {
+RedcapRcurl <- function(datarecord = NULL) {
     msgFunName(cpOutLnk, "RedcapRcurl")
-
-    message(crayon::bgBlue("Record Data Uploaded:"), datarecord)
-    # RCurl::postForm(
-    #     apiLink,
-    #     token = gb$ApiToken,
-    #     content = 'record',
-    #     format = 'json',
-    #     type = 'flat',
-    #     data = datarecord,
-    #     overwriteBehavior = 'normal'
-    # )
-    rcon <- redcapAPI::redcapConnection(apiLink, token = gb$ApiToken)
-    redcapAPI::importRecords(rcon, data = datarecord, overwriteBehavior = "normal")
+    if (!is.null(datarecord)) {
+        rcon <-
+            redcapAPI::redcapConnection(apiLink, token = gb$ApiToken)
+        redcapAPI::importRecords(rcon, data = datarecord,
+                                 overwriteBehavior = "normal")
+        message(crayon::bgBlue("Record Data Uploaded:"), "\n",
+                paste(datarecord, collapse = "\n"))
+    }
 }
 
 
