@@ -1,10 +1,8 @@
 #!/usr/bin/env R
-## ---------------------------
 ## Script name: BigPurpleIdats.R
-## Purpose: source of global scripts, copy idat files to HPC, & create minfi samplesheet.csv
+## Purpose: Functions to copy idat files to HPC & create minfi samplesheet.csv
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2023
-## ---------------------------
+## Copyright (c) NYULH Jonathan Serrano, 2025
 
 # Set package installation options
 library("base"); gb <- globalenv(); assign("gb", gb)
@@ -27,7 +25,8 @@ rsch.idat <<- NameDrive("snudem01labspace","idats")
 clin.idat <<- NameDrive("molecular", "MOLECULAR/iScan")
 
 # REDcap Heading Fields to pull for SampleSheet
-flds <<- c("record_id", "b_number", "tm_number", "accession_number", "block", "diagnosis", "organ", "tissue_comments", "run_number", "nyu_mrn")
+flds <<- c("record_id", "b_number", "tm_number", "accession_number", "block",
+           "diagnosis", "organ", "tissue_comments", "run_number", "nyu_mrn")
 
 # Helper function to suppress messages and warnings
 supM <- function(sobj) suppressMessages(suppressWarnings(sobj))
@@ -118,12 +117,12 @@ search.redcap <- function(rd_numbers, token=NULL, flds=NULL) {
 }
 
 getDefaults <- function() {
-    cbVol <- switch(Sys.info()[['sysname']], "Darwin"="/Volumes/CBioinformatics/Methylation", "Linux"="~/molecpathlab/production/Methylation")
+    cbVol <- switch(Sys.info()[['sysname']], "Darwin"="/Volumes/CBioinformatics/Methylation",
+                    "Linux"="~/molecpathlab/production/Methylation")
     moVol = "/Volumes/molecular"
     rsVol = "/Volumes/snudem01labspace"
     defaultParams <- data.frame(
         mnp.pk.loc = file.path(cbVol, "classifiers/mnp.v11b6"),
-        # other parameters as in the original code
         stringsAsFactors=F
     )
     return(defaultParams)
@@ -183,7 +182,8 @@ defineParams <- function(mnp.pk.loc = NULL,
 
     sapply(names(defVars), function(i) assignVar(i, defVars[[i]]))
 
-    cbVol <- switch(Sys.info()[['sysname']], "Darwin"="/Volumes/CBioinformatics/", "Linux"="~/molecpathlab/production/")
+    cbVol <- switch(Sys.info()[['sysname']], "Darwin"="/Volumes/CBioinformatics/",
+                    "Linux"="~/molecpathlab/production/")
 
     if (!isMC) {
         methDir = rschOut
@@ -205,7 +205,8 @@ setDirectory <- function(foldr) {
 
 SourceFunctions <- function(workingPath = NULL) {
     LoadPkgs()
-    git_url <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/CopyInputs.R"
+    git_url <-
+    "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/CopyInputs.R"
     workingPath <- if (is.null(workingPath)) getwd() else workingPath
     invisible(devtools::source_url(url = git_url))
     setDirectory(foldr = workingPath)
