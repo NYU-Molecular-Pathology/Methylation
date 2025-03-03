@@ -1,59 +1,85 @@
 #!/usr/bin/env Rscript
-## ---------------------------
 ## Script name: tableMaker.R
-## Purpose: Source global parameters for research report output tables and values
+## Purpose: Source global parameters for research report tables and values
 ## Date Created: May 17, 2022
-## Date Last Modified: February 29, 2024
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2024
-## ---------------------------
 
 gb <- globalenv(); assign("gb", gb)
+
 setDirectory <- function(foldr) {
-    bsDir = paste("cd", foldr); mm2 = crayon::white$bgRed("Location Not Found:", foldr)
-    if (dir.exists(foldr)) {system(bsDir);setwd(foldr);assign("runDir", foldr)} else{warning(mm2)}
+    bsDir = paste("cd", foldr)
+    mm2 = crayon::white$bgRed("Location Not Found:", foldr)
+    if (dir.exists(foldr)) {
+        system(bsDir); setwd(foldr); assign("runDir", foldr)
+    } else{ warning(mm2) }
 }
 
-if(!require("librarian")){install.packages("librarian", dependencies=T, verbose=T, Ncpus = 4, quiet=T)}
+
+checkNeeded <- function(pkgList) {
+    installedPkgs <- rownames(installed.packages())
+    neededPkgs <- pkgList[!pkgList %in% installedPkgs]
+    return(neededPkgs)
+}
+
+
+if (length(checkNeeded("librarian")) > 0) {
+    install.packages(
+        "librarian",
+        dependencies = T,
+        verbose = T,
+        Ncpus = 4,
+        quiet = T
+    )
+}
+
+if (length(checkNeeded("pak")) > 0) {
+    install.packages("pak", dependencies = T, ask = F, type = "binary")
+}
+
 
 # Load/install Packages
 pkgs <- c(
-#  'animation',
-  'knitr',
-  'readr',
-  'ggplot2',
-  'devtools',
-  "BiocManager",
-  'parallel',
-  'iterators',
-  'doParallel',
-  "foreach",
-  "dplyr",
-  "DT",
-  "kableExtra",
-  "foreach",
-  "magrittr",
-  "conumee",
-  "enrichplot",
-  "limma",
-  "stringr",
-  "tidyverse",
-  "tidyr",
-  "DOSE",
-  "ggnewscale",
-  "enrichplot",
-  "ComplexHeatmap",
-  "assertr",
-  "Biobase",
-  "irlba",
-  "grid",
-  "RColorBrewer",
-  "Cairo",
-  "gridExtra"
+    'knitr',
+    'readr',
+    'ggplot2',
+    'devtools',
+    "BiocManager",
+    'parallel',
+    'iterators',
+    'doParallel',
+    "foreach",
+    "dplyr",
+    "DT",
+    "kableExtra",
+    "foreach",
+    "magrittr",
+    "conumee",
+    "enrichplot",
+    "limma",
+    "stringr",
+    "tidyverse",
+    "tidyr",
+    "DOSE",
+    "ggnewscale",
+    "enrichplot",
+    "ComplexHeatmap",
+    "assertr",
+    "Biobase",
+    "irlba",
+    "grid",
+    "RColorBrewer",
+    "Cairo",
+    "gridExtra"
 )
 
-librarian::shelf(pkgs, ask = F, warn.conflicts = F, update_all = F)
+pkgs_needed <- checkNeeded(pkgs)
+
+if (length(pkgs_needed) > 0) {
+    pak::pkg_install(pkgs_needed, ask = F)
+}
+
 
 require("gridExtra")
 require("Cairo")
@@ -66,30 +92,31 @@ EndDiv <- function(){
     cat("\n\n")
 }
 
-makeDt <- function(targets, gb=NULL, showHide = FALSE) {
+makeDt <- function(targets, gb = NULL, showHide = FALSE) {
     dtOpts <- list(
-        columnDefs = list(list(className = 'dt-center', targets = "_all")), scrollX = T, scrollY = T,
-        info = F, pageLength = 20, autoWidth = F, rownames = F, lengthChange = F, searchable = T
+        columnDefs = list(list(className = 'dt-center', targets = "_all")),
+        scrollX = T, scrollY = T, info = F, pageLength = 20, autoWidth = F,
+        rownames = F, lengthChange = F, searchable = T
     )
-    
-    if(!is.null(gb)){
+
+    if (!is.null(gb)){
         colFilter <- c(gb$col_samNames, gb$col_samTypes, gb$col_shapes, "SentrixID_Pos")
-        if(!is.null(gb$col_arrayType)){
+        if (!is.null(gb$col_arrayType)){
             colFilter <- c(colFilter, gb$col_arrayType)
         }
-        if(!is.null(gb$batch_col)){
+        if (!is.null(gb$batch_col)){
             colFilter <- c(colFilter, gb$batch_col)
         }
-        if(!is.null(gb$col_samGrp)){
+        if (!is.null(gb$col_samGrp)){
             colFilter <- c(colFilter, gb$col_samGrp)
         }
-        if(!is.null(gb$col_other)){
+        if (!is.null(gb$col_other)){
             colFilter <- c(colFilter, gb$col_other)
         }
         colFilter <- unique(colFilter)
         targets <- targets[, colFilter]
     }
-    
+
     theDt <- DT::datatable(
         targets,
         selection = "single",
@@ -97,48 +124,48 @@ makeDt <- function(targets, gb=NULL, showHide = FALSE) {
         options = dtOpts,
         class = 'white-space: nowrap'
     )
-    
+
     if(showHide){
         gb$MakeHideButton("SampleData")
         return(theDt)
     }else{
         return(theDt)
     }
-    
+
 }
 
 smallTab <- function(dtObj) {
-  dtTable <- knitr::kable(dtObj, row.names = F, "html")
-  dtTable <- kableExtra::kable_styling(
-      dtTable,
-      bootstrap_options = c("striped", "condensed"),
-      full_width = F,
-      position = "left"
-  )
+    dtTable <- knitr::kable(dtObj, row.names = F, "html")
+    dtTable <- kableExtra::kable_styling(
+        dtTable,
+        bootstrap_options = c("striped", "condensed"),
+        full_width = F,
+        position = "left"
+    )
 
- dtTable <- kableExtra::column_spec(dtTable, 1:ncol(dtObj), width = "4cm")
-  return(dtTable)
+    dtTable <- kableExtra::column_spec(dtTable, 1:ncol(dtObj), width = "4cm")
+    return(dtTable)
 }
 
 # Adds colors to csv targets file to maintain same color scheme between plots
 FixNullNaVars <- function(targets, varColumns) {
-  if(all(varColumns %in% dimnames(targets)[[2]])==F){
-    message("The column names you provided are not found in targets columns: ", paste(varColumns, collapse = ", "))
-    stopifnot(all(varColumns %in% dimnames(targets)[[2]]))
+    if(all(varColumns %in% dimnames(targets)[[2]])==F){
+        message("The column names you provided are not found in targets columns: ", paste(varColumns, collapse = ", "))
+        stopifnot(all(varColumns %in% dimnames(targets)[[2]]))
     }
-  for (variable in varColumns) {
-    if (any(is.null(targets[, variable]))) {
-      targets[is.null(targets[, variable]), variable] <- "NONE"
+    for (variable in varColumns) {
+        if (any(is.null(targets[, variable]))) {
+            targets[is.null(targets[, variable]), variable] <- "NONE"
+        }
+        if (any(is.na(targets[, variable]))) {
+            targets[is.na(targets[, variable]), variable] <- "NONE"
+        }
+        if (any(targets[, variable] == "")) {
+            toFix <- targets[, variable] == ""
+            targets[toFix, variable] <- "NONE"
+        }
     }
-    if (any(is.na(targets[, variable]))) {
-      targets[is.na(targets[, variable]), variable] <- "NONE"
-    }
-    if (any(targets[, variable] == "")) {
-        toFix <- targets[, variable] == ""
-        targets[toFix, variable] <- "NONE"
-    }
-  }
-  return(targets)
+    return(targets)
 }
 
 
@@ -194,104 +221,101 @@ GetDefaultColors <- function(col_vect = NULL) {
 
 
 CheckColorCount <- function(varColumns, targets, col_vect) {
-  for (vc in varColumns) {
-    if (length(unique(targets[, vc])) > length(col_vect)) {
-      warning(
-        'Column "', vc, '" has more than 32 variables!',
-        '\nYou need to input more colors in colorTargets(col_vect) or reduce number of variables!'
-      )
+    for (vc in varColumns) {
+        if (length(unique(targets[, vc])) > length(col_vect)) {
+            warning(
+                'Column "', vc, '" has more than 32 variables!',
+                '\nYou need to input more colors in colorTargets(col_vect) or reduce number of variables!'
+            )
+        }
     }
-  }
 }
 
 
 GetColorVariables <- function(targets, varColumns, col_vect){
-  CheckColorCount(varColumns, targets, col_vect)
+    CheckColorCount(varColumns, targets, col_vect)
     dat <- targets[, varColumns] # varColumns
     anno_df <- data.frame(dat)
     vars2Color <- as.list(lapply(dat, unique))
     colorValues <- lapply(vars2Color, function(x) {x = (col_vect)[1:(length(x))]})
     for (x in 1:length(vars2Color)) {
-      for (varNum in 1:length(vars2Color[x])) {
-        names(colorValues[x][[1]]) = c(vars2Color[x][[1]])
-      }
+        for (varNum in 1:length(vars2Color[x])) {
+            names(colorValues[x][[1]]) = c(vars2Color[x][[1]])
+        }
     }
     return(colorValues)
 }
 
 
 FlipColorVector <- function(targets, colorColNames, col_vect){
-  if (length(colorColNames) > 1) {
-      for (varN in 1:length(colorColNames)) {
-        if ((varN %% 2) == 0) {
-          col2Change <- colorColNames[varN]
-          oldColors2 <- unique(targets[, col2Change])
-          col_vect <- rev(col_vect)
-          newColAssign <- col_vect[1:length(oldColors2)]
-          for (oldColN in 1:length(oldColors2)) {
-            oldCol <- oldColors2[oldColN]
-            newCol <- newColAssign[oldColN]
-            colorSelec <- which(targets[, col2Change] == oldCol)
-            targets[colorSelec, col2Change] <- newCol
-          }
+    if (length(colorColNames) > 1) {
+        for (varN in 1:length(colorColNames)) {
+            if ((varN %% 2) == 0) {
+                col2Change <- colorColNames[varN]
+                oldColors2 <- unique(targets[, col2Change])
+                col_vect <- rev(col_vect)
+                newColAssign <- col_vect[1:length(oldColors2)]
+                for (oldColN in 1:length(oldColors2)) {
+                    oldCol <- oldColors2[oldColN]
+                    newCol <- newColAssign[oldColN]
+                    colorSelec <- which(targets[, col2Change] == oldCol)
+                    targets[colorSelec, col2Change] <- newCol
+                }
+            }
         }
-      }
-  }
-  return(targets)
-  
+    }
+    return(targets)
+
 }
 
 colorTargets <- function(targets, varColumns = c("Type","Origin"), col_vect = NULL){
     col_vect <- gb$GetDefaultColors(col_vect)
     targets <- gb$FixNullNaVars(targets, varColumns)
-    
-    #message("\nTargets Dimnames:\n", paste(dimnames(targets)[[2]], collapse = " | "))
-    
+
     hasType <- any("Type" %in% varColumns)
     if (length(varColumns) <= 1 & hasType == F) {
-      targets$Type <- targets[, varColumns[1]]
-      varColumns <- c(varColumns, "Type")
+        targets$Type <- targets[, varColumns[1]]
+        varColumns <- c(varColumns, "Type")
     }
     if (length(unique(varColumns)) == 1) {
-      targets$NewCol <- targets[, varColumns[1]]
-      varColumns <- c(varColumns, "NewCol")
+        targets$NewCol <- targets[, varColumns[1]]
+        varColumns <- c(varColumns, "NewCol")
     }
     colorColNames <- unlist(lapply(varColumns, paste0, "_color"))
     colorValues <- GetColorVariables(targets, varColumns, col_vect)
     targets$color <- NULL
-    
+
     for (colorCol in colorColNames) {
-      targets[, colorCol] <- NA
+        targets[, colorCol] <- NA
     }
     for (colNam in varColumns) {
-      newColumnId <- paste0(colNam, "_color")
+        newColumnId <- paste0(colNam, "_color")
         varNameColVals <- names(colorValues[colNam][[1]])
         blankVals <- varNameColVals==""
         if(any(blankVals)){
             varNameColVals[blankVals] <- "NONE"
             names(colorValues[colNam][[1]])[names(colorValues[colNam][[1]])==""] <- "NONE"
         }
-        
-      for (samNam in names(colorValues[colNam][[1]])) {
-        varToColor <- targets[, colNam] == samNam
-        colorHex <- paste0(colorValues[[colNam]][[samNam]])
-        targets[, newColumnId][varToColor] <- colorHex
-      }
+
+        for (samNam in names(colorValues[colNam][[1]])) {
+            varToColor <- targets[, colNam] == samNam
+            colorHex <- paste0(colorValues[[colNam]][[samNam]])
+            targets[, newColumnId][varToColor] <- colorHex
+        }
     }
-    
-    #targets <- FlipColorVector(targets, colorColNames, col_vect)
+
     return(targets)
 }
 
 
 getColors <- function(samTypes) {
-  library('RColorBrewer')
-  qualCols = brewer.pal.info[brewer.pal.info$category == 'qual', ]
-  col_vector = unlist(mapply(brewer.pal, qualCols$maxcolors, rownames(qualCols)))
-  col_vector <- unique(col_vector)
-  myColors = col_vector[1:length(unique(samTypes))]
-  names(myColors) <- unique(samTypes)
-  return(myColors)
+    library('RColorBrewer')
+    qualCols = brewer.pal.info[brewer.pal.info$category == 'qual', ]
+    col_vector = unlist(mapply(brewer.pal, qualCols$maxcolors, rownames(qualCols)))
+    col_vector <- unique(col_vector)
+    myColors = col_vector[1:length(unique(samTypes))]
+    names(myColors) <- unique(samTypes)
+    return(myColors)
 }
 
 
@@ -319,23 +343,23 @@ StripSheetSpaces <- function(samSh, samsheet, gb){
 
 
 ValidateColumns <- function(targets, gb) {
-  if (is.null(gb$col_samTypes)) {
-    if (is.null(gb$col_samGrp)) {
-      targets$Unknown_Samples <- "Unknown"
-      gb$col_samGrp <- gb$col_samTypes <- "Unknown_Samples"
-    } else{
-      gb$col_samTypes <- gb$col_samGrp
+    if (is.null(gb$col_samTypes)) {
+        if (is.null(gb$col_samGrp)) {
+            targets$Unknown_Samples <- "Unknown"
+            gb$col_samGrp <- gb$col_samTypes <- "Unknown_Samples"
+        } else{
+            gb$col_samTypes <- gb$col_samGrp
+        }
     }
-  }
-  if (gb$col_samNames %in% colnames(targets) == F) {
-      stop("\nYour input col_samNames", ' "', gb$col_samNames, '" ', 
-           "was not found in the colnames(targets) available:\n", 
-           paste(colnames(targets), collapse = "\n"))
-  }
-  if (gb$col_samTypes %in% colnames(targets) == F){
-    targets[, gb$col_samTypes] <- "Unknown"
-  }
-  return(targets)
+    if (gb$col_samNames %in% colnames(targets) == F) {
+        stop("\nYour input col_samNames", ' "', gb$col_samNames, '" ',
+             "was not found in the colnames(targets) available:\n",
+             paste(colnames(targets), collapse = "\n"))
+    }
+    if (gb$col_samTypes %in% colnames(targets) == F){
+        targets[, gb$col_samTypes] <- "Unknown"
+    }
+    return(targets)
 }
 
 
@@ -392,7 +416,10 @@ sanitizeSheet <- function(inputFi, samsheet, gb) {
     targets <- StripSheetSpaces(samSh, samsheet, gb)
     targets <- ValidateColumns(targets, gb)
     targets <- ValidateSentrix(targets, gb)
-    targets <- StandardizeHeaders(targets, samNames = targets[, gb$col_samNames], sentrixs = targets[, gb$col_sentrix])
+    targets <- StandardizeHeaders(targets,
+                                  samNames = targets[, gb$col_samNames],
+                                  sentrixs = targets[, gb$col_sentrix]
+                                  )
     targets <- ValidateSampleIDs(targets)
     write.csv(targets, file = samsheet, quote=F, row.names=F)
     return(targets)
@@ -401,22 +428,22 @@ sanitizeSheet <- function(inputFi, samsheet, gb) {
 
 #animation::ani.options(autobrowse = FALSE)
 options(width=1200)
-library(magrittr) # needs to be run every time you start R and want to use %>%
-library(dplyr)
+library("magrittr")
+library("dplyr")
 require("tidyverse")
 require("plotly")
 require("ggplot2")
 library("DT")
 
 printMissing <- function(theMissing, gb) {
-  cat("#### Poor Quality or Dropped Samples:\n\n")
-  if (!is.null(theMissing) & nrow(theMissing) > 0) {
-    selCols <-
-      c("Sample_Name", gb$col_sentrix, gb$col_samTypes, gb$col_samGrp, "Sample_Group")
-    return(gb$smallTab(theMissing[, selCols]))
-  } else{
-    cat("None\n\n")
-  }
+    cat("#### Poor Quality or Dropped Samples:\n\n")
+    if (!is.null(theMissing) & nrow(theMissing) > 0) {
+        selCols <-
+            c("Sample_Name", gb$col_sentrix, gb$col_samTypes, gb$col_samGrp, "Sample_Group")
+        return(gb$smallTab(theMissing[, selCols]))
+    } else{
+        cat("None\n\n")
+    }
 }
 
 loadHtmlTag <- function(){
@@ -426,8 +453,10 @@ loadHtmlTag <- function(){
     require("ggplot2")
     library("ggplot2")
     library("DT")
-    htmltools::tagList(DT::datatable(cars, options=list(pageLength = 15, width="100%")))
-    par(ask=F); devAskNewPage(ask = F)
+    htmltools::tagList(DT::datatable(
+        cars, options = list(pageLength = 15, width = "100%")))
+    par(ask = F)
+    devAskNewPage(ask = F)
     doParallel::registerDoParallel(cores=2)
     return(htmltools::tagList(plotly::ggplotly(ggplot2::ggplot())))
 }
@@ -441,9 +470,9 @@ sourceParams <- function(X = c("Params_input.R", "Params_output.R")) {
 
 
 GetCsvSheet <- function(needFi, samsheet, token, idatPath = NULL, outputFi = "samplesheet_og.csv"){
-  if(is.null(idatPath)){
-      idatPath <- file.path(getwd(), "idats")
-  }
+    if(is.null(idatPath)){
+        idatPath <- file.path(getwd(), "idats")
+    }
     # Using "pullRedcap_manual.R"
     rds <- gb$readInfo(inputSheet = samsheet) # inputSheet can be xlsx or csv
     stopifnot(length(rds) > 1)
@@ -455,8 +484,8 @@ GetCsvSheet <- function(needFi, samsheet, token, idatPath = NULL, outputFi = "sa
         rds <- rds[-toDrop]
     }
     if(gb$needFi==T) {
-      gb$grabRDCopyIdat(rd_numbers=rds, token, copyIdats=T, outputFi=outputFi)
-      gb$MoveIdats()
+        gb$grabRDCopyIdat(rd_numbers=rds, token, copyIdats=T, outputFi=outputFi)
+        gb$MoveIdats()
     }else{
         result <- gb$search.redcap(rd_numbers=rds, token)
         result <- result[!is.na(result$barcode_and_row_column),]
@@ -488,37 +517,37 @@ CheckTargetIdats <- function(targets) {
 
 
 GetSamFreqTab <- function(targets, varCol1, varCol2 = NULL) {
-  varColHead <- c("Sample Type", "Freq")
-  sampleColumn <- targets[, varCol1]
-  t1 <- setNames(as.data.frame(table(sampleColumn), row.names = NULL), varColHead)
-  if (!is.null(varCol2)) {
-    sampleColumn <- targets[, varCol2]
-    t1 <- c(t1, setNames(as.data.frame(table(sampleColumn), row.names = NULL), varColHead))
-  }
-  return(list(t1))
+    varColHead <- c("Sample Type", "Freq")
+    sampleColumn <- targets[, varCol1]
+    t1 <- setNames(as.data.frame(table(sampleColumn), row.names = NULL), varColHead)
+    if (!is.null(varCol2)) {
+        sampleColumn <- targets[, varCol2]
+        t1 <- c(t1, setNames(as.data.frame(table(sampleColumn), row.names = NULL), varColHead))
+    }
+    return(list(t1))
 }
 
 
 MessageBatches <- function(targets, col_batchEffect) {
-  if (!is.null(col_batchEffect)) {
-    cat(paste0('#### Batch Effect Column Name: "', col_batchEffect, '" \n\n'))
-    cat("#### Different Batches:\n")
-    cat(paste(unique(targets[, col_batchEffect]), collapse = " & "))
-    cat("\n\n")
-  }else{
-    cat("#### No Batch Effect Correction Performed\n\n")
-  }
+    if (!is.null(col_batchEffect)) {
+        cat(paste0('#### Batch Effect Column Name: "', col_batchEffect, '" \n\n'))
+        cat("#### Different Batches:\n")
+        cat(paste(unique(targets[, col_batchEffect]), collapse = " & "))
+        cat("\n\n")
+    }else{
+        cat("#### No Batch Effect Correction Performed\n\n")
+    }
 }
 
 MessageArrayMix <- function(targets, col_arrayType) {
-  if (!is.null(col_arrayType)) {
-    cat(paste0('#### Arrays Type Column Name: "', col_arrayType, '" \n\n'))
-    cat("#### Different Arrays: ")
-    cat(paste(unique(targets[, col_arrayType]), collapse = " & "))
-    cat("\n\n")
-  }else{
-    cat("No array probes merged, all microarrays are the same version\n\n")
-  }
+    if (!is.null(col_arrayType)) {
+        cat(paste0('#### Arrays Type Column Name: "', col_arrayType, '" \n\n'))
+        cat("#### Different Arrays: ")
+        cat(paste(unique(targets[, col_arrayType]), collapse = " & "))
+        cat("\n\n")
+    }else{
+        cat("No array probes merged, all microarrays are the same version\n\n")
+    }
 }
 
 
@@ -543,17 +572,17 @@ PrintSamTypes <- function(targets, shCol) {
 
 
 MsgSamFreq <- function(targets, gb){
-  plotLi <- gb$PrintSamTypes(targets, gb$col_samTypes)
-  if(gb$col_samGrp != gb$col_samTypes){
-    plotLi <- list("Sample Types" = plotLi, "Sample Groups" = gb$PrintSamTypes(targets, gb$col_samGrp))
-  }
-  if(!is.null(gb$col_arrayType)){
-    plotLi <- list(plotLi, "Array Types"= gb$PrintSamTypes(targets, gb$col_arrayType))
-  }
-  return(
-      knitr::kable(plotLi, format = "html", table.attr = 'class="myTable"') %>%
-      kableExtra::kable_styling(full_width = F, bootstrap_options = "bordered", position = "left")
-  )
+    plotLi <- gb$PrintSamTypes(targets, gb$col_samTypes)
+    if(gb$col_samGrp != gb$col_samTypes){
+        plotLi <- list("Sample Types" = plotLi, "Sample Groups" = gb$PrintSamTypes(targets, gb$col_samGrp))
+    }
+    if (!is.null(gb$col_arrayType)){
+        plotLi <- list(plotLi, "Array Types"= gb$PrintSamTypes(targets, gb$col_arrayType))
+    }
+    return(
+        knitr::kable(plotLi, format = "html", table.attr = 'class="myTable"') %>%
+            kableExtra::kable_styling(full_width = F, bootstrap_options = "bordered", position = "left")
+    )
 }
 
 
@@ -568,7 +597,7 @@ MsgNoobInfo <- function(getNoob) {
 
 
 if(Sys.info()[['sysname']]!="Darwin") {
-    if(!require("rprofile")){remotes::install_github("csgillespie/rprofile", upgrade="never")}
+    if (!require("rprofile")){remotes::install_github("csgillespie/rprofile", upgrade="never")}
     rprofile::set_startup_options(show.signif.stars = FALSE, useFancyQuotes = FALSE, Ncpus = parallel::detectCores()-2)
     Sys.setenv("R_PROFILE"=file.path(Sys.getenv("HOME"), "Rprofile.site"))
     magickPath <- paste0(system("which convert", intern=T))
@@ -577,24 +606,24 @@ if(Sys.info()[['sysname']]!="Darwin") {
 
 
 GetColorShape <- function(var1Col, var2Col){
-  if(is.null(var2Col)){
-   var2Col <- "None"
-  }
-  return(paste0("Color Labels = ", var1Col, " & ", "Shapes = ", var2Col))
+    if(is.null(var2Col)){
+        var2Col <- "None"
+    }
+    return(paste0("Color Labels = ", var1Col, " & ", "Shapes = ", var2Col))
 }
 
 
 ShowAnyMissed <- function(gb){
-  cat("\n\n")
-  cat("#### Samples Removed from Analysis with Missing or Duplicate idat files:\n\n")
-  oldTargFile <- file.path(gb$runDir, "csv", "oldTargs.csv")
-  oldTargs <- sanitizeSheet(gb$inputFi, oldTargFile, gb)
-  oldTargs <- oldTargs[!c(oldTargs[,gb$col_samNames] %in% targets[,gb$col_samNames]),]
-  if(nrow(oldTargs)>0){
-    return(gb$smallTab(oldTargs))
-  }else{
-    return(cat("NONE\n\n"))
-  }
+    cat("\n\n")
+    cat("#### Samples Removed from Analysis with Missing or Duplicate idat files:\n\n")
+    oldTargFile <- file.path(gb$runDir, "csv", "oldTargs.csv")
+    oldTargs <- sanitizeSheet(gb$inputFi, oldTargFile, gb)
+    oldTargs <- oldTargs[!c(oldTargs[,gb$col_samNames] %in% targets[,gb$col_samNames]),]
+    if(nrow(oldTargs)>0){
+        return(gb$smallTab(oldTargs))
+    }else{
+        return(cat("NONE\n\n"))
+    }
 }
 
 
@@ -604,7 +633,7 @@ PrintTableLists <- function(ta1, ta2, ...) {
         knitr::kable(
             list(ta1, ta2, ...), format = "html", table.attr = 'class="myTable"') %>%
             kableExtra::kable_styling(full_width = F)
-        )
+    )
     cat("\n\n")
 }
 
@@ -672,47 +701,47 @@ MsgNullVar <- function(gb, colTxt, strTxt, varTxt) {
 }
 
 ShowKnitProgress <- function() {
-  library("knitr")
-  library("knitrProgressBar")
-  library("progressr")
-  knitr::opts_knit$set(progress = TRUE, verbose = TRUE)
-  knitr::opts_hooks$set(
-    log = function(options) {
-      parsed <- parse(text = options$code, keep.source = FALSE)
-      newCode <- sapply(as.character(parsed), function(x) {
-        return(c('writeLog(sprintf("%s - format(Sys.time(), "%Y-%m-%d %H:%M:%S")), sep = NULL)',
-                 sprintf("writeLog('%s')", x), x)
-              )
-      })
-      options$code = as.vector(newCode)
-      return(options)
-    }
-  )
-  
-  knitr::knit_hooks$set(time_it = local({
-  now <- NULL
-  function(before, options) {
-    if (before) {
-      # record the current time before each chunk
-      now <<- Sys.time()
-    } else {
-      # calculate the time difference after a chunk
-      res <- difftime(Sys.time(), now)
-      # return a character string to show the time
-      paste("Time for this code chunk to run:", res)
-    }
-  }
-}))
-  
-  options(
-    knitr.progress.fun = function(total, labels) {
-      p <- progressr::progressor(100, on_exit = FALSE)
-      list(
-        update = function(i) p(sprintf("chunk: %s", labels[i])),
-        done = function() p(type = "finish")
-      )
-    }
-  )
+    library("knitr")
+    library("knitrProgressBar")
+    library("progressr")
+    knitr::opts_knit$set(progress = TRUE, verbose = TRUE)
+    knitr::opts_hooks$set(
+        log = function(options) {
+            parsed <- parse(text = options$code, keep.source = FALSE)
+            newCode <- sapply(as.character(parsed), function(x) {
+                return(c('writeLog(sprintf("%s - format(Sys.time(), "%Y-%m-%d %H:%M:%S")), sep = NULL)',
+                         sprintf("writeLog('%s')", x), x)
+                )
+            })
+            options$code = as.vector(newCode)
+            return(options)
+        }
+    )
+
+    knitr::knit_hooks$set(time_it = local({
+        now <- NULL
+        function(before, options) {
+            if (before) {
+                # record the current time before each chunk
+                now <<- Sys.time()
+            } else {
+                # calculate the time difference after a chunk
+                res <- difftime(Sys.time(), now)
+                # return a character string to show the time
+                paste("Time for this code chunk to run:", res)
+            }
+        }
+    }))
+
+    options(
+        knitr.progress.fun = function(total, labels) {
+            p <- progressr::progressor(100, on_exit = FALSE)
+            list(
+                update = function(i) p(sprintf("chunk: %s", labels[i])),
+                done = function() p(type = "finish")
+            )
+        }
+    )
 }
 
 CatShapeColor <- function(var1Col = NULL, var2Col = NULL, tbset = TRUE, preFix = "Unsupervised") {
@@ -729,4 +758,3 @@ CatShapeColor <- function(var1Col = NULL, var2Col = NULL, tbset = TRUE, preFix =
         cat(paste('#', tsneHead, '\n\n'))
     }
 }
-
