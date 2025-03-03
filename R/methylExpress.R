@@ -1,17 +1,19 @@
 #!/usr/bin/env Rscript
-## ---------------------------
 ## Script name: methylExpress.R
 ## Purpose: Source global scripts for executing Clinical methylation pipeline
-## Date Last Modified: January 12, 2024
+## Date Created: August 13, 2022
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2023
-## ---------------------------
+## Copyright (c) NYULH Jonathan Serrano, 2025
 
 gb <- globalenv()
 assign("gb", gb)
 args <- commandArgs(TRUE)
-if (!requireNamespace("devtools", quietly = T)) install.packages("devtools")
+
+if (!"devtools" %in% rownames(installed.packages())) {
+    install.packages("devtools", dependencies = T, ask = F)
+}
+library("devtools")
 
 # Parameters Input trailing commandline ---------------------------------------
 args[1] -> token      # <- NULL
@@ -20,7 +22,7 @@ args[3] -> selectRDs  # <- NULL
 args[4] -> baseFolder # <- NULL
 args[5] -> redcapUp   # <- TRUE
 args[6] -> runLocal   # <- FALSE
-forcedUpload <- F
+forcedUpload <- FALSE
 
 # Source and Load Functions and Packages --------------------------------------
 LoadGitHubScripts <- function(ghRepo, scriptList) {
@@ -35,11 +37,19 @@ LoadGitHubScripts <- function(ghRepo, scriptList) {
 mainHub <-
     "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R"
 scriptList <- c(
-    "LoadInstallPackages.R", "SetRunParams.R", "MakeSampleSheet.R",
-    "CopyInputs.R", "CopyOutput.R", "pipelineHelper.R", "CustomRuns.R"
-    )
+    "LoadInstallPackages.R",
+    "SetRunParams.R",
+    "MakeSampleSheet.R",
+    "CopyInputs.R",
+    "CopyOutput.R",
+    "pipelineHelper.R",
+    "CustomRuns.R"
+)
 rmdScripts <- c("ClassTables.R", "MLH1_Functions.R", "RedcapOutput.R")
-suppressPackageStartupMessages(LoadGitHubScripts(mainHub, scriptList))
+
+suppressPackageStartupMessages(suppressWarnings(
+    LoadGitHubScripts(mainHub, scriptList)))
+
 invisible(suppressWarnings(LoadGitHubScripts(
     file.path(mainHub, "Report-Scripts"), rmdScripts
 )))
@@ -56,6 +66,7 @@ gb$CheckInputArg(runLocal, gb, F)
 gb$ApiToken <- gb$token <- token
 baseFolder <- gb$CheckBaseFolderInput(baseFolder)
 selectRDs <- gb$AssignArgs(runID, baseFolder, token, selectRDs, redcapUp, gb)
+
 gb$reportMd <- reportMd <- file.path(fs::path_home(), "report.Rmd")
 
 # Execute Pipeline Functions --------------------------------------------------
