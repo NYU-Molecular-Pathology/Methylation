@@ -4,7 +4,7 @@
 ## Date Created:  August 29, 2022
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2024
+## Copyright (c) NYULH Jonathan Serrano, 2025
 
 gb <- globalenv(); assign("gb", gb)
 reportMd <- file.path(fs::path_home(),"report.Rmd") # From curl github download
@@ -15,6 +15,7 @@ msgFunName <- function(pthLnk, funNam) {
     message("\nExecuting function: ", crayon::black$bgYellow(funNam),
             " from RScript in:\n", pthLnk, "\n")
 }
+
 
 GetLocalData <- function(rg){
     msgFunName(cpInLnk4,"GetLocalData")
@@ -31,8 +32,9 @@ GetLocalData <- function(rg){
     return(dat)
 }
 
+
 GetTargetData <- function(data) {
-        msgFunName(cpInLnk4,"GetTargetData")
+    msgFunName(cpInLnk4,"GetTargetData")
     runDt <- data.frame(
         sampleID = paste0(data[, "Sample_Name"]),
         bnumber = paste0(data[, "DNA_Number"]),
@@ -45,6 +47,7 @@ GetTargetData <- function(data) {
     )
     return(runDt)
 }
+
 
 KnitReportRmd <- function(dat, token, reportMd){
             msgFunName(cpInLnk4,"KnitReportRmd")
@@ -69,6 +72,7 @@ KnitReportRmd <- function(dat, token, reportMd){
     )
 }
 
+
 loop_targets <- function(targets, reportMd){
     msgFunName(cpInLnk4,"loop_targets")
     reportMd <- file.path(fs::path_home(),"report.Rmd")
@@ -91,6 +95,7 @@ loop_targets <- function(targets, reportMd){
     }
 }
 
+
 loop_local <- function(RGSet){
                     msgFunName(cpInLnk4,"loop_local")
     reportMd <- file.path(fs::path_home(),"report.Rmd")
@@ -105,6 +110,7 @@ loop_local <- function(RGSet){
         )
     }
 }
+
 
 PromptInputCsv <- function(runID) {
     msgFunName(cpInLnk4,"PromptInputCsv")
@@ -131,6 +137,7 @@ PromptInputCsv <- function(runID) {
     print(rd_numbers$rd_numbers)
     return(rd_numbers$rd_numbers)
 }
+
 
 ParseInputCsvPath <- function(samSheetIn) {
     csvFilePath <- as.character(samSheetIn)
@@ -259,7 +266,7 @@ CheckBaseDir <- function(baseFolder){
 
 # Sets the working folder directory
 SetBaseFolder <- function(token, baseFolder, runID){
-        msgFunName(cpInLnk4,"SetBaseFolder")
+    msgFunName(cpInLnk4,"SetBaseFolder")
     baseFolder <- CheckBaseDir(baseFolder)
     methylPath <- gb$setRunDir(runID=gb$runID, workFolder = baseFolder)
     message("Working directory set to:\n", crayon::bgGreen(methylPath), "\n")
@@ -322,6 +329,7 @@ MakeBlankRun <- function(rd_numbers, token, outputFi="samplesheet.csv"){
     return(as.data.frame(read.csv(outputFi)))
 }
 
+
 MakeSarcomaReport <- function(worksheet = "samplesheet.csv", targets = NULL) {
     msgFunName(cpInLnk4,"MakeSarcomaReport")
     if (is.null(targets)) {
@@ -345,25 +353,34 @@ MakeSarcomaReport <- function(worksheet = "samplesheet.csv", targets = NULL) {
     }
 }
 
+
 StartRun <- function(selectRDs = NULL, emailNotify = T, redcapUp = T) {
     msgFunName(cpInLnk4,"StartRun")
-    gb$msgFunName(paste0(mainHub,"methylExpress.R"),"startRun")
+    runOrder <- NULL
+
     # Re-order sample report generation for priority
-    if (!is.null(selectRDs)) {runOrder <- gb$reOrderRun(selectRDs) }else{runOrder <- NULL}
+    if (!is.null(selectRDs)) {
+        runOrder <- gb$reOrderRun(selectRDs)
+    }
+
     gb$makeHtmlReports(
+        runOrder = runOrder,   # Prioritize specific RD-numbers
         skipQC = F,            # Don't skip QC generation
         email = emailNotify,   # to email after Run complete
-        selectSams = runOrder, # Prioritize specific RD-numbers
         redcapUp = redcapUp    # Flag to import files to REDCap
     )
 }
 
 
-LoadGitHubScripts <- function(ghRepo, scriptList){scripts = file.path(ghRepo, scriptList)
-return(lapply(scripts, function(i){message("Sourcing: ", i); devtools::source_url(i)}))}
+LoadGitHubScripts <- function(ghRepo, scriptList) {
+    scripts <- file.path(ghRepo, scriptList)
+    return(lapply(scripts, function(i) {
+        message("Sourcing: ", i)
+        devtools::source_url(i)
+    }))
+}
 
-mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R"
+mainHub <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R"
 rmdScripts <- c("ClassTables.R", "MLH1_Functions.R", "RedcapOutput.R")
 
-LoadGitHubScripts(file.path(mainHub,"Report-Scripts"), rmdScripts)
-
+#LoadGitHubScripts(file.path(mainHub,"Report-Scripts"), rmdScripts)
