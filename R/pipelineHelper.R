@@ -247,25 +247,37 @@ launchEmailNotify <- function(runID) {
 }
 
 
-# FUN: Creates the QC record for the current run on REDCap --------------------
+#' Check for and Create a REDCap Record if It Does Not Exist
+#'
+#' This function checks whether a record with a given record_name exists in the REDCap database.
+#' If the record is not found, it creates a new record with that record_name.
+#'
+#' @param record_name A character string representing the REDCap record identifier.
+#' @param rcon A valid REDCap connection object created using redcapConnection().
+#'
+#' @return The result of the importRecords call if a new record is created,
+#'         or a message indicating that the record already exists.
+#'
+#' @import redcapAPI
 CreateRedcapRecord <- function(runID = NULL, recordWord = "QC") {
-    msgFunName(pipeLnk, "CreateRedcapRecord")
-    if (is.null(runID)) {
-        runID <- paste0(basename(gb$workDir))
+    rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
+    record_name <-  paste0(runID, "_", recordWord)
+    existing_record <- redcapAPI::exportRecordsTyped(rcon,
+                                                     records = record_name)
+    if (nrow(existing_record) == 0) {
+        new_record_df <- data.frame(
+            record_id = record_name,
+            run_number = runID,
+            stringsAsFactors = FALSE
+        )
+        new_record <- redcapAPI::castForImport(
+            new_record_df, rcon, fields = c("record_id", "run_number")
+            )
+        import_result <- redcapAPI::importRecords(rcon, new_record)
+        message(dsh, "Created REDCap Record: ", new_record_df[1], dsh, "\n")
+    } else {
+        message(paste(record_name, "already exists in the REDCap database."))
     }
-    record = c(record_id = paste0(runID, "_", recordWord), run_number = runID)
-    cntrl <- jsonlite::toJSON(list(as.list(record)), auto_unbox = T)
-    try(RCurl::postForm(
-        gb$apiLink,
-        token = gb$ApiToken,
-        content = 'record',
-        format = 'json',
-        type = 'flat',
-        data = cntrl
-    ),
-    T
-    )
-    message(dsh, "Created REDCap Record: ", record[1], dsh, "\n")
 }
 
 # Checks if the QC File will be read ------------------------------------------
@@ -674,18 +686,7 @@ check_control_sam1 <- function(data, cntrl, runID) {
 }
 
 
-# MAIN: Generates Html reports with samplesheet.csv for V12_EPICV2 ----
-makeHtmlReports <- function(runPath = NULL,
-                            sheetName = "samplesheet.csv",
-                            selectSams = NULL,
-                            skipQC = F,
-                            email = T,
-                            redcapUp = T) {
-
-    msgFunName(pipeLnk, "makeHtmlReports")
-    library("data.table")
-    assign("genCn", FALSE, envir = gb)
-
+check_csv_data <- function(sheetName = "samplesheet.csv") {
     data <- utils::read.csv(sheetName, strip.white = T)
     toKeep <- !(is.na(data[, 1]) | data[, 1] == 0 | data[, 1] == "")
     if (any(!toKeep)) {
@@ -706,7 +707,26 @@ makeHtmlReports <- function(runPath = NULL,
 
     if (length(cntrl) >= 1) {
         data <- check_control_sam1(data, cntrl, runID)
+    } else {
+        warning("No control found in the samplesheet csv file!")
     }
+
+    return(data)
+}
+
+
+# MAIN: Generates Html reports with samplesheet.csv for V12_EPICV2 ----
+makeHtmlReports <- function(runOrder = NULL,
+                            skipQC = F,
+                            email = T,
+                            redcapUp = T) {
+    msgFunName(pipeLnk, "makeHtmlReports")
+
+    library("data.table")
+    assign("genCn", FALSE, envir = gb)
+
+    data <- check_csv_data()
+    runID <- paste0(data$RunID[1])
 
     reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
     CopyRmdFile(gb$runID, reportMd)
@@ -715,7 +735,7 @@ makeHtmlReports <- function(runPath = NULL,
     library("pander")
     library("htmltools")
 
-    loopRender(selectSams, data, redcapUp)
+    loopRender(runOrder, data, redcapUp)
     checkRunOutput(runID)
 
     qcVals <- NULL
@@ -731,9 +751,8 @@ makeHtmlReports <- function(runPath = NULL,
     }
 
     if (grepl("TEST", runID)) {
-        redcapUp = F; email = F
+        redcapUp <- email <- FALSE
     }
-
 
     if (file.exists(gb$UPLOAD_LOG_TSV)) {
         file.list <- read.table(gb$UPLOAD_LOG_TSV)[,1]
@@ -741,14 +760,13 @@ makeHtmlReports <- function(runPath = NULL,
             gb$uploadToRedcap(file.list, T)
         }
     }
-    #file.list <- dir(getwd(), pattern = ".html", full.names = T)
-    #gb$uploadToRedcap(file.list, F)
-
 
     if (email == T) {
         RenameFailed(qcVals)
-        gb$CombineClassAndQC(output_fi = paste0(runID, "_qc_data.csv"),
-                             gb$ApiToken, runDir = runPath, runID)
+        gb$CombineClassAndQC(
+            output_fi = paste0(runID, "_qc_data.csv"),
+            gb$ApiToken, runDir = NULL, runID
+        )
         launchEmailNotify(runID)
     }
 
@@ -849,9 +867,9 @@ StartRun <- function(selectRDs = NULL, emailNotify = T, redcapUp = T) {
         runOrder <- gb$reOrderRun(selectRDs)
     }
     gb$makeHtmlReports(
+        runOrder = runOrder,   # Prioritize specific RD-numbers
         skipQC = F,            # Don't skip QC generation
         email = emailNotify,   # to email after Run complete
-        selectSams = runOrder, # Prioritize specific RD-numbers
         redcapUp = redcapUp    # Flag to import files to REDCap
     )
 }
