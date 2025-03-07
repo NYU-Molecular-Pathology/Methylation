@@ -222,28 +222,31 @@ generateQCreport <- function(runID = NULL) {
 
 # Sends an email notification that the run is complete from redcap admin ------
 launchEmailNotify <- function(runID) {
-    msgFunName(pipeLnk,"launchEmailNotify")
-    isMC = sjmisc::str_contains(runID, "MGDM") |
-        sjmisc::str_contains(runID, "MC")
+    msgFunName(pipeLnk, "launchEmailNotify")
+
+    isMC = sjmisc::str_contains(runID, "MGDM") | sjmisc::str_contains(runID, "MC")
     is_validation <- sjmisc::str_contains(runID, "VAL")
+
     if (is_validation) {
         return(message("Run is Validation. No email will be generated"))
     }
     if (sjmisc::str_contains(runID, "EPICV1")) {
         return(message("Run is Validation. No email will be generated"))
     }
+
     com <- ifelse(isMC == T, "sample_qc", "sample_research")
-    record = data.frame(record_id = paste0(runID, "_QC"), comments = com)
-    datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox = T)
-    RCurl::postForm(
-        gb$apiLink,
-        token = gb$ApiToken,
-        content = 'record',
-        format = 'json',
-        type = 'flat',
-        data = datarecord
+    record_df = data.frame(record_id = paste0(runID, "_QC"), comments = com)
+    record_data <- redcapAPI::castForImport(
+        record_df, rcon, fields = c("record_id", "comments")
     )
-    cat(bkBlu("Check email to confirm Email Notification Created"), sep = "\n")
+
+    rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
+
+    res <- redcapAPI::importRecords(rcon,
+                             record_data,
+                             returnContent = "ids",
+                             overwriteBehavior = "overwrite")
+    message(bkBlu("Check email to confirm notification created for", res))
 }
 
 
