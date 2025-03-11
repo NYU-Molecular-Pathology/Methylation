@@ -6,24 +6,17 @@
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH, 2025
 
-gb <- globalenv() 
+gb <- globalenv()
 assign("gb", gb)
 supM <- function(objTing){return(suppressMessages(suppressWarnings(objTing)))}
 assign(x = "supM", value = supM, envir = .GlobalEnv)
 options(install.packages.compile.from.source = "--no-multiarch")
 options(Ncpus = 4)
 
-is_installed <- function(package_name) {
-    tryCatch(
-        expr = {
-            return(length(find.package(package_name, quiet = TRUE)) > 0)
-        },
-        error = function(e) {
-            return(FALSE)
-        }
-    )
-}
 
+not_installed <- function(pkgName) {
+    return(!pkgName %in% rownames(installed.packages()))
+}
 
 pkgs <- c(
     "needs",
@@ -37,7 +30,6 @@ pkgs <- c(
     "plotly",
     "pkgdown",
     "magrittr",
-    "compiler",
     "minfi",
     "pander",
     "parallel",
@@ -64,7 +56,14 @@ optsLi <- list(
     progress = TRUE
 )
 
-chunkOpts <- list(error = FALSE, echo = FALSE, message = FALSE, warning = FALSE, self.contained = TRUE, comment = '')
+chunkOpts <- list(
+    error = FALSE,
+    echo = FALSE,
+    message = FALSE,
+    warning = FALSE,
+    self.contained = TRUE,
+    comment = ''
+)
 
 LoadReportPkgs <- function(pkgs, optsLi, chunkOpts){
     rlis = getOption("repos")
@@ -72,33 +71,32 @@ LoadReportPkgs <- function(pkgs, optsLi, chunkOpts){
     try(options(repos = rlis), silent=T)
     options("install.packages.compile.from.source" = "never")
     options("install.packages.check.source"="no")
-    
-    if(!is_installed("devtools")){
-        install.packages("devtools", dependencies = c("Depends", "Imports", "LinkingTo"), quiet = T,
+
+    if (not_installed("devtools")){
+        install.packages("devtools", dependencies = T, quiet = T,
                          ask = FALSE, lib = .libPaths()[1], update = F)
-        }
-    if (!is_installed("BiocManager")) {
-        install.packages("BiocManager", dependencies = c("Depends", "Imports", "LinkingTo"), quiet = T,
+    }
+    if (not_installed("BiocManager")) {
+        install.packages("BiocManager", dependencies = T, quiet = T,
                          ask = FALSE, lib = .libPaths()[1], update = F)
-        }
-    if(!require("librarian")){
-        install.packages("librarian", dependencies = c("Depends", "Imports", "LinkingTo"), quiet = T,
+    }
+    if (not_installed("librarian")){
+        install.packages("librarian", dependencies = T, quiet = T,
                          ask = FALSE, lib = .libPaths()[1], update = F)
-        }
-    
+    }
+
     library("BiocManager")
-    librarian::shelf(pkgs, ask=F, verbose=F, warn.conflicts = F, quietly = T)
-    require("needs", quietly = T, warn.conflicts=F)
-    library(verbose=F, warn.conflicts = F, quietly = T, package = "knitr")
+    not_loaded <- setdiff(pkgs, loadedNamespaces())
+    librarian::shelf(not_loaded, ask = F)
+
+    require("needs", quietly = T, warn.conflicts = F)
     knitr::opts_chunk$set(optsLi)
     knitr::opts_knit$set(optsLi)
     knitr::opts_current$set(optsLi)
     knitr::opts_knit$set(root.dir = getwd())
     options(width = 300, scipen = 5)
-    library(verbose = F, warn.conflicts = F, quietly = T, package = "pander")
+
     pander::panderOptions('table.alignment.default', "left")
-    require("compiler")
-    invisible(supM(compiler::compilePKGS(enable = TRUE)))
     knitr::opts_chunk$set(chunkOpts)
     supM(library(verbose=F, warn.conflicts = F, quietly = T, package="ggplot2"))
 }
@@ -173,13 +171,13 @@ GetClassProbTables <-  function(outList){
                    kableExtra::column_spec(column = c(1, 2), extra_css = xtraCss1) %>%
                    kableExtra::column_spec(column = 2, background = "rgb(204,230,255)", extra_css = txtc) %>%
                    kableExtra::row_spec(row = 0, font_size = 16, background = "rgb(135,174,237)", color = "black")
-               )
+        )
     } else{
         out_class_family=outList$out_class_family
         out <- outList$out
     }
     stopifnot(!is.null(outList) & !is.null(out_class_family))
-    
+
     famTable <- out_class_family %>%
         knitr::kable("html", kgh, align = 'clc') %>%
         kableExtra::kable_styling(kgb, full_width = F, position="float_left") %>%
@@ -187,7 +185,7 @@ GetClassProbTables <-  function(outList){
         kableExtra::column_spec(column = 2, background = "rgb(204,255,204)", extra_css = txtc) %>%
         kableExtra::row_spec(row = 0, font_size = 16, background = "rgb(127,217,126)", color = "black") %>%
         kableExtra::row_spec(row = 1, extra_css = xtraCss2)
-    
+
     grpTable <- out %>%
         knitr::kable("html", kgh, align='clc') %>%
         kableExtra::kable_styling(kgb, full_width = F) %>%
@@ -195,7 +193,7 @@ GetClassProbTables <-  function(outList){
         kableExtra::column_spec(column = 2, background = "rgb(204,230,255)", extra_css = txtc) %>%
         kableExtra::row_spec(row = 0, font_size = 16, background = "rgb(135,174,237)", color = "black") %>%
         kableExtra::row_spec(row=1,extra_css=xtraCss3)
-    
+
     return(list("famTable" = famTable, "grpTable" = grpTable))
 }
 
@@ -228,11 +226,11 @@ PrintGainLoss <- function(gnLss){
 
 
 GrabClassDetails <- function(refData, sclass) {
-  sampleMatch <- refData$Molecular_subclass == sclass$predicted
-  if (any(sampleMatch)) {
-    theRefLi <- refData$description[sampleMatch]
-  } else{
-    theRefLi <- "No description availible."
-  }
-  return(theRefLi)
+    sampleMatch <- refData$Molecular_subclass == sclass$predicted
+    if (any(sampleMatch)) {
+        theRefLi <- refData$description[sampleMatch]
+    } else{
+        theRefLi <- "No description availible."
+    }
+    return(theRefLi)
 }
