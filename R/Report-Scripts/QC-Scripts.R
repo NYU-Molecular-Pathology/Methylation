@@ -1,12 +1,10 @@
 #!/usr/bin/env Rscript
-## ---------------------------
 ## Script name: QC-Scripts.R
 ## Purpose: source of global scripts imported for QC methylation analysis
-## Date Last Modified: January 19, 2024
+## Date Created: June 13, 2022
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2024
-## ---------------------------
+## Copyright (c) NYULH Jonathan Serrano, 2025
 
 gb <- globalenv(); assign("gb", gb)
 options("install.packages.compile.from.source" = "No")
@@ -18,50 +16,71 @@ supM <- function(pk){return(suppressPackageStartupMessages(suppressWarnings(pk))
 # Setting US CRAN REPO
 options(repos = c(getOption("repos"), CRAN = "http://cran.us.r-project.org"))
 
-pkgs <-
-    c(
-        "knitr",
-        "kableExtra",
-        "magick",
-        "webshot",
-        "plyr",
-        "ggplot2",
-        "reshape2",
-        "data.table",
-        "DT",
-        "plotly",
-        "MethylAid",
-        "minfi",
-        "scales",
-        "htmltools",
-        "IlluminaHumanMethylation450kmanifest",
-        "IlluminaHumanMethylationEPICmanifest",
-        "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
-        "Biobase",
-        "RColorBrewer",
-        "limma",
-        "ggfortify",
-        "Rtsne",
-        "qdapTools",
-        "gplots",
-        "readxl",
-        "stringr",
-        "ggrepel",
-        "Polychrome",
-        "tinytex",
-        "gridExtra",
-        "rmarkdown",
-        "BiocParallel",
-        "pals",
-        "grid",
-        "grDevices",
-        "magrittr",
-        "dplyr"
-    )
+pkgs <- c(
+    "knitr",
+    "kableExtra",
+    "magick",
+    "webshot",
+    "plyr",
+    "ggplot2",
+    "reshape2",
+    "data.table",
+    "DT",
+    "plotly",
+    "MethylAid",
+    "minfi",
+    "scales",
+    "htmltools",
+    "IlluminaHumanMethylation450kmanifest",
+    "IlluminaHumanMethylationEPICmanifest",
+    "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
+    "Biobase",
+    "RColorBrewer",
+    "limma",
+    "ggfortify",
+    "Rtsne",
+    "qdapTools",
+    "gplots",
+    "readxl",
+    "stringr",
+    "ggrepel",
+    "Polychrome",
+    "tinytex",
+    "gridExtra",
+    "rmarkdown",
+    "BiocParallel",
+    "pals",
+    "grid",
+    "grDevices",
+    "magrittr",
+    "dplyr"
+)
 
-if(!require("librarian")){
-    install.packages("librarian", dependencies=T, verbose=T, Ncpus = 4, quiet=T)}
-librarian::shelf(pkgs, ask=F)
+
+not_installed <- function(pkgName) {
+    return(!pkgName %in% rownames(installed.packages()))
+}
+
+if (not_installed("pak")) {
+    install.packages("pak", dependencies = T, ask = F, type = "binary")
+}
+library("pak")
+
+missing_pkgs <- sapply(pkgs, not_installed)
+
+if (any(missing_pkgs)) {
+    to_install <- names(missing_pkgs[missing_pkgs == T])
+    try(pak::pkg_install(to_install, ask = F), silent = T)
+}
+
+if (not_installed("librarian")) {
+    try(pak::pkg_install("librarian", ask = F), silent = T)
+}
+
+library("librarian")
+not_loaded <- setdiff(pkgs, loadedNamespaces())
+
+supM(librarian::shelf(not_loaded, ask = F))
 
 # FUN: Increases vertical spacing between legend keys
 draw_key_polygon3 <- function(data, params, size) {
@@ -102,13 +121,13 @@ makeLabels <- function(totNum, xName, yName, plotName, thePlot) {
             plot.title = element_text(color = "navy", size = 26, face = "bold"),
             plot.subtitle = element_text(color = "black", size = 12),
             plot.caption = element_text(color = "darkgreen",face = "italic",size = 12)
-            ) +
+        ) +
         labs(label = "", color = "") +
         guides(colour = guide_legend(
             title = "Samples",
             override.aes = list(shape = 19),
             byrow = TRUE, ncol = 9), fill = guide_legend(show.legend = F)
-            ) + coord_cartesian(clip = 'off')
+        ) + coord_cartesian(clip = 'off')
     legendLabel <- legendLabel + theme(legend.position="none")
     return(legendLabel)
 }
@@ -131,12 +150,12 @@ plotParams <- function(totNum, dParam, xincept, yincept) {
     dParam <- ReplaceNAorNull(dParam, xincept, yincept)
     dParam$Sample_Name = paste(dParam$Sample_Name, dParam$MP_num, sep = "\n")
     plot.colours <- glasbey()[1:(length(dParam$x))]
-    
-    
+
+
     thePlot <-
         ggplot(dParam, aes(x = dParam[, 2], y = dParam[, 3],
                            color = dParam$Sample_Name, label = dParam$Sample_Name
-                           ), show.legend = F) +
+        ), show.legend = F) +
         scale_color_manual(values = plot.colours) +
         geom_point(shape = 19, size = 5, alpha = 0.8) +
         theme_bw() +
@@ -153,8 +172,8 @@ plotParams <- function(totNum, dParam, xincept, yincept) {
                 y = dParam[, 3],
                 show.legend = F,
                 fill = dParam$Sample_Name,
-                colour = scales::alpha(c("black"), 1.0), inherit.aes = F, legend=F 
-                ),
+                colour = scales::alpha(c("black"), 1.0), inherit.aes = F, legend=F
+            ),
             fontface = 'bold',
             colour = scales::alpha(c("black"), 1.0),
             alpha = 0.50,
@@ -176,7 +195,7 @@ plotParams <- function(totNum, dParam, xincept, yincept) {
         thePlot <- thePlot +
             geom_vline(xintercept = xincept, linetype = 'dashed', colour = "red", inherit.aes = F) +
             coord_cartesian(clip="off") +
-            expand_limits(x = min(dParam[,2]), y = max(dParam[,3])*0.25) + 
+            expand_limits(x = min(dParam[,2]), y = max(dParam[,3])*0.25) +
             guides(fill = guide_legend(show.legend = F)) +
             theme(legend.position = "none") +
             scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) +
@@ -191,7 +210,7 @@ plotParams <- function(totNum, dParam, xincept, yincept) {
             scale_x_continuous(breaks = scales::pretty_breaks()) +
             guides(fill = guide_legend(show.legend = F)) +
             theme(legend.position = "none") + ylim(0.00, 1.00)
-        }
+    }
     thePlot <- thePlot + theme(legend.position = "none")
     return(thePlot)
 }
@@ -220,8 +239,8 @@ getProbes <- function(probeName) {
 
 ## Merges Dataframe Values --------------------------------------
 mergeDF <- function(df, tg) {
-	mdf <- merge(df, tg, by = "row.names", suffixes = c("", ".y"))
-	return(mdf)
+    mdf <- merge(df, tg, by = "row.names", suffixes = c("", ".y"))
+    return(mdf)
 }
 
 ## MU data --------------------------------------
@@ -233,55 +252,55 @@ rotateData <- function(data, columns) {
 
 ## Subset Custom Data --------------------------------------
 GetNewDt <- function(data_final){
-  dataList <- list(final_data = data_final)
-  names(dataList) <- c("final_data")
-  return(dataList)
+    dataList <- list(final_data = data_final)
+    names(dataList) <- c("final_data")
+    return(dataList)
 }
 
 ## Get Data Values for Plot --------------------------------------
 getData <- function(theD, exGrn, exRed, cutoff, targets){
-	dGrn <- theD[(exGrn), c(1:5, 7)]
-	x <- tapply((dGrn$IntGrn), dGrn$Samples, mean)
-	is.na(x) <- !is.finite(x)
-	dRed <- theD[as.array(exRed), c(1:6)]
-	df <- data.frame(x, y = tapply(dRed$IntRed, dRed$Samples, mean))
-	mdf <- mergeDF(df,tg=targets)
-	plot_data <- gb$rotateData(mdf,columns = c("x", "y"))
-	fdt <- plot_data; ott <- subset(plot_data, plot_data$x <= cutoff)
-	return(list(final_data = fdt,outlier = ott))
+    dGrn <- theD[(exGrn), c(1:5, 7)]
+    x <- tapply((dGrn$IntGrn), dGrn$Samples, mean)
+    is.na(x) <- !is.finite(x)
+    dRed <- theD[as.array(exRed), c(1:6)]
+    df <- data.frame(x, y = tapply(dRed$IntRed, dRed$Samples, mean))
+    mdf <- mergeDF(df,tg=targets)
+    plot_data <- gb$rotateData(mdf,columns = c("x", "y"))
+    fdt <- plot_data; ott <- subset(plot_data, plot_data$x <= cutoff)
+    return(list(final_data = fdt,outlier = ott))
 }
 
 get.hc.dat <- function(targets) {
-	d <- getProbes("HYB")
-	d <- d[order(d$Samples),]
-	hiD <- grepl("High", d$ExtendedType)
-	loD <- grepl("Low", d$ExtendedType)
-	x <- 0.5 * (d$IntGrn[hiD] + d$IntGrn[loD])
-	y <- d$IntGrn[hiD] - d$IntGrn[loD]
-	df <- data.frame(x = x, y = y, row.names = d$Samples[hiD])
-	mdf <- mergeDF(df,tg = targets)
-	return(mdf)
+    d <- getProbes("HYB")
+    d <- d[order(d$Samples),]
+    hiD <- grepl("High", d$ExtendedType)
+    loD <- grepl("Low", d$ExtendedType)
+    x <- 0.5 * (d$IntGrn[hiD] + d$IntGrn[loD])
+    y <- d$IntGrn[hiD] - d$IntGrn[loD]
+    df <- data.frame(x = x, y = y, row.names = d$Samples[hiD])
+    mdf <- mergeDF(df,tg = targets)
+    return(mdf)
 }
 
 get.bs.dat <- function(targets) {
-	bsD = getProbes(probeName = "BSI")
-	BSvals <- getData(theD = bsD, exGrn = grepl("C1|C2|C3", bsD$ExtendedType),
-	                  exRed = grepl("C4|C5|C6", bsD$ExtendedType), cutoff = 10, targets)
-	return(BSvals)
+    bsD = getProbes(probeName = "BSI")
+    BSvals <- getData(theD = bsD, exGrn = grepl("C1|C2|C3", bsD$ExtendedType),
+                      exRed = grepl("C4|C5|C6", bsD$ExtendedType), cutoff = 10, targets)
+    return(BSvals)
 }
 
 get.op.dat <- function(targets) {
-	newD <- getProbes(probeName = "NP")
-	OPvals <- getData(theD = newD, exGrn = newD$ExtendedType %in% c("NP (C)", "NP (G)"),
-					  exRed = newD$ExtendedType %in% c("NP (A)", "NP (T)"), cutoff = 11, targets)
-	return(OPvals)
+    newD <- getProbes(probeName = "NP")
+    OPvals <- getData(theD = newD, exGrn = newD$ExtendedType %in% c("NP (C)", "NP (G)"),
+                      exRed = newD$ExtendedType %in% c("NP (A)", "NP (T)"), cutoff = 11, targets)
+    return(OPvals)
 }
 
 get.dp.dat <- function(gb){
-  dpDt <- gb$sdata@DPfreq
-  df <- data.frame(x = 1:length(dpDt), y = dpDt, row.names = names(dpDt))
-  dat.dp <- gb$mergeDF(df, tg = gb$targets)
-  return(dat.dp)
+    dpDt <- gb$sdata@DPfreq
+    df <- data.frame(x = 1:length(dpDt), y = dpDt, row.names = names(dpDt))
+    dat.dp <- gb$mergeDF(df, tg = gb$targets)
+    return(dat.dp)
 }
 
 swm <- function(funObj){return(suppressMessages(suppressWarnings(funObj)))}
@@ -350,20 +369,20 @@ GetSummaryTab <- function(mnpOutTb){
     gCel <- ifelse(mnpOutTb$classifier_value < 0.90, "red", "green")
     bNum =  mnpOutTb$b_number
     tableSum <- mnpOutTb %>%
-    	dplyr::mutate(
-    		classifier_value = cell_spec(classifier_value, "html", color = gCel, bold = T),
-    		mgmt_status = cell_spec(mgmt_status, "html", color = gCol)) %>%
+        dplyr::mutate(
+            classifier_value = cell_spec(classifier_value, "html", color = gCel, bold = T),
+            mgmt_status = cell_spec(mgmt_status, "html", color = gCol)) %>%
         dplyr::select(
             record_id, b_number, tm_number, classifier_score, classifier_value,
             subgroup, subgroup_score, mgmt_status
-            ) %>%
+        ) %>%
         kable(format = "html", booktabs = T, escape = F,
               linesep = "", align = "c", col.names = tableHeader) %>%
-    	kable_styling("striped", position="left") %>%
-    	row_spec(which(grepl('control',bNum)),bold=T, color="white",background="orange") %>%
-    	row_spec(which(grepl('low',bNum)), bold=T, color="white",background="salmon") %>%
-    	row_spec(which(grepl('_',bNum)),bold=T, color="white",background="salmon") %>%
-    	kable_styling(latex_options="scale_down")
+        kable_styling("striped", position="left") %>%
+        row_spec(which(grepl('control',bNum)),bold=T, color="white",background="orange") %>%
+        row_spec(which(grepl('low',bNum)), bold=T, color="white",background="salmon") %>%
+        row_spec(which(grepl('_',bNum)),bold=T, color="white",background="salmon") %>%
+        kable_styling(latex_options="scale_down")
     tableSum <- tableSum %>% kable_styling(position="left")
     return(tableSum)
 }
@@ -373,15 +392,15 @@ GetFailedSams <- function(mnpOutTb){
     rNum = mnpOutTb$record_id
     low_vals <- mnpOutTb$classifier_value < 0.90
     if(any(low_vals)){
-      lowClassVals <- paste0("**", rNum[low_vals], "**")
-      lowValScores <- mnpOutTb$classifier_value[low_vals]
-      lowScoring <-  paste(lowClassVals, lowValScores, sep = ", ")
-      failedSams <- unlist(lapply(lowScoring, function(x){
-        paste("<li>", x,"</li>\n")
-      }))
-      return(failedSams)
+        lowClassVals <- paste0("**", rNum[low_vals], "**")
+        lowValScores <- mnpOutTb$classifier_value[low_vals]
+        lowScoring <-  paste(lowClassVals, lowValScores, sep = ", ")
+        failedSams <- unlist(lapply(lowScoring, function(x){
+            paste("<li>", x,"</li>\n")
+        }))
+        return(failedSams)
     }else{
-      return(NULL)
+        return(NULL)
     }
 }
 
@@ -400,7 +419,7 @@ GetControlSam <- function(mnpOutTb){
 }
 
 GetNotesData <- function(xlsmSheet){
-	library("knitr");library("kableExtra");library("dplyr")
+    library("knitr");library("kableExtra");library("dplyr")
     columnCss <- "border-width:2px;border-style:solid;background-color:rgb(255,250,205);border-color:rgb(105,105,105);width:900px;"
     rwcss <- "color:white;text-align:center;font-weight:bold;border-color:rgb(105,105,105);background-color:rgb(139,69,19);"
     noteData <- as.data.frame(readxl::read_excel(xlsmSheet, 2, "M1:M7", col_types = c("text")), row.names=NULL)
@@ -507,22 +526,22 @@ Combine_QC_data <- function(data_1, data2){
 
 # FUNCTION: Saves each qc metric x and y values to a csv file
 SaveQCmetrics <- function(gb, dat.mu, dat.op, dat.bs, dat.hc, dat.dp) {
-  fileOut <- paste(gb$runID, "qc_data.csv", sep = "_")
-  fileOutDir <- file.path(gb$runPath, fileOut)
+    fileOut <- paste(gb$runID, "qc_data.csv", sep = "_")
+    fileOutDir <- file.path(gb$runPath, fileOut)
 
-  outData_MU <- FilterColNames(dat.mu, "Log2sqrt(M*U)", "Log2(M/U)")
-  outData_OP <- FilterColNames(dat.op, "log2sqrt(R*G)", "log2(R/G)")
+    outData_MU <- FilterColNames(dat.mu, "Log2sqrt(M*U)", "Log2(M/U)")
+    outData_OP <- FilterColNames(dat.op, "log2sqrt(R*G)", "log2(R/G)")
 
-  final_data <- Combine_QC_data(outData_MU, outData_OP)
+    final_data <- Combine_QC_data(outData_MU, outData_OP)
 
-  outData_BS <- FilterColNames(dat.bs, "BS_log2sqrt(R*G)", "BS_log2(R/G)")
-  final_data <- Combine_QC_data(final_data, outData_BS)
+    outData_BS <- FilterColNames(dat.bs, "BS_log2sqrt(R*G)", "BS_log2(R/G)")
+    final_data <- Combine_QC_data(final_data, outData_BS)
 
-  outData_HC <- FilterColNames(dat.hc, "log2sqrt(H*L)", "log2(H/L)")
-  final_data <- Combine_QC_data(final_data, outData_HC)
+    outData_HC <- FilterColNames(dat.hc, "log2sqrt(H*L)", "log2(H/L)")
+    final_data <- Combine_QC_data(final_data, outData_HC)
 
-  outData_DP <- FilterColNames(dat.dp, "Samples", "Pvalue")
-  final_data <- Combine_QC_data(final_data, outData_DP)
+    outData_DP <- FilterColNames(dat.dp, "Samples", "Pvalue")
+    final_data <- Combine_QC_data(final_data, outData_DP)
 
-  write.csv(final_data, file = fileOutDir, row.names = F, quote = F)
+    write.csv(final_data, file = fileOutDir, row.names = F, quote = F)
 }
