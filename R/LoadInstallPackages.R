@@ -50,57 +50,61 @@ if (isMacOS) {
 
 # Cran Packages ---------------------------------------------------------------
 cranPkgs <- c(
-    'devtools',
-    'remotes',
-    'sjmisc',
-    'stringi',
-    'digest',
-    'RCurl',
-    'rlang',
-    'parallel',
-    'grid',
-    'gridExtra',
-    'knitr',
-    'kableExtra',
-    'htmltools',
-    'ggplot2',
-    'plotly',
-    'ggfortify',
-    'ggrepel',
-    'gplots',
-    'fastmatch',
-    'pals',
-    'Polychrome',
-    'qdapTools',
-    'beepr',
-    'xtable',
-    'pander',
-    'grDevices',
-    'graphics',
-    'stats',
-    'utils',
-    'magick',
-    'ade4',
-    "MASS",
+    # Fundamental utilities and core dependencies
+    "Rcpp",
+    "rlang",
+    "digest",
+    "RCurl",
     "R.utils",
     "optparse",
-    "targets",
+    "future.apply",
+    "fastmatch",
+    
+    # Development tools
+    "devtools",
     "usethis",
-    "webshot",
-    "reshape",
-    "reshape2",
+    
+    # Data manipulation and transformation
     "data.table",
-    "DT",
+    "reshape2",
+    "stringr",
+    
+    # Plotting and graphics
+    "ggplot2",
     "scales",
     "RColorBrewer",
+    "gridExtra",
+    "ggfortify",
+    "ggrepel",
+    "gplots",
+    "plotly",
+    
+    # Reporting and document generation
+    "knitr",
+    "kableExtra",
+    "xtable",
+    "pander",
+    
+    # Web and interactive tools
+    "htmltools",
+    "webshot",
+    "DT",
+    
+    # Miscellaneous tools and specialized packages
+    "sjmisc",
+    "qdapTools",
+    "beepr",
+    "magick",
+    "ade4",
+    "targets",
     "readxl",
-    "stringr",
     "tinytex",
-    "future.apply",
-    "Rcpp",
     "httpuv",
-    "shiny"
+    "shiny",
+    "pals",
+    "Polychrome"
 )
+
 
 # GitHub Packages -------------------------------------------------------------
 gHubPkgs <- data.frame(
@@ -115,33 +119,45 @@ gHubPkgs <- data.frame(
 
 # BioConductor Packages  ------------------------------------------------------
 biocPkgs <- c(
-    'HDF5Array',
-    'bumphunter',
-    'GEOquery',
-    "Biobase", "MatrixGenerics", "GenomeInfoDb",
-    'lumi',
-    'rngtools',
-    'Rtsne',
-    'methylumi',
-    'randomForest',
-    'glmnet',
-    'IlluminaHumanMethylation450kmanifest',
-    'IlluminaHumanMethylation450kanno.ilmn12.hg19',
-    'IlluminaHumanMethylationEPICmanifest',
-    'IlluminaHumanMethylationEPICanno.ilm10b2.hg19',
-    'IlluminaHumanMethylationEPICanno.ilm10b4.hg19',
-    'MethylAid',
-    'conumee',
-    'BiocParallel',
-    "limma"
+    # Core Bioconductor infrastructure and utilities
+    "BiocParallel",
+    "Biobase",
+    "GenomeInfoDb",
+    "MatrixGenerics",
+    "rngtools",
+    
+    # Data acquisition and storage
+    "GEOquery",
+    "HDF5Array",
+    
+    # Illumina methylation annotation (450k)
+    "IlluminaHumanMethylation450kmanifest",
+    "IlluminaHumanMethylation450kanno.ilmn12.hg19",
+    
+    # Illumina methylation annotation (EPIC)
+    "IlluminaHumanMethylationEPICmanifest",
+    "IlluminaHumanMethylationEPICanno.ilm10b2.hg19",
+    "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
+    
+    # Methylation data processing
+    "lumi",
+    "methylumi",
+    "MethylAid",
+    
+    # Analysis and machine learning methods
+    "bumphunter",
+    "limma",
+    "conumee",
+    "randomForest",
+    "glmnet",
+    "Rtsne"
 )
+
 
 # Extra Libraries -------------------------------------------------------------
 extraPks <- c(
-    "doSNOW",
     "doParallel",
     "foreach",
-    "compiler",
     "tidyverse",
     "plyr",
     "dplyr",
@@ -155,32 +171,22 @@ extraPks <- c(
 )
 
 # Helper Functions ------------------------------------------------------------
-sup <- function(x) return(suppressWarnings(suppressPackageStartupMessages(x)))
 
-sw <- function(pkgOb) try(return(suppressMessages(suppressWarnings(pkgOb))), T)
-
-ld <- function(libName) {
-    lib.opts <- list(package = libName, character.only = T,verbose = T, warn.conflicts = F, quietly = F)
-    suppressPackageStartupMessages(do.call(library, c(lib.opts)))
+# Loads a library if not in current NameSpace
+load_lib <- function(libName) {
+    lib.opts <- list(package = libName, character.only = T, verbose = F)
+    if (!libName %in% loadedNamespaces()) {
+        suppressPackageStartupMessages(do.call(library, c(lib.opts)))
+    }
     message(libName, " ...load successful")
 }
 
+# Checks if a package is installed
 not_installed <- function(pkgName) {
     return(!pkgName %in% rownames(installed.packages()))
 }
 
-mkred <- function(strMsg) {
-    return(crayon::white$bgRed$bold(strMsg))
-}
-
-mkblu <- function(strMsg) {
-    return(crayon::white$bgBlue$bold(strMsg))
-}
-
-mkGrn <- function(strMsg) {
-    return(crayon::white$bgGreen$bold(strMsg))
-}
-
+# Messages the current package being checked for installation
 msgCheck <- function(pkg, warn = F) {
     if (warn == F) {
         message("Checking ", pkg, "...")
@@ -190,7 +196,7 @@ msgCheck <- function(pkg, warn = F) {
 }
 
 
-# FUN: Installs package from github link
+# FUNC: Installs package from github link
 gh.inst <- function(pkNam, ...) {
     msgCheck(basename(pkNam[[1]]))
     if (not_installed(names(pkNam))) {
@@ -208,15 +214,15 @@ gh.inst <- function(pkNam, ...) {
                 do.call(devtools::install_github, params)
             },
             finally = {
-                ld(names(pkNam))
+                load_lib(names(pkNam))
             }
         )
     } else {
-        ld(names(pkNam))
+        load_lib(names(pkNam))
     }
 }
 
-# FUN: Installs package from Source link
+# FUNC: Installs package from Source link
 source_inst <- function(fn) {
     msgCheck(names(fn))
     if (not_installed(names(fn))) {
@@ -234,14 +240,14 @@ source_inst <- function(fn) {
                 do.call(install.packages, c(params, method = "auto"))
             },
             finally = {
-                ld(names(fn))
+                load_lib(names(fn))
             }
         )} else {
-            ld(names(fn))
+            load_lib(names(fn))
         }
 }
 
-# FUN: Installs package from Bioconductor
+# FUNC: Installs package from Bioconductor
 bc.inst <- function(pknm) {
     message("Checking ", pknm, "...")
     if (not_installed(pknm)) {
@@ -260,17 +266,17 @@ bc.inst <- function(pknm) {
                 message(cond)
             },
             finally = {
-                ld(pknm)
+                load_lib(pknm)
             }
         )
     } else {
-        ld(pknm)
+        load_lib(pknm)
     }
 }
 
-# FUN: Installs and updates autoloading of the needs package
+# FUNC: Installs and updates autoloading of the needs package
 manageNeeds <- function() {
-
+    
     updateRProfile <- function() {
         txt1 <- "^[:blank:]*autoload\\(\"needs\", \"needs\"\\)"
         txt2 <- "\n\nautoload(\"needs\", \"needs\")\n\n"
@@ -280,9 +286,9 @@ manageNeeds <- function() {
             file.path(Sys.getenv("HOME"), "Rprofile.site"),
             profPath
         )
-
+        
         if (!file.exists(siteProf)) try(file.create(siteProf), silent = TRUE)
-
+        
         if (file.exists(siteProf)) {
             lines <- readLines(siteProf, warn = FALSE)
             if (!any(grepl(txt1, lines))) {
@@ -290,7 +296,7 @@ manageNeeds <- function() {
             }
         }
     }
-
+    
     configureNeeds <- function() {
         sysfile <- system.file("extdata", "promptUser", package = "needs")
         options(needs.promptUser = FALSE)
@@ -301,7 +307,7 @@ manageNeeds <- function() {
             }
         }
     }
-
+    
     installNeeds <- function() {
         tryCatch(
             install.packages("needs", dependencies = TRUE, verbose = TRUE,
@@ -317,16 +323,16 @@ manageNeeds <- function() {
             }
         )
     }
-
+    
     if (not_installed("needs")) {
         installNeeds()
         configureNeeds()
         updateRProfile()
     }
-
+    
 }
 
-# FUN: ensures the main package installers are loaded
+# FUNC: ensures the main package installers are loaded
 loadMainPkgs <- function() {
     if (not_installed("devtools")) {
         install.packages("devtools", dependencies = TRUE, ask = F)
@@ -334,43 +340,43 @@ loadMainPkgs <- function() {
     if (not_installed("BiocManager")) {
         install.packages("BiocManager", dependencies = TRUE, ask = F)
     }
-    ld("BiocManager")
-
+    load_lib("BiocManager")
+    
     if (not_installed("zip")) {
         install.packages("zip", dependencies = TRUE, ask = F)
     }
-    ld("zip")
-
+    load_lib("zip")
+    
     if (not_installed("pak")) {
         install.packages("pak", type = "binary", ask = F, dependencies = T)
     }
-
+    
     manageNeeds()
     options(needs.promptUser = FALSE)
     options(promptUser = FALSE)
     options(device.ask.default = FALSE)
     options(install.packages.check.source = "yes")
-
+    
     gh.inst(data.frame(easypackages = "jakesherman/easypackages"))
-
+    
     if (not_installed("tidyverse")) {
         pak::pkg_install("tidyverse", ask = F)
     }
 }
 
-# FUN: Applies each function install type (Github, CRAN, BioConductor) to Pkgs
+# FUNC: Applies each function install type (Github, CRAN, BioConductor) to Pkgs
 load_install_pkgs <- function(pkgList, instFun) {
     invisible(lapply(X = 1:length(pkgList), function(X) {
         instFun(pkgList[X])
     }))
 }
 
-# FUN: Ensures the correct minfi and manifest are installed for the classifier
+# FUNC: Ensures the correct minfi and manifest are installed for the classifier
 install_minfi <- function() {
     if (isNamespaceLoaded("minfi")) {
         try(unloadNamespace("minfi"), silent = TRUE)
     }
-
+    
     if (not_installed("IlluminaHumanMethylationEPICv2manifest")) {
         devtools::install_github(
             "mwsill/IlluminaHumanMethylationEPICv2manifest",
@@ -387,7 +393,7 @@ install_minfi <- function() {
     )
 }
 
-# FUN: Ensures if the version of minfi installed is correct for the classifier
+# FUNC: Ensures if the version of minfi installed is correct for the classifier
 check_minfi <- function(){
     minfiVers <- as.character(utils::packageVersion("minfi"))
     if (minfiVers != "1.43.1") {
@@ -395,27 +401,27 @@ check_minfi <- function(){
     }
 }
 
-# FUN: Checks if the package in the input list is already installed
+# FUNC: Checks if the package in the input list is already installed
 checkNeeded <- function(pkgList) {
     neededPkgs <- pkgList[!pkgList %in% rownames(installed.packages())]
     return(neededPkgs)
 }
 
-# FUN: Loads the list of packages from CRAN, GitHub, and BioConductor needed
+# FUNC: Loads the list of packages from CRAN, GitHub, and BioConductor needed
 loadPacks <- function() {
     loadMainPkgs()
-
+    
     neededPkgs <- checkNeeded(cranPkgs)
     if (length(neededPkgs) > 0) {
         pak::pkg_install(neededPkgs, ask = F)
     }
-
+    
     if (not_installed("minfi")) {
         install_minfi()
     }
-
+    
     load_install_pkgs(gHubPkgs, gh.inst)
-
+    
     if (not_installed("MethylAid")) {
         tryCatch(
             BiocManager::install(
@@ -426,39 +432,39 @@ loadPacks <- function() {
             }
         )
     }
-
+    
     neededPkgs <- checkNeeded(biocPkgs)
     if (length(neededPkgs) > 0) {
         pak::pkg_install(neededPkgs, ask = F)
     }
-
+    
     suppressWarnings(load_install_pkgs(biocPkgs, bc.inst))
     check_minfi()
-
+    
     if (not_installed("librarian")) {
         install.packages("librarian", dependencies = T, ask = F)
     }
-
+    
     neededPkgs <- checkNeeded(extraPks)
     if (length(neededPkgs) > 0) {
         pak::pkg_install(neededPkgs, ask = F)
     }
-
-    ld('grid')
-    ld("pals")
-    ld("stringr")
+    
+    load_lib('grid')
+    load_lib("pals")
+    load_lib("stringr")
 }
 
-# FUN: Ensures the network drives are mounted
+# FUNC: Ensures the network drives are mounted
 checkMounts <- function() {
     paths <- c(
         "/Volumes/CBioinformatics/" = "CBioinformatics",
         "/Volumes/molecular/Molecular" = "Molecular"
     )
-
+    
     message("You have the following drives mounted:")
     system("ls /Volumes")
-
+    
     missingPaths <- names(paths)[!dir.exists(names(paths))]
     if (length(missingPaths) > 0) {
         message("You do not have the following drives mounted:")
@@ -466,7 +472,7 @@ checkMounts <- function() {
     }
 }
 
-# FUN: Ensures the latest classifier version is installed
+# FUNC: Ensures the latest classifier version is installed
 checkEpicV2 <- function(pkg, epicV2script) {
     if (pkg %in% rownames(installed.packages())) {
         message(paste("Package", pkg, "is installed with version:",
@@ -478,7 +484,7 @@ checkEpicV2 <- function(pkg, epicV2script) {
 }
 
 
-# FUN: Checks if the package UniD and it's requirements are installed
+# FUNC: Checks if the package UniD and it's requirements are installed
 check_uniD_pkg <- function() {
     uniDpkgs <- c("ade4", "methylumi", "mlr")
     librarian::shelf(uniDpkgs, ask = F, update_all = F, quiet = F)
