@@ -211,6 +211,39 @@ set_env_vars <- function() {
     if (command_exists("gfortran")) Sys.setenv(FC = Sys.which("gfortran"))
 }
 
+
+# Ensure any required libraries are symlinked
+#library_path <- "/usr/local/opt/apache-arrow/lib/libarrow.1801.dylib"
+
+check_symlink <- function(library_path, target_path = "libarrow.1700.dylib") {
+    # Check if the library exists at the expected location
+    if (!file.exists(library_path)) {
+        stop("Library not found at\n", library_path)
+    }
+
+    # Check if the symlink exists and create it if it does not
+    if (!file.exists(target_path)) {
+        message("Creating symlink for ", basename(library_path), "...")
+        system(paste("cd", dirname(library_path)))
+        system(paste("ln -s", library_path, target_path))
+    }
+}
+
+
+symlink_llvm <- function() {
+    llvm_path = get_prefix("llvm")
+    unwind_libpath <- file.path(llvm_path, "lib", "unwind", "libunwind.1.dylib")
+    missing_path <- file.path(llvm_path, "lib", "libunwind.1.dylib")
+    check_symlink(unwind_libpath, missing_path)
+
+    arrow_path = get_prefix("apache-arrow")
+    arrow_libs <- dir(file.path(arrow_path, "lib"), all.files = TRUE, full.names = TRUE)
+    arrow_dylib <- arrow_libs[grepl("^libarrow\\.[0-9]{4}\\.dylib$", basename(arrow_libs))]
+    miss_arrow <- file.path(arrow_path, "lib", "libarrow.1700.dylib")
+    #check_symlink(arrow_dylib, miss_arrow)
+}
+
+
 # Main setup
 setup_compilers <- function() {
     ensure_homebrew()
@@ -218,6 +251,7 @@ setup_compilers <- function() {
                    "PKG_LIBS", "LD_LIBRARY_PATH", "R_LD_LIBRARY_PATH"))
     set_env_vars()
     options(Ncpus = 6)
+    symlink_llvm()
 }
 
 
@@ -371,14 +405,22 @@ check_needed <- function(pkgs) {
 }
 
 
-# FUNC: Returns all package dependencies that are not installed ----------------
+# FUNC: Returns all package dependencies that are not installed ---------------
 get_pkg_deps <- function(pkgs) {
     deps_list <- unique(pak::pkg_deps(pkgs)$package)
     all_pkgs <- setdiff(deps_list, pkgs)
     return(check_needed(all_pkgs))
 }
 
-# FUNC: Attempts source and binary package installation ------------------------
+
+install_deps <- function(pkg) {
+    any_deps <- get_pkg_deps(pkg)
+    if (length(any_deps) > 0) {
+        pak::pkg_install(any_deps, ask = F)
+    }
+}
+
+# FUNC: Attempts source and binary package installation -----------------------
 install_pkgs <- function(needed_pk, pkg_type = "source") {
     install_opts$type <- pkg_type
     tryCatch(
@@ -391,7 +433,7 @@ install_pkgs <- function(needed_pk, pkg_type = "source") {
     )
 }
 
-# FUNC: Attempts source and binary install of Bioconductor ---------------------
+# FUNC: Attempts source and binary install of Bioconductor --------------------
 install_bio_pkg <- function(new_pkg) {
     params <- list(dependencies = c("Depends", "Imports", "LinkingTo"),
                    ask = FALSE, update = TRUE)
@@ -412,7 +454,18 @@ install_bio_pkg <- function(new_pkg) {
 }
 
 
-# FUNC: Installs any package dependencies and then the package -----------------
+install_url <- function(pkg_url){
+    install.packages(
+        pkg_url,
+        repos = NULL,
+        type = "source",
+        ask = F,
+        dependencies = T
+    )
+}
+
+
+# FUNC: Installs any package dependencies and then the package ----------------
 try_install <- function(new_pkg) {
     message("Trying to install required package: ", new_pkg)
     pkg_deps <- get_pkg_deps(new_pkg)
@@ -430,7 +483,7 @@ try_install <- function(new_pkg) {
 }
 
 
-# FUNC: Loads and installs necessary CRAN packages -----------------------------
+# FUNC: Loads and installs necessary CRAN packages ----------------------------
 check_pkg_install <- function(pkgs) {
 
     pkgs_needed <- check_needed(pkgs)
@@ -534,10 +587,7 @@ if (not_installed("httr")) {
 }
 
 binary_install("librarian")
-
-
 binary_install("BiocManager")
-
 
 if (not_installed("BiocGenerics")) {
     BiocManager::install("BiocGenerics", update = F, ask = F)
@@ -579,10 +629,7 @@ preReqPkgs <- c(
     "genefilter", "DNAcopy", "rtracklayer",
 
     # Preprocessing and computational utilities
-    "preprocessCore", "matrixStats", "nleqslv", "quadprog",
-
-    # Reshaping tools (both the modern and legacy packages; include only one if possible)
-    "reshape2", "reshape",
+    "preprocessCore", "matrixStats", "nleqslv", "quadprog", "reshape2", "reshape",
 
     # Specialized bioinformatics and methylation analysis
     "FDb.InfiniumMethylation.hg19", "HDF5Array", "BiocParallel",
@@ -681,18 +728,18 @@ biocPkgs <- c(
 
 if (not_installed("mapview")) {
     tryCatch(
-        remotes::install_github("r-spatial/mapview", dependencies = T,
+        devtools::install_github("r-spatial/mapview", dependencies = T,
                                 upgrade = "never", auth_token = NULL),
-        error = install.packages("mapview", dependencies = T, verbose = T,
-                                 ask = F, type = "binary")
+        error = function(e){
+            install.packages("mapview", dependencies = T, verbose = T,
+                             ask = F, type = "binary")
+        }
     )
 }
 
 any_failed0 <- check_pkg_install(corePkgs)
 
-if (not_installed("urca")) {
-    pak::pkg_install("urca", ask = F)
-}
+if (not_installed("urca")) pak::pkg_install("urca", ask = F)
 library("urca")
 
 rhd_pkgs <- c("rhdf5", "Rhtslib", "Rhdf5lib", "HDF5Array", "rhdf5filters")
@@ -744,7 +791,7 @@ if (not_installed("karyoploteR")) {
     } else{
         tgz_url <- file.path(bio_url, "big-sur-x86_64/contrib/4.4", karyo_tgz)
     }
-    install.packages(tgz_url, repos = NULL, type = "source", ask = F, dependencies = T)
+    install_url(tgz_url)
 }
 
 if (not_installed("Rsamtools")) {
@@ -756,38 +803,17 @@ if (not_installed("Rsamtools")) {
     )
 }
 
+
+bio_url <-
+    "https://bioconductor.org/packages/release/data/annotation/src/contrib"
+
 if (not_installed("FDb.InfiniumMethylation.hg19")) {
     tryCatch(
         pak::pkg_install("FDb.InfiniumMethylation.hg19", ask = F),
         error = function(cond) {
-            bio_url <-
-                "https://bioconductor.org/packages/release/data/annotation/src/contrib"
-            pkg_url1 <- file.path(bio_url, "org.Hs.eg.db_3.19.1.tar.gz")
-            pkg_url2 <- file.path(bio_url,
-                                  "TxDb.Hsapiens.UCSC.hg19.knownGene_3.2.2.tar.gz")
-            pkg_url3 <- file.path(bio_url,
-                                  "FDb.InfiniumMethylation.hg19_2.2.0.tar.gz")
-            install.packages(
-                pkg_url1,
-                repos = NULL,
-                type = "source",
-                ask = F,
-                dependencies = T
-            )
-            install.packages(
-                pkg_url2,
-                repos = NULL,
-                type = "source",
-                ask = F,
-                dependencies = T
-            )
-            install.packages(
-                pkg_url3,
-                repos = NULL,
-                type = "source",
-                ask = F,
-                dependencies = T
-            )
+            install_url(file.path(bio_url, "org.Hs.eg.db_3.19.1.tar.gz"))
+            install_url(file.path(bio_url, "TxDb.Hsapiens.UCSC.hg19.knownGene_3.2.2.tar.gz"))
+            install_url(file.path(bio_url, "FDb.InfiniumMethylation.hg19_2.2.0.tar.gz"))
         }
     )
 }
@@ -797,29 +823,19 @@ if (not_installed("IlluminaHumanMethylationEPICv2manifest")) {
 }
 
 if (not_installed("IlluminaHumanMethylation450kanno.ilmn12.hg19")) {
-    bio_url <- "https://bioconductor.org/packages/release/data/annotation/src/contrib/IlluminaHumanMethylation450kanno.ilmn12.hg19_0.6.1.tar.gz"
-    install.packages(bio_url, repos = NULL, type = "source", ask = F, dependencies = T)
+    install_url(file.path(bio_url, "IlluminaHumanMethylation450kanno.ilmn12.hg19_0.6.1.tar.gz"))
 }
 
 if (not_installed("IlluminaHumanMethylation450kmanifest")) {
-    bio_url <- "https://bioconductor.org/packages/release/data/annotation/src/contrib/IlluminaHumanMethylation450kmanifest_0.4.0.tar.gz"
-    install.packages(bio_url, repos = NULL, type = "source", ask = F, dependencies = T)
+    install_url(file.path(bio_url, "IlluminaHumanMethylation450kmanifest_0.4.0.tar.gz"))
 }
 
 if (not_installed("IlluminaHumanMethylationEPICanno.ilm10b2.hg19")) {
-    bio_url <- "https://bioconductor.org/packages/release/data/annotation/src/contrib/IlluminaHumanMethylationEPICanno.ilm10b2.hg19_0.6.0.tar.gz"
-    install.packages(
-        bio_url,
-        repos = NULL,
-        type = "source",
-        ask = F,
-        dependencies = T
-    )
+    install_url(file.path(bio_url, "IlluminaHumanMethylationEPICanno.ilm10b2.hg19_0.6.0.tar.gz"))
 }
 
 if (not_installed("IlluminaHumanMethylationEPICanno.ilm10b4.hg19")) {
-    bio_url <- "https://www.bioconductor.org/packages/release/data/annotation/src/contrib/IlluminaHumanMethylationEPICanno.ilm10b4.hg19_0.6.0.tar.gz"
-    install.packages(bio_url, repos = NULL, type = "source", ask = F, dependencies = T)
+    install_url(file.path(bio_url, "IlluminaHumanMethylationEPICanno.ilm10b4.hg19_0.6.0.tar.gz"))
 }
 
 if (not_installed("minfi")) {
@@ -829,12 +845,6 @@ if (not_installed("minfi")) {
     try_github_inst("mwsill/minfi")
 }
 
-install_deps <- function(pkg) {
-    any_deps <- get_pkg_deps(pkg)
-    if (length(any_deps) > 0) {
-        pak::pkg_install(any_deps, ask = F)
-    }
-}
 
 if (not_installed("fields")) {
     install_deps("fields")
@@ -879,15 +889,12 @@ if (not_installed("conumee2.0")) {
 }
 
 any_fail <- check_pkg_install(preReqPkgs)
-
 any_fail2 <- check_pkg_install(biocPkgs)
 
 if (not_installed("mgmtstp27")) {
     gitLink <-
         "https://github.com/badozor/mgmtstp27/raw/master/archive/mgmtstp27_0.6-3.tar.gz"
-    install.packages(
-        gitLink, repos = NULL, dependencies = T, verbose = T, type = "source", ask = F
-    )
+    install_url(gitLink)
 }
 
 if (not_installed("Rcpp")) {
@@ -938,14 +945,7 @@ if (not_installed("FField")) {
         error = function(cond) {
             cran_link <-
                 "https://cran.r-project.org/src/contrib/Archive/FField/FField_0.1.0.tar.gz"
-            install.packages(
-                cran_link,
-                repos = NULL,
-                dependencies = T,
-                verbose = T,
-                type = "source",
-                ask = F
-            )
+            install_url(cran_link)
         }
     )
 }
@@ -975,45 +975,13 @@ if (not_installed("GenVisR")) {
     )
 }
 
-if (not_installed("forecast")) {
-    pak::pkg_install("forecast", ask = F)
-}
-
-if (not_installed("quantreg")) {
-    pak::pkg_install("quantreg", ask = F)
-}
+if (not_installed("forecast")) pak::pkg_install("forecast", ask = F)
+if (not_installed("quantreg")) pak::pkg_install("quantreg", ask = F)
 
 Sys.setenv(TORCH_INSTALL = "1")
 options(needs.auto = TRUE)
 
 
-# Ensure any required libraries are symlinked
-#library_path <- "/usr/local/opt/apache-arrow/lib/libarrow.1801.dylib"
-
-check_symlink <- function(library_path, target_path = "libarrow.1700.dylib") {
-    # Check if the library exists at the expected location
-    if (!file.exists(library_path)) {
-        stop("Library not found at\n", library_path)
-    }
-
-    # Check if the symlink exists and create it if it does not
-    if (!file.exists(target_path)) {
-        message("Creating symlink for ", basename(library_path), "...")
-        system(paste("cd", dirname(library_path)))
-        system(paste("ln -s", library_path, target_path))
-    }
-}
-
-llvm_path = get_prefix("llvm")
-unwind_libpath <- file.path(llvm_path, "lib", "unwind", "libunwind.1.dylib")
-missing_path <- file.path(llvm_path, "lib", "libunwind.1.dylib")
-check_symlink(unwind_libpath, missing_path)
-
-arrow_path = get_prefix("apache-arrow")
-arrow_libs <- dir(file.path(arrow_path, "lib"), all.files = TRUE, full.names = TRUE)
-arrow_dylib <- arrow_libs[grepl("^libarrow\\.[0-9]{4}\\.dylib$", basename(arrow_libs))]
-miss_arrow <- file.path(arrow_path, "lib", "libarrow.1700.dylib")
-#check_symlink(arrow_dylib, miss_arrow)
 
 msg_pkg <- function(li_name){
     message("Installing package list: ", li_name, "...", "\n")
