@@ -416,24 +416,24 @@ callApiImport <- function(rcon, recordName, runID) {
 
 callApiFile <- function(rcon, recordName, ovwr = F, fiPath = NULL, fld = NULL) {
     msgFunName(cpOutLnk, "callApiFile")
-    message("\n", gb$mkBlue("Importing Record Report for:"), recordName)
-
+    message("\n", gb$mkBlue("Importing Record Report for: "), recordName)
+    
     if (is.null(fiPath)) {
         fiPath <- dir(
             path = getwd(),
-            pattern = paste0(recordName, ".*\\.html$"),
-            full.names = T
+            pattern = sprintf("^%s.*\\.html$", recordName),
+            full.names = TRUE
         )
     }
-
+    
     if (is.null(fld)) {
         fld <- "classifier_pdf"
     }
-
-    if (file.exists(fiPath)) {
+    
+    if (length(fiPath) > 0 & file.exists(fiPath)) {
         message("Uploading file:\n", fiPath)
         message("To REDCap Record: ", recordName)
-
+        
         redcapAPI::importFiles(rcon,
                                file = fiPath,
                                record = recordName,
@@ -443,7 +443,7 @@ callApiFile <- function(rcon, recordName, ovwr = F, fiPath = NULL, fld = NULL) {
         log_fi_out <- paste(gb$runID, "import_log.tsv", sep = "_")
         writeLogFi(recordName, logFile = log_fi_out)
     }
-
+    
 }
 
 
