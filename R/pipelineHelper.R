@@ -757,12 +757,14 @@ makeHtmlReports <- function(runOrder = NULL,
         redcapUp <- email <- FALSE
     }
 
-    if (file.exists(gb$UPLOAD_LOG_TSV)) {
-        file.list <- read.table(gb$UPLOAD_LOG_TSV)[,1]
-        if (length(file.list) > 0) {
-            gb$uploadToRedcap(file.list, T)
-        }
-    }
+    # if (file.exists(gb$UPLOAD_LOG_TSV)) {
+    #     file.list <- read.table(gb$UPLOAD_LOG_TSV)[,1]
+    #     if (length(file.list) > 0) {
+    #         gb$uploadToRedcap(file.list, T)
+    #     }
+    # }
+    file.list <- dir(getwd(), pattern = ".html", full.names = TRUE)
+    gb$uploadToRedcap(file.list, F)
 
     if (email == T) {
         RenameFailed(qcVals)
