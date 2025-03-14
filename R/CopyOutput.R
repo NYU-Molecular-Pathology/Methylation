@@ -430,16 +430,16 @@ callApiFile <- function(rcon, recordName, ovwr = F, fiPath = NULL, fld = NULL) {
         fld <- "classifier_pdf"
     }
     
-    if (length(fiPath) > 0 & file.exists(fiPath)) {
+    if (length(fiPath) > 0) {
         message("Uploading file:\n", fiPath)
         message("To REDCap Record: ", recordName)
-        
+
         redcapAPI::importFiles(rcon,
                                file = fiPath,
                                record = recordName,
                                field = fld)
     } else{
-        message("REDCap file upload failed: ", fiPath)
+        message("REDCap file not uploaded: ", fiPath)
         log_fi_out <- paste(gb$runID, "import_log.tsv", sep = "_")
         writeLogFi(recordName, logFile = log_fi_out)
     }
@@ -475,9 +475,11 @@ uploadToRedcap <- function(file.list, deskCSV = T, runNumb = NULL) {
         if (isEmpty == F) {
             message(paste(recordName, "already has a file in REDCap"))
             message("Overwrite uploading will be set to FALSE")
+        } else {
+            if (file.exists(fiPath)) {
+                callApiFile(rcon, recordName, isEmpty, fiPath)
+            }
         }
-
-        callApiFile(rcon, recordName, isEmpty, fiPath)
     }
     if (deskCSV == T) {
         try(importDesktopCsv(rcon), outFile = "importDesktopRedcapLog.txt")
