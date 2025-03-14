@@ -119,8 +119,15 @@ checkRedcapRecord <- function(recordName, fieldName = 'classifier_pdf') {
 
 MakeLogFile <- function(infoData, logFile) {
     message("Writing log:\n", infoData, "To file: ", logFile)
-    write.table(infoData, file = logFile, append = T, quote = F,
-                sep = '\t', row.names = F, col.names = F)
+    
+    tryCatch(
+        write.table(infoData, file = logFile, append = T, quote = F,
+            sep = '\t', row.names = F, col.names = F),
+        error = function(e) {
+            message(e)
+            message("failed to record log of message")
+        }
+    )
 }
 
 
