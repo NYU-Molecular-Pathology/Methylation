@@ -223,7 +223,9 @@ generateQCreport <- function(runID = NULL) {
 # Sends an email notification that the run is complete from redcap admin ------
 launchEmailNotify <- function(runID) {
     msgFunName(pipeLnk, "launchEmailNotify")
-
+    
+    rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
+    
     isMC = sjmisc::str_contains(runID, "MGDM") | sjmisc::str_contains(runID, "MC")
     is_validation <- sjmisc::str_contains(runID, "VAL")
 
@@ -239,9 +241,7 @@ launchEmailNotify <- function(runID) {
     record_data <- redcapAPI::castForImport(
         record_df, rcon, fields = c("record_id", "comments")
     )
-
-    rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
-
+    
     res <- redcapAPI::importRecords(rcon,
                              record_data,
                              returnContent = "ids",
