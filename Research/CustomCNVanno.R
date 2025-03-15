@@ -94,10 +94,10 @@ get_gene_ranges <- function(geneSymbols) {
 }
 
 
-# Helper function: for each gene, count overlapping probes in the CNV annotation's probe GRanges.
+# Helper function: for each gene, count overlapping probes
 count_gene_probes <- function(gene_gr, probe_gr) {
     hits <- GenomicRanges::findOverlaps(gene_gr, probe_gr)
-    hits <- as(hits, "Hits")  # convert to a plain Hits object
+    hits <- as(hits, "Hits")
     length(unique(S4Vectors::subjectHits(hits)))
 }
 
@@ -219,17 +219,19 @@ custom_cnv_plot_with_gene_annotation <- function(RGset, geneNames, ref = NULL, m
     p_interactive <- conumee2::CNV.plotly(cnv_obj)
 
     if (!is.null(gene_gr)) {
+        gene_order <- p_interactive[["x"]][["data"]][[5]][["text"]]
+        is_found <- gene_order %in% gene_gr$symbol
+        orig_m <- p_interactive[["x"]][["data"]][[5]][["marker"]][["size"]]
+        marks <- rep(orig_m, length(gene_order))
+        marks[is_found] <- 12
+        p_interactive[["x"]][["data"]][[5]][["marker"]][["size"]] <- marks
 
-        gene_df <- as.data.frame(gene_gr)
-        gene_df$midpoint <- (gene_df$start + gene_df$end) / 2
-        p <- p_interactive +
-            ggplot2::geom_vline(data = gene_df,
-                                ggplot2::aes(xintercept = midpoint),
-                                color = "purple", linetype = "dashed", size = 0.5) +
-            ggplot2::geom_text(data = gene_df,
-                               ggplot2::aes(x = midpoint, y = Inf, label = symbol),
-                               angle = 90, vjust = -0.5, hjust = 1, size = 3, color = "purple")
+        orig_c <- p_interactive[["x"]][["data"]][[5]][["marker"]][["color"]]
+        new_cols <- rep(orig_c, length(gene_order))
+        new_cols[is_found] <- "yellow"
+        p_interactive[["x"]][["data"]][[5]][["marker"]][["color"]] <- new_cols
     }
+
     final_title <- paste("CNV Genome Plot With Genes –", paste(geneNames, collapse = ", "))
     if (nchar(gene_annotation_message) > 0) {
         final_title <- paste0(final_title, "\nNote: ", gene_annotation_message)
@@ -250,3 +252,4 @@ if (RGset@annotation[["array"]] == "IlluminaHumanMethylationEPICv2") {
 
 result <- custom_cnv_plot_with_gene_annotation(RGset, myGenes)
 result$plot  # Interactive plotly object
+
