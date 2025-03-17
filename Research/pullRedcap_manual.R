@@ -373,6 +373,7 @@ grabRDCopyIdat <- function(rd_numbers,
         idatPath <- file.path(getwd(), "idats")
     }
     ApiToken <- token
+    stopifnot(length(rd_numbers) > 0)
     result_raw <- gb$search.redcap(rd_numbers, token)
     toDrop <- is.na(result_raw$barcode_and_row_column)
     if (any(toDrop)) {
