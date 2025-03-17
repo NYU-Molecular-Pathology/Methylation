@@ -7,8 +7,9 @@
 
 gb <- globalenv()
 
-my_idat <- "/path/to/myfiles"
-
+my_idat <- "/path/to/file.idat"
+manifest_path = "/Volumes/CBioinformatics/Methylation/Manifests"
+ref_path <- "/Volumes/CBioinformatics/Methylation/Manifests/ref_v2_hg38.rds"
 pkgs <- c(
     "devtools",
     "conumee2",
@@ -24,11 +25,8 @@ pkgs <- c(
     "ggplot2",
     "ExperimentHub",
     "sesameData",
-    "IlluminaHumanMethylationEPICv2.anno.20a1.hg38",
     "IlluminaHumanMethylationEPICanno.ilm10b4.hg19"
 )
-
-
 
 not_installed <- function(pkgName) {
     return(!pkgName %in% rownames(installed.packages()))
@@ -51,9 +49,9 @@ if (any(missing_pkgs)) {
     pak::pkg_install(needs_install)
 }
 
-sesameData::sesameDataCacheAll()
+stopifnot(all(sapply(pkgs, requireNamespace, quietly = FALSE)))
 
-stopifnot(all(sapply(pkgs, requireNamespace, quietly = TRUE)))
+sesameData::sesameDataCacheAll()
 
 # Helper function: detect array type and genome build from an RGset.
 detect_array_info <- function(RGset) {
@@ -68,6 +66,25 @@ detect_array_info <- function(RGset) {
     genome <- if (grepl("EPICv2", RGset@annotation[["array"]], ignore.case = TRUE)) "hg38" else "hg19"
     list(array = array_type, genome = genome)
 }
+
+
+
+liftOver_Mset_manifest <- function(mset, v2Man) {
+    mapping_vec <- setNames(v2Man$EPICv1_Loci, v2Man$IlmnID)
+
+    keep <- mset@NAMES %in% v2Man$IlmnID
+    mset <- mset[keep, ]
+    orig <- mset@NAMES
+    new_names <- ifelse(orig %in% names(mapping_vec), mapping_vec[orig], orig)
+    mset@NAMES <- new_names
+    rownames(mset) <- new_names
+    mset@annotation["annotation"] <- "ilm10b4.hg19"
+    mset@annotation["IlluminaHumanMethylationEPIC"] <- "ilm10b4.hg19"
+
+    return(mset)
+}
+
+
 
 # Helper function: retrieve gene ranges (e.g., TSS/promoter region) for a given gene symbol.
 get_gene_ranges <- function(geneSymbols) {
@@ -90,6 +107,7 @@ get_gene_ranges <- function(geneSymbols) {
         symbol = geneInfo$hgnc_symbol
     )
     gr <- GenomeInfoDb::keepStandardChromosomes(gr, pruning.mode = "coarse")
+    mcols(gr)$name <- mcols(gr)$symbol
     return(gr)
 }
 
@@ -104,6 +122,18 @@ count_gene_probes <- function(gene_gr, probe_gr) {
 
 
 alignCNVObjects <- function(query_obj, ref_obj, anno_obj) {
+
+    qProbs <- rownames(query_obj@intensity)
+    query_int_df <- as.data.frame(do.call(cbind, lapply(query_obj@intensity, function(x) data.frame(x))))
+    rownames(query_int_df) <- qProbs
+
+    rProbs <- rownames(ref_obj@intensity)
+    ref_int_df   <- as.data.frame(do.call(cbind, lapply(ref_obj@intensity, function(x) data.frame(x))))
+    rownames(ref_int_df) <- rProbs
+
+    query_obj@intensity <- query_int_df
+    ref_obj@intensity   <- ref_int_df
+
     # Remove duplicate rows in intensity data frames
     query_int <- query_obj@intensity
     ref_int <- ref_obj@intensity
@@ -127,23 +157,39 @@ alignCNVObjects <- function(query_obj, ref_obj, anno_obj) {
 }
 
 
+modify_markers <- function(p_interactive) {
+    gene_order <- p_interactive[["x"]][["data"]][[5]][["text"]]
+    is_found <- gene_order %in% gene_gr$symbol
+    orig_m <- p_interactive[["x"]][["data"]][[5]][["marker"]][["size"]]
+    marks <- rep(orig_m, length(gene_order))
+    marks[is_found] <- 12
+    p_interactive[["x"]][["data"]][[5]][["marker"]][["size"]] <- marks
+
+    orig_c <- p_interactive[["x"]][["data"]][[5]][["marker"]][["color"]]
+    new_cols <- rep(orig_c, length(gene_order))
+    new_cols[is_found] <- "yellow"
+    p_interactive[["x"]][["data"]][[5]][["marker"]][["color"]] <- new_cols
+    return(p_interactive)
+}
+
+
 # Main function: process RGset, perform CNV analysis, annotate requested genes,
 # and generate an interactive genome plot with gene annotation.
-custom_cnv_plot_with_gene_annotation <- function(RGset, geneNames, ref = NULL, minProbeThreshold = 4) {
-    # Detect array type and genome build.
+custom_cnv_plot_with_gene_annotation <- function(RGset, geneNames,
+                                                 ref = NULL, minProbeThreshold = 4) {
     array_info <- detect_array_info(RGset)
-    message("Detected array type: ", array_info$array, " and genome build: ", array_info$genome)
+    message("Detected array type: ", array_info$array,
+            " and genome build: ",array_info$genome)
+
     library("conumee2")
-    # Preprocess the queried RGset using minfi.
     Mset <- minfi::preprocessIllumina(RGset, normalize = "controls")
     query_cnv <- conumee2::CNV.load(Mset)
 
-    # Load built-in exclude_regions and detail_regions.
     con_path <- file.path(path.package("conumee2"), "data")
-    load(file.path(con_path, "exclude_regions.rda"))  # loads object 'exclude_regions'
-    load(file.path(con_path, if (array_info$genome == "hg38") "detail_regions.hg38.rda" else "detail_regions.rda"))
+    load(file.path(con_path, "exclude_regions.rda"))
 
-    ref <- NULL
+    gene_gr <- get_gene_ranges(geneNames)
+
     anno <- conumee2::CNV.create_anno(
         bin_minprobes = 15,
         bin_minsize = 50000,
@@ -152,49 +198,18 @@ custom_cnv_plot_with_gene_annotation <- function(RGset, geneNames, ref = NULL, m
         chrXY = TRUE,
         genome = array_info$genome,
         exclude_regions = exclude_regions,
-        detail_regions = detail_regions
+        detail_regions = gene_gr
     )
 
-    if (is.null(ref)) {
-        if (array_info$array == "EPICv2") {
-            message("No reference provided; attempting to load EPICv2 reference from sesameData.")
-            available_refs <- sesameData::sesameDataList()
-            if ("EPICv2.8.SigDF" %in% available_refs$Title) {
-                ref_list <- sesameData::sesameDataGet("EPICv2.8.SigDF")
-                ref_mat <- do.call(cbind, lapply(ref_list, totalIntensities))
-                ref_df <- as.data.frame(ref_mat, check.names = FALSE)
-                ref <- conumee2::CNV.load(ref_df)
-            } else {
-                stop("EPICv2.8.SigDF is not available. Please update sesameData and cache all data, or choose an alternative reference.")
-            }
-        } else {
-            message("No reference provided; using default reference from minfiData ('MsetEx').")
-            data("MsetEx", package = "minfiData", envir = environment())
-            ref <- conumee2::CNV.load(get("MsetEx", envir = environment()))
-        }
-    }
-
-    qProbs <- rownames(query_cnv@intensity)
-    query_int_df <- as.data.frame(do.call(cbind, lapply(query_cnv@intensity, function(x) data.frame(x))))
-    rownames(query_int_df) <- qProbs
-
-    rProbs <- rownames(ref@intensity)
-    ref_int_df   <- as.data.frame(do.call(cbind, lapply(ref@intensity, function(x) data.frame(x))))
-    rownames(ref_int_df) <- rProbs
-
-    query_cnv@intensity <- query_int_df
-    ref@intensity   <- ref_int_df
+    ref <- base::readRDS(ref_path)
 
     aligned <- alignCNVObjects(query_cnv, ref, anno)
+    colnames(aligned$ref@intensity) <- colnames(ref@intensity)
 
-    colnames(aligned$ref@intensity) <- names(ref_list)
     cnv_obj <- conumee2::CNV.fit(query = aligned$query, ref = aligned$ref, anno = aligned$anno)
     cnv_obj <- conumee2::CNV.bin(cnv_obj)
     cnv_obj <- conumee2::CNV.detail(cnv_obj)
     cnv_obj <- conumee2::CNV.segment(cnv_obj)
-
-    # Grab the gene ranges if possible
-    gene_gr <- get_gene_ranges(geneNames)
 
     if (is.null(gene_gr)) {
         warning("No gene ranges could be retrieved for the supplied gene names.")
@@ -219,17 +234,7 @@ custom_cnv_plot_with_gene_annotation <- function(RGset, geneNames, ref = NULL, m
     p_interactive <- conumee2::CNV.plotly(cnv_obj)
 
     if (!is.null(gene_gr)) {
-        gene_order <- p_interactive[["x"]][["data"]][[5]][["text"]]
-        is_found <- gene_order %in% gene_gr$symbol
-        orig_m <- p_interactive[["x"]][["data"]][[5]][["marker"]][["size"]]
-        marks <- rep(orig_m, length(gene_order))
-        marks[is_found] <- 12
-        p_interactive[["x"]][["data"]][[5]][["marker"]][["size"]] <- marks
-
-        orig_c <- p_interactive[["x"]][["data"]][[5]][["marker"]][["color"]]
-        new_cols <- rep(orig_c, length(gene_order))
-        new_cols[is_found] <- "yellow"
-        p_interactive[["x"]][["data"]][[5]][["marker"]][["color"]] <- new_cols
+        p_interactive <- modify_markers(p_interactive)
     }
 
     final_title <- paste("CNV Genome Plot With Genes –", paste(geneNames, collapse = ", "))
@@ -242,7 +247,8 @@ custom_cnv_plot_with_gene_annotation <- function(RGset, geneNames, ref = NULL, m
 
 # Example usage:
 geneNames <- c("BRCA1", "FOXA1", "TP53")
-RGset <- minfi::read.metharray(my_idat, force = T)
+RGset <- minfi::read.metharray(my_idat, force = TRUE)
+
 if (RGset@annotation[["array"]] == "IlluminaHumanMethylationEPICv2") {
     RGset@annotation[["annotation"]] <- "20a1.hg38"
     RGset@annotation[["Genome"]] <- "hg38"
@@ -252,4 +258,3 @@ if (RGset@annotation[["array"]] == "IlluminaHumanMethylationEPICv2") {
 
 result <- custom_cnv_plot_with_gene_annotation(RGset, myGenes)
 result$plot  # Interactive plotly object
-
