@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 ## Script name: CustomCNVanno.R
-## Purpose: Functions for taking a list of input genes and output custom CNV annotation for Conumee
+## Purpose: Functions for annotating custom gene details to CNV genomeplot
 ## Date Created: August 10, 2023
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2025
@@ -232,6 +232,7 @@ get_final_plot <- function(cnv_obj, geneNames, gene_anno_msg, gene_gr) {
 
 get_reference <- function(array_info) {
     if (file.exists(ref_path)) {
+        message("Loading reference file...")
         ref <- readRDS(ref_path)
         return(ref)
     }
