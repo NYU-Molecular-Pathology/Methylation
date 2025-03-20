@@ -64,9 +64,9 @@ reOrderRun <- function(selectRDs, sh="samplesheet.csv") {
 
 
 SetKnitProgress <- function() {
-    library("knitr")
-    library("progressr")
-    library("cli")
+    suppressPackageStartupMessages(library("knitr"))
+    suppressPackageStartupMessages(library("progressr"))
+    suppressPackageStartupMessages(library("cli"))
     knitr::opts_knit$set(verbose = TRUE)
     options(knitr.package.verbose = FALSE)
     progressr::handlers(global = TRUE)
