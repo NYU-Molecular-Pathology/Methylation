@@ -1046,6 +1046,7 @@ BuildNoPhilips <- function(rawData, runID, pact_run) {
         stringsAsFactors = FALSE
     )
     mainSheet[!whichNormal, "Tumor_Content"] <- 70
+    mainSheet[!whichNormal, "Tumor_Type"] <- "Not Available"
     return(mainSheet)
 }
 
