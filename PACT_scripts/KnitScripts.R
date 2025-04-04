@@ -563,12 +563,16 @@ makeColorfulTab <- function(objDat) {
         "</span>\n\n"
     )
     
-    objDat <- ColorTable(objDat)
-    knitr::kable(objDat, "html", escape = FALSE, row.names = FALSE) %>%
-        kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
-        kableExtra::row_spec(0, extra_css = "font-weight: bold;") %>%
-        kableExtra::scroll_box(height = "100%", width = "100%") %>%
-        print()
+    if (nrow(objDat) == 0) {
+        cat("No calls after filtering")
+    } else {
+        objDat <- ColorTable(objDat)
+        knitr::kable(objDat, "html", escape = FALSE, row.names = FALSE) %>%
+            kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
+            kableExtra::row_spec(0, extra_css = "font-weight: bold;") %>%
+            kableExtra::scroll_box(height = "100%", width = "100%") %>%
+            print()
+    }
     cat("\n\n")
 }
 
@@ -1271,7 +1275,10 @@ CreateVariantsTabs <- function(philipsIndels, snvTab) {
         }
     } else{
         if (nrow(snvTab) > 0) {
-            snvTab$In.Philips <- "No"
+            snvTab$In.Philips <- "NA"
+            snvTab$Same <- "Pending"
+            columns_to_front <- c("Same")
+            snvTab <- snvTab[, c(columns_to_front, setdiff(names(snvTab), columns_to_front))]
         }
         makeDT("In-House Somatic Variant Calls", objDat = snvTab)
     }
