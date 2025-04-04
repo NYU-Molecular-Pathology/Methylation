@@ -368,18 +368,28 @@ check_validation <- function(sh_Dat) {
 # Imports the xlsm sheet 3 data
 importSingle <- function(sh_Dat) {
     msgFunName(cpOutLnk, "importSingle")
-
+    
     sh_Dat <- check_validation(sh_Dat)
     record <- sh_Dat$record_id
-
+    
     recordEmpty <- checkRedcapRecord(record, fieldName = "well_number")
     if (recordEmpty) {
         import_redcap_data(sh_Dat)
     } else{
         message(mkRed("Record Data not Uploaded:"), "\n", record[1])
     }
-
+    
     htmlEmpty <- checkRedcapRecord(paste0(record[1]))
+    record_run <- checkRedcapRecord(record, fieldName = "run_number")
+    different_run <- sh_Dat$run_number[1] != record_run
+    
+    if (different_run) {
+        rd_msg <- paste("RD-number", record, "was used on a previous run:")
+        message(mkRed(rd_msg), "\n", record_run)
+        log_fi_out <- paste(gb$runID, "import_log.tsv", sep = "_")
+        writeLogFi(record, isHtml = T, logFile = log_fi_out)
+    }
+
     if (htmlEmpty) {
         rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
         callApiFile(rcon, record[1])
