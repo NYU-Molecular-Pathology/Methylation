@@ -380,9 +380,12 @@ importSingle <- function(sh_Dat) {
     }
     
     htmlEmpty <- checkRedcapRecord(paste0(record[1]))
-    record_run <- checkRedcapRecord(record, fieldName = "run_number")
-    different_run <- sh_Dat$run_number[1] != record_run
     
+    rcon <- redcapAPI::redcapConnection(url = gb$apiLink, gb$ApiToken)
+    formData <- redcapAPI::exportRecordsTyped(rcon, fields = "run_number", records = record)
+    record_run <- formData[1, "run_number"]
+    
+    different_run <- sh_Dat$run_number[1] != record_run
     if (different_run) {
         rd_msg <- paste("RD-number", record, "was used on a previous run:")
         message(mkRed(rd_msg), "\n", record_run)
@@ -391,7 +394,6 @@ importSingle <- function(sh_Dat) {
     }
 
     if (htmlEmpty) {
-        rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
         callApiFile(rcon, record[1])
     } else{
         message(mkRed("Record already has an HTML in REDCap:"), "\n", record[1])
