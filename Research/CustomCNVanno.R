@@ -34,9 +34,8 @@ not_installed <- function(pkgName) {
     return(!pkgName %in% rownames(installed.packages()))
 }
 
-if ( !not_installed("conumee2.0")) {
-    remove.packages("conumee2.0")
-    devtools::install_github("hovestadtlab/conumee2", subdir = "conumee2")
+if (not_installed("conumee2")) {
+    devtools::install_github("hovestadtlab/conumee2", subdir = "conumee2", upgrade = "always")
 }
 
 missing_pkgs <- sapply(pkgs, not_installed)
