@@ -9,13 +9,14 @@ library("base"); gb <- globalenv(); assign("gb", gb)
 formals(install.packages)[c("dependencies", "verbose", "ask")] <- list(T, T, F)
 args <- commandArgs(TRUE)
 
-if (!require("devtools")) {
-    install.packages("devtools", dependencies = T, ask = F)
-}
+# Checks if a package is installed
+not_installed <- function(pkgName) return(!pkgName %in% rownames(installed.packages()))
+
+if (not_installed("devtools")) install.packages("devtools", dependencies = T, ask = F)
 
 # Input Arguments -------------------------------------------------------------
 args[1] -> token
-args[2] -> inputSheet
+args[2] -> input_value
 args[3] -> copyToFolder
 
 dsh = "\n================"
@@ -33,10 +34,9 @@ flds = c("record_id", "b_number", "tm_number", "accession_number", "block",
          "diagnosis", "organ", "tissue_comments", "run_number", "nyu_mrn")
 
 # Load/Install redcapAPI Package ----------------------
-if (suppressWarnings(!requireNamespace("redcapAPI"))) {
-    params = list('nutterb/redcapAPI', dependencies = T,
-                  upgrade = "always", type = "source")
-    do.call(devtools::install_github,c(params))
+if (not_installed("redcapAPI")) {
+    params = list('nutterb/redcapAPI', dependencies = T, upgrade = "always", type = "source")
+    do.call(devtools::install_github, c(params))
 }
 
 if (!(utils::packageVersion("redcapAPI") >= "2.7.4")) {
@@ -52,9 +52,8 @@ are_valid <- function(...) {
 if (!are_valid(copyToFolder)) {
     copyToFolder <- getwd()
 }
-try(setwd(copyToFolder), T)
 
-supM <- function(sobj) {return(suppressMessages(suppressWarnings(sobj)))}
+try(setwd(copyToFolder), T)
 
 # FUN: Checks if z-drive is accessible to the Rscript
 checkMounts <- function() {
@@ -68,18 +67,6 @@ checkMounts <- function() {
         cat(crayon::white$bgRed$bold(zDrive), "\n")
         stopifnot(!any(failMount == T))
     } else {message("\n",crayon::bgGreen("Z-drive path is accessible"),"\n")}
-}
-
-
-is_installed <- function(package_name) {
-    tryCatch(
-        expr = {
-            return(length(find.package(package_name, quiet = TRUE)) > 0)
-        },
-        error = function(e) {
-            return(FALSE)
-        }
-    )
 }
 
 
@@ -98,7 +85,7 @@ loadPacks <- function() {
         instType <- "source"
     }
     invisible(lapply(pkgs, function(pk) {
-        if (suppressWarnings(!requireNamespace(pk))) {
+        if (not_installed(pk)) {
             install.packages(
                 pk, dependencies = c("Depends", "Imports", "LinkingTo"),
                 verbose = T, repos = "http://cran.us.r-project.org",
@@ -106,17 +93,17 @@ loadPacks <- function() {
         }
     }))
 
-    if (!is_installed("remotes")) {
+    if (not_installed("remotes")) {
         install.packages("remotes", type = instType, ask = F)
     }
 
-    if (!is_installed("redcapAPI")) {
+    if (not_installed("redcapAPI")) {
         install.packages("redcapAPI", type = instType, ask = F)
     }
 
     library("redcapAPI")
     library("dplyr")
-    requireNamespace('foreach')
+    library('foreach')
 }
 
 # API Call functions -----
@@ -134,8 +121,8 @@ search.redcap <- function(rd_numbers, token = NULL, flds = NULL) {
     rcon <- redcapAPI::redcapConnection(gb$apiLink, token)
     if (is.null(flds)) {
         flds <- c(
-        "record_id", "b_number", "primary_tech", "second_tech", "run_number",
-        "barcode_and_row_column", "accession_number", "tm_number", "arrived"
+            "record_id", "b_number", "primary_tech", "second_tech", "run_number",
+            "barcode_and_row_column", "accession_number", "tm_number", "arrived"
         )
     }
 
@@ -272,7 +259,7 @@ defineParams <- function(mnp.pk.loc = NULL,
         Sys.info()[['sysname']],
         "Darwin" = "/Volumes/CBioinformatics/",
         "Linux" = "~/molecpathlab/production/"
-        )
+    )
     if (!isMC) {
         methDir = rschOut
         assign("workDir", cbVol)
@@ -303,19 +290,19 @@ sourceFuns <- function(workingPath = NULL) {
 }
 
 
-readInfo <- function(inputSheet) {
+readInfo <- function(input_value) {
     # Detect if file is xlsx or csv
-    readFlag <- endsWith(inputSheet, ".csv") == T
-    message("inputSheet: ", inputSheet)
+    readFlag <- endsWith(input_value, ".csv") == T
+    message("input_value: ", input_value)
     if (readFlag == T) {
         message("FileType is .csv, executing read.delim...")
         rds <-
-            read.delim(inputSheet, header = F, sep = ",", colClasses = character(), row.names = NULL)[, 1]
+            read.delim(input_value, header = F, sep = ",", colClasses = character(), row.names = NULL)[, 1]
     } else{
         message("FileType is .xlsx, executing readxl::read_excel...")
-        findFlag <- endsWith(inputSheet, ".xlsx") == T
+        findFlag <- endsWith(input_value, ".xlsx") == T
         if (findFlag) {
-            rds <- readxl::read_excel(inputSheet, col_names = F, sheet = 1)[, 1]
+            rds <- readxl::read_excel(input_value, col_names = F, sheet = 1)[, 1]
         } else{
             rds <- read.delim(file.path(getwd(), "samplesheet.csv"),
                               header = F, sep = ",", colClasses = character(), row.names = NULL)[, 1]
@@ -325,7 +312,7 @@ readInfo <- function(inputSheet) {
         warning(
             'Converting RD-numbers to class "character"\n',
             'Your version of readxl did not output typeof == "list".'
-            )
+        )
         rds <- as.data.frame(rds)[, 1]
     }
     rds <- rds[!is.na(rds)]
@@ -431,18 +418,18 @@ get_rd_args <- function(args) {
 
 
 # MAIN: Check if your input is a list of RD-numbers or a file input -----------
-if (are_valid(inputSheet, token)) {
-    if (endsWith(inputSheet, ".csv") | endsWith(inputSheet, ".xlsx")) {
-        rd_numbers <- readInfo(inputSheet)
+if (are_valid(input_value, token)) {
+    if (endsWith(input_value, ".csv") | endsWith(input_value, ".xlsx")) {
+        rd_numbers <- readInfo(input_value)
     } else{
-        rd_numbers <- as.vector(inputSheet)
+        rd_numbers <- as.vector(input_value)
     }
     rd_numbers <- rd_numbers[grep("^RD-", rd_numbers)]
     grabRDCopyIdat(rd_numbers = rd_numbers, token = token)
 }
 
 # Example Use -----------------------------------------------------------------
-#rds <- readInfo(inputSheet = "~/Desktop/MySampleSheet.xlsx")
+#rds <- readInfo(input_value = "~/Desktop/MySampleSheet.xlsx")
 # OR
 #rds <- c("RD-22-123", "RD-21-345", "RD-20-678")
 # THEN run
