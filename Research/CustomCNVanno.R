@@ -5,12 +5,16 @@
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2025
 
-# Example usage:
-my_idat <- "/path/to/file.idat"
-geneNames <- c("BRCA1", "FOXA1", "TP53")
 
+# Global Paths to Reference Files ---------------------------------------------
 manifest_path = "/Volumes/CBioinformatics/Methylation/Manifests"
-ref_path <- "/Volumes/CBioinformatics/Methylation/Manifests/ref_v2_hg38.rds"
+
+# User Input: Project Directory and Sample Sheet -----------------------------
+proj_dir <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs/pull_redcap_idats"
+sam_sheet <- "samplesheet_rds.csv"
+geneNames <- c("BRCA1", "FOXA1", "TP53")
+min_probes = 4  # Minimum number of probes to bin for genes
+
 pkgs <- c(
     "devtools",
     "conumee2",
@@ -27,62 +31,75 @@ pkgs <- c(
     "ggplot2",
     "ExperimentHub",
     "sesameData",
-    "IlluminaHumanMethylationEPICanno.ilm10b4.hg19"
+    "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
+    "htmlwidgets",
+    "plotly",
+    "reticulate"
 )
 
-not_installed <- function(pkgName) {
-    return(!pkgName %in% rownames(installed.packages()))
-}
+not_installed <- function(pkgName) return(!pkgName %in% rownames(installed.packages()))
 
+if (not_installed("devtools")) install.packages("devtools", ask = F, dependencies = T)
 if (not_installed("conumee2")) {
     devtools::install_github("hovestadtlab/conumee2", subdir = "conumee2", upgrade = "always")
 }
 
 missing_pkgs <- sapply(pkgs, not_installed)
-
 if (not_installed("pak")) install.packages("pak", ask = F, dependencies = T)
 if (any(missing_pkgs)) pak::pkg_install(pkgs[missing_pkgs], ask = FALSE)
-stopifnot(all(sapply(pkgs, requireNamespace, quietly = FALSE)))
+stopifnot(all(sapply(pkgs, library, character.only = T, logical.return = T)))
 
+# Helper functions for plotly pip save html widget debug
+pip_install <- function(pkg) {
+    reticulate::py_run_string(
+        paste0("import sys; import subprocess;", " ",
+               "subprocess.check_call([sys.executable, '-m', 'pip', 'install', '", pkg, "'])")
+    )
 
-# Helper function: detect array type and genome build from an RGset.
-detect_array_info <- function(RGset) {
-    ann <- minfi::getAnnotation(RGset)
-    array_type <- if (grepl("450k", RGset@annotation[["array"]], ignore.case = TRUE)) {
-        "450k"
-    } else if (grepl("EPICv2", RGset@annotation[["array"]], ignore.case = TRUE)) {
-        "EPICv2"
-    } else {
-        "EPIC"
-    }
-    genome <- if (grepl("EPICv2", RGset@annotation[["array"]], ignore.case = TRUE)) "hg38" else "hg19"
-    list(array = array_type, genome = genome)
 }
 
+load_module <- function(pkg) {
+    if (!reticulate::py_module_available(pkg)) pip_install(pkg)
+    reticulate::py_run_string(paste("import", pkg))
+}
 
-liftOver_Mset_manifest <- function(mset, v2Man) {
-    mapping_vec <- setNames(v2Man$EPICv1_Loci, v2Man$IlmnID)
+reticulate::py_run_string("import sys")
+load_module("kaleido")
+load_module("plotly")
 
-    keep <- mset@NAMES %in% v2Man$IlmnID
-    mset <- mset[keep, ]
-    orig <- mset@NAMES
-    new_names <- ifelse(orig %in% names(mapping_vec), mapping_vec[orig], orig)
-    mset@NAMES <- new_names
-    rownames(mset) <- new_names
-    mset@annotation["annotation"] <- "ilm10b4.hg19"
-    mset@annotation["IlluminaHumanMethylationEPIC"] <- "ilm10b4.hg19"
 
-    return(mset)
+# Helper function: detect array type and genome build from an RGset
+detect_array_info <- function(RGset) {
+    array_type <- "EPIC"
+    if (RGset@annotation[["array"]] == "IlluminaHumanMethylation450k") {
+        array_type <- "450k"
+    }
+    if (RGset@annotation[["array"]] == "IlluminaHumanMethylationEPICv2") {
+        array_type <- "EPICv2"
+    }
+    genome <- ifelse(array_type == "EPICv2", "hg38", "hg19")
+    array_info <- list(array = array_type, genome = genome)
+    message(paste("Array type:", array_info$array, "Genome build:", array_info$genome))
+    return(array_info)
 }
 
 
 # Helper function: retrieve gene ranges (e.g., TSS/promoter region) for a given gene symbol.
-get_gene_ranges <- function(geneSymbols) {
+get_gene_ranges <- function(geneSymbols, array_info) {
+
+    if (array_info$genome == "hg19") {
+        host_url <- "https://grch37.ensembl.org"  # Use the GRCh37 archive for hg19
+    } else {
+        host_url <- "https://www.ensembl.org"  # Use the main Ensembl site for hg38
+    }
+
     mart <- biomaRt::useMart(
         biomart = "ENSEMBL_MART_ENSEMBL",
         dataset = "hsapiens_gene_ensembl",
-        host = "https://www.ensembl.org"
+        host = host_url,
+        version = "Ensembl Genes 113"
     )
+
     geneInfo <- biomaRt::getBM(
         attributes = c("hgnc_symbol", "chromosome_name", "start_position", "end_position", "strand"),
         filters = "hgnc_symbol",
@@ -111,7 +128,6 @@ count_gene_probes <- function(gene_gr, probe_gr) {
 
 
 alignCNVObjects <- function(query_obj, ref_obj, anno_obj) {
-
     qProbs <- rownames(query_obj@intensity)
     query_int_df <- as.data.frame(
         do.call(cbind, lapply(query_obj@intensity, function(x) data.frame(x))))
@@ -135,10 +151,15 @@ alignCNVObjects <- function(query_obj, ref_obj, anno_obj) {
 
     # Extract probe IDs
     query_probes <- rownames(query_int)
-    ref_probes   <- rownames(ref_int)
+    ref_probes <- rownames(ref_int)
+
     anno_probes <- anno_obj@probes@elementMetadata@listData[["IlmnID"]]
-    names(anno_obj@probes) <-
-        anno_obj@probes@elementMetadata@listData[["IlmnID"]]
+    if (is.null(anno_probes)) {
+        anno_probes <- names(anno_obj@probes)
+    } else {
+        names(anno_obj@probes) <-
+            anno_obj@probes@elementMetadata@listData[["IlmnID"]]
+    }
     common_probes <- base::Reduce(intersect,
                                   list(query_probes, ref_probes, anno_probes))
     if (length(common_probes) == 0)
@@ -149,7 +170,7 @@ alignCNVObjects <- function(query_obj, ref_obj, anno_obj) {
     list(query = query_obj, ref = ref_obj, anno = anno_obj)
 }
 
-
+# Function: Alters apearence of plot points, colors, and arrows in the output plot
 modify_markers <- function(p_interactive, gene_gr) {
     gene_order <- p_interactive[["x"]][["data"]][[5]][["text"]]
     is_found <- gene_order %in% gene_gr$symbol
@@ -162,65 +183,81 @@ modify_markers <- function(p_interactive, gene_gr) {
     new_cols <- rep(orig_c, length(gene_order))
     new_cols[is_found] <- "yellow"
     p_interactive[["x"]][["data"]][[5]][["marker"]][["color"]] <- new_cols
+
+    x_points <- as.numeric(paste(p_interactive[["x"]][["data"]][[5]]$x))
+    y_points <- as.numeric(paste(p_interactive[["x"]][["data"]][[5]]$y))
+
+    p_interactive <- p_interactive %>% plotly::layout(
+        annotations = lapply(seq_along(x_points), function(i) {
+            list(
+                x = x_points[i], y = y_points[i],
+                text = p_interactive[["x"]][["data"]][[5]][["text"]][i],
+                showarrow = TRUE,
+                ax = 20, ay = -30, arrowhead = 4, arrowwidth = 0.8,
+                font = list(size = 12, color = "black")
+            )
+        })
+    )
+
     return(p_interactive)
 }
 
-
-process_gene_ranges <- function(gene_gr, anno, min_probes = 4) {
+# Function: Process gene ranges and check for probe counts
+process_gene_ranges <- function(gene_gr, anno) {
     if (is.null(gene_gr)) {
         warning("No gene ranges could be retrieved for the supplied gene names.")
         return("No gene ranges found for input gene list.")
     }
 
     probe_gr <- anno@probes
-    gene_probe_counts <- sapply(split(gene_gr, gene_gr$symbol), count_gene_probes, probe_gr = probe_gr)
+    gene_probe_counts <- sapply(split(gene_gr, gene_gr$symbol),
+                                count_gene_probes, probe_gr = probe_gr)
 
     gene_anno_msg <- ""
     for (gene in names(gene_probe_counts)) {
         nprobes <- gene_probe_counts[gene]
         if (nprobes == 0) {
-            gene_anno_msg <- paste0(gene_anno_msg,
-                                    "No matches found for gene ",
-                                    gene,
+            gene_anno_msg <- paste0(gene_anno_msg, "No matches found for gene ", gene,
                                     " on the methylation array. ")
         } else if (nprobes < min_probes) {
-            gene_anno_msg <- paste0(gene_anno_msg,
-                                    "Caution: only ",
-                                    nprobes,
-                                    " probes annotated for gene ",
-                                    gene,
-                                    ". ")
+            gene_anno_msg <- paste0(gene_anno_msg, "Caution: only ", nprobes,
+                                    " probes annotated for gene ", gene, ". ")
         }
     }
 
     return(gene_anno_msg)
 }
 
-
-get_cnv_obj <- function(align_obj) {
+# Helper function: Generate CNV object from aligned query and reference objects
+get_cnv_obj <- function(align_obj, sample_name) {
     cnv_obj <- conumee2::CNV.fit(query = align_obj$query,
                                  ref = align_obj$ref,
                                  anno = align_obj$anno)
     cnv_obj <- conumee2::CNV.bin(cnv_obj)
     cnv_obj <- conumee2::CNV.detail(cnv_obj)
     cnv_obj <- conumee2::CNV.segment(cnv_obj)
+    cnv_obj@name <- sample_name
     return(cnv_obj)
 }
 
+# Function: Generates the final plot with custom gene annotations
+get_final_plot <- function(cnv_obj, anno, gene_gr) {
 
-get_final_plot <- function(cnv_obj, geneNames, gene_anno_msg, gene_gr) {
+    geneNames <- unique(gene_gr$symbol)
+
     p_interactive <- conumee2::CNV.plotly(cnv_obj)
     if (!is.null(gene_gr)) {
         p_interactive <- modify_markers(p_interactive, gene_gr)
     }
 
     if (length(geneNames) <= 5) {
-        final_title <- paste("CNV Genome Plot With Genes –",
+        final_title <- paste(cnv_obj@name, "CNV Genome Plot With Genes –",
                              paste(geneNames, collapse = ", "))
     } else {
         final_title <- "CNV Genome Plot With Custom Gene Annotations"
     }
 
+    gene_anno_msg <- process_gene_ranges(gene_gr, anno)
     if (nchar(gene_anno_msg) > 0) {
         final_title <- paste0(final_title, "\nNote: ", gene_anno_msg)
     }
@@ -228,8 +265,13 @@ get_final_plot <- function(cnv_obj, geneNames, gene_anno_msg, gene_gr) {
     return(p_interactive)
 }
 
-
+# Function: loads pre-computed reference files for CNV analysis
 get_reference <- function(array_info) {
+    if (array_info$genome == "hg19") {
+        ref_path <- file.path(manifest_path, "ref_v1_hg19.rds")
+    } else {
+        ref_path <- file.path(manifest_path, "ref_v2_hg38.rds")
+    }
     if (file.exists(ref_path)) {
         message("Loading reference file...")
         ref <- readRDS(ref_path)
@@ -268,29 +310,41 @@ get_reference <- function(array_info) {
     return(ref)
 }
 
-
-
-# Main function: process RGset, perform CNV analysis, annotate requested genes,
-# and generate an interactive genome plot with gene annotation.
-annotate_cnv_with_genes <- function(my_idat, geneNames,
-                                                 ref = NULL, min_probes = 4) {
-
-    RGset <- minfi::read.metharray(my_idat, force = TRUE)
-
+# Helper function: Use minfi to get RGset and set genome build
+get_rgset <- function(sam_data) {
+    RGset <- minfi::read.metharray(sam_data$Basename, force = TRUE)
     if (RGset@annotation[["array"]] == "IlluminaHumanMethylationEPICv2") {
         RGset@annotation[["annotation"]] <- "20a1.hg38"
         RGset@annotation[["Genome"]] <- "hg38"
     } else{
         RGset@annotation[["Genome"]] <- "hg19"
     }
+    return(RGset)
+}
 
+# Helper function: Save output files - HTML & PNG plots to current directory
+save_output <- function(cnv_obj, p_interactive) {
+    html_file <- paste0(cnv_obj@name, "_cnv_plot_anno.html")
+    if (!file.exists(html_file)) {
+        message("Saving file:\n", file.path(getwd(), html_file))
+        htmlwidgets::saveWidget(p_interactive, html_file)
+    }
+
+    png_file <- paste0(cnv_obj@name, "_cnv_plot_anno.png")
+    if (!file.exists(png_file)) {
+        message("Saving file:\n", file.path(getwd(), png_file))
+        plotly::save_image(p_interactive, png_file, width = "1600", height = "900", scale = 2.5)
+    }
+}
+
+
+# Main function: process RGset, perform CNV analysis, annotate input genes, plots generate plots
+annotate_cnv_with_genes <- function(sam_data, geneNames, ref = NULL, doXY = TRUE) {
+
+    RGset <- get_rgset(sam_data)
     array_info <- detect_array_info(RGset)
-    message("Detected array type: ", array_info$array,
-            " and genome build: ",array_info$genome)
+    gene_gr <- get_gene_ranges(geneNames, array_info)
 
-    gene_gr <- get_gene_ranges(geneNames)
-
-    library("conumee2")
     Mset <- minfi::preprocessIllumina(RGset, normalize = "controls")
     query_cnv <- conumee2::CNV.load(Mset)
 
@@ -299,7 +353,7 @@ annotate_cnv_with_genes <- function(my_idat, geneNames,
 
     anno <- conumee2::CNV.create_anno(
         array_type = array_info$array,
-        chrXY = TRUE,
+        chrXY = doXY,
         genome = array_info$genome,
         exclude_regions = exclude_regions,
         detail_regions = gene_gr
@@ -312,15 +366,23 @@ annotate_cnv_with_genes <- function(my_idat, geneNames,
     aligned <- alignCNVObjects(query_cnv, ref, anno)
     colnames(aligned$ref@intensity) <- colnames(ref@intensity)
 
-    cnv_obj <- get_cnv_obj(aligned)
+    cnv_obj <- get_cnv_obj(aligned, sam_data$Sample_Name)
 
-    gene_anno_msg <- process_gene_ranges(gene_gr, anno, min_probes)
-    p_interactive <- get_final_plot(cnv_obj, geneNames, gene_anno_msg, gene_gr)
+    p_interactive <- get_final_plot(cnv_obj, anno, gene_gr)
 
-    list(plot = p_interactive, cnv_analysis = cnv_obj)
+    save_output(cnv_obj, p_interactive)
+    #list(plot = p_interactive, cnv_analysis = cnv_obj)
 }
 
+# Main function: loop through samples in the sample sheet and call annotate_cnv_with_genes
+loop_samples <- function(proj_dir, sam_sheet, geneNames) {
+    setwd(proj_dir)
+    targets <- read.csv(file.path(proj_dir, sam_sheet))
+    for (samRow in 1:nrow(targets)) {
+        sam_data <- targets[samRow, ]
+        annotate_cnv_with_genes(sam_data, geneNames)
+    }
+}
 
 # Example usage:
-result <- annotate_cnv_with_genes(my_idat, geneNames)
-result$plot
+loop_samples(proj_dir, sam_sheet, geneNames)
