@@ -104,7 +104,7 @@ cranPkgs <- c(
 gHubPkgs <- c(
    'rstudio/rmarkdown',
     'dasonk/docstring',
-    'rstudio/rstudioapi',
+    #'rstudio/rstudioapi',
     'nutterb/redcapAPI',
     "r-lib/crayon",
     "thomas-neitmann/mdthemes"
