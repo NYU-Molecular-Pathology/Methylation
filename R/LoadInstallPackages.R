@@ -136,7 +136,7 @@ biocPkgs <- c(
     
     # Illumina methylation annotation (EPIC)
     "IlluminaHumanMethylationEPICmanifest",
-    "IlluminaHumanMethylationEPICanno.ilm10b2.hg19",
+    #"IlluminaHumanMethylationEPICanno.ilm10b2.hg19",
     "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
     
     # Methylation data processing
