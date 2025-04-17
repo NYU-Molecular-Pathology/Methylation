@@ -19,9 +19,7 @@ msgFunName <- function(pthLnk, funNam) {
 }
 
 
-not_installed <- function(pkgName) {
-    return(!pkgName %in% rownames(installed.packages()))
-}
+not_installed <- function(pkgName) return(!pkgName %in% rownames(installed.packages()))
 
 load_pkgs <- function(pkgs){
     suppressPackageStartupMessages(
@@ -37,7 +35,7 @@ methylQCpkgs <- c(
     "kableExtra", "magick", "webshot", "plyr", "ggplot2", "knitr", "reshape2",
     "data.table", "DT", "plotly", "MethylAid", "minfi", "scales",
     "IlluminaHumanMethylation450kmanifest",
-    "IlluminaHumanMethylationEPICanno.ilm10b2.hg19",
+    #"IlluminaHumanMethylationEPICanno.ilm10b2.hg19",
     "IlluminaHumanMethylationEPICmanifest",
     "IlluminaHumanMethylationEPICv2manifest",
     "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
@@ -49,30 +47,39 @@ methylQCpkgs <- c(
 reqPkg <- c("ggplot2", "pals", "stringr", "scales", "grid")
 
 
+check_v2Manifest <- function() {
+    v2Man <- "IlluminaHumanMethylationEPICv2manifest"
+    do_install <- FALSE
+    if (not_installed(v2Man)) {
+        do_install <- TRUE
+    } else if (!utils::packageVersion(v2Man) == "0.1.0") {
+        do_install <- TRUE
+    }
+
+    if (do_install) {
+        try(unloadNamespace(v2Man), silent = TRUE)
+        try(remove.packages(v2Man), silent = TRUE)
+        devtools::install_github("mwsill/IlluminaHumanMethylationEPICv2manifest",
+                                 upgrade = "never", force = T, dependencies = T, type = "source", auth_token = NULL
+        )
+    }
+}
+
+
 # FUNC: Installs version-specific minfi
 minfi_install <- function() {
     Sys.setenv(R_COMPILE_AND_INSTALL_PACKAGES = "always")
-    devtools::install_github(
-        "mwsill/minfi",
-        upgrade = "always",
-        force = T, dependencies = T, type = "source", auth_token = NULL
-    )
-    if (!utils::packageVersion("IlluminaHumanMethylationEPICv2manifest") == "0.1.0") {
-        try(unloadNamespace("IlluminaHumanMethylationEPICv2manifest"), silent = TRUE)
-        try(remove.packages("IlluminaHumanMethylationEPICv2manifest"), silent = TRUE)
-        devtools::install_github(
-            "mwsill/IlluminaHumanMethylationEPICv2manifest",
-            upgrade = "always",
-            force = T, dependencies = T, type = "source", auth_token = NULL
-        )
-    }
+    check_v2Manifest()
+    devtools::install_github("mwsill/minfi", upgrade = "never",
+        force = T, dependencies = T, type = "source", auth_token = NULL)
 }
 
 
 # FUNC: Ensures the required packages for the QC report are installed/loaded
 check_QC_pkgs <- function() {
     msgFunName(setRunLnk, "check_QC_pkgs")
-
+    
+    check_v2Manifest()
     needed_pkgs <- sapply(methylQCpkgs, not_installed)
 
     if (any(needed_pkgs)) {
@@ -91,7 +98,6 @@ check_QC_pkgs <- function() {
         try(remove.packages("minfi"), silent = TRUE)
         minfi_install()
     }
-
 
     load_pkgs(reqPkg)
 }
