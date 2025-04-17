@@ -196,7 +196,7 @@ gh.inst <- function(git_repo, ...) {
             }
         )
     }
-    load_lib(names(pkg))
+    load_lib(pkg)
 }
 
 # FUNC: Installs package from Source link
