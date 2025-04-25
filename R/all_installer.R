@@ -214,6 +214,48 @@ set_env_vars <- function() {
 
 # Ensure any required libraries are symlinked
 #library_path <- "/usr/local/opt/apache-arrow/lib/libarrow.1801.dylib"
+# Retrieve Homebrew prefix for a given package
+get_brew_prefix <- function(pkg) {
+    prefix <- system2("brew", c("--prefix", pkg), stdout = TRUE, stderr = FALSE)
+    if (length(prefix) == 0 || !dir.exists(prefix)) {
+        stop("Could not find Homebrew prefix for package: ", pkg)
+    }
+    prefix
+}
+
+# Check for existing symlink and create if missing
+ensure_symlink <- function(source, target) {
+    if (!file.exists(source)) {
+        stop("Source library not found: ", source)
+    }
+    if (!file.exists(target)) {
+        message("Creating symlink: ", basename(target), " -> ", basename(source))
+        owd <- setwd(dirname(source))
+        on.exit(setwd(owd), add = TRUE)
+        file.symlink(basename(source), basename(target))
+    } else {
+        message("Symlink or file already exists: ", target)
+    }
+}
+
+# Locate current libarrow dylib and symlink it to the expected name
+symlink_arrow <- function(target_name = "libarrow.1801.dylib") {
+    arrow_prefix <- get_brew_prefix("apache-arrow")
+    lib_dir      <- file.path(arrow_prefix, "lib")
+    
+    candidates <- list.files(lib_dir, pattern = "^libarrow\\.[0-9]+\\.dylib$",
+                             full.names = TRUE)
+    if (length(candidates) == 0) {
+        stop("No libarrow.*.dylib files found in ", lib_dir)
+    }
+    versions <- as.integer(gsub("^libarrow\\.([0-9]+)\\.dylib$", "\\1",
+                                basename(candidates)))
+    source_lib <- candidates[which.max(versions)]
+    target_lib <- file.path(lib_dir, target_name)
+    ensure_symlink(source_lib, target_lib)
+}
+
+symlink_arrow()
 
 check_symlink <- function(library_path, target_path = "libarrow.1700.dylib") {
     # Check if the library exists at the expected location
