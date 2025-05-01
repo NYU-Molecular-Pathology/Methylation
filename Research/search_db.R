@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-## Script name: Search_REDcap.R
+## Script name: search_db.R
 ## Purpose: Source of functions to search REDCap fields for matching records
 ## Date Created: April 11, 2024
 ## Version: 1.0.0
