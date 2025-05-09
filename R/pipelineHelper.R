@@ -717,6 +717,28 @@ check_csv_data <- function(sheetName = "samplesheet.csv") {
     return(data)
 }
 
+# Checks if any html reports are missing from the samplesheet to upload
+final_upload_check <- function() {
+    samList <- read.csv("samplesheet.csv")[,1]
+    rd_numbers <- samList[grepl("RD", samList)]
+    rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
+    fetched_rds <- redcapAPI::exportRecordsTyped(
+        rcon, fields = c("classifier_pdf"), records = rd_numbers)
+    missing_rds <- !rd_numbers %in% fetched_rds$record_id
+    if (any(missing_rds)) {
+        to_upload <- rd_numbers[missing_rds]
+        message(paste("The following reports are missing from REDCap:", paste(to_upload, collapse = ", ")))
+        all_reports <- dir(getwd(), pattern = ".html", full.names = TRUE)
+        for (rd in to_upload){
+            rd_html <- all_reports[grepl(rd, all_reports)]
+            if (length(rd_html) == 0){
+                message(paste("No report found for", rd))
+            } else {
+                redcapAPI::importFiles(rcon, file = rd_html, record = rd, field = "classifier_pdf")
+            }
+        }
+    } 
+}
 
 # MAIN: Generates Html reports with samplesheet.csv for V12_EPICV2 ----
 makeHtmlReports <- function(runOrder = NULL,
@@ -772,6 +794,7 @@ makeHtmlReports <- function(runOrder = NULL,
             output_fi = paste0(runID, "_qc_data.csv"),
             gb$ApiToken, runDir = NULL, runID
         )
+        final_upload_check()
         launchEmailNotify(runID)
     }
 
