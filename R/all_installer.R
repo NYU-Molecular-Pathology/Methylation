@@ -15,6 +15,13 @@ if (getRversion() <= "4.2.2") {
     stop("Your R version is ", R.version.string, ". Update to 4.4.0 or later.")
 }
 
+snapshot_date <- "2025-05-01"
+options(
+  repos = c(
+    CRAN = sprintf("https://cran.microsoft.com/snapshot/%s/", snapshot_date)
+  )
+)
+
 supM <- function(pk) {
     return(suppressPackageStartupMessages(suppressWarnings(pk)))
 }
@@ -446,7 +453,6 @@ check_needed <- function(pkgs) {
     return(neededPkgs)
 }
 
-
 # FUNC: Returns all package dependencies that are not installed ---------------
 get_pkg_deps <- function(pkgs) {
     deps_list <- unique(pak::pkg_deps(pkgs)$package)
@@ -609,13 +615,10 @@ if (not_installed("arrow")) {
 bin_pkgs <- c(
     # Core utilities and dependencies
     "curl", "jsonlite", "mime", "openssl", "R6",
-
     # Testing and coverage
     "covr", "testthat",
-
     # Web and image handling
     "httpuv", "jpeg", "png", "xml2",
-
     # Reporting and markdown (ensuring binary installation)
     "knitr", "rmarkdown", "readr"
 )
@@ -1022,8 +1025,6 @@ if (not_installed("quantreg")) pak::pkg_install("quantreg", ask = F)
 
 Sys.setenv(TORCH_INSTALL = "1")
 options(needs.auto = TRUE)
-
-
 
 msg_pkg <- function(li_name){
     message("Installing package list: ", li_name, "...", "\n")
