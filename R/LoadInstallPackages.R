@@ -330,6 +330,22 @@ checkNeeded <- function(pkgList) {
     return(neededPkgs)
 }
 
+# FUNC: Ensures correct version of Plotly to avoid issues loading ggplot2
+check_plotly <- function(){
+    plotly_version <- package_version("4.10.4")
+    
+    if (packageVersion("plotly") < plotly_version) {
+        if ("package:plotly" %in% search()) {
+            try(detach("package:plotly", unload = TRUE, character.only = TRUE), TRUE)
+        }
+        if ("plotly" %in% loadedNamespaces()) {
+            try(unloadNamespace("plotly"), TRUE)
+        }
+        library(pak)
+        pak::pkg_install("plotly", upgrade = TRUE, ask = FALSE, dependencies = TRUE)
+    }
+}
+
 # FUNC: Loads the list of packages from CRAN, GitHub, and BioConductor needed
 loadPacks <- function() {
     loadMainPkgs()
@@ -347,7 +363,7 @@ loadPacks <- function() {
             error = function(e) pak::pkg_install("MethylAid", ask = F)
             )
     }
-
+    check_plotly()
     neededPkgs <- checkNeeded(biocPkgs)
     if (length(neededPkgs) > 0) pak::pkg_install(neededPkgs, ask = F)
 
