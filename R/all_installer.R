@@ -16,10 +16,13 @@ if (getRversion() <= "4.2.2") {
 }
 
 snapshot_date <- "2025-05-01"
+bioc_version   <- "3.19"
 options(
-  repos = c(
-    CRAN = sprintf("https://cran.microsoft.com/snapshot/%s/", snapshot_date)
-  )
+    repos = c(
+        CRAN = sprintf("https://cran.microsoft.com/snapshot/%s/", snapshot_date),
+        BioC = sprintf("https://packagemanager.rstudio.com/bioconductor/%s@%s",
+                       bioc_version, snapshot_date)
+        )
 )
 
 supM <- function(pk) {
@@ -67,9 +70,6 @@ check_and_install_mac_libs <- function(pkgs) {
     }
 }
 
-# Execute the function to check and install macOS binaries
-check_and_install_mac_libs(mac_tools)
-
 
 fix_brew_path <- function() {
     # Define the target directories to add to the PATH
@@ -93,7 +93,6 @@ fix_brew_path <- function() {
     } else {
         renviron_content <- character(0)
     }
-
     if (!any(grepl("^PATH=", renviron_content))) {
         # Append the new PATH if no PATH is defined
         writeLines(c(renviron_content, target_entry), renviron_file)
@@ -117,19 +116,19 @@ command_exists <- function(cmd) {
     }
 }
 
-
-setup_brew <- function() {
-    # Define the commands
+# Ensures brew was added to the user shell profile
+setup_brew <- function(brew_path) {
+    zprof <- file.path(Sys.getenv("HOME"), ".zprofile")
+    bashprof <- file.path(Sys.getenv("HOME"), ".bash_profile")
     commands <- c(
-        'echo >> "$HOME/.zprofile"',
-        'echo \'eval "$(/opt/homebrew/bin/brew shellenv)"\' >> "$HOME/.zprofile"',
-        'eval "$(/opt/homebrew/bin/brew shellenv)"'
+        sprintf("echo >> %s", shQuote(zprof)),
+        sprintf("echo 'eval \"$(%s shellenv)\"' >> %s", brew_path, shQuote(zprof)),
+        sprintf("echo >> %s", shQuote(bashprof)),
+        sprintf("echo 'eval \"$(%s shellenv)\"' >> %s", brew_path, shQuote(bashprof)),
+        sprintf("eval \"$(%s shellenv)\"", brew_path)
     )
 
-    # Execute the commands
-    for (cmd in commands) {
-        system(cmd)
-    }
+    for (cmd in commands) system(cmd)
 }
 
 # Install Homebrew and packages if necessary
@@ -142,7 +141,8 @@ ensure_homebrew <- function() {
     if (!brew_installed) {
         message("Installing Homebrew...")
         system('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"', wait = TRUE)
-        setup_brew()
+        brew_path  <- ifelse(file.exists(arm_brew), arm_brew, x64_brew)
+        setup_brew(brew_path)
     }
 
     fix_brew_path()
@@ -218,16 +218,13 @@ set_env_vars <- function() {
     if (command_exists("gfortran")) Sys.setenv(FC = Sys.which("gfortran"))
 }
 
-
 # Ensure any required libraries are symlinked
-#library_path <- "/usr/local/opt/apache-arrow/lib/libarrow.1801.dylib"
-# Retrieve Homebrew prefix for a given package
 get_brew_prefix <- function(pkg) {
     prefix <- system2("brew", c("--prefix", pkg), stdout = TRUE, stderr = FALSE)
     if (length(prefix) == 0 || !dir.exists(prefix)) {
         stop("Could not find Homebrew prefix for package: ", pkg)
     }
-    prefix
+    return(prefix)
 }
 
 # Check for existing symlink and create if missing
@@ -249,21 +246,27 @@ ensure_symlink <- function(source, target) {
 symlink_arrow <- function(target_name = "libarrow.1801.dylib") {
     arrow_prefix <- get_brew_prefix("apache-arrow")
     lib_dir      <- file.path(arrow_prefix, "lib")
-    
-    candidates <- list.files(lib_dir, pattern = "^libarrow\\.[0-9]+\\.dylib$",
-                             full.names = TRUE)
+    candidates   <- list.files(lib_dir,
+                               pattern = "^libarrow\\.[0-9]+\\.dylib$",
+                               full.names = TRUE)
     if (length(candidates) == 0) {
         stop("No libarrow.*.dylib files found in ", lib_dir)
     }
-    versions <- as.integer(gsub("^libarrow\\.([0-9]+)\\.dylib$", "\\1",
-                                basename(candidates)))
-    source_lib <- candidates[which.max(versions)]
-    target_lib <- file.path(lib_dir, target_name)
-    ensure_symlink(source_lib, target_lib)
+    versions   <- as.integer(gsub("^libarrow\\.([0-9]+)\\.dylib$", "\\1",
+                                  basename(candidates)))
+    # find the latest
+    idx_max <- which.max(versions)
+    source_lib <- candidates[idx_max]
+    # all older versions get a symlink pointing at the latest
+    for (i in seq_along(candidates)) {
+        if (i == idx_max) next
+        ver <- versions[i]
+        target_lib <- file.path(lib_dir, sprintf("libarrow.%d.dylib", ver))
+        ensure_symlink(source_lib, target_lib)
+    }
 }
 
-symlink_arrow()
-
+# Checks if the symlink exists between a library and target path
 check_symlink <- function(library_path, target_path = "libarrow.1700.dylib") {
     # Check if the library exists at the expected location
     if (!file.exists(library_path)) {
@@ -296,8 +299,9 @@ symlink_llvm <- function() {
 # Main setup
 setup_compilers <- function() {
     ensure_homebrew()
-    Sys.unsetenv(c("CC", "CXX", "OBJC", "LDFLAGS", "CPPFLAGS", "PKG_CFLAGS",
-                   "PKG_LIBS", "LD_LIBRARY_PATH", "R_LD_LIBRARY_PATH"))
+    comp_flags <- c("CC", "CXX", "OBJC", "LDFLAGS", "CPPFLAGS", "PKG_CFLAGS",
+                    "PKG_LIBS", "LD_LIBRARY_PATH", "R_LD_LIBRARY_PATH")
+    Sys.unsetenv(comp_flags)
     set_env_vars()
     options(Ncpus = 6)
     symlink_llvm()
@@ -305,21 +309,18 @@ setup_compilers <- function() {
 
 
 loadLibrary <- function(pkgName) {
-    suppressPackageStartupMessages(library(
-        pkgName,
-        quietly = TRUE,
-        logical.return = TRUE,
-        warn.conflicts = FALSE,
-        character.only = TRUE
-    ))
+    suppressWarnings(suppressPackageStartupMessages(library(
+        pkgName, verbose = FALSE, quietly = TRUE,
+        logical.return = TRUE, warn.conflicts = FALSE, character.only = TRUE
+    )))
 }
 
-
+# FUNC: Checks if a package is installed ---------------
 not_installed <- function(pkgName) {
     return(!pkgName %in% rownames(installed.packages()))
 }
 
-
+# FUNC: Installs a package from binary file -----------------------------------
 binary_install <- function(pkg) {
     if (not_installed(pkg)) {
         tryCatch(
@@ -334,7 +335,7 @@ binary_install <- function(pkg) {
 }
 
 
-# FUNC: Downloads Github repo locally then unzips it ---------------------------
+# FUNC: Downloads Github repo locally then unzips it --------------------------
 download_pkg_unzip <- function(git_repo, zip_name = "main.zip") {
     repo_url <- file.path("https://github.com", git_repo, "archive/refs/heads")
     url_path <- file.path(repo_url, zip_name)
@@ -344,7 +345,7 @@ download_pkg_unzip <- function(git_repo, zip_name = "main.zip") {
     utils::unzip(out_file, exdir = local_dir)
 }
 
-# FUNC: Downloads Github repo locally then installs ----------------------------
+# FUNC: Downloads Github repo locally then installs ---------------------------
 local_github_pkg_install <- function(git_repo) {
     repo_url <- file.path("https://github.com", git_repo, "archive/refs/heads")
     local_dir <- file.path(fs::path_home(), "github_pkgs")
@@ -366,7 +367,7 @@ local_github_pkg_install <- function(git_repo) {
 }
 
 
-# FUNC: Installs package from a Github repository ------------------------------
+# FUNC: Installs package from a Github repository -----------------------------
 install_repo <- function(git_repo) {
     tryCatch(
         expr = {
@@ -383,7 +384,7 @@ install_repo <- function(git_repo) {
 }
 
 
-# FUNC: TryCatch for installing with devtools and install.packages -------------
+# FUNC: TryCatch for installing with devtools and install.packages ------------
 try_github_inst <- function(git_repo) {
     message("Installing from repo: ", git_repo)
     tryCatch(
@@ -407,7 +408,7 @@ install_opts <- list(
 )
 
 
-# FUNC: Quietly loads package library without messages -------------------------
+# FUNC: Quietly loads package library without messages ------------------------
 quiet_load <- function(pkg_name) {
     if (isNamespaceLoaded(pkg_name) == F) {
         libLoad <- suppressWarnings(suppressPackageStartupMessages(
@@ -422,7 +423,7 @@ quiet_load <- function(pkg_name) {
     return(pkg_vec)
 }
 
-# FUNC: Checks required package if not installs binary -------------------------
+# FUNC: Checks required package if not installs binary ------------------------
 require_pkg <- function(pkg, pkg_type = "source") {
     install_opts$type <- pkg_type
     if (!pkg %in% rownames(installed.packages())) {
@@ -460,7 +461,7 @@ get_pkg_deps <- function(pkgs) {
     return(check_needed(all_pkgs))
 }
 
-
+# FUNC: Gets and installs any package dependencies ----------------------------
 install_deps <- function(pkg) {
     any_deps <- get_pkg_deps(pkg)
     if (length(any_deps) > 0) {
@@ -501,7 +502,7 @@ install_bio_pkg <- function(new_pkg) {
     }
 }
 
-
+# FUNC: Installs a package from a tarball url ---------------------------------
 install_url <- function(pkg_url){
     install.packages(
         pkg_url,
@@ -590,7 +591,10 @@ manual_bioc <- function(bio_pkg) {
 # Start execution -------------------------------------------------------------
 
 if (is_macos) {
+    # Execute the function to check and install macOS binaries
+    check_and_install_mac_libs(mac_tools)
     setup_compilers()
+    symlink_arrow()
 }
 
 if (not_installed("rJava")) {
@@ -774,7 +778,7 @@ biocPkgs <- c(
 if (not_installed("mapview")) {
     tryCatch(
         devtools::install_github("r-spatial/mapview", dependencies = T,
-                                upgrade = "never", auth_token = NULL),
+                                 upgrade = "never", auth_token = NULL),
         error = function(e){
             install.packages("mapview", dependencies = T, verbose = T,
                              ask = F, type = "binary")
