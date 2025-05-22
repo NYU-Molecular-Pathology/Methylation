@@ -4,7 +4,7 @@
 ## Date Created: September 2, 2021
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2024
+## Copyright (c) NYULH Jonathan Serrano, 2025
 
 gb <- globalenv(); assign("gb", gb)
 
@@ -33,71 +33,74 @@ message("\n================ Parameters input ================\n")
 message("token: ", token, "\ninputSheet: ", inputSheet, "\n")
 
 if (!requireNamespace("devtools", quietly = TRUE)) {
-    install.packages("devtools", ask = F, dependencies = T)
+    install.packages("devtools", ask = FALSE, dependencies = TRUE)
 }
+
+
+install_brew <- function() {
+    message("Installing Homebrew...")
+    system('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"', wait = TRUE)
+}
+
 
 # FUN: Check if system command exists
 command_exists <- function(cmd) nzchar(Sys.which(cmd))
 
 # Ensures that brew is found in the system R PATH
 fix_brew_path <- function() {
-    # Define the target directories to add to the PATH
-    target_dirs <- c("/opt/homebrew/bin", "/usr/local/bin")
-    target_dirs <- target_dirs[dir.exists(target_dirs)]
-    
-    # Get the current PATH in the R session
-    current_path <- strsplit(Sys.getenv("PATH"), ":")[[1]]
-    
-    # Add the target directories to the PATH if they are not already present
-    new_path <- unique(c(target_dirs, current_path))
+    # pick the correct brew binary in one line
+    arm_brew <- "/opt/homebrew/bin/brew"
+    x64_brew <- "/usr/local/bin/brew"
+
+    if (!file.exists(arm_brew) && !file.exists(x64_brew)) install_brew()
+
+    brew_path <- ifelse(file.exists(arm_brew), arm_brew, x64_brew)
+    brew_dir <- dirname(brew_path)
+
+    # update session PATH
+    old_path <- strsplit(Sys.getenv("PATH", ""), ":", fixed = TRUE)[[1]]
+    new_path <- unique(c(brew_dir, old_path))
     Sys.setenv(PATH = paste(new_path, collapse = ":"))
-    message("PATH updated for the current session.")
-    
-    # Persist the change in ~/.Renviron for future sessions
-    renviron_file <- file.path(Sys.getenv("HOME"), ".Renviron")
-    target_entry <- paste0('PATH="', paste(new_path, collapse = ":"), '"')
-    
-    if (file.exists(renviron_file)) {
-        renviron_content <- readLines(renviron_file, warn = FALSE)
+
+    # prepare .Renviron update
+    renv_file <- file.path(Sys.getenv("HOME"), ".Renviron")
+    entry <- paste0('PATH="', paste(new_path, collapse = ":"), '"')
+    lines <- if (file.exists(renv_file)) {
+        readLines(renv_file, warn = FALSE)
     } else {
-        renviron_content <- character(0)
-        writeLines(c(renviron_content, target_entry), renviron_file)
-        message("PATH added to ~/.Renviron.")
+        character()
     }
-    
-    if (!any(grepl(target_dirs, renviron_content))) {
-        # Append the new PATH if no PATH is defined
-        writeLines(c(renviron_content, target_entry), renviron_file)
-        message("PATH added to ~/.Renviron.")
-    } else {
-        # Update the PATH entry if it exists
-        #renviron_content <- sub("^PATH=.*", target_entry, renviron_content)
-        #writeLines(renviron_content, renviron_file)
-        message("PATH already updated in ~/.Renviron.")
+
+    # only write if the exact entry is missing
+    if (!any(grepl(entry, lines, fixed = TRUE))) {
+        idx   <- grep("^PATH=", lines)
+        lines <- if (length(idx) > 0) {
+            lines[idx] <- entry
+            lines
+        } else {
+            c(lines, entry)
+        }
+        writeLines(lines, renv_file)
     }
 }
+
 
 # Install Homebrew and packages if necessary
 ensure_homebrew <- function() {
     pkgs <- c("gcc", "llvm", "lld", "open-mpi", "pkgconf", "gdal", "proj",
               "apache-arrow")
     fix_brew_path()
-    
-    if (!command_exists("brew")) {
-        message("Installing Homebrew...")
-        system('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"', wait = TRUE)
-    }
-          
+    if (!command_exists("brew")) install_brew(); fix_brew_path()
     installed_pkgs <- system2("brew", c("list", "--formula"),
                               stdout = T, stderr = F)
 
     for (pkg in pkgs) {
         if (!(pkg %in% installed_pkgs)) {
-            message("Installing ", pkg, " via Homebrew...")
             system2("brew", c("install", pkg), wait = TRUE)
         }
     }
 }
+
 
 get_prefix <- function(pkg = "") {
     system2("brew", c("--prefix", pkg), stdout = TRUE, stderr = FALSE)
