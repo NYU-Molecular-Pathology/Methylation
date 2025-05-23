@@ -10,8 +10,8 @@ gb <- globalenv(); assign("gb", gb)
 
 # Input Arguments -------------------------------------------------------------
 args <- commandArgs(TRUE)
-token <- args[1]
-inputSheet <- args[2]
+args[1] -> token       # REDCap Methylation API Token
+args[2] -> inputSheet  # pactID
 
 # Validate arguments
 stopifnot(!is.na(token), !is.na(inputSheet))
@@ -20,28 +20,40 @@ readFlag <- grepl("\\.csv$", inputSheet)
 message(paste("Now Running $HOME/PactMethMatch.R", token, inputSheet))
 
 # REDCap Fields  --------------------------------------------------------------
+meth_repo <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation"
+cnv_outFolder = "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
+
 flds <- c("record_id", "b_number", "tm_number", "accession_number", "block",
           "diagnosis", "organ", "tissue_comments", "run_number", "nyu_mrn",
           "qc_passed")
 
 main_pkgs <- c("data.table", "openxlsx", "jsonlite", "RCurl", "readxl",
                "stringr", "tidyverse", "crayon", "tinytex", "systemfonts",
-               "remotes")
+               "remotes", "dplyr", "fs")
 
 # Message Inputs --------------------------------------------------------------
 message("\n================ Parameters input ================\n")
 message("token: ", token, "\ninputSheet: ", inputSheet, "\n")
 
-if (!requireNamespace("devtools", quietly = TRUE)) {
+
+snapshot_date <- "2025-05-01"
+options(
+    repos = c(
+        CRAN = sprintf("https://cran.microsoft.com/snapshot/%s/", snapshot_date)
+    )
+)
+
+if (!"devtools" %in% rownames(installed.packages())) {
     install.packages("devtools", ask = FALSE, dependencies = TRUE)
 }
 
+library("devtools")
 
+# FUN: Install Homebrew if not installed -------------------------------------
 install_brew <- function() {
     message("Installing Homebrew...")
     system('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"', wait = TRUE)
 }
-
 
 # FUN: Check if system command exists
 command_exists <- function(cmd) nzchar(Sys.which(cmd))
@@ -77,9 +89,7 @@ fix_brew_path <- function() {
         lines <- if (length(idx) > 0) {
             lines[idx] <- entry
             lines
-        } else {
-            c(lines, entry)
-        }
+        } else {c(lines, entry)}
         writeLines(lines, renv_file)
     }
 }
@@ -101,7 +111,7 @@ ensure_homebrew <- function() {
     }
 }
 
-
+# Returns the path to the brew module
 get_prefix <- function(pkg = "") {
     system2("brew", c("--prefix", pkg), stdout = TRUE, stderr = FALSE)
 }
@@ -110,7 +120,6 @@ get_prefix <- function(pkg = "") {
 set_env_vars <- function() {
     brew_prefix = get_prefix()
     llvm_path = get_prefix("llvm")
-    mpi_path = get_prefix("open-mpi")
     arrow_path = get_prefix("apache-arrow")
     Sys.setenv(
         CC = file.path(llvm_path, "bin/clang"),
@@ -143,60 +152,61 @@ set_env_vars <- function() {
             file.path(llvm_path, "lib/c++"),
             sep = ":"
         ),
-        DYLD_LIBRARY_PATH = file.path(arrow_path, "lib"),
-        PATH = paste(file.path(mpi_path, "bin"), Sys.getenv("PATH"), sep = ":")
+        DYLD_LIBRARY_PATH = file.path(arrow_path, "lib")
     )
     if (command_exists("gfortran")) Sys.setenv(FC = Sys.which("gfortran"))
 }
 
 
-# FUN: Returns all packages that are not installed ----------------------------
-check_needed <- function(pkgs) {
-    neededPkgs <- pkgs[!pkgs %in% rownames(installed.packages())]
-    return(neededPkgs)
+#' Ensures Required Packages are Loaded the `pak` package installs any missing
+#' @param pkgs A character vector of package names
+ensure_packages <- function(pkgs) {
+    installed_pk <- rownames(installed.packages())
+    missing_pkgs <- setdiff(pkgs, installed_pk)
+    if (length(missing_pkgs) > 0) {
+        message(missing_pkgs)
+        if (!"pak" %in% installed_pk) {
+            tryCatch(
+                install.packages(
+                    "pak", repos = sprintf("https://r-lib.github.io/p/pak/stable/%s/%s/%s",
+                                           .Platform$pkgType, R.Version()$os, R.Version()$arch)
+                ),
+                error = function(e) {
+                    install.packages(
+                        "pak", ask = FALSE, dependencies = TRUE,
+                        repos = "https://packagemanager.rstudio.com/all/latest"
+                    )
+                })
+        }
+        library("pak")
+        for (pkg in missing_pkgs) {
+            tryCatch(
+                pak::pkg_install(pkg, ask = FALSE),
+                error = function(e) {
+                    install.packages(pkg, ask = FALSE, dependencies = TRUE)
+                }
+            )
+        }
+    }
+    stopifnot(all(sapply(pkgs, function(pkg) {
+        suppressPackageStartupMessages(library(
+            pkg, mask.ok = TRUE, character.only = TRUE, logical.return = TRUE
+        ))
+    })))
 }
 
 
 # Function to setup compilers, load and install necessary packages ------------
 check_pkg_install <- function() {
-    params <- list(
-        dependencies = TRUE,
-        ask = FALSE,
-        update = "never",
-        quiet = TRUE,
-        repos = 'http://cran.us.r-project.org',
-        Ncpus = 4
-    )
-
     ensure_homebrew()
     Sys.unsetenv(c("CC", "CXX", "OBJC", "LDFLAGS", "CPPFLAGS", "PKG_CFLAGS",
                    "PKG_LIBS", "LD_LIBRARY_PATH", "R_LD_LIBRARY_PATH"))
     set_env_vars()
 
-    needed_pkgs <- check_needed(main_pkgs)
-
-    if (!requireNamespace("pak", quietly = T)) {
-        install.packages("pak", dependencies = T, ask = F, type = "binary")
-    }
-
-    if (length(needed_pkgs) > 0) {
-        for (n_pkg in needed_pkgs) {
-            tryCatch({
-                pak::pkg_install(n_pkg, ask = F)
-            }, error = function(e) {
-                message("Pak install failed, attempting binary installation.")
-                params$type <- "binary"
-                do.call(install.packages, c(list(pkgs = n_pkg), params))
-            })
-        }
-    }
-
-    sapply(main_pkgs, library, character.only = TRUE, logical.return = TRUE)
+    ensure_packages(main_pkgs)
 
     if (!requireNamespace("mnp.v12epicv2", quietly = TRUE)) {
-        devtools::source_url(
-            "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/refs/heads/main/R/all_installer.R")
-        source("/Volumes/CBioinformatics/Methylation/Rscripts/install_epic_v2_classifier.R")
+        devtools::source_url(file.path(meth_repo, "refs/heads/main/R/all_installer.R"))
     }
 }
 
@@ -245,8 +255,13 @@ grabAllRecords <- function(flds, rcon) {
 }
 
 
+# Messages the item matched in the database with the NGS number
 message_matched <- function(item, dbInfo, ngsNum, i) {
-    message(sprintf("Match found for '%s' (%s) for %s in: \"%s\" column", item, dbInfo, ngsNum, i))
+    match_log <- file.path(fs::path_home(), "Desktop", paste0(inputSheet, "_match_log.tsv"))
+    match_line <- sprintf("Match found for '%s' (%s) for %s in: \"%s\" column",
+                    item, dbInfo, ngsNum, i)
+    message(match_line)
+    cat(match_line, file = match_log, append = TRUE, sep = "\n")
 }
 
 
@@ -294,7 +309,7 @@ getAltPath <- function(inputFi) {
     }
 }
 
-
+# Returns the folder path to the PACT run where inputSheet is the PACT ID
 getPactFolder <- function(inputSheet) {
     drive <- file.path("", "Volumes", "molecular", "MOLECULAR LAB ONLY")
     folder <- file.path(drive, "NYU PACT Patient Data", "Workbook")
@@ -304,7 +319,7 @@ getPactFolder <- function(inputSheet) {
     return(runFolder)
 }
 
-
+# Returns the file path to the PACT run worksheet
 getFilePath <- function(inputSheet) {
     runFolder <- getPactFolder(inputSheet)
     inputFi <- file.path(runFolder, paste0(inputSheet, ".xlsm"))
@@ -343,7 +358,7 @@ parseWorksheet <- function(inputFi) {
     return(vals2find)
 }
 
-
+# Parses the input file depending on if the input is a csv file or a xlsx file path
 getCaseValues <- function(inputSheet, readFlag) {
     isSamSheet <- stringr::str_detect(inputSheet, "-SampleSheet")
     hasFileSep <- stringr::str_detect(inputSheet, .Platform$file.sep)
@@ -368,7 +383,7 @@ getCaseValues <- function(inputSheet, readFlag) {
     return(parseWorksheet(getFilePath(inputSheet)))
 }
 
-
+# Generates a query list of items to search for in the REDCap database
 genQuery <- function(dbCol,vals2find) {
     currCol <- vals2find[, dbCol]
     toKeep <- which(currCol != 0 & !is.na(currCol) & currCol != "")
@@ -378,7 +393,7 @@ genQuery <- function(dbCol,vals2find) {
     return(q1)
 }
 
-
+# Queries the REDCap database for the items in the query list
 queryCases <- function(vals2find, db) {
     queryList <- unlist(lapply(1:ncol(vals2find), function(i) {genQuery(i, vals2find)}), use.names = TRUE)
     theTScases <- queryList[stringr::str_detect(queryList, "TS|TB|TC")]
@@ -389,7 +404,7 @@ queryCases <- function(vals2find, db) {
     return(unique(methQuery))
 }
 
-
+# Generates the year path for the report link in the xlsx output file
 get_year_paths <- function(output) {
     output_final <- output[!is.na(output$run_number),]
     yearSplit <- stringr::str_split_fixed(output_final$run_number, "-", 2)[, 1]
@@ -403,17 +418,13 @@ get_year_paths <- function(output) {
     return(yearPath)
 }
 
-
+# Appends the smb file paths to the report path columns in the output excel sheet
 addOutputLinks <- function(output) {
-    if (ncol(output) == 0) {
-        return(output)
-    }
+    if (ncol(output) == 0) return(output)
 
     winpath <- "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/MethylationClassifier"
     yearPath <- get_year_paths(output)
-
     output$report_complete <- ifelse(!is.na(output$run_number), "YES", "NOT_YET_RUN")
-
     out_htmls <- paste0(output$record_id, ".html")
     output$'Report Link' <- file.path(winpath, yearPath, output$run_number, out_htmls)
     output$'Report Link'[is.na(output$run_number)] <- ""
@@ -426,11 +437,10 @@ addOutputLinks <- function(output) {
         output$`Report Link`[oldRun] <- ""
         output$`Report Path`[oldRun] <- ""
     }
-
     return(output)
 }
 
-
+# Finds and fills in missing NGS numbers in the output data frame for matching fields
 FillMissingNGS <- function(output, vals2find) {
     rows2fill <- which(is.na(output$Test_Number))
 
@@ -454,7 +464,7 @@ FillMissingNGS <- function(output, vals2find) {
     return(output)
 }
 
-
+# Corrects any NA or missing NGS numbers, and appends output links
 modifyOutput <- function(output, vals2find) {
     if (!("Test Number" %in% colnames(vals2find))) {
         return(output)
@@ -479,7 +489,7 @@ modifyOutput <- function(output, vals2find) {
     return(output)
 }
 
-
+# Returns the volume paths to the methylation reports in the dataframe
 GetVolumePaths <- function(methData) {
     smb_path <- "smb://shares-cifs.nyumc.org/apps/acc_pathology"
     checkPaths <- stringr::str_replace_all(methData$`Report Path`, smb_path, "/Volumes")
@@ -488,6 +498,7 @@ GetVolumePaths <- function(methData) {
     return(checkPaths)
 }
 
+# Checks if paths to the methylation reports are valid and fixes any broken
 CheckMethPaths <- function(methData) {
     for (i in 1:length(methData$`Report Path`)) {
         currPath <- methData$`Report Path`[i]
@@ -539,7 +550,7 @@ CheckMethPaths <- function(methData) {
     return(methData)
 }
 
-
+# Adds hyperlinks to the report links in the output excel file
 addExcelLink <- function(output, fiLn, wb, runId) {
     x <- c(output$'Report Link'[fiLn])
     names(x) <- paste0(output$record_id[fiLn], ".html")
@@ -548,14 +559,14 @@ addExcelLink <- function(output, fiLn, wb, runId) {
     openxlsx::writeData(wb, sheet = runId, x = x, startCol = colNum, startRow = fiLn + 1)
 }
 
-
+# Writes the openxlsx workbook file to the Desktop
 createXlFile <- function(runId, output) {
     wb <- openxlsx::createWorkbook()
     openxlsx::addWorksheet(wb, runId)
     output <- CheckMethPaths(methData = output)
     openxlsx::writeData(wb, sheet = runId, x = output)
     for (fiLn in 1:length(output$'Report Link')) {
-        if (output$'Report Link'[fiLn]!='') {
+        if (output$'Report Link'[fiLn] != '') {
             addExcelLink(output, fiLn, wb, runId)
         }
     }
@@ -565,7 +576,7 @@ createXlFile <- function(runId, output) {
     return(outFi)
 }
 
-
+# Uses Rcurl to post Json form to REDCap
 postData <- function(rcon, record) {
     datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox = T)
     res <-
@@ -582,7 +593,7 @@ postData <- function(rcon, record) {
     cat(res)
 }
 
-
+# Uploads the xlsx file to REDCap and sends an email notification
 emailFile <- function(runId, outFi, rcon) {
     record = data.frame(record_id = runId, run_number = runId)
     postData(rcon, record)
@@ -621,7 +632,7 @@ emailFile <- function(runId, outFi, rcon) {
     message("------", "Email Notification Created", "------")
 }
 
-
+# Grabs the run ID from the input xlsx sheet name
 grab_run_id <- function(readFlag, inputSheet) {
     runId <-
         ifelse(readFlag == T, substr(inputSheet, 1, nchar(inputSheet) - 4), inputSheet)
@@ -667,10 +678,9 @@ getOuputData <- function(token, flds, inputSheet, readFlag) {
     }
 
     runId <- grab_run_id(readFlag, inputSheet)
-
     output <- modifyOutput(output, vals2find)
-
     toDrop <- is.na(output$Test_Number)
+
     if (any(toDrop)) {
         hasNGS <- which(grepl("NGS", output$tm_number))
         message("NGS Number found in 'tm_number' field of REDCap!")
@@ -684,7 +694,7 @@ getOuputData <- function(token, flds, inputSheet, readFlag) {
     return(output)
 }
 
-
+# Installs correct version of EPICv2 manifest and minfi from GitHub
 minfi_install <- function() {
     Sys.setenv(R_COMPILE_AND_INSTALL_PACKAGES = "always")
     devtools::install_github(
@@ -699,27 +709,21 @@ minfi_install <- function() {
     )
 }
 
-
+# Checks the correct package versions are installed and loads them
 source_pkg_vers <- function() {
     minfiVers <- as.character(utils::packageVersion("minfi"))
-    if (minfiVers != "1.43.1") {
-        minfi_install()
-    }
+    if (minfiVers != "1.43.1") minfi_install()
 
     v2_manifest <- "IlluminaHumanMethylationEPICv2manifest"
     epicVers <- as.character(utils::packageVersion(v2_manifest))
-    if (epicVers != "0.1.0") {
-        minfi_install()
-    }
+    if (epicVers != "0.1.0") minfi_install()
 
-    v2Pkg_needed <- !requireNamespace("mnp.v12epicv2", quietly = T)
-    v2Con_needed <- !requireNamespace("conumee2.0", quietly = T)
-
+    v2Pkg_needed <- !"mnp.v12epicv2" %in% rownames(installed.packages())
+    v2Con_needed <- !"conumee2.0" %in% rownames(installed.packages())
     if (v2Pkg_needed | v2Con_needed) {
-        script_path <- "/Volumes/CBioinformatics/Methylation/Rscripts"
-        v2_script <- "install_epic_v2_classifier.R"
-        epicV2script <- file.path(script_path, v2_script)
-        source(epicV2script)
+        source(
+            "/Volumes/CBioinformatics/Methylation/Rscripts/install_epic_v2_classifier.R"
+            )
     }
 
     stopifnot(library("conumee2.0", logical.return = T))
@@ -728,20 +732,20 @@ source_pkg_vers <- function() {
     stopifnot(library("mnp.v12epicv2", logical.return = T))
 }
 
-
-sourceFuns2 <- function(workingPath = getwd()) {
-    mainHub = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main"
-    script.list <- c("R/SetRunParams.R", "R/CopyInputs.R")
+# Loads additional packages and functions for generating CNV PNGs
+sourceFuns2 <- function() {
+    mainHub <- file.path(meth_repo, "main", "R")
+    script.list <- c("SetRunParams.R", "CopyInputs.R")
     scripts <- file.path(mainHub, script.list)
     invisible(lapply(scripts, function(i) {
         suppressPackageStartupMessages(devtools::source_url(i))
     }))
-    gb$setDirectory(workingPath)
+    gb$setDirectory(getwd())
     source_pkg_vers()
     return(gb$defineParams())
 }
 
-
+# Messages the RD-numbers with idats and sets the API token as global variable
 msg_rd_num <- function(rds, token) {
     message("\nRD-numbers with idats:\n", paste(rds, collapse = "\n"))
     assign("rds", rds)
@@ -750,7 +754,7 @@ msg_rd_num <- function(rds, token) {
     assign("ApiToken", ApiToken)
 }
 
-
+# Generates a minfi samplesheet from REDCap RD numbers and copies idat files
 get_pact_rds <- function(rd_numbers, token) {
     result <- gb$search.redcap(rd_numbers, token)
     result <- result[!is.na(result$barcode_and_row_column),]
@@ -759,7 +763,7 @@ get_pact_rds <- function(rd_numbers, token) {
     gb$get.idats()  # copies idat files from return to current directory
 }
 
-
+# Messages final output of png CNV file output success on the user Desktop
 msgCreated <- function(mySentrix) {
     pngFiles <- paste0(file.path(fs::path_home(), "Desktop", mySentrix[, 1]),"_cnv.png")
     cnvMade <- file.exists(pngFiles)
@@ -774,44 +778,15 @@ msgCreated <- function(mySentrix) {
     }
 }
 
-
-TryCatchCNV <- function(mySentrix, sam, asPNG) {
-    sampleName <- mySentrix[sam, 1]
-    sentrix <- mySentrix[sam, "SentrixID_Pos"]
-    message("\nGetting RGset for ", sentrix, "\n")
-    RGsetEpic <- gb$grabRGset(getwd(), sentrix)
-    tryCatch(
-        expr = {gb$gen.cnv.png2(RGsetEpic, sampleName, asPNG)},
-        error = function(e) {
-            stop(crayon::bgRed(sprintf(
-                "An error occured with %s png creation:", sampleName)),
-                "\n", e)
-        }
-    )
-}
-
-
-loopCNV <- function(mySentrix, asPNG) {
-    for (sam in rownames(mySentrix)) {
-        sampleName <- mySentrix[sam, 1]
-        fn = file.path(fs::path_home(), "Desktop", paste0(sampleName, "_cnv.png"))
-        if (file.exists(fn)) {
-            message("\nFile already exists, skipping:", fn, "\n")
-        } else{
-            TryCatchCNV(mySentrix, sam, asPNG)
-        }
-    }
-}
-
-
+# Function to check if CNV PNGs already exist on Z-drive to skip them
 CheckIfPngExists <- function(rds, outFolder = NULL) {
     if (is.null(outFolder)) {
-        outFolder = "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
+        outFolder <- cnv_outFolder
     }
     outFiles <- file.path(outFolder, paste0(rds, "_cnv.png"))
     finished <- file.exists(outFiles)
     if (any(finished)) {
-        message(crayon::bgGreen("The following are completed and will be skipped:"))
+        message(crayon::bgGreen("Cases below already exist and will be skipped:"))
         message(paste(capture.output(outFiles[finished]), collapse = '\n'))
 
         rds <- rds[!finished]
@@ -824,7 +799,7 @@ CheckIfPngExists <- function(rds, outFolder = NULL) {
     return(rds)
 }
 
-
+# Main function that generates the CNV PNG for a single idat file path
 get_pact_cnv <- function(samName, samEpic, idatPath = getwd()) {
     sam_out_png <- file.path(fs::path_home(), "Desktop",
                              paste0(samName, "_cnv.png"))
@@ -846,17 +821,17 @@ get_pact_cnv <- function(samName, samEpic, idatPath = getwd()) {
     invisible(dev.off())
 }
 
-
+# Function to generate CNV PNGs for all samples with sentrix IDs
 generate_new_cnv <- function(targets) {
     has_idat <- targets[, "SentrixID_Pos"] %like% "_R0"
     targets <- targets[has_idat, ]
-    if (!requireNamespace("conumee2.0", quietly = TRUE)) {
-        devtools::source_url("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/refs/heads/main/R/all_installer.R")
-        source("/Volumes/CBioinformatics/Methylation/Rscripts/install_epic_v2_classifier.R")
+    all_installer <- file.path(meth_repo, "refs/heads/main/R/all_installer.R")
+
+    if ("conumee2.0" %in% rownames(installed.packages()) == F) {
+        devtools::source_url(all_installer)
     }
-    if (!requireNamespace("mnp.v12epicv2", quietly = TRUE)) {
-        devtools::source_url("https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/refs/heads/main/R/all_installer.R")
-        source("/Volumes/CBioinformatics/Methylation/Rscripts/install_epic_v2_classifier.R")
+    if ("mnp.v12epicv2" %in% rownames(installed.packages()) == F) {
+        devtools::source_url(all_installer)
     }
     if (!requireNamespace("mnp.v12epicv2", quietly = TRUE)) {
         stop(crayon::bgRed("The classifier is not installed no CNV will generate!"))
@@ -873,18 +848,17 @@ generate_new_cnv <- function(targets) {
     while (!is.null(dev.list())) {dev.off()}
 }
 
-
-GetSampleList <- function(rds, sampleSheet="samplesheet.csv") {
+# Reads the sample sheet and returns a dataframe of samples to be processed
+GetSampleList <- function(rds, sampleSheet = "samplesheet.csv") {
     targets <- read.csv(sampleSheet)
     toDrop <- targets$Sample_Name %in% rds
-    targets <- targets[toDrop,]
+    targets <- targets[toDrop, ]
     rownames(targets) <- 1:nrow(targets)
     return(targets)
 }
 
-
+# Loads additional functions from GitHub and a TryCatch to generate CNV PNGs
 try_cnv_make <- function(rds, token) {
-
     msg_rd_num(rds, token)
     sourceFuns2()
     get_pact_rds(rds, token)
@@ -904,11 +878,12 @@ try_cnv_make <- function(rds, token) {
     )
 }
 
-
+# Copies any CNV PNGs from the Desktop to the Molecular Z-drive folder
 copy_output_png <- function(outFolder = NULL) {
-    library("dplyr")
+    if (!"dplyr" %in% loadedNamespaces()) library("dplyr")
+
     if (is.null(outFolder)) {
-        outFolder = "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
+        outFolder <- cnv_outFolder
     }
     desk <- file.path(fs::path_home(), "Desktop")
     the.cnvs <- dir(desk, "_cnv.png", full.names = T) %>% file.info() %>%
@@ -932,7 +907,7 @@ copy_output_png <- function(outFolder = NULL) {
     }
 }
 
-
+# Checks the output generated to see if any CNV PNGs need to be created
 queue_cnv_maker <- function(output, token) {
     rds <- output$record_id[output$report_complete == "YES"]
     rds <- rds[grep("^RD-", rds)]
