@@ -127,34 +127,39 @@ set_env_vars <- function() {
         OBJC = file.path(llvm_path, "bin/clang"),
         LDFLAGS = paste(
             paste0("-L", file.path(llvm_path, "lib")),
-            paste0("-L", file.path(llvm_path, "lib/c++")),
-            paste0("-Wl,-rpath,", file.path(llvm_path, "lib/c++")),
-            paste0("-L", file.path(llvm_path, "lib/unwind"), "-lunwind")
-        ),
+            paste0("-L", file.path(llvm_path, "lib", "c++")),
+            paste0("-L", file.path(llvm_path, "lib", "unwind")),
+            paste0("-Wl,-rpath,", file.path(llvm_path, "lib", "c++")),
+            paste0("-Wl,-rpath,", file.path(llvm_path, "lib", "unwind")),
+            "-lunwind"),
         CPPFLAGS = paste0("-I", file.path(llvm_path, "include")),
         PKG_CFLAGS = paste(
             paste0("-I", file.path(brew_prefix, "include")),
-            if (nzchar(arrow_path))
-                paste0("-I", file.path(arrow_path, "include"))
-            else
-                NULL
-        ),
+            paste0("-I", file.path(arrow_path, "include"))),
         PKG_LIBS = paste(
             paste0("-L", file.path(brew_prefix, "lib")),
             paste0("-L", file.path(llvm_path, "lib")),
-            if (nzchar(arrow_path)) {
-                paste0("-L", file.path(arrow_path, "lib"), " -larrow")
-            }else { NULL }
-        ),
+            paste0("-L", file.path(arrow_path, "lib"), " -larrow")),
         LD_LIBRARY_PATH = file.path(brew_prefix, "lib"),
         R_LD_LIBRARY_PATH = paste(
-            file.path(brew_prefix, "lib"),
-            file.path(llvm_path, "lib/c++"),
-            sep = ":"
-        ),
+            file.path(brew_prefix, "lib"), file.path(llvm_path, "lib/c++"), sep = ":"),
         DYLD_LIBRARY_PATH = file.path(arrow_path, "lib")
     )
     if (command_exists("gfortran")) Sys.setenv(FC = Sys.which("gfortran"))
+}
+
+# Installs the pak package
+install_pak <- function() {
+    tryCatch(
+        install.packages("pak", repos = sprintf(
+            "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
+            .Platform$pkgType, R.Version()$os, R.Version()$arch)),
+        error = function(e) {
+            install.packages(
+                "pak", ask = FALSE, dependencies = TRUE,
+                repos = "https://packagemanager.rstudio.com/all/latest")
+        }
+    )
 }
 
 
@@ -165,19 +170,7 @@ ensure_packages <- function(pkgs) {
     missing_pkgs <- setdiff(pkgs, installed_pk)
     if (length(missing_pkgs) > 0) {
         message(missing_pkgs)
-        if (!"pak" %in% installed_pk) {
-            tryCatch(
-                install.packages(
-                    "pak", repos = sprintf("https://r-lib.github.io/p/pak/stable/%s/%s/%s",
-                                           .Platform$pkgType, R.Version()$os, R.Version()$arch)
-                ),
-                error = function(e) {
-                    install.packages(
-                        "pak", ask = FALSE, dependencies = TRUE,
-                        repos = "https://packagemanager.rstudio.com/all/latest"
-                    )
-                })
-        }
+        if (!"pak" %in% installed_pk) install_pak()
         library("pak")
         for (pkg in missing_pkgs) {
             tryCatch(
@@ -202,9 +195,7 @@ check_pkg_install <- function() {
     Sys.unsetenv(c("CC", "CXX", "OBJC", "LDFLAGS", "CPPFLAGS", "PKG_CFLAGS",
                    "PKG_LIBS", "LD_LIBRARY_PATH", "R_LD_LIBRARY_PATH"))
     set_env_vars()
-
     ensure_packages(main_pkgs)
-
     if (!requireNamespace("mnp.v12epicv2", quietly = TRUE)) {
         devtools::source_url(file.path(meth_repo, "refs/heads/main/R/all_installer.R"))
     }
@@ -259,7 +250,7 @@ grabAllRecords <- function(flds, rcon) {
 message_matched <- function(item, dbInfo, ngsNum, i) {
     match_log <- file.path(fs::path_home(), "Desktop", paste0(inputSheet, "_match_log.tsv"))
     match_line <- sprintf("Match found for '%s' (%s) for %s in: \"%s\" column",
-                    item, dbInfo, ngsNum, i)
+                          item, dbInfo, ngsNum, i)
     message(match_line)
     cat(match_line, file = match_log, append = TRUE, sep = "\n")
 }
@@ -284,7 +275,7 @@ searchDb <- function(queryList, db) {
     return(res)
 }
 
-
+# Filters out workbooks from xlsx and other files that may be in the directory
 filterFiles <- function(potentialFi) {
     wbFiles <- grep("\\.xlsm$|book", basename(potentialFi), value = TRUE)
     if (!any(grepl("\\.xlsm$", wbFiles))) {
@@ -294,7 +285,7 @@ filterFiles <- function(potentialFi) {
     return(filteredFiles)
 }
 
-
+# Checks alternative directories if the file with expected name is not found
 getAltPath <- function(inputFi) {
     message(crayon::bgRed("PACT run worksheet not found:"), "\n", inputFi)
     message("Checking other files in PACT folder: ", basename(dirname(inputFi)))
@@ -328,7 +319,6 @@ getFilePath <- function(inputSheet) {
     }
     return(inputFi)
 }
-
 
 # Parses the input file for the "PhilipsExport" tab
 parseWorksheet <- function(inputFi) {
@@ -443,7 +433,6 @@ addOutputLinks <- function(output) {
 # Finds and fills in missing NGS numbers in the output data frame for matching fields
 FillMissingNGS <- function(output, vals2find) {
     rows2fill <- which(is.na(output$Test_Number))
-
     if (length(rows2fill) > 0) {
         for (row in rows2fill) {
             accessionNum <- output$accession_number[row]
@@ -454,13 +443,11 @@ FillMissingNGS <- function(output, vals2find) {
             }
         }
     }
-
     rowsStillMissing <- which(is.na(output$Test_Number))
     if (length(rowsStillMissing) > 0) {
         warning("Some samples still missing NGS Numbers:\n",
                 paste(output$record_id[rowsStillMissing], collapse = "\n"))
     }
-
     return(output)
 }
 
@@ -643,7 +630,7 @@ grab_run_id <- function(readFlag, inputSheet) {
     return(runId)
 }
 
-
+# Grabs REDCap data and finds matches to inputSheet columns to fields
 getOuputData <- function(token, flds, inputSheet, readFlag) {
     apiUrl = "https://redcap.nyumc.org/apps/redcap/api/"
     rcon <- redcapAPI::redcapConnection(apiUrl, token)
@@ -652,13 +639,10 @@ getOuputData <- function(token, flds, inputSheet, readFlag) {
     if (class(vals2find) != "data.frame") {
         vals2find <- as.data.frame(vals2find)
     }
-
     db <- grabAllRecords(flds, rcon)
-
     if (nrow(vals2find) != 0) {
         output <- queryCases(vals2find, db)
     }
-
     if (nrow(output) == 0) {
         warning("No Methylation Cases on this PACT run, generating blank file")
         output[1, ] <- "NONE"
@@ -723,7 +707,7 @@ source_pkg_vers <- function() {
     if (v2Pkg_needed | v2Con_needed) {
         source(
             "/Volumes/CBioinformatics/Methylation/Rscripts/install_epic_v2_classifier.R"
-            )
+        )
     }
 
     stopifnot(library("conumee2.0", logical.return = T))
@@ -928,6 +912,7 @@ queue_cnv_maker <- function(output, token) {
     }
 }
 
+# MAIN Execution start -----
 check_pkg_install()
 check_REDCap_vers() # Check REDCap API version
 checkMounts()
