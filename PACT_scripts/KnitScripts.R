@@ -717,6 +717,13 @@ parseCNV <- function(outPath, sam, cnvTab) {
     if (!is.null(sam_folder)) {
         cnvFi <- file.path(sam_folder, "aberration_cnv.csv")
     }
+    
+    if (length(cnvFi) > 1) {
+    info <- file.info(cnvFi)
+    newest <- cnvFi[which.max(info$mtime)]
+    cnvFi <- newest
+    }
+    
     if (!file.exists(cnvFi)) {
         warning("File does not exist:\n", cnvFi, "\nSkipping Philips...")
         cnvTab$Gene <- "No Philips Data Dump CSV file availible, check ISPM for CNV"
@@ -1129,6 +1136,12 @@ makeAbTab <- function(sam, philipsFtp = "/Volumes/molecular/Molecular/Philips_SF
     
     snvCsv <- file.path(dumpDir, "aberration_snv.csv")
     
+    if (length(snvCsv) > 1) {
+    info <- file.info(snvCsv)
+    newest <- snvCsv[which.max(info$mtime)]
+    snvCsv <- newest
+    }
+    
     if (file.exists(snvCsv)) {
         philipsIndels <- tryCatch(
             printSnvs(snvCsv),
@@ -1315,6 +1328,71 @@ makeOncoKbTab <- function(tabNam, objDat) {
 }
 
 
+read_merge_metrics <- function(metrics_dir, fileType ) {
+    filePatt <- paste0("_", fileType, ".*\\.csv$")
+    normal_paths <- list.files(
+        path      = metrics_dir,
+        pattern   = filePatt,
+        full.names = TRUE
+    )
+    normal_list <- lapply(normal_paths, function(filepath) {
+        df <- read.csv(filepath, stringsAsFactors = FALSE, header = TRUE)
+        vec <- df[2]
+        rownames(vec) <- df[[1]]
+        return(vec)
+    })
+    normals_mat <- do.call(cbind, normal_list)
+    normals_df <- as.data.frame(normals_mat, stringsAsFactors = FALSE)
+    return(normals_df)
+}
+
+
+get_metrics_dir <- function(run_id) {
+  runYear <- paste0("20", substring(run_id, 1, 2))
+  MOL_DIR <- "/Volumes/molecular/Molecular/NGS607"
+  OUTPUT_DIR <- file.path(MOL_DIR, runYear, run_id, "output")
+  METRICS_DIR <- file.path(OUTPUT_DIR, "CollectHsMetrics")
+  OUT_FOLDER <- file.path(OUTPUT_DIR, "HS_Metrics_CSV")
+  return(OUT_FOLDER)
+}
+
+
+make_hs_metrics_tab <- function(tabNam, sam, norm_metrics, tumor_metrics, tumorSams) {
+  gb$MakeTabColor(tabNam)
+  dtOpts <- list(
+    info         = FALSE,
+    autoWidth    = FALSE,
+    lengthChange = FALSE,
+    searching    = FALSE,
+    paging       = FALSE,
+    ordering     = FALSE    # disable sorting
+)
+  normals <- rownames(norm_metrics)
+  tumors <- rownames(tumor_metrics)
+  sam_match <- which(sam == tumorSams$Test_Number)  
+  if (length(sam_match) > 0) {
+    sam_row <- tumorSams[sam_match, ]
+    
+    tum_match <- which(stringr::str_detect(sam_row$Sample_ID, tumors))
+    norm_match <- which(stringr::str_detect(sam_row$Paired_Normal, normals))
+    
+    norm_row <- norm_metrics[norm_match, ]
+    tum_row <- tumor_metrics[tum_match, ]
+   
+    dtTab1 <- htmltools::tagList(
+        DT::datatable(norm_row, style = "default", rownames = TRUE, options = dtOpts)
+    )
+    cat("\n\n"); print(dtTab1); cat("\n\n")
+    
+    dtTab2 <- htmltools::tagList(
+        DT::datatable(tum_row, style = "default", rownames = TRUE, options = dtOpts)
+    )
+    cat("\n\n"); print(dtTab2); cat("\n\n")
+    
+  }
+}
+
+
 LoopSampleTabs <- function(params) {
     pactName <- params$pactName
     methData <- gb$GetMethDf(params$pactName)
@@ -1322,6 +1400,11 @@ LoopSampleTabs <- function(params) {
     samList <- gb$GetSamList(pactName, 2)
     toDrop <- grepl("^0_", samList$Paired_Normal)
 
+    run_id <- read.csv("demux-samplesheet.csv", skip = 19)$Run_Number[1]
+    metrics_dir <- get_metrics_dir(run_id)
+    norm_metrics <- read_merge_metrics(metrics_dir, "normals")
+    tumor_metrics <- read_merge_metrics(metrics_dir, "tumors")
+    
     if (any(toDrop)) {
         ngs_drop <- samList$Test_Number[toDrop]
         toKeep <- !samList$Test_Number %in% ngs_drop
@@ -1388,7 +1471,6 @@ LoopSampleTabs <- function(params) {
         MakeVAFtab(sam)
         cat("\n\n")
         
-        
         onco_df <- as.data.frame(
           matrix(nrow = 0, ncol = ncol(onco_dat),
                  dimnames = list(NULL, colnames(onco_dat)))
@@ -1402,6 +1484,9 @@ LoopSampleTabs <- function(params) {
         }
         
         makeOncoKbTab("OncoKB Level 1 Genes", onco_df)
+        
+        make_hs_metrics_tab("HS Metrics", sam, norm_metrics, tumor_metrics, tumorSams)
+        
         cat(' </div> ')
         
     }
