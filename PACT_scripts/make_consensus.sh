@@ -130,8 +130,12 @@ fi
 # EXECUTE: Rscripts for generating HTML Report --------------------------------
 cd "${HOME}" && curl -# -L ${pactGithub}/MakeIndelList.R >"${HOME}/MakeIndelList.R"
 chmod +rwx "${HOME}/MakeIndelList.R"
-
 RScript --verbose "${HOME}/MakeIndelList.R" "${pactRun}"
+
+cd "${HOME}" && curl -# -L ${pactGithub}/hs_metric_consensus.R >"${HOME}/hs_metric_consensus.R"
+chmod +rwx "${HOME}/hs_metric_consensus.R"
+RScript --verbose "${HOME}/hs_metric_consensus.R" "${runID}" "${pactRun}"
+
 cd "${WORK_DIR}/" || exit
 
 echo "Running Rscript:"
