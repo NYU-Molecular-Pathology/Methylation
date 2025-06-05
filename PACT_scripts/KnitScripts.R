@@ -9,30 +9,38 @@
 gb <- globalenv()
 assign("gb", gb)
 
-
 # Ensures the brew command can be seen in the PATH environment
 fix_brew_path <- function() {
-    brew_paths <- c("/opt/homebrew/bin/brew", "/usr/local/bin/brew")
-    brew_dir <- dirname(brew_paths[file.exists(brew_paths)])
+    # Define the target directories to add to the PATH
+    target_dirs <- c("/opt/homebrew/bin", "/usr/local/bin")
+
+    # Get the current PATH in the R session
     current_path <- strsplit(Sys.getenv("PATH"), ":")[[1]]
-    updated_path <- unique(c(brew_dir, current_path))
-    Sys.setenv(PATH = paste(updated_path, collapse = ":"))
-    
+
+    # Add the target directories to the PATH if they are not already present
+    new_path <- unique(c(target_dirs, current_path))
+    Sys.setenv(PATH = paste(new_path, collapse = ":"))
+    message("PATH updated for the current session.")
+
+    # Persist the change in ~/.Renviron for future sessions
     renviron_file <- file.path(Sys.getenv("HOME"), ".Renviron")
-    path_entry <- paste0('PATH="', paste(updated_path, collapse = ":"), '"')
-    renviron_content <- character(0)
+
+    # Ensure the target directories are reflected in ~/.Renviron
+    target_entry <- paste0('PATH="', paste(new_path, collapse = ":"), '"')
     if (file.exists(renviron_file)) {
         renviron_content <- readLines(renviron_file, warn = FALSE)
-    }
-    
-    if (!any(grepl("^PATH=", renviron_content))) {
-        new_content <- c(renviron_content, path_entry)
     } else {
-        new_content <- sub("^PATH=.*", path_entry, renviron_content)
+        renviron_content <- character(0)
     }
-    
-    if (!identical(new_content, renviron_content)) {
-        writeLines(new_content, renviron_file)
+    if (!any(grepl("^PATH=", renviron_content))) {
+        # Append the new PATH if no PATH is defined
+        writeLines(c(renviron_content, target_entry), renviron_file)
+        message("PATH added to ~/.Renviron.")
+    } else {
+        # Update the PATH entry if it exists
+        renviron_content <- sub("^PATH=.*", target_entry, renviron_content)
+        writeLines(renviron_content, renviron_file)
+        message("PATH updated in ~/.Renviron.")
     }
 }
 
