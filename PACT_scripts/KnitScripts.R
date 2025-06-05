@@ -1391,38 +1391,43 @@ make_hs_metrics_tab <- function(sam, norm_metrics, tumor_metrics, tumorSams) {
     tum_match <- which(stringr::str_detect(sam_row$Sample_ID, tumors))
     norm_match <- which(stringr::str_detect(sam_row$Paired_Normal, normals))
 
-    norm_row <- norm_metrics[norm_match, ]
-    norm_mean_sd <- norm_metrics[c("Mean:", "SD:"), ]
-    norms <- rbind(norm_row, norm_mean_sd)
+    custom_order <- c("MEAN_TARG_CVG_normals",
+                      "AT_DROPOUT_normals",
+                      "GC_DROPOUT_normals", "PCT_250_CVG_normals", "FOLD_80_BASE_PENALTY_normals")
     
-    old_cols <- colnames(norms)
+    norm_row <- norm_metrics[norm_match, ]
+    norm_row <- norm_row[, custom_order]
+    old_cols <- colnames(norm_row)
+    
     stringr::str_replace_all(old_cols, c("_" = " ", "normals" = "")) -> new_cols
-    colnames(norms) <- new_cols
+    colnames(norm_row) <- new_cols
+    
+    
+    custom_order2 <- c("MEAN_TARG_CVG_tumors",
+                      "AT_DROPOUT_tumors",
+                      "GC_DROPOUT_tumors", "PCT_250_CVG_tumors", "FOLD_80_BASE_PENALTY_tumors")
     
     tum_row <- tumor_metrics[tum_match, ]
-    tumor_mean_sd <- tumor_metrics[c("Mean:", "SD:"), ]
-    tums <- rbind(tum_row, tumor_mean_sd)
-    
-    old_cols <- colnames(tums)
+    tum_row <- tum_row[, custom_order2]
+    old_cols <- colnames(tum_row)
     stringr::str_replace_all(old_cols, c("_" = " ", "tumors" = "")) -> new_cols
-    colnames(tums) <- new_cols
+    colnames(tum_row) <- new_cols
     
-    kableTab1 <- norms %>%
+    kableTab1 <- norm_row %>%
       knitr::kable(format = "html", row.names = TRUE) %>%
-      kableExtra::kable_styling(full_width = FALSE) %>%
-      kableExtra::row_spec(1, background = "lightblue")
+      kableExtra::kable_styling(full_width = FALSE)
+    
     cat("\n\n")
     bold_center("Normal HS Metric Values")
     cat("\n\n"); print(kableTab1); cat("\n\n")
 
-    kableTab2 <- tums %>%
+    kableTab2 <- tum_row %>%
       knitr::kable(format = "html", row.names = TRUE) %>%
-      kableExtra::kable_styling(full_width = FALSE) %>%
-      kableExtra::row_spec(1, background = "lightblue")
+      kableExtra::kable_styling(full_width = FALSE)
 
     cat('<hr style="border:none; ' , 'height:3px; ' ,
         'background-color:#000; ' , 'width:100%;" />\n')
-      
+    
     cat("\n\n")
     bold_center("Tumor HS Metric Values")
     cat("\n\n"); print(kableTab2); cat("\n\n")
@@ -1491,6 +1496,8 @@ LoopSampleTabs <- function(params) {
         samRows <- snvDt$Test_Case == sam
         cnvTab <- snvDt[samRows & snvDt$Variant == "CNV", ]
         cnvTab <- checkDataDump(sam, cnvTab)
+
+        make_hs_metrics_tab(sam, norm_metrics, tumor_metrics, tumorSams)
         
         snvTab <- snvDt[samRows & snvDt$Variant == "SNV", ]
         philipsIndels <- makeAbTab(sam)
@@ -1524,8 +1531,6 @@ LoopSampleTabs <- function(params) {
         }
         
         makeOncoKbTab("OncoKB Level 1 Genes", onco_df)
-        
-        make_hs_metrics_tab(sam, norm_metrics, tumor_metrics, tumorSams)
         
         cat(' </div> ')
         
