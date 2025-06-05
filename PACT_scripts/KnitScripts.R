@@ -1359,8 +1359,8 @@ get_metrics_dir <- function(run_id) {
 
 bold_center <- function(txt_in) {
   msg <- paste0(
-    '<div style="text-align:center;">',
-    '<span style="font-weight:bold; font-size:14px;">', txt_in, '</span>',
+    '<div style="text-align:left;">',
+    '<span style="font-weight:bold; font-size:18px; ; color:black;">', txt_in, '</span>',
     '</div>\n\n'
   )
   return(cat(msg))
