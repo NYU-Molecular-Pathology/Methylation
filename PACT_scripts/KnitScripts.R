@@ -1357,38 +1357,63 @@ get_metrics_dir <- function(run_id) {
 }
 
 
-make_hs_metrics_tab <- function(tabNam, sam, norm_metrics, tumor_metrics, tumorSams) {
-  gb$MakeTabColor(tabNam)
-  dtOpts <- list(
-    info         = FALSE,
-    autoWidth    = FALSE,
-    lengthChange = FALSE,
-    searching    = FALSE,
-    paging       = FALSE,
-    ordering     = FALSE    # disable sorting
-)
+bold_center <- function(txt_in) {
+  msg <- paste0(
+    '<div style="text-align:center;">',
+    '<span style="font-weight:bold; font-size:14px;">', txt_in, '</span>',
+    '</div>\n\n'
+  )
+  return(cat(msg))
+}
+
+
+make_hs_metrics_tab <- function(sam, norm_metrics, tumor_metrics, tumorSams) {
+  gb$MakeTabColor("HS Metrics")
+  
   normals <- rownames(norm_metrics)
   tumors <- rownames(tumor_metrics)
   sam_match <- which(sam == tumorSams$Test_Number)  
   if (length(sam_match) > 0) {
     sam_row <- tumorSams[sam_match, ]
-    
+
     tum_match <- which(stringr::str_detect(sam_row$Sample_ID, tumors))
     norm_match <- which(stringr::str_detect(sam_row$Paired_Normal, normals))
-    
+
     norm_row <- norm_metrics[norm_match, ]
+    norm_mean_sd <- norm_metrics[c("Mean:", "SD:"), ]
+    norms <- rbind(norm_row, norm_mean_sd)
+    
+    old_cols <- colnames(norms)
+    stringr::str_replace_all(old_cols, c("_" = " ", "normals" = "")) -> new_cols
+    colnames(norms) <- new_cols
+    
     tum_row <- tumor_metrics[tum_match, ]
-   
-    dtTab1 <- htmltools::tagList(
-        DT::datatable(norm_row, style = "default", rownames = TRUE, options = dtOpts)
-    )
-    cat("\n\n"); print(dtTab1); cat("\n\n")
+    tumor_mean_sd <- tumor_metrics[c("Mean:", "SD:"), ]
+    tums <- rbind(tum_row, tumor_mean_sd)
     
-    dtTab2 <- htmltools::tagList(
-        DT::datatable(tum_row, style = "default", rownames = TRUE, options = dtOpts)
-    )
-    cat("\n\n"); print(dtTab2); cat("\n\n")
+    old_cols <- colnames(tums)
+    stringr::str_replace_all(old_cols, c("_" = " ", "normals" = "")) -> new_cols
+    colnames(tums) <- new_cols
     
+    kableTab1 <- norms %>%
+      knitr::kable(format = "html", row.names = TRUE) %>%
+      kableExtra::kable_styling(full_width = FALSE) %>%
+      kableExtra::row_spec(1, background = "lightblue")
+    cat("\n\n")
+    bold_center("Normal HS Metric Values")
+    cat("\n\n"); print(kableTab1); cat("\n\n")
+
+    kableTab2 <- tums %>%
+      knitr::kable(format = "html", row.names = TRUE) %>%
+      kableExtra::kable_styling(full_width = FALSE) %>%
+      kableExtra::row_spec(1, background = "lightblue")
+
+    cat("\n\n")
+    bold_center("Tumor HS Metric Values")
+    cat("\n\n"); print(kableTab2); cat("\n\n")
+
+  } else {
+    cat("\n\n"); cat("No HS Metrics for this Sample"); cat("\n\n")
   }
 }
 
@@ -1485,7 +1510,7 @@ LoopSampleTabs <- function(params) {
         
         makeOncoKbTab("OncoKB Level 1 Genes", onco_df)
         
-        make_hs_metrics_tab("HS Metrics", sam, norm_metrics, tumor_metrics, tumorSams)
+        make_hs_metrics_tab(sam, norm_metrics, tumor_metrics, tumorSams)
         
         cat(' </div> ')
         
