@@ -171,6 +171,10 @@ librarian::shelf(
 
 library("kableExtra")
 
+bold_line <- function() {
+  return(cat('<hr style="border:none; ' , 'height:3px; ' ,
+        'background-color:#000; ' , 'width:100%;" />\n'))
+}
 
 CheckMntDirs <- function(critialMnts, params) {
     outDir <- file.path(params$workDir, paste0(params$pactName, "_consensus"))
@@ -1408,6 +1412,9 @@ make_hs_metrics_tab <- function(sam, norm_metrics, tumor_metrics, tumorSams) {
       kableExtra::kable_styling(full_width = FALSE) %>%
       kableExtra::row_spec(1, background = "lightblue")
 
+    cat('<hr style="border:none; ' , 'height:3px; ' ,
+        'background-color:#000; ' , 'width:100%;" />\n')
+      
     cat("\n\n")
     bold_center("Tumor HS Metric Values")
     cat("\n\n"); print(kableTab2); cat("\n\n")
