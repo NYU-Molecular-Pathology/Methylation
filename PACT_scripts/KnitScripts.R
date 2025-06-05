@@ -1396,7 +1396,7 @@ make_hs_metrics_tab <- function(sam, norm_metrics, tumor_metrics, tumorSams) {
     tums <- rbind(tum_row, tumor_mean_sd)
     
     old_cols <- colnames(tums)
-    stringr::str_replace_all(old_cols, c("_" = " ", "normals" = "")) -> new_cols
+    stringr::str_replace_all(old_cols, c("_" = " ", "tumors" = "")) -> new_cols
     colnames(tums) <- new_cols
     
     kableTab1 <- norms %>%
