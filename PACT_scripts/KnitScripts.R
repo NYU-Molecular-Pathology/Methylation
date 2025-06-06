@@ -1416,21 +1416,21 @@ make_hs_metrics_tab <- function(sam, norm_metrics, tumor_metrics, tumorSams) {
     kableTab1 <- norm_row %>%
       knitr::kable(format = "html", row.names = TRUE) %>%
       kableExtra::kable_styling(full_width = FALSE)
-    
-    cat("\n\n")
-    bold_center("Normal HS Metric Values")
-    cat("\n\n"); print(kableTab1); cat("\n\n")
-
     kableTab2 <- tum_row %>%
       knitr::kable(format = "html", row.names = TRUE) %>%
       kableExtra::kable_styling(full_width = FALSE)
-
-    cat('<hr style="border:none; ' , 'height:3px; ' ,
-        'background-color:#000; ' , 'width:100%;" />\n')
     
     cat("\n\n")
     bold_center("Tumor HS Metric Values")
     cat("\n\n"); print(kableTab2); cat("\n\n")
+
+    cat('<hr style="border:none; ' , 'height:3px; ' ,
+        'background-color:#000; ' , 'width:100%;" />\n')
+
+    cat("\n\n")
+    bold_center("Normal HS Metric Values")
+    cat("\n\n"); print(kableTab1); cat("\n\n")
+
 
   } else {
     cat("\n\n"); cat("No HS Metrics for this Sample"); cat("\n\n")
