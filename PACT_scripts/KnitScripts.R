@@ -995,7 +995,9 @@ GetMethMatchInfo <- function(methData, theRd) {
         full_width = F,
         position = "left"
     )
-    newTa <- kableExtra::column_spec(newTa, 1:5, width = "5cm")
+    newTa <- kableExtra::column_spec(newTa, 1:5, width = "5cm") %>%
+      kableExtra::column_spec(11, background = "#ffd680")
+    
     cat("#### Methylation Full Report Link:")
     cat("\n\n")
     txtLink <- paste0("[", theRd, "](", rdDtRows$`Report Path`, ")")
