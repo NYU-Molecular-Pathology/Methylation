@@ -25,7 +25,7 @@ cnv_outFolder = "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
 
 flds <- c("record_id", "b_number", "tm_number", "accession_number", "block",
           "diagnosis", "organ", "tissue_comments", "run_number", "nyu_mrn",
-          "qc_passed")
+          "qc_passed", "arrived")
 
 main_pkgs <- c("data.table", "openxlsx", "jsonlite", "RCurl", "readxl",
                "stringr", "tidyverse", "crayon", "tinytex", "systemfonts",
@@ -52,7 +52,10 @@ library("devtools")
 # FUN: Install Homebrew if not installed -------------------------------------
 install_brew <- function() {
     message("Installing Homebrew...")
-    system('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"', wait = TRUE)
+    system(
+        '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+        , wait = TRUE
+    )
 }
 
 # FUN: Check if system command exists
@@ -182,9 +185,9 @@ ensure_packages <- function(pkgs) {
         }
     }
     stopifnot(all(sapply(pkgs, function(pkg) {
-        suppressPackageStartupMessages(library(
+        suppressWarnings(suppressPackageStartupMessages(library(
             pkg, mask.ok = TRUE, character.only = TRUE, logical.return = TRUE
-        ))
+        )))
     })))
 }
 
@@ -196,9 +199,10 @@ check_pkg_install <- function() {
                    "PKG_LIBS", "LD_LIBRARY_PATH", "R_LD_LIBRARY_PATH"))
     set_env_vars()
     ensure_packages(main_pkgs)
-    if (!requireNamespace("mnp.v12epicv2", quietly = TRUE)) {
+    if (!"mnp.v12epicv2" %in% rownames(installed.packages())) {
         devtools::source_url(file.path(meth_repo, "refs/heads/main/R/all_installer.R"))
     }
+    suppressWarnings(suppressPackageStartupMessages(library("mnp.v12epicv2")))
 }
 
 
@@ -355,7 +359,8 @@ getCaseValues <- function(inputSheet, readFlag) {
 
     if (readFlag && isSamSheet) {
         vals2find <- utils::read.csv(inputSheet, skip = 19)[, c(6, 7, 9)]
-        return(as.data.frame(vals2find[!grepl("H20|SERACARE|HAPMAP", vals2find[, 2]),]))
+        vals2find <- as.data.frame(vals2find[!grepl("H20|SERACARE|HAPMAP", vals2find[, 2]),])
+        return(vals2find)
     }
 
     if (readFlag && !isSamSheet) {
@@ -367,14 +372,17 @@ getCaseValues <- function(inputSheet, readFlag) {
     }
 
     if (!readFlag && hasFileSep) {
-        return(parseWorksheet(inputSheet))
+        vals2find <- parseWorksheet(inputSheet)
+        return(vals2find)
     }
 
-    return(parseWorksheet(getFilePath(inputSheet)))
+    pact_xlsm <- getFilePath(inputSheet)
+    vals2find <- parseWorksheet(pact_xlsm)
+    return(vals2find)
 }
 
 # Generates a query list of items to search for in the REDCap database
-genQuery <- function(dbCol,vals2find) {
+genQuery <- function(dbCol, vals2find) {
     currCol <- vals2find[, dbCol]
     toKeep <- which(currCol != 0 & !is.na(currCol) & currCol != "")
     q1 <- currCol[toKeep]
@@ -385,9 +393,14 @@ genQuery <- function(dbCol,vals2find) {
 
 # Queries the REDCap database for the items in the query list
 queryCases <- function(vals2find, db) {
-    queryList <- unlist(lapply(1:ncol(vals2find), function(i) {genQuery(i, vals2find)}), use.names = TRUE)
+    # Label each item with the NGS-number
+    queryList <- unlist(lapply(1:ncol(vals2find), function(i) {
+        genQuery(i, vals2find)
+    }), use.names = TRUE)
     theTScases <- queryList[stringr::str_detect(queryList, "TS|TB|TC")]
-    theTScases <- sapply(theTScases, function(x) paste(stringr::str_split_fixed(x, "-", 3)[1, 1:2], collapse = "-"))
+    theTScases <- sapply(theTScases, function(x) {
+        paste(stringr::str_split_fixed(x, "-", 3)[1, 1:2], collapse = "-")
+    })
     queryList <- c(queryList, theTScases)
     queryList <- queryList[!duplicated(queryList)]
     methQuery <- searchDb(queryList, db)
@@ -630,16 +643,10 @@ grab_run_id <- function(readFlag, inputSheet) {
     return(runId)
 }
 
-# Grabs REDCap data and finds matches to inputSheet columns to fields
-getOuputData <- function(token, flds, inputSheet, readFlag) {
-    apiUrl = "https://redcap.nyumc.org/apps/redcap/api/"
-    rcon <- redcapAPI::redcapConnection(apiUrl, token)
 
-    vals2find <- getCaseValues(inputSheet, readFlag)
-    if (class(vals2find) != "data.frame") {
-        vals2find <- as.data.frame(vals2find)
-    }
-    db <- grabAllRecords(flds, rcon)
+process_values <- function(vals2find, db) {
+    output <- data.frame()
+
     if (nrow(vals2find) != 0) {
         output <- queryCases(vals2find, db)
     }
@@ -649,17 +656,33 @@ getOuputData <- function(token, flds, inputSheet, readFlag) {
     } else {
         rownames(output) <- 1:nrow(output)
     }
-
     if (ncol(output) == 0) {
         message(crayon::bgRed("No Methylation on this PACT run!"))
         return(output)
     }
-
     if (readFlag == T) {
         output <- modifyOutput(output, vals2find)
         write.csv(output, file = "meth_sample_data.csv", quote = F, row.names = F)
         return(output)
     }
+    return(output)
+}
+
+
+# Grabs REDCap data and finds matches to inputSheet columns to fields
+getOuputData <- function(token, flds, inputSheet, readFlag) {
+    apiUrl = "https://redcap.nyumc.org/apps/redcap/api/"
+    rcon <- redcapAPI::redcapConnection(apiUrl, token)
+
+    vals2find <- getCaseValues(inputSheet, readFlag)
+
+    if (class(vals2find) != "data.frame") {
+        vals2find <- as.data.frame(vals2find)
+    }
+
+    # Get entire REDCap Database matrix
+    db <- grabAllRecords(flds, rcon)
+    output <- process_values(vals2find, db)
 
     runId <- grab_run_id(readFlag, inputSheet)
     output <- modifyOutput(output, vals2find)
@@ -908,7 +931,8 @@ queue_cnv_maker <- function(output, token) {
         copy_output_png()
     } else{
         message(crayon::bgGreen(
-            "No CNV png images to generate. Check the output directory."))
+            "No CNV png images to generate. Check the output directory."
+            ))
     }
 }
 
