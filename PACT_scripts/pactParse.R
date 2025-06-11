@@ -752,22 +752,22 @@ BindUnpairedRows <- function(rawData, pairedList, runID) {
 GetPairedList <- function(philipsExport, runID) {
     pairedList <- paste(unlist(lapply(
         X = 1:length(philipsExport$`Tumor Specimen ID`), function(acc) {
-        tumorSam <- paste(
-            philipsExport[,"Epic Order Number"][acc],
-            runID,
-            philipsExport$`Tumor Specimen ID`[acc],
-            philipsExport$`Tumor DNA/RNA Number`[acc],
-            sep = "_"
-        )
-        normalSam <- paste(
-            philipsExport[,"Epic Order Number"][acc],
-            runID,
-            philipsExport[,"Normal Specimen ID"][acc],
-            philipsExport$`Normal DNA/RNA Number`[acc],
-            sep = "_"
-        )
-        return(rbind(tumorSam, normalSam))
-    })))
+            tumorSam <- paste(
+                philipsExport[,"Epic Order Number"][acc],
+                runID,
+                philipsExport$`Tumor Specimen ID`[acc],
+                philipsExport$`Tumor DNA/RNA Number`[acc],
+                sep = "_"
+            )
+            normalSam <- paste(
+                philipsExport[,"Epic Order Number"][acc],
+                runID,
+                philipsExport[,"Normal Specimen ID"][acc],
+                philipsExport$`Normal DNA/RNA Number`[acc],
+                sep = "_"
+            )
+            return(rbind(tumorSam, normalSam))
+        })))
     return(pairedList)
 }
 
@@ -968,7 +968,7 @@ FixLastColumns <- function(mainSheet, rawData) {
     if (length(dupes) > 0 & dupes != 0) {
         message(crayon::bgRed(
             "The following rows are duplicated and will be removed:"), "\n"
-            )
+        )
         MsgDF(mainSheet[dupes,])
         mainSheet <- mainSheet[-dupes,]
         row.names(mainSheet) <- 1:nrow(mainSheet)
@@ -989,10 +989,59 @@ GetExtraNormalRows <- function(rawData){
 }
 
 
+fix_unpaired_noPhilips <- function(rawData, pairedNorm, concat_id) {
+    onlyNormals <- stringr::str_detect(rawData$`Type & Tissue`, "Norm|norm")
+    whichTumor <- stringr::str_detect(rawData$`Type & Tissue`, "Tum|tum")
+    if (sum(whichTumor) > sum(onlyNormals)) {
+        message("Run has multiple tumor-only samples")
+        true_indices <- which(whichTumor)[1:sum(onlyNormals)]
+        pairedNorm[true_indices] <- concat_id[onlyNormals, 1]
+    } else {
+        message("Run has multiple normal-only samples")
+        true_indices <- which(whichTumor)
+        extra_idx <- GetExtraNormalRows(rawData)
+
+        pairsToFind <- rawData$`Accession#`[extra_idx]
+        newPairs <- concat_id[onlyNormals, 1]
+        tumor_ids <- concat_id[whichTumor, 1]
+
+        unmatched <- unlist(lapply(pairsToFind, function(sam) {
+            which(grepl(sam , newPairs))
+        }))
+
+
+        newPairs[unmatched] <- "NORMAL_ONLY"  # Un-pair Normal-only samples
+        true_indices <- unique(sort(c(true_indices, extra_idx), decreasing = FALSE))
+
+        if (length(unmatched) != length(pairsToFind)) {
+            message("Extra tumor samples also exist on this run:")
+            tumor_idx <- unlist(lapply(pairsToFind, function(sam) {
+                which(grepl(sam , tumor_ids))
+            }))
+            unmatchedTumor <- tumor_ids[tumor_idx]
+
+            tumor_idx <- which(unmatchedTumor == concat_id[true_indices,])
+
+            message(paste(unmatchedTumor, collapse = "\n"))
+
+            for (idx in tumor_idx) {
+                newPairs <- append(newPairs, "UNMATCHED_TUMOR", after = tumor_idx - 1)
+            }
+
+        }
+        if (length(true_indices) != length(newPairs)) {
+            message("length(true_indices) != length(newPairs)")
+        }
+        pairedNorm[true_indices] <- newPairs
+    }
+    return(pairedNorm)
+}
+
+
 BuildNoPhilips <- function(rawData, runID, pact_run) {
     message(
         "Generating SampleSheet without Philips Data: ALL are validation!"
-        )
+    )
     seqId <- stringr::str_split_fixed(runID, "_", 4)
     whichNormal <- stringr::str_detect(rawData$`Type & Tissue`, "Norm|norm|cont|Cont")
     onlyNormals <- stringr::str_detect(rawData$`Type & Tissue`, "Norm|norm")
@@ -1002,25 +1051,8 @@ BuildNoPhilips <- function(rawData, runID, pact_run) {
     whichTumor <- stringr::str_detect(rawData$`Type & Tissue`, "Tum|tum")
 
     if (sum(whichTumor) != sum(onlyNormals)) {
-        message("Not all tumors and normals are paired")
-        if (sum(whichTumor) > sum(onlyNormals)) {
-            true_indices <- which(whichTumor)[1:sum(onlyNormals)]
-            pairedNorm[true_indices] <- concat_id[onlyNormals, 1]
-        }else {
-            message("Run has multiple normal-only samples")
-            true_indices <- which(whichTumor)
-            extra_idx <- GetExtraNormalRows(rawData)
-
-            pairsToFind <- rawData$`Accession#`[extra_idx]
-            newPairs <- concat_id[onlyNormals, 1]
-
-            unmatched <- unlist(lapply(pairsToFind, function(sam) {
-                which(grepl(sam , newPairs))
-            }))
-            newPairs[unmatched] <- ""  # Un-pair Normal-only samples
-            true_indices <- sort(c(true_indices, extra_idx))
-            pairedNorm[true_indices] <- newPairs
-        }
+        message("Not all Tumor and Normal samples are paired!")
+        pairedNorm <- fix_unpaired_noPhilips(rawData, pairedNorm, concat_id)
     } else{
         pairedNorm[whichTumor] <- concat_id[onlyNormals, 1]
     }
@@ -1156,7 +1188,7 @@ GetPhilipsData <- function(inputFi) {
 Err_runID <- function(runID) {
     err_msg <- crayon::bgRed(
         'Keyword "Run ID:" not found in SampleSheet "DNA #" column'
-        )
+    )
     new_id <- paste('\nDefaulting to script input RUNID:', runID)
     message(err_msg, new_id)
 }
@@ -1337,7 +1369,7 @@ validateInputs <- function(rcon, recordName, fiPath) {
 # Uploads CSV file to REDCap --------------------------------------------------
 callApiFileCsv <- function(rcon, recordName, fiPath) {
     validateInputs(rcon, recordName, fiPath)
-    
+
     upload_success <- try(redcapAPI::importFileToRecord(
         rcon,
         file = fiPath,
@@ -1345,7 +1377,7 @@ callApiFileCsv <- function(rcon, recordName, fiPath) {
         event = NULL,
         field = "pact_csv_sheet"
     ), silent = T)
-    
+
     if (upload_success == T) {
         message("File uploaded to REDCap successfully:\n", fiPath)
     } else {
