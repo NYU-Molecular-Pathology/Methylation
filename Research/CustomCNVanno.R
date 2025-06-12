@@ -44,7 +44,6 @@ pkgs <- c(
     "ggplot2",
     "ExperimentHub",
     "sesameData",
-    "rmarkdown",
     "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
     "htmlwidgets",
     "plotly",
@@ -102,10 +101,14 @@ ensure_packages("conumee2")
 
 # If no usable Python is found, bootstrap a Miniconda env named "r-reticulate"
 if (!reticulate::py_available(initialize = FALSE)) {
-    reticulate::install_miniconda()
-    reticulate::conda_install("r-reticulate", "python-kaleido")
-    reticulate::conda_install("r-reticulate", "plotly", channel = "plotly")
+    if (!reticulate::miniconda_exists()) reticulate::install_miniconda()
     reticulate::use_condaenv("r-reticulate", required = TRUE)
+    if (!reticulate::py_module_available("kaleido")) {
+        reticulate::conda_install("r-reticulate", "python-kaleido")
+    }
+    if (!reticulate::py_module_available("plotly")) {
+        reticulate::conda_install("r-reticulate", "plotly", channel = "plotly")
+    }
 }
 
 
@@ -157,7 +160,7 @@ get_gene_ranges <- function(geneSymbols, array_info) {
     all_marts <- biomaRt::listMarts(host = host_url)
     mart_name <- all_marts$biomart[1]
     mart_set <- all_marts$version[1]
-    
+
     mart <- biomaRt::useMart(
         biomart = mart_name,
         dataset = "hsapiens_gene_ensembl",
@@ -427,6 +430,10 @@ annotate_cnv_with_genes <- function(sam_data, geneNames, ref = NULL, doXY = TRUE
         detail_regions = gene_gr
     )
 
+    if (is.null(ref)) {
+        ref <- get_reference(array_info)
+    }
+
     aligned <- alignCNVObjects(query_cnv, ref, anno)
     colnames(aligned$ref@intensity) <- colnames(ref@intensity)
 
@@ -439,16 +446,12 @@ annotate_cnv_with_genes <- function(sam_data, geneNames, ref = NULL, doXY = TRUE
 }
 
 # Main function: loop through samples in the sample sheet and call annotate_cnv_with_genes
-loop_samples <- function(PROJ_DIR, sam_sheet, geneNames, ref = NULL) {
+loop_samples <- function(PROJ_DIR, sam_sheet, geneNames) {
     targets <- read.csv(sam_sheet)
-
-    if (is.null(ref)) {
-        ref <- get_reference(array_info)
-    }
 
     for (samRow in 1:nrow(targets)) {
         sam_data <- targets[samRow, ]
-        annotate_cnv_with_genes(sam_data, geneNames, ref = ref)
+        annotate_cnv_with_genes(sam_data, geneNames)
     }
 }
 
