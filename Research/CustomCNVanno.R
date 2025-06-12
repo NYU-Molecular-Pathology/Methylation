@@ -102,7 +102,7 @@ ensure_packages("conumee2")
 # If no usable Python is found, bootstrap a Miniconda env named "r-reticulate"
 if (!reticulate::py_available(initialize = FALSE)) {
     reticulate::install_miniconda()
-    reticulate::conda_install("r-reticulate", "kaleido")
+    reticulate::conda_install("r-reticulate", "python-kaleido")
     reticulate::conda_install("r-reticulate", "plotly", channel = "plotly")
     reticulate::use_condaenv("r-reticulate", required = TRUE)
 }
