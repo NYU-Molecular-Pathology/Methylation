@@ -44,6 +44,7 @@ pkgs <- c(
     "ggplot2",
     "ExperimentHub",
     "sesameData",
+    "rmarkdown",
     "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
     "htmlwidgets",
     "plotly",
