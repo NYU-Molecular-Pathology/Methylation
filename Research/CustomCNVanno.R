@@ -30,24 +30,22 @@ options(
 )
 
 pkgs <- c(
-    "devtools",
-    "sesame",
-    "minfi",
-    "S4Vectors",
-    "GenomicRanges",
-    "IRanges",
-    "dplyr",
-    "stringr",
-    "biomaRt",
-    "AnnotationDbi",
-    "plotly",
-    "ggplot2",
-    "ExperimentHub",
-    "sesameData",
-    "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
-    "htmlwidgets",
-    "plotly",
-    "reticulate"
+  "S4Vectors",
+  "IRanges",
+  "GenomicRanges",
+  "AnnotationDbi",
+  "biomaRt",
+  "ExperimentHub",
+  "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
+  "sesameData",
+  "sesame",
+  "minfi",
+  "stringr",
+  "dplyr",
+  "ggplot2",
+  "htmlwidgets",
+  "plotly",
+  "reticulate"
 )
 
 # Helper function: Check if a package is not installed
@@ -84,14 +82,15 @@ ensure_packages <- function(pkgs) {
         }
     }
     stopifnot(all(sapply(pkgs, function(pkg) {
-        suppressPackageStartupMessages(library(
+    suppressWarnings(suppressPackageStartupMessages(library(
             pkg, mask.ok = TRUE, character.only = TRUE, logical.return = TRUE
-        ))
+        )))
     })))
 }
 
 if (not_installed("devtools")) install.packages("devtools", ask = F, dependencies = T)
 library("devtools")
+if (not_installed("BiocManager")) install.packages("BiocManager", ask = F, dependencies = T)
 ensure_packages(pkgs)
 
 if (not_installed("conumee2")) {
