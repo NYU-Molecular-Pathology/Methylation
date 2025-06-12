@@ -147,17 +147,21 @@ detect_array_info <- function(RGset) {
 # Helper function: retrieve gene ranges (e.g., TSS/promoter region) for a given gene symbol.
 get_gene_ranges <- function(geneSymbols, array_info) {
 
-    if (array_info$genome == "hg19") {
+    if (array_info$genome != "hg19") {
         host_url <- "https://grch37.ensembl.org"  # Use the GRCh37 archive for hg19
     } else {
         host_url <- "https://www.ensembl.org"  # Use the main Ensembl site for hg38
     }
 
+    all_marts <- biomaRt::listMarts(host = host_url)
+    mart_name <- all_marts$biomart[1]
+    mart_set <- all_marts$version[1]
+    
     mart <- biomaRt::useMart(
-        biomart = "ENSEMBL_MART_ENSEMBL",
+        biomart = mart_name,
         dataset = "hsapiens_gene_ensembl",
         host = host_url,
-        version = "Ensembl Genes 113"
+        version = mart_set
     )
 
     geneInfo <- biomaRt::getBM(
