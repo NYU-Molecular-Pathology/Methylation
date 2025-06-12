@@ -10,14 +10,27 @@
 manifest_path = "/Volumes/CBioinformatics/Methylation/Manifests"
 
 # User Input: Project Directory and Sample Sheet -----------------------------
-proj_dir <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs/pull_redcap_idats"
+PROJ_DIR <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs/pull_redcap_idats"
+OUTPUT_DIR <- file.path(PROJ_DIR, "CNV_annotated_plots")
 sam_sheet <- "samplesheet_rds.csv"
 geneNames <- c("BRCA1", "FOXA1", "TP53")
 min_probes = 4  # Minimum number of probes to bin for genes
 
+if (!dir.exists(OUTPUT_DIR)) {dir.create(OUTPUT_DIR, recursive = TRUE)}
+setwd(PROJ_DIR)
+
+snapshot_date <- "2025-05-01"
+bioc_version   <- "3.19"
+options(
+    repos = c(
+        CRAN = sprintf("https://cran.microsoft.com/snapshot/%s/", snapshot_date),
+        BioC = sprintf("https://packagemanager.rstudio.com/bioconductor/%s@%s",
+                       bioc_version, snapshot_date)
+    )
+)
+
 pkgs <- c(
     "devtools",
-    "conumee2",
     "sesame",
     "minfi",
     "S4Vectors",
@@ -37,30 +50,77 @@ pkgs <- c(
     "reticulate"
 )
 
+# Helper function: Check if a package is not installed
 not_installed <- function(pkgName) return(!pkgName %in% rownames(installed.packages()))
 
+# Helper function: Install pak package if not already installed
+install_pak <- function() {
+    tryCatch(
+        install.packages(
+            "pak", repos = sprintf("https://r-lib.github.io/p/pak/stable/%s/%s/%s",
+                                   .Platform$pkgType, R.Version()$os, R.Version()$arch)),
+        error = function(e) {
+            install.packages("pak", ask = FALSE, dependencies = TRUE,
+                             repos = "https://packagemanager.rstudio.com/all/latest"
+            )
+        })
+}
+
+# Function to ensure required packages are installed and loaded
+ensure_packages <- function(pkgs) {
+    installed_pkgs <- rownames(installed.packages())
+    missing_pkgs <- setdiff(pkgs, installed_pkgs)
+    if (length(missing_pkgs) > 0) {
+        message(missing_pkgs)
+        if (!"pak" %in% installed_pkgs) install_pak()
+        library("pak")
+        for (pkg in missing_pkgs) {
+            tryCatch(
+                pak::pkg_install(pkg, ask = FALSE),
+                error = function(e) {
+                    install.packages(pkg, ask = FALSE, dependencies = TRUE)
+                }
+            )
+        }
+    }
+    stopifnot(all(sapply(pkgs, function(pkg) {
+        suppressPackageStartupMessages(library(
+            pkg, mask.ok = TRUE, character.only = TRUE, logical.return = TRUE
+        ))
+    })))
+}
+
 if (not_installed("devtools")) install.packages("devtools", ask = F, dependencies = T)
+library("devtools")
+ensure_packages(pkgs)
+
 if (not_installed("conumee2")) {
     devtools::install_github("hovestadtlab/conumee2", subdir = "conumee2", upgrade = "always")
 }
+ensure_packages("conumee2")
 
-missing_pkgs <- sapply(pkgs, not_installed)
-if (not_installed("pak")) install.packages("pak", ask = F, dependencies = T)
-if (any(missing_pkgs)) pak::pkg_install(pkgs[missing_pkgs], ask = FALSE)
-stopifnot(all(sapply(pkgs, library, character.only = T, logical.return = T)))
+# If no usable Python is found, bootstrap a Miniconda env named "r-reticulate"
+if (!reticulate::py_available(initialize = FALSE)) {
+    reticulate::install_miniconda()
+    reticulate::conda_install("r-reticulate", "kaleido")
+    reticulate::conda_install("r-reticulate", "plotly", channel = "plotly")
+    reticulate::use_condaenv("r-reticulate", required = TRUE)
+}
+
 
 # Helper functions for plotly pip save html widget debug
 pip_install <- function(pkg) {
     reticulate::py_run_string(
-        paste0("import sys; import subprocess;", " ",
-               "subprocess.check_call([sys.executable, '-m', 'pip', 'install', '", pkg, "'])")
+        paste0("import sys; import subprocess;", " ", "subprocess.check_call",
+               "([sys.executable, '-m', 'pip', 'install', '", pkg, "'])")
     )
-
 }
 
+# Helper to load Python module using reticulate for kaleido needed for plotly image export
 load_module <- function(pkg) {
     if (!reticulate::py_module_available(pkg)) pip_install(pkg)
     reticulate::py_run_string(paste("import", pkg))
+    reticulate::import(pkg)
 }
 
 reticulate::py_run_string("import sys")
@@ -126,7 +186,7 @@ count_gene_probes <- function(gene_gr, probe_gr) {
     length(unique(S4Vectors::subjectHits(hits)))
 }
 
-
+# Function: Aligns query and reference CNV objects, ensuring common probes
 alignCNVObjects <- function(query_obj, ref_obj, anno_obj) {
     qProbs <- rownames(query_obj@intensity)
     query_int_df <- as.data.frame(
@@ -301,7 +361,7 @@ get_reference <- function(array_info) {
         library("minfiDataEPIC")
         data("MsetEPIC", package = "minfiDataEPIC", envir = environment())
         ref <- conumee2::CNV.load(get("MsetEPIC", envir = environment()))
-    } else{
+    } else {
         library("minfiData")
         data("MsetEx", package = "minfiData", envir = environment())
         ref <- conumee2::CNV.load(get("MsetEx", envir = environment()))
@@ -325,15 +385,17 @@ get_rgset <- function(sam_data) {
 # Helper function: Save output files - HTML & PNG plots to current directory
 save_output <- function(cnv_obj, p_interactive) {
     html_file <- paste0(cnv_obj@name, "_cnv_plot_anno.html")
+    out_html <- file.path(OUTPUT_DIR, html_file)
     if (!file.exists(html_file)) {
-        message("Saving file:\n", file.path(getwd(), html_file))
-        htmlwidgets::saveWidget(p_interactive, html_file)
+        message("Saving file:\n", out_html)
+        htmlwidgets::saveWidget(p_interactive, out_html)
     }
 
     png_file <- paste0(cnv_obj@name, "_cnv_plot_anno.png")
+    out_png <- file.path(OUTPUT_DIR, png_file)
     if (!file.exists(png_file)) {
         message("Saving file:\n", file.path(getwd(), png_file))
-        plotly::save_image(p_interactive, png_file, width = "1600", height = "900", scale = 2.5)
+        plotly::save_image(p_interactive, out_png, width = "1600", height = "900", scale = 2.5)
     }
 }
 
@@ -349,6 +411,7 @@ annotate_cnv_with_genes <- function(sam_data, geneNames, ref = NULL, doXY = TRUE
     query_cnv <- conumee2::CNV.load(Mset)
 
     con_path <- file.path(path.package("conumee2"), "data")
+    exclude_regions <- get(load(file.path(con_path, "exclude_regions.rda")))
     load(file.path(con_path, "exclude_regions.rda"))
 
     anno <- conumee2::CNV.create_anno(
@@ -375,9 +438,8 @@ annotate_cnv_with_genes <- function(sam_data, geneNames, ref = NULL, doXY = TRUE
 }
 
 # Main function: loop through samples in the sample sheet and call annotate_cnv_with_genes
-loop_samples <- function(proj_dir, sam_sheet, geneNames) {
-    setwd(proj_dir)
-    targets <- read.csv(file.path(proj_dir, sam_sheet))
+loop_samples <- function(PROJ_DIR, sam_sheet, geneNames) {
+    targets <- read.csv(sam_sheet)
     for (samRow in 1:nrow(targets)) {
         sam_data <- targets[samRow, ]
         annotate_cnv_with_genes(sam_data, geneNames)
@@ -385,4 +447,4 @@ loop_samples <- function(proj_dir, sam_sheet, geneNames) {
 }
 
 # Example usage:
-loop_samples(proj_dir, sam_sheet, geneNames)
+loop_samples(PROJ_DIR, sam_sheet, geneNames)
