@@ -30,22 +30,22 @@ options(
 )
 
 pkgs <- c(
-  "S4Vectors",
-  "IRanges",
-  "GenomicRanges",
-  "AnnotationDbi",
-  "biomaRt",
-  "ExperimentHub",
-  "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
-  "sesameData",
-  "sesame",
-  "minfi",
-  "stringr",
-  "dplyr",
-  "ggplot2",
-  "htmlwidgets",
-  "plotly",
-  "reticulate"
+    "S4Vectors",
+    "IRanges",
+    "GenomicRanges",
+    "AnnotationDbi",
+    "biomaRt",
+    "ExperimentHub",
+    "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
+    "sesameData",
+    "sesame",
+    "minfi",
+    "stringr",
+    "dplyr",
+    "ggplot2",
+    "htmlwidgets",
+    "plotly",
+    "reticulate"
 )
 
 # Helper function: Check if a package is not installed
@@ -82,7 +82,7 @@ ensure_packages <- function(pkgs) {
         }
     }
     stopifnot(all(sapply(pkgs, function(pkg) {
-    suppressWarnings(suppressPackageStartupMessages(library(
+        suppressWarnings(suppressPackageStartupMessages(library(
             pkg, mask.ok = TRUE, character.only = TRUE, logical.return = TRUE
         )))
     })))
@@ -111,7 +111,7 @@ if (!reticulate::py_available(initialize = FALSE)) {
 }
 
 
-# Helper functions for plotly pip save html widget debug
+# Helper functions for python module pip installation
 pip_install <- function(pkg) {
     reticulate::py_run_string(
         paste0("import sys; import subprocess;", " ", "subprocess.check_call",
@@ -119,7 +119,7 @@ pip_install <- function(pkg) {
     )
 }
 
-# Helper to load Python module using reticulate for kaleido needed for plotly image export
+# Helper loads Python module with reticulate: kaleido is needed for plotly image export
 load_module <- function(pkg) {
     if (!reticulate::py_module_available(pkg)) pip_install(pkg)
     reticulate::py_run_string(paste("import", pkg))
@@ -148,9 +148,9 @@ detect_array_info <- function(RGset) {
 
 
 # Helper function: retrieve gene ranges (e.g., TSS/promoter region) for a given gene symbol.
-get_gene_ranges <- function(geneSymbols, array_info) {
+get_gene_ranges <- function(geneNames, array_info) {
 
-    if (array_info$genome != "hg19") {
+    if (array_info$genome == "hg19") {
         host_url <- "https://grch37.ensembl.org"  # Use the GRCh37 archive for hg19
     } else {
         host_url <- "https://www.ensembl.org"  # Use the main Ensembl site for hg38
@@ -170,7 +170,7 @@ get_gene_ranges <- function(geneSymbols, array_info) {
     geneInfo <- biomaRt::getBM(
         attributes = c("hgnc_symbol", "chromosome_name", "start_position", "end_position", "strand"),
         filters = "hgnc_symbol",
-        values = geneSymbols,
+        values = geneNames,
         mart = mart
     )
     if (nrow(geneInfo) == 0) return(NULL)
@@ -186,14 +186,14 @@ get_gene_ranges <- function(geneSymbols, array_info) {
 }
 
 
-# Helper function: for each gene, count overlapping probes
+# Helper function: for each gene, counts overlapping probes
 count_gene_probes <- function(gene_gr, probe_gr) {
     hits <- GenomicRanges::findOverlaps(gene_gr, probe_gr)
     hits <- as(hits, "Hits")
     length(unique(S4Vectors::subjectHits(hits)))
 }
 
-# Function: Aligns query and reference CNV objects, ensuring common probes
+# Aligns query and reference CNV objects, ensuring common probes
 alignCNVObjects <- function(query_obj, ref_obj, anno_obj) {
     qProbs <- rownames(query_obj@intensity)
     query_int_df <- as.data.frame(
@@ -237,7 +237,7 @@ alignCNVObjects <- function(query_obj, ref_obj, anno_obj) {
     list(query = query_obj, ref = ref_obj, anno = anno_obj)
 }
 
-# Function: Alters apearence of plot points, colors, and arrows in the output plot
+# Alters appearance of plot points, colors, and arrows in the final plot
 modify_markers <- function(p_interactive, gene_gr) {
     gene_order <- p_interactive[["x"]][["data"]][[5]][["text"]]
     is_found <- gene_order %in% gene_gr$symbol
@@ -269,7 +269,7 @@ modify_markers <- function(p_interactive, gene_gr) {
     return(p_interactive)
 }
 
-# Function: Process gene ranges and check for probe counts
+# Processes gene ranges and checks probe counts
 process_gene_ranges <- function(gene_gr, anno) {
     if (is.null(gene_gr)) {
         warning("No gene ranges could be retrieved for the supplied gene names.")
@@ -295,7 +295,7 @@ process_gene_ranges <- function(gene_gr, anno) {
     return(gene_anno_msg)
 }
 
-# Helper function: Generate CNV object from aligned query and reference objects
+# Helper function: Generates CNV object from aligned query and reference objects
 get_cnv_obj <- function(align_obj, sample_name) {
     cnv_obj <- conumee2::CNV.fit(query = align_obj$query,
                                  ref = align_obj$ref,
@@ -307,7 +307,7 @@ get_cnv_obj <- function(align_obj, sample_name) {
     return(cnv_obj)
 }
 
-# Function: Generates the final plot with custom gene annotations
+# Generates the final plot with custom gene annotations
 get_final_plot <- function(cnv_obj, anno, gene_gr) {
 
     geneNames <- unique(gene_gr$symbol)
@@ -332,7 +332,7 @@ get_final_plot <- function(cnv_obj, anno, gene_gr) {
     return(p_interactive)
 }
 
-# Function: loads pre-computed reference files for CNV analysis
+# Loads pre-computed normal sample reference files for CNV analysis
 get_reference <- function(array_info) {
     if (array_info$genome == "hg19") {
         ref_path <- file.path(manifest_path, "ref_v1_hg19.rds")
@@ -407,8 +407,8 @@ save_output <- function(cnv_obj, p_interactive) {
 }
 
 
-# Main function: process RGset, perform CNV analysis, annotate input genes, plots generate plots
-annotate_cnv_with_genes <- function(sam_data, geneNames, ref = NULL, doXY = TRUE) {
+# Processes RGset, perform CNV analysis, annotate input genes, plots, and saves output
+annotate_cnv_with_genes <- function(sam_data, geneNames, refs = NULL, doXY = TRUE) {
 
     RGset <- get_rgset(sam_data)
     array_info <- detect_array_info(RGset)
@@ -428,9 +428,14 @@ annotate_cnv_with_genes <- function(sam_data, geneNames, ref = NULL, doXY = TRUE
         exclude_regions = exclude_regions,
         detail_regions = gene_gr
     )
-
-    if (is.null(ref)) {
-        ref <- get_reference(array_info)
+    ref <- NULL
+    ref <- if (is.null(refs)) {get_reference(array_info)} else {
+        switch(
+            array_info$genome,
+            hg19 = refs$hg19,
+            hg38 = refs$hg38,
+            stop("Unsupported genome")
+        )
     }
 
     aligned <- alignCNVObjects(query_cnv, ref, anno)
@@ -444,15 +449,25 @@ annotate_cnv_with_genes <- function(sam_data, geneNames, ref = NULL, doXY = TRUE
     #list(plot = p_interactive, cnv_analysis = cnv_obj)
 }
 
-# Main function: loop through samples in the sample sheet and call annotate_cnv_with_genes
-loop_samples <- function(PROJ_DIR, sam_sheet, geneNames) {
+# Helper function: Loads pre-computed reference files if available
+load_references <- function(manifest_path) {
+    if (!dir.exists(manifest_path)) return(NULL)
+    hg19_ref <- readRDS(file.path(manifest_path, "ref_v1_hg19.rds"))
+    hg38_ref <- readRDS(file.path(manifest_path, "ref_v2_hg38.rds"))
+    return(list(hg19 = hg19_ref, hg38 = hg38_ref))
+}
+
+
+# MAIN: Load references if available and itterate through sample sheet to render plots ------------
+loop_samples <- function(manifest_path, sam_sheet, geneNames) {
     targets <- read.csv(sam_sheet)
+    refs <- load_references(manifest_path)
 
     for (samRow in 1:nrow(targets)) {
         sam_data <- targets[samRow, ]
-        annotate_cnv_with_genes(sam_data, geneNames)
+        annotate_cnv_with_genes(sam_data, geneNames, refs = refs)
     }
 }
 
-# Example usage:
-loop_samples(PROJ_DIR, sam_sheet, geneNames)
+
+loop_samples(manifest_path, sam_sheet, geneNames)
