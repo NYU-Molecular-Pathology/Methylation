@@ -426,10 +426,6 @@ annotate_cnv_with_genes <- function(sam_data, geneNames, ref = NULL, doXY = TRUE
         detail_regions = gene_gr
     )
 
-    if (is.null(ref)) {
-        ref <- get_reference(array_info)
-    }
-
     aligned <- alignCNVObjects(query_cnv, ref, anno)
     colnames(aligned$ref@intensity) <- colnames(ref@intensity)
 
@@ -442,11 +438,16 @@ annotate_cnv_with_genes <- function(sam_data, geneNames, ref = NULL, doXY = TRUE
 }
 
 # Main function: loop through samples in the sample sheet and call annotate_cnv_with_genes
-loop_samples <- function(PROJ_DIR, sam_sheet, geneNames) {
+loop_samples <- function(PROJ_DIR, sam_sheet, geneNames, ref = NULL) {
     targets <- read.csv(sam_sheet)
+
+    if (is.null(ref)) {
+        ref <- get_reference(array_info)
+    }
+
     for (samRow in 1:nrow(targets)) {
         sam_data <- targets[samRow, ]
-        annotate_cnv_with_genes(sam_data, geneNames)
+        annotate_cnv_with_genes(sam_data, geneNames, ref = ref)
     }
 }
 
