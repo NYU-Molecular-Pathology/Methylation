@@ -101,7 +101,7 @@ ensure_packages("conumee2")
 
 # If no usable Python is found, bootstrap a Miniconda env named "r-reticulate"
 if (!reticulate::py_available(initialize = FALSE)) {
-    if (!reticulate::miniconda_exists()) reticulate::install_miniconda()
+    if (is.null(reticulate::miniconda_path())) try(reticulate::install_miniconda(), TRUE)
     reticulate::use_condaenv("r-reticulate", required = TRUE)
     if (!reticulate::py_module_available("kaleido")) {
         reticulate::conda_install("r-reticulate", "python-kaleido")
