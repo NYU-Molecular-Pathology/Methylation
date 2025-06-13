@@ -425,6 +425,24 @@ writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
     write.csv(samplesheet_csv, file = "samplesheet.csv", quote = F, row.names = F)
 }
 
+# Ensures the correct version of redcapAPI is installed
+check_REDCap_vers <- function(min_version = "2.7.4") {
+    if (!"redcapAPI" %in% rownames(installed.packages())) {
+        devtools::install_github('nutterb/redcapAPI', dependencies = TRUE,
+                                 upgrade = "always", ask = F, type = "source")
+    }
+    current_vers <- as.character(utils::packageVersion("redcapAPI"))
+    is_current <- utils::compareVersion(current_vers, min_version) >= 0
+    if (!is_current) {
+        if ("redcapAPI" %in% loadedNamespaces()) {
+            try(unloadNamespace("redcapAPI"), TRUE)
+        }
+        devtools::install_github('nutterb/redcapAPI', dependencies = TRUE,
+                                 upgrade = "always", ask = F, type = "source")
+    }
+    suppressPackageStartupMessages(library("redcapAPI", logical.return = TRUE))
+}
+
 
 #' FUN: Returns dataframe of REDCap search using a default header and fields
 search.redcap <- function(rd_numbers,
@@ -434,7 +452,7 @@ search.redcap <- function(rd_numbers,
     if (!require("redcapAPI")) {
         install.packages("redcapAPI", dependencies = T, ask = F)
     }
-    library("redcapAPI")
+    check_REDCap_vers()
     if (is.null(token)) {
         message("You must provide an ApiToken!")
     }
