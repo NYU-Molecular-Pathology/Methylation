@@ -208,16 +208,20 @@ check_pkg_install <- function() {
 
 # Check REDCap Version --------------------------------------------------------
 check_REDCap_vers <- function(min_version = "2.7.4") {
-    if (!requireNamespace("redcapAPI", quietly = TRUE)) {
+    if (!"redcapAPI" %in% rownames(installed.packages())) {
         devtools::install_github('nutterb/redcapAPI', dependencies = TRUE,
                                  upgrade = "always", ask = F, type = "source")
     }
     current_vers <- as.character(utils::packageVersion("redcapAPI"))
     is_current <- utils::compareVersion(current_vers, min_version) >= 0
     if (!is_current) {
-        install.packages("redcapAPI", dependencies = T, ask = F, update = T)
+        if ("redcapAPI" %in% loadedNamespaces()) {
+            try(unloadNamespace("redcapAPI"), TRUE)
+        }
+        devtools::install_github('nutterb/redcapAPI', dependencies = TRUE,
+                                 upgrade = "always", ask = F, type = "source")
     }
-    library("redcapAPI", logical.return = TRUE)
+    suppressPackageStartupMessages(library("redcapAPI", logical.return = TRUE))
 }
 
 
