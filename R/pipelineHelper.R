@@ -378,7 +378,7 @@ getRunData <- function(single_data, fi_end = ".html") {
 
 
 NameControl <- function(data, runId) {
-    library("data.table")
+    suppressPackageStartupMessages(library("data.table"))
     cntrl <- which(stringr::str_detect(
         data[, 1], pattern = stringr::regex('control', ignore_case = T)))
     if (length(cntrl) >= 1) {
@@ -747,7 +747,7 @@ makeHtmlReports <- function(runOrder = NULL,
                             redcapUp = T) {
     msgFunName(pipeLnk, "makeHtmlReports")
 
-    library("data.table")
+    suppressPackageStartupMessages(library("data.table"))
     assign("genCn", FALSE, envir = gb)
 
     data <- check_csv_data()
@@ -755,10 +755,9 @@ makeHtmlReports <- function(runOrder = NULL,
 
     reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
     CopyRmdFile(gb$runID, reportMd)
-
-    library('mnp.v12epicv2')
-    library("pander")
-    library("htmltools")
+    suppressPackageStartupMessages(library("mnp.v12epicv2"))
+    suppressPackageStartupMessages(library("pander"))
+    suppressPackageStartupMessages(library("htmltools"))
 
     loopRender(runOrder, data, redcapUp)
     checkRunOutput(runID)
