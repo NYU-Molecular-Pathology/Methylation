@@ -14,7 +14,9 @@ PROJ_DIR <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs/pull_redcap_idat
 OUTPUT_DIR <- file.path(PROJ_DIR, "CNV_annotated_plots")
 sam_sheet <- "samplesheet_rds.csv"
 geneNames <- c("BRCA1", "FOXA1", "TP53")
+merged_name = NULL # Optional argument if two or more genes combined annotation
 min_probes = 4  # Minimum number of probes to bin for genes
+doXY = TRUE
 
 if (!dir.exists(OUTPUT_DIR)) {dir.create(OUTPUT_DIR, recursive = TRUE)}
 setwd(PROJ_DIR)
@@ -30,6 +32,8 @@ options(
 )
 
 pkgs <- c(
+    "fs",
+    "readr",
     "S4Vectors",
     "IRanges",
     "GenomicRanges",
@@ -248,7 +252,7 @@ modify_markers <- function(p_interactive, gene_gr) {
 
     orig_c <- p_interactive[["x"]][["data"]][[5]][["marker"]][["color"]]
     new_cols <- rep(orig_c, length(gene_order))
-    new_cols[is_found] <- "yellow"
+    new_cols[is_found] <- "#fdbc4b"
     p_interactive[["x"]][["data"]][[5]][["marker"]][["color"]] <- new_cols
 
     x_points <- as.numeric(paste(p_interactive[["x"]][["data"]][[5]]$x))
@@ -261,7 +265,7 @@ modify_markers <- function(p_interactive, gene_gr) {
                 text = p_interactive[["x"]][["data"]][[5]][["text"]][i],
                 showarrow = TRUE,
                 ax = 20, ay = -30, arrowhead = 4, arrowwidth = 0.8,
-                font = list(size = 12, color = "black")
+                font = list(family = "Arial Black", size = 13, color = "black")
             )
         })
     )
@@ -393,34 +397,55 @@ get_rgset <- function(sam_data) {
 save_output <- function(cnv_obj, p_interactive) {
     html_file <- paste0(cnv_obj@name, "_cnv_plot_anno.html")
     out_html <- file.path(OUTPUT_DIR, html_file)
-    if (!file.exists(html_file)) {
-        message("Saving file:\n", out_html)
-        htmlwidgets::saveWidget(p_interactive, out_html)
-    }
+    message("Saving file:\n", out_html)
+    filesDir <- paste0(tools::file_path_sans_ext(basename(out_html)), "_files")
+
+    htmlwidgets::saveWidget(p_interactive, out_html, libdir = filesDir)
+    outFiles <- file.path(dirname(out_html), filesDir)
+    try(fs::dir_delete(filesDir), silent = TRUE)
 
     png_file <- paste0(cnv_obj@name, "_cnv_plot_anno.png")
     out_png <- file.path(OUTPUT_DIR, png_file)
-    if (!file.exists(png_file)) {
-        message("Saving file:\n", file.path(getwd(), png_file))
-        plotly::save_image(p_interactive, out_png, width = "1600", height = "900", scale = 2.5)
-    }
+    message("Saving file:\n", file.path(getwd(), png_file))
+    plotly::save_image(p_interactive, out_png, width = "1600", height = "900", scale = 2.5)
+
 }
 
 
-# Processes RGset, perform CNV analysis, annotate input genes, plots, and saves output
-annotate_cnv_with_genes <- function(sam_data, geneNames, refs = NULL, doXY = TRUE) {
+merge_gene_regions <- function(gene_gr, merged_name) {
+    chrs <- unique(as.character(GenomeInfoDb::seqnames(gene_gr)))
+    if (length(chrs) != 1) {
+        stop("Cannot merge genes on multiple chromosomes.")
+    }
+    merged_start <- min(GenomicRanges::start(gene_gr))
+    merged_end   <- max(GenomicRanges::end(gene_gr))
+    gene_gr <- GenomicRanges::GRanges(
+        seqnames = chrs,
+        ranges   = IRanges::IRanges(start = merged_start, end = merged_end),
+        strand   = "*"
+    )
+    S4Vectors::mcols(gene_gr)$symbol <- merged_name
+    S4Vectors::mcols(gene_gr)$name <- merged_name
+    return(gene_gr)
+}
+
+
+con_path        <- file.path(path.package("conumee2"), "data")
+exclude_regions <- get(load(file.path(con_path, "exclude_regions.rda")))
+load(file.path(con_path, "exclude_regions.rda"))
+
+annotate_cnv_with_genes <- function(sam_data, geneNames, merged_name = NULL, refs = NULL) {
 
     RGset <- get_rgset(sam_data)
     array_info <- detect_array_info(RGset)
     gene_gr <- get_gene_ranges(geneNames, array_info)
 
+    if (!is.null(merged_name)) {
+        gene_gr <- merge_gene_regions(gene_gr, merged_name)
+    }
+
     Mset <- minfi::preprocessIllumina(RGset, normalize = "controls")
     query_cnv <- conumee2::CNV.load(Mset)
-
-    con_path <- file.path(path.package("conumee2"), "data")
-    exclude_regions <- get(load(file.path(con_path, "exclude_regions.rda")))
-    load(file.path(con_path, "exclude_regions.rda"))
-
     anno <- conumee2::CNV.create_anno(
         array_type = array_info$array,
         chrXY = doXY,
@@ -428,46 +453,192 @@ annotate_cnv_with_genes <- function(sam_data, geneNames, refs = NULL, doXY = TRU
         exclude_regions = exclude_regions,
         detail_regions = gene_gr
     )
+
     ref <- NULL
     ref <- if (is.null(refs)) {get_reference(array_info)} else {
-        switch(
-            array_info$genome,
-            hg19 = refs$hg19,
-            hg38 = refs$hg38,
-            stop("Unsupported genome")
-        )
+        switch(array_info$genome, hg19 = refs$hg19, hg38 = refs$hg38)
     }
 
     aligned <- alignCNVObjects(query_cnv, ref, anno)
     colnames(aligned$ref@intensity) <- colnames(ref@intensity)
-
     cnv_obj <- get_cnv_obj(aligned, sam_data$Sample_Name)
-
     p_interactive <- get_final_plot(cnv_obj, anno, gene_gr)
 
     save_output(cnv_obj, p_interactive)
     #list(plot = p_interactive, cnv_analysis = cnv_obj)
 }
 
+
+read_zipfile <- function(zip_url) {
+    tmp <- tempfile(fileext = ".zip")
+    download.file(zip_url, tmp, mode = "wb")
+    csv_name <- unzip(tmp, list = TRUE)$Name[1]
+    man_epic <- suppressWarnings(readr::read_csv(unz(tmp, csv_name), skip = 7,
+                                                 show_col_types = FALSE))
+    unlink(tmp)
+    man_epic <- as.data.frame(man_epic)
+    return(man_epic)
+}
+
+
+load_manifests <- function() {
+    illumina_url <- "https://webdata.illumina.com/downloads/productfiles"
+    man_450k <- suppressWarnings(readr::read_csv(
+        skip = 7, file.path(illumina_url, "humanmethylation450",
+                            "humanmethylation450_15017482_v1-2.csv"),
+        show_col_types = FALSE))
+    man_450k <- as.data.frame(man_450k)
+
+    zip_url <- file.path(illumina_url, "methylationEPIC",
+                         "infinium-methylationepic-v-1-0-b5-manifest-file-csv.zip")
+    man_epic <- read_zipfile(zip_url)
+
+    zip_url <- file.path(illumina_url, "methylationEPIC",
+                         "infinium-methylationepic-v-1-0-b5-manifest-file-csv.zip")
+    man_epic2 <- read_zipfile(zip_url)
+
+    array_manifests <- list("450k" = man_450k, "EPIC" = man_epic, "EPICv2" = man_epic2)
+
+    return(array_manifests)
+}
+
+# Returns list of genes with enough probes to plot and saves coverage summary
+evaluate_gene_coverage <- function(geneNames, array_manifests, exclude_probes = NULL) {
+    tile_size = 200
+    summary_df <- data.frame(Gene = geneNames, stringsAsFactors = FALSE)
+    detail_list <- list()
+
+    for (array in names(array_manifests)) {
+        df <- array_manifests[[array]]
+        if (!is.null(exclude_probes)) {
+            df <- df[!df$IlmnID %in% exclude_probes, ]
+        }
+        df <- df[!is.na(df$CHR) & !is.na(df$MAPINFO), ]
+
+        probe_gr <- GenomicRanges::GRanges(
+            seqnames = paste0("chr", df$CHR),
+            ranges   = IRanges::IRanges(start = df$MAPINFO, width = 1),
+            probe_id = df$IlmnID,
+            Island   = df$Relation_to_UCSC_CpG_Island,
+            Region   = df$UCSC_RefGene_Group
+        )
+
+        per_array <- lapply(geneNames, function(g) {
+            gene_gr <- get_gene_ranges(
+                g, list(array = array, genome = ifelse(array == "EPICv2", "hg38", "hg19"))
+            )
+            if (is.null(gene_gr)) {
+                return(data.frame(
+                    Gene           = g,
+                    Array          = array,
+                    nProbes        = 0L,
+                    pctTiles       = 0,
+                    tilesCovered   = 0L,
+                    nTiles         = 0L,
+                    GeneRegion     = NA_character_,
+                    ProbeIDs       = I(list(character())),
+                    CpG_Islands    = I(list(character())),
+                    RefGene_Groups = I(list(character())),
+                    stringsAsFactors = FALSE
+                ))
+            }
+
+            # tile the gene into fixed-width bins
+            gene_width <- sum(GenomicRanges::width(gene_gr))
+            nTiles     <- ceiling(gene_width / tile_size)
+            tiles      <- GenomicRanges::tile(gene_gr, n = nTiles)[[1]]
+
+            # count overlaps per tile
+            hits_tiles    <- GenomicRanges::countOverlaps(tiles, probe_gr)
+            tilesCovered  <- sum(hits_tiles > 0)
+            pctTiles      <- round(tilesCovered / nTiles * 100, 1)
+            hits          <- GenomicRanges::findOverlaps(gene_gr, probe_gr)
+            idx           <- unique(S4Vectors::subjectHits(hits))
+            nProbes       <- length(idx)
+            probe_ids     <- df$IlmnID[idx]
+            islands       <- unique(df$Relation_to_UCSC_CpG_Island[idx])
+            regions       <- unique(df$UCSC_RefGene_Group[idx])
+            region_string <- paste0(as.character(GenomeInfoDb::seqnames(gene_gr)),
+                                    ":", GenomicRanges::start(gene_gr),
+                                    "-", GenomicRanges::end(gene_gr))
+
+            data.frame(
+                Gene           = g,
+                Array          = array,
+                nProbes        = nProbes,
+                pctTiles       = pctTiles,
+                tilesCovered   = tilesCovered,
+                nTiles         = nTiles,
+                GeneRegion     = region_string,
+                ProbeIDs       = I(list(probe_ids)),
+                CpG_Islands    = I(list(islands)),
+                RefGene_Groups = I(list(regions)),
+                stringsAsFactors = FALSE
+            )
+        })
+
+        per_array_df <- do.call(rbind, per_array)
+        summary_df[[paste0(array, "_nProbes")]] <- per_array_df$nProbes
+        summary_df[[paste0(array, "_pctTiles")]] <- per_array_df$pctTiles
+        detail_list[[array]] <- per_array_df
+    }
+
+    write.table(
+        summary_df,
+        file      = file.path(OUTPUT_DIR, "gene_coverage_summary.tsv"),
+        sep       = "\t",
+        row.names = FALSE,
+        quote     = FALSE
+    )
+    detail_df <- do.call(rbind, detail_list)
+    write.csv(
+        detail_df,
+        file      = file.path(OUTPUT_DIR, "gene_coverage_details.csv"),
+        row.names = FALSE,
+        quote     = FALSE
+    )
+
+    # filter genes
+    maxP <- apply(summary_df[, grep("_nProbes$", names(summary_df))],
+                  1, max, na.rm = TRUE)
+    good <- summary_df$Gene[maxP >= min_probes]
+    bad  <- summary_df$Gene[maxP <  min_probes]
+    if (length(bad)) warning("Excluded (low coverage): ", paste(bad, collapse = ", "))
+
+    final_out <- invisible(list(
+        goodGenes = good,
+        summary   = summary_df,
+        details   = detail_df
+    ))
+    return(final_out$good)
+}
+
+
+
+
 # Helper function: Loads pre-computed reference files if available
 load_references <- function(manifest_path) {
     if (!dir.exists(manifest_path)) return(NULL)
+    message("Loading ref_v1_hg19.rds")
     hg19_ref <- readRDS(file.path(manifest_path, "ref_v1_hg19.rds"))
+    message("Loading ref_v2_hg38.rds")
     hg38_ref <- readRDS(file.path(manifest_path, "ref_v2_hg38.rds"))
     return(list(hg19 = hg19_ref, hg38 = hg38_ref))
 }
 
 
-# MAIN: Load references if available and itterate through sample sheet to render plots ------------
-loop_samples <- function(manifest_path, sam_sheet, geneNames) {
+# MAIN: Load references if available and iterate through sample sheet to render plots ------------
+loop_samples <- function(manifest_path, sam_sheet, geneNames, merged_name) {
     targets <- read.csv(sam_sheet)
     refs <- load_references(manifest_path)
-
+    array_manifests <- load_manifests()
+    geneNames <- evaluate_gene_coverage(geneNames, array_manifests)
     for (samRow in 1:nrow(targets)) {
         sam_data <- targets[samRow, ]
-        annotate_cnv_with_genes(sam_data, geneNames, refs = refs)
+        message(paste0(capture.output(sam_data), collapse = "\n"))
+        annotate_cnv_with_genes(sam_data, geneNames, merged_name, refs = refs)
     }
 }
 
 
-loop_samples(manifest_path, sam_sheet, geneNames)
+loop_samples(manifest_path, sam_sheet, geneNames, merged_name)
