@@ -263,9 +263,12 @@ modify_markers <- function(p_interactive, gene_gr) {
             list(
                 x = x_points[i], y = y_points[i],
                 text = p_interactive[["x"]][["data"]][[5]][["text"]][i],
-                showarrow = TRUE,
-                ax = 20, ay = -30, arrowhead = 4, arrowwidth = 0.8,
-                font = list(family = "Arial Black", size = 13, color = "black")
+                showarrow = TRUE, arrowsize  = 0.7,
+                ax = 30, ay = -60, arrowhead = 3, arrowwidth = 2.5,
+                bgcolor     = "rgba(255,255,255,0.7)",
+                bordercolor = "#0a4209",
+                borderpad   = 4,
+                font = list(family = "Arial Black", size = 14, color = "black")
             )
         })
     )
@@ -402,13 +405,13 @@ save_output <- function(cnv_obj, p_interactive) {
 
     htmlwidgets::saveWidget(p_interactive, out_html, libdir = filesDir)
     outFiles <- file.path(dirname(out_html), filesDir)
-    try(fs::dir_delete(filesDir), silent = TRUE)
+    try(unlink(filesDir, recursive = TRUE, force = TRUE), silent = TRUE)
 
     png_file <- paste0(cnv_obj@name, "_cnv_plot_anno.png")
     out_png <- file.path(OUTPUT_DIR, png_file)
     message("Saving file:\n", file.path(getwd(), png_file))
-    plotly::save_image(p_interactive, out_png, width = "1600", height = "900", scale = 2.5)
-
+    plotly::save_image(p_interactive, out_png, width = "1000", height = "600",
+                       scale = 2.0)
 }
 
 
@@ -570,11 +573,12 @@ evaluate_gene_coverage <- function(geneNames, array_manifests, exclude_probes = 
                 tilesCovered   = tilesCovered,
                 nTiles         = nTiles,
                 GeneRegion     = region_string,
-                ProbeIDs       = I(list(probe_ids)),
-                CpG_Islands    = I(list(islands)),
-                RefGene_Groups = I(list(regions)),
+                ProbeIDs       = if (length(probe_ids) > 0) paste(probe_ids, collapse = ";") else "",
+                CpG_Islands    = if (length(islands)  > 0) paste(islands,    collapse = ";") else "",
+                RefGene_Groups = if (length(regions)  > 0) paste(regions,    collapse = ";") else "",
                 stringsAsFactors = FALSE
             )
+
         })
 
         per_array_df <- do.call(rbind, per_array)
@@ -591,9 +595,11 @@ evaluate_gene_coverage <- function(geneNames, array_manifests, exclude_probes = 
         quote     = FALSE
     )
     detail_df <- do.call(rbind, detail_list)
-    write.csv(
+
+    write.table(
         detail_df,
-        file      = file.path(OUTPUT_DIR, "gene_coverage_details.csv"),
+        file      = file.path(OUTPUT_DIR, "gene_coverage_details.tsv"),
+        sep       = "\t",
         row.names = FALSE,
         quote     = FALSE
     )
@@ -612,8 +618,6 @@ evaluate_gene_coverage <- function(geneNames, array_manifests, exclude_probes = 
     ))
     return(final_out$good)
 }
-
-
 
 
 # Helper function: Loads pre-computed reference files if available
