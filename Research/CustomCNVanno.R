@@ -21,6 +21,16 @@ doXY = TRUE
 if (!dir.exists(OUTPUT_DIR)) {dir.create(OUTPUT_DIR, recursive = TRUE)}
 setwd(PROJ_DIR)
 
+if (dir.exists(manifest_path)) {
+    hg19_rds <- file.path(manifest_path, "ref_v1_hg19.rds")
+    hg38_rds <- file.path(manifest_path, "ref_v2_hg38.rds")
+    if (!file.exists(file.path(PROJ_DIR, "ref_v1_hg19.rds"))) {
+        fs::file_copy(hg19_rds, PROJ_DIR, overwrite = TRUE)
+        fs::file_copy(hg38_rds, PROJ_DIR, overwrite = TRUE)
+    }
+    manifest_path <- PROJ_DIR
+}
+
 snapshot_date <- "2025-05-01"
 bioc_version   <- "3.19"
 options(
@@ -397,21 +407,36 @@ get_rgset <- function(sam_data) {
 }
 
 # Helper function: Save output files - HTML & PNG plots to current directory
-save_output <- function(cnv_obj, p_interactive) {
+save_output <- function(cnv_obj, p_interactive, geneRatios) {
     html_file <- paste0(cnv_obj@name, "_cnv_plot_anno.html")
     out_html <- file.path(OUTPUT_DIR, html_file)
     message("Saving file:\n", out_html)
-    filesDir <- paste0(tools::file_path_sans_ext(basename(out_html)), "_files")
-
+    outDir <- paste0(tools::file_path_sans_ext(basename(out_html)), "_files")
+    filesDir <- file.path(OUTPUT_DIR, outDir)
     htmlwidgets::saveWidget(p_interactive, out_html, libdir = filesDir)
-    outFiles <- file.path(dirname(out_html), filesDir)
-    try(unlink(filesDir, recursive = TRUE, force = TRUE), silent = TRUE)
 
     png_file <- paste0(cnv_obj@name, "_cnv_plot_anno.png")
     out_png <- file.path(OUTPUT_DIR, png_file)
     message("Saving file:\n", file.path(getwd(), png_file))
     plotly::save_image(p_interactive, out_png, width = "1000", height = "600",
                        scale = 2.0)
+
+    try(unlink(filesDir, recursive = TRUE, force = TRUE), silent = TRUE)
+    try(fs::dir_delete(filesDir), silent = TRUE)
+    if (dir.exists(filesDir)) {
+        message("filesDir STILL exists:\n", filesDir)
+        message("Force removing...")
+        system2("rm", args = c("-rf", shQuote(filesDir)))
+    }
+
+    output_file <- file.path(OUTPUT_DIR, "Gene_cnv_Log2Ratios.csv")
+
+    if (!file.exists(output_file)) {
+        write.csv(geneRatios, output_file, row.names = FALSE)
+    } else {
+        write.table(geneRatios, file = output_file, append = TRUE, sep = ",",
+                    col.names = FALSE, row.names = FALSE)
+    }
 }
 
 
@@ -436,6 +461,27 @@ merge_gene_regions <- function(gene_gr, merged_name) {
 con_path        <- file.path(path.package("conumee2"), "data")
 exclude_regions <- get(load(file.path(con_path, "exclude_regions.rda")))
 load(file.path(con_path, "exclude_regions.rda"))
+
+# Returns the log2 ratio value of each annotated gene in the plot as a dataframe
+get_gene_ratios <- function(cnv_obj, geneNames) {
+    rd_number <- cnv_obj@name
+
+    log2vals <- lapply(geneNames, function(gene) {
+        logRatio <- cnv_obj@detail[["ratio"]][["x"]][[gene]]
+        roundedVal <- round(as.numeric(logRatio), 2)
+        data.frame(
+            Sample  = rd_number,
+            Gene    = gene,
+            Log2Val = roundedVal,
+            stringsAsFactors = FALSE
+        )
+    })
+
+    final_df <- do.call(rbind, log2vals)
+
+    return(final_df)
+}
+
 
 annotate_cnv_with_genes <- function(sam_data, geneNames, merged_name = NULL, refs = NULL) {
 
@@ -462,12 +508,14 @@ annotate_cnv_with_genes <- function(sam_data, geneNames, merged_name = NULL, ref
         switch(array_info$genome, hg19 = refs$hg19, hg38 = refs$hg38)
     }
 
-    aligned <- alignCNVObjects(query_cnv, ref, anno)
+    aligned <- alignCNVObjects(query_obj = query_cnv, ref_obj = ref, anno_obj = anno)
     colnames(aligned$ref@intensity) <- colnames(ref@intensity)
     cnv_obj <- get_cnv_obj(aligned, sam_data$Sample_Name)
+    geneNames <- unique(paste(gene_gr$symbol))
     p_interactive <- get_final_plot(cnv_obj, anno, gene_gr)
+    geneRatios <- get_gene_ratios(cnv_obj, geneNames)
 
-    save_output(cnv_obj, p_interactive)
+    save_output(cnv_obj, p_interactive, geneRatios)
     #list(plot = p_interactive, cnv_analysis = cnv_obj)
 }
 
