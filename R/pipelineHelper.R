@@ -183,6 +183,16 @@ CheckSampleQCmetrics <- function(runID) {
     return(final_qc)
 }
 
+my_html_document <- function(...) {
+    fmt <- rmarkdown::html_document(...)
+    fmt$pandoc$convert_fun <- function(input, output, from, to, ...) {
+        # Call pandoc_convert with verbose = FALSE
+        rmarkdown::pandoc_convert(input = input, to = to, from = from,
+                                  output = output, verbose = FALSE)
+        }
+    fmt
+}
+
 # QC REPORT maker: knits the QC RMD file --------------------------------------
 generateQCreport <- function(runID = NULL) {
     msgFunName(pipeLnk, "generateQCreport")
@@ -206,6 +216,7 @@ generateQCreport <- function(runID = NULL) {
             rmdToKnit,
             output_file = outQCpath,
             quiet = TRUE,
+            output_format = my_html_document(),
             params = list(runID = runID,
                           baseDir = deskRunDir,
                           knitDir = getwd())
@@ -490,7 +501,7 @@ getRunList <- function(data, samList) {
 
 make_knit_report <- function(dat, reportMd, params_init) {
     rmarkdown::render(
-        input = reportMd, output_format = "html_document",
+        input = reportMd, output_format = my_html_document(),
         output_file = file.path(getwd(), paste0(dat$outFi)),
         output_dir = getwd(), knit_root_dir = getwd(),
         clean = TRUE, quiet = FALSE,
