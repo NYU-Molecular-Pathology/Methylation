@@ -1352,7 +1352,7 @@ read_merge_metrics <- function(metrics_dir, fileType ) {
     normal_list <- lapply(normal_paths, function(filepath) {
         df <- read.csv(filepath, stringsAsFactors = FALSE, header = TRUE)
         vec <- df[2]
-        rownames(vec) <- df[[1]]
+        rownames(vec) <- make.unique(df[[1]], sep = "_")
         return(vec)
     })
     normals_mat <- do.call(cbind, normal_list)
