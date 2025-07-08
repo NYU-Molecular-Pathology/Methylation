@@ -95,6 +95,24 @@ SetKnitProgress <- function() {
     )
 }
 
+check_html_file_sizes <- function(meth_dir) {
+    html_files <- list.files(meth_dir, pattern = "\\.html$", full.names = TRUE)
+    
+    if (length(html_files) == 0) {
+        warning("No HTML files found in the directory.")
+        return(invisible(NULL))
+    }
+    
+    # Iterate through files and check their sizes
+    for (file in html_files) {
+        file_size_mb <- file.info(file)$size / (1024 * 1024)
+        if (file_size_mb < 1) {
+            warning(sprintf("File '%s' is smaller than 1MB (%.2f MB).", basename(file), file_size_mb))
+        }
+    }
+    
+    message("File size check completed.")
+}
 
 CopyRmdFile <- function(runID, rmdFile) {
     msgFunName(pipeLnk, "CopyRmdFile")
@@ -806,6 +824,7 @@ makeHtmlReports <- function(runOrder = NULL,
         )
         final_upload_check()
         launchEmailNotify(runID)
+        check_html_file_sizes(getwd()) # checks files copied size
     }
 
     try(beepr::beep(2), T)
