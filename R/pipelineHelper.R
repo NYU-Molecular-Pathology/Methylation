@@ -429,6 +429,71 @@ NameControl <- function(data, runId) {
 }
 
 
+get_latest_record_id <- function() {
+    rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
+    logs <- exportLogging(rcon,
+        beginTime = as.POSIXct(Sys.Date() - 30, tz = Sys.timezone()),
+        endTime = Sys.time(), batchInterval = 1000
+    )
+    creates <- stringr::str_detect(logs$action, "Create")
+    created_logs <- logs[creates, ]
+
+    rd_numbs <- stringr::str_detect(created_logs$record, "RD-")
+    created_logs <- created_logs[rd_numbs,]
+    created_logs$timestamp <- as.POSIXct(created_logs$timestamp,
+                                         tz = Sys.timezone())
+    latest_record <- created_logs$record[which.max(created_logs$timestamp)]
+    return(latest_record)
+}
+
+
+name_next_records <- function(latest_record, how_many) {
+    parts <- strsplit(latest_record, "-", fixed = TRUE)[[1]]
+    prefix <- paste(parts[1], parts[2], sep = "-")
+    current_num <- as.integer(parts[3])
+    num_width <- nchar(parts[3])
+    new_nums <- seq.int(current_num + 1L, current_num + how_many)
+    formatted <- formatC(new_nums, width = num_width, flag = "0")
+    next_records <- paste(prefix, formatted, sep = "-")
+    return(next_records)
+}
+
+
+make_new_rd_number <- function(record_name = NULL, runID) {
+    rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
+
+    existing_record <- redcapAPI::exportRecordsTyped(rcon,
+                                                     records = record_name)
+    if (nrow(existing_record) == 0) {
+        new_record_df <- data.frame(
+            record_id = record_name,
+            run_number = runID,
+            stringsAsFactors = FALSE
+        )
+        new_record <- redcapAPI::castForImport(
+            new_record_df, rcon, fields = c("record_id", "run_number")
+        )
+        import_result <- redcapAPI::importRecords(rcon, new_record)
+        message(dsh, "Created REDCap Record: ", new_record_df[1], dsh, "\n")
+    } else {
+        message(paste(record_name, "already exists in the REDCap database."))
+    }
+}
+
+# Generates new RD-numbers in REDCap from last created and assigns sheet
+fill_missing_rd <- function(samplesSheet, missing_rd) {
+    total_missing <- length(which(missing_rd == T))
+    latest_record <- get_latest_record_id()
+    next_records <- name_next_records(latest_record, how_many = total_missing)
+
+    for (rd in next_records) {
+        make_new_rd_number(rd, gb$runID)
+    }
+    samplesSheet[missing_rd, 1] <- next_records
+    return(samplesSheet)
+}
+
+
 ReadSamSheet <- function(samList) {
     msgFunName(pipeLnk, "ReadSamSheet")
     msgParams("samList")
@@ -462,10 +527,13 @@ ReadSamSheet <- function(samList) {
 
     missing_rd <- samplesSheet$record_id == 0 | is.na(samplesSheet$record_id)
 
-    if (any(missing_rd)) {
+   if (any(missing_rd)) {
+
         warning(paste("Sample #", which(missing_rd), "is missing an RD-number!\n"))
-        message(bkRed("Dropping sample #", which(missing_rd), "from SampleSheet!\n"))
-        samplesSheet <- samplesSheet[!missing_rd, ]
+        message(bkRed("Creating new RD for sample #", which(missing_rd),
+                      "from SampleSheet!\n"))
+        #samplesSheet <- samplesSheet[!missing_rd, ]
+        samplesSheet <- fill_missing_rd(samplesSheet, missing_rd)
     }
 
     return(samplesSheet)
