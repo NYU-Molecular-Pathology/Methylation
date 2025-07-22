@@ -16,15 +16,18 @@ if (getRversion() <= "4.2.2") {
 }
 
 bioc_version  <- "3.19"
-snapshot_date <- "2025-06-30"
-options(
-    repos = c(
-        CRAN = sprintf("https://packagemanager.posit.co/cran/%s", snapshot_date),
-        BioC = sprintf(
-            "https://packagemanager.posit.co/bioconductor/%s", snapshot_date
-        )
-    )
-)
+
+# Configure BiocManager to use Posit Package Manager
+options(BioC_mirror = "https://packagemanager.posit.co/bioconductor/2025-06-30")
+
+# Configure BiocManager to load its configuration from Package Manager
+options(BIOCONDUCTOR_CONFIG_FILE = "https://packagemanager.posit.co/bioconductor/2025-06-30/config.yaml")
+
+# Set the Bioconductor version to prevent defaulting to a newer version
+Sys.setenv("R_BIOC_VERSION" = "3.22")
+
+# Configure a CRAN snapshot compatible with Bioconductor 3.22
+options(repos = c(CRAN = "https://packagemanager.posit.co/cran/2025-06-30"))
 
 
 supM <- function(pk) {
