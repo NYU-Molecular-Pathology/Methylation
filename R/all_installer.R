@@ -449,7 +449,12 @@ rbase_pkgs <- rownames(installed.packages(priority = "base"))
 pkg_info <- utils::available.packages(repos = biocRepos)
 
 if (not_installed("pak")) {
-    install.packages("pak", dependencies = T, ask = F)
+    try(install.packages("pak", dependencies = T, ask = F), silent = T)
+}
+
+if (not_installed("pak")) {
+    install.packages("pak", repos = sprintf("https://r-lib.github.io/p/pak/stable/%s/%s/%s",
+                                            .Platform$pkgType, R.Version()$os, R.Version()$arch))
 }
 stopifnot(loadLibrary("pak"))
 
