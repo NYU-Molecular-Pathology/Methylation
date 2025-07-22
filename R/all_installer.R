@@ -15,14 +15,15 @@ if (getRversion() <= "4.2.2") {
     stop("Your R version is ", R.version.string, ". Update to 4.4.0 or later.")
 }
 
-## a date ≤ 2023‑06‑30 (last MRAN snapshot)
-snapshot_date <- "2023-06-30"    # last available PPM snapshot near Bioc 3.19 release :contentReference[oaicite:1]{index=1}
 bioc_version  <- "3.19"
-
+snapshot_date <- "2025-06-30"
 options(
   repos = c(
     CRAN = sprintf("https://packagemanager.posit.co/cran/%s", snapshot_date),
-    BioC = sprintf("https://packagemanager.posit.co/cran/__repos__/bioconductor/%s/bioc", bioc_version)
+    BioC = sprintf(
+      "https://packagemanager.posit.co/cran/__repos__/bioconductor/%s/bioc",
+      bioc_version
+    )
   )
 )
 
