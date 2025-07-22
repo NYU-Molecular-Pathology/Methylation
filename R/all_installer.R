@@ -18,13 +18,12 @@ if (getRversion() <= "4.2.2") {
 bioc_version  <- "3.19"
 snapshot_date <- "2025-06-30"
 options(
-  repos = c(
-    CRAN = sprintf("https://packagemanager.posit.co/cran/%s", snapshot_date),
-    BioC = sprintf(
-      "https://packagemanager.posit.co/cran/__repos__/bioconductor/%s/bioc",
-      bioc_version
+    repos = c(
+        CRAN = sprintf("https://packagemanager.posit.co/cran/%s", snapshot_date),
+        BioC = sprintf(
+            "https://packagemanager.posit.co/bioconductor/%s", snapshot_date
+        )
     )
-  )
 )
 
 
