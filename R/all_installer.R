@@ -16,15 +16,16 @@ if (getRversion() <= "4.2.2") {
 }
 
 ## a date ≤ 2023‑06‑30 (last MRAN snapshot)
-snapshot_date <- "2023-06-30"
+snapshot_date <- "2023-06-30"    # last available PPM snapshot near Bioc 3.19 release :contentReference[oaicite:1]{index=1}
 bioc_version  <- "3.19"
 
 options(
   repos = c(
-    CRAN = sprintf("https://mran.microsoft.com/snapshot/%s/", snapshot_date),
-    BioC = sprintf("https://bioconductor.org/packages/%s/bioc", bioc_version)
+    CRAN = sprintf("https://packagemanager.posit.co/cran/%s", snapshot_date),
+    BioC = sprintf("https://packagemanager.posit.co/cran/__repos__/bioconductor/%s/bioc", bioc_version)
   )
 )
+
 
 supM <- function(pk) {
     return(suppressPackageStartupMessages(suppressWarnings(pk)))
