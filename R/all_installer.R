@@ -15,14 +15,15 @@ if (getRversion() <= "4.2.2") {
     stop("Your R version is ", R.version.string, ". Update to 4.4.0 or later.")
 }
 
-snapshot_date <- "2025-05-01"
-bioc_version   <- "3.19"
+## a date ≤ 2023‑06‑30 (last MRAN snapshot)
+snapshot_date <- "2023-06-30"
+bioc_version  <- "3.19"
+
 options(
-    repos = c(
-        CRAN = sprintf("https://cran.microsoft.com/snapshot/%s/", snapshot_date),
-        BioC = sprintf("https://packagemanager.rstudio.com/bioconductor/%s@%s",
-                       bioc_version, snapshot_date)
-        )
+  repos = c(
+    CRAN = sprintf("https://mran.microsoft.com/snapshot/%s/", snapshot_date),
+    BioC = sprintf("https://bioconductor.org/packages/%s/bioc", bioc_version)
+  )
 )
 
 supM <- function(pk) {
