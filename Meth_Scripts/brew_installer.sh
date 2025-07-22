@@ -55,11 +55,6 @@ if ! brew list --cask basictex &>/dev/null || command -v pdflatex > /dev/null 2>
     brew install --cask basictex
 fi
 
-# Check if temurin is installed ----------------------------------------------
-if ! brew list --cask temurin &>/dev/null; then
-    brew install --cask temurin
-fi
-
 # Check additional requirements for Arm64 Macs --------------------------------
 if [[ $(uname -m) == "arm64" ]]; then
     brew install --cask temurin
