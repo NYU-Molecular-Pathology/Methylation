@@ -174,58 +174,63 @@ get_prefix <- function(pkg = "") {
 
 # Set environment variables dynamically
 set_env_vars <- function() {
-    brew_prefix = get_prefix()
-    llvm_path = get_prefix("llvm")
-    mpi_path = get_prefix("open-mpi")
-    arrow_path = get_prefix("apache-arrow")
+    brew_prefix  <- get_prefix()
+    llvm_path    <- get_prefix("llvm")
+    mpi_path     <- get_prefix("open-mpi")
+    arrow_path   <- get_prefix("apache-arrow")
 
-    # Dynamically find any versioned libarrow.*.dylib file
+    # Determine SDK path and target architecture
+    sdk_path <- system2("xcrun", c("--sdk", "macosx", "--show-sdk-path"), stdout = TRUE)
+    arch     <- Sys.info()[["machine"]]  # "x86_64" or "arm64"
+
+    # Retrieve R's built‑in compiler flags
+    default_cflags   <- system2("R", c("CMD", "config", "CFLAGS"),   stdout = TRUE)
+    default_cxxflags <- system2("R", c("CMD", "config", "CXXFLAGS"), stdout = TRUE)
+
+    # Construct LDFLAGS, CPPFLAGS, PKG_CFLAGS, PKG_LIBS as before...
     libarrow_files <- Sys.glob(file.path(arrow_path, "lib", "libarrow.*.dylib"))
-    if (length(libarrow_files) == 0) stop("No versioned libarrow.*.dylib file found in apache-arrow lib path.")
-
-    # Select the latest version of libarrow.*.dylib (lexicographically last)
+    if (length(libarrow_files) == 0) stop("No versioned libarrow.*.dylib file found.")
     libarrow_versioned <- sort(libarrow_files, decreasing = TRUE)[1]
 
-
     Sys.setenv(
-        CC = file.path(llvm_path, "bin/clang"),
-        CXX = file.path(llvm_path, "bin/clang++"),
-        OBJC = file.path(llvm_path, "bin/clang"),
-        LDFLAGS = paste(
+        CC        = file.path(llvm_path, "bin/clang"),
+        CXX       = file.path(llvm_path, "bin/clang++"),
+        OBJC      = file.path(llvm_path, "bin/clang"),
+
+        # Inject SDK root, dynamic arch, plus R's defaults
+        CFLAGS    = paste("-isysroot", sdk_path, "-arch", arch, default_cflags),
+        CXXFLAGS  = paste("-isysroot", sdk_path, "-arch", arch, default_cxxflags),
+
+        LDFLAGS   = paste(
             paste0("-L", file.path(llvm_path, "lib")),
             paste0("-L", file.path(llvm_path, "lib/c++")),
             paste0("-Wl,-rpath,", file.path(llvm_path, "lib/c++")),
             paste0("-L", file.path(llvm_path, "lib/unwind"), "-lunwind")
         ),
-        CPPFLAGS = paste0("-I", file.path(llvm_path, "include")),
-        PKG_CFLAGS = paste(
+
+        CPPFLAGS  = paste0("-I", file.path(llvm_path, "include")),
+
+        PKG_CFLAGS= paste(
             paste0("-I", file.path(brew_prefix, "include")),
-            if (nzchar(arrow_path))
-                paste0("-I", file.path(arrow_path, "include"))
-            else
-                NULL
+            if (nzchar(arrow_path)) paste0("-I", file.path(arrow_path, "include")) else NULL
         ),
-        PKG_LIBS = paste(
+
+        PKG_LIBS  = paste(
             paste0("-L", file.path(brew_prefix, "lib")),
             paste0("-L", file.path(llvm_path, "lib")),
-            if (nzchar(arrow_path)) {
-                paste0("-L", file.path(arrow_path, "lib"), " -larrow")
-            }else { NULL }
+            if (nzchar(arrow_path)) paste0("-L", file.path(arrow_path, "lib"), " -larrow") else NULL
         ),
-        LD_LIBRARY_PATH = file.path(brew_prefix, "lib"),
-        R_LD_LIBRARY_PATH = paste(
-            file.path(brew_prefix, "lib"),
-            file.path(llvm_path, "lib/c++"),
-            sep = ":"
-        ),
-        DYLD_LIBRARY_PATH = paste(
-            file.path(arrow_path, "lib"),
-            libarrow_versioned,
-            sep = ":"
-        ),
+
+        LD_LIBRARY_PATH    = file.path(brew_prefix, "lib"),
+        R_LD_LIBRARY_PATH  = paste(file.path(brew_prefix, "lib"), file.path(llvm_path, "lib/c++"), sep = ":"),
+        DYLD_LIBRARY_PATH  = paste(file.path(arrow_path, "lib"), libarrow_versioned, sep = ":"),
+
         PATH = paste(file.path(mpi_path, "bin"), Sys.getenv("PATH"), sep = ":")
     )
-    if (command_exists("gfortran")) Sys.setenv(FC = Sys.which("gfortran"))
+
+    if (nzchar(Sys.which("gfortran"))) {
+        Sys.setenv(FC = Sys.which("gfortran"))
+    }
 }
 
 # Ensure any required libraries are symlinked
