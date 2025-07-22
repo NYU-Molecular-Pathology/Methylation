@@ -15,6 +15,11 @@ if (getRversion() <= "4.2.2") {
     stop("Your R version is ", R.version.string, ". Update to 4.4.0 or later.")
 }
 
+options(askYesNo = function(msg, default, prompts) {
+    return(TRUE)
+})
+options(install.packages.compile.from.source = "always")
+Sys.setenv(R_COMPILE_AND_INSTALL_PACKAGES = "always")
 bioc_version  <- "3.19"
 
 # Configure BiocManager to use Posit Package Manager
