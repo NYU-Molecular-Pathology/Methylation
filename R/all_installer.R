@@ -647,15 +647,9 @@ if (not_installed("BiocGenerics")) {
     BiocManager::install("BiocGenerics", update = F, ask = F)
 }
 
-if (not_installed("Biobase")) {
-    BiocManager::install("Biobase", update = F, ask = F, type = "source")
-}
-
 stopifnot(loadLibrary("devtools"))
 stopifnot(loadLibrary("librarian"))
 stopifnot(loadLibrary("BiocManager"))
-stopifnot(loadLibrary("Biobase"))
-
 
 # List Classifier Core Packages -----------------------------------------------
 corePkgs <- c(
@@ -709,7 +703,7 @@ core_util <- c(
 bioc_tools <- c(
     "BiocVersion", "BiocManager", "BiocStyle", "biocViews", "BSgenome",
     "clusterProfiler", "cn.mops", "CopyNumberPlots", "ensembldb", "cellranger",
-    "pathview", "Biobase", "MethylAid", "enrichplot"
+    "pathview", "MethylAid", "enrichplot"
 )
 
 # Group 3: Documentation, Reporting, Interface, and Dashboard Tools
@@ -977,7 +971,6 @@ if (not_installed("sf")) {
 invisible(gc())
 
 loadLibrary("BiocManager")
-loadLibrary("Biobase")
 
 terraDep <- c('tinytest', 'ncdf4', 'leaflet')
 check_pkg_install(terraDep)
