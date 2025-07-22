@@ -174,64 +174,105 @@ get_prefix <- function(pkg = "") {
 
 # Set environment variables dynamically
 set_env_vars <- function() {
-    brew_prefix  <- get_prefix()
-    llvm_path    <- get_prefix("llvm")
-    mpi_path     <- get_prefix("open-mpi")
-    arrow_path   <- get_prefix("apache-arrow")
+  # Helper to get Homebrew prefix
+  get_prefix <- function(pkg = "") {
+    system2("brew", c("--prefix", pkg), stdout = TRUE, stderr = FALSE)
+  }
 
-    # Determine SDK path and target architecture
-    sdk_path <- system2("xcrun", c("--sdk", "macosx", "--show-sdk-path"), stdout = TRUE)
-    arch     <- Sys.info()[["machine"]]  # "x86_64" or "arm64"
+  # Homebrew prefixes
+  brew_prefix <- get_prefix()
+  llvm_path   <- get_prefix("llvm")
+  mpi_path    <- get_prefix("open-mpi")
+  arrow_path  <- get_prefix("apache-arrow")
+  zlib_prefix <- get_prefix("zlib")
 
-    # Retrieve R's built‑in compiler flags
-    default_cflags   <- system2("R", c("CMD", "config", "CFLAGS"),   stdout = TRUE)
-    default_cxxflags <- system2("R", c("CMD", "config", "CXXFLAGS"), stdout = TRUE)
+  # macOS SDK and architecture
+  sdk_path <- system2("xcrun", c("--sdk", "macosx", "--show-sdk-path"), stdout = TRUE)
+  arch     <- Sys.info()[["machine"]]  # “x86_64” or “arm64”
 
-    # Construct LDFLAGS, CPPFLAGS, PKG_CFLAGS, PKG_LIBS as before...
-    libarrow_files <- Sys.glob(file.path(arrow_path, "lib", "libarrow.*.dylib"))
-    if (length(libarrow_files) == 0) stop("No versioned libarrow.*.dylib file found.")
-    libarrow_versioned <- sort(libarrow_files, decreasing = TRUE)[1]
+  # R’s built‑in compile flags
+  default_cflags   <- system2("R", c("CMD", "config", "CFLAGS"),   stdout = TRUE)
+  default_cxxflags <- system2("R", c("CMD", "config", "CXXFLAGS"), stdout = TRUE)
 
-    Sys.setenv(
-        CC        = file.path(llvm_path, "bin/clang"),
-        CXX       = file.path(llvm_path, "bin/clang++"),
-        OBJC      = file.path(llvm_path, "bin/clang"),
+  # Locate libarrow
+  libarrow_files <- Sys.glob(file.path(arrow_path, "lib", "libarrow.*.dylib"))
+  if (length(libarrow_files) == 0) {
+    stop("No versioned libarrow.*.dylib file found in apache-arrow lib path.")
+  }
+  libarrow_versioned <- sort(libarrow_files, decreasing = TRUE)[1]
 
-        # Inject SDK root, dynamic arch, plus R's defaults
-        CFLAGS    = paste("-isysroot", sdk_path, "-arch", arch, default_cflags),
-        CXXFLAGS  = paste("-isysroot", sdk_path, "-arch", arch, default_cxxflags),
+  # Homebrew zlib paths
+  z_cpp <- paste0("-I", file.path(zlib_prefix, "include"))
+  z_ld  <- paste0("-L", file.path(zlib_prefix, "lib"))
+  z_pc  <- file.path(zlib_prefix, "lib", "pkgconfig")
 
-        LDFLAGS   = paste(
-            paste0("-L", file.path(llvm_path, "lib")),
-            paste0("-L", file.path(llvm_path, "lib/c++")),
-            paste0("-Wl,-rpath,", file.path(llvm_path, "lib/c++")),
-            paste0("-L", file.path(llvm_path, "lib/unwind"), "-lunwind")
-        ),
+  Sys.setenv(
+    ## Compilers
+    CC        = file.path(llvm_path, "bin", "clang"),
+    CXX       = file.path(llvm_path, "bin", "clang++"),
+    OBJC      = file.path(llvm_path, "bin", "clang"),
 
-        CPPFLAGS  = paste0("-I", file.path(llvm_path, "include")),
+    ## Core flags: SDK + arch + R defaults
+    CFLAGS    = paste("-isysroot", sdk_path, "-arch", arch, default_cflags),
+    CXXFLAGS  = paste("-isysroot", sdk_path, "-arch", arch, default_cxxflags),
 
-        PKG_CFLAGS= paste(
-            paste0("-I", file.path(brew_prefix, "include")),
-            if (nzchar(arrow_path)) paste0("-I", file.path(arrow_path, "include")) else NULL
-        ),
+    ## Linker flags
+    LDFLAGS   = paste(
+                  paste0("-L", file.path(llvm_path, "lib")),
+                  paste0("-L", file.path(llvm_path, "lib", "c++")),
+                  paste0("-Wl,-rpath,", file.path(llvm_path, "lib", "c++")),
+                  paste0("-L", file.path(llvm_path, "lib", "unwind"), "-lunwind"),
+                  z_ld
+                ),
 
-        PKG_LIBS  = paste(
-            paste0("-L", file.path(brew_prefix, "lib")),
-            paste0("-L", file.path(llvm_path, "lib")),
-            if (nzchar(arrow_path)) paste0("-L", file.path(arrow_path, "lib"), " -larrow") else NULL
-        ),
+    ## Preprocessor flags
+    CPPFLAGS  = paste(
+                  paste0("-I", file.path(llvm_path, "include")),
+                  z_cpp
+                ),
 
-        LD_LIBRARY_PATH    = file.path(brew_prefix, "lib"),
-        R_LD_LIBRARY_PATH  = paste(file.path(brew_prefix, "lib"), file.path(llvm_path, "lib/c++"), sep = ":"),
-        DYLD_LIBRARY_PATH  = paste(file.path(arrow_path, "lib"), libarrow_versioned, sep = ":"),
+    ## pkg-config
+    PKG_CONFIG_PATH = paste(
+                         Sys.getenv("PKG_CONFIG_PATH"),
+                         z_pc,
+                         sep = ":"
+                       ),
 
-        PATH = paste(file.path(mpi_path, "bin"), Sys.getenv("PATH"), sep = ":")
-    )
+    ## Package-specific flags
+    PKG_CFLAGS = paste(
+                    paste0("-I", file.path(brew_prefix, "include")),
+                    if (nzchar(arrow_path)) paste0("-I", file.path(arrow_path, "include")) else ""
+                  ),
+    PKG_LIBS   = paste(
+                    paste0("-L", file.path(brew_prefix, "lib")),
+                    paste0("-L", file.path(llvm_path, "lib")),
+                    if (nzchar(arrow_path)) paste0("-L", file.path(arrow_path, "lib"), " -larrow") else ""
+                  ),
 
-    if (nzchar(Sys.which("gfortran"))) {
-        Sys.setenv(FC = Sys.which("gfortran"))
-    }
+    ## Library paths
+    LD_LIBRARY_PATH    = file.path(brew_prefix, "lib"),
+    R_LD_LIBRARY_PATH  = paste(
+                             file.path(brew_prefix, "lib"),
+                             file.path(llvm_path, "lib", "c++"),
+                             sep = ":"
+                           ),
+    DYLD_LIBRARY_PATH  = paste(
+                             file.path(arrow_path, "lib"),
+                             libarrow_versioned,
+                             sep = ":"
+                           ),
+
+    ## PATH update for MPI
+    PATH = paste(file.path(mpi_path, "bin"), Sys.getenv("PATH"), sep = ":")
+  )
+
+  if (nzchar(Sys.which("gfortran"))) {
+    Sys.setenv(FC = Sys.which("gfortran"))
+  }
+
+  return(invisible(NULL))
 }
+
 
 # Ensure any required libraries are symlinked
 get_brew_prefix <- function(pkg) {
