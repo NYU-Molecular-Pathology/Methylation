@@ -971,6 +971,9 @@ if (not_installed("mapview")) {
     )
 }
 
+if (not_installed("XML")) {
+    try(install.packages("XML", configure.vars = "CPPFLAGS=-D_LIBCPP_DISABLE_AVAILABILITY", ask = F), silent = TRUE)
+}
 any_failed0 <- check_pkg_install(corePkgs)
 
 if (not_installed("urca")) pak::pkg_install("urca", ask = F)
