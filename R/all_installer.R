@@ -144,7 +144,7 @@ setup_brew <- function(brew_path) {
 # Install Homebrew and packages if necessary
 ensure_homebrew <- function() {
     pkgs <- c("gcc", "llvm", "lld", "open-mpi", "pkgconf", "gdal", "proj",
-              "apache-arrow")
+              "apache-arrow", "zlib", "libaec")
     arm_brew <- "/opt/homebrew/bin/brew"
     x64_brew <- "/usr/local/bin/brew"
     brew_installed <- file.exists(arm_brew) | file.exists(x64_brew)
