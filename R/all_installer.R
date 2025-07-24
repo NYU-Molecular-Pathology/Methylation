@@ -175,120 +175,72 @@ get_prefix <- function(pkg = "") {
 
 # Set all compiler paths so R packages can install properly
 set_env_vars <- function() {
-    # Homebrew prefixes
-    brew_prefix <- get_prefix()
-    llvm_path <- get_prefix("llvm")
-    mpi_path <- get_prefix("open-mpi")
-    arrow_path <- get_prefix("apache-arrow")
-    zlib_prefix <- get_prefix("zlib")
 
-    # macOS SDK and architecture
-    sdk_path <- system2(
-        "xcrun",
-        c("--sdk", "macosx", "--show-sdk-path"),
-        stdout = TRUE
-    )
-    arch <- Sys.info()[["machine"]]
+  # LLVM and MPI prefixes
+  llvm_path <- get_prefix("llvm")
+  mpi_path  <- get_prefix("open-mpi")
 
-    # R’s built‑in compiler flags
-    default_cflags   <- system2("R", c("CMD", "config", "CFLAGS"),   stdout = TRUE)
-    default_cxxflags <- system2("R", c("CMD", "config", "CXXFLAGS"), stdout = TRUE)
-    default_cppflags <- system2("R", c("CMD", "config", "CPPFLAGS"), stdout = TRUE)
-    default_ldflags  <- system2("R", c("CMD", "config", "LDFLAGS"),  stdout = TRUE)
+  # R’s built‑in compiler flags
+  default_cflags   <- system2("R", c("CMD", "config", "CFLAGS"),   stdout = TRUE)
+  default_cxxflags <- system2("R", c("CMD", "config", "CXXFLAGS"), stdout = TRUE)
+  default_cppflags <- system2("R", c("CMD", "config", "CPPFLAGS"), stdout = TRUE)
+  default_ldflags  <- system2("R", c("CMD", "config", "LDFLAGS"),  stdout = TRUE)
 
-    # Locate the latest Arrow dylib, if present
-    libarrow_files <- Sys.glob(file.path(arrow_path, "lib", "libarrow.*.dylib"))
-    libarrow_ver   <- if (length(libarrow_files) > 0) {
-        sort(libarrow_files, decreasing = TRUE)[1]
-    } else {
-        NULL
-    }
+  # Build up flags using only LLVM’s include/lib directories
+  cflags   <- default_cflags
+  cxxflags <- default_cxxflags
+  cppflags <- paste(
+    default_cppflags,
+    "-I", file.path(llvm_path, "include")
+  )
+  ldflags  <- paste(
+    default_ldflags,
+    "-L", file.path(llvm_path, "lib"),
+    "-L", file.path(llvm_path, "lib", "c++"),
+    "-Wl,-rpath,", file.path(llvm_path, "lib", "c++"),
+    "-L", file.path(llvm_path, "lib", "unwind"), "-lunwind"
+  )
 
-    # Compiler and linker flag components
-    sdk_flag    <- paste("-isysroot", sdk_path, "-arch", arch)
-    z_cpp_flag  <- paste0("-I", file.path(zlib_prefix, "include"))
-    z_ld_flag   <- paste0("-L", file.path(zlib_prefix, "lib"))
+  # pkg-config should only look in LLVM’s pkgconfig
+  pkg_config_path <- file.path(llvm_path, "lib", "pkgconfig")
 
-    cflags   <- paste(sdk_flag, default_cflags)
-    cxxflags <- paste(sdk_flag, default_cxxflags)
-    cppflags <- paste(
-        sdk_flag,
-        default_cppflags,
-        z_cpp_flag,
-        paste0("-I", file.path(llvm_path, "include"))
-    )
-    ldflags  <- paste(
-        sdk_flag,
-        default_ldflags,
-        z_ld_flag,
-        paste0("-L", file.path(llvm_path, "lib")),
-        paste0("-L", file.path(llvm_path, "lib", "c++")),
-        paste0("-Wl,-rpath,", file.path(llvm_path, "lib", "c++")),
-        paste0("-L", file.path(llvm_path, "lib", "unwind"), "-lunwind")
-    )
+  # Simplify PKG_CFLAGS / PKG_LIBS to LLVM
+  pkg_cflags <- paste0("-I", file.path(llvm_path, "include"))
+  pkg_libs   <- paste0("-L", file.path(llvm_path, "lib"))
 
-    # pkg-config path
-    pkg_config_path <- paste(
-        Sys.getenv("PKG_CONFIG_PATH"),
-        file.path(zlib_prefix, "lib", "pkgconfig"),
-        sep = ":"
-    )
+  # Library search paths
+  ld_library_path   <- file.path(llvm_path, "lib")
+  r_ld_library_path <- file.path(llvm_path, "lib", "c++")
+  dyld_library_path <- file.path(llvm_path, "lib")
 
-    # Package‑specific overrides
-    pkg_cflags <- paste0(
-        "-I", file.path(brew_prefix, "include"),
-        if (nzchar(arrow_path)) {
-            paste0(" -I", file.path(arrow_path, "include"))
-        } else {
-            ""
-        }
-    )
-    pkg_libs <- paste0(
-        "-L", file.path(brew_prefix, "lib"),
-        " -L", file.path(llvm_path, "lib"),
-        if (nzchar(arrow_path)) {
-            paste0(" -L", file.path(arrow_path, "lib"), " -larrow")
-        } else {
-            ""
-        }
-    )
+  # Ensure MPI binaries are first on PATH
+  path <- paste(
+    file.path(llvm_path, "bin"),
+    file.path(mpi_path,  "bin"),
+    Sys.getenv("PATH"),
+    sep = ":"
+  )
 
-    # Runtime library search paths
-    ld_library_path <- paste(file.path(brew_prefix, "lib"),
-                             Sys.getenv("LD_LIBRARY_PATH"), sep = ":")
-
-    r_ld_library_path   <- paste(file.path(brew_prefix, "lib"),
-                                 file.path(llvm_path, "lib", "c++"), sep = ":")
-
-    dyld_library_path   <- paste(
-        if (!is.null(libarrow_ver)) dirname(libarrow_ver) else "",
-        Sys.getenv("DYLD_LIBRARY_PATH"), sep = ":")
-
-    # Ensure MPI binaries are on PATH
-    path <- paste(file.path(mpi_path, "bin"), Sys.getenv("PATH"), sep = ":")
-
-    # Apply all environment variables
-    Sys.setenv(
-        SDKROOT     = sdk_path,
-        CC          = file.path(llvm_path, "bin", "clang"),
-        CXX         = file.path(llvm_path, "bin", "clang++"),
-        FC = if (nzchar(Sys.which("gfortran"))) Sys.which("gfortran") else "",
-        OBJC        = file.path(llvm_path, "bin", "clang"),
-        CFLAGS      = cflags,
-        CXXFLAGS    = cxxflags,
-        CPPFLAGS    = cppflags,
-        LDFLAGS     = ldflags,
-        PKG_CONFIG_PATH     = pkg_config_path,
-        PKG_CFLAGS          = pkg_cflags,
-        PKG_LIBS            = pkg_libs,
-        LD_LIBRARY_PATH     = ld_library_path,
-        R_LD_LIBRARY_PATH   = r_ld_library_path,
-        DYLD_LIBRARY_PATH   = dyld_library_path,
-        PATH                = path
-    )
+  # Apply environment variables
+  Sys.setenv(
+    CC               = file.path(llvm_path, "bin", "clang"),
+    CXX              = file.path(llvm_path, "bin", "clang++"),
+    CXX11            = file.path(llvm_path, "bin", "clang++"),
+    FC               = Sys.which("gfortran"),
+    OBJC             = file.path(llvm_path, "bin", "clang"),
+    CFLAGS           = cflags,
+    CXXFLAGS         = cxxflags,
+    CPPFLAGS         = cppflags,
+    LDFLAGS          = ldflags,
+    PKG_CONFIG_PATH  = pkg_config_path,
+    PKG_CFLAGS       = pkg_cflags,
+    PKG_LIBS         = pkg_libs,
+    LD_LIBRARY_PATH  = ld_library_path,
+    R_LD_LIBRARY_PATH= r_ld_library_path,
+    DYLD_LIBRARY_PATH= dyld_library_path,
+    PATH             = path
+  )
 }
-
-
 
 # Ensure any required libraries are symlinked
 get_brew_prefix <- function(pkg) {
