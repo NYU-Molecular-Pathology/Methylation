@@ -866,15 +866,20 @@ library("urca")
 configure_args <- c("--disable-lto",
                     paste0("--with-zlib=", get_prefix("zlib"))
 )
-try(BiocManager::install(
-    "Rhdf5lib",
-    type = "source",
-    update = FALSE,
-    ask = FALSE,
-    configure.args = configure_args
-),
-    silent = TRUE
-)
+if (not_installed("Rhdf5lib")){
+    try(BiocManager::install("Rhdf5lib", type="binary", ask = FALSE, update = FALSE), silent = TRUE)
+}
+if (not_installed("Rhdf5lib")){
+    try(BiocManager::install(
+        "Rhdf5lib",
+        type = "source",
+        update = FALSE,
+        ask = FALSE,
+        configure.args = configure_args
+    ),
+        silent = TRUE
+    )
+}
         
 rhd_pkgs <- c("rhdf5", "Rhtslib", "Rhdf5lib", "HDF5Array", "rhdf5filters")
 any_failed_rhd <- check_pkg_install(rhd_pkgs)
