@@ -47,7 +47,7 @@ install_pkgs() {
 install_pkgs libmagic sqlite proj tcl-tk xz
 install_pkgs aspell gdal autoconf automake gcc libgit2 openssl@3 zlib go pandoc git libffi
 install_pkgs texinfo pango cairo open-mpi poppler-qt5 graphviz libopenmpt java11 zeromq libomp pytorch openjdk@11 gmp mpfr pkg-config apache-arrow udunits mariadb-connector-c libtiff hdf5
-install_pkgs llvm z3 libxml2 pcre2 bzip2 htslib
+install_pkgs llvm z3 libxml2 pcre2 bzip2 htslib blosc
 install_pkgs abseil harfbuzz libtool pixman aom highway libusb pmix apache-arrow-glib hwloc libuv poppler apr icu4c libvmaf apr-util imath libvorbis popt isl libx11 portaudio jansson libxau jasper libxcb protobuf aws-sdk-cpp jpeg-turbo libxdmcp pybind11 brotli jpeg-xl libxext json-c python@3.12 c-ares jsoncpp libxrender ca-certificates krb5 libyaml qhull lame little-cms2 qt@5 cfitsio libaec rapidjson cmake libarchive lz4 re2 curl libassuan lzo readline eigen libavif m4 rtmpdump emacs libb2 make shared-mime-info epsilon libde265 sleef expat libevent minizip snappy flac mpdecimal speedtest-cli fontconfig libgcrypt freetype libgeotiff mpg123 subversion freexl netcdf swig fribidi libgpg-error netpbm gd libidn2 ninja thrift libkml npth tree-sitter gdk-pixbuf libksba nspr geos liblerc nss unbound gettext numpy unixodbc gflags libmpc openblas uriparser gh libnghttp2 utf8proc giflib libogg opencoarrays webp glib x265 glog libpng openexr wget xerces-c gnupg librsvg openldap gnutls librttopo libsndfile opus gpgme libsodium p11-kit graphite2 libspatialite zstd libssh2 grpc libtasn1 gts pinentry
 
 # Check if basictex is installed ----------------------------------------------
