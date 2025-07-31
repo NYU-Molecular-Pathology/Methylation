@@ -189,218 +189,137 @@ get_prefix <- function(pkg = "") {
 set_env_vars <- function() {
     message("Attempting to set environment variables for R package compilation...")
 
+    # 1. Retrieve macOS SDK path and configure
+    sdk_path <- system2("xcrun", c("--sdk", "macosx", "--show-sdk-path"), stdout = TRUE)
+    message(paste0("  - Retrieved macOS SDK path: ", sdk_path))
+    Sys.setenv(SDKROOT = sdk_path)
+
+    sysroot_flag     <- paste("-isysroot", sdk_path)
+    sdk_include_flag <- paste0("-I", sdk_path, "/usr/include")
+
+    # 2. Homebrew prefixes
+    get_prefix <- function(pkg = "") system2("brew", c("--prefix", pkg), stdout = TRUE, stderr = FALSE)
+
     llvm_path <- get_prefix("llvm")
-    if (is.null(llvm_path)) {
-        message("  - LLVM Homebrew installation not found. Skipping LLVM-specific environment variables.")
-        llvm_bin_path <- NULL
-        llvm_include_path <- NULL
-        llvm_lib_path <- NULL
-        llvm_lib_cxx_path <- NULL
-        llvm_lib_unwind_path <- NULL
-        llvm_pkgconfig_path <- NULL
-    } else {
-        llvm_bin_path <- file.path(llvm_path, "bin")
-        llvm_include_path <- file.path(llvm_path, "include")
-        llvm_lib_path <- file.path(llvm_path, "lib")
-        llvm_lib_cxx_path <- file.path(llvm_path, "lib", "c++")
-        llvm_lib_unwind_path <- file.path(llvm_path, "lib", "unwind")
-        llvm_pkgconfig_path <- file.path(llvm_path, "lib", "pkgconfig")
+    if (nzchar(llvm_path)) {
+        llvm_bin       <- file.path(llvm_path, "bin")
+        llvm_inc       <- file.path(llvm_path, "include")
+        llvm_lib       <- file.path(llvm_path, "lib")
+        llvm_cxxlib    <- file.path(llvm_lib, "c++")
+        llvm_unwind    <- file.path(llvm_lib, "unwind")
+        llvm_pc        <- file.path(llvm_lib, "pkgconfig")
         message(paste0("  - Found LLVM at: ", llvm_path))
+    } else {
+        message("  - LLVM not found; skipping LLVM env vars.")
+        llvm_bin <- llvm_inc <- llvm_lib <- llvm_cxxlib <- llvm_unwind <- llvm_pc <- NULL
     }
 
-    # Open MPI path: For packages requiring MPI support.
     mpi_path <- get_prefix("open-mpi")
-    if (is.null(mpi_path)) {
-        message("  - Open MPI Homebrew installation not found. Skipping Open MPI-specific environment variables.")
-        mpi_bin_path <- NULL
-    } else {
-        mpi_bin_path <- file.path(mpi_path, "bin")
+    if (nzchar(mpi_path)) {
+        mpi_bin <- file.path(mpi_path, "bin")
         message(paste0("  - Found Open MPI at: ", mpi_path))
-    }
+    } else mpi_bin <- NULL
 
-    # libxml2 path: Crucial for the 'XML' package compilation issue.
     libxml2_path <- get_prefix("libxml2")
-    if (is.null(libxml2_path)) {
-        message("  - libxml2 Homebrew installation not found. Ensure libxml2 is installed via Homebrew if you encounter compilation issues.")
-        libxml2_include_path <- NULL
-        libxml2_lib_path <- NULL
-    } else {
-        # libxml2 headers are often nested in 'include/libxml2'
-        libxml2_include_path <- file.path(libxml2_path, "include", "libxml2")
-        libxml2_lib_path <- file.path(libxml2_path, "lib")
+    if (nzchar(libxml2_path)) {
+        xml_inc <- file.path(libxml2_path, "include", "libxml2")
+        xml_lib <- file.path(libxml2_path, "lib")
         message(paste0("  - Found libxml2 at: ", libxml2_path))
-    }
+    } else xml_inc <- xml_lib <- NULL
 
+    hdf5_path <- get_prefix("hdf5")
+    if (nzchar(hdf5_path)) {
+        h5_inc <- file.path(hdf5_path, "include")
+        h5_lib <- file.path(hdf5_path, "lib")
+        message(paste0("  - Found HDF5 at: ", hdf5_path))
+        Sys.setenv(HDF5_DIR = hdf5_path)
+    } else h5_inc <- h5_lib <- NULL
 
-    # --- 2. Get R's Default Compiler Flags ---
-
-    # Retrieve R's default compiler flags using 'R CMD config'.
-    # These provide a baseline and ensure compatibility with R's build system.
-    default_cflags <- system2("R", c("CMD", "config", "CFLAGS"), stdout = TRUE)
+    # 3. R default flags
+    default_cflags   <- system2("R", c("CMD", "config", "CFLAGS"), stdout = TRUE)
     default_cxxflags <- system2("R", c("CMD", "config", "CXXFLAGS"), stdout = TRUE)
     default_cppflags <- system2("R", c("CMD", "config", "CPPFLAGS"), stdout = TRUE)
-    default_ldflags <- system2("R", c("CMD", "config", "LDFLAGS"), stdout = TRUE)
+    default_ldflags  <- system2("R", c("CMD", "config", "LDFLAGS"), stdout = TRUE)
 
+    # 4. Prepend SDK flags
+    CFLAGS   <- paste(sysroot_flag, sdk_include_flag, default_cflags)
+    CXXFLAGS <- paste(sysroot_flag, sdk_include_flag, default_cxxflags)
+    CPPFLAGS <- paste(sysroot_flag, sdk_include_flag, default_cppflags)
+    LDFLAGS  <- default_ldflags
 
-    # --- 3. Construct New Compiler Flags ---
-
-    # Initialize flags with R's defaults.
-    cflags <- default_cflags
-    cxxflags <- default_cxxflags
-    cppflags <- default_cppflags
-    ldflags <- default_ldflags
-
-    # Append LLVM include path to CPPFLAGS if LLVM is found.
-    if (!is.null(llvm_include_path)) {
-        cppflags <- paste(cppflags, paste0("-I", llvm_include_path))
+    # 5. Append include/lib directories
+    if (nzchar(llvm_inc)) {
+        CPPFLAGS <- paste(CPPFLAGS, paste0("-I", llvm_inc))
+        LDFLAGS  <- paste(LDFLAGS,
+                          paste0("-L", llvm_lib),
+                          paste0("-L", llvm_cxxlib),
+                          paste0("-Wl,-rpath,", llvm_cxxlib),
+                          paste0("-L", llvm_unwind),
+                          "-lunwind")
+    }
+    if (nzchar(xml_inc)) {
+        CPPFLAGS <- paste(CPPFLAGS, paste0("-I", xml_inc))
+        LDFLAGS  <- paste(LDFLAGS, paste0("-L", xml_lib))
+    }
+    if (nzchar(h5_inc)) {
+        CPPFLAGS <- paste(CPPFLAGS, paste0("-I", h5_inc))
+        LDFLAGS  <- paste(LDFLAGS, paste0("-L", h5_lib))
     }
 
-    # Append libxml2 include path to CPPFLAGS if libxml2 is found.
-    if (!is.null(libxml2_include_path)) {
-        cppflags <- paste(cppflags, paste0("-I", libxml2_include_path))
-    }
+    # 6. PKG_CONFIG_PATH
+    pc_paths <- unique(na.omit(c(llvm_pc,
+                                 if (nzchar(xml_lib)) file.path(xml_lib, "pkgconfig"),
+                                 if (nzchar(h5_lib)) file.path(h5_lib, "pkgconfig"),
+                                 strsplit(Sys.getenv("PKG_CONFIG_PATH"), ":")[[1]])))
+    PKG_CONFIG_PATH <- paste(pc_paths, collapse = ":")
 
-    # Append LLVM library paths to LDFLAGS if LLVM is found.
-    if (!is.null(llvm_lib_path)) {
-        ldflags <- paste(
-            ldflags,
-            paste0("-L", llvm_lib_path),
-            paste0("-L", llvm_lib_cxx_path),
-            paste0("-Wl,-rpath,", llvm_lib_cxx_path), # Add runtime search path for C++ libraries
-            paste0("-L", llvm_lib_unwind_path),
-            "-lunwind" # Link against libunwind for stack unwinding
-        )
-    }
+    # 7. PKG_CFLAGS and PKG_LIBS
+    PKG_CFLAGS <- paste(na.omit(c(if (nzchar(llvm_inc)) paste0("-I", llvm_inc),
+                                  if (nzchar(xml_inc)) paste0("-I", xml_inc),
+                                  if (nzchar(h5_inc)) paste0("-I", h5_inc))), collapse = " ")
+    PKG_LIBS   <- paste(na.omit(c(if (nzchar(llvm_lib)) paste0("-L", llvm_lib),
+                                  if (nzchar(xml_lib)) paste0("-L", xml_lib),
+                                  if (nzchar(h5_lib)) paste0("-L", h5_lib))), collapse = " ")
 
-    # Append libxml2 library path to LDFLAGS if libxml2 is found.
-    if (!is.null(libxml2_lib_path)) {
-        ldflags <- paste(ldflags, paste0("-L", libxml2_lib_path))
-    }
+    # 8. Library paths
+    lib_paths <- unique(na.omit(c(llvm_lib, llvm_cxxlib, xml_lib, h5_lib,
+                                  strsplit(Sys.getenv("LD_LIBRARY_PATH"), ":")[[1]])))
+    LD_LIBRARY_PATH    <- paste(lib_paths, collapse = ":")
+    R_LD_LIBRARY_PATH  <- paste(unique(c(lib_paths,
+                                         strsplit(Sys.getenv("R_LD_LIBRARY_PATH"), ":")[[1]])), collapse = ":")
+    DYLD_LIBRARY_PATH  <- paste(unique(c(lib_paths,
+                                         strsplit(Sys.getenv("DYLD_LIBRARY_PATH"), ":")[[1]])), collapse = ":")
 
-    # --- 4. Construct Other Environment Variables ---
+    # 9. PATH
+    PATH <- paste(unique(na.omit(c(llvm_bin, mpi_bin,
+                                   strsplit(Sys.getenv("PATH"), ":")[[1]]))), collapse = ":")
 
-    # PKG_CONFIG_PATH: Directs pkg-config to find .pc files for Homebrew packages.
-    pkg_config_path_components <- c()
-    if (!is.null(llvm_pkgconfig_path)) {
-        pkg_config_path_components <- c(pkg_config_path_components, llvm_pkgconfig_path)
-    }
-    # Add libxml2's pkgconfig path if it exists (usually within its lib directory)
-    if (!is.null(libxml2_lib_path)) {
-        pkg_config_path_components <- c(pkg_config_path_components, file.path(libxml2_lib_path, "pkgconfig"))
-    }
-    # Combine with existing PKG_CONFIG_PATH, ensuring uniqueness
-    pkg_config_path <- paste(
-        unique(c(pkg_config_path_components, strsplit(Sys.getenv("PKG_CONFIG_PATH"), ":")[[1]])),
-        collapse = ":"
+    # 10. Apply environment variables
+    env_list <- list(
+        SDKROOT = sdk_path,
+        CC = if (nzchar(llvm_bin)) file.path(llvm_bin, "clang") else Sys.which("clang"),
+        CXX = if (nzchar(llvm_bin)) file.path(llvm_bin, "clang++") else Sys.which("clang++"),
+        CXX11 = if (nzchar(llvm_bin)) file.path(llvm_bin, "clang++") else Sys.which("clang++"),
+        FC = Sys.which("gfortran"),
+        OBJC = if (nzchar(llvm_bin)) file.path(llvm_bin, "clang") else Sys.which("clang"),
+        AR = if (nzchar(llvm_bin)) file.path(llvm_bin, "ar") else Sys.which("ar"),
+        RANLIB = if (nzchar(llvm_bin)) file.path(llvm_bin, "ranlib") else Sys.which("ranlib"),
+        NM = if (nzchar(llvm_bin)) file.path(llvm_bin, "nm") else Sys.which("nm"),
+        CFLAGS = CFLAGS,
+        CXXFLAGS = CXXFLAGS,
+        CPPFLAGS = CPPFLAGS,
+        LDFLAGS = LDFLAGS,
+        PKG_CONFIG_PATH = PKG_CONFIG_PATH,
+        PKG_CFLAGS = PKG_CFLAGS,
+        PKG_LIBS = PKG_LIBS,
+        LD_LIBRARY_PATH = LD_LIBRARY_PATH,
+        R_LD_LIBRARY_PATH = R_LD_LIBRARY_PATH,
+        DYLD_LIBRARY_PATH = DYLD_LIBRARY_PATH,
+        PATH = PATH
     )
+    do.call(Sys.setenv, env_list)
 
-
-    # PKG_CFLAGS / PKG_LIBS: Generic flags for packages that use them directly.
-    pkg_cflags_components <- c()
-    if (!is.null(llvm_include_path)) {
-        pkg_cflags_components <- c(pkg_cflags_components, paste0("-I", llvm_include_path))
-    }
-    if (!is.null(libxml2_include_path)) {
-        pkg_cflags_components <- c(pkg_cflags_components, paste0("-I", libxml2_include_path))
-    }
-    pkg_cflags <- trimws(paste(pkg_cflags_components, collapse = " ")) # Remove leading/trailing spaces
-
-    pkg_libs_components <- c()
-    if (!is.null(llvm_lib_path)) {
-        pkg_libs_components <- c(pkg_libs_components, paste0("-L", llvm_lib_path))
-    }
-    if (!is.null(libxml2_lib_path)) {
-        pkg_libs_components <- c(pkg_libs_components, paste0("-L", libxml2_lib_path))
-    }
-    pkg_libs <- trimws(paste(pkg_libs_components, collapse = " ")) # Remove leading/trailing spaces
-
-
-    # Dynamic Library Search Paths: Crucial for runtime linking on macOS and Linux.
-    # Prepend Homebrew library paths to ensure they are found first.
-    library_paths_to_add <- c()
-    if (!is.null(llvm_lib_path)) {
-        library_paths_to_add <- c(library_paths_to_add, llvm_lib_path, llvm_lib_cxx_path)
-    }
-    if (!is.null(libxml2_lib_path)) {
-        library_paths_to_add <- c(library_paths_to_add, libxml2_lib_path)
-    }
-
-    # Combine with existing paths, ensuring uniqueness and preserving order.
-    current_ld_library_path <- Sys.getenv("LD_LIBRARY_PATH")
-    current_r_ld_library_path <- Sys.getenv("R_LD_LIBRARY_PATH")
-    current_dyld_library_path <- Sys.getenv("DYLD_LIBRARY_PATH")
-
-    ld_library_path <- paste(
-        unique(c(library_paths_to_add, strsplit(current_ld_library_path, ":")[[1]])),
-        collapse = ":"
-    )
-    r_ld_library_path <- paste(
-        unique(c(library_paths_to_add, strsplit(current_r_ld_library_path, ":")[[1]])),
-        collapse = ":"
-    )
-    dyld_library_path <- paste(
-        unique(c(library_paths_to_add, strsplit(current_dyld_library_path, ":")[[1]])),
-        collapse = ":"
-    )
-
-
-    # PATH: Prepend Homebrew's bin directories to ensure custom compilers/tools are found.
-    path_components_to_add <- c()
-    if (!is.null(llvm_bin_path)) {
-        path_components_to_add <- c(path_components_to_add, llvm_bin_path)
-    }
-    if (!is.null(mpi_bin_path)) {
-        path_components_to_add <- c(path_components_to_add, mpi_bin_path)
-    }
-    # Combine with existing PATH, ensuring uniqueness.
-    path <- paste(
-        unique(c(path_components_to_add, strsplit(Sys.getenv("PATH"), ":")[[1]])),
-        collapse = ":"
-    )
-
-
-    # --- 5. Apply Environment Variables ---
-
-    # Unset SDKROOT to prevent conflicts with Xcode's macOS SDK.
-    Sys.unsetenv("SDKROOT")
-    message("  - Unset SDKROOT to avoid conflicts with macOS SDK.")
-
-    # Create a named list of environment variables to set.
-    # Use Sys.which() as a fallback if Homebrew paths are not found.
-    env_vars_to_set <- list(
-        CC = if (!is.null(llvm_bin_path)) {file.path(llvm_bin_path, "clang") } else {Sys.which("clang")},
-        CXX = if (!is.null(llvm_bin_path)) {file.path(llvm_bin_path, "clang++") } else {Sys.which("clang++")},
-        CXX11 = if (!is.null(llvm_bin_path)) {file.path(llvm_bin_path, "clang++") } else {Sys.which("clang++")},
-        FC = Sys.which("gfortran"), # Assumes gfortran is in PATH or system-wide
-        OBJC = if (!is.null(llvm_bin_path)) {file.path(llvm_bin_path, "clang") } else {Sys.which("clang")},
-        AR = if (!is.null(llvm_bin_path)) {file.path(llvm_bin_path, "llvm-ar") } else {Sys.which("ar")},
-        RANLIB = if (!is.null(llvm_bin_path)) {file.path(llvm_bin_path, "llvm-ranlib") } else {Sys.which("ranlib")},
-        NM = if (!is.null(llvm_bin_path)) {file.path(llvm_bin_path, "llvm-nm") } else {Sys.which("nm")},
-        CFLAGS = cflags,
-        CXXFLAGS = cxxflags,
-        CPPFLAGS = cppflags,
-        LDFLAGS = ldflags,
-        PKG_CONFIG_PATH = pkg_config_path,
-        PKG_CFLAGS = pkg_cflags,
-        PKG_LIBS = pkg_libs,
-        LD_LIBRARY_PATH = ld_library_path,
-        R_LD_LIBRARY_PATH = r_ld_library_path,
-        DYLD_LIBRARY_PATH = dyld_library_path,
-        PATH = path
-    )
-
-    # Filter out any NULL or empty string values from the list before setting,
-    # to prevent setting environment variables to invalid paths.
-    env_vars_to_set <- Filter(
-        function(x) !is.null(x) && length(x) > 0 && nchar(x) > 0,
-        env_vars_to_set
-    )
-
-    # Apply all filtered environment variables.
-    do.call(Sys.setenv, env_vars_to_set)
-
-    message("\nEnvironment variables have been set for the current R session.")
-    message("If issues persist, try restarting R session and updating xcode commandline tools.")
+    message("\nEnvironment variables set; restart R session before building packages.")
 }
 
 
