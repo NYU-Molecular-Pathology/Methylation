@@ -60,19 +60,7 @@ ensure_packages <- function(pkgs) {
     for (pkg in pkgs) quite_load(pkg)
 }
 
-    # Load all required packages and report status
-    load_results <- sapply(all_pkgs_to_check, quite_load)
-    for (i in seq_along(load_results)) {
-        pkg_name <- names(load_results)[i]
-        status <- ifelse(load_results[i], "TRUE", "FALSE")
-        message(paste0(pkg_name, " loaded... ", status))
-    }
-
-    stopifnot(all(load_results)) # Ensure all packages were successfully loaded
-    message("All packages loading complete.")
-}
-
-# Package lists ----------------
+# Package lists ----------------------------------------------------
 # CRAN_PACKAGES
 PACKAGES <- c(
     "data.table", "RColorBrewer", "lattice", "nor1mix",
