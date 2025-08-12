@@ -97,8 +97,7 @@ cranPkgs <- c(
     "httpuv",
     "shiny",
     "pals",
-    "Polychrome",
-    "mdthemes"
+    "Polychrome"
 )
 
 
@@ -330,6 +329,10 @@ loadPacks <- function() {
     neededPkgs <- checkNeeded(cranPkgs)
     if (length(neededPkgs) > 0) pak::pkg_install(neededPkgs, ask = FALSE)
 
+    if (not_installed("mdthemes")) {
+        remotes::install_github("thomas-neitmann/mdthemes", upgrade = "never")
+    }
+  
     if (not_installed("minfi")) install_minfi()
 
     load_install_pkgs(gHubPkgs, gh.inst)
