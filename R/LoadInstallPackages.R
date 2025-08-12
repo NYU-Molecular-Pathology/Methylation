@@ -9,14 +9,14 @@
 
 # Define the specific versions and mirrors
 snapshot_date <- "2025-05-01"
-bioc_version <- "3.22"
+bioc_version  <- "3.22"
 
-# Set repositories using BiocManager and a custom CRAN snapshot
 options(
-  repos = c(
-    CRAN = paste0("https://packagemanager.posit.co/cran/", snapshot_date),
-    BiocManager::repositories(version = bioc_version)
-  )
+    download.file.method = "curl",
+    repos = c(
+        CRAN = sprintf("https://packagemanager.posit.co/cran/%s", snapshot_date),
+        BiocManager::repositories(version = bioc_version)
+    )
 )
 
 cbioLn <- "/Volumes/CBioinformatics/Methylation/classifiers"
