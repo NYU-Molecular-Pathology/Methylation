@@ -97,7 +97,8 @@ cranPkgs <- c(
     "httpuv",
     "shiny",
     "pals",
-    "Polychrome"
+    "Polychrome",
+    "mdthemes"
 )
 
 
@@ -106,8 +107,7 @@ gHubPkgs <- c(
     'rstudio/rmarkdown',
     'dasonk/docstring',
     'nutterb/redcapAPI',
-    "r-lib/crayon",
-    "thomas-neitmann/mdthemes"
+    "r-lib/crayon"
 )
 
 # BioConductor Packages  ------------------------------------------------------
