@@ -32,12 +32,13 @@ if (dir.exists(manifest_path)) {
 }
 
 snapshot_date <- "2025-05-01"
-bioc_version   <- "3.19"
+bioc_version  <- "3.22"
+
 options(
+    download.file.method = "curl",
     repos = c(
-        CRAN = sprintf("https://cran.microsoft.com/snapshot/%s/", snapshot_date),
-        BioC = sprintf("https://packagemanager.rstudio.com/bioconductor/%s@%s",
-                       bioc_version, snapshot_date)
+        CRAN = sprintf("https://packagemanager.posit.co/cran/%s", snapshot_date),
+        BiocManager::repositories(version = bioc_version)
     )
 )
 
