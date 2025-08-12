@@ -272,12 +272,13 @@ loadMainPkgs <- function() {
 
     if (not_installed("pak")) install.packages("pak", type = "binary", ask = FALSE, dependencies = T)
     library("pak")
-    pak::repo_add(PPM = "PPM@2025-05-01")
-    pak::repo_add(
-        CRAN = sprintf("https://cran.microsoft.com/snapshot/%s/", snapshot_date),
-        BioC = sprintf("https://packagemanager.rstudio.com/bioconductor/%s@%s",
-                       bioc_version, snapshot_date)
-        )
+    # CRAN from PPM snapshot (compact spec), Bioconductor official URLs
+    pak::repo_add(CRAN = sprintf("PPM@%s", snapshot_date))
+    
+    # Supply Bioconductor repos explicitly (stable and what BiocManager uses)
+    bioc_repos <- BiocManager::repositories(version = bioc_version)
+    pak::repo_add(bioc_repos)
+
     if (not_installed("needs")) manage_needs()
     options(needs.promptUser = FALSE)
     options(promptUser = FALSE)
