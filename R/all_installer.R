@@ -20,7 +20,7 @@ options(askYesNo = function(msg, default, prompts) {
 })
 options(install.packages.compile.from.source = "always")
 Sys.setenv(R_COMPILE_AND_INSTALL_PACKAGES = "always")
-bioc_version  <- "3.19"
+bioc_version  <- "3.22"
 
 # Configure BiocManager to use Posit Package Manager
 options(BioC_mirror = "https://packagemanager.posit.co/bioconductor/2025-06-30")
@@ -29,7 +29,7 @@ options(BioC_mirror = "https://packagemanager.posit.co/bioconductor/2025-06-30")
 options(BIOCONDUCTOR_CONFIG_FILE = "https://packagemanager.posit.co/bioconductor/2025-06-30/config.yaml")
 
 # Set the Bioconductor version to prevent defaulting to a newer version
-Sys.setenv("R_BIOC_VERSION" = "3.22")
+Sys.setenv("R_BIOC_VERSION" = bioc_version)
 
 # Configure a CRAN snapshot compatible with Bioconductor 3.22
 options(repos = c(CRAN = "https://packagemanager.posit.co/cran/2025-06-30"))
@@ -186,143 +186,6 @@ get_prefix <- function(pkg = "") {
 }
 
 
-set_env_vars <- function() {
-    message("Attempting to set environment variables for R package compilation...")
-
-    # 1. Retrieve macOS SDK path and configure
-    sdk_path <- system2("xcrun", c("--sdk", "macosx", "--show-sdk-path"), stdout = TRUE)
-    message(paste0("  - Retrieved macOS SDK path: ", sdk_path))
-    Sys.setenv(SDKROOT = sdk_path)
-
-    sysroot_flag     <- paste("-isysroot", sdk_path)
-    sdk_include_flag <- paste0("-I", sdk_path, "/usr/include")
-
-    # 2. Homebrew prefixes
-    get_prefix <- function(pkg = "") system2("brew", c("--prefix", pkg), stdout = TRUE, stderr = FALSE)
-
-    llvm_path <- get_prefix("llvm")
-    if (nzchar(llvm_path)) {
-        llvm_bin       <- file.path(llvm_path, "bin")
-        llvm_inc       <- file.path(llvm_path, "include")
-        llvm_lib       <- file.path(llvm_path, "lib")
-        llvm_cxxlib    <- file.path(llvm_lib, "c++")
-        llvm_unwind    <- file.path(llvm_lib, "unwind")
-        llvm_pc        <- file.path(llvm_lib, "pkgconfig")
-        message(paste0("  - Found LLVM at: ", llvm_path))
-    } else {
-        message("  - LLVM not found; skipping LLVM env vars.")
-        llvm_bin <- llvm_inc <- llvm_lib <- llvm_cxxlib <- llvm_unwind <- llvm_pc <- NULL
-    }
-
-    mpi_path <- get_prefix("open-mpi")
-    if (nzchar(mpi_path)) {
-        mpi_bin <- file.path(mpi_path, "bin")
-        message(paste0("  - Found Open MPI at: ", mpi_path))
-    } else mpi_bin <- NULL
-
-    libxml2_path <- get_prefix("libxml2")
-    if (nzchar(libxml2_path)) {
-        xml_inc <- file.path(libxml2_path, "include", "libxml2")
-        xml_lib <- file.path(libxml2_path, "lib")
-        message(paste0("  - Found libxml2 at: ", libxml2_path))
-    } else xml_inc <- xml_lib <- NULL
-
-    hdf5_path <- get_prefix("hdf5")
-    if (nzchar(hdf5_path)) {
-        h5_inc <- file.path(hdf5_path, "include")
-        h5_lib <- file.path(hdf5_path, "lib")
-        message(paste0("  - Found HDF5 at: ", hdf5_path))
-        Sys.setenv(HDF5_DIR = hdf5_path)
-    } else h5_inc <- h5_lib <- NULL
-
-    # 3. R default flags
-    default_cflags   <- system2("R", c("CMD", "config", "CFLAGS"), stdout = TRUE)
-    default_cxxflags <- system2("R", c("CMD", "config", "CXXFLAGS"), stdout = TRUE)
-    default_cppflags <- system2("R", c("CMD", "config", "CPPFLAGS"), stdout = TRUE)
-    default_ldflags  <- system2("R", c("CMD", "config", "LDFLAGS"), stdout = TRUE)
-
-    # 4. Prepend SDK flags
-    CFLAGS   <- paste(sysroot_flag, sdk_include_flag, default_cflags)
-    CXXFLAGS <- paste(sysroot_flag, sdk_include_flag, default_cxxflags)
-    CPPFLAGS <- paste(sysroot_flag, sdk_include_flag, default_cppflags)
-    LDFLAGS  <- default_ldflags
-
-    # 5. Append include/lib directories
-    if (nzchar(llvm_inc)) {
-        CPPFLAGS <- paste(CPPFLAGS, paste0("-I", llvm_inc))
-        LDFLAGS  <- paste(LDFLAGS,
-                          paste0("-L", llvm_lib),
-                          paste0("-L", llvm_cxxlib),
-                          paste0("-Wl,-rpath,", llvm_cxxlib),
-                          paste0("-L", llvm_unwind),
-                          "-lunwind")
-    }
-    if (nzchar(xml_inc)) {
-        CPPFLAGS <- paste(CPPFLAGS, paste0("-I", xml_inc))
-        LDFLAGS  <- paste(LDFLAGS, paste0("-L", xml_lib))
-    }
-    if (nzchar(h5_inc)) {
-        CPPFLAGS <- paste(CPPFLAGS, paste0("-I", h5_inc))
-        LDFLAGS  <- paste(LDFLAGS, paste0("-L", h5_lib))
-    }
-
-    # 6. PKG_CONFIG_PATH
-    pc_paths <- unique(na.omit(c(llvm_pc,
-                                 if (nzchar(xml_lib)) file.path(xml_lib, "pkgconfig"),
-                                 if (nzchar(h5_lib)) file.path(h5_lib, "pkgconfig"),
-                                 strsplit(Sys.getenv("PKG_CONFIG_PATH"), ":")[[1]])))
-    PKG_CONFIG_PATH <- paste(pc_paths, collapse = ":")
-
-    # 7. PKG_CFLAGS and PKG_LIBS
-    PKG_CFLAGS <- paste(na.omit(c(if (nzchar(llvm_inc)) paste0("-I", llvm_inc),
-                                  if (nzchar(xml_inc)) paste0("-I", xml_inc),
-                                  if (nzchar(h5_inc)) paste0("-I", h5_inc))), collapse = " ")
-    PKG_LIBS   <- paste(na.omit(c(if (nzchar(llvm_lib)) paste0("-L", llvm_lib),
-                                  if (nzchar(xml_lib)) paste0("-L", xml_lib),
-                                  if (nzchar(h5_lib)) paste0("-L", h5_lib))), collapse = " ")
-
-    # 8. Library paths
-    lib_paths <- unique(na.omit(c(llvm_lib, llvm_cxxlib, xml_lib, h5_lib,
-                                  strsplit(Sys.getenv("LD_LIBRARY_PATH"), ":")[[1]])))
-    LD_LIBRARY_PATH    <- paste(lib_paths, collapse = ":")
-    R_LD_LIBRARY_PATH  <- paste(unique(c(lib_paths,
-                                         strsplit(Sys.getenv("R_LD_LIBRARY_PATH"), ":")[[1]])), collapse = ":")
-    DYLD_LIBRARY_PATH  <- paste(unique(c(lib_paths,
-                                         strsplit(Sys.getenv("DYLD_LIBRARY_PATH"), ":")[[1]])), collapse = ":")
-
-    # 9. PATH
-    PATH <- paste(unique(na.omit(c(llvm_bin, mpi_bin,
-                                   strsplit(Sys.getenv("PATH"), ":")[[1]]))), collapse = ":")
-
-    # 10. Apply environment variables
-    env_list <- list(
-        SDKROOT = sdk_path,
-        CC = if (nzchar(llvm_bin)) file.path(llvm_bin, "clang") else Sys.which("clang"),
-        CXX = if (nzchar(llvm_bin)) file.path(llvm_bin, "clang++") else Sys.which("clang++"),
-        CXX11 = if (nzchar(llvm_bin)) file.path(llvm_bin, "clang++") else Sys.which("clang++"),
-        FC = Sys.which("gfortran"),
-        OBJC = if (nzchar(llvm_bin)) file.path(llvm_bin, "clang") else Sys.which("clang"),
-        AR = if (nzchar(llvm_bin)) file.path(llvm_bin, "ar") else Sys.which("ar"),
-        RANLIB = if (nzchar(llvm_bin)) file.path(llvm_bin, "ranlib") else Sys.which("ranlib"),
-        NM = if (nzchar(llvm_bin)) file.path(llvm_bin, "nm") else Sys.which("nm"),
-        CFLAGS = CFLAGS,
-        CXXFLAGS = CXXFLAGS,
-        CPPFLAGS = CPPFLAGS,
-        LDFLAGS = LDFLAGS,
-        PKG_CONFIG_PATH = PKG_CONFIG_PATH,
-        PKG_CFLAGS = PKG_CFLAGS,
-        PKG_LIBS = PKG_LIBS,
-        LD_LIBRARY_PATH = LD_LIBRARY_PATH,
-        R_LD_LIBRARY_PATH = R_LD_LIBRARY_PATH,
-        DYLD_LIBRARY_PATH = DYLD_LIBRARY_PATH,
-        PATH = PATH
-    )
-    do.call(Sys.setenv, env_list)
-
-    message("\nEnvironment variables set; restart R session before building packages.")
-}
-
-
 # Ensure any required libraries are symlinked
 get_brew_prefix <- function(pkg) {
     prefix <- system2("brew", c("--prefix", pkg), stdout = TRUE, stderr = FALSE)
@@ -407,7 +270,7 @@ setup_compilers <- function() {
     comp_flags <- c("CC", "CXX", "OBJC", "LDFLAGS", "CPPFLAGS", "PKG_CFLAGS",
                     "PKG_LIBS", "LD_LIBRARY_PATH", "R_LD_LIBRARY_PATH")
     Sys.unsetenv(comp_flags)
-    set_env_vars()
+    source("/Volumes/CBioinformatics/Methylation/Rscripts/set_r_build_env.R")
     options(Ncpus = 6)
     symlink_llvm()
 }
@@ -474,11 +337,13 @@ local_github_pkg_install <- function(git_repo) {
 
 # FUNC: Installs package from a Github repository -----------------------------
 install_repo <- function(git_repo) {
+
     tryCatch(
         expr = {
             devtools::install_github(
                 git_repo, dependencies = T, upgrade = "always", type = "source",
-                auth_token = NULL, subdir = basename(git_repo))
+                auth_token = NULL, subdir = basename(git_repo)
+                )
         },
         error = function(e) {
             devtools::install_github(
@@ -515,10 +380,12 @@ install_opts <- list(
 
 # FUNC: Quietly loads package library without messages ------------------------
 quiet_load <- function(pkg_name) {
+    libLoad <- FALSE
     if (isNamespaceLoaded(pkg_name) == F) {
-        libLoad <- suppressWarnings(suppressPackageStartupMessages(
+        libLoad <- tryCatch(suppressWarnings(suppressPackageStartupMessages(
             library(pkg_name, character.only = T, logical.return = T, quietly = T)
-        ))
+        )),
+        error = function(e){return(FALSE)})
     } else{
         libLoad <- TRUE
     }
@@ -544,7 +411,6 @@ require_pkg("utils", "binary")
 require_pkg("BiocManager", "binary")
 
 biocRepos <- suppressMessages(BiocManager::repositories())
-avail_bioc_packs <- suppressMessages(BiocManager::available())
 rbase_pkgs <- rownames(installed.packages(priority = "base"))
 pkg_info <- utils::available.packages(repos = biocRepos)
 
@@ -553,10 +419,254 @@ if (not_installed("pak")) {
 }
 
 if (not_installed("pak")) {
-    install.packages("pak", repos = sprintf("https://r-lib.github.io/p/pak/stable/%s/%s/%s",
-                                            .Platform$pkgType, R.Version()$os, R.Version()$arch))
+    try(install.packages("pak", repos = sprintf("https://r-lib.github.io/p/pak/stable/%s/%s/%s",
+                                            .Platform$pkgType, R.Version()$os, R.Version()$arch)),
+        silent = T)
 }
+
+if (not_installed("pak")) {
+    try(install.packages("pak", dependencies = T, ask = F, type = "binary"), silent = T)
+}
+
 stopifnot(loadLibrary("pak"))
+
+
+manual_bioc <- function(bio_pkg) {
+    if (not_installed(bio_pkg)) {
+        install.packages(bio_pkg,
+                         repos = "http://bioconductor.org/packages/release/bioc",
+                         type = "binary",
+                         ask = F)
+    }
+    if (!loadLibrary(bio_pkg)) {
+        BiocManager::install(bio_pkg, update = F, ask = F, dependencies = T)
+    }
+    if (!loadLibrary(bio_pkg)) {
+        try_github_inst(file.path("Bioconductor", bio_pkg))
+    }
+    loadLibrary(bio_pkg)
+}
+
+# Start execution -------------------------------------------------------------
+
+if (is_macos) {
+    # Execute the function to check and install macOS binaries
+    check_and_install_mac_libs(mac_tools)
+    setup_compilers()
+    symlink_arrow()
+}
+
+if (not_installed("arrow")) {
+    install.packages('arrow', type = "binary", ask = F, dependencies = T,
+                     repos = c('https://apache.r-universe.dev',
+                               'https://cloud.r-project.org'))
+}
+
+bin_pkgs <- c(
+    # Core utilities and dependencies
+    "curl", "jsonlite", "mime", "openssl", "R6",
+    # Testing and coverage
+    "covr", "testthat",
+    # Web and image handling
+    "httpuv", "jpeg", "png", "xml2",
+    # Reporting and markdown (ensuring binary installation)
+    "knitr", "rmarkdown", "readr"
+)
+
+for (pkg in bin_pkgs) {
+    binary_install(pkg)
+}
+
+if (not_installed("httr")) {
+    tryCatch(install.packages("httr", ask = F, dependencies = T),
+             error = function(e) binary_install("httr")
+    )
+}
+
+binary_install("librarian")
+binary_install("BiocManager")
+
+if (not_installed("BiocGenerics")) {
+    BiocManager::install("BiocGenerics", update = F, ask = F)
+}
+
+stopifnot(loadLibrary("devtools"))
+stopifnot(loadLibrary("librarian"))
+stopifnot(loadLibrary("BiocManager"))
+
+
+library("httr")
+
+avail_bioc_packs <- suppressMessages(BiocManager::available())
+
+if (not_installed("stringr")) {
+    install.packages("stringr", dependencies = TRUE, ask = FALSE)
+}
+
+library("stringr")
+
+get_r_series <- function() {
+    major <- R.version$major
+    minor <- strsplit(R.version$minor, "\\.")[[1L]][1L]
+    series <- paste0(major, ".", minor)
+    return(series)
+}
+
+detect_macos_flavor <- function() {
+    os <- Sys.info()[["sysname"]]
+    if (!identical(os, "Darwin")) {
+        stop("This resolver is intended for macOS binaries.")
+    }
+    plat <- paste(R.version$platform, R.version$arch,
+                  Sys.info()[["machine"]], sep = " ")
+    if (grepl("arm64|aarch64", plat, ignore.case = TRUE)) {
+        return("big-sur-arm64")
+    } else if (grepl("x86_64", plat, ignore.case = TRUE)) {
+        return("big-sur-x86_64")
+    } else {
+        stop("Unsupported macOS architecture: ", plat)
+    }
+}
+
+macos_binary_packages_roots <- function() {
+    series <- get_r_series()
+    flavor <- detect_macos_flavor()
+
+    cran <- file.path("https://cran.r-project.org/bin/macosx",
+                      flavor, "contrib", series)
+    bioc_base <- "https://bioconductor.org/packages/release"
+
+    bioc <- file.path(bioc_base, "bioc/bin/macosx", flavor,
+                      "contrib", series)
+    bioc_ann <- file.path(bioc_base, "data/annotation/bin/macosx",
+                          flavor, "contrib", series)
+    bioc_exp <- file.path(bioc_base, "data/experiment/bin/macosx",
+                          flavor, "contrib", series)
+    bioc_wf  <- file.path(bioc_base, "workflows/bin/macosx",
+                          flavor, "contrib", series)
+
+    roots <- c(cran, bioc, bioc_ann, bioc_exp, bioc_wf)
+    return(roots)
+}
+
+# Read PACKAGES or PACKAGES.gz into a data.frame; NULL on failure
+read_packages_index <- function(root_url) {
+    cand <- c(file.path(root_url, "PACKAGES"),
+              file.path(root_url, "PACKAGES.gz"))
+
+    for (u in cand) {
+        resp <- try(httr::GET(u, httr::timeout(10)), silent = TRUE)
+        if (inherits(resp, "try-error")) next
+        if (httr::status_code(resp) != 200) next
+
+        # Detect gz by URL suffix; handle both text and gz
+        txt <- NULL
+        if (grepl("\\.gz$", u)) {
+            raw <- httr::content(resp, as = "raw")
+            con <- gzcon(rawConnection(raw, "rb"))
+            on.exit(close(con), add = TRUE)
+            txt <- paste(readLines(con, warn = FALSE), collapse = "\n")
+        } else {
+            txt <- httr::content(resp, as = "text", encoding = "UTF-8")
+        }
+
+        if (!nzchar(txt)) next
+        tc <- textConnection(txt)
+        on.exit(close(tc), add = TRUE)
+        dcf <- try(read.dcf(tc), silent = TRUE)
+        if (inherits(dcf, "try-error") || is.null(dcf)) next
+        df <- as.data.frame(dcf, stringsAsFactors = FALSE,
+                            optional = TRUE)
+        return(df)
+    }
+    return(NULL)
+}
+
+# Search across roots; return list(entry=df_row, root=root_url) or NULL
+locate_pkg_entry <- function(pkg_name) {
+    roots <- macos_binary_packages_roots()
+    for (root in roots) {
+        df <- read_packages_index(root)
+        if (is.null(df)) next
+        if (!"Package" %in% names(df)) next
+        hit <- df[df$Package == pkg_name, , drop = FALSE]
+        if (nrow(hit) == 1L) {
+            return(list(entry = hit, root = root))
+        }
+    }
+    return(NULL)
+}
+
+# Public API: return "<pkg>_<version>.tgz"
+get_binary_tgz <- function(pkg_name) {
+    stopifnot(is.character(pkg_name), length(pkg_name) == 1L)
+
+    found <- locate_pkg_entry(pkg_name)
+    if (is.null(found)) {
+        stop("No macOS binary entry found for '", pkg_name,
+             "' under ", paste(macos_binary_packages_roots(),
+                               collapse = ", "), ".")
+    }
+
+    e <- found$entry
+    ver <- if ("Version" %in% names(e)) e$Version else NA_character_
+    if (!nzchar(ver)) {
+        stop("Version missing for '", pkg_name, "' in PACKAGES.")
+    }
+
+    tgz <- paste0(pkg_name, "_", ver, ".tgz")
+    return(tgz)
+}
+
+# Build the full download URL (uses the same resolver)
+resolve_binary_url <- function(pkg_name) {
+    found <- locate_pkg_entry(pkg_name)
+    if (is.null(found)) {
+        stop("No macOS binary entry found for '", pkg_name, "'.")
+    }
+
+    e <- found$entry
+    root <- found$root
+
+    if ("File" %in% names(e) && nzchar(e$File)) {
+        filename <- e$File
+    } else {
+        ver <- if ("Version" %in% names(e)) e$Version else NA_character_
+        if (!nzchar(ver)) {
+            stop("Version missing for '", pkg_name, "' in PACKAGES.")
+        }
+        filename <- paste0(pkg_name, "_", ver, ".tgz")
+    }
+    url <- file.path(root, filename)
+    return(url)
+}
+
+# Installer: accepts a package name OR a direct *.tgz URL/path
+install_binary_tgz <- function(pkg_or_tgz, quiet = TRUE) {
+    is_tgz <- grepl("\\.(tgz|pkg)\\z", pkg_or_tgz)
+    url <- if (is_tgz) pkg_or_tgz else resolve_binary_url(pkg_or_tgz)
+
+    # HEAD may be blocked; fall back to GET
+    ok <- FALSE
+    h <- try(httr::HEAD(url, httr::timeout(10)), silent = TRUE)
+    if (!inherits(h, "try-error") &&
+        httr::status_code(h) >= 200 && httr::status_code(h) < 300) {
+        ok <- TRUE
+    } else {
+        g <- try(httr::GET(url, httr::timeout(10)), silent = TRUE)
+        if (!inherits(g, "try-error") &&
+            httr::status_code(g) >= 200 && httr::status_code(g) < 300) {
+            ok <- TRUE
+        }
+    }
+    if (!ok) {
+        stop("Binary URL not accessible: ", url)
+    }
+
+    utils::install.packages(url, repos = NULL, type = "binary",
+                            quiet = quiet)
+    return(invisible(url))
+}
 
 # FUNC: Returns all packages that are not installed ----------------------------
 check_needed <- function(pkgs) {
@@ -587,7 +697,8 @@ install_pkgs <- function(needed_pk, pkg_type = "source") {
         error = function(e) {
             message("\nInitial installation failed! Trying binary install.\n")
             install_opts$type <- "binary"
-            do.call(install.packages, c(list(pkgs = needed_pk), install_opts))
+            install_binary_tgz()
+            #do.call(install.packages, c(list(pkgs = needed_pk), install_opts))
         }
     )
 }
@@ -646,15 +757,21 @@ try_install <- function(new_pkg) {
 check_pkg_install <- function(pkgs) {
 
     pkgs_needed <- check_needed(pkgs)
-
     if (length(pkgs_needed) > 0) {
-        message("The following missing packages will be installed:\n",
-                paste(pkgs_needed, collapse = "\n"))
+        message(
+            "The following missing packages will be installed:\n",
+            paste(pkgs_needed, collapse = "\n")
+        )
         for (new_pkg in pkgs_needed) {
             tryCatch(
                 pak::pkg_install(new_pkg, ask = F),
-                error = function(cond){
-                    try_install(new_pkg)
+                error = function(cond) {
+                    tryCatch(
+                        try_install(new_pkg),
+                        error = function(cond) {
+                            message(new_pkg, "--install failed")
+                        }
+                    )
                 }
             )
         }
@@ -667,13 +784,22 @@ check_pkg_install <- function(pkgs) {
         return(NULL)
     }
 
-    load_success <- sapply(not_loaded, quiet_load)
+    to_load <- not_loaded %in% rownames(installed.packages())
 
-    if (any(load_success == F)) {
-        failed_pkgs <- pkgs[load_success == F]
+    if (any(to_load)) {
+        installed_pk <- not_loaded[to_load]
+        load_success <- unlist(lapply(installed_pk, quiet_load))
+    }
+
+    failed_pkgs <- !not_loaded %in% names(load_success)
+
+    if (any(!load_success) || any(failed_pkgs)) {
+        failed_pkgs1 <- pkgs[!load_success]
+        failed_pkgs2 <- not_loaded[failed_pkgs]
+        still_missing <- c(failed_pkgs1, failed_pkgs2)
         message("\n>>The following package(s) failed to install:")
-        message(paste(failed_pkgs, collapse = "\n"))
-        return(failed_pkgs)
+        message(paste(still_missing, collapse = "\n"))
+        return(still_missing)
     } else{
         message("All packages loaded successfully!")
         return(NULL)
@@ -681,80 +807,22 @@ check_pkg_install <- function(pkgs) {
 }
 
 
-manual_bioc <- function(bio_pkg) {
-    if (not_installed(bio_pkg)) {
-        install.packages(bio_pkg,
-                         repos = "http://bioconductor.org/packages/release/bioc",
-                         type = "binary",
-                         ask = F)
-    }
-    if (!loadLibrary(bio_pkg)) {
-        BiocManager::install(bio_pkg, update = F, ask = F, dependencies = T)
-    }
-    if (!loadLibrary(bio_pkg)) {
-        try_github_inst(file.path("Bioconductor", bio_pkg))
-    }
-    loadLibrary(bio_pkg)
-}
-
-
-# Start execution -------------------------------------------------------------
-
-if (is_macos) {
-    # Execute the function to check and install macOS binaries
-    check_and_install_mac_libs(mac_tools)
-    setup_compilers()
-    symlink_arrow()
+if (not_installed("rJava")) {
+    try(install_binary_tgz("rJava_1.0-11.tgz"), silent = TRUE)
 }
 
 if (not_installed("rJava")) {
-    try(install.packages("rJava", type = "binary",
-                         dependencies = T, ask = F), T)
+    binary_install("rJava")
 }
 
 java_inst <- system("java -version", ignore.stdout = T, ignore.stderr = T) == 0
+
 if (!java_inst) {
     temurin <- "brew install --cask temurin"
     system(temurin, ignore.stdout = TRUE, ignore.stderr = TRUE)
 }
 java_home <- system("/usr/libexec/java_home", intern = TRUE)
 Sys.setenv(JAVA_HOME = java_home)
-
-if (not_installed("arrow")) {
-    install.packages('arrow', type = "binary", ask = F, dependencies = T,
-                     repos = c('https://apache.r-universe.dev',
-                               'https://cloud.r-project.org'))
-}
-
-bin_pkgs <- c(
-    # Core utilities and dependencies
-    "curl", "jsonlite", "mime", "openssl", "R6",
-    # Testing and coverage
-    "covr", "testthat",
-    # Web and image handling
-    "httpuv", "jpeg", "png", "xml2",
-    # Reporting and markdown (ensuring binary installation)
-    "knitr", "rmarkdown", "readr"
-)
-
-for (pkg in bin_pkgs) {
-    binary_install(pkg)
-}
-
-if (not_installed("httr")) {
-    install.packages("httr", ask = F, dependencies = T)
-}
-
-binary_install("librarian")
-binary_install("BiocManager")
-
-if (not_installed("BiocGenerics")) {
-    BiocManager::install("BiocGenerics", update = F, ask = F)
-}
-
-stopifnot(loadLibrary("devtools"))
-stopifnot(loadLibrary("librarian"))
-stopifnot(loadLibrary("BiocManager"))
 
 # List Classifier Core Packages -----------------------------------------------
 corePkgs <- c(
@@ -898,14 +966,21 @@ any_failed0 <- check_pkg_install(corePkgs)
 if (not_installed("urca")) pak::pkg_install("urca", ask = F)
 library("urca")
 
-# Since Homebrew has no szip, disable that filter explicitly
-configure_args <- c("--disable-lto",
-                    paste0("--with-zlib=", get_prefix("zlib"))
-)
-if (not_installed("Rhdf5lib")){
-    try(BiocManager::install("Rhdf5lib", type="binary", ask = FALSE, update = FALSE), silent = TRUE)
+if (not_installed("Rhdf5lib")) {
+    try(BiocManager::install("Rhdf5lib",
+                             type = "binary",
+                             ask = FALSE,
+                             update = FALSE),
+        silent = TRUE)
 }
-if (not_installed("Rhdf5lib")){
+
+if (not_installed("Rhtslib")) {
+    install_binary_tgz("Rhtslib")
+}
+
+stopifnot(!not_installed("Rhtslib"))
+
+if (not_installed("Rhdf5lib")) {
     try(BiocManager::install(
         "Rhdf5lib",
         type = "source",
@@ -913,10 +988,11 @@ if (not_installed("Rhdf5lib")){
         ask = FALSE,
         configure.args = configure_args
     ),
-        silent = TRUE
+    silent = TRUE
     )
 }
-        
+
+
 rhd_pkgs <- c("rhdf5", "Rhtslib", "Rhdf5lib", "HDF5Array", "rhdf5filters")
 any_failed_rhd <- check_pkg_install(rhd_pkgs)
 
@@ -928,17 +1004,25 @@ if (not_installed("GenomeInfoDbData")) {
         }
     )
 }
-library("GenomeInfoDbData")
+loadLibrary("GenomeInfoDbData")
 
-if (not_installed("GenomeInfoDb")) {
-    tryCatch(
-        pak::pkg_install("GenomeInfoDb", ask = F),
-        error = function(cond){
-            try_github_inst("Bioconductor/GenomeInfoDb")
-        }
-    )
+try_bio <- function(pkg){
+    if (not_installed(pkg)) {
+        tryCatch(
+            manual_bioc(pkg),
+            error = function(cond) {
+                pak::pkg_install(pkg, ask = F)
+            }
+        )
+    }
 }
-library("GenomeInfoDb")
+
+try_bio("GenomeInfoDb")
+
+try(
+BiocManager::install("GenomeInfoDb", update = TRUE, ask = FALSE, force = TRUE),
+silent = TRUE)
+
 
 if (not_installed("ff")) {
     install.packages("ff", type = "binary", ask = F, dependencies = T)
@@ -948,8 +1032,7 @@ if (not_installed("Hmisc")) {
     tryCatch(
         pak::pkg_install("Hmisc", ask = F),
         error = function(cond){
-            bio_url <- "https://cran.r-project.org/src/contrib/Hmisc_5.1-3.tar.gz"
-            install.packages(bio_url, repos = NULL, type = "source", ask = F, dependencies = T)
+            install_binary_tgz("Hmisc")
         }
     )
 }
@@ -969,66 +1052,35 @@ if (not_installed("karyoploteR")) {
     install_url(tgz_url)
 }
 
-if (not_installed("Rsamtools")) {
-    tryCatch(
-        manual_bioc("Rsamtools"),
-        error = function(cond) {
-            pak::pkg_install("Rsamtools", ask = F)
-        }
+
+
+
+try_bio("Rsamtools")
+try_bio("preprocessCore")
+try_bio("genefilter")
+
+if (not_installed("fields")) {
+    install.packages("fields", type = "binary", ask = FALSE, dependencies = TRUE)
+}
+
+# Main installation function
+install_minfi_pre <- function() {
+    pkgs_minfi <- c(
+        "GenomeInfoDb", "methods", "BiocGenerics", "GenomicRanges",
+        "SummarizedExperiment", "Biostrings", "bumphunter", "S4Vectors",
+        "Biobase", "IRanges", "beanplot", "RColorBrewer", "lattice", "nor1mix",
+        "siggenes", "limma", "preprocessCore", "illuminaio",
+        "DelayedMatrixStats", "mclust", "genefilter", "nlme", "reshape",
+        "MASS", "quadprog", "data.table", "GEOquery", "stats", "grDevices",
+        "graphics", "utils", "DelayedArray", "HDF5Array", "BiocParallel"
     )
-}
-
-
-bio_url <-
-    "https://bioconductor.org/packages/release/data/annotation/src/contrib"
-
-if (not_installed("FDb.InfiniumMethylation.hg19")) {
-    tryCatch(
-        pak::pkg_install("FDb.InfiniumMethylation.hg19", ask = F),
-        error = function(cond) {
-            install_url(file.path(bio_url, "org.Hs.eg.db_3.19.1.tar.gz"))
-            install_url(file.path(bio_url, "TxDb.Hsapiens.UCSC.hg19.knownGene_3.2.2.tar.gz"))
-            install_url(file.path(bio_url, "FDb.InfiniumMethylation.hg19_2.2.0.tar.gz"))
-        }
-    )
-}
-
-if (not_installed("IlluminaHumanMethylationEPICv2manifest")) {
-    try_github_inst("mwsill/IlluminaHumanMethylationEPICv2manifest")
-}
-
-if (not_installed("IlluminaHumanMethylation450kanno.ilmn12.hg19")) {
-    install_url(file.path(bio_url, "IlluminaHumanMethylation450kanno.ilmn12.hg19_0.6.1.tar.gz"))
-}
-
-if (not_installed("IlluminaHumanMethylation450kmanifest")) {
-    install_url(file.path(bio_url, "IlluminaHumanMethylation450kmanifest_0.4.0.tar.gz"))
-}
-
-if (not_installed("IlluminaHumanMethylationEPICanno.ilm10b2.hg19")) {
-    install_url(file.path(bio_url, "IlluminaHumanMethylationEPICanno.ilm10b2.hg19_0.6.0.tar.gz"))
-}
-
-if (not_installed("IlluminaHumanMethylationEPICanno.ilm10b4.hg19")) {
-    install_url(file.path(bio_url, "IlluminaHumanMethylationEPICanno.ilm10b4.hg19_0.6.0.tar.gz"))
+    for (pkg in pkgs_minfi) try_bio(pkg)
+    BiocManager::install(c( "GenomicRanges", "IRanges", "S4Vectors"),
+                         update = TRUE, ask = FALSE, force = FALSE)
 }
 
 if (not_installed("minfi")) {
-    if (not_installed("sparseMatrixStats")) {
-        pak::pkg_install("sparseMatrixStats", ask = F)
-    }
-    try_github_inst("mwsill/minfi")
-}
-
-
-if (not_installed("fields")) {
-    install_deps("fields")
-    tryCatch(
-        pak::pkg_install("fields", ask = F),
-        error = function(cond) {
-            manual_bioc("fields")
-        }
-    )
+    install_minfi_pre()
 }
 
 if (not_installed("RnBeads")) {
@@ -1059,8 +1111,8 @@ if (not_installed("RnBeads")) {
     pak::pkg_install("RnBeads", ask = F)
 }
 
-if (not_installed("conumee2.0")) {
-    try_github_inst("hovestadtlab/conumee2")
+if (not_installed("DNAcopy")) {
+    try_bio("DNAcopy")
 }
 
 any_fail <- check_pkg_install(preReqPkgs)
@@ -1076,7 +1128,12 @@ if (not_installed("Rcpp")) {
     tryCatch(
         pak::pkg_install("Rcpp", ask = F),
         error = function(cond) {
-            try_github_inst("RcppCore/Rcpp")
+            tryCatch(try_github_inst("RcppCore/Rcpp"),
+                     error = function(cond) {
+                         install.packages("Rcpp", type = "binary", ask = FALSE,
+                                          dependencies = TRUE)
+                     }
+                     )
         }
     )
 }
@@ -1101,6 +1158,12 @@ loadLibrary("BiocManager")
 
 terraDep <- c('tinytest', 'ncdf4', 'leaflet')
 check_pkg_install(terraDep)
+
+for (pk in terraDep) {
+    if (not_installed(pk))
+    install.packages(pk, type = "binary", ask = FALSE,
+                     dependencies = TRUE)
+}
 
 if (not_installed("terra")) {
     tryCatch(
@@ -1151,6 +1214,8 @@ if (not_installed("GenVisR")) {
 
 if (not_installed("forecast")) pak::pkg_install("forecast", ask = F)
 if (not_installed("quantreg")) pak::pkg_install("quantreg", ask = F)
+if (not_installed("stringfish")) install_binary_tgz("stringfish_0.17.0.tgz")
+if (not_installed("KEGGgraph")) install_binary_tgz("KEGGgraph_1.68.0.tgz", FALSE)
 
 Sys.setenv(TORCH_INSTALL = "1")
 options(needs.auto = TRUE)
@@ -1160,26 +1225,47 @@ msg_pkg <- function(li_name){
 }
 
 msg_pkg("core_util")
-any_fail3 <- check_pkg_install(core_util)
+core_fail <- check_pkg_install(core_util)
 msg_pkg("bioc_tools")
-any_fail3 <- check_pkg_install(bioc_tools)
+bioc_fail <- check_pkg_install(bioc_tools)
 msg_pkg("doc_report")
-any_fail3 <- check_pkg_install(doc_report)
+docr_fail <- check_pkg_install(doc_report)
 msg_pkg("parallel_work")
-any_fail3 <- check_pkg_install(parallel_work)
+para_fail <- check_pkg_install(parallel_work)
 msg_pkg("viz_graphics")
-any_fail3 <- check_pkg_install(viz_graphics)
+vizg_fail <- check_pkg_install(viz_graphics)
 msg_pkg("data_io")
-any_fail3 <- check_pkg_install(data_io)
+data_fail <- check_pkg_install(data_io)
 msg_pkg("dev_interop")
-any_fail3 <- check_pkg_install(dev_interop)
+devi_fail <- check_pkg_install(dev_interop)
 msg_pkg("misc_tools")
-any_fail3 <- check_pkg_install(misc_tools)
+misc_fail <- check_pkg_install(misc_tools)
+
+fail_pkgs <- c(core_fail, bioc_fail, docr_fail, para_fail, vizg_fail,
+               data_fail, devi_fail, misc_fail)
+
+if (length(fail_pkgs) > 0) {
+    message(
+        "The following packages failed to initially install:",
+        paste(fail_pkgs, collapse = " ")
+    )
+    for (pk in fail_pkgs) {
+        install_binary_tgz(pk)
+    }
+    still_missing <- fail_pkgs[!fail_pkgs %in% rownames(installed.packages())]
+    if (length(still_missing) > 0) {
+        librarian::shelf(still_missing, ask = FALSE, dependencies = TRUE)
+    }
+}
 
 invisible(gc())
 
 if (not_installed("foghorn")) {
     pak::pkg_install("foghorn", ask = F)
+}
+
+if (not_installed("mdthemes")) {
+    remotes::install_github("thomas-neitmann/mdthemes", upgrade = "never")
 }
 
 water_pkgs <- c("mlr", "wateRmelon", "RPMM", "impute")
