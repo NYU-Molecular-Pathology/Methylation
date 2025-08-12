@@ -275,9 +275,10 @@ loadMainPkgs <- function() {
     # CRAN from PPM snapshot (compact spec), Bioconductor official URLs
     pak::repo_add(CRAN = sprintf("PPM@%s", snapshot_date))
     
-    # Supply Bioconductor repos explicitly (stable and what BiocManager uses)
+    # Supply Bioconductor repos explicitly
     bioc_repos <- BiocManager::repositories(version = bioc_version)
-    pak::repo_add(bioc_repos)
+    bioc_repos <- bioc_repos[!names(bioc_repos) %in% c("CRAN")]
+    pak::repo_add(.list = as.list(bioc_repos))
 
     if (not_installed("needs")) manage_needs()
     options(needs.promptUser = FALSE)
