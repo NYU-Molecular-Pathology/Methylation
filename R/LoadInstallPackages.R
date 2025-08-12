@@ -392,6 +392,8 @@ startLoadingAll <- function(typeSrc, epicV2script) {
     message("Your R library path(s):\n", paste(.libPaths(), collapse = "\n"))
     checkMounts()
     library("base")
+    Sys.setenv(TORCH_INSTALL = "1")
+    options(needs.auto = TRUE)
     loadPacks()
     suppressWarnings(load_install_pkgs(classPacks, source_inst))
     #check_uniD_pkg()
