@@ -9,7 +9,7 @@
 
 # Define the specific versions and mirrors
 snapshot_date <- "2025-05-01"
-bioc_version  <- "3.22"
+bioc_version  <- "3.20"
 
 options(
     download.file.method = "curl",
