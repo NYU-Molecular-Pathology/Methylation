@@ -35,16 +35,7 @@ main_pkgs <- c("data.table", "openxlsx", "jsonlite", "RCurl", "readxl",
 message("\n================ Parameters input ================\n")
 message("token: ", token, "\ninputSheet: ", inputSheet, "\n")
 
-snapshot_date <- "2025-05-01"
-bioc_version  <- "3.22"
-
-options(
-    download.file.method = "curl",
-    repos = c(
-        CRAN = sprintf("https://packagemanager.posit.co/cran/%s", snapshot_date),
-        BiocManager::repositories(version = bioc_version)
-    )
-)
+options(repos = c(CRAN = "https://cran.r-project.org"))
 
 if (!"devtools" %in% rownames(installed.packages())) {
     install.packages("devtools", ask = FALSE, dependencies = TRUE)
