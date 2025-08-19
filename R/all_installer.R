@@ -15,25 +15,24 @@ if (getRversion() <= "4.2.2") {
     stop("Your R version is ", R.version.string, ". Update to 4.4.0 or later.")
 }
 
-options(askYesNo = function(msg, default, prompts) {
-    return(TRUE)
-})
+options(askYesNo = function(msg, default, prompts) {return(TRUE)})
 options(install.packages.compile.from.source = "always")
 Sys.setenv(R_COMPILE_AND_INSTALL_PACKAGES = "always")
-bioc_version  <- "3.22"
+
+bioc_version  <- "3.20"
+snapshot_date <- "2025-05-01"  # YYYY-MM-DD
+options(download.file.method = "libcurl")
+cran_ppm <- sprintf("https://packagemanager.posit.co/cran/%s/", snapshot_date)
+options(repos = c(CRAN = cran_ppm, CRAN_secondary = "https://cran.rstudio.com/"))
 
 # Configure BiocManager to use Posit Package Manager
-options(BioC_mirror = "https://packagemanager.posit.co/bioconductor/2025-06-30")
+options(BioC_mirror =  sprintf("https://packagemanager.posit.co/bioconductor/%s", snapshot_date))
 
 # Configure BiocManager to load its configuration from Package Manager
-options(BIOCONDUCTOR_CONFIG_FILE = "https://packagemanager.posit.co/bioconductor/2025-06-30/config.yaml")
+options(BIOCONDUCTOR_CONFIG_FILE = sprintf("https://packagemanager.posit.co/bioconductor/%s/config.yaml", snapshot_date))
 
 # Set the Bioconductor version to prevent defaulting to a newer version
 Sys.setenv("R_BIOC_VERSION" = bioc_version)
-
-# Configure a CRAN snapshot compatible with Bioconductor 3.22
-options(repos = c(CRAN = "https://packagemanager.posit.co/cran/2025-06-30"))
-
 
 supM <- function(pk) {
     return(suppressPackageStartupMessages(suppressWarnings(pk)))
@@ -84,16 +83,12 @@ check_and_install_mac_libs <- function(pkgs) {
 fix_brew_path <- function() {
     # Define the target directories to add to the PATH
     target_dirs <- c("/opt/homebrew/bin", "/usr/local/bin")
-
-    # Get the current PATH in the R session
     current_path <- strsplit(Sys.getenv("PATH"), ":")[[1]]
 
     # Add the target directories to the PATH if they are not already present
     new_path <- unique(c(target_dirs, current_path))
     Sys.setenv(PATH = paste(new_path, collapse = ":"))
     message("PATH updated for the current session.")
-
-    # Persist the change in ~/.Renviron for future sessions
     renviron_file <- file.path(Sys.getenv("HOME"), ".Renviron")
 
     # Ensure the target directories are reflected in ~/.Renviron
@@ -275,7 +270,7 @@ setup_compilers <- function() {
     symlink_llvm()
 }
 
-
+# FUNC: Returns boolean if package loads without messages
 loadLibrary <- function(pkgName) {
     suppressWarnings(suppressPackageStartupMessages(library(
         pkgName, verbose = FALSE, quietly = TRUE,
@@ -283,27 +278,26 @@ loadLibrary <- function(pkgName) {
     )))
 }
 
-# FUNC: Checks if a package is installed ---------------
+# FUNC: Checks if a package is installed
 not_installed <- function(pkgName) {
     return(!pkgName %in% rownames(installed.packages()))
 }
 
-# FUNC: Installs a package from binary file -----------------------------------
+# FUNC: Installs a package from binary file
 binary_install <- function(pkg) {
     if (not_installed(pkg)) {
         tryCatch(
-            install.packages(pkg, dependencies = T, ask = F, type = "binary"),
+            install.packages(pkg, dependencies = TRUE, ask = FALSE, type = "binary"),
             error = function(e) {
                 message(e)
-                message("trying to install as source")
-                install.packages(pkg, dependencies = T, ask = F)
+                message(paste("Attempting to install", pkg, "from source..."))
+                install.packages(pkg, dependencies = TRUE, ask = FALSE)
             }
         )
     }
 }
 
-
-# FUNC: Downloads Github repo locally then unzips it --------------------------
+# FUNC: Downloads Github repo locally then unzips it
 download_pkg_unzip <- function(git_repo, zip_name = "main.zip") {
     repo_url <- file.path("https://github.com", git_repo, "archive/refs/heads")
     url_path <- file.path(repo_url, zip_name)
@@ -313,7 +307,7 @@ download_pkg_unzip <- function(git_repo, zip_name = "main.zip") {
     utils::unzip(out_file, exdir = local_dir)
 }
 
-# FUNC: Downloads Github repo locally then installs ---------------------------
+# FUNC: Downloads Github repo locally then installs
 local_github_pkg_install <- function(git_repo) {
     repo_url <- file.path("https://github.com", git_repo, "archive/refs/heads")
     local_dir <- file.path(fs::path_home(), "github_pkgs")
@@ -334,27 +328,63 @@ local_github_pkg_install <- function(git_repo) {
     install.packages(pkg_dir, repo = NULL, type = "source", dependencies = T)
 }
 
-
-# FUNC: Installs package from a Github repository -----------------------------
+# FUNC: Installs package from a Github repository
 install_repo <- function(git_repo) {
 
     tryCatch(
         expr = {
             devtools::install_github(
-                git_repo, dependencies = T, upgrade = "always", type = "source",
+                git_repo, dependencies = TRUE, upgrade = "always", type = "source",
                 auth_token = NULL, subdir = basename(git_repo)
-                )
+            )
         },
         error = function(e) {
             devtools::install_github(
-                git_repo, dependencies = T, upgrade = "always", type = "source",
+                git_repo, dependencies = TRUE, upgrade = "always", type = "source",
                 auth_token = NULL)
         }
     )
 }
 
+# FUNC: Attempts to install from github using git without token
+safe_install_github <- function() {
+    options(ask = FALSE)
+    has_cmd <- function(cmd) nzchar(Sys.which(cmd))
+    if (has_cmd("git")) {
+        if (system2("git", args = c("ls-remote", "https://github.com/r-lib/remotes.git"),
+                    stdout = FALSE, stderr = FALSE) == 0) {
+            message("Git is already installed and working.")
+            return(invisible(TRUE))
+        }
+    }
+    macos <- identical(Sys.info()[["sysname"]], "Darwin")
+    if (!has_cmd("git") && macos && has_cmd("brew")) {
+        message("Installing git via Homebrew...")
+        system2("brew", args = "install git")
+        if (has_cmd("git")) message("Git installed successfully.")
+    }
+    if (not_installed("remotes")) {
+        install.packages("remotes", ask = FALSE, dependencies = TRUE)
+    }
+    token <- Sys.getenv("GITHUB_PAT", unset = "")
+    if (!nzchar(token)) message("No GITHUB_PAT detected. Proceeding unauthenticated.")
+    tryCatch({
+        remotes::install_github("r-lib/remotes", auth_token = if (nzchar(token)) token else NULL,
+                                upgrade = "never", dependencies = NA, quiet = TRUE)
+    }, error = function(e) {
+        url <- "https://api.github.com/repos/r-lib/remotes/tarball/HEAD"
+        dest <- tempfile(fileext = ".tar.gz")
+        utils::download.file(
+            url, dest, method = if ("libcurl" %in% capabilities()) "libcurl" else "auto",
+            mode = "wb", quiet = TRUE,
+            headers = if ("headers" %in% names(formals(utils::download.file)))
+                c("User-Agent: R-safe-install/1.0") else NULL)
+        utils::install.packages(dest, repos = NULL, type = "source", quiet = TRUE)
+    })
+}
 
-# FUNC: TryCatch for installing with devtools and install.packages ------------
+
+# FUNC: TryCatch for installing with devtools and install.packages
 try_github_inst <- function(git_repo) {
     message("Installing from repo: ", git_repo)
     tryCatch(
@@ -367,18 +397,7 @@ try_github_inst <- function(git_repo) {
     )
 }
 
-
-install_opts <- list(
-    dependencies = c("Depends", "Imports", "LinkingTo"),
-    ask = FALSE,
-    update = "never",
-    quiet = TRUE,
-    repos = 'http://cran.us.r-project.org',
-    Ncpus = 6
-)
-
-
-# FUNC: Quietly loads package library without messages ------------------------
+# FUNC: Quietly loads package library without messages
 quiet_load <- function(pkg_name) {
     libLoad <- FALSE
     if (isNamespaceLoaded(pkg_name) == F) {
@@ -395,8 +414,16 @@ quiet_load <- function(pkg_name) {
     return(pkg_vec)
 }
 
-# FUNC: Checks required package if not installs binary ------------------------
+# FUNC: Checks required package if not installs binary
 require_pkg <- function(pkg, pkg_type = "source") {
+    install_opts <- list(
+        dependencies = c("Depends", "Imports", "LinkingTo"),
+        ask = FALSE,
+        update = "never",
+        quiet = TRUE,
+        repos = 'http://cran.us.r-project.org',
+        Ncpus = 6
+    )
     install_opts$type <- pkg_type
     if (!pkg %in% rownames(installed.packages())) {
         do.call(install.packages, c(list(pkgs = pkg), install_opts))
@@ -404,42 +431,54 @@ require_pkg <- function(pkg, pkg_type = "source") {
     quiet_load(pkg)
 }
 
+# FUNC: Checks the pak package is installed and loaded
+ensure_pak <- function() {
+    if (not_installed("pak")) {
+        try(install.packages("pak", dependencies = TRUE, ask = FALSE), silent = T)
+    }
 
-# Check devtools and install package dependencies -----------------------------
+    if (not_installed("pak")) {
+        try(install.packages(
+            "pak",
+            repos = sprintf(
+                "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
+                .Platform$pkgType,
+                R.Version()$os,
+                R.Version()$arch
+            )
+        ), silent = T)
+    }
+
+    if (not_installed("pak")) {
+        try(install.packages("pak", dependencies = TRUE, ask = FALSE, type = "binary"), silent = T)
+    }
+
+    stopifnot(loadLibrary("pak"))
+}
+
+
+# Check devtools and BiocManager are installed and loaded
 require_pkg("devtools", "binary")
 require_pkg("utils", "binary")
 require_pkg("BiocManager", "binary")
 
+if (BiocManager::version() != bioc_version) {
+    BiocManager::install(version = bioc_version, ask = FALSE, update = FALSE)
+}
+
 biocRepos <- suppressMessages(BiocManager::repositories())
 rbase_pkgs <- rownames(installed.packages(priority = "base"))
 pkg_info <- utils::available.packages(repos = biocRepos)
+ensure_pak()
 
-if (not_installed("pak")) {
-    try(install.packages("pak", dependencies = T, ask = F), silent = T)
-}
-
-if (not_installed("pak")) {
-    try(install.packages("pak", repos = sprintf("https://r-lib.github.io/p/pak/stable/%s/%s/%s",
-                                            .Platform$pkgType, R.Version()$os, R.Version()$arch)),
-        silent = T)
-}
-
-if (not_installed("pak")) {
-    try(install.packages("pak", dependencies = T, ask = F, type = "binary"), silent = T)
-}
-
-stopifnot(loadLibrary("pak"))
-
-
+# FUNC: Installs a package using BiocManager
 manual_bioc <- function(bio_pkg) {
     if (not_installed(bio_pkg)) {
-        install.packages(bio_pkg,
-                         repos = "http://bioconductor.org/packages/release/bioc",
-                         type = "binary",
-                         ask = F)
+        install.packages(bio_pkg, repos = "http://bioconductor.org/packages/release/bioc",
+                         type = "binary", ask = FALSE)
     }
     if (!loadLibrary(bio_pkg)) {
-        BiocManager::install(bio_pkg, update = F, ask = F, dependencies = T)
+        BiocManager::install(bio_pkg, update = F, ask = FALSE, dependencies = T)
     }
     if (!loadLibrary(bio_pkg)) {
         try_github_inst(file.path("Bioconductor", bio_pkg))
@@ -447,7 +486,7 @@ manual_bioc <- function(bio_pkg) {
     loadLibrary(bio_pkg)
 }
 
-# Start execution -------------------------------------------------------------
+# Start execution
 
 if (is_macos) {
     # Execute the function to check and install macOS binaries
@@ -457,29 +496,35 @@ if (is_macos) {
 }
 
 if (not_installed("arrow")) {
-    install.packages('arrow', type = "binary", ask = F, dependencies = T,
-                     repos = c('https://apache.r-universe.dev',
-                               'https://cloud.r-project.org'))
+    tryCatch(
+        install.packages(
+            'arrow',
+            type = "binary",
+            ask = FALSE,
+            dependencies = TRUE,
+            repos = c(
+                'https://apache.r-universe.dev',
+                'https://cloud.r-project.org'
+            )
+        ),
+        error = function(e) pak::pkg_install('arrow', ask = FALSE)
+    )
 }
 
 bin_pkgs <- c(
-    # Core utilities and dependencies
-    "curl", "jsonlite", "mime", "openssl", "R6",
-    # Testing and coverage
-    "covr", "testthat",
-    # Web and image handling
-    "httpuv", "jpeg", "png", "xml2",
-    # Reporting and markdown (ensuring binary installation)
-    "knitr", "rmarkdown", "readr"
+    "curl", "jsonlite", "mime", "openssl", "R6", # Core utilities and dependencies
+    "covr", "testthat",               # Testing and coverage tools
+    "httpuv", "jpeg", "png", "xml2",  # Web and image handling
+    "knitr", "rmarkdown", "readr"     # Reporting and markdown
 )
 
-for (pkg in bin_pkgs) {
-    binary_install(pkg)
-}
+for (pkg in bin_pkgs) binary_install(pkg)
+
 
 if (not_installed("httr")) {
-    tryCatch(install.packages("httr", ask = F, dependencies = T),
-             error = function(e) binary_install("httr")
+    tryCatch(
+        install.packages("httr", ask = FALSE, dependencies = T),
+        error = function(e) binary_install("httr")
     )
 }
 
@@ -487,15 +532,15 @@ binary_install("librarian")
 binary_install("BiocManager")
 
 if (not_installed("BiocGenerics")) {
-    BiocManager::install("BiocGenerics", update = F, ask = F)
+    BiocManager::install("BiocGenerics", update = F, ask = FALSE)
 }
 
 stopifnot(loadLibrary("devtools"))
 stopifnot(loadLibrary("librarian"))
 stopifnot(loadLibrary("BiocManager"))
+safe_install_github()
 
-
-library("httr")
+loadLibrary("httr")
 
 avail_bioc_packs <- suppressMessages(BiocManager::available())
 
@@ -503,8 +548,8 @@ if (not_installed("stringr")) {
     install.packages("stringr", dependencies = TRUE, ask = FALSE)
 }
 
-library("stringr")
-
+loadLibrary("stringr")
+# FUNC: Returns the current R series (e.g., "4.2", "4.3", "4.4")
 get_r_series <- function() {
     major <- R.version$major
     minor <- strsplit(R.version$minor, "\\.")[[1L]][1L]
@@ -512,25 +557,52 @@ get_r_series <- function() {
     return(series)
 }
 
-detect_macos_flavor <- function() {
-    os <- Sys.info()[["sysname"]]
-    if (!identical(os, "Darwin")) {
-        stop("This resolver is intended for macOS binaries.")
+# FUNC: Detects the latest macOS CRAN flavor based on available directories
+detect_latest_macos_cran_flavor <- function() {
+    # Helper: Extract all href directory tokens from HTML lines
+    extract_dirs <- function(lines) {
+        m <- gregexpr("href=[\"']([^\"']+/)[\"']", lines, perl = TRUE)
+        toks <- unlist(regmatches(lines, m), use.names = FALSE)
+        hrefs <- tolower(sub(".*href=[\"']([^\"']+/)[\"'].*", "\\1", toks))
+        hrefs[grepl("/$", hrefs, useBytes = TRUE)]
     }
-    plat <- paste(R.version$platform, R.version$arch,
-                  Sys.info()[["machine"]], sep = " ")
-    if (grepl("arm64|aarch64", plat, ignore.case = TRUE)) {
-        return("big-sur-arm64")
-    } else if (grepl("x86_64", plat, ignore.case = TRUE)) {
-        return("big-sur-x86_64")
-    } else {
-        stop("Unsupported macOS architecture: ", plat)
+
+    # Helper: List subdirectories of a CRAN URL, handling potential errors
+    list_dirs <- function(url0) {
+        con <- try(url(url0, open = "rb"), silent = TRUE)
+        if (inherits(con, "try-error")) return(character(0))
+        on.exit(try(close(con), silent = TRUE), add = TRUE)
+        lines <- try(readLines(con, warn = FALSE), silent = TRUE)
+        if (inherits(lines, "try-error")) return(character(0))
+        dirs <- extract_dirs(lines)
+        # Strip trailing slashes and return unique directory names
+        unique(sub("/$", "", dirs))
     }
+
+    cran_root <- "https://cran.r-project.org/bin/macosx/"
+    root_dirs <- list_dirs(cran_root)
+    if (length(root_dirs) == 0L) {
+        return("unknown-arch")
+    }
+
+    # Filter for modern flavors that specify the CPU architecture
+    cand_flavors <- root_dirs[grepl("-(arm64|x86_64)$", root_dirs, perl = TRUE)]
+    if (length(cand_flavors) == 0L) {
+        return("unknown-arch")
+    }
+
+    sys_arch <- Sys.info()[["machine"]]
+    best_flavor <- cand_flavors[grepl(sys_arch, cand_flavors)]
+    if (length(best_flavor > 1)) {
+        return(best_flavor[1])
+    }
+    return(best_flavor)
 }
 
+# FUNC: Returns https root for macOS binary packages
 macos_binary_packages_roots <- function() {
     series <- get_r_series()
-    flavor <- detect_macos_flavor()
+    flavor <- detect_latest_macos_cran_flavor()
 
     cran <- file.path("https://cran.r-project.org/bin/macosx",
                       flavor, "contrib", series)
@@ -544,7 +616,6 @@ macos_binary_packages_roots <- function() {
                           flavor, "contrib", series)
     bioc_wf  <- file.path(bioc_base, "workflows/bin/macosx",
                           flavor, "contrib", series)
-
     roots <- c(cran, bioc, bioc_ann, bioc_exp, bioc_wf)
     return(roots)
 }
@@ -668,42 +739,50 @@ install_binary_tgz <- function(pkg_or_tgz, quiet = TRUE) {
     return(invisible(url))
 }
 
-# FUNC: Returns all packages that are not installed ----------------------------
+# FUNC: Returns all packages that are not installed
 check_needed <- function(pkgs) {
     neededPkgs <- pkgs[!pkgs %in% rownames(installed.packages())]
     return(neededPkgs)
 }
 
-# FUNC: Returns all package dependencies that are not installed ---------------
+# FUNC: Returns all package dependencies that are not installed
 get_pkg_deps <- function(pkgs) {
     deps_list <- unique(pak::pkg_deps(pkgs)$package)
     all_pkgs <- setdiff(deps_list, pkgs)
     return(check_needed(all_pkgs))
 }
 
-# FUNC: Gets and installs any package dependencies ----------------------------
+# FUNC: Gets and installs any package dependencies
 install_deps <- function(pkg) {
     any_deps <- get_pkg_deps(pkg)
     if (length(any_deps) > 0) {
-        pak::pkg_install(any_deps, ask = F)
+        pak::pkg_install(any_deps, ask = FALSE)
     }
 }
 
-# FUNC: Attempts source and binary package installation -----------------------
+# FUNC: Attempts source and binary package installation
 install_pkgs <- function(needed_pk, pkg_type = "source") {
+    install_opts <- list(
+        dependencies = c("Depends", "Imports", "LinkingTo"),
+        ask = FALSE,
+        update = "never",
+        quiet = TRUE,
+        repos = 'http://cran.us.r-project.org',
+        Ncpus = 6
+    )
     install_opts$type <- pkg_type
     tryCatch(
         do.call(install.packages, c(list(pkgs = needed_pk), install_opts)),
         error = function(e) {
             message("\nInitial installation failed! Trying binary install.\n")
             install_opts$type <- "binary"
-            install_binary_tgz()
+            install_binary_tgz(needed_pk)
             #do.call(install.packages, c(list(pkgs = needed_pk), install_opts))
         }
     )
 }
 
-# FUNC: Attempts source and binary install of Bioconductor --------------------
+# FUNC: Attempts source and binary install of Bioconductor
 install_bio_pkg <- function(new_pkg) {
     params <- list(dependencies = c("Depends", "Imports", "LinkingTo"),
                    ask = FALSE, update = TRUE)
@@ -723,19 +802,18 @@ install_bio_pkg <- function(new_pkg) {
     }
 }
 
-# FUNC: Installs a package from a tarball url ---------------------------------
+# FUNC: Installs a package from a tarball url
 install_url <- function(pkg_url){
     install.packages(
         pkg_url,
         repos = NULL,
         type = "source",
-        ask = F,
+        ask = FALSE,
         dependencies = T
     )
 }
 
-
-# FUNC: Installs any package dependencies and then the package ----------------
+# FUNC: Installs any package dependencies and then the package
 try_install <- function(new_pkg) {
     message("Trying to install required package: ", new_pkg)
     pkg_deps <- get_pkg_deps(new_pkg)
@@ -752,8 +830,7 @@ try_install <- function(new_pkg) {
 
 }
 
-
-# FUNC: Loads and installs necessary CRAN packages ----------------------------
+# FUNC: Loads and installs necessary CRAN packages
 check_pkg_install <- function(pkgs) {
 
     pkgs_needed <- check_needed(pkgs)
@@ -764,7 +841,7 @@ check_pkg_install <- function(pkgs) {
         )
         for (new_pkg in pkgs_needed) {
             tryCatch(
-                pak::pkg_install(new_pkg, ask = F),
+                pak::pkg_install(new_pkg, ask = FALSE),
                 error = function(cond) {
                     tryCatch(
                         try_install(new_pkg),
@@ -806,25 +883,29 @@ check_pkg_install <- function(pkgs) {
     }
 }
 
+# Ensures Java Installation and path in environment
+check_java_install <- function() {
+  if (not_installed("rJava")) {
+      try(install_binary_tgz("rJava"), silent = TRUE)
+  }
 
-if (not_installed("rJava")) {
-    try(install_binary_tgz("rJava_1.0-11.tgz"), silent = TRUE)
+  if (not_installed("rJava")) {
+      binary_install("rJava")
+  }
+
+  java_inst <- system("java -version", ignore.stdout = T, ignore.stderr = T) == 0
+
+  if (!java_inst) {
+      temurin <- "brew install --cask temurin"
+      system(temurin, ignore.stdout = TRUE, ignore.stderr = TRUE)
+  }
+  java_home <- system("/usr/libexec/java_home", intern = TRUE)
+  Sys.setenv(JAVA_HOME = java_home)
 }
 
-if (not_installed("rJava")) {
-    binary_install("rJava")
-}
+check_java_install()
 
-java_inst <- system("java -version", ignore.stdout = T, ignore.stderr = T) == 0
-
-if (!java_inst) {
-    temurin <- "brew install --cask temurin"
-    system(temurin, ignore.stdout = TRUE, ignore.stderr = TRUE)
-}
-java_home <- system("/usr/libexec/java_home", intern = TRUE)
-Sys.setenv(JAVA_HOME = java_home)
-
-# List Classifier Core Packages -----------------------------------------------
+# List Classifier Core Packages
 corePkgs <- c(
     'XML',
     "randomForest",
@@ -836,7 +917,7 @@ corePkgs <- c(
     "gmp"
 )
 
-# List Prerequisite Packages --------------------------------------------------
+# List Prerequisite Packages
 preReqPkgs <- c(
     # Foundational packages and database interfaces
     "MASS", "BH", "filelock", "rjson", "RSQLite", "DBI", "AnnotationDbi",
@@ -940,30 +1021,30 @@ misc_tools <- c(
     "xopen", "yaml", "stringdist"
 )
 
-biocPkgs <- c(
-    "conumee",
-    "lumi",
-    "methylumi"
-)
+# Group 10: Bioconductor remaining packages
+biocPkgs <- c("conumee", "lumi", "methylumi")
 
-
+# Continued install
 if (not_installed("mapview")) {
     tryCatch(
-        devtools::install_github("r-spatial/mapview", dependencies = T,
+        devtools::install_github("r-spatial/mapview", dependencies = TRUE,
                                  upgrade = "never", auth_token = NULL),
         error = function(e){
-            install.packages("mapview", dependencies = T, verbose = T,
-                             ask = F, type = "binary")
+            install.packages("mapview", dependencies = TRUE, verbose = T,
+                             ask = FALSE, type = "binary")
         }
     )
 }
 
 if (not_installed("XML")) {
-    try(install.packages("XML", configure.vars = "CPPFLAGS=-D_LIBCPP_DISABLE_AVAILABILITY", ask = F), silent = TRUE)
+    try(install.packages(
+        "XML", configure.vars = "CPPFLAGS=-D_LIBCPP_DISABLE_AVAILABILITY",
+        ask = FALSE), silent = TRUE)
 }
+
 any_failed0 <- check_pkg_install(corePkgs)
 
-if (not_installed("urca")) pak::pkg_install("urca", ask = F)
+if (not_installed("urca")) pak::pkg_install("urca", ask = FALSE)
 library("urca")
 
 if (not_installed("Rhdf5lib")) {
@@ -981,15 +1062,11 @@ if (not_installed("Rhtslib")) {
 stopifnot(!not_installed("Rhtslib"))
 
 if (not_installed("Rhdf5lib")) {
-    try(BiocManager::install(
-        "Rhdf5lib",
-        type = "source",
-        update = FALSE,
-        ask = FALSE,
-        configure.args = configure_args
-    ),
-    silent = TRUE
-    )
+    try(BiocManager::install("Rhdf5lib",
+                             type = "source",
+                             update = FALSE,
+                             ask = FALSE),
+        silent = TRUE)
 }
 
 
@@ -998,70 +1075,23 @@ any_failed_rhd <- check_pkg_install(rhd_pkgs)
 
 if (not_installed("GenomeInfoDbData")) {
     tryCatch(
-        pak::pkg_install("GenomeInfoDbData", ask = F),
+        pak::pkg_install("GenomeInfoDbData", ask = FALSE),
         error = function(cond){
             try_github_inst("Bioconductor/GenomeInfoDbData")
         }
     )
 }
+
 loadLibrary("GenomeInfoDbData")
 
-try_bio <- function(pkg){
-    if (not_installed(pkg)) {
-        tryCatch(
-            manual_bioc(pkg),
-            error = function(cond) {
-                pak::pkg_install(pkg, ask = F)
-            }
-        )
-    }
-}
-
-try_bio("GenomeInfoDb")
-
-try(
-BiocManager::install("GenomeInfoDb", update = TRUE, ask = FALSE, force = TRUE),
-silent = TRUE)
-
-
-if (not_installed("ff")) {
-    install.packages("ff", type = "binary", ask = F, dependencies = T)
-}
-
-if (not_installed("Hmisc")) {
-    tryCatch(
-        pak::pkg_install("Hmisc", ask = F),
-        error = function(cond){
-            install_binary_tgz("Hmisc")
-        }
-    )
-}
-
-if (not_installed("karyoploteR")) {
-    try(pak::pkg_install("karyoploteR", ask = F), silent = TRUE)
-}
-
-if (not_installed("karyoploteR")) {
-    bio_url <- "https://www.bioconductor.org/packages/release/bioc/bin/macosx"
-    karyo_tgz <- "karyoploteR_1.30.0.tgz"
-    if (arch != "x86_64") {
-        tgz_url <- file.path(bio_url, "big-sur-arm64/contrib/4.4", karyo_tgz)
-    } else{
-        tgz_url <- file.path(bio_url, "big-sur-x86_64/contrib/4.4", karyo_tgz)
-    }
-    install_url(tgz_url)
-}
-
-
-
-
-try_bio("Rsamtools")
-try_bio("preprocessCore")
-try_bio("genefilter")
-
-if (not_installed("fields")) {
-    install.packages("fields", type = "binary", ask = FALSE, dependencies = TRUE)
-}
+check_pkg_install("GenomeInfoDb")
+check_pkg_install("ff")
+check_pkg_install("Hmisc")
+check_pkg_install("karyoploteR")
+check_pkg_install("Rsamtools")
+check_pkg_install("preprocessCore")
+check_pkg_install("genefilter")
+check_pkg_install("fields")
 
 # Main installation function
 install_minfi_pre <- function() {
@@ -1074,19 +1104,140 @@ install_minfi_pre <- function() {
         "MASS", "quadprog", "data.table", "GEOquery", "stats", "grDevices",
         "graphics", "utils", "DelayedArray", "HDF5Array", "BiocParallel"
     )
-    for (pkg in pkgs_minfi) try_bio(pkg)
+    check_pkg_install(pkgs_minfi)
     BiocManager::install(c( "GenomicRanges", "IRanges", "S4Vectors"),
                          update = TRUE, ask = FALSE, force = FALSE)
 }
 
+# FUNC: Fixes and installs minfi from a specific commit for compatibility with GenomeinfoDb
+fix_and_install_minfi <- function() {
+    repo = "mwsill/minfi"
+    ref = "a5c555d"
+    build_vig = FALSE
+    req_pkgs <-
+        c("withr", "remotes", "callr", "pkgbuild", "desc", "BiocManager")
+    check_pkg_install(req_pkgs)
+    withr::with_tempdir({
+        # 1) Download the GitHub archive for the ref (no git ops)
+        url   <- sprintf("https://codeload.github.com/%s/tar.gz/%s", repo, ref)
+        tgz   <- file.path(getwd(), "minfi-src.tgz")
+        root  <- file.path(getwd(), "src-unpacked")
+        dir.create(root, showWarnings = FALSE, recursive = TRUE)
+        utils::download.file(url, tgz, mode = "wb", quiet = TRUE)
+
+        # 2) Unpack and locate the package root
+        utils::untar(tgz, exdir = root)
+        roots <- list.dirs(root, full.names = TRUE, recursive = FALSE)
+        if (length(roots) < 1L) { stop("Unpack failed: no root dir found.") }
+        src_dir   <- roots[1L]
+        desc_path <- file.path(src_dir, "DESCRIPTION")
+        ns_path   <- file.path(src_dir, "NAMESPACE")
+        if (!file.exists(desc_path)) { stop("DESCRIPTION missing.") }
+        if (!file.exists(ns_path))   { stop("NAMESPACE missing.") }
+
+        # 3) Ensure runtime deps are installed
+        if (not_installed("GenomeInfoDb")) {
+            tryCatch(
+                BiocManager::install("GenomeInfoDb", ask = FALSE, update = FALSE),
+                error = function(e) install_binary_tgz(pkg)
+            )
+        }
+        if (not_installed("GenomicRanges")) {
+            tryCatch(
+                BiocManager::install("GenomicRanges", ask = FALSE, update = FALSE),
+                error = function(e) install_binary_tgz(pkg)
+            )
+        }
+
+        # 4) Patch DESCRIPTION: ensure Imports entries, remove any 'Seqinfo' pkg
+        d <- desc::desc(file = desc_path)
+        deps <- tryCatch(d$get_deps(), error = function(e) utils::data.frame())
+        if (nrow(deps) && any(deps$package == "Seqinfo")) {
+            for (ty in unique(deps$type[deps$package == "Seqinfo"])) {
+                try(desc::desc_del_dep("Seqinfo", type = ty, file = desc_path),
+                    silent = TRUE)
+            }
+        }
+        ensure_import <- function(pkg) {
+            dd <- tryCatch(d$get_deps(), error = function(e) utils::data.frame())
+            need <- !(nrow(dd) && any(dd$package == pkg & dd$type == "Imports"))
+            if (need) {
+                desc::desc_set_dep(pkg, type = "Imports", file = desc_path)
+            }
+            return(invisible(TRUE))
+        }
+        ensure_import("GenomeInfoDb")
+        ensure_import("GenomicRanges")
+
+        # 5) Patch NAMESPACE:
+        ns <- readLines(ns_path, warn = FALSE)
+
+        # Drop any imports from a fictitious 'Seqinfo' package or class
+        drop_seqinfo <- grepl("^\\s*import\\(\\s*Seqinfo\\s*\\)\\s*$", ns) |
+            grepl("importFrom\\(\\s*Seqinfo\\s*,", ns) |
+            grepl("importClassesFrom\\(\\s*Seqinfo\\s*,", ns) |
+            grepl("importClassesFrom\\(\\s*GenomeInfoDb\\s*,\\s*Seqinfo\\s*\\)",
+                  ns) |
+            grepl("importFrom\\(\\s*GenomeInfoDb\\s*,\\s*Seqinfo\\s*\\)",
+                  ns)
+        if (any(drop_seqinfo)) { ns <- ns[!drop_seqinfo] }
+
+        # Remove fragile GenomeInfoDb importFrom for non-exported replacement generics
+        drop_gi_ifrom <- grepl(
+            "importFrom\\(\\s*GenomeInfoDb\\s*,.*(seqlevels|genome|seqlengths).*\\)",
+            ns
+        )
+        if (any(drop_gi_ifrom)) { ns <- ns[!drop_gi_ifrom] }
+
+        # Remove incorrect importMethodsFrom(GenomeInfoDb, ...)
+        drop_gi_imeth <- grepl(
+            "importMethodsFrom\\(\\s*GenomeInfoDb\\s*,", ns
+        )
+        if (any(drop_gi_imeth)) { ns <- ns[!drop_gi_imeth] }
+
+        # Ensure broad imports (safe, avoids non-export trap)
+        if (!any(grepl("^\\s*import\\(\\s*GenomeInfoDb\\s*\\)\\s*$", ns))) {
+            ns <- c("import(GenomeInfoDb)", ns)
+        }
+        if (!any(grepl("^\\s*import\\(\\s*GenomicRanges\\s*\\)\\s*$", ns))) {
+            ns <- c("import(GenomicRanges)", ns)
+        }
+
+        writeLines(ns, ns_path, useBytes = TRUE)
+
+        # 6) Build and install from the patched sources
+        build_args <- c("--no-manual")
+        if (!isTRUE(build_vig)) {
+            build_args <- c(build_args, "--no-build-vignettes")
+        }
+        tarball <- callr::r(
+            function(path, args) pkgbuild::build(path = path, args = args),
+            args = list(path = src_dir, args = build_args)
+        )
+
+        install_opts <- c("--no-multiarch", "--no-test-load")
+        remotes::install_local(
+            tarball,
+            upgrade = "never",
+            dependencies = TRUE,
+            quiet = FALSE,
+            INSTALL_opts = install_opts
+        )
+    })
+
+    suppressPackageStartupMessages(library(minfi, character.only = TRUE))
+    return(invisible(TRUE))
+}
+
 if (not_installed("minfi")) {
     install_minfi_pre()
+    fix_and_install_minfi()
 }
 
 if (not_installed("RnBeads")) {
     if (not_installed("gplots")) {
         install_deps("gplots")
-        pak::pkg_install("gplots", ask = F)
+        pak::pkg_install("gplots", ask = FALSE)
     }
     rn_deps <- c(
         "BiocGenerics",
@@ -1108,13 +1259,11 @@ if (not_installed("RnBeads")) {
     )
     check_pkg_install(rn_deps)
     install_deps("RnBeads")
-    pak::pkg_install("RnBeads", ask = F)
+    pak::pkg_install("RnBeads", ask = FALSE)
 }
 
-if (not_installed("DNAcopy")) {
-    try_bio("DNAcopy")
-}
 
+check_pkg_install("DNAcopy")
 any_fail <- check_pkg_install(preReqPkgs)
 any_fail2 <- check_pkg_install(biocPkgs)
 
@@ -1124,31 +1273,16 @@ if (not_installed("mgmtstp27")) {
     install_url(gitLink)
 }
 
-if (not_installed("Rcpp")) {
-    tryCatch(
-        pak::pkg_install("Rcpp", ask = F),
-        error = function(cond) {
-            tryCatch(try_github_inst("RcppCore/Rcpp"),
-                     error = function(cond) {
-                         install.packages("Rcpp", type = "binary", ask = FALSE,
-                                          dependencies = TRUE)
-                     }
-                     )
-        }
-    )
-}
-
-spat_config <-
-    '--with-proj-lib=/usr/local/lib/ --with-proj-include=/usr/local/include/'
-options(configure.args = c("sf" = spat_config))
+check_pkg_install("Rcpp")
 
 if (not_installed("sf")) {
+    spat_config <-
+        '--with-proj-lib=/usr/local/lib/ --with-proj-include=/usr/local/include/'
+    options(configure.args = c("sf" = spat_config))
     tryCatch(
-        install.packages("sf", type = "source", dependencies = T, ask = F),
-        error = function(e) {
-            remotes::install_github("r-spatial/sf", configure.args = spat_config,
-                                    dependencies = T, upgrade = "never")
-        }
+        remotes::install_github("r-spatial/sf", configure.args = spat_config,
+                                dependencies = TRUE, upgrade = "never"),
+        error = function(e) check_pkg_install("sf")
     )
 }
 
@@ -1159,86 +1293,43 @@ loadLibrary("BiocManager")
 terraDep <- c('tinytest', 'ncdf4', 'leaflet')
 check_pkg_install(terraDep)
 
-for (pk in terraDep) {
-    if (not_installed(pk))
-    install.packages(pk, type = "binary", ask = FALSE,
-                     dependencies = TRUE)
-}
-
-if (not_installed("terra")) {
-    tryCatch(
-        pak::pkg_install("terra", ask = F),
-        error = function(cond){
-            install.packages(
-                'terra', repos = 'https://rspatial.r-universe.dev', ask = F,
-                dependencies = T, verbose = T, Ncpus = 6)
-        }
-    )
-}
-
-if (not_installed("FField")) {
-    tryCatch(
-        pak::pkg_install("FField", ask = F),
-        error = function(cond) {
-            cran_link <-
-                "https://cran.r-project.org/src/contrib/Archive/FField/FField_0.1.0.tar.gz"
-            install_url(cran_link)
-        }
-    )
-}
-
-if (not_installed("vdiffr")) {
-    pak::pkg_install("vdiffr", ask = F)
-}
-
-if (not_installed("UCSC.utils")) {
-    pak::pkg_install("UCSC.utils", ask = F)
-}
+check_pkg_install("terra")
+check_pkg_install("FField")
+check_pkg_install("vdiffr")
+check_pkg_install("UCSC.utils")
 
 if (not_installed("GenVisR")) {
     if (not_installed("VariantAnnotation")) {
         tryCatch(
             manual_bioc("VariantAnnotation"),
             error = function(cond){
-                pak::pkg_install("VariantAnnotation", ask = F)
+                pak::pkg_install("VariantAnnotation", ask = FALSE)
             }
         )
     }
     tryCatch(
         try_github_inst("griffithlab/GenVisR"),
         error = function(cond){
-            pak::pkg_install("GenVisR", ask = F)
+            pak::pkg_install("GenVisR", ask = FALSE)
         }
     )
 }
 
-if (not_installed("forecast")) pak::pkg_install("forecast", ask = F)
-if (not_installed("quantreg")) pak::pkg_install("quantreg", ask = F)
-if (not_installed("stringfish")) install_binary_tgz("stringfish_0.17.0.tgz")
-if (not_installed("KEGGgraph")) install_binary_tgz("KEGGgraph_1.68.0.tgz", FALSE)
+check_pkg_install("forecast")
+check_pkg_install("quantreg")
+check_pkg_install("stringfish")
+check_pkg_install("KEGGgraph")
 
 Sys.setenv(TORCH_INSTALL = "1")
 options(needs.auto = TRUE)
 
-msg_pkg <- function(li_name){
-    message("Installing package list: ", li_name, "...", "\n")
-}
-
-msg_pkg("core_util")
 core_fail <- check_pkg_install(core_util)
-msg_pkg("bioc_tools")
 bioc_fail <- check_pkg_install(bioc_tools)
-msg_pkg("doc_report")
 docr_fail <- check_pkg_install(doc_report)
-msg_pkg("parallel_work")
 para_fail <- check_pkg_install(parallel_work)
-msg_pkg("viz_graphics")
 vizg_fail <- check_pkg_install(viz_graphics)
-msg_pkg("data_io")
 data_fail <- check_pkg_install(data_io)
-msg_pkg("dev_interop")
 devi_fail <- check_pkg_install(dev_interop)
-msg_pkg("misc_tools")
 misc_fail <- check_pkg_install(misc_tools)
 
 fail_pkgs <- c(core_fail, bioc_fail, docr_fail, para_fail, vizg_fail,
@@ -1260,9 +1351,7 @@ if (length(fail_pkgs) > 0) {
 
 invisible(gc())
 
-if (not_installed("foghorn")) {
-    pak::pkg_install("foghorn", ask = F)
-}
+check_pkg_install("foghorn")
 
 if (not_installed("mdthemes")) {
     remotes::install_github("thomas-neitmann/mdthemes", upgrade = "never")
