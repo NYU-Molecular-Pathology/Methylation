@@ -1081,7 +1081,7 @@ filterAbberations <- function(snvOut) {
 }
 
 
-printSnvs <- function(snvCsv) {
+printSnvs <- function(snvCsv, panel_607) {
     snvCsvCol <- c(
         "HGNC_gene",
         "AberrationType",
@@ -1092,20 +1092,26 @@ printSnvs <- function(snvCsv) {
         "normal_dp",
         "THERAPY_AVAILABILITY",
         "HGVSp_Short",
-        "SomaticStatus"
+        "QC.BioInfo.Filter",
+        "Variant.caller"
     )
     snvOutDf <- as.data.frame(read.delim(snvCsv, sep = ","))[, snvCsvCol]
     snvOut <- filterAbberations(snvOutDf)
+    snvOut$In_607_Panel <- ifelse(
+            snvOut$HGNC_gene %in% panel_607, "Yes", "No"
+        )
     makeDT("Philips Filtered Indels", snvOut)
     cat("\n\n")
     return(snvOutDf)
 }
+
 
 printSpecInfo <- function(samCsv) {
     samOut <- as.data.frame(read.delim(samCsv, sep = ","))[, c(1, 3:13)]
     makeDT("Philips Specimen Info", samOut)
     cat("\n\n")
 }
+
 
 printDiagInfo <- function(diagCsv) {
     diagCsvCols <- c(
@@ -1137,7 +1143,7 @@ PrintParseErr <- function(csvPath, tabTxt) {
 }
 
 # Makes Abberations Tab ------------------------------------------------------------
-makeAbTab <- function(sam, philipsFtp = "/Volumes/molecular/Molecular/Philips_SFTP") {
+makeAbTab <- function(sam, panel_607, philipsFtp = "/Volumes/molecular/Molecular/Philips_SFTP") {
     dumpDir <- get_ngs_path(outPath = file.path(getwd(), "zipfiles"), sam)
     
     if (is.null(dumpDir)) {
@@ -1158,7 +1164,7 @@ makeAbTab <- function(sam, philipsFtp = "/Volumes/molecular/Molecular/Philips_SF
     
     if (file.exists(snvCsv)) {
         philipsIndels <- tryCatch(
-            printSnvs(snvCsv),
+            printSnvs(snvCsv, panel_607),
             error = function(e) {
                 PrintParseErr(snvCsv, "SNV")
             }
@@ -1473,6 +1479,9 @@ LoopSampleTabs <- function(params) {
     tmb_tsv <- "./TMB_MSI/annotations.paired.tmb.validation.2callers.tsv"
     msi_tsv <- "./TMB_MSI/msi_validation.tsv"
     onco_wsh <- "/Volumes/CBioinformatics/jonathan/pact/OncoKB-Level1-Genes-Feb2025.xlsx"
+    gene_list <- "/Volumes/CBioinformatics/jonathan/pact/panel_607_genes.csv"
+    
+    panel_607 <- as.data.frame(read.table(gene_list, sep = ",", header = T))[, 1]
     
     tmb_dat <- as.data.frame(read.table(tmb_tsv, sep = "\t", header = T))
     msi_dat <- as.data.frame(read.table(msi_tsv, sep = "\t", header = T))
@@ -1502,7 +1511,7 @@ LoopSampleTabs <- function(params) {
         make_hs_metrics_tab(sam, norm_metrics, tumor_metrics, tumorSams)
         
         snvTab <- snvDt[samRows & snvDt$Variant == "SNV", ]
-        philipsIndels <- makeAbTab(sam)
+        philipsIndels <- makeAbTab(sam, panel_607)
         CreateVariantsTabs(philipsIndels, snvTab)
         
         cnvTab <- subset(cnvTab, select = -Variant)
