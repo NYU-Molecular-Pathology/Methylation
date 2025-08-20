@@ -5,21 +5,33 @@
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2025
 
-
 # Global Paths to Reference Files ---------------------------------------------
+gb <- globalenv(); assign("gb", gb)
 manifest_path = "/Volumes/CBioinformatics/Methylation/Manifests"
+source("/Volumes/CBioinformatics/Methylation/Rscripts/pull_redcap_manual.R")
 
 # User Input: Project Directory and Sample Sheet -----------------------------
-PROJ_DIR <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs/pull_redcap_idats"
-OUTPUT_DIR <- file.path(PROJ_DIR, "CNV_annotated_plots")
-sam_sheet <- "samplesheet_rds.csv"
 geneNames <- c("BRCA1", "FOXA1", "TP53")
-merged_name = NULL # Optional argument if two or more genes combined annotation
-min_probes = 4  # Minimum number of probes to bin for genes
-doXY = TRUE
+
+check_coverage <- FALSE # Should the probe gene coverage be checked?
+
+rd_numbers <- as.data.frame(read.csv("rd_numbers_NGS.csv"))[,1]
+samples_in <- NULL # "my_sample_list.xlsx"
+
+input_value <- if (is.null(rd_numbers)) {samples_in} else{ rd_numbers}
+
+PROJ_DIR <- file.path(path.expand("~"), "Documents/CNV_custom_test")
+sam_sheet <- "samplesheet_list.csv"
+OUTPUT_DIR <- file.path(PROJ_DIR, "CNV_annotated_plots")
 
 if (!dir.exists(OUTPUT_DIR)) {dir.create(OUTPUT_DIR, recursive = TRUE)}
 setwd(PROJ_DIR)
+gb$setDirectory(PROJ_DIR)
+gb$copy_idats_make_csv(copyToFolder = PROJ_DIR, sam_sheet, input_value)
+
+merged_name = NULL # Optional argument if two or more genes combined annotation
+min_probes = 4  # Minimum number of probes to bin for genes
+doXY = TRUE
 
 if (dir.exists(manifest_path)) {
     hg19_rds <- file.path(manifest_path, "ref_v1_hg19.rds")
@@ -31,20 +43,11 @@ if (dir.exists(manifest_path)) {
     manifest_path <- PROJ_DIR
 }
 
-snapshot_date <- "2025-05-01"
-bioc_version  <- "3.22"
-
-options(
-    download.file.method = "curl",
-    repos = c(
-        CRAN = sprintf("https://packagemanager.posit.co/cran/%s", snapshot_date),
-        BiocManager::repositories(version = bioc_version)
-    )
-)
-
 pkgs <- c(
     "fs",
     "readr",
+    "curl",
+    "data.table",
     "S4Vectors",
     "IRanges",
     "GenomicRanges",
@@ -64,54 +67,96 @@ pkgs <- c(
 )
 
 # Helper function: Check if a package is not installed
-not_installed <- function(pkgName) return(!pkgName %in% rownames(installed.packages()))
+not_installed <-
+    function(pkgName) return(!pkgName %in% rownames(installed.packages()))
 
-# Helper function: Install pak package if not already installed
-install_pak <- function() {
-    tryCatch(
-        install.packages(
-            "pak", repos = sprintf("https://r-lib.github.io/p/pak/stable/%s/%s/%s",
-                                   .Platform$pkgType, R.Version()$os, R.Version()$arch)),
-        error = function(e) {
-            install.packages("pak", ask = FALSE, dependencies = TRUE,
-                             repos = "https://packagemanager.rstudio.com/all/latest"
-            )
-        })
+options(repos = c(CRAN = "https://cran.rstudio.com/"))
+
+# Helper function to silently load packages and message if loaded successfully
+quite_load <- function(pkg) {
+    bool <- suppressWarnings(suppressPackageStartupMessages(
+        library(pkg, character.only = TRUE, logical.return = TRUE)))
+    message(paste(pkg, "loaded...", bool))
+    if (bool == FALSE)
+        stop(paste("Package", pkg, "failed to load. Install manually."))
+    return(invisible(bool))
 }
 
-# Function to ensure required packages are installed and loaded
-ensure_packages <- function(pkgs) {
-    installed_pkgs <- rownames(installed.packages())
-    missing_pkgs <- setdiff(pkgs, installed_pkgs)
-    if (length(missing_pkgs) > 0) {
-        message(missing_pkgs)
-        if (!"pak" %in% installed_pkgs) install_pak()
-        library("pak")
-        for (pkg in missing_pkgs) {
-            tryCatch(
-                pak::pkg_install(pkg, ask = FALSE),
-                error = function(e) {
+# Helper function to install the 'pak' package
+install_pak <- function() {
+    pak_arch <- sprintf("https://r-lib.github.io/p/pak/stable/%s/%s/%s",
+                        .Platform$pkgType, R.Version()$os, R.Version()$arch)
+    tryCatch(
+        install.packages("pak", repos = pak_arch, dependencies = T, ask = F),
+        error = function(e) install.packages("pak", dependencies = T, ask = F)
+    )
+}
+
+# Iteratively install packages that are missing from the system
+loop_install_pkgs <- function(missing_pkgs) {
+    bioc_packages <- rownames(available.packages(repos = BiocManager::repositories()))
+    for (pkg in missing_pkgs) {
+        tryCatch(
+            pak::pkg_install(pkg, ask = FALSE),
+            error = function(e) {
+                if (pkg %in% bioc_packages) {
+                    BiocManager::install(pkg, ask = FALSE, dependencies = TRUE)
+                } else {
                     install.packages(pkg, ask = FALSE, dependencies = TRUE)
                 }
-            )
-        }
+            }
+        )
     }
-    stopifnot(all(sapply(pkgs, function(pkg) {
-        suppressWarnings(suppressPackageStartupMessages(library(
-            pkg, mask.ok = TRUE, character.only = TRUE, logical.return = TRUE
-        )))
-    })))
 }
 
+# Ensure all required packages are installed and the libaries are loaded
+ensure_packages <- function(pkgs) {
+    installed_pk <- rownames(installed.packages())
+    missing_pkgs <- setdiff(pkgs, installed_pk)
+    if (length(missing_pkgs) > 0) {
+        message(missing_pkgs)
+        if (!"BiocManager" %in% installed_pk) {
+            install.packages("BiocManager", dependencies = TRUE, ask = FALSE)
+        }
+        quite_load("BiocManager")
+        if (!"pak" %in% installed_pk) install_pak()
+        quite_load("pak")
+        loop_install_pkgs(missing_pkgs)
+    }
+    for (pkg in pkgs) quite_load(pkg)
+}
+
+
 if (not_installed("devtools")) install.packages("devtools", ask = F, dependencies = T)
-library("devtools")
+quite_load("devtools")
+
 if (not_installed("BiocManager")) install.packages("BiocManager", ask = F, dependencies = T)
+quite_load("BiocManager")
+
 ensure_packages(pkgs)
 
 if (not_installed("conumee2")) {
     devtools::install_github("hovestadtlab/conumee2", subdir = "conumee2", upgrade = "always")
 }
 ensure_packages("conumee2")
+quite_load("conumee2")
+
+if (not_installed("minfi")) {
+    BiocManager::install("minfi", update = TRUE, force = TRUE, ask = FALSE)
+}
+
+needs_update <- utils::compareVersion(as.character(utils::packageVersion("minfi")), "1.52.1") < 0
+
+if (needs_update) {
+    if ("minfi" %in% loadedNamespaces()) try(base::unloadNamespace("minfi"), silent = TRUE)
+    BiocManager::install("minfi", update = TRUE, force = TRUE, ask = FALSE)
+}
+
+quite_load("minfi")
+quite_load("IlluminaHumanMethylation450kmanifest")
+quite_load("IlluminaHumanMethylationEPICmanifest")
+quite_load("IlluminaHumanMethylationEPICv2manifest")
+
 
 # If no usable Python is found, bootstrap a Miniconda env named "r-reticulate"
 if (!reticulate::py_available(initialize = FALSE)) {
@@ -431,6 +476,15 @@ save_output <- function(cnv_obj, p_interactive, geneRatios) {
     }
 
     output_file <- file.path(OUTPUT_DIR, "Gene_cnv_Log2Ratios.csv")
+    geneRatios$CNV <- ""
+
+    geneRatios$CNV <- dplyr::case_when(
+        geneRatios$Log2Val >= 0.75 ~ "AMPLIFICATION",
+        geneRatios$Log2Val >= 0.30 ~ "GAIN",
+        geneRatios$Log2Val <= -0.60 ~ "DELETION",
+        geneRatios$Log2Val <= -0.30 ~ "LOSS",
+        TRUE ~ "NEUTRAL"
+    )
 
     if (!file.exists(output_file)) {
         write.csv(geneRatios, output_file, row.names = FALSE)
@@ -459,7 +513,7 @@ merge_gene_regions <- function(gene_gr, merged_name) {
 }
 
 
-con_path        <- file.path(path.package("conumee2"), "data")
+con_path <- file.path(path.package("conumee2"), "data")
 exclude_regions <- get(load(file.path(con_path, "exclude_regions.rda")))
 load(file.path(con_path, "exclude_regions.rda"))
 
@@ -488,6 +542,7 @@ annotate_cnv_with_genes <- function(sam_data, geneNames, merged_name = NULL, ref
 
     RGset <- get_rgset(sam_data)
     array_info <- detect_array_info(RGset)
+    print(array_info)
     gene_gr <- get_gene_ranges(geneNames, array_info)
 
     if (!is.null(merged_name)) {
@@ -496,6 +551,14 @@ annotate_cnv_with_genes <- function(sam_data, geneNames, merged_name = NULL, ref
 
     Mset <- minfi::preprocessIllumina(RGset, normalize = "controls")
     query_cnv <- conumee2::CNV.load(Mset)
+
+    if (!all(rownames(Mset) == rownames(query_cnv@intensity))) {
+        message("rownames(Mset):\n", paste(head(rownames(Mset)), collapse = "\n"))
+        message("rownames(query_cnv@intensity):\n",
+                paste(head(rownames(query_cnv@intensity)), collapse = "\n"))
+        stop("Update conumee2 and minfi to have correct manifest version")
+    }
+
     anno <- conumee2::CNV.create_anno(
         array_type = array_info$array,
         chrXY = doXY,
@@ -504,14 +567,20 @@ annotate_cnv_with_genes <- function(sam_data, geneNames, merged_name = NULL, ref
         detail_regions = gene_gr
     )
 
-    ref <- NULL
-    ref <- if (is.null(refs)) {get_reference(array_info)} else {
-        switch(array_info$genome, hg19 = refs$hg19, hg38 = refs$hg38)
+    if (is.null(refs)) {
+        ref <- get_reference(array_info)
+    } else {
+        if (array_info$genome == "hg19") {
+            ref <- refs$hg19
+        } else {
+            ref <- refs$hg38
+        }
     }
+
 
     aligned <- alignCNVObjects(query_obj = query_cnv, ref_obj = ref, anno_obj = anno)
     colnames(aligned$ref@intensity) <- colnames(ref@intensity)
-    cnv_obj <- get_cnv_obj(aligned, sam_data$Sample_Name)
+    cnv_obj <- suppressWarnings(get_cnv_obj(aligned, sam_data$Sample_Name))
     geneNames <- unique(paste(gene_gr$symbol))
     p_interactive <- get_final_plot(cnv_obj, anno, gene_gr)
     geneRatios <- get_gene_ratios(cnv_obj, geneNames)
@@ -553,6 +622,93 @@ load_manifests <- function() {
 
     return(array_manifests)
 }
+
+
+read_manifest_subset <- function(path, selec_cols = NULL) {
+    message("Reading manifest: ", basename(path))
+    if (is.null(selec_cols)) {
+        desired <- c(
+            "CHR",
+            "MAPINFO",
+            "IlmnID",
+            "Relation_to_UCSC_CpG_Island",
+            "UCSC_RefGene_Group"
+        )
+    }else{
+        desired <- selec_cols
+    }
+
+    classes <- c(
+        CHR = "character",
+        MAPINFO = "integer",
+        IlmnID = "character",
+        Relation_to_UCSC_CpG_Island = "character",
+        UCSC_RefGene_Group = "character"
+    )
+
+    dt <- data.table::fread(
+        file = path,
+        skip = 7,
+        select = desired,
+        colClasses = classes,
+        fill = TRUE,
+        showProgress = TRUE
+    )
+    return(dt[])
+}
+
+
+load_local_manifests <- function() {
+    csv_450K <- file.path(manifest_path, "humanmethylation450_15017482_v1-2.csv")
+    csv_EPICv1 <- file.path(manifest_path, "infinium-methylationepic-v-1-0-b5-manifest-file.csv")
+    csv_EPICv2 <- file.path(manifest_path, "EPIC-8v2-0_A2.csv")
+
+    man_450k <- read_manifest_subset(csv_450K)
+    man_epic <- read_manifest_subset(csv_EPICv1)
+    man_epic2 <- read_manifest_subset(csv_EPICv2)
+    array_manifests <- list("450k" = man_450k, "EPIC" = man_epic, "EPICv2" = man_epic2)
+    return(array_manifests)
+}
+
+
+# Flatten all list-columns by joining unique elements with a semicolon.
+flatten_list_columns <- function(df) {
+    sep = ";"
+    is_list_col <- vapply(df, is.list, logical(1))
+
+    if (any(is_list_col)) {
+        list_names <- names(df)[is_list_col]
+
+        for (nm in list_names) {
+            df[[nm]] <- vapply(
+                X = df[[nm]],
+                FUN = function(cell) {
+                    if (is.null(cell)) {
+                        return(NA_character_)
+                    } else {
+                        val <- cell
+                        if (is.list(val)) {
+                            val <- unlist(val, recursive = TRUE, use.names = FALSE)
+                        }
+                        if (length(val) == 0) {
+                            return(NA_character_)
+                        } else {
+                            val <- as.character(val)
+                            val <- unique(val)
+                            return(paste(val, collapse = sep))
+                        }
+                    }
+                },
+                FUN.VALUE = character(1)
+            )
+        }
+    } else {
+        df <- df
+    }
+
+    return(df)
+}
+
 
 # Returns list of genes with enough probes to plot and saves coverage summary
 evaluate_gene_coverage <- function(geneNames, array_manifests, exclude_probes = NULL) {
@@ -644,6 +800,7 @@ evaluate_gene_coverage <- function(geneNames, array_manifests, exclude_probes = 
         quote     = FALSE
     )
     detail_df <- do.call(rbind, detail_list)
+    detail_df <- flatten_list_columns(detail_df)
 
     write.table(
         detail_df,
@@ -665,7 +822,8 @@ evaluate_gene_coverage <- function(geneNames, array_manifests, exclude_probes = 
         summary   = summary_df,
         details   = detail_df
     ))
-    return(final_out$good)
+    good_genes <- final_out$good
+    return(good_genes)
 }
 
 
@@ -684,13 +842,16 @@ load_references <- function(manifest_path) {
 loop_samples <- function(manifest_path, sam_sheet, geneNames, merged_name) {
     targets <- read.csv(sam_sheet)
     refs <- load_references(manifest_path)
-    array_manifests <- load_manifests()
-    geneNames <- evaluate_gene_coverage(geneNames, array_manifests)
     for (samRow in 1:nrow(targets)) {
         sam_data <- targets[samRow, ]
         message(paste0(capture.output(sam_data), collapse = "\n"))
         annotate_cnv_with_genes(sam_data, geneNames, merged_name, refs = refs)
     }
+}
+
+if (check_coverage) {
+    array_manifests <- load_local_manifests()
+    geneNames <- evaluate_gene_coverage(geneNames, array_manifests)
 }
 
 
