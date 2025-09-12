@@ -300,7 +300,7 @@ callApiImport <- function(rcon, recordName, runID) {
 
 callApiFile <- function(rcon, recordName, fiPath = NULL, fld = "classifier_pdf") {
     msgFunName(cpOutLnk, "callApiFile")
-    message("\n", gb$mkBlue("Importing Record Report for: "), recordName)
+    message("\n", gb$mkBlue("Importing Record Report for:"), " ", recordName)
 
     if (is.null(fiPath)) {
         fiPath <- dir(
