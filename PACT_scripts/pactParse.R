@@ -4,7 +4,7 @@
 ## Author: Jonathan Serrano
 ## Date Created: August 16, 2021
 ## Version: 1.0.1
-## Copyright (c) NYULH Jonathan Serrano, 2024
+## Copyright (c) NYULH Jonathan Serrano, 2025
 
 library("base"); args <- commandArgs(TRUE); gb <- globalenv(); assign("gb", gb)
 
@@ -351,49 +351,79 @@ FindMissingPairs <- function(extraNormals,
                              philipsExport,
                              sheetPairTumor,
                              sheetPairNorm,
-                             mainSheet, rawData) {
-
-    if (extraNormals) {
+                             mainSheet,
+                             rawData) {
+    # Determine which side has unpaired entries relative to Philips export
+    if (isTRUE(extraNormals)) {
         message(crayon::bgRed("More NORMALS than Tumors on this run!"))
         unmatchedSamples <- which(!philipsExport$`Tumor DNA/RNA Number` %in% sheetPairTumor)
     } else {
         message(crayon::bgRed("More TUMORS than Normals on this run!"))
-        unmatchedSamples <-  which(!philipsExport$`Normal DNA/RNA Number` %in% sheetPairNorm)
+        unmatchedSamples <- which(!philipsExport$`Normal DNA/RNA Number` %in% sheetPairNorm)
     }
-
-    if (length(unmatchedSamples) == 0) {
-        unique_values <- rawData$Test_Number[!duplicated(rawData$Test_Number) &
-                                                 !duplicated(rawData$Test_Number, fromLast = TRUE)]
-
-        if (length(unique_values) > 0) {
-            unmatchedSamples <- which(rawData$Test_Number %in% unique_values)
-            missingSams <- mainSheet$Sample_ID[unmatchedSamples]
-            dnaMissingPair <- stringr::str_detect(mainSheet$Sample_ID, pattern = missingSams)
+    
+    # Helper to safely build a single regex pattern from a character vector
+    build_pattern <- function(x) {
+        x <- unique(stats::na.omit(x))
+        x <- x[nzchar(x)]
+        if (length(x) == 0L) {
+            return("")
         } else {
+            return(paste(x, collapse = "|"))
+        }
+    }
+    
+    # If Philips shows everything paired, try heuristics on the run sheet itself
+    if (length(unmatchedSamples) == 0L) {
+        # Heuristic A: “unique” Test_Number values (appear only once → likely unpaired)
+        uniq_mask <- !duplicated(rawData$Test_Number) & !duplicated(rawData$Test_Number, fromLast = TRUE)
+        unique_values <- rawData$Test_Number[uniq_mask]
+        
+        if (length(unique_values) > 0L) {
+            # Use B-numbers (DNA #) of the unique cases to search within Sample_ID strings
+            missing_vec <- rawData$`DNA #`[rawData$Test_Number %in% unique_values]
+            pat <- build_pattern(missing_vec)
+            if (!nzchar(pat)) {
+                return(rep(FALSE, length.out = nrow(mainSheet)))
+            }
+            dnaMissingPair <- stringr::str_detect(mainSheet$Sample_ID, pattern = pat)
+            return(dnaMissingPair)
+        } else {
+            # Heuristic B: rows starting with "0_" then search for any tumor B-numbers within them
             start_with_0 <- grepl("^0_", mainSheet$Sample_ID)
             missingSams <- mainSheet$Sample_ID[start_with_0]
-            contains_any_b <- function(x, substrings) {
-                if (any(sapply(substrings, function(sub) grepl(sub, x)))) {
-                    return(x)
-                }
+            if (length(missingSams) == 0L) {
+                return(rep(FALSE, length.out = nrow(mainSheet)))
             }
-            extraSams <- unlist(lapply(missingSams, contains_any_b, substrings = sheetPairTumor))
-            extraSams <- paste(extraSams, collapse = "|")
-            dnaMissingPair <- stringr::str_detect(mainSheet$Sample_ID, pattern = extraSams)
+            # Search for any tumor B-number string within those “0_” entries
+            extraSams <- vapply(
+                X = missingSams,
+                FUN.VALUE = character(1),
+                FUN = function(x) {
+                    hit <- any(vapply(sheetPairTumor, function(sub) grepl(sub, x, fixed = TRUE), logical(1)))
+                    if (isTRUE(hit)) x else ""
+                }
+            )
+            pat <- build_pattern(extraSams)
+            if (!nzchar(pat)) {
+                return(rep(FALSE, length.out = nrow(mainSheet)))
+            }
+            dnaMissingPair <- stringr::str_detect(mainSheet$Sample_ID, pattern = pat)
+            return(dnaMissingPair)
         }
-
-        return(dnaMissingPair)
     }
-
-    missingSams <-
-        paste(if (extraNormals) {
-            sheetPairNorm[unmatchedSamples]
-        } else {
-            sheetPairTumor[unmatchedSamples]
-        }, collapse = "|")
-
-    dnaMissingPair <- stringr::str_detect(mainSheet$Sample_ID, pattern = missingSams)
-
+    
+    # Philips reports explicit mismatches: build pattern from the appropriate side
+    missing_vec <- if (isTRUE(extraNormals)) {
+        sheetPairNorm[unmatchedSamples]
+    } else {
+        sheetPairTumor[unmatchedSamples]
+    }
+    pat <- build_pattern(missing_vec)
+    if (!nzchar(pat)) {
+        return(rep(FALSE, length.out = nrow(mainSheet)))
+    }
+    dnaMissingPair <- stringr::str_detect(mainSheet$Sample_ID, pattern = pat)
     return(dnaMissingPair)
 }
 
