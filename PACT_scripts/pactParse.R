@@ -353,78 +353,79 @@ FindMissingPairs <- function(extraNormals,
                              sheetPairNorm,
                              mainSheet,
                              rawData) {
-    # Determine which side has unpaired entries relative to Philips export
-    if (isTRUE(extraNormals)) {
-        message(crayon::bgRed("More NORMALS than Tumors on this run!"))
-        unmatchedSamples <- which(!philipsExport$`Tumor DNA/RNA Number` %in% sheetPairTumor)
-    } else {
-        message(crayon::bgRed("More TUMORS than Normals on this run!"))
-        unmatchedSamples <- which(!philipsExport$`Normal DNA/RNA Number` %in% sheetPairNorm)
-    }
-    
-    # Helper to safely build a single regex pattern from a character vector
+    # Build a single regex pattern safely from a character vector
     build_pattern <- function(x) {
         x <- unique(stats::na.omit(x))
         x <- x[nzchar(x)]
-        if (length(x) == 0L) {
-            return("")
-        } else {
-            return(paste(x, collapse = "|"))
-        }
+        if (length(x) == 0L) "" else paste(x, collapse = "|")
     }
-    
-    # If Philips shows everything paired, try heuristics on the run sheet itself
-    if (length(unmatchedSamples) == 0L) {
-        # Heuristic A: “unique” Test_Number values (appear only once → likely unpaired)
+
+    # Always return a logical vector aligned to mainSheet rows
+    empty_flag <- rep(FALSE, length.out = nrow(mainSheet))
+
+    if (isTRUE(extraNormals)) {
+        message(crayon::bgRed("More NORMALS than Tumors on this run!"))
+        unmatched <- which(!philipsExport$`Tumor DNA/RNA Number` %in% sheetPairTumor)
+    } else {
+        message(crayon::bgRed("More TUMORS than Normals on this run!"))
+        unmatched <- which(!philipsExport$`Normal DNA/RNA Number` %in% sheetPairNorm)
+    }
+
+    # If Philips shows all pairs present, fall back to heuristics on the run sheet
+    if (length(unmatched) == 0L) {
+        # Heuristic A: “unique” Test_Number values (occur exactly once → likely unpaired)
         uniq_mask <- !duplicated(rawData$Test_Number) & !duplicated(rawData$Test_Number, fromLast = TRUE)
-        unique_values <- rawData$Test_Number[uniq_mask]
-        
-        if (length(unique_values) > 0L) {
-            # Use B-numbers (DNA #) of the unique cases to search within Sample_ID strings
-            missing_vec <- rawData$`DNA #`[rawData$Test_Number %in% unique_values]
+        unique_tests <- rawData$Test_Number[uniq_mask]
+        if (length(unique_tests) > 0L) {
+            # Prefer DNA # as identifiers for matching mainSheet$Sample_ID
+            missing_vec <- rawData$`DNA #`[rawData$Test_Number %in% unique_tests]
             pat <- build_pattern(missing_vec)
-            if (!nzchar(pat)) {
-                return(rep(FALSE, length.out = nrow(mainSheet)))
-            }
-            dnaMissingPair <- stringr::str_detect(mainSheet$Sample_ID, pattern = pat)
-            return(dnaMissingPair)
+            if (!nzchar(pat)) return(empty_flag)
+            return(stringr::str_detect(mainSheet$Sample_ID, pattern = pat))
         } else {
             # Heuristic B: rows starting with "0_" then search for any tumor B-numbers within them
-            start_with_0 <- grepl("^0_", mainSheet$Sample_ID)
-            missingSams <- mainSheet$Sample_ID[start_with_0]
-            if (length(missingSams) == 0L) {
-                return(rep(FALSE, length.out = nrow(mainSheet)))
-            }
-            # Search for any tumor B-number string within those “0_” entries
-            extraSams <- vapply(
-                X = missingSams,
-                FUN.VALUE = character(1),
-                FUN = function(x) {
-                    hit <- any(vapply(sheetPairTumor, function(sub) grepl(sub, x, fixed = TRUE), logical(1)))
-                    if (isTRUE(hit)) x else ""
-                }
-            )
-            pat <- build_pattern(extraSams)
-            if (!nzchar(pat)) {
-                return(rep(FALSE, length.out = nrow(mainSheet)))
-            }
-            dnaMissingPair <- stringr::str_detect(mainSheet$Sample_ID, pattern = pat)
-            return(dnaMissingPair)
+            start0 <- grepl("^0_", mainSheet$Sample_ID)
+            if (!any(start0)) return(empty_flag)
+            # Search for any tumor B-number within those “0_” entries
+            tum_pat <- build_pattern(sheetPairTumor)
+            if (!nzchar(tum_pat)) return(empty_flag)
+            keep <- stringr::str_detect(mainSheet$Sample_ID[start0], pattern = tum_pat)
+            res <- empty_flag
+            res[which(start0)[keep]] <- TRUE
+            return(res)
         }
     }
-    
-    # Philips reports explicit mismatches: build pattern from the appropriate side
+
+    ## Philips reports explicit mismatches:
+    # Primary identifiers from Philips (may include NAs)
     missing_vec <- if (isTRUE(extraNormals)) {
-        sheetPairNorm[unmatchedSamples]
+        philipsExport$`Normal DNA/RNA Number`[unmatched]
     } else {
-        sheetPairTumor[unmatchedSamples]
+        philipsExport$`Tumor DNA/RNA Number`[unmatched]
     }
+
     pat <- build_pattern(missing_vec)
+
+    # If those are NA/empty, build a fallback from rawData rows sharing the test numbers
     if (!nzchar(pat)) {
-        return(rep(FALSE, length.out = nrow(mainSheet)))
+        tests <- philipsExport$`Test Number`[unmatched]
+        rd <- rawData[rawData$Test_Number %in% tests, , drop = FALSE]
+        if (nrow(rd) == 0L) return(empty_flag)
+
+        if (isTRUE(extraNormals)) {
+            # Pull normals’ DNA numbers; if none detected, fall back to all DNA # for those tests
+            cand <- rd$`DNA #`[grepl("(?i)norm", rd$`Type & Tissue`)]
+            if (!length(cand)) cand <- rd$`DNA #`
+        } else {
+            # Pull tumors’ DNA numbers; if none detected, fall back to all DNA # for those tests
+            cand <- rd$`DNA #`[grepl("(?i)tum", rd$`Type & Tissue`)]
+            if (!length(cand)) cand <- rd$`DNA #`
+        }
+        pat <- build_pattern(cand)
+        if (!nzchar(pat)) return(empty_flag)
     }
-    dnaMissingPair <- stringr::str_detect(mainSheet$Sample_ID, pattern = pat)
-    return(dnaMissingPair)
+
+    stringr::str_detect(mainSheet$Sample_ID, pattern = pat)
 }
 
 
