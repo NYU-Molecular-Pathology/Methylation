@@ -9,7 +9,13 @@
 
 # Define the specific versions and mirrors
 snapshot_date <- "2025-05-01"
-bioc_version  <- "3.20"
+
+if (!"BiocManager" %in% rownames(installed.packages())) {
+    install.packages("BiocManager", ask = FALSE, dependencies = TRUE,
+                     Ncpus = max(1L, parallel::detectCores() - 1L))
+}
+
+bioc_version  <- paste0(BiocManager::version())
 
 options(
     download.file.method = "curl",
