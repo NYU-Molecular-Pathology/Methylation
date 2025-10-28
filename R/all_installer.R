@@ -15,24 +15,47 @@ if (getRversion() <= "4.2.2") {
     stop("Your R version is ", R.version.string, ". Update to 4.4.0 or later.")
 }
 
-options(askYesNo = function(msg, default, prompts) {return(TRUE)})
-options(install.packages.compile.from.source = "always")
+## Non-interactive installs and compilation policy
+options(
+    askYesNo = function(msg, default, prompts) { return(TRUE) },
+    install.packages.compile.from.source = "always",
+    download.file.method = "libcurl"
+)
 Sys.setenv(R_COMPILE_AND_INSTALL_PACKAGES = "always")
 
-bioc_version  <- "3.20"
-snapshot_date <- "2025-05-01"  # YYYY-MM-DD
-options(download.file.method = "libcurl")
+## Pins
+bioc_version  <- "3.22"           # Bioconductor release (aligns with R 4.5)
+snapshot_date <- "2025-10-01"     # CRAN snapshot date (YYYY-MM-DD)
+
+## Posit Package Manager (PPM) endpoints
 cran_ppm <- sprintf("https://packagemanager.posit.co/cran/%s/", snapshot_date)
-options(repos = c(CRAN = cran_ppm, CRAN_secondary = "https://cran.rstudio.com/"))
+bioc_ppm_base <- sprintf("https://packagemanager.posit.co/bioconductor/%s/", bioc_version)
 
-# Configure BiocManager to use Posit Package Manager
-options(BioC_mirror =  sprintf("https://packagemanager.posit.co/bioconductor/%s", snapshot_date))
+## Ensure BiocManager uses PPM (and does not reach bioconductor.org)
+options(BioC_mirror = bioc_ppm_base)
+Sys.setenv(
+    R_BIOC_VERSION = bioc_version,
+    BIOCONDUCTOR_ONLINE_VERSION_DIAGNOSIS = "FALSE",
+    BIOCONDUCTOR_CONFIG_FILE = sprintf("%sconfig.yaml", bioc_ppm_base)
+)
 
-# Configure BiocManager to load its configuration from Package Manager
-options(BIOCONDUCTOR_CONFIG_FILE = sprintf("https://packagemanager.posit.co/bioconductor/%s/config.yaml", snapshot_date))
+## Compose one authoritative repos vector via BiocManager
+if (!"BiocManager" %in% rownames(installed.packages())) {
+    install.packages("BiocManager", repos = cran_ppm, ask = FALSE, dependencies = TRUE,
+                     Ncpus = max(1L, parallel::detectCores() - 1L))
+}
 
-# Set the Bioconductor version to prevent defaulting to a newer version
-Sys.setenv("R_BIOC_VERSION" = bioc_version)
+## Use BiocManager to generate all Bioconductor sub-repositories + CRAN (PPM)
+repos_vec <- BiocManager::repositories(
+    version = bioc_version,
+    site_repository = cran_ppm
+)
+options(repos = repos_vec)
+
+## Optional: sanity check
+message("Configured repositories:")
+print(getOption("repos"))
+
 
 supM <- function(pk) {
     return(suppressPackageStartupMessages(suppressWarnings(pk)))
