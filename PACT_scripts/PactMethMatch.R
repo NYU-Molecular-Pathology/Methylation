@@ -313,12 +313,14 @@ getPactFolder <- function(inputSheet) {
 }
 
 # Returns the file path to the PACT run worksheet
+# Returns the file path to the PACT run worksheet
 getFilePath <- function(inputSheet) {
     runFolder <- getPactFolder(inputSheet)
     inputFi <- file.path(runFolder, paste0(inputSheet, ".xlsm"))
     if (!file.exists(inputFi)) {
         inputFi <- getAltPath(inputFi)
     }
+    message("Using PACT run worksheet file:\n", inputFi)
     return(inputFi)
 }
 
@@ -353,15 +355,17 @@ parseWorksheet <- function(inputFi) {
 # Parses the input file depending on if the input is a csv file or a xlsx file path
 getCaseValues <- function(inputSheet, readFlag) {
     isSamSheet <- stringr::str_detect(inputSheet, "-SampleSheet")
-    hasFileSep <- stringr::str_detect(inputSheet, .Platform$file.sep)
+    isFilePath <- stringr::str_detect(inputSheet, .Platform$file.sep)
 
     if (readFlag && isSamSheet) {
+        message("Parsing Data from Demux SampleSheet.csv file...")
         vals2find <- utils::read.csv(inputSheet, skip = 19)[, c(6, 7, 9)]
         vals2find <- as.data.frame(vals2find[!grepl("H20|SERACARE|HAPMAP", vals2find[, 2]),])
         return(vals2find)
     }
 
     if (readFlag && !isSamSheet) {
+        message("Parsing Data from .csv file that is not a Demux SampleSheet...")
         vals2find <- read.csv(inputSheet)
         if (ncol(vals2find) > 1) {
             vals2find <- unlist(lapply(vals2find, identity))
@@ -369,11 +373,14 @@ getCaseValues <- function(inputSheet, readFlag) {
         return(as.data.frame(unique(vals2find[vals2find != ""])))
     }
 
-    if (!readFlag && hasFileSep) {
+    if (!readFlag && isFilePath) {
+        message("Parsing Data from .xlsm/.xlsx file path...")
         vals2find <- parseWorksheet(inputSheet)
         return(vals2find)
     }
-
+    # Default case: inputSheet is a PACT ID, get the file path
+    message("Parsing Data from PACT RUN ID: ", inputSheet,
+            " finding run worksheet...")
     pact_xlsm <- getFilePath(inputSheet)
     vals2find <- parseWorksheet(pact_xlsm)
     return(vals2find)
