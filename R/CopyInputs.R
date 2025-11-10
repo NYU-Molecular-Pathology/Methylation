@@ -21,12 +21,25 @@ msgParams <- function(...) {
     message("\nParam passed: ", crayon::bgGreen(paste(deparse(substitute(...)), "=", ...)), "\n")
 }
 
+# DEFAULT DIRECTORY PATHS -----------------------------------------------------
+cbVol <- "/Volumes/CBioinformatics/Methylation"
+moVol <- "/Volumes/molecular"
+rsVol <- "/Volumes/snudem01labspace"
+
+mnp.pk.loc = file.path(cbVol, "classifiers/mnp.v12epicv2")
+methDir = file.path(cbVol, "Clinical_Runs")
+clinDrv = file.path(moVol, "MOLECULAR LAB ONLY/NYU-METHYLATION")
+rschOut = file.path(rsVol, "FINAL_PDF_Reports_Brain")
+clinOut = file.path(moVol, "MOLECULAR/MethylationClassifier")
+rsch.idat = file.path(rsVol, "idats")
+clin.idat = file.path(moVol, "MOLECULAR/iScan")
+
 # Changes the working directory using the system CD command
 setDirectory <- function(foldr) {
     msgFunName(cpInLnk,"setDirectory")
     bsDir = paste("cd", foldr)
     mm2 = crayon::white$bgRed("Location Not Found:", foldr)
-
+    
     if (dir.exists(foldr)) {
         system(bsDir)
         setwd(foldr)
@@ -40,14 +53,14 @@ CreateRunDir <- function(newRun) {
     if (endsWith(newRun, "/")) {
         newRun <- substr(newRun, 1, nchar(newRun) - 1)
     }
-
+    
     message(crayon::bgGreen("New Run Path:"), "\n", newRun)
-
+    
     if (!dir.exists(newRun)) {
         dir.create(newRun, recursive = T)
         Sys.chmod(newRun, "0777", use_umask = FALSE)
     }
-
+    
     setDirectory(newRun)
     return(newRun)
 }
@@ -58,9 +71,9 @@ setRunDir <- function(runID = NULL, workFolder = NULL) {
     msgFunName(cpInLnk, "setRunDir")
     msgParams(runID)
     msgParams(workFolder)
-
-    workFolder <- ifelse(is.null(workFolder), gb$defaultDir, workFolder)
-
+    
+    workFolder <- ifelse(is.null(workFolder), defaultDir, workFolder)
+    
     if (is.null(runID)) {
         runID <- paste0(basename(getwd()))
     }
@@ -86,7 +99,7 @@ check_idat_sizes <- function(runFolder) {
                       full.names = TRUE)
     idat_sizes <- round(file.size(idat_files) / 1e6, 1)
     mb_unique <- unique(idat_sizes)
-
+    
     if (length(mb_unique) > 1) {
         mb_sizes <- c(14.4, 13.7, 10.3, 8.1)
         miss_copied <- !idat_sizes %in% mb_sizes
@@ -156,11 +169,11 @@ MakeLogFile <- function(infoData, logFile) {
 copyBaseIdats <- function(allFi, idatPath = NULL) {
     msgFunName(cpInLnk, "copyBaseIdats")
     suppressPackageStartupMessages(library("cli"))
-
+    
     if (is.null(idatPath)) {
         idatPath <- getwd()
     }
-
+    
     # Check read permission (necessary for copying)
     readable <- fs::file_access(allFi, mode = "read")
     if (any(readable == F)) {
@@ -169,21 +182,21 @@ copyBaseIdats <- function(allFi, idatPath = NULL) {
         MakeLogFile(infoData, "read_error_idat.txt")
         allFi <- allFi[readable]
     }
-
+    
     cli::cli_progress_bar("Copying files", total = length(allFi))
-
+    
     for (f in allFi) {
         tryCatch(
             fs::file_copy(f, file.path(getwd(), basename(f)), overwrite = TRUE),
             error = function(e) {
                 infoData <- paste("Failed to copy:", f)
                 cli::cli_alert_danger(infoData)
-                gb$MakeLogFile(infoData, "missing_idat_files.txt")
+                MakeLogFile(infoData, "missing_idat_files.txt")
             }
         )
         cli::cli_progress_update()  # Updates progress
     }
-
+    
     cli::cli_progress_done()  # Mark progress as complete
     check_success_copy(allFi)
 }
@@ -196,7 +209,7 @@ WarnMounts <- function(idat.dir){
         message(
             crayon::bgRed("Share drive not found, ensure path is accessible:"),
             "\n", idat.dir
-            )
+        )
         stopifnot(dir.exists(idat.dir))
     }
 }
@@ -234,7 +247,7 @@ CheckIdatsReal <- function(ssheet, allFi) {
 
 VerifyIdatFound <- function(foundIdat, otherIdat, toBeFound, extr.idat){
     if (any(foundIdat) == F) {
-
+        
         message(crayon::bgRed("Still missing idat files not in External folder:"))
         DataFrameMessage(toBeFound)
         return(NULL)
@@ -284,14 +297,14 @@ GetExternalIdats <- function(allFi, ssheet, extr.idat) {
         " ",
         extr.idat
     )
-
+    
     if (length(allFi) > 0) {
         stillMissing <- ListMissedIdats(allFi, basesNeeded)
     } else{
         stillMissing <- basesNeeded %in% basesNeeded
         allFi <- NULL
     }
-
+    
     if (any(stillMissing) == T) {
         message("Missing idats:\n", DataFrameMessage(ssheet[stillMissing, ]))
         idatsToAdd <- GetIdats2Add(basesNeeded[stillMissing], extr.idat)
@@ -309,29 +322,27 @@ GetExternalIdats <- function(allFi, ssheet, extr.idat) {
 # FUN: Returns list of idat files that exist on Molecular and SnuderlLab drives -
 get.idats <- function(csvNam = "samplesheet.csv", runDir = NULL) {
     msgFunName(cpInLnk, "get.idats")
-    rsch.idat <- gb$rsch.idat
-    clin.idat <- gb$clin.idat
-    extr.idat <- file.path(gb$rsch.idat, "External")
+    extr.idat <- file.path(rsch.idat, "External")
     WarnMounts(rsch.idat)
     WarnMounts(clin.idat)
-
+    
     if (is.null(runDir)) {
         runDir <- getwd()
     }
-
+    
     if (!file.exists(csvNam)) {
         message("Cannot find your sheet named:", csvNam)
         stopifnot(file.exists(csvNam))
     }
-
+    
     ssheet = read.csv(csvNam, strip.white = T)
     allFi <- getAllFiles(idatDir = c(rsch.idat, clin.idat),
                          csvNam = csvNam)
-
+    
     # Check existence
     exists <- fs::file_exists(allFi)
     allFi <- allFi[exists]
-
+    
     if (length(allFi) == 0) {
         allFi <- GetExternalIdats(allFi, ssheet, extr.idat)
     }
@@ -457,7 +468,7 @@ search.redcap <- function(rd_numbers,
         message("You must provide an ApiToken!")
     }
     stopifnot(!is.null(token))
-    rcon <- redcapAPI::redcapConnection(gb$apiLink, token)
+    rcon <- redcapAPI::redcapConnection(apiLink, token)
     if (is.null(flds)) {
         flds = c(
             "record_id",
