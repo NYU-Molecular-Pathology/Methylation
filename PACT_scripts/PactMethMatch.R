@@ -508,41 +508,48 @@ CheckMethPaths <- function(methData) {
     for (i in 1:length(methData$`Report Path`)) {
         currPath <- methData$`Report Path`[i]
         currSplit <- stringr::str_split_fixed(currPath, "/", 11)[1, ]
-        if (stringr::str_detect(currSplit[10], "MGDM") == F) {
+        if (stringr::str_detect(currSplit[10], "MGDM") == FALSE) {
             next
         }
-        runYear <- stringr::str_split_fixed(currSplit[10],"-", 2)[1,1]
+        runYear <- stringr::str_split_fixed(currSplit[10], "-", 2)[1, 1]
         runYear <- paste0("20", runYear)
         currSplit[9] <- runYear
         newPath <- paste(currSplit, collapse = "/")
         methData[i, "Report Path"] <- newPath
     }
     checkPaths <- GetVolumePaths(methData)
-    anyPathsFalse <- file.exists(checkPaths) == F
+    anyPathsFalse <- file.exists(checkPaths) == FALSE
     if (any(anyPathsFalse)) {
         message("Fixing broken file paths...")
         toReplace <- basename(checkPaths[anyPathsFalse])
         mainDirs <- dirname(checkPaths[anyPathsFalse])
-        if (!dir.exists(mainDirs)) {
-            correct_dir <- dir(
-                path = dirname(mainDirs),
-                pattern = basename(mainDirs),
-                full.names = T
-            )
-            mainDirs <- correct_dir
+        mainDirs <- unique(mainDirs)
+        for (x in 1:length(mainDirs)) {
+            if (!dir.exists(mainDirs[x])) {
+                correct_dir <- dir(
+                    path = dirname(mainDirs[x]),
+                    pattern = basename(mainDirs[x]),
+                    full.names = TRUE
+                )
+                mainDirs[x] <- correct_dir
+            }
         }
         for (missing in toReplace) {
-            patt <- stringr::str_split_fixed(missing, ".html", 2)[1,1]
-            file_found <- dir(path = mainDirs, pattern = patt, full.names = T)
+            patt <- stringr::str_split_fixed(missing, ".html", 2)[1, 1]
+            file_found <- dir(path = mainDirs, pattern = patt, full.names = TRUE)
             if (length(file_found) > 0) {
                 toSwap <- which(grepl(missing, methData$`Report Path`))
-                newPath <- stringr::str_replace(methData$`Report Path`[toSwap], missing, basename(file_found))
+                newPath <- stringr::str_replace(
+                    methData$`Report Path`[toSwap],
+                    missing,
+                    basename(file_found)
+                )
                 message("Updating file path:\n", newPath)
                 methData$`Report Path`[toSwap] <- newPath
             }
         }
         checkPaths <- GetVolumePaths(methData)
-        anyPathMissed <- file.exists(checkPaths) == F
+        anyPathMissed <- file.exists(checkPaths) == FALSE
         if (any(anyPathMissed)) {
             msg1 <- "Some paths to html reports need editing in MethylMatch.xlsx sheet!"
             msg2 <- "Fix the following paths in worksheet 'Report Path' column that do not exist:"
