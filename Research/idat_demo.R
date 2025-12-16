@@ -172,7 +172,7 @@ stopifnot(identical(colnames(betas), targets[[sampleNameCol]]))
 
 ## ------------------------------------------------------------------
 ## 1) Adding in DEMO columns in `targets`
-##    (These are synthetic example annotations; replace with REAL metadata when available.)
+## (These are synthetic example annotations; replace with REAL metadata when available.)
 ## ------------------------------------------------------------------
 n <- nrow(targets)
 
@@ -187,12 +187,12 @@ if (!("Batch" %in% colnames(targets))) {
 }
 
 if (!("Sex" %in% colnames(targets))) {
-    ## Example: alternating F/M
-    targets$Sex <- factor(rep(c("F", "M"), length.out = n), levels = c("F", "M"))
+    ## Example: Made up F/M sample labels
+    targets$Sex <- factor(sample(rep(c("F", "M"), length.out = n)),levels = c("F", "M"))
 }
 
 if (!("Age" %in% colnames(targets))) {
-    ## Example: deterministic ages (useful for a continuous annotation)
+    ## Example: deterministic ages (useful for when you have a continuous annotation)
     targets$Age <- 30 + ((seq_len(n) - 1L) %% 25L)
 }
 
