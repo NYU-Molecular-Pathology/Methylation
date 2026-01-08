@@ -4,7 +4,7 @@
 ## Author: Jonathan Serrano
 ## Date Created: August 16, 2021
 ## Version: 1.0.1
-## Copyright (c) NYULH Jonathan Serrano, 2025
+## Copyright (c) NYULH Jonathan Serrano, 2026
 
 library("base"); args <- commandArgs(TRUE); gb <- globalenv(); assign("gb", gb)
 
@@ -136,19 +136,9 @@ write_to_log <- function(recordName, logFile = NULL) {
 loadPacks <- function() {
     SilentInstall("devtools")
 
-    if (!requireNamespace("redcapAPI", quietly = T)) {
-        params = list('nutterb/redcapAPI', dependencies = T,
-                      upgrade = "never", type = "source")
-        do.call(devtools::install_github, c(params))
-    }
-    libLoad("redcapAPI")
-
-    pkgs <- c("foreach", "jsonlite", "RCurl", "readxl", "stringr")
+    pkgs <- c("foreach", "jsonlite", "RCurl", "readxl", "stringr", "httr", "fs",
+              "crayon", "dplyr", "tibble", "data.table")
     SilentInstall(pkgs)
-
-    if (!(utils::packageVersion("redcapAPI") >= "2.7.4")) {
-        install.packages("redcapAPI", ask = F, update = T, dependencies = T)
-    }
 }
 
 
@@ -1362,87 +1352,62 @@ AltParseFormat <- function(worksheetPath, runID) {
 }
 
 
-PostRedcapCurl <- function(rcon, datarecord, retcon = 'ids') {
-    message(crayon::bgMagenta("REDCap Output:"))
-    tryCatch(
-        expr = {RCurl::postForm(
-            rcon$url, token = rcon$token, content = 'record', format = 'json',
-            type = 'flat', data = datarecord,
-            returnContent = retcon, returnFormat = 'csv')
-        },
-        error = function(e) {message("REDCap push failed!\n", e)},
-        finally = message(datarecord)
-    )
-}
-
-
-# Generate Email notification and attach csv file -----------------------------
-emailNotify <- function(record, rcon) {
-    record$pact_csv_email <- "pact_csv_email"
-    datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox = T)
-    PostRedcapCurl(rcon, datarecord)
-    brick_message("Email Notification Created")
-}
-
-# Calls API for CSV file ------------------------------------------------------
-validateInputs <- function(rcon, recordName, fiPath) {
-    if (is.null(rcon) || !is.list(rcon)) {
-        stop("rcon should be a list")
-    }
-    if (!is.character(recordName) || length(recordName) != 1) {
-        stop("recordName should be a single character string.")
-    }
-    if (!file.exists(fiPath)) {
-        stop("The file specified as fiPath does not exist.")
-    }
-}
-
-# Uploads CSV file to REDCap --------------------------------------------------
-callApiFileCsv <- function(rcon, recordName, fiPath) {
-    validateInputs(rcon, recordName, fiPath)
-
-    upload_success <- try(redcapAPI::importFileToRecord(
-        rcon,
-        file = fiPath,
-        record = recordName,
-        event = NULL,
-        field = "pact_csv_sheet"
-    ), silent = T)
-
-    if (upload_success == T) {
-        message("File uploaded to REDCap successfully:\n", fiPath)
-    } else {
-        message("File failed to upload to REDCap in callApiFileCsv:\n", fiPath)
-    }
-}
-
-
-# Connect to REDCap and send email attachments of csv file --------------------
 pushToRedcap <- function(outVals, token = NULL) {
-
     stopifnot(!is.null(token) & !is.null(outVals))
+
     runID <- outVals[[1]]
     outFile <- outVals[[2]]
+    stopifnot(is.character(runID), is.character(outFile), length(outFile) == 1L, file.exists(outFile))
+
     api_url <- "https://redcap.nyumc.org/apps/redcap/api/"
+    to_data_json <- function(df) {
+        jsonlite::toJSON(unname(split(df, seq_len(nrow(df)))), auto_unbox = TRUE)
+    }
 
-    rcon <- redcapAPI::redcapConnection(api_url, token)
-    record = data.frame(record_id = runID, pact_run_number = runID)
-    datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox = T)
+    # 1) create/update record + set pact_run_number
+    rec_json <- to_data_json(data.frame(record_id = runID, pact_run_number = runID, stringsAsFactors = FALSE))
 
-    PostRedcapCurl(rcon, datarecord, retcon = 'nothing')
-    callApiFileCsv(rcon, runID, outFile)
-
-    tryCatch(
-        redcapAPI::importFiles(
-            rcon = rcon,
-            file = outFile,
-            record = runID,
-            field = "pact_csv_sheet",
-            repeat_instance = 1
+    httr::POST(
+        api_url,
+        body = list(
+            token = token, content = "record", action = "import",
+            format = "json", type = "flat",
+            overwriteBehavior = "overwrite",
+            returnContent = "nothing", returnFormat = "json",
+            data = rec_json
         ),
-        error = function(e) {message("REDCap file upload error failed:\n", e)}
+        encode = "form",
+        httr::timeout(120)
     )
-    emailNotify(record, rcon)
+
+    # 2) upload file to pact_csv_sheet
+    httr::POST(
+        api_url,
+        body = list(
+            token = token, content = "file", action = "import",
+            record = runID, field = "pact_csv_sheet",
+            file = httr::upload_file(outFile)
+        ),
+        encode = "multipart",
+        httr::timeout(120)
+    )
+
+    # 3) set email flag pact_csv_email = "pact_csv_email"
+    email_json <- to_data_json(data.frame(
+        record_id = runID, pact_csv_email = "pact_csv_email", stringsAsFactors = FALSE))
+
+    httr::POST(
+        api_url,
+        body = list(
+            token = token, content = "record", action = "import",
+            format = "json", type = "flat",
+            overwriteBehavior = "overwrite",
+            returnContent = "nothing", returnFormat = "json",
+            data = email_json
+        ),
+        encode = "form",
+        httr::timeout(120)
+    )
 }
 
 
@@ -1486,7 +1451,6 @@ MakeValidationSheet <- function(sheetHead, mainSheet, has_validation) {
     outFile <- WriteMainSheet(mainSheet_val, sheetHead_val)
     outValsVal <- c(runID = mainSheet_val[1, "Sample_Project"],
                     outFile = outFile)
-    pushToRedcap(outValsVal, token)
     mainSheet <- mainSheet[!has_validation, ]
     row.names(mainSheet) <- 1:nrow(mainSheet)
     return(mainSheet)
