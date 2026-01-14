@@ -4,7 +4,7 @@
 ## Date Created: July 30, 2025
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2025
+## Copyright (c) NYULH Jonathan Serrano, 2026
 
 ## 1. Load/install packages
 if (!"BiocManager" %in% rownames(installed.packages())) {
@@ -74,10 +74,10 @@ make_minfi_samplesheet <- function(idats_folder = NULL) {
 make_minfi_samplesheet()
 targets <- as.data.frame(read.csv(SAM_SHEET))
 
-rgSet <- minfi::read.metharray.exp(base = getwd(), targets = targets,
-                                   verbose = TRUE, force = TRUE
+rgSet <- minfi::read.metharray.exp(
+    base = getwd(), targets = targets,
+    verbose = TRUE, force = TRUE
 )
-
 ## ------------------------------------------------------------------
 ## 1) Compute detection P-values (probe x sample)
 ## ------------------------------------------------------------------
@@ -104,53 +104,118 @@ detP    <- detP[, goodSamples, drop = FALSE]
 sample_ids <- rgSet@colData[[sampleNameCol]]
 colnames(detP) <- sample_ids
 
-## ------------------------------------------------------------------
-## 3) Normalize / preprocess RGChannelSet -> (Genomic)MethylSet
-##    Choose ONE method; common choices: preprocessNoob, preprocessFunnorm, preprocessQuantile
-## ------------------------------------------------------------------
-normMethod <- "noob"  # change to "funnorm" or "quantile" if desired
+## -----------------------------
+## User-input
+## -----------------------------
+normMethod     <- "funnorm"  # "funnorm" | "quantile" | "noob"
+probePval      <- 0.01
+removeSexSnps  <- TRUE
 
-mSet <- if (identical(normMethod, "noob")) {
-    suppressWarnings(minfi::preprocessNoob(rgSet))
-} else if (identical(normMethod, "funnorm")) {
-    suppressWarnings(minfi::preprocessFunnorm(rgSet))
-} else if (identical(normMethod, "quantile")) {
-    suppressWarnings(minfi::preprocessQuantile(rgSet))
-} else {
-    stop("normMethod must be one of: 'noob', 'funnorm', 'quantile'")
+## FunNorm knobs (minfi defaults are typically sensible)
+funnorm_nPCs   <- 2
+funnorm_keepCN <- TRUE  # FALSE reduces object size; set TRUE only if CN is needed downstream
+
+## Noob knobs
+noob_dyeMethod <- "single"   # ssNoob; robust without choosing a reference array
+noob_offset    <- 15
+
+## -----------------------------
+## 3) Preprocess to GenomicRatioSet
+## -----------------------------
+if (identical(normMethod, "funnorm")) {
+    ## preprocessFunnorm(rgSet, , bgCorr=TRUE, dyeCorr=TRUE, ratioConvert=TRUE) -> GenomicRatioSet
+    gnMset <-    suppressWarnings(
+        minfi::preprocessFunnorm(
+            rgSet,
+            nPCs        = funnorm_nPCs,
+            bgCorr      = TRUE,
+            dyeCorr     = TRUE,
+            keepCN      = funnorm_keepCN,
+            ratioConvert = TRUE,
+            verbose     = TRUE
+        )
+    )
+
+}
+if (identical(normMethod, "quantile")) {
+
+    ## preprocessQuantile(RGChannelSet or [Genomic]MethylSet) -> GenomicRatioSet
+    ## Note: not recommended when global shifts are expected (e.g., cancer vs normal).
+    gnMset <- suppressWarnings(
+        minfi::preprocessQuantile(
+            rgSet,
+            fixOutliers       = TRUE,
+            removeBadSamples  = FALSE,
+            quantileNormalize = TRUE,
+            stratified        = TRUE,
+            mergeManifest     = FALSE,
+            sex               = NULL,
+            verbose           = TRUE
+        )
+    )
+
+}
+if (identical(normMethod, "noob")) {
+
+    ## preprocessNoob(rgSet) -> MethylSet; then mapToGenome + ratioConvert -> GenomicRatioSet
+    mSet_noob <- suppressWarnings(
+        minfi::preprocessNoob(
+            rgSet,
+            offset    = noob_offset,
+            dyeCorr   = TRUE,
+            dyeMethod = noob_dyeMethod,
+            verbose   = FALSE
+        )
+    )
+
+    gmSet_noob <- minfi::mapToGenome(mSet_noob)
+    gnMset <- suppressWarnings(
+        minfi::ratioConvert(
+            gmSet_noob,
+            what   = "both",
+            keepCN = FALSE
+        )
+    )
+
 }
 
-## ------------------------------------------------------------------
-## 4) Filter poor-quality probes (require probe detection P < probePval in ALL samples)
-## ------------------------------------------------------------------
-probePval <- 0.01
+## -----------------------------
+## 4) Filter poor-quality probes: require detP < probePval in ALL samples
+## -----------------------------
+idx <- match(minfi::featureNames(gnMset), rownames(detP))
+if (anyNA(idx)) {
+    stop("detP rownames do not fully cover featureNames(gnMset). Ensure detP was from same rgSet.")
+}
+detP_aligned <- detP[idx, , drop = FALSE]
 
-## Ensure detP rows match the featureNames of the methylation object
-detP_aligned <- detP[match(minfi::featureNames(mSet), rownames(detP)), , drop = FALSE]
-keepProbes <- rowSums(detP_aligned < probePval, na.rm = FALSE) == ncol(mSet)
-mSetClean <- mSet[keepProbes, ]
+keepProbes  <- rowSums(detP_aligned < probePval) == ncol(gnMset)
+gnMsetClean <- gnMset[keepProbes, ]
 
-## ------------------------------------------------------------------
-## 5) Add SNP annotation + optionally drop SNP-affected probes and sex-chr probes
-## ------------------------------------------------------------------
-removeSexSnps <- TRUE
+## -----------------------------
+## 5) SNP annotation + SNP/sex probe removal (requires genomic object)
+## -----------------------------
 if (isTRUE(removeSexSnps)) {
-    ## Add SNP info first
-    mSetClean <- minfi::addSnpInfo(mSetClean)
 
-    ## Drop loci with SNPs at SBE and CpG (maf=0 removes any annotated SNP overlap)
-    mSetClean <- minfi::dropLociWithSnps(mSetClean, snps = c("SBE", "CpG"), maf = 0)
+    ## Adds SNP info into the genomic ranges metadata
+    gnMsetClean <- minfi::addSnpInfo(gnMsetClean)
+
+    ## Drop loci with SNPs at SBE and/or CpG (maf=0 drops any annotated overlap)
+    gnMsetClean <- minfi::dropLociWithSnps(
+        gnMsetClean,
+        snps = c("SBE", "CpG"),
+        maf  = 0
+    )
 
     ## Drop chrX/chrY probes
-    annot <- minfi::getAnnotation(mSetClean)
+    annot <- minfi::getAnnotation(gnMsetClean)
     sexProbes <- annot$Name[annot$chr %in% c("chrX", "chrY")]
-    mSetClean <- mSetClean[!(rownames(mSetClean) %in% sexProbes), ]
+    gnMsetClean <- gnMsetClean[!(minfi::featureNames(gnMsetClean) %in% sexProbes), ]
 }
 
 ## ------------------------------------------------------------------
 ## 6) Extract Beta values
 ## ------------------------------------------------------------------
-betas <- minfi::getBeta(mSetClean)
+betas <- minfi::getBeta(gnMsetClean)
 colnames(betas) <- sample_ids
 
 ## betas is now a matrix: probes x samples
@@ -219,7 +284,6 @@ targets$Age_Group <- cut(targets$Age,
                          labels = c("30-39", "40-49", "50-55"),
                          right = TRUE)
 
-
 ## IMPORTANT: keys in `anno_colors` must match the *annotation names* used below.
 ## In your code, if you used `Age = targets$Age_Group`, so the key must be "Age" (not "Age_Group"),
 ## unless you rename the annotation to Age_Group. https://r-charts.com/colors/
@@ -258,12 +322,14 @@ ht1 <- ComplexHeatmap::Heatmap(
     show_row_names = FALSE,
     show_column_names = TRUE,
     column_names_rot = 45,
+    column_names_gp = grid::gpar(fontsize = 8),
     cluster_rows = TRUE,
     cluster_columns = TRUE,
     use_raster = TRUE
 )
 
-ComplexHeatmap::draw(ht1, heatmap_legend_side = "right", annotation_legend_side = "right")
+ComplexHeatmap::draw(ht1, heatmap_legend_side = "right", annotation_legend_side = "right",
+                     padding = grid::unit(c(0, 25, 5, 5), "mm"))
 
 ## ------------------------------------------------------------------
 ## 2B) Omit Batch annotation entirely (remove it from annotation + color list)
@@ -287,9 +353,11 @@ ht2 <- ComplexHeatmap::Heatmap(
     show_row_names = FALSE,
     show_column_names = TRUE,
     column_names_rot = 45,
+    column_names_gp = grid::gpar(fontsize = 8),
     cluster_rows = TRUE,
     cluster_columns = TRUE,
     use_raster = TRUE
 )
 
-ComplexHeatmap::draw(ht2, heatmap_legend_side = "right", annotation_legend_side = "right")
+ComplexHeatmap::draw(ht2, heatmap_legend_side = "right", annotation_legend_side = "right",
+                     padding = grid::unit(c(0, 15, 5, 5), "mm"))
