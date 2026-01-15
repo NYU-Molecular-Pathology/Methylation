@@ -78,6 +78,18 @@ rgSet <- minfi::read.metharray.exp(
     base = getwd(), targets = targets,
     verbose = TRUE, force = TRUE
 )
+
+# Minfi QC -----------------------------------------
+MSet <- minfi::preprocessRaw(rgSet)
+qc <- getQC(MSet)
+minfi::plotQC(qc)
+densityPlot(MSet)
+
+# View example data --------------------------------
+# library(minfiDataEPIC)
+# file.path(path.package("minfiDataEPIC"), "extdata")
+
+
 ## ------------------------------------------------------------------
 ## 1) Compute detection P-values (probe x sample)
 ## ------------------------------------------------------------------
