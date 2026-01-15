@@ -1,0 +1,626 @@
+---
+output: 
+  html_document:
+    self_contained: yes
+    mode: selfcontained
+classoption: landscape
+params:
+  author: "Jonathan Serrano"
+---
+
+```{r setup, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+#!/usr/bin/env Rscript
+## Script name: Research_Sample_QC.Rmd
+## Purpose: Generates QC Plots for methylation array sample runs
+## Date Created: June 13, 2022
+## Version: 1.0.0
+## Author: Jonathan Serrano
+## Copyright (c) NYULH Jonathan Serrano, 2026
+gb <- globalenv(); assign("gb", gb)
+# Input Parameters -------------------------------------------
+gb$runID <- "Methylation_Run"
+baseDir <- getwd()
+gb$runPath <- getwd()
+
+options("install.packages.compile.from.source" = "No")
+options("install.packages.check.source" = "no")
+options(warn = -1)
+# Load/install missing pacakges without asking
+supM <- function(pk) {return(suppressPackageStartupMessages(suppressWarnings(pk)))}
+
+# Setting US CRAN REPO
+options(repos = c(getOption("repos"), CRAN = "http://cran.us.r-project.org"))
+
+pkgs <- c(
+    "knitr",
+    "kableExtra",
+    "magick",
+    "webshot",
+    "plyr",
+    "ggplot2",
+    "reshape2",
+    "data.table",
+    "DT",
+    "plotly",
+    "MethylAid",
+    "minfi",
+    "scales",
+    "htmltools",
+    "IlluminaHumanMethylation450kmanifest",
+    "IlluminaHumanMethylationEPICmanifest",
+    "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
+    "Biobase",
+    "RColorBrewer",
+    "limma",
+    "ggfortify",
+    "Rtsne",
+    "qdapTools",
+    "gplots",
+    "readxl",
+    "stringr",
+    "ggrepel",
+    "Polychrome",
+    "tinytex",
+    "gridExtra",
+    "rmarkdown",
+    "BiocParallel",
+    "pals",
+    "grid",
+    "grDevices",
+    "magrittr",
+    "dplyr"
+)
+not_installed <- function(pkgName) {
+    return(!pkgName %in% rownames(installed.packages()))
+}
+
+if (not_installed("pak")) {
+    install.packages("pak", dependencies = T, ask = F, type = "binary")
+}
+supM(library("pak"))
+
+missing_pkgs <- sapply(pkgs, not_installed)
+
+if (any(missing_pkgs)) {
+    to_install <- names(missing_pkgs[missing_pkgs == T])
+    try(pak::pkg_install(to_install, ask = F), silent = T)
+}
+
+if (not_installed("librarian")) try(pak::pkg_install("librarian", ask = F), silent = T)
+
+supM(library("librarian"))
+not_loaded <- setdiff(pkgs, loadedNamespaces())
+if (length(not_loaded) > 0) supM(librarian::shelf(not_loaded, ask = F))
+
+# FUN: Increases vertical spacing between legend keys
+draw_key_polygon3 <- function(data, params, size) {
+    lwd <- min(data$size, min(size) / 4)
+    grid::rectGrob(
+        width = grid::unit(1.5, "npc"),
+        height = grid::unit(1.5, "npc"),
+        gp = grid::gpar(
+            col = data$colour,
+            fill = scales::alpha(data$fill, data$alpha),
+            lty = data$linetype,
+            lwd = lwd * ggplot2:::.pt,
+            linejoin = "mitre"
+        )
+    )
+}
+# register new key drawing fun, global & persistent during R session
+ggplot2:::GeomBar$draw_key <- draw_key_polygon3
+set.seed(123)
+
+## Generate Plot labels  ------------------
+makeLabels <- function(totNum, xName, yName, plotName, thePlot) {
+    legendLabel <- thePlot + xlab(xName) + ylab(yName) + ggtitle(plotName) +
+        theme(
+            plot.background = element_blank(),
+            legend.title = element_text(size = 12),
+            legend.text = element_text(size = 10),
+            legend.key = element_rect(size = 2),
+            axis.title = element_text(size = 14),
+            legend.direction = "horizontal",
+            legend.position = "bottom",
+            axis.text.x = element_text(size = 14),
+            axis.text.y = element_text(size = 14),
+            plot.margin = grid::unit(c(1, 1, 1, 1), "cm"),
+            legend.spacing.x = unit(0.20, "cm"),
+            legend.spacing.y = unit(0.65, "cm"),
+            legend.spacing = unit(0.20, "cm"),
+            plot.title = element_text(color = "navy", size = 26, face = "bold"),
+            plot.subtitle = element_text(color = "black", size = 12),
+            plot.caption = element_text(color = "darkgreen", face = "italic", size = 12)
+        ) +
+        labs(label = "", color = "") +
+        guides(colour = guide_legend(
+            title = "Samples",
+            override.aes = list(shape = 19),
+            byrow = TRUE, ncol = 9
+        ), fill = guide_legend(show.legend = F)) + coord_cartesian(clip = "off")
+    legendLabel <- legendLabel + theme(legend.position = "none")
+    return(legendLabel)
+}
+
+## Replace any NA Values in the plot with fail values
+ReplaceNAorNull <- function(dParam, xincept, yincept) {
+    if (any(is.na(dParam$x))) {
+        dParam$x[is.na(dParam$x)] <- xincept - 1
+    }
+    if (any(is.na(dParam$y))) {
+        dParam$y[is.na(dParam$y)] <- yincept - 1
+    }
+    return(dParam)
+}
+
+
+## Generate Plots for Probes --------------------------------------
+plotParams <- function(totNum, dParam, xincept, yincept) {
+    dParam <- dParam$final_data
+    dParam <- ReplaceNAorNull(dParam, xincept, yincept)
+    dParam$Sample_Name <- paste(dParam$Sample_Name, dParam$MP_num, sep = "\n")
+    n_sam <- length(dParam$x)
+    if (n_sam <= 32) {
+      plot.colours <- pals::glasbey()[1:n_sam]
+    } else{
+      plot.colours <- Polychrome::createPalette(N = n_sam, seedcolors = c("#FF0000", "#00FF00", "#0000FF"))
+    }
+
+    thePlot <-
+        ggplot(dParam, aes(
+            x = dParam[, 2], y = dParam[, 3],
+            color = dParam$Sample_Name, label = dParam$Sample_Name
+        ), show.legend = F) +
+        scale_color_manual(values = plot.colours) +
+        geom_point(shape = 19, size = 5, alpha = 0.8) +
+        theme_bw() +
+        scale_fill_manual(values = plot.colours) +
+        guides(fill = guide_legend(show.legend = F))
+    if (yincept == 0) {
+        thePlot <- thePlot + ggrepel::geom_label_repel(
+            aes(
+                label = dParam$Sample_Name,
+                size = 4,
+                label.padding = 0.15,
+                label.size = 0.15,
+                x = dParam[, 2],
+                y = dParam[, 3],
+                show.legend = F,
+                fill = dParam$Sample_Name,
+                colour = scales::alpha(c("black"), 1.0), inherit.aes = F, legend = F
+            ),
+            fontface = "bold",
+            colour = scales::alpha(c("black"), 1.0),
+            alpha = 0.50,
+            show.legend = F,
+            segment.alpha = 0.30,
+            segment.size = 0.75,
+            direction = "both",
+            max.overlaps = Inf,
+            min.segment.length = 0.015,
+            color = "black",
+            label.size = 0.4,
+            size = 4,
+            nudge_x = ifelse(thePlot$data$x > mean(thePlot$data$x), -0.15, 0),
+            nudge_y = ifelse(thePlot$data$y > mean(thePlot$data$y), -0.05, 0),
+            point.padding = unit(0.25, "lines"),
+            label.r = unit(0.5, "lines"),
+            force = 12,
+            max.iter = 10000
+        ) + theme(legend.position = "none")
+        thePlot <- thePlot +
+            geom_vline(xintercept = xincept, linetype = "dashed", colour = "red", inherit.aes = F) +
+            coord_cartesian(clip = "off") +
+            expand_limits(x = min(dParam[, 2]), y = max(dParam[, 3]) * 0.25) +
+            guides(fill = guide_legend(show.legend = F)) +
+            theme(legend.position = "none") +
+            scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) +
+            scale_y_continuous(breaks = scales::pretty_breaks(n = 10)) +
+            guides(fill = guide_legend(show.legend = F))
+    }
+    if (yincept != 0) {
+        samlab <- c(stringr::str_replace(dParam$Sample_Name, c("\n"), "_"))
+        thePlot <- thePlot +
+            geom_hline(yintercept = yincept, linetype = "dashed", colour = "red", inherit.aes = F) +
+            annotate("text", x = dParam[, 2], y = 0.5, label = samlab, angle = 90, size = 4) +
+            scale_x_continuous(breaks = scales::pretty_breaks()) +
+            guides(fill = guide_legend(show.legend = F)) +
+            theme(legend.position = "none") + ylim(0.00, 1.00)
+    }
+    thePlot <- thePlot + theme(legend.position = "none")
+    return(thePlot)
+}
+
+
+## Get Plot Specific Probes --------------------------------------
+getProbes <- function(probeName) {
+    gb <- globalenv()
+    assign("gb", gb)
+    qcProbes <- list(
+        BSI = "^BISULFITE CONVERSION I$",
+        BSII = "^BISULFITE CONVERSION II$",
+        EC = "^EXTENSION$",
+        SPI = "^SPECIFICITY I$",
+        HYB = "^HYBRIDIZATION$",
+        NP = "^NON-POLYMORPHIC$",
+        SPII = "^SPECIFICITY II$",
+        TR = "^TARGET REMOVAL$",
+        SC = "^STAINING$",
+        NC = "^NEGATIVE$"
+    )
+    stopifnot(!is.null(sdata))
+    d <- gb$sdata@plotdata
+    d <- d[grepl(qcProbes[probeName], d$Type), ]
+    return(d)
+}
+
+## Merges Dataframe Values --------------------------------------
+mergeDF <- function(df, tg) {
+    mdf <- merge(df, tg, by = "row.names", suffixes = c("", ".y"))
+    return(mdf)
+}
+
+## MU data --------------------------------------
+rotateData <- function(data, columns) {
+    data[, columns] <-
+        c(0.5 * (data[, columns[1]] + data[, columns[2]]), data[, columns[1]] - data[, columns[2]])
+    return(data)
+}
+
+## Subset Custom Data --------------------------------------
+GetNewDt <- function(data_final) {
+    dataList <- list(final_data = data_final)
+    names(dataList) <- c("final_data")
+    return(dataList)
+}
+
+## Get Data Values for Plot --------------------------------------
+getData <- function(theD, exGrn, exRed, cutoff, targets) {
+    dGrn <- theD[(exGrn), c(1:5, 7)]
+    x <- tapply((dGrn$IntGrn), dGrn$Samples, mean)
+    is.na(x) <- !is.finite(x)
+    dRed <- theD[as.array(exRed), c(1:6)]
+    df <- data.frame(x, y = tapply(dRed$IntRed, dRed$Samples, mean))
+    mdf <- mergeDF(df, tg = targets)
+    plot_data <- rotateData(mdf, columns = c("x", "y"))
+    fdt <- plot_data
+    ott <- subset(plot_data, plot_data$x <= cutoff)
+    return(list(final_data = fdt, outlier = ott))
+}
+
+get.hc.dat <- function(targets) {
+    d <- getProbes("HYB")
+    d <- d[order(d$Samples), ]
+    hiD <- grepl("High", d$ExtendedType)
+    loD <- grepl("Low", d$ExtendedType)
+    x <- 0.5 * (d$IntGrn[hiD] + d$IntGrn[loD])
+    y <- d$IntGrn[hiD] - d$IntGrn[loD]
+    df <- data.frame(x = x, y = y, row.names = d$Samples[hiD])
+    mdf <- mergeDF(df, tg = targets)
+    return(mdf)
+}
+
+get.bs.dat <- function(targets) {
+    bsD <- getProbes(probeName = "BSI")
+    BSvals <- getData(
+        theD = bsD, exGrn = grepl("C1|C2|C3", bsD$ExtendedType),
+        exRed = grepl("C4|C5|C6", bsD$ExtendedType), cutoff = 10, targets
+    )
+    return(BSvals)
+}
+
+get.op.dat <- function(targets) {
+    newD <- getProbes(probeName = "NP")
+    OPvals <- getData(
+        theD = newD, exGrn = newD$ExtendedType %in% c("NP (C)", "NP (G)"),
+        exRed = newD$ExtendedType %in% c("NP (A)", "NP (T)"), cutoff = 11, targets
+    )
+    return(OPvals)
+}
+
+get.dp.dat <- function(gb) {
+    dpDt <- gb$sdata@DPfreq
+    df <- data.frame(x = 1:length(dpDt), y = dpDt, row.names = names(dpDt))
+    dat.dp <- mergeDF(df, tg = gb$targets)
+    return(dat.dp)
+}
+
+swm <- function(funObj) {
+    return(suppressMessages(suppressWarnings(funObj)))
+}
+
+SetKnitPath <- function(runPath, baseDir) {
+    system(paste("cd", runPath))
+    knitr::opts_knit$set(runPath) # rprojroot::find_rstudio_root_file()
+    knitr::opts_knit$set(root.dir = runPath)
+    message("\nUsing the following output Directory:\n", baseDir)
+    message("\nUsing the following Knit Directory:\n", runPath)
+}
+
+GetSheetNamePath <- function(baseDir) {
+    sheetNamePath <- list.files(baseDir, "samplesheet.csv", full.names = T)
+    if (length(sheetNamePath) > 1) {
+        warning(">1 samplesheet in the folder")
+        sheetNamePath <- sheetNamePath[1]
+    }
+    if (length(sheetNamePath) == 0) {
+        warning("No samplesheet found:\n", baseDir)
+        samSheetDir <-
+            dir(getwd(), "samplesheet.csv", full.names = T)
+    }
+    if (is.na(sheetNamePath)) {
+        sheetNamePath <- dir(getwd(), "samplesheet.csv", full.names = T)[1]
+    }
+    message(paste0("Sample sheet name is: ", sheetNamePath))
+    return(sheetNamePath)
+}
+
+
+
+
+
+genSumFail <- function(failPlot, failTex, sf = NULL) {
+    ftx <- paste("<h4>The following samples **Failed", failTex, "QC:**</h4>")
+    if (length(failPlot) > 0) {
+        sf <- paste(sf, paste(ftx, paste0(failPlot, "</li>\n"), sep = "\n<li>"))
+    }
+    return(sf)
+}
+
+
+GetFixedDf <- function(sheetNamePath, runPath) {
+    fixerrors <- read.csv(sheetNamePath, strip.white = T)
+    if (!"SentrixID_Pos" %in% colnames(fixerrors)) {
+        fixerrors$SentrixID_Pos <- basename(fixerrors$Basename)
+    }
+    basePaths <- file.path(runPath, fixerrors$SentrixID_Pos)
+    fixerrors$Basename <- basePaths
+    return(fixerrors)
+}
+
+
+GrabTargetsDf <- function(runPath, fixerrors, samSheet = "samplesheet.csv") {
+    targets <- minfi::read.metharray.sheet(runPath, samSheet, verbose = F)
+    basePaths <- file.path(runPath, fixerrors$SentrixID_Pos)
+    targets$basenames <- basePaths # path/to/idat/files
+    return(targets)
+}
+
+
+# FUNCTION: Filters out columns in Plot data and re-names
+FilterColNames <- function(outData, xName, yName) {
+    selectedColumns <- c("RunID", "Sample_Name", "DNA_Number", "MP_num", "x", "y")
+    newColumnNames <- c("RunID", "Sample_Name", "B-number", "TM-number", as.character(xName), as.character(yName))
+
+    dataSubset <- if ("final_data" %in% names(outData)) outData[["final_data"]] else outData
+
+    filteredData <- dataSubset[, selectedColumns]
+    colnames(filteredData) <- newColumnNames
+
+    if (xName == "Samples") {
+        filteredData <- filteredData[, -5]
+    }
+    return(filteredData)
+}
+
+# FUNCTION: Merges common columns between two plot data frames
+Combine_QC_data <- function(data_1, data2) {
+    return(merge(data_1, data2, by = c("RunID", "Sample_Name", "B-number", "TM-number")))
+}
+
+# FUNCTION: Saves each qc metric x and y values to a csv file
+SaveQCmetrics <- function(gb, dat.mu, dat.op, dat.bs, dat.hc, dat.dp) {
+    fileOut <- paste(gb$runID, "qc_data.csv", sep = "_")
+    fileOutDir <- file.path(getwd(), fileOut)
+
+    outData_MU <- FilterColNames(dat.mu, "Log2sqrt(M*U)", "Log2(M/U)")
+    outData_OP <- FilterColNames(dat.op, "log2sqrt(R*G)", "log2(R/G)")
+
+    final_data <- Combine_QC_data(outData_MU, outData_OP)
+
+    outData_BS <- FilterColNames(dat.bs, "BS_log2sqrt(R*G)", "BS_log2(R/G)")
+    final_data <- Combine_QC_data(final_data, outData_BS)
+
+    outData_HC <- FilterColNames(dat.hc, "log2sqrt(H*L)", "log2(H/L)")
+    final_data <- Combine_QC_data(final_data, outData_HC)
+
+    outData_DP <- FilterColNames(dat.dp, "Samples", "Pvalue")
+    final_data <- Combine_QC_data(final_data, outData_DP)
+    idx <- which(colnames(final_data) %in% c("B-number", "TM-number"))
+    final_data <- final_data[, -idx]
+    write.csv(final_data, file = fileOutDir, row.names = F, quote = F)
+}
+
+MsgFailedQCs <- function(summaryFail) {
+    cat('<p class="comment" style="width:80%;"><ul>')
+    if (length(summaryFail) > 0) {
+        cat(summaryFail, sep = "\n\n")
+    } else {
+        cat("All samples **Passed each QC Critera**", sep = "\n\n")
+    }
+    cat('</ul>')
+}
+
+SetKnitPath(gb$runPath, baseDir)
+# Read Sample Data -------------------------------------------------
+sheetNamePath <- GetSheetNamePath(baseDir)
+gb$fixerrors <- fixerrors <- GetFixedDf(sheetNamePath, gb$runPath)
+gb$targets <- targets <- GrabTargetsDf(gb$runPath, fixerrors)
+# Set Run Data Values ----------------------------------------------
+titleName <- paste("Methylation Assay QC for Batch", gb$runID)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+knitr::opts_knit$set(global.par = TRUE, ask = F)
+grDevices::devAskNewPage(ask = F)
+R.utils::setOption("device.ask.default", FALSE)
+gitPath <-
+    "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/Report-Scripts"
+htmltools::includeCSS(file.path(gitPath, "QC-Style.html"))
+```
+
+```{css, echo = FALSE}
+@page {size: 11in 8.5in;}
+@media only screen {
+ html {font-size: 14px;}
+  :root {
+    --base-font-size: 14px;
+  }
+}
+```
+
+---
+title: "`r titleName`"
+subtitle: "Clinical Methylation Run QC Version 1.2"
+author: "`r paste0(params$author)`"
+date: "`r paste0(fixerrors$Date[1])`"
+always_allow_html: yes
+papersize: a4
+linestretch: 1.2
+fontsize: 10pt
+geometry:
+- top=2mm
+- left=2mm
+- right=2mm
+- bottom=2mm
+classoption:
+- a4paper
+- landscape
+---
+
+<footer><p>Page 1 of 6</p></footer>
+
+```{r, label = "Margin Params", results='hide', echo=FALSE}
+par(mar = c(8, 8, 0, 0)) #it's important to have that in a separate chunk
+``` 
+
+```{r BioCParallel, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, results='hide'}
+gb <- globalenv(); assign("gb", gb)
+# Set Parallel Parameters --------------------------------------
+GetTotalPairs <- function(fixerrors) {
+    # Checks here if you have odd number of arrays used in makeLabels function
+    if (nrow(fixerrors) < 8) {
+        warning("Less than 8 samples are run, disabling BiocParallel")
+        totNum <- 1
+    } else {
+        totNum <- nrow(fixerrors) / 8
+    }
+    return(totNum)
+}
+gb$totNum <- totNum <- GetTotalPairs(fixerrors)
+fixerrors <- as.data.frame(fixerrors)
+fixerrors$`RD-number` <- fixerrors$`B-number` <- fixerrors$`TM-number` <-
+    fixerrors$DNA_Number <- fixerrors$Sample_Name
+fixerrors$MP_num <- ""
+fixerrors$RunID <- gb$runID
+# MethylAid Summarize ------------------------------------------
+gb$sdata <- sdata <- MethylAid::summarize(fixerrors, verbose = TRUE, force = TRUE)
+assign("sdata", sdata, envir = gb)
+## Get MU Data & Colors ----------------------------------------
+gb$targets <- fixerrors
+MU <- log2(t(sdata@MU))
+gb$targets <- sdata@targets; assign("targets", sdata@targets, envir = gb)
+d <- sdata@plotdata; assign("d", sdata@plotdata, envir = gb)
+## Merge and Rotate Data ----------------------------------------
+mergedMU <- merge(MU, targets, by = "row.names")
+data_rotated <- rotateData(mergedMU, columns = c("Methylated", "Unmethylated"))
+data_rotated$x = data_rotated[, 2]
+data_rotated$y = data_rotated[, 3]
+data_rotated <- data_rotated
+MUvals <- GetNewDt(data_rotated)
+plot.colours <- pals::glasbey()[1:(length(MUvals$final_data$Sample_Name))]
+```
+
+```{r Plot Getter, echo=FALSE, message=FALSE, warning=FALSE, results='hide', paged.print=FALSE}
+gb <- globalenv(); assign("gb", gb)
+## Plot Title Names -------------------------------------- --------------------------------
+pltNames <- c(
+    "Signal Intensity QC- Checks Raw signal quality (*MU > 9* is Passing)",
+    "Biological Positive Control- Overall Amplification (*SBPC > 11* is Passing)",
+    "Bisulfite Conversion Control- Zymo Kit Performance (*BS > 10* is Passing)",
+    "Hybridization Control QC- Checks Probe Binding (*SHC > 12.75* is Passing)",
+    "Negative Control QC- Checks negative probes above background \n(*Pvalue > 0.95* is Passing)"
+    )
+swm <- function(funObj) {return(suppressMessages(suppressWarnings(funObj)))}
+totNum <- totNum; plotParams <- plotParams; makeLabels <- makeLabels
+## MU Plot --------------------------------------------------------------------------------
+dat.mu <- swm(GetNewDt(data_rotated))
+plotMU <- swm(plotParams(totNum, dParam = dat.mu, xincept = 9, yincept = 0))
+plotMU <- swm(makeLabels(totNum, plotName = paste0(pltNames[1]),
+                         xName = "Log2 sqrt(M*U)", yName = "Log2 (M/U)", thePlot = plotMU))
+## Plot OP Sample Dependent QC ------------------------------------------------------------
+dat.op <- get.op.dat(targets)
+plotOP <- swm(plotParams(totNum, dParam = dat.op, xincept = 11, yincept = 0))
+plotOP <- swm(makeLabels(totNum, plotName = paste0(pltNames[2]),
+                         xName = "log2 sqrt(R*G)", yName = "log2 (R/G)", thePlot = plotOP))
+## Plot BS Biological Control -------------------------------------------------------------
+dat.bs <- get.bs.dat(targets)
+plotBS <- swm(plotParams(totNum, dParam = dat.bs, xincept = 10, yincept = 0))
+plotBS <- swm(makeLabels(totNum, plotName = paste0(pltNames[3]),
+                         xName = "log2 sqrt(R*G)", yName = "log2 (R/G)", thePlot = plotBS))
+##Plot HC Hybridization Control -----------------------------------------------------------
+dat.hc <- get.hc.dat(targets)
+plotHC <- swm(plotParams(totNum, dParam = GetNewDt(dat.hc), xincept = 12.75, yincept = 0))
+plotHC <- swm(makeLabels(totNum, plotName = paste0(pltNames[4]),
+                         xName = "log2 sqrt(H*L)", yName = "log2 (H/L)", thePlot = plotHC))
+## Plot DP --------------------------------------------------------------------------------
+dat.dp <- get.dp.dat(gb)
+plotDP <- swm(plotParams(totNum, dParam = GetNewDt(dat.dp), xincept = 0, yincept = 0.95))
+plotDP <- swm(makeLabels(totNum, plotName = paste0(pltNames[5]),
+                         xName = "Samples", yName = "Pvalue", thePlot = plotDP))
+## Save Plot Values -----------------------------------------------------------------------
+SaveQCmetrics(gb, dat.mu, dat.op, dat.bs, dat.hc, dat.dp)
+```
+
+```{r "Signal Intensity QC", echo=FALSE, error=FALSE, fig.align="left", fig.margin=TRUE, message=FALSE, warning=FALSE, results='as-is', fig.width=14.8, fig.height=9.6}
+gb <- globalenv(); assign("gb", gb)
+summaryFail <- NULL
+pltCap <- paste(gb$runID, "Page 2 of 6")
+pmu <- plotMU + ggplot2::labs(
+    subtitle = "Median methylated vs unmethylated log2 intensity plot checks for the raw signal quality per sample. For each CpG site,\nmethylated and unmethylated measurements are produced. The measure of relative methylation levels depend on these signal intensities.\nSamples falling **above threshold (MU > 9) pass QC** and anything below the threshold are considered QC Failed samples.\n", caption = pltCap)
+failedMU <- plotMU$data$x <= 9
+failedMU <- plotMU$data$Sample_Name[failedMU]
+summaryFail <- genSumFail(failedMU, "Signal intensity", summaryFail)
+summaryFail <- summaryFail;assign("summaryFail", summaryFail, envir = gb)
+```
+
+```{r "Signal Intensity QC2", echo=FALSE, warning=FALSE, message=FALSE, fig.align="left", fig.margin=TRUE, results='hide', fig.width=14.8, fig.height=9.6}
+plotMU2 <- pmu 
+```
+
+```{r "Signal Intensity & Biological Positive Plot", echo=FALSE, warning=FALSE, fig.align="left", message=FALSE, fig.margin=TRUE, fig.width=14.8, fig.height=9.6, results='asis', include=TRUE}
+plotMU2 + ggplot2::theme(plot.title = ggplot2::element_text(color = "navy", size = 26, face = "bold"))
+pltCap <- paste(gb$runID, "Page 3 of 6")
+plotOP + ggplot2::labs(subtitle = "Sample biological positive control is assessed based on Non-polymorphic (NP) control probes. NP controls are used to test the overall performance of assay from amplification to detection.\nSamples falling **above threshold (SBPC > 11) pass** this QC and anything below the threshold are considered bad samples.\n", caption = pltCap)
+failedOP <- plotOP$data$x <= 11
+failedOP <- plotOP$data$Sample_Name[failedOP]
+summaryFail <- genSumFail(failedOP, "Positive Control", summaryFail)
+```
+
+```{r "Bisulfite Conversion", echo=FALSE, warning=FALSE, message=FALSE, fig.align="left", fig.margin=TRUE, fig.width=14.8, fig.height=9.6}
+pltCap <- paste(gb$runID, "Page 4 of 6")
+plotBS + ggplot2::labs(subtitle = "Bisulfite conversion quality is assessed based on Bisulfite Conversion I (BSI) control probes. BSI control probes use Infinium I probe design to monitor efficiency of bisulfite conversion.\nSamples falling **above threshold (BS > 10) pass** this QC and anything below the threshold are considered bad samples.\n", caption = pltCap)
+failedBS <- plotBS$data$x <= 10
+failedBS <- plotBS$data$Sample_Name[failedBS]
+summaryFail <- genSumFail(failedBS, "Bisulfite Conversion", summaryFail)
+```
+
+```{r "Sample hybridization Plot", echo=FALSE, fig.margin=TRUE, warning=FALSE, fig.align="left", message=FALSE, fig.width=14.8, fig.height=9.6}
+pltCap <- paste(gb$runID, "Page 5 of 6")
+plotHC + ggplot2::labs(subtitle = "Sample hybridization is assessed based on Hybridization control (HC) probes.\nHC probes test the overall performance of the entire assay using synthetic targets instead of amplified DNA.\n**Samples falling above threshold (SHC > 12.75) pass this QC** and anything below the threshold are considered QC Failed samples.", caption = pltCap)
+failedHC <- plotHC$data$x <= 12.75
+failedHC <- plotHC$data$Sample_Name[failedHC]
+summaryFail <- genSumFail(failedHC, "Probe Hybridization", summaryFail)
+```
+
+```{r "Sample negative control Plot", fig.margin=TRUE, echo=FALSE, warning=FALSE, fig.align="left", message=FALSE, fig.width=14.8, fig.height=9.6}
+pltCap <- paste(gb$runID, "Page 6 of 6")
+plotDP + ggplot2::labs(subtitle = "Sample negative control is assessed based on negative control (NC) probes. NC are randomly permuted sequences that should not hybridize to DNA template.\nThe mean signal of these probes defines the background of the system.\nTo be considered as passing this QC, **less than 95%** of probes should be above the background signal.", caption = pltCap)
+failedDP <- plotDP$data$y <= 0.95
+failedDP <- plotDP$data$Sample_Name[failedDP]
+summaryFail <- genSumFail(failedDP, "Negative Control", summaryFail)
+summarName <- paste("Classifier Report Summary for", gb$runID) # summary table heading
+```
+<div><h2>QC Summary</h2>
+```{r, post_note, echo=FALSE, results='asis', out.width="65%", message=TRUE}
+gb$MsgFailedQCs(summaryFail)
+```
+</div>
