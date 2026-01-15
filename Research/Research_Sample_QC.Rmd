@@ -107,8 +107,9 @@ draw_key_polygon3 <- function(data, params, size) {
         )
     )
 }
+
 # register new key drawing fun, global & persistent during R session
-ggplot2:::GeomBar$draw_key <- draw_key_polygon3
+GeomBar$draw_key <- draw_key_polygon3
 set.seed(123)
 
 ## Generate Plot labels  ------------------
