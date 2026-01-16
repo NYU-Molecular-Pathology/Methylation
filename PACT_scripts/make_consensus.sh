@@ -131,7 +131,7 @@ fi
 cd "${HOME}" && curl -# -L ${pactGithub}/MakeIndelList.R >"${HOME}/MakeIndelList.R"
 chmod +rwx "${HOME}/MakeIndelList.R"
 
-/Volumes/CBioinformatics/Bash_Scripts/copy_marcin_idats.sh "${pactRun}"
+source /Volumes/CBioinformatics/Bash_Scripts/copy_marcin_idats.sh "${pactRun}" || true
 
 cd "${HOME}"
 
