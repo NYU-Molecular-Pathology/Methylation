@@ -23,21 +23,36 @@ options(
 )
 Sys.setenv(R_COMPILE_AND_INSTALL_PACKAGES = "always")
 
-## Pins
-bioc_version  <- "3.22"           # Bioconductor release (aligns with R 4.5)
-snapshot_date <- "2025-10-01"     # CRAN snapshot date (YYYY-MM-DD)
+## ---- hard reset (do this early, ideally in a fresh R session) ----
+options(repos = NULL)
+options(BioC_mirror = NULL)
+options(BIOCONDUCTOR_CONFIG_FILE = NULL)
+Sys.unsetenv(c(
+  "BIOCONDUCTOR_CONFIG_FILE",
+  "R_BIOC_VERSION",
+  "BIOCONDUCTOR_ONLINE_VERSION_DIAGNOSIS",
+  "BIOCONDUCTOR_USE_CONTAINER_REPOSITORY"
+))
 
-## Posit Package Manager (PPM) endpoints
-cran_ppm <- sprintf("https://packagemanager.posit.co/cran/%s/", snapshot_date)
-bioc_ppm_base <- sprintf("https://packagemanager.posit.co/bioconductor/%s/", bioc_version)
+bioc_version  <- "3.20"   # Compatible with R 4.4.x
+snapshot_date <- "2025-10-01"
 
-## Ensure BiocManager uses PPM (and does not reach bioconductor.org)
+cran_ppm <- sprintf("https://packagemanager.posit.co/cran/%s", snapshot_date)
+bioc_ppm_base <- "https://packagemanager.posit.co/bioconductor"
+
 options(BioC_mirror = bioc_ppm_base)
-Sys.setenv(
-    R_BIOC_VERSION = bioc_version,
-    BIOCONDUCTOR_ONLINE_VERSION_DIAGNOSIS = "FALSE",
-    BIOCONDUCTOR_CONFIG_FILE = sprintf("%sconfig.yaml", bioc_ppm_base)
+options(BIOCONDUCTOR_CONFIG_FILE = sprintf("%s/config.yaml", bioc_ppm_base))
+
+repos_vec <- BiocManager::repositories(
+    version = bioc_version,
+    site_repository = cran_ppm
 )
+
+options(repos = repos_vec)
+
+## sanity checks (should have NO "//" anywhere)
+stopifnot(!any(grepl("//packages", repos_vec, fixed = TRUE)))
+repos_vec
 
 ## Compose one authoritative repos vector via BiocManager
 if (!"BiocManager" %in% rownames(installed.packages())) {
@@ -908,22 +923,22 @@ check_pkg_install <- function(pkgs) {
 
 # Ensures Java Installation and path in environment
 check_java_install <- function() {
-  if (not_installed("rJava")) {
-      try(install_binary_tgz("rJava"), silent = TRUE)
-  }
+    if (not_installed("rJava")) {
+        try(install_binary_tgz("rJava"), silent = TRUE)
+    }
 
-  if (not_installed("rJava")) {
-      binary_install("rJava")
-  }
+    if (not_installed("rJava")) {
+        binary_install("rJava")
+    }
 
-  java_inst <- system("java -version", ignore.stdout = T, ignore.stderr = T) == 0
+    java_inst <- system("java -version", ignore.stdout = T, ignore.stderr = T) == 0
 
-  if (!java_inst) {
-      temurin <- "brew install --cask temurin"
-      system(temurin, ignore.stdout = TRUE, ignore.stderr = TRUE)
-  }
-  java_home <- system("/usr/libexec/java_home", intern = TRUE)
-  Sys.setenv(JAVA_HOME = java_home)
+    if (!java_inst) {
+        temurin <- "brew install --cask temurin"
+        system(temurin, ignore.stdout = TRUE, ignore.stderr = TRUE)
+    }
+    java_home <- system("/usr/libexec/java_home", intern = TRUE)
+    Sys.setenv(JAVA_HOME = java_home)
 }
 
 check_java_install()
@@ -1074,8 +1089,7 @@ if (not_installed("Rhdf5lib")) {
     try(BiocManager::install("Rhdf5lib",
                              type = "binary",
                              ask = FALSE,
-                             update = FALSE),
-        silent = TRUE)
+                             update = FALSE), silent = TRUE)
 }
 
 if (not_installed("Rhtslib")) {
