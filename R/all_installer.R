@@ -15,6 +15,20 @@ if (getRversion() <= "4.2.2") {
     stop("Your R version is ", R.version.string, ". Update to 4.4.0 or later.")
 }
 
+if (!dir.exists("/Volumes/CBioinformatics/Methylation")) {
+    stop("You need to mount the share drive: smb://research-cifs.nyumc.org/Research/CBioinformatics/")
+}
+
+check_file_access <- function(path) {
+    file.access(path, mode = 2) == 0
+}
+
+has_admin_rwx <- sapply(.libPaths()[1], check_file_access)
+
+if (has_admin_rwx == FALSE) {
+    stop("Your system needs to have admin permissions to the R library")
+}
+
 ## Non-interactive installs and compilation policy
 options(
     askYesNo = function(msg, default, prompts) { return(TRUE) },
