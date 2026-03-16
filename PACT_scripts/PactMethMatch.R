@@ -509,6 +509,21 @@ CheckMethPaths <- function(methData) {
         currPath <- methData$`Report Path`[i]
         currSplit <- stringr::str_split_fixed(currPath, "/", 11)[1, ]
         if (stringr::str_detect(currSplit[10], "MGDM") == FALSE) {
+            if (stringr::str_detect(methData$run_number[i], pattern = "MC")) {
+                runYear <- stringr::str_split_fixed(methData$run_number[i], "-", 2)[1, 1]
+                runYear <- gsub("MC", "", runYear)
+                runYear <- paste0("20", runYear)
+                smb_path <- "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/MethylationClassifier"
+                newPath <- file.path(smb_path, runYear, methData$run_number[i], "Reports", paste0(methData$record_id[i], ".html"))
+                methData[i, "Report Path"] <- newPath
+                return(methData)
+            }
+            if (stringr::str_detect(methData$run_number[i], pattern = "MR")) {
+                smb_path <- "smb://research-cifs.nyumc.org/Research/snudem01lab/snudem01labspace/FINAL_PDF_Reports_Brain"
+                newPath <- file.path(smb_path, methData$run_number[i], paste0(methData$record_id[i], ".html"))
+                methData[i, "Report Path"] <- newPath
+                return(methData)
+            }
             next
         }
         runYear <- stringr::str_split_fixed(currSplit[10], "-", 2)[1, 1]
