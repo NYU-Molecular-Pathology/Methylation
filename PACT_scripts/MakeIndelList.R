@@ -2,9 +2,10 @@
 ## Script name: MakeIndelList.R
 ## Purpose: Filter out somatic variants for PACT consensus into a csv file
 ## Date Created: August 19, 2022
-## Version: 1.0.0
+## Date Modified: March 23, 2026
+## Version: 1.0.1
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2024
+## Copyright (c) NYULH Jonathan Serrano, 2026
 
 library("base")
 args <- commandArgs(TRUE)
@@ -30,7 +31,10 @@ if (!requireNamespace("dplyr", quietly = TRUE)) {
 library("stringr", warn.conflicts = F, quietly = T)
 library("dplyr", warn.conflicts = F, quietly = T)
 
-runYear <- stringr::str_split_fixed(pactRunName, "-", 3)[1, 2]
+RUN_ID <- read.csv(file.path(concensusDir, "demux-samplesheet.csv" ),
+                   skip = 19, header = TRUE)[1, "Run_Number"]
+runYear <- substr(RUN_ID, 1, 2)
+
 csvPath <- file.path(DEFAULT_OUT, paste0("20", runYear), pactRunName)
 stopifnot(dir.exists(csvPath))
 
@@ -63,6 +67,25 @@ varColumns <- c(
     "ExonicFunc.refGene",
     "AAChange.refGene"
 )
+
+IS_SG <- all(varColumns %in% colnames(filteredData))
+
+if (IS_SG) {
+    varColumns <- c(
+        "TM_Number",
+        "Tumor",
+        "Normal",
+        "Gene.refGene",
+        "Variant",
+        "DP",
+        "AF",
+        "MuTect2",
+        "LoFreqSomatic",
+        "ExonicFunc.refGene",
+        "AAChange.refGene"
+    )
+}
+
 callsList <- filteredData[, varColumns]
 fix_genes <- stringr::str_replace_all(callsList$Gene.refGene, ",", " ")
 callsList$Gene.refGene <- fix_genes
@@ -72,14 +95,17 @@ callsList$AAChange.refGene <- fix_aa
 # Paste gene positions separated by colons and create consensus column defaults
 positions <- stringr::str_split_fixed(callsList$Variant, ":", 3)[, 1:2]
 callsList$Position <- paste(positions[, 1], positions[, 2], sep = "_")
+callsList$Variant <- "SNV"
 callsList$nyu <- "Yes"
 callsList$philips <- ""
-callsList$Variant <- "SNV"
+
+if (IS_SG == FALSE) {
+    callsList$Test_Number <- callsList$TM_Number
+}
 
 # Arrange so that Mutect2 DP is used first when both callers are Yes
-callsList <- callsList %>% arrange(desc(MuTect2 == "Yes")) %>% 
+callsList <- callsList %>% arrange(desc(MuTect2 == "Yes")) %>%
     distinct(Test_Number, Position, .keep_all = TRUE)
-
 blank_row <- data.frame(
     Test_Number = "",
     Tumor = "",
@@ -116,24 +142,42 @@ for (ngs in unique(variantsData$Test_Number)) {
 }
 
 # Generate final data frame with specific column names and column ordering
-varsToCheck <- data.frame(
-    "Test_Case" = callsList$Test_Number,
-    "Tumor" = callsList$Tumor,
-    "Normal" = callsList$Normal,
-    "Gene" = callsList$Gene.refGene,
-    "Mutation Type" = callsList$ExonicFunc.refGene,
-    "Other" = callsList$Position,
-    "In NYU" = callsList$nyu,
-    "In Philips" = callsList$philips,
-    "Depth" = callsList$DP,
-    "AF" = callsList$AF,
-    "MuTect2" = callsList$MuTect2,
-    "LoFreqSomatic" = callsList$LoFreqSomatic,
-    "IGV" = '',
-    "Comments" = '',
-    "AAChange" = callsList$AAChange.refGene,
-    "Variant" = callsList$Variant
-)
+if (IS_SG == FALSE) {
+    varsToCheck <- data.frame(
+        "Test_Case" = callsList$Test_Number,
+        "Tumor" = callsList$Tumor,
+        "Normal" = callsList$Normal,
+        "Gene" = callsList$Gene.refGene,
+        "Mutation Type" = callsList$ExonicFunc.refGene,
+        "Other" = callsList$Position,
+        "In NYU" = callsList$nyu,
+        "In Philips" = callsList$philips,
+        "Depth" = callsList$DP,
+        "AF" = callsList$AF,
+        "MuTect2" = callsList$MuTect2,
+        "LoFreqSomatic" = callsList$LoFreqSomatic,
+        "IGV" = '',
+        "Comments" = '',
+        "AAChange" = callsList$AAChange.refGene,
+        "Variant" = callsList$Variant
+    )
+}else {
+    varsToCheck <- data.frame(
+        "Test_Case" = callsList$Test_Number,
+        "Tumor" = callsList$Tumor,
+        "Normal" = callsList$Normal,
+        "Gene" = callsList$Gene.refGene,
+        "Mutation Type" = callsList$ExonicFunc.refGene,
+        "Other" = callsList$Position,
+        "Depth" = callsList$DP,
+        "AF" = callsList$AF,
+        "MuTect2" = callsList$MuTect2,
+        "LoFreqSomatic" = callsList$LoFreqSomatic,
+        "IGV" = '',
+        "AAChange" = callsList$AAChange.refGene,
+        "Variant" = callsList$Variant
+    )
+}
 
 outPutFile <- file.path(concensusDir, paste0(pactRunName, "_desc.csv"))
 write.csv(varsToCheck, file = outPutFile, quote = F, row.names = F)
