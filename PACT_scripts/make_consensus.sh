@@ -9,7 +9,7 @@
 ## Copyright (c) NYULH Jonathan Serrano, 2024
 
 # Hardcoded paths
-GITHUB_URL="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts"
+GIT_URL="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts"
 RESULTS_DIR="/Volumes/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics"
 SCRIPTS_DIR="/Volumes/CBioinformatics/Bash_Scripts"
 DEFAULT_DIR="/Volumes/CBioinformatics/jonathan/pact/consensus"
@@ -43,47 +43,40 @@ NGS607_DIR="${MOLEC_VOL}/NGS607/${CURRENT_YR}/${RUN_ID}"
 BG_GRN="$(tput setab 2)" # makes text background green
 BG_RED="$(tput setab 1)" # makes text background red
 BG_BLU="$(tput setab 4)" # makes text background blue
+BG_YLW="$(tput setab 3)" # makes text background yellow
 NORMAL=$(tput sgr0)      # resets default text
 
 # Function to exit when any command fails
-set -Eeuo pipefail; last_cmd="" err_line=0 err_fi=""
+set -Eeuo pipefail; end_cmd="" err_n=0 e_fi=""
 msg_red() { echo "" && echo -e "${BG_RED}$1${NORMAL}\n"; }
-msg_err() { local ec=$?; msg_red "ERROR: ${last_cmd}\nFile: ${err_fi}:${err_line} (Exit: ${ec})"; }
-trap 'last_cmd=$BASH_COMMAND; err_line=$LINENO; err_fi=${BASH_SOURCE[0]}' DEBUG
+msg_err() { local ec=$?; msg_red "ERROR: ${end_cmd}\nFile: ${e_fi}:${err_n} (Exit: ${ec})"; }
+trap 'end_cmd=$BASH_COMMAND; err_n=$LINENO; e_fi=${BASH_SOURCE[0]}' DEBUG
 trap 'msg_err' ERR
 
 # Function to display and execute code
-msg_rsync() {
-    local flags=${3:-}
-    echo -e "\n${BG_BLU}rsync:${NORMAL}\nrsync -vrhP ${flags} \"$1\" \"$2\"\n"
-    rsync -vrhP "${flags}" "$1" "$2"
-}
+msg_code() { echo -e "Executing:\n${BG_BLU}$*${NORMAL}\n"; "$@"; }
+msg_rsync() { msg_code rsync -vrhP ${3:+$3 }"$1" "$2"; }
 msg_curl() {
-    out_fi=$1; out_dir=${2:-$HOME}; outpath="${out_dir}/${out_fi}"
+    out_fi=$1; out_dir=${2:-$HOME}; dest="${out_dir}/${out_fi}"
     cd "$out_dir" || exit
-    echo -e "${BG_GRN}Downloading file from Github:${NORMAL}\n$outpath\n"
-    curl -k -# -L "$GITHUB_URL/$out_fi" >"$outpath" && chmod +rwx "$outpath"
-    msg_red "--------------END--------------"
+    echo -e "${BG_GRN}Downloading file from Github:${NORMAL}\n$dest\n"
+    curl -k -# -L "$GIT_URL/$out_fi" >"$dest" && chmod +rwx "$dest"
 }
 
 # Main execution --------------------------------------------------------------
-mkdir -p "${WORK_DIR}"
+mkdir -p "${WORK_DIR}" "${DESK_DIR}/TMB_MSI"
 cd "${WORK_DIR}" || exit
+mkdir -p "${PNG_OUT_DIR}" "${TMB_MSI_OUT}"
 
-curl -# -L ${GITHUB_URL}/PACT_consensus.Rmd >"${WORK_DIR}/${PACT_ID}_consensus.Rmd"
+# Download Rmd and scripts from Github
+curl -# -L ${GIT_URL}/PACT_consensus.Rmd >"${WORK_DIR}/${PACT_ID}_consensus.Rmd"
 msg_curl "MakeIndelList.R"
 msg_curl "hs_metric_consensus.R"
 
 /Volumes/CBioinformatics/PACT/getMethylMatch.sh "${PACT_ID}" "${RUN_ID}" & wait
 
-cd "${WORK_DIR}" || exit
-
-mkdir -p "${DESK_DIR}"
-mkdir -p "${DESK_DIR}/TMB_MSI"
-mkdir -p "${PNG_OUT_DIR}"
-mkdir -p "${TMB_MSI_OUT}"
-
 cd "$HOME" || exit
+
 # Z-drive TO Desktop
 msg_rsync "${FACETS_DIR}/" "${DESK_DIR}" "--include=*.png --exclude=*"
 msg_rsync "${FACETS_DIR}/${PACT_ID}-QC.tsv" "${DESK_DIR}"
@@ -100,11 +93,7 @@ msg_rsync "${DESK_DIR}/" "${WORK_DIR}" "--include=*.tsv"
 msg_rsync "${DESK_DIR}/TMB_MSI/" "${TMB_MSI_OUT}" "--include=*.tsv"
 
 # Check if _MethylMatch.xlsx file exists --------------------------------------
-if [ -f "${METH_MATCH}" ]; then
-    msg_rsync "${METH_MATCH}" "${WORK_DIR}"
-else
-    msg_red "NO METHYLMATCH FILE COPIED!"
-fi
+[ -f "${METH_MATCH}" ] && msg_rsync "${METH_MATCH}" "${WORK_DIR}"
 
 # Copy demux-samplesheet.csv to consensus
 msg_rsync "$HOME/Desktop/${PACT_ID}/demux-samplesheet.csv" "${WORK_DIR}"
@@ -113,7 +102,7 @@ msg_rsync "$HOME/Desktop/${PACT_ID}/demux-samplesheet.csv" "${WORK_DIR}"
 [ -d "${VAF_DIR}" ] && rsync -vrP "${DESK_VAF}" "${WORK_DIR}/"
 
 # EXECUTE: Rscripts for generating HTML Report --------------------------------
-msg_red "Checking if GOS idat files need to be copied..."
+echo -e "${BG_YLW}Checking if GOS idat files need to be copied...${NORMAL}"
 source "${SCRIPTS_DIR}/copy_marcin_idats.sh" "${PACT_ID}" || true
 
 RScript --verbose "${HOME}/MakeIndelList.R" "${PACT_ID}"
@@ -121,7 +110,7 @@ RScript --verbose "${HOME}/hs_metric_consensus.R" "${RUN_ID}" "${PACT_ID}"
 
 cd "${WORK_DIR}/" || exit
 
-echo "Running rmarkdown:"
+echo -e "${BG_BLU}Running rmarkdown:${NORMAL}"
 Rscript --verbose -e "rmarkdown::render('${WORK_DIR}/${PACT_ID}_consensus.Rmd', params=list(pactName='${PACT_ID}', userName='${kerbero}'))" && open "${WORK_DIR}/${PACT_ID}_consensus.html"
 
 # COPY FINAL Output Report ----------------------------------------------------
