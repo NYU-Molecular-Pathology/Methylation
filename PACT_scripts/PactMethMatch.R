@@ -2,22 +2,23 @@
 ## Script name: PactMethMatch.R
 ## Purpose: search REDCap for PACT samples with methylation & generate cnv PNG
 ## Date Created: September 2, 2021
-## Version: 1.0.0
+## Date Modified March 25, 2026
+## Version: 1.0.1
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2025
+## Copyright (c) NYULH Jonathan Serrano, 2026
 
 gb <- globalenv(); assign("gb", gb)
 
 # Input Arguments -------------------------------------------------------------
 args <- commandArgs(TRUE)
 args[1] -> token       # REDCap Methylation API Token
-args[2] -> inputSheet  # pactID
+args[2] -> PACT_INPUT  # pactID
 
 # Validate arguments
-stopifnot(!is.na(token), !is.na(inputSheet))
-readFlag <- grepl("\\.csv$", inputSheet)
+stopifnot(!is.na(token), !is.na(PACT_INPUT))
+readFlag <- grepl("\\.csv$", PACT_INPUT)
 
-message(paste("Now Running $HOME/PactMethMatch.R", token, inputSheet))
+message(paste("Now Running $HOME/PactMethMatch.R", token, PACT_INPUT))
 
 # REDCap Fields  --------------------------------------------------------------
 meth_repo <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation"
@@ -33,7 +34,7 @@ main_pkgs <- c("data.table", "openxlsx", "jsonlite", "RCurl", "readxl",
 
 # Message Inputs --------------------------------------------------------------
 message("\n================ Parameters input ================\n")
-message("token: ", token, "\ninputSheet: ", inputSheet, "\n")
+message("token: ", token, "\nPACT_INPUT: ", PACT_INPUT, "\n")
 
 options(repos = c(CRAN = "https://cran.r-project.org"))
 
@@ -250,7 +251,7 @@ grabAllRecords <- function(flds, rcon) {
 
 # Messages the item matched in the database with the NGS number
 message_matched <- function(item, dbInfo, ngsNum, i) {
-    match_log <- file.path(fs::path_home(), "Desktop", paste0(inputSheet, "_match_log.tsv"))
+    match_log <- file.path(fs::path_home(), "Desktop", paste0(PACT_INPUT, "_match_log.tsv"))
     match_line <- sprintf("Match found for '%s' (%s) for %s in: \"%s\" column",
                           item, dbInfo, ngsNum, i)
     message(match_line)
@@ -288,10 +289,10 @@ filterFiles <- function(potentialFi) {
 }
 
 # Checks alternative directories if the file with expected name is not found
-getAltPath <- function(inputFi) {
-    message(crayon::bgRed("PACT run worksheet not found:"), "\n", inputFi)
-    message("Checking other files in PACT folder: ", basename(dirname(inputFi)))
-    potentialFi <- list.files(dirname(inputFi), full.names = TRUE)
+getAltPath <- function(pact_sheet) {
+    message(crayon::bgRed("PACT run worksheet not found:"), "\n", pact_sheet)
+    message("Checking other files in PACT folder: ", basename(dirname(pact_sheet)))
+    potentialFi <- list.files(dirname(pact_sheet), full.names = TRUE)
     altFi <- filterFiles(potentialFi)
     if (length(altFi) > 0) {
         chosenFi <- altFi[1]
@@ -302,33 +303,42 @@ getAltPath <- function(inputFi) {
     }
 }
 
-# Returns the folder path to the PACT run where inputSheet is the PACT ID
-getPactFolder <- function(inputSheet) {
+# Returns the folder path to the PACT run where PACT_INPUT is the PACT ID
+getPactFolder <- function(PACT_INPUT) {
     drive <- file.path("", "Volumes", "molecular", "MOLECULAR LAB ONLY")
     folder <- file.path(drive, "NYU PACT Patient Data", "Workbook")
-    runyr <- stringr::str_split_fixed(inputSheet,"-",3)[,2]
-    runFolder <- file.path(folder, paste0("20", runyr), inputSheet)
+    runyr <- stringr::str_split_fixed(PACT_INPUT, "-", 3)[, 2]
+    runFolder <- file.path(folder, paste0("20", runyr), PACT_INPUT)
+    if (dir.exists(runFolder)) {
+        return(runFolder)
+    }
+    runyr <- paste0("20", stringr::str_split_fixed(PACT_INPUT, "-", 2)[1, 1])
+    runFolder <- file.path(drive, "NYU PACT Patient Data", "Results", "Bioinformatics",
+                           runyr, PACT_INPUT)
     stopifnot(dir.exists(runFolder))
     return(runFolder)
 }
 
 # Returns the file path to the PACT run worksheet
-# Returns the file path to the PACT run worksheet
-getFilePath <- function(inputSheet) {
-    runFolder <- getPactFolder(inputSheet)
-    inputFi <- file.path(runFolder, paste0(inputSheet, ".xlsm"))
-    if (!file.exists(inputFi)) {
-        inputFi <- getAltPath(inputFi)
+getFilePath <- function(PACT_INPUT) {
+    runFolder <- getPactFolder(PACT_INPUT)
+    if (stringr::str_detect(runFolder, pattern = "Results")) {
+        pact_sheet <- file.path(runFolder, "demux-samplesheet.csv")
+    }else{
+        pact_sheet <- file.path(runFolder, paste0(PACT_INPUT, ".xlsm"))
+        if (!file.exists(pact_sheet)) {
+            pact_sheet <- getAltPath(pact_sheet)
+        }
     }
-    message("Using PACT run worksheet file:\n", inputFi)
-    return(inputFi)
+    message("Using the following PACT sheet file:\n", pact_sheet)
+    return(pact_sheet)
 }
 
 # Parses the input file for the "PhilipsExport" tab
-parseWorksheet <- function(inputFi) {
+parseWorksheet <- function(pact_sheet) {
     sheet2Read <- "PhilipsExport"
-    message("Reading the file:\n", inputFi)
-    shNames <- readxl::excel_sheets(inputFi)
+    message("Reading the file:\n", pact_sheet)
+    shNames <- readxl::excel_sheets(pact_sheet)
     message("Excel sheet names:\n", paste(shNames, collapse = "\n"))
     stopifnot(!is.null(shNames) & length(shNames) > 2)
     sh <- which(grepl(sheet2Read, shNames, ignore.case = T))[1]
@@ -341,7 +351,7 @@ parseWorksheet <- function(inputFi) {
           "Test Number")
     vals2find <-  suppressMessages(as.data.frame(
         readxl::read_excel(
-            inputFi,
+            pact_sheet,
             sheet = sheet_to_read,
             skip = 3,
             col_types = "text"
@@ -352,21 +362,41 @@ parseWorksheet <- function(inputFi) {
     return(vals2find)
 }
 
+
+parseDemuxCsv <- function(pact_sheet) {
+    raw_csv_df <- as.data.frame(read.csv(pact_sheet, skip = 19))
+    csv_df <- raw_csv_df[raw_csv_df$Tumor_Content != 0,]
+    raw_columns <- c("TUMOR_CASE_ID_BLOCK", "Normal_DNA", "Tumor_DNA")
+    vals2find <- csv_df[, raw_columns]
+    vals2find$Normal_DNA <- sub("-[^-]+$", "", vals2find$TUMOR_CASE_ID_BLOCK)
+    rownames(vals2find) <- NULL
+    vals2find$MRN <- stringr::str_split_fixed(csv_df$Sample_ID, "_", 3)[,1]
+    vals2find$Test <- csv_df$TM_Number
+    pact_columns <-
+        c("Tumor Specimen ID",
+          "Normal Specimen ID",
+          "Tumor DNA/RNA Number",
+          "MRN",
+          "Test Number")
+    colnames(vals2find) <- pact_columns
+    return(vals2find)
+}
+
 # Parses the input file depending on if the input is a csv file or a xlsx file path
-getCaseValues <- function(inputSheet, readFlag) {
-    isSamSheet <- stringr::str_detect(inputSheet, "-SampleSheet")
-    isFilePath <- stringr::str_detect(inputSheet, .Platform$file.sep)
+getCaseValues <- function(PACT_INPUT, readFlag) {
+    isSamSheet <- stringr::str_detect(PACT_INPUT, "-SampleSheet")
+    isFilePath <- stringr::str_detect(PACT_INPUT, .Platform$file.sep)
 
     if (readFlag && isSamSheet) {
         message("Parsing Data from Demux SampleSheet.csv file...")
-        vals2find <- utils::read.csv(inputSheet, skip = 19)[, c(6, 7, 9)]
+        vals2find <- utils::read.csv(PACT_INPUT, skip = 19)[, c(6, 7, 9)]
         vals2find <- as.data.frame(vals2find[!grepl("H20|SERACARE|HAPMAP", vals2find[, 2]),])
         return(vals2find)
     }
 
     if (readFlag && !isSamSheet) {
         message("Parsing Data from .csv file that is not a Demux SampleSheet...")
-        vals2find <- read.csv(inputSheet)
+        vals2find <- read.csv(PACT_INPUT)
         if (ncol(vals2find) > 1) {
             vals2find <- unlist(lapply(vals2find, identity))
         }
@@ -375,14 +405,18 @@ getCaseValues <- function(inputSheet, readFlag) {
 
     if (!readFlag && isFilePath) {
         message("Parsing Data from .xlsm/.xlsx file path...")
-        vals2find <- parseWorksheet(inputSheet)
+        vals2find <- parseWorksheet(PACT_INPUT)
         return(vals2find)
     }
-    # Default case: inputSheet is a PACT ID, get the file path
-    message("Parsing Data from PACT RUN ID: ", inputSheet,
+    # Default case: PACT_INPUT is a PACT ID, get the file path
+    message("Parsing Data from PACT RUN ID: ", PACT_INPUT,
             " finding run worksheet...")
-    pact_xlsm <- getFilePath(inputSheet)
-    vals2find <- parseWorksheet(pact_xlsm)
+    pact_sheet <- getFilePath(PACT_INPUT)
+    if (grepl("\\.csv$", pact_sheet)) {
+        vals2find <- parseDemuxCsv(pact_sheet)
+    } else{
+        vals2find <- parseWorksheet(pact_sheet)
+    }
     return(vals2find)
 }
 
@@ -507,6 +541,9 @@ GetVolumePaths <- function(methData) {
 CheckMethPaths <- function(methData) {
     for (i in 1:length(methData$`Report Path`)) {
         currPath <- methData$`Report Path`[i]
+        if (currPath == "") {
+            next
+        }
         currSplit <- stringr::str_split_fixed(currPath, "/", 11)[1, ]
         if (stringr::str_detect(currSplit[10], "MGDM") == FALSE) {
             if (stringr::str_detect(methData$run_number[i], pattern = "MC")) {
@@ -538,7 +575,7 @@ CheckMethPaths <- function(methData) {
         message("Fixing broken file paths...")
         toReplace <- basename(checkPaths[anyPathsFalse])
         mainDirs <- dirname(checkPaths[anyPathsFalse])
-        mainDirs <- unique(mainDirs)
+        #mainDirs <- unique(mainDirs)
         for (x in 1:length(mainDirs)) {
             if (!dir.exists(mainDirs[x])) {
                 correct_dir <- dir(
@@ -552,7 +589,11 @@ CheckMethPaths <- function(methData) {
         for (missing in toReplace) {
             patt <- stringr::str_split_fixed(missing, ".html", 2)[1, 1]
             file_found <- dir(path = mainDirs, pattern = patt, full.names = TRUE)
+            file_found <- unique(file_found)
             if (length(file_found) > 0) {
+                if (length(file_found) > 1) {
+                    file_found <- file_found[1]
+                }
                 toSwap <- which(grepl(missing, methData$`Report Path`))
                 newPath <- stringr::str_replace(
                     methData$`Report Path`[toSwap],
@@ -588,19 +629,19 @@ addExcelLink <- function(output, fiLn, wb, runId) {
 
 # Writes the openxlsx workbook file to the Desktop
 createXlFile <- function(runId, output) {
+    output <- CheckMethPaths(methData = output)
     wb <- openxlsx::createWorkbook()
     openxlsx::addWorksheet(wb, runId)
-    output <- CheckMethPaths(methData = output)
     openxlsx::writeData(wb, sheet = runId, x = output)
     for (fiLn in 1:length(output$'Report Link')) {
         if (output$'Report Link'[fiLn] != '') {
             addExcelLink(output, fiLn, wb, runId)
         }
     }
-    outFi <- file.path(fs::path_home(),"Desktop",
+    meth_xlsx <- file.path(fs::path_home(),"Desktop",
                        paste0(runId,"_MethylMatch.xlsx"))
-    openxlsx::saveWorkbook(wb, outFi, overwrite = T)
-    return(outFi)
+    openxlsx::saveWorkbook(wb, meth_xlsx, overwrite = T)
+    return(meth_xlsx)
 }
 
 # Uses Rcurl to post Json form to REDCap
@@ -621,7 +662,7 @@ postData <- function(rcon, record) {
 }
 
 # Uploads the xlsx file to REDCap and sends an email notification
-emailFile <- function(runId, outFi, rcon) {
+emailFile <- function(runId, meth_xlsx, rcon) {
     record = data.frame(record_id = runId, run_number = runId)
     postData(rcon, record)
     isDone <-
@@ -638,7 +679,7 @@ emailFile <- function(runId, outFi, rcon) {
             action = 'import',
             record = runId,
             field = "other_file",
-            file = httr::upload_file(outFi),
+            file = httr::upload_file(meth_xlsx),
             returnFormat = 'csv'
         )
         res <-
@@ -649,9 +690,9 @@ emailFile <- function(runId, outFi, rcon) {
                 }
             )
         if (res$status_code == "200") {
-            message("REDCap file upload failed:\n", outFi)
+            message("REDCap file upload failed:\n", meth_xlsx)
         }else{
-            message("REDCap file upload successful:\n", outFi)
+            message("REDCap file upload successful:\n", meth_xlsx)
         }
     }
     record$comments <- "pact_sample_list_email"
@@ -660,12 +701,18 @@ emailFile <- function(runId, outFi, rcon) {
 }
 
 # Grabs the run ID from the input xlsx sheet name
-grab_run_id <- function(readFlag, inputSheet) {
+grab_run_id <- function(readFlag, PACT_INPUT) {
+    is_sophia <- grepl("^[0-9]{2}", PACT_INPUT)
+    if (is_sophia) {
+        pact_sheet <- getFilePath(PACT_INPUT)
+        runId <- as.data.frame(read.csv(pact_sheet, skip = 19))$Run_Number[1]
+        return(runId)
+    }
     runId <-
-        ifelse(readFlag == T, substr(inputSheet, 1, nchar(inputSheet) - 4), inputSheet)
-    if (stringr::str_detect(inputSheet, ".xls")) {
+        ifelse(readFlag == T, substr(PACT_INPUT, 1, nchar(PACT_INPUT) - 4), PACT_INPUT)
+    if (stringr::str_detect(PACT_INPUT, ".xls")) {
         runId <-
-            substr(basename(inputSheet), 1, nchar(basename(inputSheet)) - 5)
+            substr(basename(PACT_INPUT), 1, nchar(basename(PACT_INPUT)) - 5)
     }
     return(runId)
 }
@@ -696,12 +743,12 @@ process_values <- function(vals2find, db) {
 }
 
 
-# Grabs REDCap data and finds matches to inputSheet columns to fields
-getOuputData <- function(token, flds, inputSheet, readFlag) {
+# Grabs REDCap data and finds matches to PACT_INPUT columns to fields
+getOuputData <- function(token, flds, PACT_INPUT, readFlag) {
     apiUrl = "https://redcap.nyumc.org/apps/redcap/api/"
     rcon <- redcapAPI::redcapConnection(apiUrl, token)
 
-    vals2find <- getCaseValues(inputSheet, readFlag)
+    vals2find <- getCaseValues(PACT_INPUT, readFlag)
 
     if (class(vals2find) != "data.frame") {
         vals2find <- as.data.frame(vals2find)
@@ -711,7 +758,7 @@ getOuputData <- function(token, flds, inputSheet, readFlag) {
     db <- grabAllRecords(flds, rcon)
     output <- process_values(vals2find, db)
 
-    runId <- grab_run_id(readFlag, inputSheet)
+    runId <- grab_run_id(readFlag, PACT_INPUT)
     output <- modifyOutput(output, vals2find)
     toDrop <- is.na(output$Test_Number)
 
@@ -723,8 +770,8 @@ getOuputData <- function(token, flds, inputSheet, readFlag) {
         }
     }
 
-    outFi <- createXlFile(runId, output)
-    emailFile(runId, outFi, rcon)
+    meth_xlsx <- createXlFile(runId, output)
+    emailFile(runId, meth_xlsx, rcon)
     return(output)
 }
 
@@ -959,7 +1006,7 @@ queue_cnv_maker <- function(output, token) {
     } else{
         message(crayon::bgGreen(
             "No CNV png images to generate. Check the output directory."
-            ))
+        ))
     }
 }
 
@@ -967,7 +1014,7 @@ queue_cnv_maker <- function(output, token) {
 check_pkg_install()
 check_REDCap_vers() # Check REDCap API version
 checkMounts()
-output <- getOuputData(token, flds, inputSheet, readFlag)
+output <- getOuputData(token, flds, PACT_INPUT, readFlag)
 
 # CNV PNG Creation -------------------------------------
 if (ncol(output) > 0) {
