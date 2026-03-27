@@ -70,7 +70,7 @@ echo "
 html {font-size: 16px;}
 
 html body {
-    color: var(--text); width: auto;
+    width: auto; color: var(--text);
     font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;
 }
 
@@ -80,6 +80,8 @@ body {
     display: block; white-space: normal;
 }
 
+main {display: grid; max-width: 1100px; margin: 20px auto;}
+
 .markdown-preview {
     margin: 0 auto !important; max-width: 1100px !important;
     width: 100% !important; height: 100% !important;
@@ -87,9 +89,9 @@ body {
 }
 
 h1, h2, h3 {
+    width: auto; color: var(--text);
     line-height: 1.2 !important; padding-bottom: 0 !important;
     margin-top: 0 !important; margin-bottom: 0.6rem !important;
-    width: auto; color: var(--text);
 }
 
 h1 {font-size: 1.3rem;}
@@ -97,6 +99,13 @@ h1 {font-size: 1.3rem;}
 h5 {
     padding: 2px !important; margin-top: 4px !important;
     margin-bottom: 4px !important; color: var(--text);
+}
+
+ol {line-height: 1.4 !important; margin-bottom: 0 !important;}
+
+hr {
+    border: 0; border-top: 1px solid #e5e7eb;
+    margin: 0.8rem 0 1rem 0;
 }
 
 .boxed {
@@ -116,17 +125,53 @@ h5 {
     margin: 0.9rem auto 1.25rem auto;
 }
 
-.tocbox ol, .tocbox ul {margin: 0; padding-left: 1.2rem;}
-.tocbox li { margin: 0.28rem 0; line-height: 1.4; color: #1f2937; 
-    word-break: break-word; overflow-wrap: anywhere;}
-.tocbox a {color: #1e3a5f; text-decoration: none; font-weight: 600;}
-.tocbox a:hover {color: #2563eb; text-decoration: underline;}
 .toc-title {
     margin: 0 0 8px 0; font-size: 24px; font-weight: 800;
     letter-spacing: 0.02em; color: #24384a;
 }
 
-ol {line-height: 1.4 !important; margin-bottom: 0 !important;}
+.tocbox ol, .tocbox ul {margin: 0; padding-left: 1.2rem;}
+.tocbox li {
+    margin: 0.28rem 0; line-height: 1.4; color: #1f2937;
+    word-break: break-word; overflow-wrap: anywhere;
+}
+.tocbox a {color: #1e3a5f; text-decoration: none; font-weight: 600;}
+.tocbox a:hover {color: #2563eb; text-decoration: underline;}
+
+.input-table-wrap {
+    display: inline-block; margin-top: 8px; margin-bottom: 12px;
+    background: #2b2521; border: 1px solid #5a4c42;
+    border-radius: 10px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+    overflow: hidden;
+}
+
+.input-table {
+    border-collapse: collapse; width: auto; min-width: 480px;
+    font-size: 13px; line-height: 1.25;
+}
+
+.input-table th, .input-table td {
+    padding: 6px 10px; text-align: left; vertical-align: top;
+    border-bottom: 1px solid #4c4037;
+}
+
+.input-table tr:last-child th, .input-table tr:last-child td {border-bottom: none;}
+
+.input-table th {
+    background: #3a322d; color: #eadfce; font-weight: 700;
+    white-space: nowrap; width: 160px; border-right: 1px solid #5a4c42;
+}
+
+.input-table td {
+    background: #2b2521; color: #f5eee6;
+    word-break: break-word; overflow-wrap: anywhere; min-width: 260px;
+}
+
+.input-table-title {
+    background: #3a322d !important; color: #f2e7d5 !important; text-align: center !important;
+    font-weight: 800; font-size: 16px; letter-spacing: 0.02em;
+    padding: 10px 12px !important; border-bottom: 1px solid #5a4c42 !important;
+}
 
 code {
     background-color: transparent !important; color: var(--code-text) !important;
@@ -158,65 +203,14 @@ button {
     vertical-align: top; white-space: nowrap;
 }
 
-button:hover {
-    background: rgba(255,255,255,0.16);
-    border-color: rgba(255,255,255,0.22);
-}
-
+button:hover {background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.22);}
 button:active, button:focus {outline: none;}
-
 button:focus:not(:active) {box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.28);}
 
 .pressed {
     background-color: #06a96e;
     background-image: linear-gradient(1deg, #00aa6c, #14C667 99%);
     border-color: rgba(34, 197, 94, 0.35) !important;
-}
-
-main {display: grid; max-width: 1100px; margin: 20px auto;}
-
-.stagehead {
-    display: inline-block; margin-top: 15px !important; margin-bottom: 8px !important;
-    padding: 0.4rem 1rem 0.4rem 1.1rem; font-size: 32px; font-weight: 700 !important;
-    letter-spacing: 0.14em; text-transform: uppercase;
-    color: var(--accent) !important; background: #eff6ff;
-    border: 4px solid #20262b; border-radius: 4px;
-    font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, sans-serif;
-    -webkit-text-stroke-width: 0;
-}
-
-hr {
-    border: 0; border-top: 1px solid #e5e7eb;
-    margin: 0.8rem 0 1rem 0;
-}
-
-.input-table-wrap {
-    display: inline-block; margin-top: 8px; margin-bottom: 12px;
-    background: #2b2521; border: 1px solid #5a4c42;
-    border-radius: 10px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
-    overflow: hidden;
-}
-
-.input-table {
-    border-collapse: collapse; width: auto; min-width: 480px;
-    font-size: 13px; line-height: 1.25;
-}
-
-.input-table th, .input-table td {
-    padding: 6px 10px; text-align: left; vertical-align: top;
-    border-bottom: 1px solid #4c4037;
-}
-
-.input-table tr:last-child th, .input-table tr:last-child td {border-bottom: none;}
-
-.input-table th {
-    background: #3a322d; color: #eadfce; font-weight: 700;
-    white-space: nowrap; width: 160px; border-right: 1px solid #5a4c42;
-}
-
-.input-table td {
-    background: #2b2521; color: #f5eee6;
-    word-break: break-word; overflow-wrap: anywhere; min-width: 260px;
 }
 
 .text-block {
@@ -250,7 +244,26 @@ hr {
 
 .text-copy-pad {padding-top: 38px;}
 
-.input-table-title { background: #3a322d !important; color: #f2e7d5 !important; text-align: center !important; font-weight: 800; font-size: 16px; letter-spacing: 0.02em; padding: 10px 12px !important; border-bottom: 1px solid #5a4c42 !important; }
+.page-title {
+    padding-top: 8px !important; margin: 0 0 6px 0 !important; text-align: center;
+    font-size: 42px !important; font-weight: 700 !important; letter-spacing: 0.02em;
+    color: #1e3a5f !important;
+}
+
+.page-ti-ru {
+    width: 180px; height: 2px; background: #cbd5e1;
+    margin: 0 auto 12px auto; border-radius: 999px;
+}
+
+.stagehead {
+    display: inline-block; margin-top: 15px !important; margin-bottom: 8px !important;
+    padding: 0.4rem 1rem 0.4rem 1.1rem; font-size: 32px; font-weight: 700 !important;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent) !important; background: #eff6ff;
+    border: 4px solid #20262b; border-radius: 4px;
+    font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, sans-serif;
+    -webkit-text-stroke-width: 0;
+}
 
 @media (max-width: 700px) {
     body {padding: 14px;}
@@ -286,23 +299,17 @@ msg_step() {
     stepColor=$2
     stepString=$3
     bg_color="<span style=\"background-color:$stepColor;border-radius:5px!important;padding:5px 8px!important;line-height:1.5;\"> "
-    echo "<h5 style='font-size:14;margin-top:10px!important;'>${bg_color}${stepNumb}. ${stepString}${NORMAL}</h5>"
-    echo "<hr>"
+    echo -e "<h5 style='font-size:14;margin-top:10px!important;'>${bg_color}${stepNumb}. ${stepString}${NORMAL}</h5>\n<hr>"
 }
 
 white_bg() {
-    msgString=$1
-    echo "${WHT_BG}<u style='padding:2px;margin-top:5px;margin-bottom:5px;line-height:2;font-size:14pt;'>${msgString}</u></span></br>"
+    echo "${WHT_BG}<u style='padding:2px;margin-top:5px;margin-bottom:5px;line-height:2;font-size:14pt;'>${1}</u></span></br>"
 }
 
-msg_bold() {
-    msgString=$1
-    echo "<u><b>${msgString}</b></u></br>"
-}
+msg_bold() { echo "<u><b>${1}</b></u></br>"; }
 
 msg_white() {
-    msgString=$1
-    echo "<p style=\"color:white!important;line-height:1.0;padding:3px;margin:0;\">${msgString}</p>"
+    echo "<p style=\"color:white!important;line-height:1.0;padding:3px;margin:0;\">${1}</p>"
 }
 
 print_toc() {
@@ -310,43 +317,35 @@ print_toc() {
     echo "${liststart}${2}</a></li>"
 }
 
-msg_input() {
-    echo "<tr><th>${1}</th><td>${2}</td></tr>"
-}
+msg_input() { echo "<tr><th>${1}</th><td>${2}</td></tr>";}
+msg_meta() { echo "<span style='font-weight:bold'>${1}</span>: ${2}</br>"; }
+msg_title() { echo "<h1 class='page-title'>${1}</h1><div class='page-ti-ru'></div>";}
+msg_meta "Author" "Jonathan Serrano"; msg_meta "Script Version" "${VERS}"; msg_meta "Current Date" "${TD_DATE}"; echo "</br>"
 
-echo "<span style='font-weight: bold'>Author</span>: Jonathan Serrano</br>"
-echo "<span style='font-weight: bold'>Script Version</span>: ${VERS}</br>"
-echo "<span style='font-weight: bold'>Current Date</span>: ${TD_DATE}</br>"
-echo "</br>"
-echo "<h1 style='padding-top:8px!important; margin:0 0 6px 0!important; text-align:center; font-size:42px!important; font-weight:700!important; letter-spacing:0.02em; color:#1e3a5f!important;'>LG-PACT Commands</h1>"
-echo "<div style='width:180px; height:2px; background:#cbd5e1; margin:0 auto 12px auto; border-radius:999px;'></div>"
+msg_title "LG-PACT Commands"
+
 echo "<div class='input-table-wrap'><table class='input-table'>"
 echo "<tr><th class='input-table-title' colspan='2'>Script Inputs</th></tr>"
 msg_input "RUN_ID" "${RUN_ID}"
 msg_input "PACT_ID" "${PACT_ID}"
 msg_input "Consensus Directory" "${CONSENSUS_DIR}"
 msg_input "Kerberos ID" "${kerbero}"
-echo "</table></div>"
-echo "<br></br>"
-echo ' <div class="tocbox"> '
-#echo " "
+echo -e "</table></div><br></br>" && echo ' <div class="tocbox"> '
+
 # Table of Contents -----------------------
-echo "<div class='toc-title'>Table of Contents</div>"
-echo " "
+echo -e "<div class='toc-title'>Table of Contents</div>\n"
 echo '<ol start="1" style="font-size:14;">'
 print_toc 1 "Demultiplexing"
 print_toc 2 "Execute In-House Pipeline and Philips Uploads"
 print_toc 3 "Generate In-House QC and Copy the Output Files and QC to Zdrive"
 print_toc 4 "Generate Consensus"
-echo "</ol>"
-echo "$BOX2"
-echo "<br></br>"
+echo -e "</ol>\n$BOX2\n<br></br>"
 
 # Stage 1 -----------------------
 msg_stage 1 "Begin Demultiplexing"
-msg_step 1 "#ffdfba" "Once sequencing is complete, start demux by logging into HPC"
+msg_step 1 "#acacff" "Once sequencing is complete, start demux by logging into HPC"
 msg_code "ssh -Y ${kerbero}@bigpurple.nyumc.org"
-msg_step 2 "#ffdfba" "Go into the demux-nf2 directory and execute the deploy command"
+msg_step 2 "#acacff" "Go into the demux-nf2 directory and execute the deploy command"
 msg_code "${BASH_HELPERS}/start_demux.sh ${PACT_ID} ${RUN_ID}"
 echo "$BOX2"
 
@@ -400,49 +399,26 @@ else
 	msg_step 1 "#bae1ff" "In your LOCAL terminal execute the make_consensus.sh script Monday after the Philips data dumps into /molecular/Molecular/Philips_SFTP"
 	msg_code "${HOME}/make_consensus.sh ${RUN_ID} ${PACT_ID}"
 	msg_step 2 "#bae1ff" "Send an email to notify the file is ready"
-	msg_txt "Hi all,
-	The methylation CNV consensus is copied here:
-	smb://shares-cifs.nyumc.org/apps/acc_pathology${outputDir}${YEAR_DIR}/${PACT_ID}/${PACT_ID}_consensus.html"
+	msg_txt "Hi all,\nThe methylation CNV consensus is copied here:\nsmb://shares-cifs.nyumc.org/apps/acc_pathology${outputDir}${YEAR_DIR}/${PACT_ID}/${PACT_ID}_consensus.html"
 	echo "$BOX2"
 fi
 
 echo "
 <script>
-    function copyEvent(id) {
-        var str = document.getElementById(id);
-        window.getSelection().selectAllChildren(str);
-        document.execCommand(\"Copy\")
-    }
+document.querySelectorAll(\"pre\").forEach((block) => {
+    if (!navigator.clipboard) {return;}
+    const button = document.createElement(\"button\");
+    button.type = \"button\";
+    button.innerText = \"Copy Code\";
 
-    const copyButtonLabel = \"Copy Code\";
-    let blocks = document.querySelectorAll(\"pre\");
-
-    blocks.forEach((block) => {
-        if (navigator.clipboard) {
-            let button = document.createElement(\"button\");
-            button.innerText = copyButtonLabel;
-            button.addEventListener(\"click\", copyCode);
-            button.onclick = copyEvent('copy');
-            block.prepend(button);
-        }
-    });
-
-    async function copyCode(event) {
-        const button = event.srcElement;
-        const pre = button.parentElement;
-        let code = pre.querySelector(\"code\");
-        let text = code.innerText;
-        await navigator.clipboard.writeText(text);
+    button.addEventListener(\"click\", async () => {
+        const code = block.querySelector(\"code\");
+        if (!code) {return;}
+        await navigator.clipboard.writeText(code.innerText);
         button.innerText = \"Code Copied\";
         button.className = \"pressed\";
-    }
-
-    function clearSelection(){
-    if (window.getSelection) {window.getSelection().removeAllRanges();}
-    else if (document.selection) {document.selection.empty();}
-    }
-
-    window.onload = clearSelection;
-
+    });
+    block.prepend(button);
+});
 </script>
 "
