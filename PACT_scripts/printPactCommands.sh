@@ -3,249 +3,290 @@
 ## Script name: printPactCommands.sh
 ## Purpose: Print out all the copiable commands used for executing the PACT pipeline
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2023
+## Version: 1.0.1
+## Date Updated: March 25, 2026
+## Copyright (c) NYULH Jonathan Serrano, 2026
 ## ---------------------------
 
-runID=${1-NULL}   # if arg $1 is empty assign NULL as default else i.e. 123456_NB501073_0212_AHT3V7BGXK
-pactRun=${2-NULL} # if arg $2 is empty assign NULL as default else i.e. PACT-21-28
-DEFAULTVALUE="/Volumes/CBioinformatics/jonathan/pact/consensus/"
-consensusDir="${3:-$DEFAULTVALUE}"
-kerbero=${4-$USER} # if arg $3 is empty assign $USER as default else i.e. whoami kerberosid
+DEFAULT_DIR="/Volumes/CBioinformatics/jonathan/pact/consensus/"
 
+RUN_ID=${1-NULL}  		# i.e. 123456_NB501073_0212_AHT3V7BGXK
+PACT_ID=${2-NULL}		# i.e. 26-PACT33
+CONSENSUS_DIR=${3-NULL} # path to where consensus generates
+kerbero=${4-$USER} 		# i.e. whoami kerberosid
+
+[[ -n "${3}" ]] && CONSENSUS_DIR="${DEFAULT_DIR}"
+IS_SOPHIA=$([[ "${PACT_ID:0:2}" =~ ^[0-9]{2}$ ]] && echo true || echo false)
+BASH_HELPERS="/gpfs/data/molecpathlab/scripts/bash_helpers"
+
+if [[ "$IS_SOPHIA" == "true" ]]; then
+	year_part=${PACT_ID:0:2}
+	BASH_HELPERS="/gpfs/data/molecpathlab/scripts/bash_helpers_SG"
+else
+	year_part=${PACT_ID:5:2}
+fi
+
+VERS="1.0.1"
 FG_YLW='<span style="color:#cf6a00;">' # makes text darkorange color
 FG_RED='<span style="color:#cc0000">'  # makes text red color
 FG_GRN='<span style="color:#6aa84f">'  # makes text color green
-FG_BLU='<span style="color:blue">'     # makes text color blue
+FG_BLU='<span style="color:dodgerblue">'     # makes text color blue
 FG_CYA='<span style="color:cyan;">'    # makes text color #baffc9
+FG_MAG='<span style="color:#ff00ff;">' # makes text color magenta
 WHT_BG="<span style='background-color:white;margin-left:30px;padding:3px;margin-top:5px;margin-bottom:5px;line-height:1.2!important;'>"
-normal="</span>" # resets default text
+NORMAL="</span>" # resets default text
 BOX1=' <div class="boxed"> '
 BOX2=' </div> '
-year_part=${pactRun:5:2}
-currYear="20${year_part}"
-#currYear=$(date +"%Y") #date2022
-#evernoteLink='https://www.evernote.com/shard/s331/sh/5416e425-83c7-5aeb-0683-6667fb3d6f8e/07ef3e8f603ecdff3afe5da18f0204f2'
-consensusDir='/Volumes/CBioinformatics/jonathan/pact/consensus/'
-productionDir="/gpfs/data/molecpathlab/production"
+
+if [[ "$IS_SOPHIA" == "true" ]]; then
+	year_part=${PACT_ID:0:2}
+else
+	year_part=${PACT_ID:5:2}
+fi
+
+TD_DATE="$(date +"%B %d, %Y %-I:%M%P %Z")"
+PACT_ID="${FG_RED}${PACT_ID}${NORMAL}"
+kerbero="${FG_MAG}${kerbero}${NORMAL}"
+RUN_ID="${FG_YLW}${RUN_ID}${NORMAL}"
+
+YEAR_DIR="${FG_BLU}20${year_part}${NORMAL}"
+PROD_DIR="/gpfs/data/molecpathlab/production"
 outputDir="/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics/"
-#reprtDir="/gpfs/data/molecpathlab/bin/QC_reprot/"
-pactGithub="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts"
-SHEETDIR="${productionDir}/samplesheets/LG-PACT/${runID}"
-DEMUXDIR="${productionDir}/Demultiplexing/${runID}"
-#molecDir="${productionDir}/NGS607/"
+DEMUXDIR="${PROD_DIR}/Demultiplexing/${RUN_ID}"
 
 echo "
-<link href='https://fonts.googleapis.com/css?family=Allerta Stencil' rel='stylesheet'>
-
-
 <style>
-h1, h2, h3 {
-    line-height: 40% !important;
-    padding-bottom: 0px !important;
-    margin-top: 0px !important;
-    width: auto;
+:root {
+    --bg: #f5f7fb; --surface: #ffffff; --surface-2: #f8fafc;
+    --text: #18212f; --muted: #5b6472; --border: #d9e1ea;
+    --accent: #2563eb; --accent-hover: #1d4ed8; --success: #15803d;
+    --shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    --radius: 14px; --radius-sm: 10px;
+    --code-bg: #111827; --code-text: #f3f4f6;
 }
+
+*, *:before, *:after {box-sizing: border-box;}
+
+html {font-size: 16px;}
 
 html body {
-    color: darkblue;
-    width: auto;
-}
-
-html body {
-    font-family: 'Helvetica Neue',Helvetica,'Segoe UI',Arial,freesans,sans-serif;
-}
-
-
-.pressed {
-  background-color: #06a96e;
-  background-image: linear-gradient(1deg, #00aa6c, #14C667 99%);
-}
-
-
-.boxed {
-    background: rgb(90, 90, 90) !important;
-    border: 3px solid black;
-    padding: 10px;
-    border-radius: 10px;
-    width: auto;
-    display: inline-block;
-    white-space: nowrap;
-    font-size:12 !important;
-}
-
-.tocbox {
-    background: rgb(255, 255, 255) !important;
-    border: 3px solid black;
-    padding: 20px;
-    border-radius: 10px;
-    width: auto;
-    display: inline-block;
-    white-space: nowrap;
-    font-size:16 !important;
-}
-
-h5 {
-    padding:2px !important;
-    margin-bottom:4px !important;
-    margin-top:4px !important;
+    color: var(--text); width: auto;
+    font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;
 }
 
 body {
-    background-color: grey !important;
-    width: 100%;
-    margin-left: 10px;
-    width: auto;
-    display: inline-block;
-    white-space: nowrap;
+    margin: 0; padding: 24px; width: auto;
+    background: #626c79 !important; color: var(--text) !important;
+    display: block; white-space: normal;
 }
 
 .markdown-preview {
-    margin-right: 10px !important;
-    width: 100% !important;
-    height: 100% !important;
-    box-sizing: content-box !important;
-    margin-left: 20px !important;
-    padding-top: 4px !important;
-    margin-top: 4px !important;
+    margin: 0 auto !important; max-width: 1100px !important;
+    width: 100% !important; height: 100% !important;
+    box-sizing: border-box !important; padding-top: 4px !important;
 }
 
-ol {
-    line-height: 1.2 !important;
-    margin-bottom:0!important;
+h1, h2, h3 {
+    line-height: 1.2 !important; padding-bottom: 0 !important;
+    margin-top: 0 !important; margin-bottom: 0.6rem !important;
+    width: auto; color: var(--text);
 }
+
+h1 {font-size: 1.3rem;}
+
+h5 {
+    padding: 2px !important; margin-top: 4px !important;
+    margin-bottom: 4px !important; color: var(--text);
+}
+
+.boxed {
+    background: rgb(90, 90, 90) !important; border: 3px solid var(--border);
+    padding: 18px 20px; border-radius: var(--radius);
+    width: 100%; display: block; white-space: normal;
+    font-size: 12px !important; box-shadow: var(--shadow);
+    margin: 0.9rem 0 1.25rem 0;
+}
+
+.tocbox {
+    background: #eef3f7 !important; border: 1px solid #b8c4cf;
+    padding: 14px 18px; border-radius: 12px;
+    width: auto; max-width: 720px; display: inline-block;
+    white-space: normal; font-size: 15px !important; line-height: 1.4;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+    margin: 0.9rem auto 1.25rem auto;
+}
+
+.tocbox ol, .tocbox ul {margin: 0; padding-left: 1.2rem;}
+.tocbox li { margin: 0.28rem 0; line-height: 1.4; color: #1f2937; 
+    word-break: break-word; overflow-wrap: anywhere;}
+.tocbox a {color: #1e3a5f; text-decoration: none; font-weight: 600;}
+.tocbox a:hover {color: #2563eb; text-decoration: underline;}
+.toc-title {
+    margin: 0 0 8px 0; font-size: 24px; font-weight: 800;
+    letter-spacing: 0.02em; color: #24384a;
+}
+
+ol {line-height: 1.4 !important; margin-bottom: 0 !important;}
 
 code {
-    background-color: black !important;
-    color: white !important;
-    margin-left: 20px !important;
-    padding: 3px !important;
-    line-height: 1.75 !important;
-    font-family: Menlo,Monaco,Consolas,'Courier New',monospace!important;
-    font-size:13 !important;
+    background-color: transparent !important; color: var(--code-text) !important;
+    margin-left: 0 !important; padding: 0 !important; line-height: 1.6 !important;
+    font-family: Menlo, Monaco, Consolas, 'Courier New', monospace !important;
+    font-size: 13px !important;
 }
 
-*, *:before, *:after {
-  box-sizing: border-box;
-}
-
-pre[class*=\"language-\"] {
-  position:relative;
-  overflow: auto;
-  margin:5px 0;
-  padding:1.75rem 0 1.75rem 1rem;
-  border-radius:10px;
+pre, pre[class*=\"language-\"] {
+    position: relative; overflow: auto; margin: 8px 0 14px 0;
+    padding: 1rem 1rem 1rem 7.5rem;
+    border-radius: 12px; background: var(--code-bg) !important;
+    border: 1px solid #1f2937;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
 }
 
 button {
-  align-items: center;
-  appearance: none;
-  background-color: #3EB2FD;
-  background-image: linear-gradient(1deg, #4F58FD, #149BF3 99%);
-  background-size: calc(100% + 20px) calc(100% + 20px);
-  border-radius: 100px;
-  border-width: 0;
-  box-shadow: none;
-  box-sizing: border-box;
-  color: #FFFFFF;
-  cursor: pointer;
-  display: inline-flex;
-  font-family: CircularStd,sans-serif;
-  font-size: 14;
-  height: auto;
-  justify-content: center;
-  line-height: 1.0;
-  padding: 3px 10px;
-  position: relative;
-  text-align: center;
-  text-decoration: none;
-  transition: background-color .2s,background-position .2s;
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: manipulation;
-  vertical-align: top;
-  white-space: nowrap;
-}
-
-button:active,
-button:focus {
-  outline: none;
+    align-items: center; appearance: none; box-sizing: border-box;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 10px; box-shadow: none; color: #ffffff;
+    cursor: pointer; display: inline-flex;
+    font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, sans-serif;
+    font-size: 12px; font-weight: 600; height: auto;
+    justify-content: center; line-height: 1.2; padding: 6px 10px;
+    position: absolute; top: 10px; left: 10px;
+    text-align: center; text-decoration: none;
+    transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+    user-select: none; -webkit-user-select: none; touch-action: manipulation;
+    vertical-align: top; white-space: nowrap;
 }
 
 button:hover {
-  background-position: -20px -20px;
+    background: rgba(255,255,255,0.16);
+    border-color: rgba(255,255,255,0.22);
 }
 
-button:focus:not(:active) {
-  box-shadow: rgba(40, 170, 255, 0.25) 0 0 0 .125em;
+button:active, button:focus {outline: none;}
+
+button:focus:not(:active) {box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.28);}
+
+.pressed {
+    background-color: #06a96e;
+    background-image: linear-gradient(1deg, #00aa6c, #14C667 99%);
+    border-color: rgba(34, 197, 94, 0.35) !important;
 }
 
-main {
-  display: grid;
-  max-width: 600px;
-  margin: 20px auto;
-}
-
-
-h1{
-  font-size:1.3rem;
-}
+main {display: grid; max-width: 1100px; margin: 20px auto;}
 
 .stagehead {
-  font-size: 40px;
-  font-weight: 600!important;
-  background-image: linear-gradient(
-        to bottom,
-        #CA4246, 
-        #E16541, 
-        #F18F43, 
-        #8B9862)!important;
-  color: transparent!important;
-  display: block;
-  background-clip: text!important;
-  -webkit-background-clip: text!important;
-  font-family: 'Allerta Stencil';
-  margin-bottom: 0px !important;
-  margin-top: 15px !important;
-  -webkit-text-stroke-width: 0.05px;
-  -webkit-text-stroke-color: black;
+    display: inline-block; margin-top: 15px !important; margin-bottom: 8px !important;
+    padding: 0.4rem 1rem 0.4rem 1.1rem; font-size: 32px; font-weight: 700 !important;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent) !important; background: #eff6ff;
+    border: 4px solid #20262b; border-radius: 4px;
+    font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, sans-serif;
+    -webkit-text-stroke-width: 0;
 }
 
+hr {
+    border: 0; border-top: 1px solid #e5e7eb;
+    margin: 0.8rem 0 1rem 0;
+}
+
+.input-table-wrap {
+    display: inline-block; margin-top: 8px; margin-bottom: 12px;
+    background: #2b2521; border: 1px solid #5a4c42;
+    border-radius: 10px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+    overflow: hidden;
+}
+
+.input-table {
+    border-collapse: collapse; width: auto; min-width: 480px;
+    font-size: 13px; line-height: 1.25;
+}
+
+.input-table th, .input-table td {
+    padding: 6px 10px; text-align: left; vertical-align: top;
+    border-bottom: 1px solid #4c4037;
+}
+
+.input-table tr:last-child th, .input-table tr:last-child td {border-bottom: none;}
+
+.input-table th {
+    background: #3a322d; color: #eadfce; font-weight: 700;
+    white-space: nowrap; width: 160px; border-right: 1px solid #5a4c42;
+}
+
+.input-table td {
+    background: #2b2521; color: #f5eee6;
+    word-break: break-word; overflow-wrap: anywhere; min-width: 260px;
+}
+
+.text-block {
+    position: relative; margin: 8px 0 14px 0;
+    padding: 14px 16px 14px 16px; border-radius: 10px;
+    background: #ffffff !important; border: 1px solid #d9e1ea;
+    color: #000000 !important;
+    font-family: Calibri, Aptos, 'Segoe UI', Arial, sans-serif !important;
+    font-size: 14px; line-height: 1.45; white-space: pre-wrap;
+    word-break: break-word; overflow-wrap: anywhere;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.text-copy-btn {
+    position: absolute; top: 10px; left: 10px;
+    align-items: center; appearance: none; display: inline-flex;
+    background: #e2e8f0; border: 1px solid #cbd5e1; border-radius: 8px;
+    color: #0f172a; cursor: pointer;
+    font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, sans-serif;
+    font-size: 12px; font-weight: 600; line-height: 1.2;
+    padding: 5px 10px; white-space: nowrap;
+}
+
+.text-copy-btn:hover {background: #cbd5e1;}
+.text-copy-btn:focus, .text-copy-btn:active {outline: none;}
+
+.text-copy-btn.pressed {
+    background: #dcfce7 !important; border-color: #86efac !important;
+    color: #166534 !important;
+}
+
+.text-copy-pad {padding-top: 38px;}
+
+.input-table-title { background: #3a322d !important; color: #f2e7d5 !important; text-align: center !important; font-weight: 800; font-size: 16px; letter-spacing: 0.02em; padding: 10px 12px !important; border-bottom: 1px solid #5a4c42 !important; }
+
+@media (max-width: 700px) {
+    body {padding: 14px;}
+    .boxed, .tocbox {padding: 16px;}
+}
 </style>
 "
 
 msg_note() {
     wordString=$1
     xtraString=$2
-    echo "<h4 style='margin:0;'>${FG_YLW}${wordString}${normal} <u style='color:white;font-style:italic;'>${xtraString}</u></h4>"
+    echo "<h4 style='margin:0;'>${FG_YLW}${wordString}${NORMAL} <u style='color:white;font-style:italic;'>${xtraString}</u></h4>"
     echo " "
 }
 
 # Stages -----------------------
 msg_stage() {
-    stageString=$1
-    stageTitle=$2
-    echo " "
-    echo "<a class='stagehead' id='stage-${stageString}'>STAGE-${stageString}</a>"
-    echo " "
-    echo "<h3 style='font-style:italic;color:#004c00'>${stageTitle}</h3>"
-    echo "$BOX1"
-    echo " "
+    echo -e " \n<a class='stagehead' id='stage-${1}'>STAGE-${1}</a>\n"
+    echo -e " <h3 style='margin:5px 0 8px 0!important; font-style:italic; font-weight:800; font-size:24px; letter-spacing:0.01em; font-family:Aptos, Calibri, \"Segoe UI\", Arial, sans-serif; color:#ffffff; text-shadow:0 1px 1px rgba(0,0,0,0.18);'>${2}</h3>\n${BOX1}\n "
 }
 
 msg_code() {
-    codeString=$1
-    echo "<pre>"
-    echo "<code class=\"language-bash\" id=\"copy\">${codeString}</code>"
-    echo "</pre>"
-    #echo "<code>${codeString}</code></br>"
+    echo -e "<pre>\n<code class=\"language-bash\" id=\"copy\">${1}</code>\n</pre>"
+}
+
+msg_txt() {
+    echo -e "<div class='text-block text-copy-pad'><button type='button' class='text-copy-btn' onclick='copyTextBlock(this)'>Copy Text</button>"
+    echo -e "<div class='text-content'>${1}</div></div>"
 }
 
 msg_step() {
     stepNumb=$1
     stepColor=$2
     stepString=$3
-    bg_color="<span style=\"background-color:$stepColor;border-radius:5px!important;padding:3px!important;line-height:1.1;\"> "
-    echo "<h5 style='font-size:13;margin-top:10px!important;'>${bg_color}${stepNumb}. ${stepString}${normal}</h5>"
+    bg_color="<span style=\"background-color:$stepColor;border-radius:5px!important;padding:5px 8px!important;line-height:1.5;\"> "
+    echo "<h5 style='font-size:14;margin-top:10px!important;'>${bg_color}${stepNumb}. ${stepString}${NORMAL}</h5>"
     echo "<hr>"
 }
 
@@ -265,170 +306,105 @@ msg_white() {
 }
 
 print_toc() {
-    stepNumb=$1
-    stepString=$2
-    liststart="<li><a href=\"#stage-${stepNumb}\">"
-    echo "${liststart}${stepString}</a></li>"
+    liststart="<li><a href=\"#stage-${1}\">"
+    echo "${liststart}${2}</a></li>"
 }
-#lastTwo=${pactRun: -2}
-runMid=${pactRun:5:2}
-pactRun="${FG_RED}${pactRun}${normal}"
-kerbero="${FG_CYA}${kerbero}${normal}"
-runID="${FG_YLW}${runID}${normal}"
-currYear="${FG_BLU}20$runMid${normal}"
-gpfsHome="/gpfs/home/${kerbero}/"
-rsyncDir="${gpfsHome}molecpathlab/production/NGS607/${runID}/output"
-zdrive="/mnt/${kerbero}/molecular/Molecular"
+
+msg_input() {
+    echo "<tr><th>${1}</th><td>${2}</td></tr>"
+}
 
 echo "<span style='font-weight: bold'>Author</span>: Jonathan Serrano</br>"
-echo "<span style='font-weight: bold'>Current Date</span>: $(date)</br>"
+echo "<span style='font-weight: bold'>Script Version</span>: ${VERS}</br>"
+echo "<span style='font-weight: bold'>Current Date</span>: ${TD_DATE}</br>"
 echo "</br>"
-echo "<h2 style='padding-top: 5px !important; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: black;'>${FG_GRN}LG-PACT Commands${normal}</h2>"
-msg_step 1 "white" "PACT RUNID: ${runID}</br>"
-msg_step 2 "white" "PACT Run Name: ${pactRun}</br>"
-msg_step 3 "white" "Consensus Directory: ${consensusDir}</br>"
-msg_step 4 "white" "Kerberos ID: ${kerbero}</br>"
-echo "</br>"
+echo "<h1 style='padding-top:8px!important; margin:0 0 6px 0!important; text-align:center; font-size:42px!important; font-weight:700!important; letter-spacing:0.02em; color:#1e3a5f!important;'>LG-PACT Commands</h1>"
+echo "<div style='width:180px; height:2px; background:#cbd5e1; margin:0 auto 12px auto; border-radius:999px;'></div>"
+echo "<div class='input-table-wrap'><table class='input-table'>"
+echo "<tr><th class='input-table-title' colspan='2'>Script Inputs</th></tr>"
+msg_input "RUN_ID" "${RUN_ID}"
+msg_input "PACT_ID" "${PACT_ID}"
+msg_input "Consensus Directory" "${CONSENSUS_DIR}"
+msg_input "Kerberos ID" "${kerbero}"
+echo "</table></div>"
+echo "<br></br>"
 echo ' <div class="tocbox"> '
 #echo " "
 # Table of Contents -----------------------
-echo "<h2 style='margin-top: 0px;font-size:20;'> Table of Contents </h2>"
+echo "<div class='toc-title'>Table of Contents</div>"
 echo " "
-echo '<ol start="0" style="font-size:14;">'
+echo '<ol start="1" style="font-size:14;">'
 print_toc 1 "Demultiplexing"
 print_toc 2 "Execute In-House Pipeline and Philips Uploads"
 print_toc 3 "Generate In-House QC and Copy the Output Files and QC to Zdrive"
 print_toc 4 "Generate Consensus"
 echo "</ol>"
 echo "$BOX2"
-# Stage 0 -----------------------
-# msg_stage 0 "Create SampleSheet.csv & Copy to BigPurple"
-# msg_step 1 "#ffb3ba" "First mount the Molecular drive and execute the shell script"
-# msg_code "diskutil mountdisk /Volumes/CBioinformatics/"
-# msg_code "/Volumes/CBioinformatics/PACT/parsepact.sh ${pactRun} ${runID}"
-# msg_step 2 "#ffb3ba" "Review the generated SampleSheet.csv ouput below and notify the lab if it contains any errors"
-# msg_code "${HOME}/Desktop/${runID}-SampleSheet.csv"
-# msg_step 3 "#ffb3ba" "Verify the script copied the samplesheet to BigPurple and added group read/write permissions to the directory:"
-# msg_code "${productionDir}/samplesheets/LG-PACT/${runID}/${runID}-SampleSheet.csv"
-# echo "$BOX2"
+echo "<br></br>"
 
 # Stage 1 -----------------------
-msg_stage 1 "Demux Steps"
-msg_step 1 "#ffdfba" "Once sequencing is finished, start demultiplexing by logging into BigPurple"
+msg_stage 1 "Begin Demultiplexing"
+msg_step 1 "#ffdfba" "Once sequencing is complete, start demux by logging into HPC"
 msg_code "ssh -Y ${kerbero}@bigpurple.nyumc.org"
 msg_step 2 "#ffdfba" "Go into the demux-nf2 directory and execute the deploy command"
-msg_code "/gpfs/data/molecpathlab/scripts/bash_helpers/start_demux.sh ${pactRun} ${runID}"
-#msg_code "cd /gpfs/data/molecpathlab/pipelines/demux-nf2/ && make deploy RUNID=${runID} SAMPLESHEET=$SHEETDIR/${runID}-SampleSheet.csv SEQTYPE=NGS607"
-#msg_step 3 "#ffdfba" "Execute the deploy command for your run"
-#msg_code "make deploy RUNID=${runID} SAMPLESHEET=$SHEETDIR/${runID}-SampleSheet.csv SEQTYPE=NGS607"
-#msg_step 3 "#ffdfba" "Go into the newly deployed Demultiplexing run directory then make update and submit"
-#msg_code "cd $DEMUXDIR && make update && make submit"
-#msg_code "make update && make submit"
+msg_code "${BASH_HELPERS}/start_demux.sh ${PACT_ID} ${RUN_ID}"
 echo "$BOX2"
 
 # Stage 2 -----------------------
-msg_stage 2 "Execute In-House Pipeline and Philips Uploads"
-msg_step 1 "#ffffba" "After Demux finishes, check the QC by pasting the link below in a web browser to open in a SFTP client like CyberDuck:"
-msg_code "sftp://bigpurple.nyumc.org${DEMUXDIR}/output/${runID}.report.html"
-#msg_code "chmod -R g+rwx ${DEMUXDIR}/output"
-msg_step "2" "#ffffba" "Return to the Demux directory, execute the pass and upload *make* commands to upload to Philips, then deploy the in-house pipeline with EITHER 2a or 2b"
-msg_code "ssh ${kerbero}@bigpurple.nyumc.org"
-msg_step "2a" "#acacff" "If all samples in the run are production samples then execute the following command 2a"
-msg_code "/gpfs/data/molecpathlab/scripts/bash_helpers/start_pipeline.sh ${pactRun} ${runID}"
-msg_step "2b" "#acacff" "If the run has any filler or previous validation cases that need to be changed in the sample sheet, execute the steps below separately after editing the run"
-msg_code "/gpfs/data/molecpathlab/scripts/bash_helpers/make_passed_uploads.sh ${pactRun} ${runID}"
-msg_code "/gpfs/data/molecpathlab/scripts/bash_helpers/deploy_607_submit.sh ${pactRun} ${runID}"
-#msg_code "make passed && make uploads && make deploy-NGS607 && cd ${productionDir}/NGS607/${runID} && chmod -R g+rwx ${productionDir}/isg-uploads/${runID}"
-#msg_code "cd ${productionDir}/NGS607/${runID}"
-#msg_step 3 "#ffffba" "Update and then submit the slurm job and check your logs using squeue -u ${kerbero} && lt logs/*"
-#msg_code "make update && make submit"
-#msg_code "squeue -u ${kerbero} && lt logs/*"
-msg_step 3 "#ffffba" "ssh pgm@pgmapllcdcpvm01.nyumc.org to the isg-uploads folder to ensure the files are accessible and check the pgm log to verify uploading to Philips every 30 min"
-#msg_code "chmod -R g+rwx ${productionDir}/isg-uploads/${runID}"
-#msg_code "ssh pgm@pgmlcdcpvm01.nyumc.org"
-#msg_note "NOTE:" "If you forget the pgm password, we have it saved in Evernote"
-msg_code "cat pgm/log/uploads.log"
-msg_note "Reminder:" "If you forget the pgm password, check Evernote. Ensure Philips ISPM uploads are not pending or missing. Nextflow will email you any errors and when the pipeline completes"
-echo "$BOX2"
+if [[ "$IS_SOPHIA" == "true" ]]; then
+	msg_stage 2 "Deploy and execute the NGS607 Pipeline"
+	msg_step 1 "#ffffba" "After Demux finishes, check the QC by pasting the link below in a web browser to open in a SFTP client like CyberDuck:"
+	msg_code "sftp://bigpurple.nyumc.org${DEMUXDIR}/output/${RUN_ID}.report.html"
+	msg_step "2" "#ffffba" "Begin the SG pipeline by executing the script below:"
+	msg_code "${BASH_HELPERS}/start_pipeline.sh ${PACT_ID} ${RUN_ID}"
+	echo "$BOX2"
+else
+	msg_stage 2 "Execute In-House Pipeline and Philips Uploads"
+	msg_step 1 "#ffffba" "After Demux finishes, check the QC by pasting the link below in a web browser to open in a SFTP client like CyberDuck:"
+	msg_code "sftp://bigpurple.nyumc.org${DEMUXDIR}/output/${RUN_ID}.report.html"
+	msg_step "2" "#ffffba" "Return to the Demux directory, execute the pass and upload *make* commands to upload to Philips, then deploy the in-house pipeline with EITHER 2a or 2b"
+	msg_code "ssh ${kerbero}@bigpurple.nyumc.org"
+	msg_step "2a" "#acacff" "If all samples in the run are production samples then execute the following command 2a"
+	msg_code "${BASH_HELPERS}/start_pipeline.sh ${PACT_ID} ${RUN_ID}"
+	msg_step "2b" "#acacff" "If the run has any filler or previous validation cases that need to be changed in the sample sheet, execute the steps below separately after editing the run"
+	msg_code "${BASH_HELPERS}/make_passed_uploads.sh ${PACT_ID} ${RUN_ID}"
+	msg_code "${BASH_HELPERS}/deploy_607_submit.sh ${PACT_ID} ${RUN_ID}"
+	msg_step 3 "#ffffba" "ssh pgm@pgmapllcdcpvm01.nyumc.org to the isg-uploads folder to ensure the files are accessible and check the pgm log to verify uploading to Philips every 30 min"
+	msg_code "cat pgm/log/uploads.log"
+	echo "$BOX2"
+fi
 
 # Stage 3 -----------------------
-# msg_stage 3 "Generate QC"
-# msg_step 1 "#d9d2e9" "After NextFlow emails you the pipeline completed successfully, return to BigPurple and generate the QC"
-# msg_code "ssh ${kerbero}@bigpurple.nyumc.org"
-# msg_step 2 "#d9d2e9" "Go to the run production directory, edit permissions, and then execute the Python Automations"
-# msg_code "module load python/cpu/3.8.11 && cd ${molecDir}${runID} && mkdir -p ${productionDir}/NGS607/${runID}/output/clinical/ && chmod -R g+rwx ${productionDir}/NGS607/${runID}/output/"
-# msg_code "python ${reprtDir}snp_overlap.py -o ${molecDir}${runID}/output/ && python ${reprtDir}generate_html_report.py -o ${molecDir}${runID} -p ${pactRun} -r ${runID} && python3 ${reprtDir}variants_qc.py -rid ${runID} -rdir ${molecDir}${runID}/output/ -pactid ${pactRun}"
-# msg_code "python /gpfs/data/molecpathlab/bin/QC_reprot/detect_hotspots.py -rid ${runID} -pactid ${pactRun}"
-# msg_step 3 "#d9d2e9" "Change permissions for group access to the new QC files ouput"
-# msg_code "chmod -R g+rwx ${productionDir}/NGS607/${runID}/output/"
-# msg_note "If this step breaks, try re-installing miniconda and the requirements.txt with the outlined commands in step 4"
-# msg_step 4 "#a980ff" "If you have MiniConda3 skip to step 5, otherwise install it and type \"no\" when prompted if you wish the installer to initialize Miniconda3 by running conda init"
-# msg_code "cd /gpfs/home/${kerbero} && wget https://repo.anaconda.com/miniconda/Miniconda3-py38_4.10.3-Linux-x86_64.sh && bash Miniconda3-py38_4.10.3-Linux-x86_64.sh"
-# msg_step 4a "#a980ff" "To complete installation, cd into your bin directory, then CLOSE the terminal window (exit BigPurple) to restart it"
-# msg_code "cd ${gpfsHome}miniconda3/bin/ && ./conda init"
-# msg_step 4b "#a980ff" "After closing the console, ssh back into BigPurple and use conda to install pip"
-# msg_code "ssh ${kerbero}@bigpurple.nyumc.org"
-# msg_code "conda install pip"
-# msg_code "pip install -r ${gpfsHome}molecpathlab/development/NGS_QC_xf/requirements.txt"
-# msg_step 5 "#d9d2e9" "Go to the QC python directory and generate the QC file"
-# msg_code "conda activate && python ${gpfsHome}molecpathlab/development/NGS_QC_xf/xf_pactqc.py -rdir ${molecDir}${runID}/output -pactid ${pactRun} && conda deactivate"
-# msg_code "chmod -R g+rwx ${productionDir}/NGS607/${runID}/output/"
-# echo "$BOX2"
-
-BAMSDIR="/gpfs/data/molecpathlab/production/NGS607/${runID}/output/alignments/recalibrated"
-
-# Stage 3 -----------------------
-msg_stage 3 "Copy the QC files and Output data to the Molecular Z-drive"
-msg_step 1 "#baffc9" "Create the output BAM directory and copy calibrated and then ssh to the data mover node by executing below:"
-msg_code "/gpfs/data/molecpathlab/scripts/bash_helpers/bam_copier.sh ${runID} ${pactRun}"
-#msg_code "mkdir -p \"/gpfs/data/clinpathlab/external/${pactRun}\" && rsync -vrthP ${BAMSDIR}/*.dd.ra.rc.bam \"/gpfs/data/clinpathlab/external/${pactRun}/\" && rsync -vrthP ${BAMSDIR}/*.dd.ra.rc.bam.bai \"/gpfs/data/clinpathlab/external/${pactRun}/\" && chmod -R ag+rwx \"/gpfs/data/clinpathlab/external/${pactRun}\""
-msg_step 2 "#baffc9" "From the data mover node, mount /mnt/${kerbero}/molecular, and execute zdrive_copier.sh below"
-#msg_code "ssh ${kerbero}@dmn-0002"
-#msg_code "mount /mnt/${kerbero}/molecular"
-#msg_note "NOTE:" "Occasionally, the 0001 will be down and the 0002 will take over.  We usually just use 0002"
-#msg_step 2 "#baffc9" "Once mounted, create the output directories in /MOLECULAR/NGS607/"
-msg_code "/mnt/${kerbero}/molecular/Molecular/Validation/Scripts/zdrive_copier.sh ${runID} ${pactRun}"
-# msg_code "mkdir -p \"${zdrive}/NGS607/${currYear}/${runID}/output/alignments\" \"/mnt/${kerbero}${outputDir}${currYear}/${pactRun}\""
-# msg_code "chmod -R g+rwx \"/mnt/${kerbero}${outputDir}${currYear}/${pactRun}\" && chmod -R g+rwx ${gpfsHome}molecpathlab/production/NGS607/${runID}/output"
-# msg_step 3 "#baffc9" "Once created, rsync the files from BigPurple to /MOLECULAR/NGS607/"
-# msg_white "<b>Copy Alignments and Annotations then theClinical Folder and .tsv files:</b>"
-# msg_code "rsync -vrthP ${rsyncDir}/alignments/${FG_GRN}recalibrated${normal} ${zdrive}/NGS607/${currYear}/${runID}/output/${FG_GRN}alignments/${normal} && rsync -vrthP ${rsyncDir}/${FG_GRN}annotations${normal} ${zdrive}/NGS607/${currYear}/${runID}/output/${FG_GRN}annotations/${normal} && rsync -vrthP ${rsyncDir}/${FG_GRN}clinical${normal} ${zdrive}/NGS607/${currYear}/${runID}/output/ && rsync -vrthP ${rsyncDir}/${FG_GRN}*.tsv${normal} ${zdrive}/NGS607/${currYear}/${runID}/"
-# msg_step 4 "#baffc9" "Next, go to /MOLECULAR LAB ONLY/NYU PACT Patient Data/ on the Z-drive and copy the remaining clinical output files, PDF facets, and QC tsv "
-# msg_code "cd \"/mnt/${kerbero}${outputDir}${currYear}/${pactRun}/\" && rsync -vrthP ${rsyncDir}/${FG_GRN}clinical/${normal} ./"
-# msg_code "rsync -vrthP ${productionDir}/NGS607/${runID}/output/cnv/FACETS/*.pdf ${productionDir}/NGS607/${runID}/${pactRun}-QC.tsv ${zdrive}/REDCap/cnv_facets/${pactRun}/"
-msg_step 3 "#baffc9" "Email the PACT team once the QC files are copied to notify them the following"
-msg_code "The in-house pipeline completed for ${pactRun}. The data for this week’s PACT run is copied here:
-smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/NGS607/${currYear}/${runID}/
+msg_stage 3 "Copy QC and output data to the Molecular Z-drive"
+msg_step 1 "#baffc9" "Copy the calibrated BAMs and run the post-scripts, then ssh to the data mover node by executing below:"
+msg_code "${BASH_HELPERS}/bam_copier.sh ${RUN_ID} ${PACT_ID}"
+msg_step 2 "#baffc9" "From the data mover node, mount /mnt/${kerbero}/molecular, and execute zdrive_copier.sh to copy the data from HPC to the Molecular share drive."
+msg_code "/mnt/${kerbero}/molecular/Molecular/Validation/Scripts/zdrive_copier.sh ${RUN_ID} ${PACT_ID}"
+msg_step 3 "#baffc9" "Once the files are copied, email the PACT team to notify them by replying to the PACTers email thread with the following message template:"
+msg_txt "Hi all,\nThe in-house pipeline completed for ${PACT_ID}. The data for this week's PACT run is copied here:
+smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/NGS607/${YEAR_DIR}/${RUN_ID}/\n
 The QC and output is copied here:
-smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics/${currYear}/${pactRun}/${pactRun}.html"
+smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics/${YEAR_DIR}/${PACT_ID}/${PACT_ID}.html"
 echo "$BOX2"
 
 # Stage 4 -----------------------
-msg_stage 4 "Methylation and Philips CNV Consensus Report"
-msg_step 1 "#bae1ff" "In your LOCAL terminal execute the make_consensus.sh script Monday after the Philips data dumps into /molecular/Molecular/Philips_SFTP" #, create a new directory for your PACT consensus in CBioinformatics drive and curl the template RMD file from GitHub"
-msg_code "${HOME}/make_consensus.sh ${runID} ${pactRun}"
-# msg_code "mkdir -p \"${consensusDir}${pactRun}_consensus\" && cd \"${consensusDir}${pactRun}_consensus\""
-# msg_code "curl -# -L ${pactGithub}/PACT_consensus.Rmd >${consensusDir}${pactRun}_consensus/${pactRun}_consensus.Rmd"
-# msg_step 1 "#bae1ff" "Re-generate the latest MethylMatch data for concensus if there was a new run last Friday"
-# msg_code "/Volumes/CBioinformatics/PACT/getMethylMatch.sh ${pactRun} ${runID}"
-# msg_step 2 "#bae1ff" "From the concensus directory, copy the .cnv.plot.pdf facets and QC from the Z-drive, and MethylMatch.xlsx from the Desktop"
-# msg_code "cd \"${consensusDir}${pactRun}_consensus\" && cp /Volumes/molecular/Molecular/REDCap/cnv_facets/${pactRun}/*.pdf ~/Desktop/${runID}-SampleSheet.csv ~/Desktop/${pactRun}_MethylMatch.xlsx /Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/${pactRun}-Somatic_Variants.html /Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/clinical/${pactRun}.html /Volumes/molecular/Molecular/REDCap/cnv_facets/${pactRun}/${pactRun}-QC.tsv /Volumes/molecular/Molecular/NGS607/${currYear}/${runID}/output/${pactRun}_Hotspots.tsv ./"
-# # msg_step 3 "#bae1ff" "Use the Evernote Guide to save the Somatic Variants as a .csv file to the downloads folder: ${HOME}/Downloads/export_mytable_MM_DD_${currYear}.csv"
-# # msg_code "open ${consensusDir}${pactRun}_consensus/${pactRun}-Somatic_Variants.html && open ${evernoteLink}"
-# msg_step 3 "#bae1ff" "Download and run the R script to save the ${pactRun}_desc.csv file"
-# msg_code "cd ${HOME} && curl -# -L ${pactGithub}/MakeIndelList.R >${HOME}/MakeIndelList.R && chmod +rwx ${HOME}/MakeIndelList.R"
-# msg_code "RScript --verbose ${HOME}/MakeIndelList.R ${pactRun}"
-# msg_step 4 "#bae1ff" "Knit the rMarkdown file in your consensus directory"
-# #msg_code "cp ${HOME}/Desktop/${pactRun}_desc.csv ${consensusDir}${pactRun}_consensus/"
-# msg_code "cd ${consensusDir}${pactRun}_consensus/ && Rscript --verbose -e \"rmarkdown::render('${consensusDir}${pactRun}_consensus/${pactRun}_consensus.Rmd', params=list(pactName='${pactRun}', userName='${kerbero}'))\""
-# msg_step 2 "#bae1ff" "Once the CNV concensus html is created, copy it to \"/Volumes${outputDir}${currYear}/${pactRun}/\""
-# msg_code "open ${consensusDir}${pactRun}_consensus/${pactRun}_consensus.html"
-# msg_code "cp ${consensusDir}${pactRun}_consensus/${pactRun}_consensus.html \"/Volumes${outputDir}${currYear}/${pactRun}/\""
-msg_step 2 "#bae1ff" "Send an email to notify the file is ready"
-msg_code "Hi all,
-The methylation CNV consensus is copied here:
-smb://shares-cifs.nyumc.org/apps/acc_pathology${outputDir}${currYear}/${pactRun}/${pactRun}_consensus.html"
-echo "$BOX2"
+if [[ "$IS_SOPHIA" == "true" ]]; then
+	msg_stage 4 "Generate Methylation CNV Consensus Report"
+	msg_step 1 "#bae1ff" "Once the SG results are ready, open your LOCAL terminal and execute the following script that was downloaded to your home folder by parseSophia.sh"
+	msg_code "${HOME}/make_consensus.sh ${RUN_ID} ${PACT_ID}"
+	msg_step 2 "#bae1ff" "Send an email to notify the html report has been generated and copied using the following as a template:"
+	msg_txt "Hi all,\nThe methylation CNV consensus is copied here:\nsmb://shares-cifs.nyumc.org/apps/acc_pathology${outputDir}${YEAR_DIR}/${PACT_ID}/${PACT_ID}_consensus.html"
+	echo "$BOX2"
+else
+	msg_stage 4 "Methylation and Philips CNV Consensus Report"
+	msg_step 1 "#bae1ff" "In your LOCAL terminal execute the make_consensus.sh script Monday after the Philips data dumps into /molecular/Molecular/Philips_SFTP"
+	msg_code "${HOME}/make_consensus.sh ${RUN_ID} ${PACT_ID}"
+	msg_step 2 "#bae1ff" "Send an email to notify the file is ready"
+	msg_txt "Hi all,
+	The methylation CNV consensus is copied here:
+	smb://shares-cifs.nyumc.org/apps/acc_pathology${outputDir}${YEAR_DIR}/${PACT_ID}/${PACT_ID}_consensus.html"
+	echo "$BOX2"
+fi
 
 echo "
 <script>
