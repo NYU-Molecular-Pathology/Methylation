@@ -85,7 +85,7 @@ mkdir -p "${TMB_MSI_OUT}"
 
 cd "$HOME" || exit
 # Z-drive TO Desktop
-msg_rsync "${FACETS_DIR}/" "${DESK_DIR}" "--include=*.png"
+msg_rsync "${FACETS_DIR}/" "${DESK_DIR}" "--include=*.png --exclude=*"
 msg_rsync "${FACETS_DIR}/${PACT_ID}-QC.tsv" "${DESK_DIR}"
 msg_rsync "${NGS607_DIR}/${PACT_ID}_Hotspots.tsv" "${DESK_DIR}"
 msg_rsync "${TMB_MSI_DIR}/${MSI_TSV}" "${DESK_DIR}/TMB_MSI/${MSI_TSV}"
