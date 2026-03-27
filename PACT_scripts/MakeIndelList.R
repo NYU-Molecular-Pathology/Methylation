@@ -11,8 +11,8 @@ library("base")
 args <- commandArgs(TRUE)
 
 # Parameters Input trailing command line --------------------------------------
-args[1] -> pactRunName
-args[2] -> concensusDir
+"PACT-26-12-R" -> pactRunName
+NA -> concensusDir
 
 DEFAULT_DIR <- "/Volumes/CBioinformatics/jonathan/pact/consensus/"
 DEFAULT_OUT <- "/Volumes/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics"
@@ -68,7 +68,7 @@ varColumns <- c(
     "AAChange.refGene"
 )
 
-IS_SG <- all(varColumns %in% colnames(filteredData))
+IS_SG <- !all(varColumns %in% colnames(filteredData))
 
 if (IS_SG) {
     varColumns <- c(
@@ -99,7 +99,7 @@ callsList$Variant <- "SNV"
 callsList$nyu <- "Yes"
 callsList$philips <- ""
 
-if (IS_SG == FALSE) {
+if (IS_SG) {
     callsList$Test_Number <- callsList$TM_Number
 }
 
