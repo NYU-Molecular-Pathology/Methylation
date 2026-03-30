@@ -290,7 +290,7 @@ msg_code() {
 }
 
 msg_txt() {
-    echo -e "<div class='text-block text-copy-pad'><button type='button' class='text-copy-btn' onclick='copyTextBlock(this)'>Copy Text</button>"
+    echo -e "<div class='text-block text-copy-pad'><button type='button' class='text-copy-btn'>Copy Text</button>"
     echo -e "<div class='text-content'>${1}</div></div>"
 }
 
@@ -405,37 +405,72 @@ fi
 
 echo "
 <script>
-function copyTextBlock(button) {
-    if (!navigator.clipboard) {return;}
+document.addEventListener('DOMContentLoaded', () => {
+    const copyToClipboard = async (text) => {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+            return true;
+        }
 
-    const block = button.closest('.text-block');
-    if (!block) {return;}
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'absolute';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
 
-    const content = block.querySelector('.text-content');
-    if (!content) {return;}
+        let ok = false;
+        try {
+            ok = document.execCommand('copy');
+        } catch (err) {
+            ok = false;
+        }
 
-    navigator.clipboard.writeText(content.innerText).then(() => {
-        button.innerText = 'Text Copied';
-        button.classList.add('pressed');
-    }).catch(() => {});
-}
+        document.body.removeChild(ta);
+        return ok;
+    };
 
-document.querySelectorAll(\"pre\").forEach((block) => {
-    if (!navigator.clipboard) {return;}
+    document.querySelectorAll('.text-copy-btn').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const block = button.closest('.text-block');
+            if (!block) {return;}
 
-    const button = document.createElement(\"button\");
-    button.type = \"button\";
-    button.innerText = \"Copy Code\";
+            const content = block.querySelector('.text-content');
+            if (!content) {return;}
 
-    button.addEventListener(\"click\", async () => {
-        const code = block.querySelector(\"code\");
-        if (!code) {return;}
-        await navigator.clipboard.writeText(code.innerText);
-        button.innerText = \"Code Copied\";
-        button.classList.add(\"pressed\");
+            const ok = await copyToClipboard(content.textContent);
+
+            if (ok) {
+                button.innerText = 'Text Copied';
+                button.classList.add('pressed');
+            } else {
+                button.innerText = 'Copy Failed';
+            }
+        });
     });
 
-    block.prepend(button);
+    document.querySelectorAll('pre').forEach((block) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.innerText = 'Copy Code';
+
+        button.addEventListener('click', async () => {
+            const code = block.querySelector('code');
+            if (!code) {return;}
+
+            const ok = await copyToClipboard(code.textContent);
+
+            if (ok) {
+                button.innerText = 'Code Copied';
+                button.classList.add('pressed');
+            } else {
+                button.innerText = 'Copy Failed';
+            }
+        });
+
+        block.prepend(button);
+    });
 });
 </script>
 "
