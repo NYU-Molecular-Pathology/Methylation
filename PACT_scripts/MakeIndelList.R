@@ -11,8 +11,8 @@ library("base")
 args <- commandArgs(TRUE)
 
 # Parameters Input trailing command line --------------------------------------
-arg[1] -> pactRunName
-arg[2] -> concensusDir
+args[1] -> pactRunName
+args[2] -> concensusDir
 
 DEFAULT_DIR <- "/Volumes/CBioinformatics/jonathan/pact/consensus/"
 DEFAULT_OUT <- "/Volumes/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics"
