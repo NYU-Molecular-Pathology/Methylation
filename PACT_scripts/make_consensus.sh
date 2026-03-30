@@ -96,6 +96,7 @@ msg_rsync "${DESK_DIR}/TMB_MSI/" "${TMB_MSI_OUT}" "--include=*.tsv"
 [ -f "${METH_MATCH}" ] && msg_rsync "${METH_MATCH}" "${WORK_DIR}"
 
 # Copy demux-samplesheet.csv to consensus
+msg_rsync "${RESULTS_DIR}/${CURRENT_YR}/${PACT_ID}/demux-samplesheet.csv" "$HOME/Desktop/${PACT_ID}/"
 msg_rsync "$HOME/Desktop/${PACT_ID}/demux-samplesheet.csv" "${WORK_DIR}"
 
 # Copy VAF QC output files if availible
