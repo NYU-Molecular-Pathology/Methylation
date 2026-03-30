@@ -405,8 +405,24 @@ fi
 
 echo "
 <script>
+function copyTextBlock(button) {
+    if (!navigator.clipboard) {return;}
+
+    const block = button.closest('.text-block');
+    if (!block) {return;}
+
+    const content = block.querySelector('.text-content');
+    if (!content) {return;}
+
+    navigator.clipboard.writeText(content.innerText).then(() => {
+        button.innerText = 'Text Copied';
+        button.classList.add('pressed');
+    }).catch(() => {});
+}
+
 document.querySelectorAll(\"pre\").forEach((block) => {
     if (!navigator.clipboard) {return;}
+
     const button = document.createElement(\"button\");
     button.type = \"button\";
     button.innerText = \"Copy Code\";
@@ -416,8 +432,9 @@ document.querySelectorAll(\"pre\").forEach((block) => {
         if (!code) {return;}
         await navigator.clipboard.writeText(code.innerText);
         button.innerText = \"Code Copied\";
-        button.className = \"pressed\";
+        button.classList.add(\"pressed\");
     });
+
     block.prepend(button);
 });
 </script>
