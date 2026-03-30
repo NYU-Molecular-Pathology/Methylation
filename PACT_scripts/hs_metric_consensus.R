@@ -2,9 +2,10 @@
 ## Script name: hs_metric_consensus.R
 ## Purpose: Saves HS Metric column values for input
 ## Date Created: June 2, 2025
-## Version: 1.0.0
+## Date Modifies: March 30, 2026
+## Version: 1.0.1
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2025
+## Copyright (c) NYULH Jonathan Serrano, 2026
 
 args <- commandArgs(TRUE)
 args[1] -> run_id       # PACT RUN ID
@@ -17,6 +18,7 @@ OUTPUT_DIR <- file.path(MOL_DIR, runYear, run_id, "output")
 
 METRICS_DIR <- file.path(OUTPUT_DIR, "CollectHsMetrics")
 OUT_FOLDER <- file.path(OUTPUT_DIR, "HS_Metrics_CSV")
+IS_SOPHIA <- grepl("^[0-9]{2}", pact_id)
 
 # Format: <HS_metric column> = <Column Label>
 metric_cols <- list(
@@ -49,10 +51,10 @@ install_pak <- function() {
     tryCatch(
         install.packages(
             "pak", repos = sprintf("https://r-lib.github.io/p/pak/stable/%s/%s/%s",
-                        .Platform$pkgType, R.Version()$os, R.Version()$arch)),
+                                   .Platform$pkgType, R.Version()$os, R.Version()$arch)),
         error = function(e) {
             install.packages("pak", ask = FALSE, dependencies = TRUE,
-                repos = "https://packagemanager.rstudio.com/all/latest"
+                             repos = "https://packagemanager.rstudio.com/all/latest"
             )
         })
 }
@@ -127,15 +129,25 @@ get_mean_and_sd <- function(combined_df) {
 
 # Saves data frame list of sample names to a csv file in output folder
 metrics_to_csv <- function(df_list, metric_type) {
-    padded_list <- lapply(df_list, function(df) {
-        colname <- names(df)[1]
-        new_df <- data.frame(sample_names = rownames(df), values = df[[1]])
-        sams <- stringr::str_split_fixed(new_df$sample_names, "_", 6)[, 6]
-        new_df$sample_names <- sams
-        names(new_df) <- c(paste(colname, "Sample Names"), metric_type)
-        new_df
-    })
-    combined_df <- do.call(cbind, padded_list)
+    if (IS_SOPHIA) {
+        colname <- names(df_list)[1]
+        combined_df <- data.frame(sample_names = rownames(df_list), values = df_list[[1]])
+        sams <- combined_df$sample_names
+        combined_df$sample_names <- sams
+        names(combined_df) <- c(paste(colname, "Sample Names"), metric_type)
+    }else {
+
+        padded_list <- lapply(df_list, function(df) {
+            colname <- names(df)[1]
+            new_df <- data.frame(sample_names = rownames(df), values = df[[1]])
+            sams <- stringr::str_split_fixed(new_df$sample_names, "_", 6)[, 6]
+            new_df$sample_names <- sams
+            names(new_df) <- c(paste(colname, "Sample Names"), metric_type)
+            new_df
+        })
+        combined_df <- do.call(cbind, padded_list)
+    }
+
     combined_df[, 2] <- round(as.numeric(combined_df[, 2]), 2)
     combined_df <- get_mean_and_sd(combined_df)
     output_csv <- paste0(metric_type,"_hs_metric_values.csv")
@@ -210,7 +222,7 @@ process_metric <- function(hs_files, pact_id, col_name, label) {
 # Helper to append a metric’s data.frames into the results object
 append_to_results <- function(results, metric_res) {
     results$normals <- append(results$normals, list(metric_res$normals))
-    results$tumors  <- append(results$tumors,  list(metric_res$tumors))
+    results$tumors  <- append(results$tumors, list(metric_res$tumors))
     return(results)
 }
 
@@ -219,15 +231,20 @@ append_to_results <- function(results, metric_res) {
 # MAIN: loop over runs, reading the hs_metrics files and extracting the metrics
 #############
 loop_metrics <- function(run_id, pact_id, metric_cols) {
+    hs_files <- get_file_lists(run_id)
     # iterate through each metric column
     for (metric in names(metric_cols)) {
         metric_label <- metric_cols[[metric]]
         metric_res <- list(label = metric, normals = list(), tumors = list())
-        hs_files <- get_file_lists(run_id)
         if (is.null(hs_files)) stop(paste("No HS metrics for:", run_id))
         # Read hs_metric files per metric column and save tumor and normal csv
         metric_data <- process_metric(hs_files, pact_id, metric_label, metric)
-        metric_res <- append_to_results(metric_res, metric_data)
+        if (IS_SOPHIA) {
+            metric_res <- metric_data
+        } else {
+            metric_res <- append_to_results(metric_res, metric_data)
+        }
+
         save_tumor_normals(metric_res)
     }
 }
