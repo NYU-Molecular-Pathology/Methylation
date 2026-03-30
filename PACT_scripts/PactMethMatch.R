@@ -619,27 +619,27 @@ CheckMethPaths <- function(methData) {
 }
 
 # Adds hyperlinks to the report links in the output excel file
-addExcelLink <- function(output, fiLn, wb, runId) {
+addExcelLink <- function(output, fiLn, wb, PACT_ID) {
     x <- c(output$'Report Link'[fiLn])
     names(x) <- paste0(output$record_id[fiLn], ".html")
     class(x) <- "hyperlink"
     colNum <- which(colnames(output) == "Report Link")
-    openxlsx::writeData(wb, sheet = runId, x = x, startCol = colNum, startRow = fiLn + 1)
+    openxlsx::writeData(wb, sheet = PACT_ID, x = x, startCol = colNum, startRow = fiLn + 1)
 }
 
 # Writes the openxlsx workbook file to the Desktop
-createXlFile <- function(runId, output) {
+createXlFile <- function(PACT_ID, output) {
     output <- CheckMethPaths(methData = output)
     wb <- openxlsx::createWorkbook()
-    openxlsx::addWorksheet(wb, runId)
-    openxlsx::writeData(wb, sheet = runId, x = output)
+    openxlsx::addWorksheet(wb, PACT_ID)
+    openxlsx::writeData(wb, sheet = PACT_ID, x = output)
     for (fiLn in 1:length(output$'Report Link')) {
         if (output$'Report Link'[fiLn] != '') {
-            addExcelLink(output, fiLn, wb, runId)
+            addExcelLink(output, fiLn, wb, PACT_ID)
         }
     }
     meth_xlsx <- file.path(fs::path_home(),"Desktop",
-                       paste0(runId,"_MethylMatch.xlsx"))
+                       paste0(PACT_ID,"_MethylMatch.xlsx"))
     openxlsx::saveWorkbook(wb, meth_xlsx, overwrite = T)
     return(meth_xlsx)
 }
@@ -662,8 +662,8 @@ postData <- function(rcon, record) {
 }
 
 # Uploads the xlsx file to REDCap and sends an email notification
-emailFile <- function(runId, meth_xlsx, rcon) {
-    record = data.frame(record_id = runId, run_number = runId)
+emailFile <- function(PACT_ID, meth_xlsx, rcon) {
+    record = data.frame(record_id = PACT_ID, run_number = PACT_ID)
     postData(rcon, record)
     isDone <-
         redcapAPI::exportRecordsTyped(
@@ -677,7 +677,7 @@ emailFile <- function(runId, meth_xlsx, rcon) {
             token = rcon$token,
             content = 'file',
             action = 'import',
-            record = runId,
+            record = PACT_ID,
             field = "other_file",
             file = httr::upload_file(meth_xlsx),
             returnFormat = 'csv'
@@ -705,16 +705,16 @@ grab_run_id <- function(readFlag, PACT_INPUT) {
     is_sophia <- grepl("^[0-9]{2}", PACT_INPUT)
     if (is_sophia) {
         pact_sheet <- getFilePath(PACT_INPUT)
-        runId <- as.data.frame(read.csv(pact_sheet, skip = 19))$Run_Number[1]
-        return(runId)
+        PACT_ID <- as.data.frame(read.csv(pact_sheet, skip = 19))$Sample_Project[1]
+        return(PACT_ID)
     }
-    runId <-
+    PACT_ID <-
         ifelse(readFlag == T, substr(PACT_INPUT, 1, nchar(PACT_INPUT) - 4), PACT_INPUT)
     if (stringr::str_detect(PACT_INPUT, ".xls")) {
-        runId <-
+        PACT_ID <-
             substr(basename(PACT_INPUT), 1, nchar(basename(PACT_INPUT)) - 5)
     }
-    return(runId)
+    return(PACT_ID)
 }
 
 
@@ -758,7 +758,7 @@ getOuputData <- function(token, flds, PACT_INPUT, readFlag) {
     db <- grabAllRecords(flds, rcon)
     output <- process_values(vals2find, db)
 
-    runId <- grab_run_id(readFlag, PACT_INPUT)
+    PACT_ID <- grab_run_id(readFlag, PACT_INPUT)
     output <- modifyOutput(output, vals2find)
     toDrop <- is.na(output$Test_Number)
 
@@ -770,8 +770,8 @@ getOuputData <- function(token, flds, PACT_INPUT, readFlag) {
         }
     }
 
-    meth_xlsx <- createXlFile(runId, output)
-    emailFile(runId, meth_xlsx, rcon)
+    meth_xlsx <- createXlFile(PACT_ID, output)
+    emailFile(PACT_ID, meth_xlsx, rcon)
     return(output)
 }
 
