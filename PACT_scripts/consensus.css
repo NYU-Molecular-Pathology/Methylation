@@ -44,7 +44,7 @@ div.main-container {
   background-color: white;
 }
 div.tocify {
-    width: 110px;
+    width: 130px !important;
     max-width: 200px;
     max-height: 100% !important;
   z-index: 289;
