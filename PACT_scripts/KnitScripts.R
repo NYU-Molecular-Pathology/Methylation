@@ -2,45 +2,56 @@
 ## Script name: KnitScripts.R
 ## Purpose: Source of global scripts used by the PACT_consensus.Rmd file
 ## Date Created: August 10, 2022
-## Version: 1.0.1
+## Date Modified: March 30, 2026
+## Version: 1.0.2
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2025
+## Copyright (c) NYULH Jonathan Serrano, 2026
 
 gb <- globalenv()
 assign("gb", gb)
 
+# FUN: Install Homebrew if not installed -------------------------------------
+install_brew <- function() {
+    message("Installing Homebrew...")
+    system(
+        '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+        , wait = TRUE
+    )
+}
+
 # Ensures the brew command can be seen in the PATH environment
 fix_brew_path <- function() {
-    # Define the target directories to add to the PATH
-    target_dirs <- c("/opt/homebrew/bin", "/usr/local/bin")
+    # pick the correct brew binary in one line
+    arm_brew <- "/opt/homebrew/bin/brew"
+    x64_brew <- "/usr/local/bin/brew"
 
-    # Get the current PATH in the R session
-    current_path <- strsplit(Sys.getenv("PATH"), ":")[[1]]
+    if (!file.exists(arm_brew) && !file.exists(x64_brew)) install_brew()
 
-    # Add the target directories to the PATH if they are not already present
-    new_path <- unique(c(target_dirs, current_path))
+    brew_path <- ifelse(file.exists(arm_brew), arm_brew, x64_brew)
+    brew_dir <- dirname(brew_path)
+
+    # update session PATH
+    old_path <- strsplit(Sys.getenv("PATH", ""), ":", fixed = TRUE)[[1]]
+    new_path <- unique(c(brew_dir, old_path))
     Sys.setenv(PATH = paste(new_path, collapse = ":"))
-    message("PATH updated for the current session.")
 
-    # Persist the change in ~/.Renviron for future sessions
-    renviron_file <- file.path(Sys.getenv("HOME"), ".Renviron")
-
-    # Ensure the target directories are reflected in ~/.Renviron
-    target_entry <- paste0('PATH="', paste(new_path, collapse = ":"), '"')
-    if (file.exists(renviron_file)) {
-        renviron_content <- readLines(renviron_file, warn = FALSE)
+    # prepare .Renviron update
+    renv_file <- file.path(Sys.getenv("HOME"), ".Renviron")
+    entry <- paste0('PATH="', paste(new_path, collapse = ":"), '"')
+    lines <- if (file.exists(renv_file)) {
+        base::readLines(renv_file, warn = FALSE)
     } else {
-        renviron_content <- character(0)
+        character()
     }
-    if (!any(grepl("^PATH=", renviron_content))) {
-        # Append the new PATH if no PATH is defined
-        writeLines(c(renviron_content, target_entry), renviron_file)
-        message("PATH added to ~/.Renviron.")
-    } else {
-        # Update the PATH entry if it exists
-        renviron_content <- sub("^PATH=.*", target_entry, renviron_content)
-        writeLines(renviron_content, renviron_file)
-        message("PATH updated in ~/.Renviron.")
+
+    # only write if the exact entry is missing
+    if (!any(grepl(entry, lines, fixed = TRUE))) {
+        idx   <- grep("^PATH=", lines)
+        lines <- if (length(idx) > 0) {
+            lines[idx] <- entry
+            lines
+        } else {c(lines, entry)}
+        base::writeLines(lines, renv_file)
     }
 }
 
@@ -330,24 +341,48 @@ GetMethDf <- function(pactName) {
 
 
 GetSamList <- function(pactName, listType = 1) {
+  
+    is_sophia <- grepl("^[0-9]{2}", pactName)
     colFltr <- c("Test_Number", "Specimen_ID", "Tumor_Content")
+    sam_col <- "Test_Number"
+    
+    if (is_sophia) {
+      colFltr <- c("TM_Number", "Sample_ID", "TUMOR_CASE_ID_BLOCK",
+                   "Tumor_Content", "Tumor_DNA", "Normal_DNA")
+      sam_col <- "TM_Number"
+    }
+    
     if (listType == 2) {
         colFltr <- c(colFltr, "Paired_Normal")
     }
-    samsheet <- list.files('.', "demux-samplesheet.csv", T)[1]
-    message("Reading file: ", samsheet)
-    samList <- read.csv(samsheet, skip = 19)[, colFltr]
-    isNGS <- !is.na(stringr::str_extract(samList$Test_Number, 'NGS'))
-    toKeep <- samList$Test_Number != "0" & isNGS
-    if (any(toKeep == F)) {
-        message(
-            crayon::bgRed(
-                "The following cases have no NGS number and are being excluded:"
-            ),
-            "\n"
-        )
-        message(paste(utils::capture.output(as.data.frame(samList[!toKeep, ])), collapse = "\n"))
-        samList <- samList[toKeep, ]
+    
+    if (is_sophia) {
+      samsheet <- list.files('.', "demux-samplesheet.csv", T)[1]
+      message("Reading file: ", samsheet)
+      samList <- read.csv(samsheet, skip = 19)[, colFltr]
+      toKeep <- samList$TM_Number != "" & !is.na(samList$TM_Number)
+      if (any(toKeep == F)) {
+          message(crayon::bgRed("The following cases are being excluded:"), "\n")
+          message(paste(utils::capture.output(as.data.frame(samList[!toKeep, ])), collapse = "\n"))
+          samList <- samList[toKeep, ]
+          rownames(samList) <- NULL
+      }
+    } else {
+      samsheet <- list.files('.', "demux-samplesheet.csv", T)[1]
+      message("Reading file: ", samsheet)
+      samList <- read.csv(samsheet, skip = 19)[, colFltr]
+      isNGS <- !is.na(stringr::str_extract(samList[, sam_col], 'NGS'))
+      toKeep <- samList[, sam_col] != "0" & isNGS
+      if (any(toKeep == F)) {
+          message(
+              crayon::bgRed(
+                  "The following cases have no NGS number and are being excluded:"
+              ),
+              "\n"
+          )
+          message(paste(utils::capture.output(as.data.frame(samList[!toKeep, ])), collapse = "\n"))
+          samList <- samList[toKeep, ]
+      }
     }
     stopifnot(nrow(samList) > 2)
     return(samList)
@@ -597,11 +632,10 @@ MakeRegularTab <- function(tabNam, objDat) {
         } else{
             CheckTabName(tabNam)
             if (tabNam == "In-House Somatic Variant Calls") {
-                makeColorfulTab(objDat)
+                make_igv_link_tab(objDat)
             } else{
                 makeDefaultDt(objDat)
             }
-            
         }
     } else{
         cat("\n\nNo additonal results for this case yet\n\n")
@@ -609,6 +643,42 @@ MakeRegularTab <- function(tabNam, objDat) {
     }
 }
 
+make_igv_link_tab <- function(objDat) {
+  if (!"IGV_URL" %in% colnames(objDat)) { return(gb$makeColorfulTab(objDat)) }
+  cat(
+    "<span style='color: red;'>", "All Variant calls have the following filters:",
+    "</span>\n\n", "<span style='color: black;'>",
+    "**Tumor freq >= 5%**, **Normal freq <2%**,", " and **Tumor Depth >50**", "</span>\n\n"
+    )
+  cat("<span style='color: dodgerblue;'>","Click on the Gene name to view in the IGV viewer", "</span>\n\n")
+    if (nrow(objDat) == 0) {
+        cat("No calls after filtering")
+        cat("\n\n")
+        return(invisible(NULL))
+    }
+    
+    # ---- hyperlink Test_Case -> IGV_URL (row-wise) ----
+      url_safe <- ifelse(
+          is.na(objDat$IGV_URL) | objDat$IGV_URL == "",
+          NA_character_,
+          htmltools::htmlEscape(objDat$IGV_URL, attribute = TRUE)
+      )
+      text_safe <- htmltools::htmlEscape(objDat$Gene)
+      
+      objDat$Gene <- sprintf(
+        "<a href=\"%s\" target=\"_blank\" rel=\"noopener noreferrer\">%s</a>",
+        url_safe, text_safe)
+  
+    objDat <- ColorTable(objDat)
+    
+    knitr::kable(objDat, format = "html", escape = FALSE, row.names = FALSE) %>%
+        kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
+        kableExtra::row_spec(0, extra_css = "font-weight: bold;") %>%
+        kableExtra::scroll_box(height = "100%", width = "100%") %>%
+        print()
+    
+    cat("\n\n")
+}
 
 # Prints out the table tab headings and tab information based on object params
 makeDT <- function(tabNam,
@@ -658,13 +728,17 @@ makeDT <- function(tabNam,
 
 MakeHStab <- function(sam, hsDat, samList, outDir) {
     ngsRows <- samList$Test_Number == sam
-    ts_number <- samList$Specimen_ID[samList$Tumor_Content != 0 &
-                                         ngsRows]
-    hotspot_tsv <- file.path(outDir, 'hotspots', paste0(ts_number, "_Hotspots.tsv"))
-    hsMain <- hsDat[hsDat$Test_Number == sam, ]
-    names(hsMain)[names(hsMain) == 'Variant'] <- 'Common COSMIC Variant'
+    if (gb$is_sophia == FALSE) {
+      ts_number <- samList$Specimen_ID[samList$Tumor_Content != 0 & ngsRows]
+      hotspot_tsv <- file.path(outDir, 'hotspots', paste0(ts_number, "_Hotspots.tsv"))
+      hsMain <- hsDat[hsDat$Test_Number == sam, ]
+      names(hsMain)[names(hsMain) == 'Variant'] <- 'Common COSMIC Variant'
+    } else {
+      hsMain <- hsDat[hsDat$TM_Number == sam, ]
+    }
     makeDT(tabNam = "Hotspots", objDat = hsMain, NULL, NULL, sam)
 }
+
 
 # Adds MSI and TMB info under QC tab
 make_msi_tmb_tab <- function(tmb_row, msi_row) {
@@ -959,29 +1033,41 @@ makeBamLink <- function(sam, pactID) {
     samsheet <- list.files(".", "demux-samplesheet.csv", T)[1]
     samCSVfi <- as.data.frame(read.csv(samsheet, skip = 19))
     allNames <- samCSVfi[, 1]
-    rowNGS <- which(samCSVfi$Test_Number == sam)
-    bamFiNam <- paste0(allNames[rowNGS], ".dd.ra.rc.bam")
-    bamFiUrl <- file.path("https://genome.med.nyu.edu/external/clinpathlab",
-                          pactID,
-                          bamFiNam)
+    if (gb$is_sophia) {
+      samCSVfi$Test_Number <- samCSVfi$TM_Number
+    }
+    sam_row <- which(samCSVfi$Test_Number == sam)
+    bamFiNam <- paste0(allNames[sam_row], ".dd.ra.rc.bam")
+    bamFiUrl <- file.path(
+      "https://genome.med.nyu.edu/external/clinpathlab", pactID, bamFiNam
+      )
     cat(paste0("```\nIGV Load from URL: ", bamFiUrl, "\n```\n\n"))
 }
 
 
 # Generates a new Sample Tabbed row in html ------------------------------------------------
-makeNewTab <- function(sam, samList, qcData, pactID) {
-    currSam <- samList[samList$Test_Number == sam, "Specimen_ID"]
-    cat(' <div class="boxed"> ')
-    cat(paste0("\n\n# **", sam, "** {.tabset}", "\n\n"))
-    cat(paste0("(", currSam[1], ")\n\n"))
-    makeBamLink(sam, pactID)
-    currQC <- grepl(paste(currSam, collapse = "|"), qcData$Sample)
-    qcTab <- qcData[currQC, 2:ncol(qcData)]
-    if (nrow(qcTab) == 0) {
-        warning(sam, " is missing from qcTsv file")
-    } else{
-        makeDT("QC", qcTab)
-    }
+makeNewTab <- function(sam, samList, qcData, pactName) {
+  currSam <- samList[samList$Test_Number == sam, "Specimen_ID"]
+  if (gb$is_sophia) {
+    currSam <- samList[samList$TM_Number == sam, "TUMOR_CASE_ID_BLOCK"]
+  }
+
+  cat(' <div class="boxed"> ')
+  cat(paste0("\n\n# **", sam, "** {.tabset}", "\n\n"))
+  cat(paste0("(", currSam[1], ")\n\n"))
+  makeBamLink(sam, pactName)
+  currQC <- grepl(paste(currSam, collapse = "|"), qcData$Sample)
+  if (gb$is_sophia) {
+    sam_qc_name <- samList[samList$TM_Number == sam, ]
+    b_numbers <- sam_qc_name[, c("Tumor_DNA", "Normal_DNA")] 
+    currQC <- grepl(paste(b_numbers[b_numbers != 0], collapse = "|"), qcData$Sample)
+  }
+  qcTab <- qcData[currQC, 2:ncol(qcData)]
+  if (nrow(qcTab) == 0) {
+      warning(sam, " is missing from qcTsv file")
+  } else{
+      makeDT("QC", qcTab)
+  }
 }
 
 
@@ -1259,25 +1345,31 @@ compare_philips <- function(snvTab, philipsIndels) {
 }
 
 
-MakeVAFtab <- function(sam) {
+MakeVAFtab <- function(sam, samList) {
     if (dir.exists("VAF_plots")) {
         vaf_pngs <- dir(
             path = file.path(getwd(), "VAF_plots"),
             pattern = ".png",
             full.names = T
         )
-        sam_find <- grepl(pattern = sam, x = vaf_pngs)
-        
+
+        if (gb$is_sophia) {
+          vaf_name <- samList[samList$TM_Number == sam & samList$TUMOR_CASE_ID_BLOCK != 0, "TUMOR_CASE_ID_BLOCK"]
+          sam_find <- grepl(pattern = vaf_name, x = vaf_pngs)
+        }else{
+          sam_find <- grepl(pattern = sam, x = vaf_pngs)
+        }
+
         if (any(sam_find)) {
             MakeTabColor("VAF Plots")
-            cat(
-                "Below are VAF distribution plots for MuTect2 and Strelka.\n\nBoth callers may not be plotted if one does not have enough data after filtering.\n\n"
-            )
+            cat("Below are VAF distribution plots for MuTect2 and Strelka.")
+            cat("\n\nCallers with insufficient post-filtering data may be omitted.\n\n")
             foundPngs <- vaf_pngs[sam_find]
             
             for (vafPlot in foundPngs) {
                 vaf_png_file <- file.path(".", "VAF_plots", paste0(basename(vafPlot)))
                 caller <- stringr::str_split_fixed(basename(vafPlot), "_", 4)[1, 4]
+                caller <- stringr::str_remove_all(caller, "dist_")
                 callerName <- stringr::str_replace_all(caller, ".png", "")
                 altTxt <- paste("![VAF Distribution for", sam, callerName, "](")
                 cat(paste0(altTxt, vaf_png_file, "){height=400px}"))
@@ -1295,26 +1387,35 @@ MakeVAFtab <- function(sam) {
 
 
 CreateVariantsTabs <- function(philipsIndels, snvTab) {
+  
+  if (nrow(snvTab) > 0) {
+    snvTab$Comments <- ""
     snvTab <- cleanTabCols(snvTab)
-    if (!is.null(philipsIndels)) {
-        philipsIndels <- cleanPhilTab(philipsIndels)
-        if (nrow(snvTab) == 0) {
-            makeDT("In-House Somatic Variant Calls", objDat = snvTab)
-        } else {
-            combTab <- compare_philips(snvTab, philipsIndels)
-            columns_to_front <- c("Same")
-            combTab <- combTab[, c(columns_to_front, setdiff(names(combTab), columns_to_front))]
-            makeDT("In-House Somatic Variant Calls", objDat = combTab)
+    sam_pos <- stringr::str_replace_all(snvTab$Position, ":", "_")
+    snvTab$IGV_URL <- paste0(gb$IGV_URL, paste(snvTab$Test_Case, sam_pos, sep = "_"))
+  }  
+
+  if (!is.null(philipsIndels)) {
+      philipsIndels <- cleanPhilTab(philipsIndels)
+      if (nrow(snvTab) == 0) {
+          makeDT("In-House Somatic Variant Calls", objDat = snvTab)
+      } else {
+          combTab <- compare_philips(snvTab, philipsIndels)
+          columns_to_front <- c("Same")
+          combTab <- combTab[, c(columns_to_front, setdiff(names(combTab), columns_to_front))]
+          makeDT("In-House Somatic Variant Calls", objDat = combTab)
+      }
+  } else{
+      if (nrow(snvTab) > 0) {
+        if (gb$is_sophia == FALSE) {
+          snvTab$In.Philips <- "NA"
+          snvTab$Same <- "Pending"
+          columns_to_front <- c("Same")
+          snvTab <- snvTab[, c(columns_to_front, setdiff(names(snvTab), columns_to_front))]
         }
-    } else{
-        if (nrow(snvTab) > 0) {
-            snvTab$In.Philips <- "NA"
-            snvTab$Same <- "Pending"
-            columns_to_front <- c("Same")
-            snvTab <- snvTab[, c(columns_to_front, setdiff(names(snvTab), columns_to_front))]
-        }
-        makeDT("In-House Somatic Variant Calls", objDat = snvTab)
-    }
+      }
+      makeDT("In-House Somatic Variant Calls", objDat = snvTab)
+  }
 }
 
 
@@ -1390,9 +1491,13 @@ bold_center <- function(txt_in) {
 make_hs_metrics_tab <- function(sam, norm_metrics, tumor_metrics, tumorSams) {
   gb$MakeTabColor("HS Metrics")
   
+  if (gb$is_sophia ) {
+    tumorSams$Test_Number <- tumorSams$TM_Number
+  }
+  
   normals <- rownames(norm_metrics)
   tumors <- rownames(tumor_metrics)
-  sam_match <- which(sam == tumorSams$Test_Number)  
+  sam_match <- which(sam == tumorSams$Test_Number)
   if (length(sam_match) > 0) {
     sam_row <- tumorSams[sam_match, ]
 
@@ -1445,7 +1550,7 @@ make_hs_metrics_tab <- function(sam, norm_metrics, tumor_metrics, tumorSams) {
   }
 }
 
-
+# MAIN Logic for calling all functions -----------------------------
 LoopSampleTabs <- function(params) {
     pactName <- params$pactName
     methData <- gb$GetMethDf(params$pactName)
@@ -1458,14 +1563,21 @@ LoopSampleTabs <- function(params) {
     norm_metrics <- read_merge_metrics(metrics_dir, "normals")
     tumor_metrics <- read_merge_metrics(metrics_dir, "tumors")
     
+    if (gb$is_sophia ) {
+      sam_col <- "TM_Number"
+      samList$Test_Number <- samList$TM_Number
+    } else{
+      sam_col <- "Test_Number"
+    }
+    
     if (any(toDrop)) {
-        ngs_drop <- samList$Test_Number[toDrop]
-        toKeep <- !samList$Test_Number %in% ngs_drop
+        ngs_drop <- samList[, sam_col][toDrop]
+        toKeep <- !samList[, sam_col] %in% ngs_drop
         samList <- samList[toKeep, ]
     }
     
-    samsPaired <- names(table(samList$Test_Number))[table(samList$Test_Number) > 1]
-    samList <- samList[samList$Test_Number %in% samsPaired, ]
+    samsPaired <- names(table(samList[, sam_col]))[table(samList[, sam_col]) > 1]
+    samList <- samList[samList[, sam_col] %in% samsPaired, ]
     
     samples <- gb$GrabSamples(samList)
     hsDat <- gb$GrabHotspots(params)
@@ -1478,7 +1590,8 @@ LoopSampleTabs <- function(params) {
     
     tmb_tsv <- "./TMB_MSI/annotations.paired.tmb.validation.2callers.tsv"
     msi_tsv <- "./TMB_MSI/msi_validation.tsv"
-    onco_wsh <- "/Volumes/CBioinformatics/jonathan/pact/OncoKB-Level1-Genes-Feb2025.xlsx"
+    #onco_wsh <- "/Volumes/CBioinformatics/jonathan/pact/OncoKB-Level1-Genes-Feb2025.xlsx"
+    onco_wsh <- "/Volumes/CBioinformatics/jonathan/pact/OncoKB-Level1-Genes-Mar2026.xlsx"
     gene_list <- "/Volumes/CBioinformatics/jonathan/pact/panel_607_genes.csv"
     
     panel_607 <- as.data.frame(read.table(gene_list, sep = ",", header = T))[, 1]
@@ -1492,12 +1605,12 @@ LoopSampleTabs <- function(params) {
     for (sam in samples) {
         message("SAMPLE: ", sam)
         makeNewTab(sam, samList, qcData, pactName)
-        sam_match <- which(sam == tumorSams$Test_Number)
+        sam_match <- which(sam == tumorSams[, sam_col])
         
         if (length(sam_match > 0)) {
             sam_id <- tumorSams$Sample_ID[sam_match]
             tmb_match <- tmb_dat$SampleID == sam_id
-            msi_match <- msi_dat$SampleID == sam_id
+            msi_match <- stringr::str_detect(msi_dat$SampleID, pattern = sam_id)
             tmb_row <- tmb_dat[tmb_match, ]
             msi_row <- msi_dat[msi_match, ]
             make_msi_tmb_tab(tmb_row, msi_row)
@@ -1506,19 +1619,31 @@ LoopSampleTabs <- function(params) {
         snvDt <- CheckMissedSam(sam, snvDt, pactName)
         samRows <- snvDt$Test_Case == sam
         cnvTab <- snvDt[samRows & snvDt$Variant == "CNV", ]
-        cnvTab <- checkDataDump(sam, cnvTab)
-
+        
+        if (gb$is_sophia == FALSE) {
+          cnvTab <- checkDataDump(sam, cnvTab)
+        } else {
+          cnvTab <- NULL
+        }
         make_hs_metrics_tab(sam, norm_metrics, tumor_metrics, tumorSams)
         
         snvTab <- snvDt[samRows & snvDt$Variant == "SNV", ]
-        philipsIndels <- makeAbTab(sam, panel_607)
-        CreateVariantsTabs(philipsIndels, snvTab)
         
-        cnvTab <- subset(cnvTab, select = -Variant)
-        makeDT("CNV", cnvTab, pdfFi = sam, outDir = outDir)
-        
+        if (gb$is_sophia == FALSE) {
+          philipsIndels <- makeAbTab(sam, panel_607)
+          gb$CreateVariantsTabs(philipsIndels, snvTab)
+        } else{
+          philipsIndels <- NULL
+          gb$CreateVariantsTabs(philipsIndels, snvTab)
+        }
+
+        if (!is.null(cnvTab)) {
+          cnvTab <- subset(cnvTab, select = -Variant)
+          makeDT("CNV", cnvTab, pdfFi = sam, outDir = outDir)
+        }
+
         if (!is.null(methData)) {
-            methCn <- methData[methData$Test_Number == sam, ]
+          methCn <- methData[methData[, "Test_Number"] == sam, ]
             makeMethTab(sam, methCn, methData)
         }
         
@@ -1526,7 +1651,7 @@ LoopSampleTabs <- function(params) {
             MakeHStab(sam, hsDat, samList, outDir)
         }
         cat("\n\n")
-        MakeVAFtab(sam)
+        MakeVAFtab(sam, samList)
         cat("\n\n")
         
         onco_df <- as.data.frame(
@@ -1570,56 +1695,62 @@ loadHtmlTag <- function() {
 
 RenamePngs <- function(tumors, pngList, ngsPngDir) {
     stopifnot(class(tumors) == "data.frame")
-    ngsOrder <- base::which(sapply(tumors$Specimen_ID, grepl, pngList), arr.ind = T)[, "row"]
+  
+    if (gb$is_sophia ) {
+      sam_col <- "TUMOR_CASE_ID_BLOCK"
+    } else{
+      sam_col <- "Specimen_ID"
+    }
+
     for (X in 1:nrow(tumors)) {
-        currCase <- tumors$Paired_Normal[X]
+        currCase <- tumors[, sam_col][X]
         fileFind <- stringr::str_detect(pngList, pattern = currCase)
         current_png <- pngList[fileFind]
         isInValid <- length(current_png) == 1
         if (!isInValid) {
             message("File png not found for sample: ", currCase)
-            message(
-                "Check Samplesheet CSV file and compare with the demux-samplesheet.csv used"
+            message("Check Samplesheet CSV file and compare with demux-samplesheet.csv used"
             )
         }
         stopifnot(length(current_png) == 1)
-        new_pngName <- paste0(tumors$Test_Number[X], ".png")
-        message("Current PNG file:\n", basename(current_png))
-        message("Matching NGS name: ",
-                tumors$Test_Number[X],
-                "\n",
-                tumors$Paired_Normal[X],
-                "\n")
-        renamedPng <- file.path(ngsPngDir, new_pngName)
-        if (!file.exists(renamedPng)) {
-            file.copy(current_png, renamedPng)
+        if (gb$is_sophia) {
+          sam_id <- "TM_Number"
+        } else{
+          sam_id <- "Test_Number"
         }
+        new_pngName <- paste0(tumors[, sam_id][X], ".png")
+        message("Current PNG file:\n", basename(current_png))
+        message("Matching NGS name: ", tumors[, sam_col][X], "\n", tumors$Paired_Normal[X], "\n")
+        renamedPng <- file.path(ngsPngDir, new_pngName)
+        if (!file.exists(renamedPng)) {file.copy(current_png, renamedPng)}
     }
 }
 
 
 FixPngList <- function(tumors, pngList) {
     message("Mismatch in tumor samples and FACET PNG files!")
-    message("Sample rows: ",
-            nrow(tumors),
-            ", PNG files: ",
-            length(pngList))
+    message("Sample rows: ", nrow(tumors), ", PNG files: ", length(pngList))
     message("Check if any are missing:\n")
-    message(paste0(capture.output(as.data.frame(
-        tumors$Specimen_ID
-    )), collapse = "\n"))
-    message(paste0(capture.output(data.frame(
-        PNG_Files = basename(pngList)
-    )), collapse = "\n"))
+    sam_id_col <- "Specimen_ID"
+    if (gb$is_sophia) {
+      sam_id_col <- "TUMOR_CASE_ID_BLOCK"
+    }
+    message(paste0(capture.output(as.data.frame(tumors[,sam_id_col])), collapse = "\n"))
+    message(paste0(capture.output(data.frame(PNG_Files = basename(pngList))), collapse = "\n"))
     normLi <- paste(tumors$Paired_Normal, collapse = "|")
+    if (gb$is_sophia) {
+      normLi <- paste(tumors[,sam_id_col], collapse = "|")
+    }
     toKeep <- unlist(lapply(
         pngList,
         FUN = function(X) {
             stringr::str_detect(X, pattern = normLi)
         }
     ))
-    message("Dropping the following:")
-    print(pngList[!toKeep])
+    if (any(!toKeep)) {
+      message("Dropping the following:")
+      print(pngList[!toKeep])
+    }
     stopifnot(any(toKeep))
     pngList <- pngList[toKeep]
     stopifnot(length(pngList) == nrow(tumors))
@@ -1627,13 +1758,19 @@ FixPngList <- function(tumors, pngList) {
 }
 
 ListNonMatching <- function(pngList, tumors, pngOutDir) {
-    if (length(pngList) < nrow(tumors)) {
+    if (gb$is_sophia ) {
+      sam_col <- "TUMOR_CASE_ID_BLOCK"
+    } else{
+      sam_col <- "Specimen_ID"
+    }
+  
+  if (length(pngList) < nrow(tumors)) {
         nonContainedIDs <-
-            sapply(tumors$Specimen_ID, function(id) {
+            sapply(tumors[, sam_col], function(id) {
                 !any(grepl(id, basename(pngList)))
             })
         if (any(nonContainedIDs)) {
-            nonMatchedIDs <- tumors$Specimen_ID[nonContainedIDs]
+            nonMatchedIDs <- tumors[, sam_col][nonContainedIDs]
             message("The following samples are missing from: ", pngOutDir)
             message(paste0(capture.output(nonMatchedIDs), collapse = "\n"))
         }
@@ -1641,7 +1778,7 @@ ListNonMatching <- function(pngList, tumors, pngOutDir) {
         return(pngList)
     } else{
         nonMatchingFiles <- sapply(basename(pngList), function(baseName) {
-            !any(sapply(tumors$Specimen_ID, function(id) {
+            !any(sapply(tumors[, sam_col], function(id) {
                 grepl(id, baseName)
             }))
         })
@@ -1653,23 +1790,23 @@ ListNonMatching <- function(pngList, tumors, pngOutDir) {
         } else{
             baseNames <- basename(pngList)
             matches <- expand.grid(
-                Specimen_ID = tumors$Specimen_ID,
+                Specimen_ID = tumors[, sam_col],
                 FileName = baseNames,
                 stringsAsFactors = FALSE
             )
             matched <- sapply(1:nrow(matches), function(i) {
-                grepl(matches$Specimen_ID[i], matches$FileName[i])
+                grepl(matches[, sam_col][i], matches$FileName[i])
             })
             duplicates <- matches[matched, ]
-            duplicates$count <- ave(duplicates$Specimen_ID,
-                                    duplicates$Specimen_ID,
+            duplicates$count <- ave(duplicates[, sam_col],
+                                    duplicates[, sam_col],
                                     FUN = length)
             duplicateMatches <- duplicates[duplicates$count > 1, ]
             message(
                 paste(
                     "The sample(s)",
                     paste(unique(
-                        duplicateMatches$Specimen_ID
+                        duplicateMatches[, sam_col]
                     )),
                     "has duplicate matching CNV Facets PNG files:"
                 )
@@ -1680,13 +1817,9 @@ ListNonMatching <- function(pngList, tumors, pngOutDir) {
     }
 }
 
-
 CheckTumorPngs <- function(samList, outDir) {
     pngOutDir <- file.path(outDir, "cnvpng") # output copy of cnvPNG files
-    if (!dir.exists(pngOutDir)) {
-        dir.create(pngOutDir)
-    }
-    
+    if (!dir.exists(pngOutDir)) dir.create(pngOutDir)
     pngList <- list.files(
         pngOutDir,
         pattern = "*.png",
@@ -1706,12 +1839,18 @@ CheckTumorPngs <- function(samList, outDir) {
     }
     
     tumors <- samList[samList$Paired_Normal != "", ] # drop controls/normals
-    dupedNgs <- duplicated(tumors$Test_Number)
     
-    if (any(dupedNgs)) {
-        stop(c(
+    if (gb$is_sophia ) {
+      sam_col <- "TM_Number"
+    } else{
+      sam_col <- "Test_Number"
+    }
+    
+    dupe_sams <- duplicated(tumors[, sam_col])
+    if (any(dupe_sams)) {
+      stop(c(
             "There are duplicated NGS numbers:\n",
-            paste(tumors$Test_Number[dupedNgs], collapse = "\n")
+            paste(tumors[, sam_col][dupe_sams], collapse = "\n")
         ))
     }
     row.names(tumors) <- 1:nrow(tumors) # correct row numbering
@@ -1729,15 +1868,21 @@ CheckTumorPngs <- function(samList, outDir) {
 
 
 CopyCnvPngs <- function(params) {
-    outDir <- file.path(params$workDir, paste0(params$pactName, "_consensus"))
-    samList <- gb$GetSamList(params$pactName, 2)
-    toDrop <- grepl("^0_", samList$Paired_Normal)
-    if (any(toDrop)) {
-        ngs_drop <- samList$Test_Number[toDrop]
-        toKeep <- !samList$Test_Number %in% ngs_drop
-        samList <- samList[toKeep, ]
+  is_sophia <- grepl("^[0-9]{2}", params$pactName)
+  outDir <- file.path(params$workDir, paste0(params$pactName, "_consensus"))
+  samList <- gb$GetSamList(params$pactName, 2)
+  toDrop <- grepl("^0_", samList$Paired_Normal)
+  if (any(toDrop)) {
+    if (is_sophia) {
+      tm_drop <- samList$TM_Number[toDrop]
+      toKeep <- !samList$TM_Number %in% tm_drop
+    } else {
+      ngs_drop <- samList$Test_Number[toDrop]
+      toKeep <- !samList$Test_Number %in% ngs_drop
     }
-    CheckTumorPngs(samList, outDir)
+    samList <- samList[toKeep, ]
+  }
+  CheckTumorPngs(samList, outDir)
 }
 
 
