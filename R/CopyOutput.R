@@ -2,9 +2,9 @@
 ## Script name: CopyOutput.R
 ## Purpose: Functions to copy methylation output files to zdrive and REDCap
 ## Date Created: June 13, 2022
-## Version: 1.0.0
+## Version: 1.0.1
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2025
+## Copyright (c) NYULH Jonathan Serrano, 2026
 
 options(stringsAsFactors = FALSE)
 gb <- globalenv(); assign("gb", gb)
@@ -143,23 +143,20 @@ writeLogFi <- function(recordName, isHtml = T, logFile = "upload_log.tsv") {
 }
 
 # FUNC: Imports data frame to REDCap
-import_redcap_data <- function(datarecord = NULL) {
+import_redcap_data <- function(sh_Dat = NULL) {
     msgFunName(cpOutLnk, "import_redcap_data")
-    if (is.null(datarecord)) {
+    if (is.null(sh_Dat)) {
         return("Data is Null nothing to import to REDCap")
     }
-    rcon <- redcapAPI::redcapConnection(apiLink, token = gb$ApiToken)
+    rcon <- redcapAPI::redcapConnection(gb$apiLink, token = gb$ApiToken)
     dataCast <- redcapAPI::castForImport(
-        datarecord, rcon, fields = colnames(datarecord)
+        sh_Dat, rcon, fields = colnames(sh_Dat)
     )
-    redcapAPI::importRecords(
-        rcon,
-        data = dataCast,
-        overwriteBehavior = "normal",
-        returnContent = "ids"
+    redcapAPI::importRecords(rcon,
+        data = dataCast, overwriteBehavior = "normal", returnContent = "ids"
     )
-    message(crayon::bgBlue("Record Data Uploaded:"), "\n",
-            paste(datarecord, collapse = "\n"))
+    message(crayon::bgBlue("Record Data Uploaded:"), "\n")
+    msg_df(sh_Dat)
 
 }
 
@@ -297,27 +294,21 @@ callApiImport <- function(rcon, recordName, runID) {
     }
 }
 
-
+# Finds html reports in current directory and uploads to matching record_id
 callApiFile <- function(rcon, recordName, fiPath = NULL, fld = "classifier_pdf") {
     msgFunName(cpOutLnk, "callApiFile")
     message("\n", gb$mkBlue("Importing Record Report for:"), " ", recordName)
 
     if (is.null(fiPath)) {
-        fiPath <- dir(
-            path = getwd(),
-            pattern = sprintf("^%s.*\\.html$", recordName),
-            full.names = TRUE
+        fiPath <- dir(path = getwd(),
+                      pattern = sprintf("^%s.*\\.html$", recordName), full.names = TRUE
         )
     }
 
     if (length(fiPath) > 0) {
-        message("Uploading file:\n", fiPath)
-        message("To REDCap Record: ", recordName)
-
-        redcapAPI::importFiles(rcon,
-                               file = fiPath,
-                               record = recordName,
-                               field = fld)
+        message("Uploading file:\n", fiPath, "\nTo REDCap Record: ", recordName)
+        redcapAPI::importFiles(
+            rcon, file = fiPath, record = recordName, field = fld)
     }
 }
 
@@ -368,35 +359,34 @@ check_validation <- function(sh_Dat) {
 # Imports the xlsm sheet 3 data
 importSingle <- function(sh_Dat) {
     msgFunName(cpOutLnk, "importSingle")
-    
+
     sh_Dat <- check_validation(sh_Dat)
-    record <- sh_Dat$record_id
-    
-    recordEmpty <- checkRedcapRecord(record, fieldName = "well_number")
+    recordName <- sh_Dat$record_id[1]
+
+    recordEmpty <- checkRedcapRecord(recordName, fieldName = "well_number")
     if (recordEmpty) {
         import_redcap_data(sh_Dat)
     } else{
-        message(mkRed("Record Data not Uploaded:"), "\n", record[1])
+        message(mkRed("Record Data not Uploaded:"), "\n", recordName)
     }
-    
-    htmlEmpty <- checkRedcapRecord(paste0(record[1]))
-    
+
+    htmlEmpty <- checkRedcapRecord(paste0(recordName))
+
     rcon <- redcapAPI::redcapConnection(url = gb$apiLink, gb$ApiToken)
-    formData <- redcapAPI::exportRecordsTyped(rcon, fields = "run_number", records = record)
+    formData <- redcapAPI::exportRecordsTyped(rcon, fields = "run_number", records = recordName)
     record_run <- formData[1, "run_number"]
-    
     different_run <- sh_Dat$run_number[1] != record_run
     if (different_run) {
-        rd_msg <- paste("RD-number", record, "was used on a previous run:")
+        rd_msg <- paste("RD-number", recordName, "was used on a previous run:")
         message(mkRed(rd_msg), "\n", record_run)
         log_fi_out <- paste(gb$runID, "import_log.tsv", sep = "_")
-        writeLogFi(record, isHtml = T, logFile = log_fi_out)
+        writeLogFi(recordName, isHtml = T, logFile = log_fi_out)
     }
 
     if (htmlEmpty) {
-        callApiFile(rcon, record[1])
+        callApiFile(rcon, recordName)
     } else{
-        message(mkRed("Record already has an HTML in REDCap:"), "\n", record[1])
+        message(mkRed("Record already has an HTML in REDCap:"), "\n", recordName[1])
     }
 }
 
