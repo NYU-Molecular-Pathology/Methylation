@@ -346,7 +346,7 @@ msg_stage 1 "Begin Demultiplexing"
 msg_step 1 "#acacff" "Once sequencing is complete, start demux by logging into HPC"
 msg_code "ssh -Y ${kerbero}@bigpurple.nyumc.org"
 msg_step 2 "#acacff" "Go into the demux-nf2 directory and execute the deploy command"
-msg_code "${BASH_HELPERS}/start_demux.sh ${PACT_ID} ${RUN_ID}"
+msg_code "${BASH_HELPERS}/start_demux.sh ${RUN_ID}"
 echo "$BOX2"
 
 # Stage 2 -----------------------
