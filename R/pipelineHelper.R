@@ -2,9 +2,9 @@
 ## Script name: pipelineHelper.R
 ## Purpose: source of global scripts to help execute Methylation Pipeline
 ## Date Created: August 5, 2021
-## Version: 1.0.1
+## Version: 1.0.2
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2025
+## Copyright (c) NYULH Jonathan Serrano, 2026
 
 gb <- globalenv(); assign("gb", gb)
 dsh = "-----------"
@@ -291,12 +291,21 @@ launchEmailNotify <- function(runID) {
 #'         or a message indicating that the record already exists.
 #'
 #' @import redcapAPI
-CreateRedcapRecord <- function(runID = NULL, recordWord = "QC") {
+CreateRedcapRecord <- function(runID = NULL, recordWord = "QC", rd = NULL) {
     rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
-    record_name <-  paste0(runID, "_", recordWord)
-    existing_record <- redcapAPI::exportRecordsTyped(rcon,
-                                                     records = record_name)
-    if (nrow(existing_record) == 0) {
+    if (recordWord != "QC" & recordWord == "regular") {
+        record_name <- rd
+    } else {
+        record_name <- paste0(runID, "_", recordWord)
+    }
+
+    exist_record <- suppressMessages(redcapAPI::exportRecordsTyped(
+        rcon, records = record_name, fields = "record_id",
+        factors = FALSE,
+        survey = FALSE,
+        dag = FALSE))
+
+    if (nrow(exist_record) == 0) {
         new_record_df <- data.frame(
             record_id = record_name,
             run_number = runID,
@@ -304,7 +313,7 @@ CreateRedcapRecord <- function(runID = NULL, recordWord = "QC") {
         )
         new_record <- redcapAPI::castForImport(
             new_record_df, rcon, fields = c("record_id", "run_number")
-            )
+        )
         import_result <- redcapAPI::importRecords(rcon, new_record)
         message(dsh, "Created REDCap Record: ", new_record_df[1], dsh, "\n")
     } else {
@@ -494,10 +503,12 @@ fill_missing_rd <- function(samplesSheet, missing_rd) {
 }
 
 
-ReadSamSheet <- function(samList) {
+# Reads both xlsx RC sheet and csv sample sheet to ensure rows match in dataframes
+# Returns the RC sample data frame
+ReadSamSheet <- function(runOrder) {
     msgFunName(pipeLnk, "ReadSamSheet")
-    msgParams("samList")
-    msgParams(samList)
+    msgParams("runOrder")
+    msgParams(runOrder)
 
     wb_path <- gb$GrabSampleSheet()
     if (is.null(wb_path)) {
@@ -505,7 +516,7 @@ ReadSamSheet <- function(samList) {
     }
 
     xlSheets <- readxl::excel_sheets(wb_path)
-    redSheet <- as.integer(which(grepl("REDCap", xlSheets) == T))
+    redSheet <- as.integer(which(grepl("REDCap", xlSheets) == TRUE))
 
     message("Excel workbook sheet names:\n")
     message(paste(1:length(xlSheets), xlSheets, collapse = "\n"))
@@ -517,55 +528,76 @@ ReadSamSheet <- function(samList) {
     }
 
     message(bkGrn("Sheet index containing 'REDCap_Import':", redSheet), "\n")
+    redcap_tab_raw <- readxl::read_excel(wb_path, sheet = redSheet, range = "A1:S97",
+                                         col_types = c("text")) %>% as.data.frame()
+    last_row <- is.na(redcap_tab_raw[, 1]) | redcap_tab_raw[, 1] == 0
+    cuttoff_idx <- as.integer(which(last_row)[1]) - 1
 
-    raw_data <- readxl::read_excel(wb_path, sheet = redSheet, range = "A1:M97",
-                                   col_types = c("text"))
+    redcap_tab_df <- redcap_tab_raw[1:cuttoff_idx, ]
+    dotColName <- stringr::str_detect(colnames(redcap_tab_df), pattern = "^\\.\\.\\.")
 
-    samplesSheet <- as.data.frame(raw_data)[samList, 1:13]
-    message(bkGrn("SampleSheet:"))
-    print(samplesSheet)
+    if (any(dotColName)) {
+        redcap_tab_df <- redcap_tab_df[, !dotColName]
+    }
 
-    missing_rd <- samplesSheet$record_id == 0 | is.na(samplesSheet$record_id)
+    csv_sheet <- dir(path = getwd(), pattern = "samplesheet.csv")
+    csv_sheet_df <- as.data.frame(read.csv(csv_sheet))
+    stopifnot(nrow(csv_sheet_df) == nrow(redcap_tab_df))
+    for (n_row in 1:nrow(csv_sheet_df)) {
+        curr_csv_id <- csv_sheet_df[n_row, c("DNA_Number", "MP_num")]
+        curr_red_id <- redcap_tab_df[n_row, c("b_number", "tm_number")]
+        stopifnot(all(curr_csv_id == curr_red_id))
+        redcap_tab_df[n_row, "record_id"] <- csv_sheet_df[n_row, 1]
+    }
 
-   if (any(missing_rd)) {
+    message(bkGrn("REDCap sheet:"))
+    gb$msg_df(redcap_tab_df)
 
+    missing_rd <- redcap_tab_df$record_id == 0 | is.na(redcap_tab_df$record_id)
+
+    if (any(missing_rd)) {
         warning(paste("Sample #", which(missing_rd), "is missing an RD-number!\n"))
         message(bkRed("Creating new RD for sample #", which(missing_rd),
                       "from SampleSheet!\n"))
-        #samplesSheet <- samplesSheet[!missing_rd, ]
-        samplesSheet <- fill_missing_rd(samplesSheet, missing_rd)
+        #redcap_tab_df <- redcap_tab_df[!missing_rd, ]
+        redcap_tab_df <- fill_missing_rd(redcap_tab_df, missing_rd)
     }
+    redcap_tab_df[is.na(redcap_tab_df)] <- ""
 
-    return(samplesSheet)
+    return(redcap_tab_df)
 }
 
 # FUN: Parses the WetLab .xlsm sheet in the current directory -----------------
-Check_sam_csv <- function(samList) {
+Check_sam_csv <- function(runOrder) {
     msgFunName(pipeLnk, "Check_sam_csv")
-    msgParams("samList")
-    msgParams(samList)
+    msgParams("runOrder")
+    msgParams(runOrder)
 
     require(rmarkdown)
 
-    isMC <- sjmisc::str_contains(gb$runID, "MGDM") |
-        sjmisc::str_contains(gb$runID, "MC")
-    is_validation <- sjmisc::str_contains(gb$runID, "VAL")
+    isMC <- stringr::str_detect(gb$runID, "MGDM") |
+        stringr::str_detect(gb$runID, "MC")
+    is_validation <- stringr::str_detect(gb$runID, "VAL")
     is_research <- grepl("MR", gb$runID)
 
-    wksh <- ReadSamSheet(samList)
+    redcap_tab_df <- ReadSamSheet(runOrder)
     if (is_validation) {
         reportMd <<-
             "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
         CopyRmdFile(gb$runID, reportMd)
     }
 
-    if (isMC == T & is_validation == F & is_research == F) {
-        wksh <- NameControl(wksh, wksh$run_number[1])
+    if (isMC == TRUE & is_validation == F & is_research == F) {
+        redcap_tab_df <- NameControl(redcap_tab_df, redcap_tab_df$run_number[1])
     }
 
-    stopifnot(!is.null(wksh))
-    rownames(wksh) <- wksh[,1]
-    return(wksh)
+    stopifnot(!is.null(redcap_tab_df))
+    all_unique <- !anyDuplicated(redcap_tab_df[, 1])
+    if (!all_unique) {
+        message("Not all RD-numbers are unique in redcap_tab_df!")
+    }
+    rownames(redcap_tab_df) <- redcap_tab_df[,1]
+    return(redcap_tab_df)
 }
 
 
@@ -696,14 +728,14 @@ get_v11_reports <- function(your_csv){
 
 # FUN: Iterates over each sample in the csv file to generate a report ---------
 # DEBUG: data <- read.csv("samplesheet.csv", strip.white=T)
-loopRender <- function(samList = NULL, data, redcapUp = T) {
+loopRender <- function(runOrder = NULL, csv_data = NULL, redcapUp = TRUE) {
     msgFunName(pipeLnk, "loopRender")
-    stopifnot(!is.null(data))
-    if (is.null(samList)) {
-        samList <- 1:length(data$Sample_Name != 0)
+    stopifnot(!is.null(csv_data))
+    if (is.null(runOrder)) {
+        runOrder <- 1:length(csv_data$Sample_Name != 0)
     }
-    workbook_data <- Check_sam_csv(samList)
-    toRun <- getRunList(data, samList)
+    redcap_tab_df <- Check_sam_csv(runOrder)
+    toRun <- getRunList(csv_data, runOrder)
     SetKnitProgress()
     requireNamespace("mnp.v12epicv2")
     currIdx = 1
@@ -711,14 +743,17 @@ loopRender <- function(samList = NULL, data, redcapUp = T) {
         totLeft <- length(toRun) - currIdx
         message(bkGrn(dsh, totLeft, "of", length(toRun), "samples remain to be run", dsh))
         remain_percent <- 100 - round((totLeft/length(toRun)) * 100 )
+        #remain_percent <- 100 - round((((totLeft - 0.5) / length(toRun)) * 100), 1)
         perc_comp <- paste0(remain_percent, "%")
         message(bkGrn("Run is approximately", perc_comp, "complete"))
 
-        msgProgress(1, sam_idx, samList)
-        do_report(single_data = data[sam_idx, ], gb$genCn)
-        msgProgress(2, sam_idx, samList)
-        if (redcapUp == T) {
-            sh_Dat <- workbook_data[sam_idx, ]
+        msgProgress(1, sam_idx, runOrder)
+        single_data = csv_data[sam_idx, ]
+        do_report(single_data)
+        msgProgress(2, sam_idx, runOrder)
+        if (redcapUp == TRUE) {
+            sh_Dat <- redcap_tab_df[sam_idx, ]
+            stopifnot(sh_Dat$record_id == single_data$Sample_Name)
             gb$importSingle(sh_Dat)
         }
         currIdx = currIdx + 1
@@ -752,66 +787,96 @@ RenameFailed <- function(qcVals) {
     }
 }
 
-
+# Adds control samples new record_id into RC DB from samplesheet RunID
 CreateControlRecords <- function(cntrl, runID, control_sams) {
     if (length(cntrl) == 1) {
-        CreateRedcapRecord(runID, "control")
+        CreateRedcapRecord(runID = runID, recordWord = "control")
     } else {
-        for (c_sam in 1:length(cntrl)) {
-            curr_sam <- control_sams[c_sam]
+        for (sam_idx in 1:length(cntrl)) {
+            curr_sam <- control_sams[sam_idx]
             curr_splt <- stringr::str_split_fixed(curr_sam, "_", 2)
-            CreateRedcapRecord(curr_splt[1,1], curr_splt[1,2])
+            curr_runID <- curr_splt[1,1]
+            curr_recordWord <- curr_splt[1,2]
+            CreateRedcapRecord(runID = curr_runID, recordWord = curr_recordWord)
         }
     }
 }
 
-
-check_control_sam1 <- function(data, cntrl, runID) {
-    control_sams <- data[cntrl, 1]
+# Checks if the samplesheet sample name(s) with keyword "control" are named with runID
+check_control_sam1 <- function(csv_data, cntrl, runID) {
+    control_sams <- csv_data[cntrl, 1]
     isNamed <- stringr::str_detect(string = control_sams, pattern = runID)
     if (!all(isNamed)) {
-        notNamed <- !stringr::str_detect(string = control_sams, pattern = runID)
+        notNamed <- !isNamed
         newCntrls <- paste(runID, control_sams[notNamed], sep = "_")
-        control_sams[notNamed] <- newCntrls
+        clean_controls <- stringr::str_replace_all(newCntrls, pattern = " ", "-")
+        control_sams[notNamed] <- clean_controls
         if (length(control_sams) > 1) {
-            control_sams <- make.unique(control_sams, sep = "_")
+            control_sams <- make.unique(control_sams, sep = "-")
         }
-        data[cntrl, 1] <- control_sams
+        csv_data[cntrl, 1] <- control_sams
         CreateControlRecords(cntrl, runID, control_sams)
     } else{
+        control_sams <- make.unique(control_sams, sep = "_")
         CreateControlRecords(cntrl, runID, control_sams)
     }
-    
-    return(data)
+    return(csv_data)
 }
 
+# Searches the RC DB to ensure all rd_numbers exist and are created as record_id if not
+check_rd_numb_db <- function(csv_data){
+    is_rd <- grepl(csv_data[, 1], pattern = "^RD-")
+    all_rd <- csv_data[is_rd, 1]
+    rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
+    all_records <- suppressMessages(redcapAPI::exportRecordsTyped(
+        rcon, fields = "record_id", factors = FALSE, survey = FALSE, dag = FALSE))
+    
+    current_records <- all_records$record_id[grepl(all_records$record_id, pattern = "^RD-")]
+    
+    for (rd_sam in 1:length(all_rd)) {
+        curr_idx <- which(csv_data[, 1] == all_rd[rd_sam])
+        curr_sam <- csv_data[curr_idx, 1]
+        if (curr_sam %in% current_records) {
+            message(curr_sam, " ", "exists in REDCap")
+            next
+        }
+        curr_run <- csv_data$RunID[curr_idx]
+        CreateRedcapRecord(runID = curr_run, recordWord = "regular", rd = curr_sam)
+    }
+}
 
+# Verifies the csv samplesheet for minfi input is correctly formatted
 check_csv_data <- function(sheetName = "samplesheet.csv") {
-    data <- utils::read.csv(sheetName, strip.white = T)
-    toKeep <- !(is.na(data[, 1]) | data[, 1] == 0 | data[, 1] == "")
+    csv_data <- utils::read.csv(sheetName, strip.white = T)
+    toKeep <- !(is.na(csv_data[, 1]) | csv_data[, 1] == 0 | csv_data[, 1] == "")
     if (any(!toKeep)) {
-        data <- data[toKeep, , drop = FALSE]
-        rownames(data) <- NULL
+        csv_data <- csv_data[toKeep, ]
+        rownames(csv_data) <- NULL
     }
 
-    sheetRunID <- paste0(data$RunID[1])
+    sheetRunID <- paste0(csv_data$RunID[1])
+    
     if (sheetRunID != gb$runID) {
         message("Batch ID in sheet is: ", sheetRunID)
         message("Batch ID provided is: ", gb$runID)
         stopifnot(sheetRunID == gb$runID)
     }
 
-    runID <- paste0(data$RunID[1])
+    runID <- paste0(csv_data$RunID[1])
     cntrl <- which(stringr::str_detect(
-        data[, 1], pattern = stringr::regex('control', ignore_case = T)))
+        csv_data[, 1], pattern = stringr::regex('control', ignore_case = T)))
 
     if (length(cntrl) >= 1) {
-        data <- check_control_sam1(data, cntrl, runID)
+        csv_data <- check_control_sam1(csv_data, cntrl, runID)
     } else {
         warning("No control found in the samplesheet csv file!")
     }
 
-    return(data)
+    check_rd_numb_db(csv_data)
+
+    write.csv(csv_data, file = sheetName, row.names = FALSE, quote = FALSE)
+
+    return(csv_data)
 }
 
 # Checks if any html reports are missing from the samplesheet to upload
@@ -837,26 +902,25 @@ final_upload_check <- function() {
     } 
 }
 
-# MAIN: Generates Html reports with samplesheet.csv for V12_EPICV2 ----
-makeHtmlReports <- function(runOrder = NULL,
-                            skipQC = F,
-                            email = T,
-                            redcapUp = T) {
+# MAIN: Generates Html reports with samplesheet.csv for V12_EPICV2 --------------------------------
+makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redcapUp = TRUE) {
     msgFunName(pipeLnk, "makeHtmlReports")
 
     suppressPackageStartupMessages(library("data.table"))
     assign("genCn", FALSE, envir = gb)
 
-    data <- check_csv_data()
-    runID <- paste0(data$RunID[1])
+    csv_data <- check_csv_data(sheetName = "samplesheet.csv")
+    runID <- paste0(csv_data$RunID[1])
 
     reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
     CopyRmdFile(gb$runID, reportMd)
-    suppressPackageStartupMessages(library("mnp.v12epicv2"))
-    suppressPackageStartupMessages(library("pander"))
-    suppressPackageStartupMessages(library("htmltools"))
+    suppressWarnings(suppressPackageStartupMessages({
+        library("mnp.v12epicv2")
+        library("pander")
+        library("htmltools")
+    }))
 
-    loopRender(runOrder, data, redcapUp)
+    loopRender(runOrder, csv_data, redcapUp)
     checkRunOutput(runID)
 
     qcVals <- NULL
@@ -875,16 +939,10 @@ makeHtmlReports <- function(runOrder = NULL,
         redcapUp <- email <- FALSE
     }
 
-    # if (file.exists(gb$UPLOAD_LOG_TSV)) {
-    #     file.list <- read.table(gb$UPLOAD_LOG_TSV)[,1]
-    #     if (length(file.list) > 0) {
-    #         gb$uploadToRedcap(file.list, T)
-    #     }
-    # }
     file.list <- dir(getwd(), pattern = ".html", full.names = TRUE)
     gb$uploadToRedcap(file.list, F)
 
-    if (email == T) {
+    if (email == TRUE) {
         RenameFailed(qcVals)
         gb$CombineClassAndQC(
             output_fi = paste0(runID, "_qc_data.csv"),
