@@ -259,31 +259,39 @@ ReadSheetDate <- function(sampleSheet) {
     return(wsDate)
 }
 
-
-# FUNC: Reads the csv samplesheet for minfi input
+#' Reads the raw_input tab of an xlsm workbook as a samplesheet for minfi
+#' Reads the first worksheet containing "raw" in its name, processes it as a samplesheet, 
+#' and returns the run ID, total sample count, or the worksheet.
+#'
+#' @param run_ID Logical. If TRUE, return the run ID.
+#' @param totalSam Logical. If TRUE, return the total number of samples.
+#' @param wks Logical. If TRUE, return the raw_input sheet as data frame.
+#'
+#' @return Character (run ID), integer (total samples), or data.frame (worksheet), depending on input
 readSampleSheet <- function(run_ID = FALSE, totalSam = FALSE, wks = FALSE) {
 
     msgFunName(cpInLnk2, "readSampleSheet")
     msgParams(run_ID, totalSam, wks)
 
-    sampleSheet <- GrabSampleSheet()
-    message(paste0("Reading worksheet named: ", sampleSheet))
+    sam_col <- "Sample_Name"
+    xlsm_wb <- GrabSampleSheet()
+    message(paste("Reading worksheet named:", xlsm_wb))
 
-    worksheet <- suppressMessages(readxl::read_excel(
-        sampleSheet,
-        sheet = 2,
-        col_names = T,
-        col_types = "text",
-        trim_ws = T
-    ))
-    to_keep <- worksheet$Sample_Name != 0
+    # Returns the index(es) of sheet names containing "raw"
+    raw_index <- grep("raw", readxl::excel_sheets(xlsm_wb), ignore.case = TRUE)[1]
+
+    worksheet <- suppressMessages(readxl::read_excel(xlsm_wb,
+        sheet = raw_index, col_names = TRUE, col_types = "text", trim_ws = TRUE)
+    )
+
+    to_keep <- worksheet[, sam_col] != 0 & !is.na( worksheet[, sam_col])
     worksheet <- worksheet[to_keep, ]
 
-    wsDate <- ReadSheetDate(sampleSheet)
+    wsDate <- ReadSheetDate(xlsm_wb)
     worksheet$Date <- paste0(wsDate$Date[1])
 
     if (is.null(gb$runID)) {
-        gb$runID <- paste0(stringr::str_split_fixed(basename(sampleSheet), pattern = ".xlsm", 2)[1,1])
+        gb$runID <- paste0(stringr::str_split_fixed(basename(xlsm_wb), pattern = ".xlsm", 2)[1,1])
     }
 
     if (gb$runID != worksheet$Project[1]) {
@@ -292,15 +300,11 @@ readSampleSheet <- function(run_ID = FALSE, totalSam = FALSE, wks = FALSE) {
         stopifnot(gb$runID == worksheet$Project[1])
     }
 
-    if (run_ID == T) {
-        return(worksheet$Project[1])
-    }
-    if (totalSam == T) {
-        return(getTotalSamples(sampleSheet))
-    }
-    if (wks == T) {
-        return(worksheet)
-    }
+    if (run_ID == TRUE) return(worksheet$Project[1])
+    if (totalSam == TRUE) return(getTotalSamples(sampleSheet))
+    if (wks == TRUE) return(worksheet)
+
+    return(worksheet)
 }
 
 
@@ -424,6 +428,103 @@ checkHeaders <- function(worksheet) {
     return(Var.names)
 }
 
+# FUNC: returns the latest RD in the input list of numbers
+get_newest_rd <- function(rd_num){
+    parsed <- strcapture(
+        "^RD-(\\d+)-(\\d+)$",
+        rd_num,
+        proto = list(year = integer(), num = integer())
+    )
+    rd_max <- rd_num[which.max(parsed$year * 1e6 + parsed$num)]
+    return(rd_max)
+}
+
+
+get_next_rd <- function(rd_nums) {
+    suffix_num <- suppressWarnings(as.integer(sub(".*-", "", rd_nums)))
+    
+    if (all(is.na(suffix_num))) {
+        return(NA_character_)
+    } else {
+        last_rd <- rd_nums[which.max(suffix_num)]
+        last_num <- as.integer(sub(".*-", "", last_rd))
+        prefix <- sub("-[^-]+$", "", last_rd)
+        
+        return(paste0(prefix, "-", last_num + 1))
+    }
+}
+
+
+is_present <- function(x) {
+    !is.null(x) && !is.na(x) && as.character(x) != "" && as.character(x) != "0"
+}
+
+# FUNC: Checks RC DB for any record_id matching FILLER annotated rows in samplesheet using b & mp numbers
+check_rd_fillers <- function(df) {
+    has_filler <- stringr::str_detect(df$Sample_Name, stringr::regex("fill", ignore_case = TRUE))
+    if (any(has_filler)) {
+        apiUrl = "https://redcap.nyumc.org/apps/redcap/api/"
+        rcon <- redcapAPI::redcapConnection(apiUrl, gb$token)
+        flds <- c("record_id", "b_number", "tm_number", "accession_number", "block",
+                  "barcode_and_row_column", "tissue_comments", "nyu_mrn")
+        params = list(rcon, fields = flds, survey = F, dag = F, factors = F, form_complete_auto = F)
+        message("Checking REDCap Database for fillers...")
+        dbCols <- do.call(redcapAPI::exportRecordsTyped, c(params))
+        db <- as.data.frame(dbCols)
+        db <- db[grepl(pattern = "RD-", db$record_id), ]
+        db <- db[!grepl(pattern = "_R0", db$barcode_and_row_column), ]
+        db <- db[!grepl(pattern = "NO IDAT FILE", db$barcode_and_row_column), ]
+        db <- db[!grepl(pattern = "DUPLICATE", db$barcode_and_row_column), ]
+        rownames(db) <- NULL
+        
+        for (filler in which(has_filler)) {
+            curr_row <- df[filler,]
+            curr_bnum <- curr_row$b_number
+            rd_num <- ""
+            if (is_present(curr_bnum)) {
+                match_b <- grepl(curr_bnum, db$b_number) | grepl(curr_bnum, db$block)
+                match_b[is.na(match_b)] <- FALSE
+                if (any(match_b)) {
+                    rd_num <- db$record_id[match_b]
+                    if (length(rd_num) > 1) {
+                        rd_num <- get_newest_rd(rd_num)
+                    }
+                    message("Filler B-number found: ", curr_bnum, " ", rd_num)
+                    df[filler, "Sample_Name"] <- rd_num
+                    next
+                }
+                curr_mp <- curr_row$MP_number
+                if (is_present(curr_mp)) {
+                    match_mp <- apply(db[c("accession_number", "tm_number", "b_number")], 1,
+                                      function(x) {any(grepl(curr_mp, x, fixed = TRUE), na.rm = TRUE)}
+                    )
+                    if (any(match_mp)) {
+                        matched_rows <- db[match_mp, , drop = FALSE]
+                        if (nrow(matched_rows) > 1) {
+                            rd_num <- get_newest_rd(matched_rows$record_id)
+                        } else {
+                            rd_num <- matched_rows$record_id
+                        }
+                        message("Filler MP match found: ", curr_mp, " ", rd_num)
+                        df[filler, "Sample_Name"] <- rd_num
+                        next
+                    }
+                }
+                if (rd_num == "") {
+                    message("No matching RD number found for filler:\n",
+                            paste(curr_row[1, c("b_number", "MP_number")], collapse = " "))
+                    message("Creating new RD-number...")
+                    mgdms <- grepl(pattern = paste0("RD-", gb$runID, "-"), df$Sample_Name)
+                    all_rd <- df$Sample_Name[mgdms]
+                    rd_num <- get_next_rd(all_rd)
+                    df[filler, "Sample_Name"] <- rd_num
+                }
+            }
+        }
+    }
+    return(df)
+}
+
 
 # FUNC: Validates RD-numbers and workbook formatting
 FormatSampleData <- function(worksheet, runID, sampleNumb) {
@@ -439,7 +540,8 @@ FormatSampleData <- function(worksheet, runID, sampleNumb) {
     }
 
     df$Notes <- paste(df$Notes[1])
-    df <- checkSampleSheet(df)
+    df <- gb$checkSampleSheet(df)
+    df <- check_rd_fillers(df)
     return(df)
 }
 
@@ -465,12 +567,12 @@ readSheetWrite <- function(sampleNumb = NULL, runID = NULL) {
 
     msgParams(sampleNumb, runID)
 
-    worksheet <- readSampleSheet(wks = TRUE)
-    df <- FormatSampleData(worksheet, runID, sampleNumb)
+    raw_input_df <- readSampleSheet(wks = TRUE)
+    run_csv_df <- FormatSampleData(raw_input_df, runID, sampleNumb)
 
     writeSampleSheet(
-        df,
-        bn = file.path(gb$methDir, runID, df[, "Sentrix_ID"]),
+        run_csv_df,
+        bn = file.path(gb$methDir, runID, run_csv_df[, "Sentrix_ID"]),
         sampleName = "Sample_Name",
         dnaNumber = "b_number",
         Sentrix = "Sentrix_ID"
