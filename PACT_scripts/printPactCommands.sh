@@ -355,7 +355,7 @@ if [[ "$IS_SOPHIA" == "true" ]]; then
 	msg_step 1 "#ffffba" "After Demux finishes, check the QC by pasting the link below in a web browser to open in a SFTP client like CyberDuck:"
 	msg_code "sftp://bigpurple.nyumc.org${DEMUXDIR}/output/${RUN_ID}.report.html"
 	msg_step "2" "#ffffba" "Begin the SG pipeline by executing the script below:"
-	msg_code "${BASH_HELPERS}/start_pipeline.sh ${PACT_ID} ${RUN_ID}"
+	msg_code "${BASH_HELPERS}/start_pipeline.sh ${RUN_ID}"
 	echo "$BOX2"
 else
 	msg_stage 2 "Execute In-House Pipeline and Philips Uploads"
