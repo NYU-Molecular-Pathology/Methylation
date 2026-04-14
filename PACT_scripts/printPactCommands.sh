@@ -1,12 +1,12 @@
 #!/bin/bash
-## ---------------------------
 ## Script name: printPactCommands.sh
-## Purpose: Print out all the copiable commands used for executing the PACT pipeline
+## Purpose: Saves the copiable commands used for executing 
+## the PACT pipeline into an HTML file for a current run
 ## Author: Jonathan Serrano
 ## Version: 1.0.1
-## Date Updated: March 25, 2026
+## Date Updated: April 14, 2026
 ## Copyright (c) NYULH Jonathan Serrano, 2026
-## ---------------------------
+## ------------------------------------------
 
 DEFAULT_DIR="/Volumes/CBioinformatics/jonathan/pact/consensus/"
 
@@ -381,16 +381,15 @@ msg_step 2 "#baffc9" "From the data mover node, mount /mnt/${kerbero}/molecular,
 msg_code "/mnt/${kerbero}/molecular/Molecular/Validation/Scripts/zdrive_copier.sh ${RUN_ID} ${PACT_ID}"
 msg_step 3 "#baffc9" "Once the files are copied, email the PACT team to notify them by replying to the PACTers email thread with the following message template:"
 if [[ "$IS_SOPHIA" == "true" ]]; then
-	msg_txt "Hi all,\nThe in-house pipeline completed for ${PACT_ID}. The data for this week's PACT run is copied here:
+	msg_txt "Hi all,\n\nThe in-house pipeline completed for ${PACT_ID}. The data for this week's PACT run are copied here:
 	smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/NGS607/${YEAR_DIR}/${RUN_ID}/\n
-	The QC and output is copied here:
+The QC and output are copied here:
 	smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics/${YEAR_DIR}/${PACT_ID}/${PACT_ID}.html
-	QC for upload to Sophia can be reviewed by logging into: https://pactqc.nyumc.org/
-	"
+QC for upload to Sophia can be reviewed by logging into: https://pactqc.nyumc.org/"
 else
-	msg_txt "Hi all,\nThe in-house pipeline completed for ${PACT_ID}. The data for this week's PACT run is copied here:
+	msg_txt "Hi all,\n\nThe in-house pipeline completed for ${PACT_ID}. The data for this week's PACT run are copied here:
 	smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/NGS607/${YEAR_DIR}/${RUN_ID}/\n
-	The QC and output is copied here:
+The QC and output are copied here:
 	smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics/${YEAR_DIR}/${PACT_ID}/${PACT_ID}.html"
 fi
 echo "$BOX2"
