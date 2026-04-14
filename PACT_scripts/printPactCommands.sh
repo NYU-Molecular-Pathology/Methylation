@@ -380,10 +380,19 @@ msg_code "${BASH_HELPERS}/bam_copier.sh ${RUN_ID} ${PACT_ID}"
 msg_step 2 "#baffc9" "From the data mover node, mount /mnt/${kerbero}/molecular, and execute zdrive_copier.sh to copy the data from HPC to the Molecular share drive."
 msg_code "/mnt/${kerbero}/molecular/Molecular/Validation/Scripts/zdrive_copier.sh ${RUN_ID} ${PACT_ID}"
 msg_step 3 "#baffc9" "Once the files are copied, email the PACT team to notify them by replying to the PACTers email thread with the following message template:"
-msg_txt "Hi all,\nThe in-house pipeline completed for ${PACT_ID}. The data for this week's PACT run is copied here:
-smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/NGS607/${YEAR_DIR}/${RUN_ID}/\n
-The QC and output is copied here:
-smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics/${YEAR_DIR}/${PACT_ID}/${PACT_ID}.html"
+if [[ "$IS_SOPHIA" == "true" ]]; then
+	msg_txt "Hi all,\nThe in-house pipeline completed for ${PACT_ID}. The data for this week's PACT run is copied here:
+	smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/NGS607/${YEAR_DIR}/${RUN_ID}/\n
+	The QC and output is copied here:
+	smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics/${YEAR_DIR}/${PACT_ID}/${PACT_ID}.html
+	QC for upload to Sophia can be reviewed by logging into: https://pactqc.nyumc.org/
+	"
+else
+	msg_txt "Hi all,\nThe in-house pipeline completed for ${PACT_ID}. The data for this week's PACT run is copied here:
+	smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/NGS607/${YEAR_DIR}/${RUN_ID}/\n
+	The QC and output is copied here:
+	smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics/${YEAR_DIR}/${PACT_ID}/${PACT_ID}.html"
+fi
 echo "$BOX2"
 
 # Stage 4 -----------------------
