@@ -1246,7 +1246,7 @@ fix_and_install_minfi <- function() {
         )
     })
 
-    suppressPackageStartupMessages(library(minfi, character.only = TRUE))
+    suppressPackageStartupMessages(library("minfi", character.only = TRUE))
     return(invisible(TRUE))
 }
 
