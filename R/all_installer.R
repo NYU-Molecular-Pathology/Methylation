@@ -50,11 +50,6 @@ Sys.unsetenv(c(
 
 options(repos = c(CRAN = "https://cloud.r-project.org"))
 
-
-## sanity checks (should have NO "//" anywhere)
-stopifnot(!any(grepl("//packages", repos_vec, fixed = TRUE)))
-repos_vec
-
 ## Compose one authoritative repos vector via BiocManager
 if (!"BiocManager" %in% rownames(installed.packages())) {
     install.packages("BiocManager", ask = FALSE, dependencies = TRUE,
@@ -492,10 +487,6 @@ ensure_pak <- function() {
 require_pkg("devtools", "binary")
 require_pkg("utils", "binary")
 require_pkg("BiocManager", "binary")
-
-if (BiocManager::version() != bioc_version) {
-    BiocManager::install(version = bioc_version, ask = FALSE, update = FALSE)
-}
 
 biocRepos <- suppressMessages(BiocManager::repositories())
 rbase_pkgs <- rownames(installed.packages(priority = "base"))
