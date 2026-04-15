@@ -48,21 +48,8 @@ Sys.unsetenv(c(
   "BIOCONDUCTOR_USE_CONTAINER_REPOSITORY"
 ))
 
-bioc_version  <- "3.20"   # Compatible with R 4.4.x
-snapshot_date <- "2025-10-01"
+options(repos = c(CRAN = "https://cloud.r-project.org"))
 
-cran_ppm <- sprintf("https://packagemanager.posit.co/cran/%s", snapshot_date)
-bioc_ppm_base <- "https://packagemanager.posit.co/bioconductor"
-
-options(BioC_mirror = bioc_ppm_base)
-options(BIOCONDUCTOR_CONFIG_FILE = sprintf("%s/config.yaml", bioc_ppm_base))
-
-repos_vec <- BiocManager::repositories(
-    version = bioc_version,
-    site_repository = cran_ppm
-)
-
-options(repos = repos_vec)
 
 ## sanity checks (should have NO "//" anywhere)
 stopifnot(!any(grepl("//packages", repos_vec, fixed = TRUE)))
@@ -70,20 +57,12 @@ repos_vec
 
 ## Compose one authoritative repos vector via BiocManager
 if (!"BiocManager" %in% rownames(installed.packages())) {
-    install.packages("BiocManager", repos = cran_ppm, ask = FALSE, dependencies = TRUE,
+    install.packages("BiocManager", ask = FALSE, dependencies = TRUE,
                      Ncpus = max(1L, parallel::detectCores() - 1L))
 }
 
-## Use BiocManager to generate all Bioconductor sub-repositories + CRAN (PPM)
-repos_vec <- BiocManager::repositories(
-    version = bioc_version,
-    site_repository = cran_ppm
-)
-options(repos = repos_vec)
-
-## Optional: sanity check
-message("Configured repositories:")
-print(getOption("repos"))
+library(BiocManager)
+options(repos = BiocManager::repositories())
 
 
 supM <- function(pk) {
