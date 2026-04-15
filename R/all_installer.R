@@ -884,7 +884,7 @@ check_pkg_install <- function(pkgs) {
     }
 
     to_load <- not_loaded %in% rownames(installed.packages())
-
+    load_success <- TRUE
     if (any(to_load)) {
         installed_pk <- not_loaded[to_load]
         load_success <- unlist(lapply(installed_pk, quiet_load))
