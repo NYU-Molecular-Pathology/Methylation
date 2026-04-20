@@ -2,7 +2,7 @@
 ## Script name: KnitScripts.R
 ## Purpose: Source of global scripts used by the PACT_consensus.Rmd file
 ## Date Created: August 10, 2022
-## Date Modified: March 30, 2026
+## Date Modified: April 20, 2026
 ## Version: 1.0.2
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2026
@@ -64,20 +64,20 @@ CheckBrewLatex <- function() {
             system('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"')
         }
     )
-    
+
     fix_brew_path()
-    
+
     if (!"fontconfig" %in% system("brew list", intern = TRUE)) {
         system("brew install fontconfig")
     }
-    
+
     tryCatch(
         system("which latex", intern = T),
         warning = function(ww) {
             system("brew install latex")
         }
     )
-    
+
     tryCatch(
         system("which pdflatex", intern = T),
         warning = function(ww) {
@@ -91,14 +91,8 @@ if (Sys.info()[['sysname']] == "Darwin") {
 }
 
 # Librarian shelf loads or installs package from CRAN, BioConductor, & GitHub
-if (!require("librarian")) {
-    install.packages(
-        "librarian",
-        dependencies = T,
-        verbose = T,
-        Ncpus = 4,
-        quiet = T
-    )
+if (!"librarian" %in% rownames(installed.packages())) {
+    install.packages("librarian", dependencies = TRUE, ask = FALSE)
 }
 
 pkgs <-
@@ -173,20 +167,10 @@ pdfToolsPkgs <-
         'testthat'
     )
 
-librarian::shelf(
-    pkgs,
-    ask = F,
-    update_all = F,
-    quiet = F,
-    dependencies = T
-)
-librarian::shelf(
-    pdfToolsPkgs,
-    ask = F,
-    update_all = F,
-    quiet = F,
-    dependencies = T
-)
+suppressWarnings(librarian::shelf(pkgs, ask = FALSE, update_all = FALSE,
+                                  quiet = TRUE, dependencies = TRUE))
+suppressWarnings(librarian::shelf(pdfToolsPkgs, ask = FALSE, update_all = FALSE,
+                 quiet = TRUE, dependencies = TRUE))
 
 library("kableExtra")
 
