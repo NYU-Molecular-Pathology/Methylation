@@ -393,7 +393,7 @@ makePdfTab <- function(pdfFi, cnvTab, outDir) {
     cat(
         "<span style='color: red;'>",
         "**Note**: CNV Amplifications are listed first,",
-        "followed other Philips CNV abberations in table below this image\n\n"
+        "below this image if available\n\n"
     )
     cat(paste0("![In-house Facets Plot (Above)](", ngsPng, "){width=100%}"))
     cat("\n\n")
@@ -414,7 +414,7 @@ makePdfTab <- function(pdfFi, cnvTab, outDir) {
         print(newTa)
         cat("\n\n")
     } else{
-        cat("\n\nNo CNV Amplifications >=5 in Philips data dump for this case\n\n")
+        cat("\n\nNo Philips data dump for this case or Sophia Run\n\n")
         cat("\n\n")
     }
     
@@ -1623,6 +1623,9 @@ LoopSampleTabs <- function(params) {
 
         if (!is.null(cnvTab)) {
           cnvTab <- subset(cnvTab, select = -Variant)
+          makeDT("CNV", cnvTab, pdfFi = sam, outDir = outDir)
+        }else{
+          cnvTab <- data.frame()
           makeDT("CNV", cnvTab, pdfFi = sam, outDir = outDir)
         }
 
