@@ -614,7 +614,7 @@ writeSampleSheet <- function(input, token = NULL, runID = NULL) {
     }
 }
 
-# MAIN Execution start ---------------------------------------- ---------------
+# MAIN Execution start --------------------------------------------------------
 
 loadPacks()
 checkMounts()
