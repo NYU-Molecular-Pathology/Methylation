@@ -665,39 +665,30 @@ postData <- function(rcon, record) {
 emailFile <- function(PACT_ID, meth_xlsx, rcon) {
     record = data.frame(record_id = PACT_ID, run_number = PACT_ID)
     postData(rcon, record)
-    isDone <-
-        redcapAPI::exportRecordsTyped(
-            rcon,
-            factors = F,
-            records = record$record_id,
-            fields = c("record_id", "other_file")
+    isDone <- redcapAPI::exportRecordsTyped(
+        rcon, factors = FALSE, records = record$record_id, fields = c("record_id", "other_file")
         )
     if (length(isDone$other_file) == 0) {
-        body <- list(
-            token = rcon$token,
-            content = 'file',
-            action = 'import',
-            record = PACT_ID,
-            field = "other_file",
-            file = httr::upload_file(meth_xlsx),
-            returnFormat = 'csv'
+        import_res <- httr::POST(
+            url = rcon$url,
+            body = list(
+                token = rcon$token, content = "file",
+                action = "import", record = PACT_ID,
+                field = "other_file", returnFormat = "json",
+                file = httr::upload_file(
+                    path = meth_xlsx,
+                    type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            ), encode = "multipart"
         )
-        res <-
-            tryCatch(
-                httr::POST(url = rcon$url, body = body, config = rcon$config),
-                error = function(cond) {
-                    list(status_code = "200")
-                }
-            )
-        if (res$status_code == "200") {
+        if (import_res$status_code == "200") {
             message("REDCap file upload failed:\n", meth_xlsx)
-        }else{
+        } else {
             message("REDCap file upload successful:\n", meth_xlsx)
         }
+        record$comments <- "pact_sample_list_email"
+        postData(rcon, record)
+        message("------", "Email Notification Created", "------")
     }
-    record$comments <- "pact_sample_list_email"
-    postData(rcon, record)
-    message("------", "Email Notification Created", "------")
 }
 
 # Grabs the run ID from the input xlsx sheet name
