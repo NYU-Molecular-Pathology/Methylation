@@ -680,7 +680,7 @@ emailFile <- function(PACT_ID, meth_xlsx, rcon) {
                     type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
             ), encode = "multipart"
         )
-        if (import_res$status_code == "200") {
+        if (import_res$status_code != "200") {
             message("REDCap file upload failed:\n", meth_xlsx)
         } else {
             message("REDCap file upload successful:\n", meth_xlsx)
