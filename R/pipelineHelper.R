@@ -1040,7 +1040,7 @@ PrepareRun <- function(token,
 
 
 # Starts run knitting html reports loop ---------------------------------------
-StartRun <- function(selectRDs = NULL, emailNotify = T, redcapUp = T) {
+StartRun <- function(selectRDs = NULL, emailNotify = TRUE, redcapUp = FALSE) {
     mainHub <- "https://github.com/NYU-Molecular-Pathology/Methylation/main/R"
     gb$msgFunName(file.path(mainHub,"methylExpress.R"),"startRun")
 
@@ -1049,10 +1049,10 @@ StartRun <- function(selectRDs = NULL, emailNotify = T, redcapUp = T) {
         runOrder <- gb$reOrderRun(selectRDs)
     }
     gb$makeHtmlReports(
-        runOrder = runOrder,   # Prioritize specific RD-numbers
-        skipQC = F,            # Don't skip QC generation
-        email = emailNotify,   # to email after Run complete
-        redcapUp = redcapUp    # Flag to import files to REDCap
+        runOrder = runOrder, # Prioritize specific RD-numbers
+        skipQC = FALSE,      # Don't skip QC generation
+        email = emailNotify, # to email after Run complete
+        redcapUp = FALSE    # Flag to import files to REDCap
     )
 }
 
