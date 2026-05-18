@@ -15,7 +15,7 @@ bkBlu <- function(...) {crayon::bgBlue$bold$white(paste(...))}
 
 # Global Variables ----------------------------------
 apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
-reportMd <- file.path(fs::path_home(),"report.Rmd")
+reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
 QC_file <- file.path(fs::path_home(),"Methyl_QC.Rmd")
 pipeLnk <-
     "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/pipelineHelper.R"
@@ -97,12 +97,12 @@ SetKnitProgress <- function() {
 
 check_html_file_sizes <- function(meth_dir) {
     html_files <- list.files(meth_dir, pattern = "\\.html$", full.names = TRUE)
-    
+
     if (length(html_files) == 0) {
         warning("No HTML files found in the directory.")
         return(invisible(NULL))
     }
-    
+
     # Iterate through files and check their sizes
     for (file in html_files) {
         file_size_mb <- file.info(file)$size / (1024 * 1024)
@@ -110,7 +110,7 @@ check_html_file_sizes <- function(meth_dir) {
             warning(sprintf("File '%s' is smaller than 1MB (%.2f MB).", basename(file), file_size_mb))
         }
     }
-    
+
     message("File size check completed.")
 }
 
@@ -252,9 +252,9 @@ generateQCreport <- function(runID = NULL) {
 # Sends an email notification that the run is complete from redcap admin ------
 launchEmailNotify <- function(runID) {
     msgFunName(pipeLnk, "launchEmailNotify")
-    
+
     rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
-    
+
     isMC = sjmisc::str_contains(runID, "MGDM") | sjmisc::str_contains(runID, "MC")
     is_validation <- sjmisc::str_contains(runID, "VAL")
 
@@ -270,7 +270,7 @@ launchEmailNotify <- function(runID) {
     record_data <- redcapAPI::castForImport(
         record_df, rcon, fields = c("record_id", "comments")
     )
-    
+
     res <- redcapAPI::importRecords(rcon,
                              record_data,
                              returnContent = "ids",
@@ -651,17 +651,14 @@ do_report <- function(single_data = NULL, genCn = FALSE) {
     msgFunName(pipeLnk, "do_report")
     msgParams("data")
 
+    reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
     dat <- getRunData(single_data)
 
     RGsetEpic <- getRGset(runPath = getwd(), sentrix = dat$senLi)
-    reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
 
-    if (genCn == T) {
-        gb$generate_cnv_png(RGsetEpic, dat$sampleID)
-    }
+    if (genCn == T) gb$generate_cnv_png(RGsetEpic, dat$sampleID)
 
     msgRunUp(dat$sampleID, dat$run_id, dat$senLi)
-    #message("Knitting report: ", reportMd)
 
     params_init <- list(
         token = gb$ApiToken,
@@ -728,7 +725,7 @@ get_v11_reports <- function(your_csv){
 
 # FUN: Iterates over each sample in the csv file to generate a report ---------
 # DEBUG: data <- read.csv("samplesheet.csv", strip.white=T)
-loopRender <- function(runOrder = NULL, csv_data = NULL, redcapUp = TRUE) {
+loopRender <- function(runOrder = NULL, csv_data = NULL, redcapUp = FALSE) {
     msgFunName(pipeLnk, "loopRender")
     stopifnot(!is.null(csv_data))
     if (is.null(runOrder)) {
@@ -749,7 +746,7 @@ loopRender <- function(runOrder = NULL, csv_data = NULL, redcapUp = TRUE) {
 
         msgProgress(1, sam_idx, runOrder)
         single_data = csv_data[sam_idx, ]
-        do_report(single_data)
+        do_report(single_data = single_data)
         msgProgress(2, sam_idx, runOrder)
         if (redcapUp == TRUE) {
             sh_Dat <- redcap_tab_df[sam_idx, ]
@@ -830,9 +827,9 @@ check_rd_numb_db <- function(csv_data){
     rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
     all_records <- suppressMessages(redcapAPI::exportRecordsTyped(
         rcon, fields = "record_id", factors = FALSE, survey = FALSE, dag = FALSE))
-    
+
     current_records <- all_records$record_id[grepl(all_records$record_id, pattern = "^RD-")]
-    
+
     for (rd_sam in 1:length(all_rd)) {
         curr_idx <- which(csv_data[, 1] == all_rd[rd_sam])
         curr_sam <- csv_data[curr_idx, 1]
@@ -855,7 +852,7 @@ check_csv_data <- function(sheetName = "samplesheet.csv") {
     }
 
     sheetRunID <- paste0(csv_data$RunID[1])
-    
+
     if (sheetRunID != gb$runID) {
         message("Batch ID in sheet is: ", sheetRunID)
         message("Batch ID provided is: ", gb$runID)
@@ -891,19 +888,19 @@ final_upload_check <- function() {
         to_upload <- rd_numbers[missing_rds]
         message(paste("The following reports are missing from REDCap:", paste(to_upload, collapse = ", ")))
         all_reports <- dir(getwd(), pattern = ".html", full.names = TRUE)
-        for (rd in to_upload){
+        for (rd in to_upload) {
             rd_html <- all_reports[grepl(rd, all_reports)]
-            if (length(rd_html) == 0){
+            if (length(rd_html) == 0) {
                 message(paste("No report found for", rd))
             } else {
                 redcapAPI::importFiles(rcon, file = rd_html, record = rd, field = "classifier_pdf")
             }
         }
-    } 
+    }
 }
 
 # MAIN: Generates Html reports with samplesheet.csv for V12_EPICV2 --------------------------------
-makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redcapUp = TRUE) {
+makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redcapUp = FALSE) {
     msgFunName(pipeLnk, "makeHtmlReports")
 
     suppressPackageStartupMessages(library("data.table"))
@@ -939,8 +936,10 @@ makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redca
         redcapUp <- email <- FALSE
     }
 
-    file.list <- dir(getwd(), pattern = ".html", full.names = TRUE)
-    gb$uploadToRedcap(file.list, F)
+    if (redcapUp == TRUE) {
+        file.list <- dir(getwd(), pattern = ".html", full.names = TRUE)
+        gb$uploadToRedcap(file.list, F)
+    }
 
     if (email == TRUE) {
         RenameFailed(qcVals)
@@ -948,7 +947,7 @@ makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redca
             output_fi = paste0(runID, "_qc_data.csv"),
             gb$ApiToken, runDir = NULL, runID
         )
-        final_upload_check()
+        if (redcapUp == TRUE) final_upload_check()
         launchEmailNotify(runID)
         check_html_file_sizes(getwd()) # checks files copied size
     }
@@ -1117,9 +1116,9 @@ CheckIdatsCopied <- function() {
 StartCustomRun <- function(redcapUp = T) {
     msgFunName(pipeLnk,"StartCustomRun")
     gb$makeHtmlReports(
-        skipQC = T,
-        email = F,
-        selectSams = NULL,
+        runOrder = NULL,
+        skipQC = TRUE,
+        email = FALSE,
         redcapUp = redcapUp
     )
 }
