@@ -24,6 +24,13 @@ args[5] -> redcapUp   # <- TRUE
 args[6] -> runLocal   # <- FALSE
 forcedUpload <- FALSE
 
+test_case <- FALSE
+
+if (test_case == TRUE) {
+    baseFolder <- selectRDs <- NULL
+    redcapUp <- runLocal <- FALSE
+}
+
 # Source and Load Functions and Packages --------------------------------------
 LoadGitHubScripts <- function(ghRepo, scriptList) {
     scripts <- file.path(ghRepo, scriptList)
@@ -34,8 +41,7 @@ LoadGitHubScripts <- function(ghRepo, scriptList) {
 }
 
 # Source GitHub Scripts -------------------------------------------------------
-mainHub <-
-    "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R"
+mainHub <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R"
 scriptList <- c(
     "LoadInstallPackages.R",
     "SetRunParams.R",
@@ -47,12 +53,9 @@ scriptList <- c(
 )
 rmdScripts <- c("ClassTables.R", "MLH1_Functions.R", "RedcapOutput.R")
 
-suppressPackageStartupMessages(suppressWarnings(
-    LoadGitHubScripts(mainHub, scriptList)))
+suppressPackageStartupMessages(suppressWarnings(LoadGitHubScripts(mainHub, scriptList)))
 
-invisible(suppressWarnings(LoadGitHubScripts(
-    file.path(mainHub, "Report-Scripts"), rmdScripts
-)))
+invisible(suppressWarnings(LoadGitHubScripts(file.path(mainHub, "Report-Scripts"), rmdScripts)))
 
 # Message and Check Input Args ------------------------------------------------
 gb$CheckInputArg(token, gb)
@@ -67,13 +70,13 @@ gb$ApiToken <- gb$token <- token
 baseFolder <- gb$CheckBaseFolderInput(baseFolder)
 selectRDs <- gb$AssignArgs(runID, baseFolder, token, selectRDs, redcapUp, gb)
 
-gb$reportMd <- reportMd <- file.path(fs::path_home(), "report.Rmd")
+gb$reportMd <- reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
 
 # Execute Pipeline Functions --------------------------------------------------
 gb$PrepareRun(token, baseFolder, runID, runLocal = runLocal)
 gb$CheckIdatsCopied()
 selectRDs <- gb$GetPriorityCases(selectRDs)
-gb$StartRun(selectRDs, emailNotify = T, redcapUp = redcapUp)
+gb$StartRun(selectRDs, emailNotify = TRUE, redcapUp = redcapUp)
 
 if (forcedUpload == T) {
     file.list <- dir(getwd(), pattern = ".html", full.names = T)
