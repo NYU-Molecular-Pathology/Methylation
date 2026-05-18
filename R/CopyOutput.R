@@ -307,8 +307,14 @@ callApiFile <- function(rcon, recordName, fiPath = NULL, fld = "classifier_pdf")
 
     if (length(fiPath) > 0) {
         message("Uploading file:\n", fiPath, "\nTo REDCap Record: ", recordName)
-        redcapAPI::importFiles(
-            rcon, file = fiPath, record = recordName, field = fld)
+        
+        tryCatch(
+            expr = redcapAPI::importFiles(rcon, file = fiPath, record = recordName, field = fld),
+            error = function(e) {
+                message("REDCap Import error for record: ", recordName)
+                message("File failed to upload: ", fiPath)
+            }
+        )
     }
 }
 
