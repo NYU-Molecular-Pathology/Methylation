@@ -13,6 +13,8 @@ bkRed <- function(...) {crayon::bgRed$bold$white(paste(...))}
 bkGrn <- function(...) {crayon::black$bgGreen$bold(paste(...))}
 bkBlu <- function(...) {crayon::bgBlue$bold$white(paste(...))}
 
+gb$redcapUp <- redcapUp <- FALSE
+
 # Global Variables ----------------------------------
 apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
 reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
@@ -726,6 +728,7 @@ get_v11_reports <- function(your_csv){
 # FUN: Iterates over each sample in the csv file to generate a report ---------
 # DEBUG: data <- read.csv("samplesheet.csv", strip.white=T)
 loopRender <- function(runOrder = NULL, csv_data = NULL, redcapUp = FALSE) {
+    gb$redcapUp <- redcapUp <- FALSE
     msgFunName(pipeLnk, "loopRender")
     stopifnot(!is.null(csv_data))
     if (is.null(runOrder)) {
@@ -748,6 +751,7 @@ loopRender <- function(runOrder = NULL, csv_data = NULL, redcapUp = FALSE) {
         single_data = csv_data[sam_idx, ]
         do_report(single_data = single_data)
         msgProgress(2, sam_idx, runOrder)
+        message("redcapUp: ", redcapUp)
         if (redcapUp == TRUE) {
             sh_Dat <- redcap_tab_df[sam_idx, ]
             stopifnot(sh_Dat$record_id == single_data$Sample_Name)
@@ -902,7 +906,8 @@ final_upload_check <- function() {
 # MAIN: Generates Html reports with samplesheet.csv for V12_EPICV2 --------------------------------
 makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redcapUp = FALSE) {
     msgFunName(pipeLnk, "makeHtmlReports")
-
+    gb$redcapUp <- redcapUp <- FALSE
+    assign("redcapUp", FALSE, envir = gb)
     suppressPackageStartupMessages(library("data.table"))
     assign("genCn", FALSE, envir = gb)
 
