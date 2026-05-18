@@ -354,7 +354,7 @@ MakeSarcomaReport <- function(worksheet = "samplesheet.csv", targets = NULL) {
 }
 
 
-StartRun <- function(selectRDs = NULL, emailNotify = T, redcapUp = T) {
+StartRun <- function(selectRDs = NULL, emailNotify = TRUE, redcapUp = FALSE) {
     msgFunName(cpInLnk4,"StartRun")
     runOrder <- NULL
 
@@ -367,7 +367,7 @@ StartRun <- function(selectRDs = NULL, emailNotify = T, redcapUp = T) {
         runOrder = runOrder,   # Prioritize specific RD-numbers
         skipQC = F,            # Don't skip QC generation
         email = emailNotify,   # to email after Run complete
-        redcapUp = redcapUp    # Flag to import files to REDCap
+        redcapUp = FALSE    # Flag to import files to REDCap
     )
 }
 
