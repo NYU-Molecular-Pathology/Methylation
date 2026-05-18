@@ -76,7 +76,7 @@ gb$reportMd <- reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_
 gb$PrepareRun(token, baseFolder, runID, runLocal = runLocal)
 gb$CheckIdatsCopied()
 selectRDs <- gb$GetPriorityCases(selectRDs)
-gb$StartRun(selectRDs, emailNotify = TRUE, redcapUp = redcapUp)
+gb$StartRun(selectRDs, emailNotify = TRUE, redcapUp = FALSE)
 
 if (forcedUpload == T) {
     file.list <- dir(getwd(), pattern = ".html", full.names = T)
