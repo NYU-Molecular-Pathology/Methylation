@@ -43,7 +43,7 @@ NGS607_DIR="${MOLEC_VOL}/NGS607/${CURRENT_YR}/${RUN_ID}"
 BG_GRN="$(tput setab 2)" # makes text background green
 BG_RED="$(tput setab 1)" # makes text background red
 BG_BLU="$(tput setab 4)" # makes text background blue
-BG_YLW="$(tput setab 3)" # makes text background yellow
+BG_YLW="$(tput setab 3)$(tput setaf 0)" # yellow background, black text
 NORMAL=$(tput sgr0)      # resets default text
 
 # Function to exit when any command fails
