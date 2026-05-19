@@ -13,7 +13,7 @@ DEFAULT_DIR="/Volumes/CBioinformatics/jonathan/pact/consensus/"
 RUN_ID=${1-NULL}  		# i.e. 123456_NB501073_0212_AHT3V7BGXK
 PACT_ID=${2-NULL}		# i.e. 26-PACT33
 CONSENSUS_DIR=${3-NULL} # path to where consensus generates
-kerbero=${4-$USER} 		# i.e. whoami kerberosid
+kerbero=${4-"svc_pact_prod"} 		# i.e. whoami kerberosid
 
 [[ -n "${3}" ]] && CONSENSUS_DIR="${DEFAULT_DIR}"
 IS_SOPHIA=$([[ "${PACT_ID:0:2}" =~ ^[0-9]{2}$ ]] && echo true || echo false)
@@ -46,7 +46,7 @@ fi
 
 TD_DATE="$(date +"%B %d, %Y %-I:%M%P %Z")"
 PACT_ID="${FG_RED}${PACT_ID}${NORMAL}"
-kerbero="${FG_MAG}${kerbero}${NORMAL}"
+="${FG_MAG}${kerbero}${NORMAL}"
 RUN_ID="${FG_YLW}${RUN_ID}${NORMAL}"
 
 YEAR_DIR="${FG_BLU}20${year_part}${NORMAL}"
