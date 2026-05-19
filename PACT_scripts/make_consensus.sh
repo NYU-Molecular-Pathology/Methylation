@@ -6,7 +6,9 @@
 ## Date Modified: March 23, 2026
 ## Author: Jonathan Serrano
 ## Version: 1.0.1
-## Copyright (c) NYULH Jonathan Serrano, 2024
+## Copyright (c) NYULH Jonathan Serrano, 2026
+
+# shellcheck disable=SC1091
 
 # Hardcoded paths
 GIT_URL="https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/PACT_scripts"
@@ -15,10 +17,13 @@ SCRIPTS_DIR="/Volumes/CBioinformatics/Bash_Scripts"
 DEFAULT_DIR="/Volumes/CBioinformatics/jonathan/pact/consensus"
 
 # Input args ------------------------------------------------------------------
-RUN_ID=${1-NULL}    # i.e. 123456_NB501073_0212_AHT3V7BGXK
-PACT_ID=${2-NULL}   # i.e. PACT-YY-28
+RUN_ID=${1-NULL}
+PACT_ID=${2-NULL}
 CONSENSUS_DIR="${3:-$DEFAULT_DIR}"
 kerbero=${4-$USER}
+
+[[ "$RUN_ID" == "NULL" || "$PACT_ID" == "NULL" ]] && 
+	{ echo "<RUN_ID> or <PACT_ID> cannot be NULL" && exit 1; }
 
 WORK_DIR="${CONSENSUS_DIR}/${PACT_ID}_consensus"
 CURRENT_YR="20${RUN_ID:0:2}"
@@ -38,20 +43,18 @@ DESK_VAF="${DESK_DIR}/VAF_plots"
 TMB_MSI_OUT="${WORK_DIR}/TMB_MSI/"
 
 NGS607_DIR="${MOLEC_VOL}/NGS607/${CURRENT_YR}/${RUN_ID}"
+DEMUX_CSV="${RESULTS_DIR}/${CURRENT_YR}/${PACT_ID}/demux-samplesheet.csv"
 
 # Color Variables -------------------------------------------------------------
-BG_GRN="$(tput setab 2)" # makes text background green
 BG_RED="$(tput setab 1)" # makes text background red
 BG_BLU="$(tput setab 4)" # makes text background blue
 BG_YLW="$(tput setab 3)$(tput setaf 0)" # yellow background, black text
 NORMAL=$(tput sgr0)      # resets default text
 
-# Function to exit when any command fails
-set -Eeuo pipefail; end_cmd="" err_n=0 e_fi=""
-msg_red() { echo "" && echo -e "${BG_RED}$1${NORMAL}\n"; }
-msg_err() { local ec=$?; msg_red "ERROR: ${end_cmd}\nFile: ${e_fi}:${err_n} (Exit: ${ec})"; }
-trap 'end_cmd=$BASH_COMMAND; err_n=$LINENO; e_fi=${BASH_SOURCE[0]}' DEBUG
-trap 'msg_err' ERR
+# trap and notify for ERRORS --------------------------------------------------
+set -Eeuo pipefail
+msg_red() { echo -e "\n${BG_RED}$1${NORMAL}\n"; }
+trap 'msg_red "ERROR:$BASH_COMMAND\nFILE: ${BASH_SOURCE[0]}\nLINE:$LINENO"' ERR
 
 # Function to display and execute code
 msg_code() { echo -e "Executing:\n${BG_BLU}$*${NORMAL}\n"; "$@"; }
@@ -59,8 +62,7 @@ msg_rsync() { msg_code rsync -vrhP ${3:+$3 }"$1" "$2"; }
 msg_curl() {
     out_fi=$1; out_dir=${2:-$HOME}; dest="${out_dir}/${out_fi}"
     cd "$out_dir" || exit
-    echo -e "${BG_GRN}Downloading file from Github:${NORMAL}\n$dest\n"
-    curl -k -# -L "$GIT_URL/$out_fi" >"$dest" && chmod +rwx "$dest"
+    msg_code curl -k -# -L "$GIT_URL/$out_fi" -o"$dest" && chmod +rwx "$dest"
 }
 
 # Main execution --------------------------------------------------------------
@@ -69,15 +71,16 @@ cd "${WORK_DIR}" || exit
 mkdir -p "${PNG_OUT_DIR}" "${TMB_MSI_OUT}"
 
 # Download Rmd and scripts from Github
-curl -# -L ${GIT_URL}/PACT_consensus.Rmd >"${WORK_DIR}/${PACT_ID}_consensus.Rmd"
+RMD_FILE="${WORK_DIR}/${PACT_ID}_consensus.Rmd"
+
+msg_code curl -# -L ${GIT_URL}/PACT_consensus.Rmd -o "${RMD_FILE}"
 msg_curl "MakeIndelList.R"
 msg_curl "hs_metric_consensus.R"
 
-/Volumes/CBioinformatics/PACT/getMethylMatch.sh "${PACT_ID}" "${RUN_ID}" & wait
-
-cd "$HOME" || exit
+msg_code /Volumes/CBioinformatics/PACT/getMethylMatch.sh "${PACT_ID}" "${RUN_ID}"
 
 # Z-drive TO Desktop
+cd "$HOME" || exit
 msg_rsync "${FACETS_DIR}/" "${DESK_DIR}" "--include=*.png --exclude=*"
 msg_rsync "${FACETS_DIR}/${PACT_ID}-QC.tsv" "${DESK_DIR}"
 msg_rsync "${NGS607_DIR}/${PACT_ID}_Hotspots.tsv" "${DESK_DIR}"
@@ -88,6 +91,9 @@ msg_rsync "${TMB_MSI_DIR}/${TMB_TSV}" "${DESK_DIR}/TMB_MSI/${TMB_TSV}"
 [ -d "${VAF_DIR}" ] && msg_rsync "${VAF_DIR}" "${DESK_DIR}"
 
 # Desktop TO Consensus
+if [ ! -w "${PNG_OUT_DIR}" ]; then
+    msg_red "Permission denied! Remove or rename the previous consenus folder:\n${WORK_DIR}" && exit 1
+fi
 cp "${DESK_DIR}/"*.png "${PNG_OUT_DIR}"
 msg_rsync "${DESK_DIR}/" "${WORK_DIR}" "--include=*.tsv"
 msg_rsync "${DESK_DIR}/TMB_MSI/" "${TMB_MSI_OUT}" "--include=*.tsv"
@@ -96,7 +102,7 @@ msg_rsync "${DESK_DIR}/TMB_MSI/" "${TMB_MSI_OUT}" "--include=*.tsv"
 [ -f "${METH_MATCH}" ] && msg_rsync "${METH_MATCH}" "${WORK_DIR}"
 
 # Copy demux-samplesheet.csv to consensus
-msg_rsync "${RESULTS_DIR}/${CURRENT_YR}/${PACT_ID}/demux-samplesheet.csv" "$HOME/Desktop/${PACT_ID}/"
+msg_rsync "${DEMUX_CSV}" "$HOME/Desktop/${PACT_ID}/"
 msg_rsync "$HOME/Desktop/${PACT_ID}/demux-samplesheet.csv" "${WORK_DIR}"
 
 # Copy VAF QC output files if availible
@@ -104,21 +110,21 @@ msg_rsync "$HOME/Desktop/${PACT_ID}/demux-samplesheet.csv" "${WORK_DIR}"
 
 # EXECUTE: Rscripts for generating HTML Report --------------------------------
 echo -e "${BG_YLW}Checking if GOS idat files need to be copied...${NORMAL}"
-source "${SCRIPTS_DIR}"/copy_marcin_idats.sh "${PACT_ID}" || true
+source "${SCRIPTS_DIR}"/copy_marcin_idats.sh "${PACT_ID}"
 
-RScript --verbose "${HOME}/MakeIndelList.R" "${PACT_ID}"
-RScript --verbose "${HOME}/hs_metric_consensus.R" "${RUN_ID}" "${PACT_ID}"
+msg_code RScript --verbose "${HOME}/MakeIndelList.R" "${PACT_ID}"
+msg_code RScript --verbose "${HOME}/hs_metric_consensus.R" "${RUN_ID}" "${PACT_ID}"
 
-cd "${WORK_DIR}/" || exit
-
-echo -e "${BG_BLU}Running rmarkdown:${NORMAL}"
-Rscript --verbose -e "rmarkdown::render('${WORK_DIR}/${PACT_ID}_consensus.Rmd', params=list(pactName='${PACT_ID}', userName='${kerbero}'))" && open "${WORK_DIR}/${PACT_ID}_consensus.html"
+msg_code cd "${WORK_DIR}/" || exit 1
+msg_code Rscript --verbose -e "rmarkdown::render('${RMD_FILE}', params=list(pactName='${PACT_ID}', userName='${kerbero}'))" 
 
 # COPY FINAL Output Report ----------------------------------------------------
 CONSENSUS_OUT="${WORK_DIR}/${PACT_ID}_consensus.html"
 FINAL_DEST="${RESULTS_DIR}/${CURRENT_YR}/${PACT_ID}/"
-echo "Copying to: ${FINAL_DEST}"
+
 [ ! -f "$CONSENSUS_OUT" ] && { echo "Consensus failed to generate: ensure all input files are copied to ${WORK_DIR}"; exit 1; }
+
+open "${CONSENSUS_OUT}"
 
 # Copy HTML file from consensus directory to DESK_DIR
 cp "${CONSENSUS_OUT}" "${DESK_DIR}/"
@@ -126,18 +132,7 @@ chmod +rwx "${DESK_DIR}/${PACT_ID}_consensus.html"
 
 # Copy HTML file from DESK_DIR to final destination
 cd "${FINAL_DEST}" || exit
-rsync -vP "${DESK_DIR}/${PACT_ID}_consensus.html" .
+msg_code rsync -vP "${DESK_DIR}/${PACT_ID}_consensus.html" .
 
-echo -e "Opening folder:\n${FINAL_DEST}"
-open "${FINAL_DEST}"
 echo -e "Ensure ${PACT_ID}_consensus.html is viewable in the output directory"
-
-# Check if PHILIP_LOG exists and open it if it does
-PHILIP_LOG="$HOME/Desktop/${PACT_ID}_philips_missing.txt"
-
-if [ -f "$PHILIP_LOG" ]; then
-    echo "File $PHILIP_LOG exists. Some samples missing from data dump..."
-    open "$PHILIP_LOG"
-else
-    echo "File $PHILIP_LOG does not exist. All data dump files downloaded"
-fi
+open "${FINAL_DEST}"
