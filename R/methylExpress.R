@@ -49,7 +49,8 @@ scriptList <- c(
     "CopyInputs.R",
     "CopyOutput.R",
     "pipelineHelper.R",
-    "CustomRuns.R"
+    "CustomRuns.R",
+    "convert_html_pdf.R"
 )
 rmdScripts <- c("ClassTables.R", "MLH1_Functions.R", "RedcapOutput.R")
 
