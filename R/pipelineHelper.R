@@ -952,11 +952,14 @@ makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redca
             output_fi = paste0(runID, "_qc_data.csv"),
             gb$ApiToken, runDir = NULL, runID
         )
-        if (redcapUp == TRUE) final_upload_check()
+        #if (redcapUp == TRUE) final_upload_check()
+        input_dir <- getwd()
+        gb$reports_to_pdf(input_dir)
+        gb$import_files_redcap(input_dir)
         launchEmailNotify(runID)
         check_html_file_sizes(getwd()) # checks files copied size
     }
-
+    
     try(beepr::beep(2), T)
     tidyUpFiles(runID)
 }
