@@ -410,11 +410,11 @@ makePdfTab <- function(pdfFi, cnvTab, outDir) {
                 position = "left"
             )
         newTa <- kableExtra::column_spec(newTa, 1:5, width = "3cm")
-        cat("#### Philips Data Dump CNV table:\n\n")
+        cat("#### Pipeline CNV table:\n\n")
         print(newTa)
         cat("\n\n")
     } else{
-        cat("\n\nNo Philips data dump for this case or Sophia Run\n\n")
+        cat("\n\nNo CNV data for this case\n\n")
         cat("\n\n")
     }
     
@@ -1586,6 +1586,18 @@ LoopSampleTabs <- function(params) {
     
     onco_genes <- unique(onco_dat$Gene)
     
+    year_dir <- paste0("20", substr(params$pactName, 1, 2))
+    res_dir <- '/Volumes/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics'
+    cnv_tsv <- file.path(res_dir, year_dir, params$pactName, 'cnv.tsv')
+
+    cnv_df <- NULL
+    
+    if (file.exists(cnv_tsv)) {
+      cnv_df <- read.table(cnv_tsv, header = TRUE, sep = "\t")
+      cnv_cols <- c("gene", "chromosome", "start", "end", "log2", "depth", "cn", "Tumor", "Normal")
+      cnv_df <- cnv_df[, cnv_cols]
+      
+    }
     for (sam in samples) {
         message("SAMPLE: ", sam)
         makeNewTab(sam, samList, qcData, pactName)
@@ -1607,7 +1619,19 @@ LoopSampleTabs <- function(params) {
         if (gb$is_sophia == FALSE) {
           cnvTab <- checkDataDump(sam, cnvTab)
         } else {
-          cnvTab <- NULL
+          if (!is.null(cnv_df)) {
+            sam_cnv <- cnv_df[!is.na(cnv_df$Tumor) & grepl(sam, cnv_df$Tumor, fixed = TRUE), , drop = FALSE]
+            if (nrow(sam_cnv) > 0) {
+              rownames(sam_cnv) <- NULL
+              cnvTab <- sam_cnv[, -c(8,9)]
+            }else {
+              cnvTab <- NULL
+            }
+            
+          }else{
+            cnvTab <- NULL
+          }
+          
         }
         make_hs_metrics_tab(sam, norm_metrics, tumor_metrics, tumorSams)
         
@@ -1622,7 +1646,7 @@ LoopSampleTabs <- function(params) {
         }
 
         if (!is.null(cnvTab)) {
-          cnvTab <- subset(cnvTab, select = -Variant)
+          #cnvTab <- subset(cnvTab, select = -Variant)
           makeDT("CNV", cnvTab, pdfFi = sam, outDir = outDir)
         }else{
           cnvTab <- data.frame()
@@ -1659,6 +1683,7 @@ LoopSampleTabs <- function(params) {
         
     }
 }
+
 
 
 loadHtmlTag <- function() {
