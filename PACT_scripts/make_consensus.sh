@@ -110,7 +110,7 @@ msg_rsync "$HOME/Desktop/${PACT_ID}/demux-samplesheet.csv" "${WORK_DIR}"
 
 # EXECUTE: Rscripts for generating HTML Report --------------------------------
 echo -e "${BG_YLW}Checking if GOS idat files need to be copied...${NORMAL}"
-source "${SCRIPTS_DIR}"/copy_marcin_idats.sh "${PACT_ID}"
+source "${SCRIPTS_DIR}"/copy_marcin_idats.sh "${RUN_ID}" "${PACT_ID}"
 
 msg_code RScript --verbose "${HOME}/MakeIndelList.R" "${PACT_ID}"
 msg_code RScript --verbose "${HOME}/hs_metric_consensus.R" "${RUN_ID}" "${PACT_ID}"
