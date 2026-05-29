@@ -46,7 +46,7 @@ fi
 
 TD_DATE="$(date +"%B %d, %Y %-I:%M%P %Z")"
 PACT_ID="${FG_RED}${PACT_ID}${NORMAL}"
-="${FG_MAG}${kerbero}${NORMAL}"
+kerbero="${FG_MAG}${kerbero}${NORMAL}"
 RUN_ID="${FG_YLW}${RUN_ID}${NORMAL}"
 
 YEAR_DIR="${FG_BLU}20${year_part}${NORMAL}"
