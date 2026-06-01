@@ -213,6 +213,7 @@ reports_to_pdf <- function(input_dir){
 
     for (html_file in html_files) {
         pdf_file <- file.path(input_dir, sanitize_string(html_file, ".pdf"))
+        if (file.exists(pdf_file)) next
         message("Converting file to PDF: ", basename(html_file))
 
         chrome_args <- c(
