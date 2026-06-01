@@ -295,8 +295,11 @@ readSampleSheet <- function(run_ID = FALSE, totalSam = FALSE, wks = FALSE) {
     if (gb$runID != worksheet$Project[1]) {
         message("The Batch ID in the samplesheet: ", worksheet$Project[1])
         message("Does not Match the input Run ID: ", gb$runID)
-        if(stringr::str_detect(pattern = "new-template", gb$runID)) return(worksheet$Project[1])
-        stopifnot(gb$runID == worksheet$Project[1])
+        if (stringr::str_detect(pattern = "new-template", gb$runID)) {
+            message(worksheet$Project[1])
+        } else {
+            stopifnot(gb$runID == worksheet$Project[1])
+        }
     }
 
     if (run_ID == TRUE) return(worksheet$Project[1])
