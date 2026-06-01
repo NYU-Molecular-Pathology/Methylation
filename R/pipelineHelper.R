@@ -506,7 +506,7 @@ fill_missing_rd <- function(samplesSheet, missing_rd) {
 
 
 # Reads both xlsx RC sheet and csv sample sheet to ensure rows match in dataframes
-# Returns the RC sample data frame
+# Returns the REDCap sample data frame
 ReadSamSheet <- function(runOrder) {
     msgFunName(pipeLnk, "ReadSamSheet")
     msgParams("runOrder")
@@ -545,9 +545,21 @@ ReadSamSheet <- function(runOrder) {
     csv_sheet <- dir(path = getwd(), pattern = "samplesheet.csv")
     csv_sheet_df <- as.data.frame(read.csv(csv_sheet))
     stopifnot(nrow(csv_sheet_df) == nrow(redcap_tab_df))
+    na_val <- is.na(csv_sheet_df)
+    if (any(na_val)) {
+        csv_sheet_df[na_val] <- ""
+    }
+    
+    na_val <- is.na(redcap_tab_df)
+    if (any(na_val)) {
+        redcap_tab_df[na_val] <- ""
+    }
+    
     for (n_row in 1:nrow(csv_sheet_df)) {
         curr_csv_id <- csv_sheet_df[n_row, c("DNA_Number", "MP_num")]
         curr_red_id <- redcap_tab_df[n_row, c("b_number", "tm_number")]
+        message("curr_csv_id: ", paste(curr_csv_id, collapse = "_"), " & ",
+                "curr_red_id: ", paste(curr_red_id, collapse = "_"))
         stopifnot(all(curr_csv_id == curr_red_id))
         redcap_tab_df[n_row, "record_id"] <- csv_sheet_df[n_row, 1]
     }
@@ -564,7 +576,6 @@ ReadSamSheet <- function(runOrder) {
         #redcap_tab_df <- redcap_tab_df[!missing_rd, ]
         redcap_tab_df <- fill_missing_rd(redcap_tab_df, missing_rd)
     }
-    redcap_tab_df[is.na(redcap_tab_df)] <- ""
 
     return(redcap_tab_df)
 }
