@@ -194,9 +194,7 @@ copyWorksheetFile <- function(runID = NULL, runYear = NULL) {
 GrabSampleSheet <- function() {
     msgFunName(cpInLnk2, "GrabSampleSheet")
     samSh <- dir(path = getwd(), full.names = T, ".xlsm")
-    if (!(length(samSh) > 0)) {
-        return(NULL)
-    }
+    if (!(length(samSh) > 0)) return(NULL)
     if (length(samSh) > 1) {
         message("Multiple samplesheets found:\n")
         msg_df(samSh)
@@ -297,6 +295,7 @@ readSampleSheet <- function(run_ID = FALSE, totalSam = FALSE, wks = FALSE) {
     if (gb$runID != worksheet$Project[1]) {
         message("The Batch ID in the samplesheet: ", worksheet$Project[1])
         message("Does not Match the input Run ID: ", gb$runID)
+        if(stringr::str_detect(pattern = "new-template", gb$runID)) return(worksheet$Project[1])
         stopifnot(gb$runID == worksheet$Project[1])
     }
 
