@@ -232,12 +232,17 @@ generateQCreport <- function(runID = NULL) {
                 knitDir = getwd()
             )
         ), collapse = "\n"))
+        runID_knit <- runID
+        if (stringr::str_detect(pattern = "new-template", runID)) {
+            runID_knit <- stringr::str_remove_all(runID, pattern = "-new-template")
+        }
+        
         rmarkdown::render(
             rmdToKnit,
             output_file = outQCpath,
             quiet = TRUE,
             output_format = "html_document",
-            params = list(runID = runID,
+            params = list(runID = runID_knit,
                           baseDir = deskRunDir,
                           knitDir = getwd())
         )
