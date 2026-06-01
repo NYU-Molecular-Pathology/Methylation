@@ -860,7 +860,11 @@ check_csv_data <- function(sheetName = "samplesheet.csv") {
     if (sheetRunID != gb$runID) {
         message("Batch ID in sheet is: ", sheetRunID)
         message("Batch ID provided is: ", gb$runID)
-        stopifnot(sheetRunID == gb$runID)
+        if (!stringr::str_detect(pattern = "new-template", gb$runID)) {
+            message(worksheet$Project[1])
+        } else {
+            stopifnot(gb$runID == worksheet$Project[1])
+        }
     }
 
     runID <- paste0(csv_data$RunID[1])
