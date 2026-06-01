@@ -191,7 +191,8 @@ inject_plotly_legend <- function(html_file, output_html = NULL) {
     return(output_html)
 }
 
-reports_to_pdf <- function(input_dir){
+
+reports_to_pdf <- function(input_dir, sam_name = NULL)){
 
     html_files <- list.files(
         path = input_dir,
@@ -206,6 +207,11 @@ reports_to_pdf <- function(input_dir){
     if (!length(html_files) > 0) {
         return(message("No HTML files found in:\n", input_dir))
     }
+
+    if (!is.null(sam_name)) {
+        html_files <- html_files[stringr::str_detect(html_files, pattern = sam_name)]
+    }
+
     chrome_bin <- "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
     if (!file.exists(chrome_bin)) {
         stop("Chrome executable does not exist: ", chrome_bin, call. = FALSE)
