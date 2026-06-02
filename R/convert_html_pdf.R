@@ -192,7 +192,7 @@ inject_plotly_legend <- function(html_file, output_html = NULL) {
 }
 
 
-reports_to_pdf <- function(input_dir, sam_name = NULL)){
+reports_to_pdf <- function(input_dir, sam_name = NULL){
 
     html_files <- list.files(
         path = input_dir,
