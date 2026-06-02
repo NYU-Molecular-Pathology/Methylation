@@ -210,6 +210,15 @@ reports_to_pdf <- function(input_dir, sam_name = NULL){
 
     if (!is.null(sam_name)) {
         html_files <- html_files[stringr::str_detect(html_files, pattern = sam_name)]
+        if (length(html_files) != 1) {
+            message("Multiple matches for sample name: ", sam_name)
+            message("Files:\n", paste(html_files, collapse = "\n"))
+            base_htmls <- stringr::str_split_fixed(basename(html_files), "_", 2)[ , 1]
+            base_htmls <- stringr::str_split_fixed(basename(base_htmls), ".html", 2)[ , 1]
+            idx_match <- which(sam_name %in% base_htmls)
+            html_files <- html_files[idx_match]
+            message("Sample: ", sam_name, "\n", "Match found: ", html_files)
+        }
     }
 
     chrome_bin <- "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
@@ -251,13 +260,13 @@ reports_to_pdf <- function(input_dir, sam_name = NULL){
                 wait = 4, timeout = 120, extra_args = chrome_args,
                 work_dir = work_dir, verbose = TRUE, outline = FALSE
             )),
-        error = function(e){
-            suppressWarnings(pagedown::chrome_print(
-                input = patched_html, output = pdf_file, browser = chrome_bin,
-                wait = 4, timeout = 120, extra_args = chrome_args,
-                work_dir = work_dir, verbose = TRUE, outline = FALSE
-            ))
-        })
+            error = function(e){
+                suppressWarnings(pagedown::chrome_print(
+                    input = patched_html, output = pdf_file, browser = chrome_bin,
+                    wait = 4, timeout = 120, extra_args = chrome_args,
+                    work_dir = work_dir, verbose = TRUE, outline = FALSE
+                ))
+            })
     }
 }
 
@@ -291,6 +300,8 @@ import_files_redcap <- function(input_dir) {
     csv_file <- dir(input_dir, pattern = "samplesheet.csv", full.names = TRUE)
     if (length(csv_file) == 1) {
         sam_sheet <- as.data.frame(read.csv(csv_file))
+    } else {
+        stop("samplesheet.csv is missng")
     }
 
     sam_list <- sam_sheet$Sample_Name
