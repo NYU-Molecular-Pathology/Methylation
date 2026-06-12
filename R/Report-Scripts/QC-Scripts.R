@@ -436,7 +436,7 @@ GetNotesData <- function(xlsmSheet){
 
 
 GetFixedDf <- function(sheetNamePath, runPath){
-    if (!dir.exists(sheetNamePath)) {stop("Samplesheet not found:\n", sheetNamePath)}
+    if (!file.exists(sheetNamePath)) {stop("Samplesheet not found:\n", sheetNamePath)}
     fixerrors <- read.csv(sheetNamePath, strip.white = T)
     basePaths <- file.path(runPath, fixerrors$SentrixID_Pos)
     fixerrors$Basename <- basePaths
