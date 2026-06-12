@@ -36,7 +36,7 @@ gb$runPath <- runPath
 gb$SetKnitPath(runPath, baseDir)
 # Read Sample Data -------------------------------------------------
 sheetNamePath <- gb$GetSheetNamePath(params, baseDir)
-if (!dir.exists(sheetNamePath)) {
+if (!file.exists(sheetNamePath)) {
   sheetNamePath <- dir(path = params$knitDir, pattern = "samplesheet.csv", full.names = TRUE)
 }
 gb$fixerrors <- fixerrors <- gb$GetFixedDf(sheetNamePath, runPath)
