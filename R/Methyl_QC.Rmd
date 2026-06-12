@@ -18,7 +18,11 @@ gb <- globalenv(); assign("gb", gb)
 gitPath = "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/R/Report-Scripts"
 devtools::source_url(file.path(gitPath, "QC-Scripts.R"))
 # Check Input Parameters -------------------------------------------
+is_new <- stringr::str_detect(params$knitDir, pattern = "-new-template")
 runID <- gb$CheckParamRunID(params, gb)
+if (is_new) {
+  runID <- basename(params$knitDir)
+}
 baseDir <- gb$CheckParamBaseDir(params, runID)
 runPath <- gb$CheckParamKnitDir(params, runID)
 is_new <- stringr::str_detect(runID, pattern = "-new-template")
