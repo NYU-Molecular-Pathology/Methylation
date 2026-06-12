@@ -36,6 +36,9 @@ gb$runPath <- runPath
 gb$SetKnitPath(runPath, baseDir)
 # Read Sample Data -------------------------------------------------
 sheetNamePath <- gb$GetSheetNamePath(params, baseDir)
+if (!dir.exists(sheetNamePath)) {
+  sheetNamePath <- dir(path = params$knitDir, pattern = "samplesheet.csv", full.names = TRUE)
+}
 gb$fixerrors <- fixerrors <- gb$GetFixedDf(sheetNamePath, runPath)
 gb$targets <- targets <- gb$GrabTargetsDf(runPath, gb$fixerrors)
 gb$redCsv <- redCsv <- gb$CheckRedCsv(runID)
