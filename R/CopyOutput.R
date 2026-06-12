@@ -531,78 +531,96 @@ CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull, rcon) {
         redcap_dat <- unique(redcap_dat)
         redcapAPI::importRecords(rcon, redcap_dat, "normal", "ids", logfile = "REDCapImportLog.txt")
         if (nrow(redcap_dat) != nrow(redcap_db)) {
-            if (nrow(redcap_dat) > nrow(redcap_db)) {
-                missing_sam <- which(!redcap_dat$record_id %in% redcap_db$record_id)
-                message("Sample is missing from REDCap Pull:",
-                        redcap_dat$record_id[missing_sam])
-                redcap_dat <- redcap_dat[-missing_sam,]
+            shared_record_ids <- intersect(redcap_dat$record_id, redcap_db$record_id)
 
-            }else{
-                missing_sam <- which(!redcap_db$record_id %in% redcap_dat$record_id)
-                message("Sample is missing from REDCap Pull:",
-                        redcap_db$record_id[missing_sam])
-                redcap_db <- redcap_db[-missing_sam,]
-            }
-        }
-        redcap_dat$block <- redcap_db$block
-        redcap_dat$diagnosis <- redcap_db[redcap_dat$record_id, "diagnosis"]
-        redcap_dat$tm_number <- redcap_db$tm_number
-        missing_cols <- setdiff(fieldsToPull, colnames(redcap_dat))
-
-        if (length(missing_cols) > 0) {
-            for (n_col in missing_cols) {
-                redcap_dat[, n_col] <- redcap_db[, n_col]
-            }
-        }
-
-        data_subset <- redcap_dat[ , fieldsToPull]
-
-        newCols <- c(
-            "record_id",
-            "subgroup_score",
-            "classifier_score",
-            "classifier_value",
-            "subgroup",
-            "b_number",
-            "primary_tech",
-            "run_number",
-            "accession_number",
-            "block",
-            "tm_number",
-            "diagnosis"
-        )
-        for (new_col in newCols) {
-            output[, new_col] <- redcap_dat[, new_col]
-        }
-
-        # if (is.null(redcap_dat$tm_number)) {
-        #     redcap_dat$tm_number <- output$tm_number
-        # }
-
-        if (all(is.na(output$subgroup_score))) {
-            output$subgroup_score <- redcap_dat$subgroup_score
-        }
-
-        if (all(is.na(output$classifier_score))) {
-            output$classifier_score <- redcap_dat$classifier_score
-        }
-
-        if (all(is.na(output$classifier_value))) {
-            output$classifier_value <- redcap_dat$classifier_value
-        }
-
-        if (all(is.na(output$subgroup))) {
-            output$subgroup <- redcap_dat$subgroup
-        }
-
-        filtered_output <- output %>% dplyr::select(-one_of(colnames(data_subset)))
-        merged_data <- merge(filtered_output, data_subset, by.x = "RD.number",
-                             by.y = "record_id")
-        MsgDF(merged_data)
-        return(merged_data)
-    } else {
-        return(output)
-    }
+            missing_from_redcap_db <- setdiff(redcap_dat$record_id, redcap_db$record_id)
+            missing_from_redcap_dat <- setdiff(redcap_db$record_id, redcap_dat$record_id)
+            
+            if (length(missing_from_redcap_db) > 0) {
+                    message("Sample is present in redcap_dat but missing from redcap_db: ",
+                            paste(missing_from_redcap_db, collapse = ", ")
+                            )
+                }
+                
+                if (length(missing_from_redcap_dat) > 0) {
+                    message("Sample is present in redcap_db but missing from redcap_dat: ",
+                            paste(missing_from_redcap_dat, collapse = ", ")
+                            )
+                }
+                
+                redcap_dat <- redcap_dat[match(shared_record_ids, redcap_dat$record_id), , drop = FALSE]
+                redcap_db <- redcap_db[match(shared_record_ids, redcap_db$record_id), , drop = FALSE]
+                
+                if (!identical(redcap_dat$record_id, redcap_db$record_id)) {
+                    stop("redcap_dat and redcap_db record_id values are still not aligned.")
+                }
+                
+                if (nrow(redcap_dat) != nrow(redcap_db)) {
+                    stop(
+                        "Row mismatch after alignment: redcap_dat has ", nrow(redcap_dat), " rows; redcap_db has ",
+                        nrow(redcap_db), " rows."
+                    )
+                }
+                    }
+                    redcap_dat$block <- redcap_db$block
+                    redcap_dat$diagnosis <- redcap_db[redcap_dat$record_id, "diagnosis"]
+                    redcap_dat$tm_number <- redcap_db$tm_number
+                    missing_cols <- setdiff(fieldsToPull, colnames(redcap_dat))
+            
+                    if (length(missing_cols) > 0) {
+                        for (n_col in missing_cols) {
+                            redcap_dat[, n_col] <- redcap_db[, n_col]
+                        }
+                    }
+            
+                    data_subset <- redcap_dat[ , fieldsToPull]
+            
+                    newCols <- c(
+                        "record_id",
+                        "subgroup_score",
+                        "classifier_score",
+                        "classifier_value",
+                        "subgroup",
+                        "b_number",
+                        "primary_tech",
+                        "run_number",
+                        "accession_number",
+                        "block",
+                        "tm_number",
+                        "diagnosis"
+                    )
+                    for (new_col in newCols) {
+                        output[, new_col] <- redcap_dat[, new_col]
+                    }
+            
+                    # if (is.null(redcap_dat$tm_number)) {
+                    #     redcap_dat$tm_number <- output$tm_number
+                    # }
+            
+                    if (all(is.na(output$subgroup_score))) {
+                        output$subgroup_score <- redcap_dat$subgroup_score
+                    }
+            
+                    if (all(is.na(output$classifier_score))) {
+                        output$classifier_score <- redcap_dat$classifier_score
+                    }
+            
+                    if (all(is.na(output$classifier_value))) {
+                        output$classifier_value <- redcap_dat$classifier_value
+                    }
+            
+                    if (all(is.na(output$subgroup))) {
+                        output$subgroup <- redcap_dat$subgroup
+                    }
+            
+                    filtered_output <- output %>% dplyr::select(-one_of(colnames(data_subset)))
+                    merged_data <- merge(filtered_output, data_subset, by.x = "RD.number",
+                                         by.y = "record_id")
+                    MsgDF(merged_data)
+                    return(merged_data)
+                } else {
+                    return(output)
+                }
 }
 
 
