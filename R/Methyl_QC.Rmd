@@ -42,6 +42,9 @@ if (!file.exists(sheetNamePath)) {
 gb$fixerrors <- fixerrors <- gb$GetFixedDf(sheetNamePath, runPath)
 gb$targets <- targets <- gb$GrabTargetsDf(runPath, gb$fixerrors)
 gb$redCsv <- redCsv <- gb$CheckRedCsv(runID)
+if (!file.exists(redCsv)) {
+  gb$redCsv <- redCsv <- dir(params$knitDir, pattern = "_Redcap.csv", full.names = TRUE)[1]
+}
 # Set Run Data Values ----------------------------------------------
 titleName <- paste("Methylation Assay QC for Batch", runID)
 knitr::opts_chunk$set(echo = TRUE)
