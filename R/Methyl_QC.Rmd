@@ -21,6 +21,13 @@ devtools::source_url(file.path(gitPath, "QC-Scripts.R"))
 runID <- gb$CheckParamRunID(params, gb)
 baseDir <- gb$CheckParamBaseDir(params, runID)
 runPath <- gb$CheckParamKnitDir(params, runID)
+is_new <- stringr::str_detect(runID, pattern = "-new-template")
+
+runPath <- gb$CheckParamKnitDir(params, runID)
+if (is_new) {
+  runPath <- file.path(dirname(runPath), runID)
+  baseDir <- file.path(dirname(baseDir), runID)
+}
 gb$runPath <- runPath
 gb$SetKnitPath(runPath, baseDir)
 # Read Sample Data -------------------------------------------------
