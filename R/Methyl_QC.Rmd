@@ -206,11 +206,10 @@ summarName <- paste("Classifier Report Summary for", runID) # summary table head
 ```
 <hr class="solid"><h2>`r I(as.character(summarName))`</h2><div style="align-content:left;width:950px">
 ```{r label="Summary Table", fig.align="left", message=FALSE, echo=FALSE, warning=FALSE}
-redCsv <- file.path(fs::path_home(), "Desktop", runID, paste0(runID, "_Redcap.csv"))
-if(!file.exists(redCsv)) {
+if(!file.exists(gb$redCsv)) {
   knitr::knit_exit()
 }
-mnpOutTb <- as.data.frame(read.csv(redCsv, strip.white = T))
+mnpOutTb <- as.data.frame(read.csv(gb$redCsv, strip.white = T))
 mnpOutTb <- unique(mnpOutTb)
 if (!nrow(mnpOutTb) > 1) {
     knitr::knit_exit()
@@ -234,8 +233,8 @@ htmltools::includeHTML(file.path(gitPath,"QC-Style.html"))
 </ul></p><h3>NOTE:</h3><p class="mnpnote"></p><p class="qcnote"></p>
 ```{r, label="Summary_notes", echo=FALSE, results='asis', out.width="65%"}
 gb <- globalenv(); assign("gb", gb)
-xlsmSheet <- file.path(gb$runPath, paste0(gb$runID,".xlsm"))
-if(!file.exists(xlsmSheet)){knitr::knit_exit()}
+xlsmSheet <- dir(gb$runPath, pattern = ".xlsm")[1]
+if (!file.exists(xlsmSheet)) {knitr::knit_exit()}
 noteData <- gb$GetNotesData(xlsmSheet)
 knitr::asis_output(noteData)
 ```
