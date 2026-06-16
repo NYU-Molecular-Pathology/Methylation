@@ -1,0 +1,70 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# R session and history
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
+
+# R package/check/build artifacts
+*.Rcheck/
+*.tar.gz
+*.tgz
+.Rbuildignore
+
+# R temporary/cache files
+*.Rout
+*.Rout.save
+*.Rout.fail
+*.RDataTmp
+*.rds.tmp
+
+# renv local state
+renv/library/
+renv/staging/
+renv/local/
+renv/cellar/
+renv/python/
+renv/sandbox/
+
+# Keep renv lock/config files trackable
+!renv.lock
+!renv/settings.json
+!renv/activate.R
+
+# RStudio / IDE files
+*.Rproj.user/
+.vscode/
+.idea/
+
+# Python / general cache files
+__pycache__/
+*.py[cod]
+.cache/
+tmp/
+temp/
+
+# Logs
+*.log
+logs/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# any agent local files
+.claude/
+AGENTS.md
+CLAUDE.md
+
+# Local notes / scratch files
+notes/
+scratch/
+TODO.local.md
