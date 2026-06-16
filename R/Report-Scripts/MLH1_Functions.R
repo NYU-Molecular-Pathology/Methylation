@@ -119,8 +119,8 @@ renderPlot <- function(beta.matrix, clin.res) {
       Probe.Names = rownames(clinVals)
     )
     density_df <- sanitizeDense(beta.matrix)
-    fig <- ggplot2::ggplot(vals_df) + geom_bar(aes(x, y, fill = Probe.Names), width = 0.05, stat = 'identity') +
-      geom_line(density_df, mapping = aes(x = x, y = y)) +
+    fig <- ggplot2::ggplot(vals_df) + ggplot2::geom_bar(aes(x, y, fill = Probe.Names), width = 0.05, stat = 'identity') +
+      ggplot2::geom_line(density_df, mapping = aes(x = x, y = y)) +
       xlab('Beta Values') + ylab('Density') + theme(panel.background = element_blank())
     return(suppressWarnings(fig))
 }
