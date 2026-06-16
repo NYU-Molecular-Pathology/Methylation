@@ -50,16 +50,16 @@ GetMLH1Data <- function(ratioSet, RGset){
     #calculate number of methylated loci with beta values above cutoff for mlh1
     pos.loci = 0
     for (mlhProbe in rownames(mlh.b)) {
-      if("cg23658326" == mlhProbe){
+      if ("cg23658326" == mlhProbe){
         pos.loci <- pos.loci + (mlh.b["cg23658326",] >= 0.18)
       }
-      if("cg11600697" == mlhProbe){
+      if ("cg11600697" == mlhProbe){
         pos.loci <- pos.loci + (mlh.b["cg11600697",] >= 0.27)
       }
-      if("cg21490561" == mlhProbe){
+      if ("cg21490561" == mlhProbe){
         pos.loci <- pos.loci + (mlh.b["cg21490561",] >= 0.13)
       }
-      if("cg00893636" == mlhProbe){
+      if ("cg00893636" == mlhProbe){
         pos.loci <- pos.loci + (mlh.b["cg00893636",] >= 0.09)
       }
     }
@@ -68,7 +68,7 @@ GetMLH1Data <- function(ratioSet, RGset){
     m.reslt[pos.loci == 4] = "POSITIVE"
     m.reslt[pos.loci >= 0 & pos.loci < 3] = "NEGATIVE"
     m.reslt[pos.loci == 3] = "INDETERMINATE"
-    
+
     all.data = data.frame(
         Sample_Name = 1,
         cg23658326.MLH1 = mlh.b["cg23658326", ], cg11600697.MLH1 = mlh.b["cg11600697", ],
@@ -106,10 +106,10 @@ sanitizeDense <- function(beta.matrix){
 ## Print out the Plotly for Mlh1 ----------------------------------------------------------
 renderPlot <- function(beta.matrix, clin.res) {
     na_vals <- which(is.na(clin.res))
-    if(length(na_vals) > 0){
-      new_names <- colnames(clin.res)
-      new_names[na_vals] <- paste(new_names[na_vals], "PROBE_MISSING", sep="_")
-      colnames(clin.res) <- new_names
+    if (length(na_vals) > 0) {
+        new_names <- colnames(clin.res)
+        new_names[na_vals] <- paste(new_names[na_vals], "PROBE_MISSING", sep = "_")
+        colnames(clin.res) <- new_names
     }
     clin.res[is.na(clin.res)] <- 0
     clinVals <- as.data.frame(t(clin.res[2:5]))
@@ -119,9 +119,9 @@ renderPlot <- function(beta.matrix, clin.res) {
       Probe.Names = rownames(clinVals)
     )
     density_df <- sanitizeDense(beta.matrix)
-    fig <- ggplot2::ggplot(vals_df) + ggplot2::geom_bar(aes(x, y, fill = Probe.Names), width = 0.05, stat = 'identity') +
-      ggplot2::geom_line(density_df, mapping = aes(x = x, y = y)) +
-      xlab('Beta Values') + ylab('Density') + theme(panel.background = element_blank())
+    fig <- ggplot2::ggplot(vals_df) + ggplot2::geom_bar(ggplot2::aes(x, y, fill = Probe.Names), width = 0.05, stat = 'identity') +
+      ggplot2::geom_line(density_df, mapping = ggplot2::aes(x = x, y = y)) +
+      ggplot2::xlab('Beta Values') + ggplot2::ylab('Density') + ggplot2::theme(panel.background = ggplot2::element_blank())
     return(suppressWarnings(fig))
 }
 
@@ -130,7 +130,7 @@ drawPlotTab <- function(mlhP){
     kgb <- c("striped",font_size = 12, bootstrap_options = btso, position = "left")
     txtc = "text-align:center;"
     be = c(booktabs = T, escape = F, linesep = "")
-    theMlhTab <- 
+    theMlhTab <-
         mlhP %>% knitr::kable("html", be, align = 'clc') %>%
         kableExtra::kable_styling(kgb, full_width = F, position = "left") %>%
         kableExtra::column_spec(column = 2, background = "rgb(204, 255, 204)", extra_css = txtc) %>%
@@ -140,10 +140,10 @@ drawPlotTab <- function(mlhP){
 
 Mlh1Pipeline <- function(RGset) {
     Mset = minfi::preprocessIllumina(RGset, bg.correct = TRUE, normalize = "controls")
-    ratioSet = ratioConvert(Mset, what = "both", keepCN = FALSE)
+    ratioSet = minfi::ratioConvert(Mset, what = "both", keepCN = FALSE)
     clin.res <- GetMLH1Data(ratioSet, RGset)
     par(mar = c(5, 6, 4, 1) + .1)
-    beta.matrix = getBeta(ratioSet)
+    beta.matrix = minfi::getBeta(ratioSet)
     theMlhplot <- renderPlot(beta.matrix, clin.res)
     mlhP <- getPlotTable(clin.data = clin.res)
     return(list(
