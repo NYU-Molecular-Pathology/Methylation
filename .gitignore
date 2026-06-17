@@ -69,6 +69,7 @@ Testing/testthat/testing_idats/
 Testing/testthat/testing_data/
 Testing/testthat/demo_idats/
 Testing/testthat/demo_data/
+Testing/test_outputs/
 
 # Local methylation testing outputs
 Testing/output/
