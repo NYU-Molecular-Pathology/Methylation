@@ -207,7 +207,7 @@ summarName <- paste("Classifier Report Summary for", runID) # summary table head
 <hr class="solid"><h2>`r I(as.character(summarName))`</h2><div style="align-content:left;width:950px">
 ```{r label="Summary Table", fig.align="left", message=FALSE, echo=FALSE, warning=FALSE}
 gb$close_page_and_exit <- function(page_num) {
-    cat('<footer><p>Page', page_num, 'of 8</p></footer></div>\n')
+    knitr::asis_output(cat('<footer><p>Page', page_num, 'of 8</p></footer></div>\n'))
     knitr::knit_exit()
 }
 if (!file.exists(gb$redCsv)) gb$close_page_and_exit(7)
