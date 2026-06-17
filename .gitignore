@@ -12,10 +12,12 @@
 .Ruserdata
 .Rproj.user/
 
-# R package/check/build artifacts
+# R build artifacts and archives
 *.Rcheck/
+*.tar
 *.tar.gz
 *.tgz
+*.zip
 .Rbuildignore
 
 # R temporary/cache files
@@ -43,12 +45,77 @@ renv/sandbox/
 .vscode/
 .idea/
 
-# Python / general cache files
-__pycache__/
-*.py[cod]
+# General cache files
 .cache/
 tmp/
 temp/
+
+# Methylation array files
+*.idat
+*.IDAT
+
+# Local methylation testing data
+testing_idats/
+testing_data/
+tests/testthat/testing_idats/
+tests/testthat/testing_data/
+tests/testthat/demo_idats/
+tests/testthat/demo_data/
+Testing/testing_idats/
+Testing/testing_data/
+Testing/demo_idats/
+Testing/demo_data/
+Testing/testthat/testing_idats/
+Testing/testthat/testing_data/
+Testing/testthat/demo_idats/
+Testing/testthat/demo_data/
+
+# Local methylation testing outputs
+Testing/output/
+Testing/outputs/
+Testing/results/
+Testing/reports/
+Testing/logs/
+Testing/tmp/
+Testing/temp/
+Testing/cache/
+Testing/.cache/
+Testing/testthat/output/
+Testing/testthat/outputs/
+Testing/testthat/results/
+Testing/testthat/reports/
+Testing/testthat/logs/
+Testing/testthat/tmp/
+Testing/testthat/temp/
+Testing/testthat/cache/
+Testing/testthat/.cache/
+
+# Keep testthat snapshots trackable
+!Testing/testthat/_snaps/
+!Testing/testthat/_snaps/**
+
+# Local methylation data
+data_raw/
+data-raw/local/
+data-raw/downloads/
+local_data/
+private_data/
+
+# Generated reports and rendered outputs
+reports/
+outputs/
+results/
+*_QC.html
+*_sarc.html
+*_QC.pdf
+*_report.html
+*_report.pdf
+*_files/
+
+# Test coverage
+coverage/
+covr/
+.coverage
 
 # Logs
 *.log
@@ -59,12 +126,9 @@ logs/
 .env.*
 !.env.example
 
-# any agent local files
+# Temp local files
 .claude/
 AGENTS.md
 CLAUDE.md
-
-# Local notes / scratch files
-notes/
 scratch/
 TODO.local.md
