@@ -206,14 +206,14 @@ summarName <- paste("Classifier Report Summary for", runID) # summary table head
 ```
 <hr class="solid"><h2>`r I(as.character(summarName))`</h2><div style="align-content:left;width:950px">
 ```{r label="Summary Table", fig.align="left", message=FALSE, echo=FALSE, warning=FALSE}
-if(!file.exists(gb$redCsv)) {
-  knitr::knit_exit()
-}
-mnpOutTb <- as.data.frame(read.csv(gb$redCsv, strip.white = T))
-mnpOutTb <- unique(mnpOutTb)
-if (!nrow(mnpOutTb) > 1) {
+gb$close_page_and_exit <- function(page_num) {
+    cat('<footer><p>Page', page_num, 'of 8</p></footer></div>\n')
     knitr::knit_exit()
 }
+if (!file.exists(gb$redCsv)) gb$close_page_and_exit(7)
+mnpOutTb <- as.data.frame(read.csv(gb$redCsv, strip.white = T))
+mnpOutTb <- unique(mnpOutTb)
+if (!nrow(mnpOutTb) > 1) gb$close_page_and_exit(7)
 knitr::asis_output(gb$GetSummaryTab(mnpOutTb))
 ```
 <footer><p>Page 7 of 8</p></footer></div><hr class="solid">
@@ -234,7 +234,7 @@ htmltools::includeHTML(file.path(gitPath,"QC-Style.html"))
 ```{r, label="Summary_notes", echo=FALSE, results='asis', out.width="65%"}
 gb <- globalenv(); assign("gb", gb)
 xlsmSheet <- dir(gb$runPath, pattern = ".xlsm", full.names = TRUE)[1]
-if (!file.exists(xlsmSheet)) {knitr::knit_exit()}
+if (!file.exists(xlsmSheet)) {gb$close_page_and_exit(8)}
 noteData <- gb$GetNotesData(xlsmSheet)
 knitr::asis_output(noteData)
 ```
