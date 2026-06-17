@@ -6,10 +6,16 @@
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2025
 
-library(verbose = F, warn.conflicts = F, quietly = T, package = "jsonlite")
-library(verbose = F, warn.conflicts = F, quietly = T, package = "crayon")
-library(verbose = F, warn.conflicts = F, quietly = T, package = "RCurl")
-library(verbose = F, warn.conflicts = F, quietly = T, package = "redcapAPI")
+gb <- globalenv(); assign("gb", gb)
+
+suppressWarnings(
+    suppressPackageStartupMessages({
+        library(jsonlite)
+        library(crayon)
+        library(RCurl)
+        library(redcapAPI)
+    })
+)
 
 makePost <- function(dfNewRed, rcon){
     data <- dfNewRed[1,]
@@ -21,8 +27,6 @@ makePost <- function(dfNewRed, rcon){
 }
 
 supM <- function(objTing){return(suppressMessages(suppressWarnings(objTing)))}
-gb <- globalenv(); assign("gb", gb)
-
 
 writeRedcapPred <- function(run_id = NULL, dfNewRed, fi_end = "_Redcap.csv") {
     stopifnot(length(run_id) > 0 & !is.na(run_id) & !is.null(run_id))
@@ -261,7 +265,7 @@ TryREDCap <- function(gb) {
         gb$writeRedcapPred(gb$dat$run_id, dfNewRed = gb$GetRedcapDF(gb)),
         error = function(e) {
             gb$DebugDataFrame(e, gb)
-            stop("REDCap csv saving failed!")
+            message("REDCap csv saving failed!")
         }
     )
 }
@@ -274,7 +278,7 @@ TryREDCap_v12 <- function(gb) {
                            fi_end = "_Redcap_v12.csv"),
         error = function(e) {
             gb$DebugDataFrame(e, gb)
-            stop("REDCap csv saving failed!")
+            message("REDCap csv saving failed!")
         }
     )
 }
