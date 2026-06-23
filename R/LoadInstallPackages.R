@@ -279,12 +279,14 @@ loadMainPkgs <- function() {
     if (not_installed("pak")) install.packages("pak", type = "binary", ask = FALSE, dependencies = T)
     library("pak")
     # CRAN from PPM snapshot (compact spec), Bioconductor official URLs
-    pak::repo_add(CRAN = sprintf("PPM@%s", snapshot_date))
+    suppressMessages(
+        pak::repo_add(CRAN = sprintf("PPM@%s", snapshot_date))
+    )
     
     # Supply Bioconductor repos explicitly
     bioc_repos <- BiocManager::repositories(version = bioc_version)
     bioc_repos <- bioc_repos[!names(bioc_repos) %in% c("CRAN")]
-    pak::repo_add(.list = as.list(bioc_repos))
+    suppressMessages(pak::repo_add(.list = as.list(bioc_repos)))
 
     if (not_installed("needs")) manage_needs()
     options(needs.promptUser = FALSE)
@@ -387,17 +389,6 @@ checkEpicV2 <- function(pkg, epicV2script) {
     }
 }
 
-# FUNC: Checks if the package UniD and it's requirements are installed
-check_uniD_pkg <- function() {
-    uniDpkgs <- c("ade4", "methylumi", "mlr")
-    librarian::shelf(uniDpkgs, ask = FALSE, update_all = F, quiet = F)
-    try(bio_install("impute"), silent = T)
-    try(bio_install("wateRmelon"), silent = T)
-    if (not_installed("UniD")) {
-        try(install.packages(uniD_path, type = "source", dependencies = T, repo = NULL), silent = T)
-    }
-}
-
 # MAIN: Loads all packages and functions --------------------------------------
 startLoadingAll <- function(typeSrc, epicV2script) {
     message("Your R library path(s):\n", paste(.libPaths(), collapse = "\n"))
@@ -407,7 +398,6 @@ startLoadingAll <- function(typeSrc, epicV2script) {
     options(needs.auto = TRUE)
     loadPacks()
     suppressWarnings(load_install_pkgs(classPacks, source_inst))
-    #check_uniD_pkg()
     checkEpicV2("mnp.v12epicv2", epicV2script)
 }
 
