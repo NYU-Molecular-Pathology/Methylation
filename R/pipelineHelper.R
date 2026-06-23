@@ -30,7 +30,7 @@ cbioLn <- switch(
 )
 
 # List of three mount paths needed to run the pipleine
-critialMnts <- c(
+critical_mounts <- c(
     "/Volumes/CBioinformatics/Methylation",
     "/Volumes/molecular/",
     "/Volumes/snudem01labspace/idats"
@@ -1015,11 +1015,11 @@ makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redca
 # FUN: Checks if all the paths are accessible to the Rscript location ---------
 checkMounts <- function() {
     msgFunName(pipeLnk,"checkMounts")
-    failMount <- lapply(critialMnts, function(driveMount) {
+    failMount <- lapply(critical_mounts, function(driveMount) {
         ifelse(!dir.exists(driveMount), return(T), return(F))
     })
     if (any(failMount == T)) {
-        toFix <- paste(critialMnts[which(failMount == T)])
+        toFix <- paste(critical_mounts[which(failMount == T)])
         cat("PATH does not exist, ensure network drive is mounted:",
             bkRed(toFix),"\n")
         cat("You may need to re-mount one of the following paths:",
