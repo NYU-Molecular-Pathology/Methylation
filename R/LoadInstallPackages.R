@@ -4,26 +4,24 @@
 ## Date Created: August 5, 2022
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2025
+## Copyright (c) NYULH Jonathan Serrano, 2026
 
-
-# Define the specific versions and mirrors
+# Define the specific versions and install params
 snapshot_date <- "2025-05-01"
 
+ncpus <- max(1L, as.integer(system("sysctl -n hw.ncpu", intern = TRUE)) - 1L)
+options(Ncpus = ncpus)
+
 if (!"BiocManager" %in% rownames(installed.packages())) {
-    install.packages("BiocManager", ask = FALSE, dependencies = TRUE,
-                     Ncpus = max(1L, parallel::detectCores() - 1L))
+    install.packages("BiocManager", ask = FALSE, dependencies = TRUE)
 }
 
 bioc_version  <- paste0(BiocManager::version())
 
-options(
+suppressMessages(options(
     download.file.method = "curl",
-    repos = c(
-        CRAN = sprintf("https://packagemanager.posit.co/cran/%s", snapshot_date),
-        BiocManager::repositories(version = bioc_version)
-    )
-)
+    repos = c(BiocManager::repositories(version = bioc_version))
+))
 
 cbioLn <- "/Volumes/CBioinformatics/Methylation/classifiers"
 epicV2script <-
@@ -181,17 +179,22 @@ not_installed <- function(pkgName) return(!pkgName %in% rownames(installed.packa
 gh.inst <- function(git_repo, ...) {
     pkg <- basename(git_repo)
     message("Checking ", pkg, "...")
-    gh.opt <- list(pkg, dependencies = T, upgrade = "never", ...)
+
     if (not_installed(pkg)) {
-        params <- c(gh.opt, list(type = "source"))
         tryCatch(
-            do.call(devtools::install_github, params),
-            error = function(cond) {
-                params <- c(gh.opt, list(type = typeSrc))
-                do.call(devtools::install_github, params)
+            devtools::install_github(
+                repo = git_repo,
+                dependencies = TRUE,
+                upgrade = "never",
+                type = "source",
+                ...
+            ),
+            error = function(e) {
+                message("GitHub package could not install from repo:", git_repo)
             }
         )
     }
+
     load_lib(pkg)
 }
 
