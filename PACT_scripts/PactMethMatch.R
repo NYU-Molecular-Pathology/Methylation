@@ -234,17 +234,23 @@ checkMounts <- function() {
 # API Call functions -----
 grabAllRecords <- function(flds, rcon) {
     message("Pulling REDCap data...")
-    params = list(rcon, fields = flds, survey = F, dag = F, factors = F, form_complete_auto = F)
-    dbCols <- do.call(redcapAPI::exportRecordsTyped, c(params))
-
+    ids <- redcapAPI::exportRecordsTyped(
+        rcon = rcon,
+        fields = "record_id",
+        survey = FALSE,
+        dag = FALSE,
+        factors = FALSE,
+        form_complete_auto = FALSE
+    )
+    rd_ids <- ids$record_id[startsWith(ids$record_id, "RD-")]
+    dbCols <- redcapAPI::exportRecordsTyped(rcon, records = rd_ids, fields = flds, survey = FALSE, dag = FALSE,
+                                            factors = FALSE, form_complete_auto = FALSE)
     db <- as.data.frame(dbCols)
-
     if (nrow(db) == 0) {
         message("REDCap API connection failed!\n",
                 "Check the Database for non-ASCII characters and verify API Token: ", token)
         stopifnot(nrow(db) > 0)
     }
-
     return(db)
 }
 
