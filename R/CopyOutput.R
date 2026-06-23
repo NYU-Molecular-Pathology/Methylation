@@ -626,15 +626,22 @@ CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull, rcon) {
 
 get_QC_metric_data <- function(output_fi, runDir, runID) {
     msgFunName(cpOutLnk, "get_QC_metric_data")
+
     runYear <- paste0(20, stringr::str_split_fixed(runID, "-", 2)[1, 1])
+
     if (is.null(output_fi)) {
         xlsx_file <- paste("Meth_QC_metrics", runYear,"runs.xlsx", sep = "_")
         file_to_read <- file.path(metrics_dir, runYear, xlsx_file)
         output <- as.data.frame(readxl::read_excel(file_to_read))
     } else{
-        currDir <- file.path(runDir, output_fi)
-        message("Reading file: ", currDir)
-        output <- as.data.frame(read.csv(currDir))
+        qc_csv <- file.path(runDir, output_fi)
+
+        if (!file.exists(qc_csv)) {
+            qc_csv <- dir(getwd(), pattern = "_qc_data.csv", full.names = TRUE)[1]
+        }
+
+        message("Reading file: ", qc_csv)
+        output <- as.data.frame(read.csv(qc_csv))
     }
     return(output)
 }
