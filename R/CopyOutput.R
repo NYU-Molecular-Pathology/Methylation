@@ -642,7 +642,9 @@ get_QC_metric_data <- function(output_fi, runDir, runID) {
 
 CombineClassAndQC <- function(output_fi = NULL, token, runDir = NULL, runID = NULL) {
     msgFunName(cpOutLnk, "CombineClassAndQC")
-
+    if (stringr::str_detect(pattern = "new-template", basename(getwd()))) {
+        runID <- basename(getwd())
+    }
     apiUrl = "https://redcap.nyumc.org/apps/redcap/api/"
     rcon <- redcapAPI::redcapConnection(apiUrl, token)
 
@@ -651,7 +653,9 @@ CombineClassAndQC <- function(output_fi = NULL, token, runDir = NULL, runID = NU
         "accession_number", "subgroup_score", "classifier_value", "subgroup",
         "classifier_score", "primary_tech", "diagnosis"
     )
-
+     if (stringr::str_detect(pattern = "new-template", runID)) {
+            runID_knit <- stringr::str_remove_all(runID, pattern = "-new-template")
+        }
     if (is.null(runDir)) {runDir <- getwd()}
     if (is.null(runID)) {runID <- basename(getwd())}
 
