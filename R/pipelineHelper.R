@@ -209,7 +209,7 @@ my_html_document <- function(...) {
         # Call pandoc_convert with verbose = FALSE
         rmarkdown::pandoc_convert(input = input, to = to, from = from,
                                   output = output, verbose = FALSE)
-        }
+    }
     fmt
 }
 
@@ -236,7 +236,7 @@ generateQCreport <- function(runID = NULL) {
         if (stringr::str_detect(pattern = "new-template", runID)) {
             runID_knit <- stringr::str_remove_all(runID, pattern = "-new-template")
         }
-        
+
         rmarkdown::render(
             rmdToKnit,
             output_file = outQCpath,
@@ -279,9 +279,9 @@ launchEmailNotify <- function(runID) {
     )
 
     res <- redcapAPI::importRecords(rcon,
-                             record_data,
-                             returnContent = "ids",
-                             overwriteBehavior = "overwrite")
+                                    record_data,
+                                    returnContent = "ids",
+                                    overwriteBehavior = "overwrite")
     message(bkBlu("Check email to confirm notification created for", res))
 }
 
@@ -448,8 +448,8 @@ NameControl <- function(data, runId) {
 get_latest_record_id <- function() {
     rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
     logs <- exportLogging(rcon,
-        beginTime = as.POSIXct(Sys.Date() - 30, tz = Sys.timezone()),
-        endTime = Sys.time(), batchInterval = 1000
+                          beginTime = as.POSIXct(Sys.Date() - 30, tz = Sys.timezone()),
+                          endTime = Sys.time(), batchInterval = 1000
     )
     creates <- stringr::str_detect(logs$action, "Create")
     created_logs <- logs[creates, ]
@@ -554,12 +554,12 @@ ReadSamSheet <- function(runOrder) {
     if (any(na_val)) {
         csv_sheet_df[na_val] <- ""
     }
-    
+
     na_val <- is.na(redcap_tab_df)
     if (any(na_val)) {
         redcap_tab_df[na_val] <- ""
     }
-    
+
     for (n_row in 1:nrow(csv_sheet_df)) {
         curr_csv_id <- csv_sheet_df[n_row, c("DNA_Number", "MP_num")]
         curr_red_id <- redcap_tab_df[n_row, c("b_number", "tm_number")]
@@ -692,54 +692,6 @@ do_report <- function(single_data = NULL, genCn = FALSE) {
     )
 }
 
-# FUN: Knits teh V11 version html report --------------------------------------
-do_report_v11 <- function(single_data = NULL, genCn = FALSE) {
-    msgFunName(pipeLnk, "do_report_v11")
-    msgParams("data")
-
-    dat <- getRunData(single_data)
-    new_filename <- sub("(\\.html)$", "_v11\\1", dat$outFi)
-    dat$outFi <- new_filename
-    RGsetEpic <- getRGset(runPath = getwd(), sentrix = dat$senLi)
-    reportMd_v11 <- "/Volumes/CBioinformatics/Methylation/report.Rmd"
-
-    msgRunUp(dat$sampleID, dat$run_id, dat$senLi)
-    message("Knitting report: ", reportMd)
-
-    params_init <- list(
-        token = gb$ApiToken,
-        rundata  = dat,
-        RGsetEpic = RGsetEpic,
-        knitDir = getwd()
-    )
-
-    tryCatch(
-        expr = make_knit_report(dat, reportMd_v11, params_init),
-        error = function(e) {handle_knit_error(e, dat, params_init)},
-        finally = message("\nRunning next sample\n")
-    )
-}
-
-# FUN: Generates the V11 version html report ----------------------------------
-get_v11_reports <- function(your_csv){
-    unloadNamespace("mnp.v12epicv2")
-    library("mnp.v11b6")
-    require("mnp.v11b6")
-    library("utils")
-
-    data <- utils::read.csv(your_csv, strip.white = T)
-    samList <- 1:length(data$Sample_Name != 0)
-    toRun <- gb$getRunList(data, samList)
-
-    for (idx in toRun) {
-        message("Running ", idx, " of ", length(toRun))
-        sheetRunID <- data[idx, "RunID"]
-        gb$runID <- sheetRunID
-        assign("runID", sheetRunID)
-        single_data = data[idx, ]
-        do_report_v11(single_data)
-    }
-}
 
 # FUN: Iterates over each sample in the csv file to generate a report ---------
 # DEBUG: data <- read.csv("samplesheet.csv", strip.white=T)
@@ -923,6 +875,48 @@ final_upload_check <- function() {
     }
 }
 
+
+get_red_csv <- function(runID) {
+    desk_dir <- file.path(fs::path_home(), "Desktop", runID)
+    if (!dir.exists(desk_dir)) {
+        desk_dir <- dir(file.path(fs::path_home(), "Desktop"), pattern = runID)[1]
+    }
+    redCsv <- file.path(desk_dir, paste0(runID, "_Redcap.csv"))
+    if (!file.exists(redCsv)) {
+        redCsv <- dir(getwd(), pattern = "_Redcap.csv", full.names = TRUE)[1]
+    }
+    return(redCsv)
+}
+
+merge_xlsm_redcap_data <- function(runID) {
+    redCsv <- get_red_csv(runID)
+    xlsm_sheet <- dir(getwd(), pattern = "*.xlsm")[1]
+    import_data <- readxl::read_excel(path = xlsm_sheet, sheet = "REDCap_Import", n_max = 100)
+    cutoff_idx <- min(which(is.na(import_data$record_id))) - 1
+
+    if (length(cutoff_idx) == 0) {
+        cutoff_idx <- min(which(import_data$record_id == 0)) - 1
+    }
+    if (length(cutoff_idx) == 0) {
+        message(crayon::bgRed("ERROR Reading 'REDCap_Import' sheet in workbook:"), "\n", xlsm_sheet)
+    }
+    scores_data <- unique(read.csv(redCsv))
+    import_data <- import_data[1:cutoff_idx, ]
+
+    common_cols <- setdiff(colnames(import_data), colnames(scores_data))
+
+    merged_data <- merge(
+        x = scores_data,
+        y = import_data[, c("record_id", common_cols), drop = FALSE],
+        by = "record_id",
+        all.x = TRUE,
+        sort = FALSE
+    )
+
+    merged_data[is.na(merged_data)] <- ""
+    return(unique(merged_data))
+}
+
 # MAIN: Generates Html reports with samplesheet.csv for V12_EPICV2 --------------------------------
 makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redcapUp = FALSE) {
     msgFunName(pipeLnk, "makeHtmlReports")
@@ -943,14 +937,38 @@ makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redca
     }))
 
     loopRender(runOrder, csv_data, redcapUp)
-    checkRunOutput(runID)
 
+    if (stringr::str_detect(basename(getwd()), pattern = "new-template")) {
+        runID <- basename(getwd())
+    }
+    rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
+    checkRunOutput(runID)
+    merged_data <- merge_xlsm_redcap_data(runID)
+    message("Importing Scores and Sample Info to REDCap...")
+    exist_record <- suppressMessages(redcapAPI::exportRecordsTyped(
+        rcon, records = merged_data$record_id, fields = "record_id",
+        factors = FALSE,
+        survey = FALSE,
+        dag = FALSE))
+
+    missing_rd <- setdiff(exist_record$record_id, merged_data$record_id)
+
+    if (length(missing_rd) > 0) {
+        for (rd_num in missing_rd) {
+            CreateRedcapRecord(runID, recordWord = "regular", rd = rd_num)
+        }
+    }
+
+    merged_data_cast <- redcapAPI::castForImport(merged_data, rcon, fields = colnames(merged_data))
+
+    redcapAPI::importRecords(rcon, merged_data_cast, returnContent = "ids",
+                             logfile = "REDCapImportLog.txt")
     qcVals <- NULL
     if (skipQC == F) {
         CreateRedcapRecord(runID)
         generateQCreport(runID)
         qcVals <- CheckSampleQCmetrics(runID)
-        rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
+
         qcVals <- gb$NameControl(qcVals, runID)
 
         redcapAPI::importRecords(rcon, qcVals, "normal", "ids",
@@ -979,7 +997,7 @@ makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redca
         launchEmailNotify(runID)
         check_html_file_sizes(getwd()) # checks files copied size
     }
-    
+
     try(beepr::beep(2), T)
     tidyUpFiles(runID)
 }
