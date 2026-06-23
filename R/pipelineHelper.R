@@ -331,23 +331,32 @@ CreateRedcapRecord <- function(runID = NULL, recordWord = "QC", rd = NULL) {
 # Checks if the QC File will be read ------------------------------------------
 checkRunOutput <- function(runID) {
     msgFunName(pipeLnk,"checkRunOutput")
+    base_run <- runID
+    is_new <- stringr::str_detect(runID, pattern = "new")
+    if (is_new == TRUE) {
+        runID <- stringr::str_split_fixed(runID, pattern = "-new", 2)[, 1]
+    }
     redcapFi <- paste0(runID,"_Redcap.csv")
     csvLocation <- file.path(fs::path_home(),"Desktop", runID, redcapFi)
 
+    if (is_new == TRUE) {
+        csv_old_dir <- file.path(fs::path_home(),"Desktop", runID)
+        csv_file_old <- dir(csv_old_dir, pattern = "_Redcap.csv", full.names = TRUE)[1]
+        new_red_csv <- paste0(base_run, "_Redcap.csv")
+        csv_new_dir <- file.path(fs::path_home(),"Desktop", base_run, new_red_csv)
+        file.copy(csv_file_old, csv_new_dir, overwrite = TRUE, copy.mode = TRUE)
+    }
+
     if (!file.exists(csvLocation)) {
         message(bkRed("File not found:")," ", csvLocation)
-        message(
-            "QC Report may generate without the Summary Table which needs ",
-            bkGrn(redcapFi))
+        message("QC Report may generate without the Summary Table which needs ", bkGrn(redcapFi))
     } else{
         outputPath <- getwd()
         if (file.exists(file.path(getwd(), redcapFi))) {
             outputPath <- file.path(getwd(), paste0(Sys.Date(), "_", redcapFi))
         }
         message("Copying file: ", outputPath)
-        fs::file_copy(path = csvLocation,
-                      new_path = outputPath,
-                      overwrite = T)
+        fs::file_copy(path = csvLocation, new_path = outputPath, overwrite = TRUE)
     }
 }
 
