@@ -175,7 +175,11 @@ getRGset <- function(runPath, sentrix) {
 
 CheckSampleQCmetrics <- function(runID) {
     msgFunName(pipeLnk, "CheckSampleQCmetrics")
-    qcValsFile <- file.path(getwd(), paste(runID, "qc_data.csv", sep = "_"))
+    qcValsFile <- dir(getwd(), pattern = "qc_data.csv", full.names = TRUE)[1]
+    if (!file.exists(qcValsFile)) {
+        stop("File not found: ", qcValsFile)
+    }
+
     qc_cols <- c(
         "RD.number",
         "Log2sqrt.M.U.",
