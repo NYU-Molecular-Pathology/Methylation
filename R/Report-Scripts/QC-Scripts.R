@@ -4,14 +4,14 @@
 ## Date Created: June 13, 2022
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2025
+## Copyright (c) NYULH Jonathan Serrano, 2026
 
 gb <- globalenv(); assign("gb", gb)
 options("install.packages.compile.from.source" = "No")
 options("install.packages.check.source" = "no")
 options(warn = -1)
 # Load/install missing pacakges without asking
-supM <- function(pk){return(suppressPackageStartupMessages(suppressWarnings(pk)))}
+supM <- function(pk) {return(suppressPackageStartupMessages(suppressWarnings(pk)))}
 
 # Setting US CRAN REPO
 options(repos = c(getOption("repos"), CRAN = "http://cran.us.r-project.org"))
@@ -62,25 +62,27 @@ not_installed <- function(pkgName) {
 }
 
 if (not_installed("pak")) {
-    install.packages("pak", dependencies = T, ask = F, type = "binary")
+    install.packages("pak", dependencies = TRUE, ask = FALSE, type = "binary")
 }
-library("pak")
 
 missing_pkgs <- sapply(pkgs, not_installed)
 
 if (any(missing_pkgs)) {
-    to_install <- names(missing_pkgs[missing_pkgs == T])
-    try(pak::pkg_install(to_install, ask = F), silent = T)
+    supM(library("pak"))
+    to_install <- names(missing_pkgs[missing_pkgs == TRUE])
+    try(pak::pkg_install(to_install, ask = FALSE), silent = TRUE)
 }
 
 if (not_installed("librarian")) {
-    try(pak::pkg_install("librarian", ask = F), silent = T)
+    try(pak::pkg_install("librarian", ask = FALSE), silent = TRUE)
 }
 
-library("librarian")
 not_loaded <- setdiff(pkgs, loadedNamespaces())
+if (length(not_loaded) != 0) {
+    if (!"librarian" %in% loadedNamespaces()) supM(library("librarian"))
+    supM(librarian::shelf(not_loaded, ask = FALSE))
+}
 
-supM(librarian::shelf(not_loaded, ask = F))
 
 # FUN: Increases vertical spacing between legend keys
 draw_key_polygon3 <- function(data, params, size) {
@@ -126,18 +128,18 @@ makeLabels <- function(totNum, xName, yName, plotName, thePlot) {
         guides(colour = guide_legend(
             title = "Samples",
             override.aes = list(shape = 19),
-            byrow = TRUE, ncol = 9), fill = guide_legend(show.legend = F)
+            byrow = TRUE, ncol = 9), fill = guide_legend(show.legend = FALSE)
         ) + coord_cartesian(clip = 'off')
-    legendLabel <- legendLabel + theme(legend.position="none")
+    legendLabel <- legendLabel + theme(legend.position = "none")
     return(legendLabel)
 }
 
 ## Replace any NA Values in the plot with fail values
-ReplaceNAorNull <- function(dParam, xincept, yincept){
-    if(any(is.na(dParam$x))){
+ReplaceNAorNull <- function(dParam, xincept, yincept) {
+    if (any(is.na(dParam$x))) {
         dParam$x[is.na(dParam$x)] <- xincept - 1
     }
-    if(any(is.na(dParam$y))){
+    if (any(is.na(dParam$y))) {
         dParam$y[is.na(dParam$y)] <- yincept - 1
     }
     return(dParam)
@@ -155,13 +157,13 @@ plotParams <- function(totNum, dParam, xincept, yincept) {
     thePlot <-
         ggplot(dParam, aes(x = dParam[, 2], y = dParam[, 3],
                            color = dParam$Sample_Name, label = dParam$Sample_Name
-        ), show.legend = F) +
+        ), show.legend = FALSE) +
         scale_color_manual(values = plot.colours) +
         geom_point(shape = 19, size = 5, alpha = 0.8) +
         theme_bw() +
         scale_fill_manual(values = plot.colours) +
-        guides(fill = guide_legend(show.legend = F))
-    if (yincept == 0){
+        guides(fill = guide_legend(show.legend = FALSE))
+    if (yincept == 0) {
         thePlot <- thePlot + ggrepel::geom_label_repel(
             aes(
                 label = dParam$Sample_Name,
@@ -170,14 +172,14 @@ plotParams <- function(totNum, dParam, xincept, yincept) {
                 label.size = 0.15,
                 x = dParam[, 2],
                 y = dParam[, 3],
-                show.legend = F,
+                show.legend = FALSE,
                 fill = dParam$Sample_Name,
-                colour = scales::alpha(c("black"), 1.0), inherit.aes = F, legend=F
+                colour = scales::alpha(c("black"), 1.0), inherit.aes = FALSE, legend = FALSE
             ),
             fontface = 'bold',
             colour = scales::alpha(c("black"), 1.0),
             alpha = 0.50,
-            show.legend = F,
+            show.legend = FALSE,
             segment.alpha = 0.30,
             segment.size = 0.75,
             direction = "both",
@@ -193,22 +195,22 @@ plotParams <- function(totNum, dParam, xincept, yincept) {
             force = 12,
             max.iter = 10000) + theme(legend.position="none")
         thePlot <- thePlot +
-            geom_vline(xintercept = xincept, linetype = 'dashed', colour = "red", inherit.aes = F) +
+            geom_vline(xintercept = xincept, linetype = 'dashed', colour = "red", inherit.aes = FALSE) +
             coord_cartesian(clip="off") +
             expand_limits(x = min(dParam[,2]), y = max(dParam[,3])*0.25) +
-            guides(fill = guide_legend(show.legend = F)) +
+            guides(fill = guide_legend(show.legend = FALSE)) +
             theme(legend.position = "none") +
             scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) +
             scale_y_continuous(breaks = scales::pretty_breaks(n = 10)) +
-            guides(fill = guide_legend(show.legend = F))
+            guides(fill = guide_legend(show.legend = FALSE))
     }
     if (yincept != 0) {
         samlab <- c(str_replace(dParam$Sample_Name, c("\n"), "_"))
         thePlot <- thePlot +
-            geom_hline(yintercept = yincept, linetype = 'dashed', colour = "red", inherit.aes = F) +
+            geom_hline(yintercept = yincept, linetype = 'dashed', colour = "red", inherit.aes = FALSE) +
             annotate("text", x = dParam[, 2], y = 0.5, label = samlab, angle = 90, size = 4) +
             scale_x_continuous(breaks = scales::pretty_breaks()) +
-            guides(fill = guide_legend(show.legend = F)) +
+            guides(fill = guide_legend(show.legend = FALSE)) +
             theme(legend.position = "none") + ylim(0.00, 1.00)
     }
     thePlot <- thePlot + theme(legend.position = "none")
@@ -251,20 +253,20 @@ rotateData <- function(data, columns) {
 }
 
 ## Subset Custom Data --------------------------------------
-GetNewDt <- function(data_final){
+GetNewDt <- function(data_final) {
     dataList <- list(final_data = data_final)
     names(dataList) <- c("final_data")
     return(dataList)
 }
 
 ## Get Data Values for Plot --------------------------------------
-getData <- function(theD, exGrn, exRed, cutoff, targets){
+getData <- function(theD, exGrn, exRed, cutoff, targets) {
     dGrn <- theD[(exGrn), c(1:5, 7)]
     x <- tapply((dGrn$IntGrn), dGrn$Samples, mean)
     is.na(x) <- !is.finite(x)
     dRed <- theD[as.array(exRed), c(1:6)]
     df <- data.frame(x, y = tapply(dRed$IntRed, dRed$Samples, mean))
-    mdf <- mergeDF(df,tg=targets)
+    mdf <- mergeDF(df, tg = targets)
     plot_data <- gb$rotateData(mdf,columns = c("x", "y"))
     fdt <- plot_data; ott <- subset(plot_data, plot_data$x <= cutoff)
     return(list(final_data = fdt,outlier = ott))
@@ -296,26 +298,26 @@ get.op.dat <- function(targets) {
     return(OPvals)
 }
 
-get.dp.dat <- function(gb){
+get.dp.dat <- function(gb) {
     dpDt <- gb$sdata@DPfreq
     df <- data.frame(x = 1:length(dpDt), y = dpDt, row.names = names(dpDt))
     dat.dp <- gb$mergeDF(df, tg = gb$targets)
     return(dat.dp)
 }
 
-swm <- function(funObj){return(suppressMessages(suppressWarnings(funObj)))}
+swm <- function(funObj) {return(suppressMessages(suppressWarnings(funObj)))}
 
-SetKnitPath <- function(runPath, baseDir){
+SetKnitPath <- function(runPath, baseDir) {
     system(paste("cd", runPath))
     knitr::opts_knit$set(runPath) # rprojroot::find_rstudio_root_file()
-    knitr::opts_knit$set(root.dir=runPath)
+    knitr::opts_knit$set(root.dir = runPath)
     message("\nUsing the following output Directory:\n", baseDir)
     message("\nUsing the following Knit Directory:\n", runPath)
 }
 
 GetSheetNamePath <- function(params, baseDir) {
     if (is.null(params$sheetNamePath)) {
-        sheetNamePath <- list.files(baseDir, "_samplesheet.csv", full.names = T)
+        sheetNamePath <- list.files(baseDir, "_samplesheet.csv", full.names = TRUE)
         if (length(sheetNamePath) > 1) {
             warning(">1 samplesheet in the folder")
         }
@@ -326,7 +328,7 @@ GetSheetNamePath <- function(params, baseDir) {
     if (length(sheetNamePath) == 0) {
         warning("No samplesheet found:\n", baseDir)
         samSheetDir <-
-            dir(getwd(), "samplesheet.csv", full.names = T)
+            dir(getwd(), "samplesheet.csv", full.names = TRUE)
         sheetName <- paste0(params$runID, "_samplesheet.csv")
         newOut <-
             file.path(fs::path_home(), "Desktop", params$runID, sheetName)
@@ -334,7 +336,7 @@ GetSheetNamePath <- function(params, baseDir) {
         sheetNamePath <- file.path(baseDir, sheetName)
     }
     if (is.na(sheetNamePath)) {
-        sheetNamePath <- dir(getwd(), "samplesheet.csv", full.names = T)[1]
+        sheetNamePath <- dir(getwd(), "samplesheet.csv", full.names = TRUE)[1]
     }
     message(paste0("Sample sheet name is: ", sheetNamePath))
     return(sheetNamePath)
@@ -361,7 +363,7 @@ genSumFail <- function(failPlot, failTex, sf = gb$summaryFail) {
 }
 
 
-GetSummaryTab <- function(mnpOutTb){
+GetSummaryTab <- function(mnpOutTb) {
     tableHeader <-
         c("RD-number", "B-Number", "TM-number", "Methylation Class", "Classifier Score",
           "Subgroup", "Subscore", "MGMT Status")
@@ -370,32 +372,32 @@ GetSummaryTab <- function(mnpOutTb){
     bNum =  mnpOutTb$b_number
     tableSum <- mnpOutTb %>%
         dplyr::mutate(
-            classifier_value = cell_spec(classifier_value, "html", color = gCel, bold = T),
+            classifier_value = cell_spec(classifier_value, "html", color = gCel, bold = TRUE),
             mgmt_status = cell_spec(mgmt_status, "html", color = gCol)) %>%
         dplyr::select(
             record_id, b_number, tm_number, classifier_score, classifier_value,
             subgroup, subgroup_score, mgmt_status
         ) %>%
-        kable(format = "html", booktabs = T, escape = F,
+        kable(format = "html", booktabs = TRUE, escape = FALSE,
               linesep = "", align = "c", col.names = tableHeader) %>%
-        kable_styling("striped", position="left") %>%
-        row_spec(which(grepl('control',bNum)),bold=T, color="white",background="orange") %>%
-        row_spec(which(grepl('low',bNum)), bold=T, color="white",background="salmon") %>%
-        row_spec(which(grepl('_',bNum)),bold=T, color="white",background="salmon") %>%
-        kable_styling(latex_options="scale_down")
-    tableSum <- tableSum %>% kable_styling(position="left")
+        kable_styling("striped", position = "left") %>%
+        row_spec(which(grepl('control',bNum)), bold = TRUE, color = "white", background = "orange") %>%
+        row_spec(which(grepl('low',bNum)), bold = TRUE, color = "white", background = "salmon") %>%
+        row_spec(which(grepl('_',bNum)), bold = TRUE, color = "white", background = "salmon") %>%
+        kable_styling(latex_options = "scale_down")
+    tableSum <- tableSum %>% kable_styling(position = "left")
     return(tableSum)
 }
 
 
-GetFailedSams <- function(mnpOutTb){
+GetFailedSams <- function(mnpOutTb) {
     rNum = mnpOutTb$record_id
     low_vals <- mnpOutTb$classifier_value < 0.90
-    if(any(low_vals)){
+    if (any(low_vals)) {
         lowClassVals <- paste0("**", rNum[low_vals], "**")
         lowValScores <- mnpOutTb$classifier_value[low_vals]
         lowScoring <-  paste(lowClassVals, lowValScores, sep = ", ")
-        failedSams <- unlist(lapply(lowScoring, function(x){
+        failedSams <- unlist(lapply(lowScoring, function(x) {
             paste("<li>", x,"</li>\n")
         }))
         return(failedSams)
@@ -405,47 +407,47 @@ GetFailedSams <- function(mnpOutTb){
 }
 
 
-GetControlSam <- function(mnpOutTb){
+GetControlSam <- function(mnpOutTb) {
     tm <- mnpOutTb$tm_number
     controlSample <- paste0(tm[(which(grepl('control', mnpOutTb$b_number)))])
     if (length(controlSample) == 0) {
         controlSample <- paste0(tm[(which(grepl('control', mnpOutTb$record_id)))])
     }
     controlSample <- paste("PC Control:", paste(controlSample))
-    if(!is.null(controlSample)) {
+    if (!is.null(controlSample)) {
         conSam <- paste0('<p><h3 style="color:#3CB371">', controlSample, "</h3></p>")
         return(cat(conSam, sep = "\n\n"))
     }
 }
 
-GetNotesData <- function(xlsmSheet){
+GetNotesData <- function(xlsmSheet) {
     library("knitr");library("kableExtra");library("dplyr")
     columnCss <- "border-width:2px;border-style:solid;background-color:rgb(255,250,205);border-color:rgb(105,105,105);width:900px;"
     rwcss <- "color:white;text-align:center;font-weight:bold;border-color:rgb(105,105,105);background-color:rgb(139,69,19);"
-    noteData <- as.data.frame(readxl::read_excel(xlsmSheet, 2, "M1:M7", col_types = c("text")), row.names=NULL)
+    noteData <- as.data.frame(readxl::read_excel(xlsmSheet, 2, "M1:M7", col_types = c("text")), row.names = NULL)
     noteData <- noteData[c(!is.na(noteData[, 1]) & noteData[, 1] != 0), 1]  %>% as.data.frame
     colnames(noteData) <- "Worksheet Notes"
     noteData <- noteData %>%
-        kable("html", booktabs = T, escape = F, linesep = "") %>%
-        kable_styling("striped", full_width = F, font_size = 16, position = "left") %>%
+        kable("html", booktabs = TRUE, escape = FALSE, linesep = "") %>%
+        kable_styling("striped", full_width = FALSE, font_size = 16, position = "left") %>%
         column_spec(column = c(1), extra_css = columnCss) %>%
         row_spec(row = 0, font_size = 24, extra_css = rwcss)
-    noteData <- noteData %>% kable_styling(position="left")
+    noteData <- noteData %>% kable_styling(position = "left")
     return(noteData)
 }
 
 
-GetFixedDf <- function(sheetNamePath, runPath){
+GetFixedDf <- function(sheetNamePath, runPath) {
     if (!file.exists(sheetNamePath)) {stop("Samplesheet not found:\n", sheetNamePath)}
-    fixerrors <- read.csv(sheetNamePath, strip.white = T)
+    fixerrors <- read.csv(sheetNamePath, strip.white = TRUE)
     basePaths <- file.path(runPath, fixerrors$SentrixID_Pos)
     fixerrors$Basename <- basePaths
     return(fixerrors)
 }
 
 
-GrabTargetsDf <- function(runPath, fixerrors, samSheet = "samplesheet.csv"){
-    targets <- minfi::read.metharray.sheet(runPath, samSheet, verbose=F)
+GrabTargetsDf <- function(runPath, fixerrors, samSheet = "samplesheet.csv") {
+    targets <- minfi::read.metharray.sheet(runPath, samSheet, verbose = FALSE)
     basePaths <- file.path(runPath, fixerrors$SentrixID_Pos)
     targets$basenames <- basePaths # path/to/idat/files
     return(targets)
@@ -461,7 +463,7 @@ CheckRedCsv <- function(runID) {
     }
 }
 
-CheckParamRunID <- function(params, gb){
+CheckParamRunID <- function(params, gb) {
     defaultRunID <- paste0(basename(getwd()))
     if (is.null(params$runID)) {runID <- defaultRunID} else{runID = params$runID}
     stopifnot(!is.null(runID)); assign("runID", runID, envir = gb)
@@ -469,16 +471,16 @@ CheckParamRunID <- function(params, gb){
     return(gb$runID)
 }
 
-CheckParamBaseDir <- function(params, runID){
+CheckParamBaseDir <- function(params, runID) {
     defaultBaseDir = file.path(fs::path_home(), "Desktop", runID)
     if (is.null(params$baseDir)) {baseDir = defaultBaseDir} else{baseDir <- paste0(params$baseDir)}
-    if(!dir.exists(baseDir)){baseDir <- getwd()}
+    if (!dir.exists(baseDir)) {baseDir <- getwd()}
     return(baseDir)
 }
 
-CheckParamKnitDir <- function(params, runID){
+CheckParamKnitDir <- function(params, runID) {
     defaultRunPath = file.path("/Volumes/CBioinformatics/Methylation/Clinical_Runs", runID)
-    if(is.null(params$knitDir)){runPath <- defaultRunPath}else{runPath <- params$knitDir}
+    if (is.null(params$knitDir)) {runPath <- defaultRunPath}else{runPath <- params$knitDir}
     return(runPath)
 }
 
@@ -497,7 +499,7 @@ MsgFailedSams <- function(failedSams) {
 
 MsgFailedQCs <- function(summaryFail) {
     cat('<p class="comment" style="width:80%;"><ul>')
-    if (length(summaryFail)>0) {
+    if (length(summaryFail) > 0) {
         cat(summaryFail, sep = "\n\n")
     } else {
         cat("All samples **Passed each QC Critera**", sep = "\n\n")
@@ -521,7 +523,7 @@ FilterColNames <- function(outData, xName, yName) {
 }
 
 # FUNCTION: Merges common columns between two plot data frames
-Combine_QC_data <- function(data_1, data2){
+Combine_QC_data <- function(data_1, data2) {
     return(merge(data_1, data2, by = c("RunID", "RD-number", "B-number", "TM-number")))
 }
 
@@ -544,5 +546,5 @@ SaveQCmetrics <- function(gb, dat.mu, dat.op, dat.bs, dat.hc, dat.dp) {
     outData_DP <- FilterColNames(dat.dp, "Samples", "Pvalue")
     final_data <- Combine_QC_data(final_data, outData_DP)
 
-    write.csv(final_data, file = fileOutDir, row.names = F, quote = F)
+    write.csv(final_data, file = fileOutDir, row.names = FALSE, quote = FALSE)
 }
