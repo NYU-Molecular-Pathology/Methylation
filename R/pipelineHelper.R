@@ -905,11 +905,9 @@ merge_xlsm_redcap_data <- function(runID) {
     redCsv <- get_red_csv(runID)
     xlsm_sheet <- dir(getwd(), pattern = "*.xlsm")[1]
     import_data <- readxl::read_excel(path = xlsm_sheet, sheet = "REDCap_Import", n_max = 100)
-    cutoff_idx <- min(which(is.na(import_data$record_id))) - 1
-
-    if (length(cutoff_idx) == 0) {
-        cutoff_idx <- min(which(import_data$record_id == 0)) - 1
-    }
+    last_zero <- min(which(import_data$record_id == 0))
+    last_naVal <- suppressWarnings(min(which(is.na(import_data$record_id))))
+    cutoff_idx <- min(c(last_zero, last_naVal)) - 1
     if (length(cutoff_idx) == 0) {
         message(crayon::bgRed("ERROR Reading 'REDCap_Import' sheet in workbook:"), "\n", xlsm_sheet)
     }
