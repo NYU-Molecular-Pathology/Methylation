@@ -17,7 +17,7 @@
 
 
 ## 📖 Methylation Pipline Overview
-<img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/1bcd4fcdb6fb8c1908cb2d38fcfc7cd2ffffe8a2/screenshots/meth_pipeline_uml.png" alt="drawing" width="100%"/><br/>
+<img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/1bcd4fcdb6fb8c1908cb2d38fcfc7cd2ffffe8a2/screenshots/methylation_overview.png" alt="drawing" width="100%"/><br/>
 
 ## 💻 Essential Downloads
 You can automatically install these requirements using:
