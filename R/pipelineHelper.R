@@ -976,12 +976,11 @@ makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redca
                              logfile = "REDCapImportLog.txt")
     qcVals <- NULL
     if (skipQC == F) {
+        runID <- basename(getwd())
         CreateRedcapRecord(runID)
         generateQCreport(runID)
         qcVals <- CheckSampleQCmetrics(runID)
-
         qcVals <- gb$NameControl(qcVals, runID)
-
         redcapAPI::importRecords(rcon, qcVals, "normal", "ids",
                                  logfile = "REDCapQCimports.txt")
     }
