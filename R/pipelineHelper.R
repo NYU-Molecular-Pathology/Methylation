@@ -975,8 +975,8 @@ makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redca
     redcapAPI::importRecords(rcon, merged_data_cast, returnContent = "ids",
                              logfile = "REDCapImportLog.txt")
     qcVals <- NULL
+    runID <- basename(getwd())
     if (skipQC == F) {
-        runID <- basename(getwd())
         CreateRedcapRecord(runID)
         generateQCreport(runID)
         qcVals <- CheckSampleQCmetrics(runID)
@@ -989,6 +989,8 @@ makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redca
         redcapUp <- email <- FALSE
     }
 
+    is_test <- stringr::str_detect(basename(getwd()), pattern = "new")
+    
     if (redcapUp == TRUE) {
         file.list <- dir(getwd(), pattern = ".html", full.names = TRUE)
         gb$uploadToRedcap(file.list, F)
@@ -1002,8 +1004,10 @@ makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redca
         )
         #if (redcapUp == TRUE) final_upload_check()
         input_dir <- getwd()
-        gb$reports_to_pdf(input_dir)
-        gb$import_files_redcap(input_dir)
+        if (is_test == FALSE) {
+            gb$reports_to_pdf(input_dir)
+            gb$import_files_redcap(input_dir)
+        }
         launchEmailNotify(runID)
         check_html_file_sizes(getwd()) # checks files copied size
     }
