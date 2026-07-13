@@ -3,7 +3,6 @@
 ## Purpose: Generate PACT Consensus HTML report with given input
 ## Author: Jonathan Serrano
 ## Date Created: August 21, 2023
-## Date Modified: March 23, 2026
 ## Author: Jonathan Serrano
 ## Version: 1.0.1
 ## Copyright (c) NYULH Jonathan Serrano, 2026
@@ -110,7 +109,7 @@ msg_rsync "$HOME/Desktop/${PACT_ID}/demux-samplesheet.csv" "${WORK_DIR}"
 
 # EXECUTE: Rscripts for generating HTML Report --------------------------------
 echo -e "${BG_YLW}Checking if GOS idat files need to be copied...${NORMAL}"
-source "${SCRIPTS_DIR}"/copy_marcin_idats.sh "${RUN_ID}" "${PACT_ID}"
+( source "${SCRIPTS_DIR}"/copy_marcin_idats.sh "${RUN_ID}" "${PACT_ID}" ) || true
 
 msg_code RScript --verbose "${HOME}/MakeIndelList.R" "${PACT_ID}"
 msg_code RScript --verbose "${HOME}/hs_metric_consensus.R" "${RUN_ID}" "${PACT_ID}"
