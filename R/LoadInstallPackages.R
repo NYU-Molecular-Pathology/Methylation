@@ -9,8 +9,13 @@
 # Define the specific versions and install params
 snapshot_date <- "2025-05-01"
 
-ncpus <- max(1L, as.integer(system("sysctl -n hw.ncpu", intern = TRUE)) - 1L)
-options(Ncpus = ncpus)
+ncpus <- parallel::detectCores(logical = TRUE)
+
+if (is.na(ncpus) || ncpus < 1L) {
+    ncpus <- 1L
+}
+
+options(Ncpus = max(1L, ncpus - 1L))
 
 if (!"BiocManager" %in% rownames(installed.packages())) {
     install.packages("BiocManager", ask = FALSE, dependencies = TRUE)
@@ -34,13 +39,25 @@ getBrewDir <- function(module_name) tryCatch(
     warning = function(e) NULL
 )
 
-proj_path <- getBrewDir("proj")
-sqli_path <- getBrewDir("sqlite")
-uniD_path <- file.path(cbioLn, "UniD")
+if (Sys.info()[["sysname"]] == "Darwin") {
+    proj_path <- getBrewDir("proj")
+    sqli_path <- getBrewDir("sqlite")
 
-Sys.setenv(PROJ_LIBS = file.path(proj_path, "lib"))
-Sys.setenv(SQLITE3_LIBS = file.path(sqli_path, "lib"))
-typeSrc <- "binary"
+    if (length(proj_path) == 1L) {
+        Sys.setenv(PROJ_LIB = file.path(proj_path, "share", "proj"))
+    }
+
+    if (length(sqli_path) == 1L) {
+        Sys.setenv(SQLITE3_LIBS = file.path(sqli_path, "lib"))
+    }
+} else {
+    proj_path <- "/usr/share/proj"
+    sqli_path <- "/usr/lib/x86_64-linux-gnu"
+
+    Sys.setenv(PROJ_LIB = proj_path, SQLITE3_LIBS = sqli_path)
+}
+
+typeSrc <- "source"
 classPacks <- c(
     mgmtstp27 = "https://github.com/badozor/mgmtstp27/raw/master/archive/mgmtstp27_0.6-3.tar.gz",
     mnpqc = paste0(file.path(cbioLn, "mnpqc_0.1.0.tar.gz"))
