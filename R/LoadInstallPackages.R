@@ -14,7 +14,7 @@ core_deps <- c("Depends", "Imports", "LinkingTo")
 install_params <- list(dependencies = c("Depends", "Imports", "LinkingTo"),
                        clean = TRUE, ask = FALSE, INSTALL_opts = "--no-multiarch")
 
-utils::assignInNamespace("interactive", function() FALSE, ns = "base")
+interactive <- function() FALSE
 
 utils::assignInNamespace("install.packages", function(...) do.call(
     utils::install.packages, utils::modifyList(install_params, list(...))), ns = "utils")
