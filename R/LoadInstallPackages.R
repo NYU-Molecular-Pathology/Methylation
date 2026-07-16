@@ -6,31 +6,80 @@
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2026
 
-# Define the specific versions and install params
-snapshot_date <- "2025-05-01"
 
-ncpus <- parallel::detectCores(logical = TRUE)
+ncpus <- suppressWarnings(try(parallel::detectCores(logical = TRUE), silent = TRUE))
+if (inherits(ncpus, "try-error") || length(ncpus) != 1L || is.na(ncpus) || ncpus < 1L) ncpus <- 1L
 
-if (is.na(ncpus) || ncpus < 1L) {
-    ncpus <- 1L
+core_deps <- c("Depends", "Imports", "LinkingTo")
+install_params <- list(dependencies = c("Depends", "Imports", "LinkingTo"),
+                       clean = TRUE, ask = FALSE, INSTALL_opts = "--no-multiarch")
+
+utils::assignInNamespace("interactive", function() FALSE, ns = "base")
+
+utils::assignInNamespace("install.packages", function(...) do.call(
+    utils::install.packages, utils::modifyList(install_params, list(...))), ns = "utils")
+
+http_user_agent <- sprintf("R/%s R (%s; %s; %s)", getRversion(), R.version$platform,
+                           R.version$arch, R.version$os)
+
+options(
+    repos = c(CRAN = "https://posit.co"),
+    BioC_mirror = "https://bioconductor.org",
+    Ncpus = max(1L, ncpus - 1L),
+    timeout = 1200L,
+    askYesNo = function(...) { return(FALSE) },
+    download.file.method = "libcurl",
+    HTTPUserAgent = http_user_agent,
+    device.ask.default = FALSE,
+    install.packages.compile.from.source = "never",
+    install.packages.check.source = "no",
+    needs.promptUser = FALSE,
+    promptUser = FALSE,
+    needs.auto = TRUE,
+    warn = 1L
+)
+
+Sys.setenv(
+    R_REMOTES_NO_ERRORS_FROM_WARNINGS = "true",
+    BIOCONDUCTOR_ONLINE_VERSION_DIAGNOSIS = "TRUE",
+    PAK_NO_UPDATE_MESSAGE = "true",
+    LIBARROW_BINARY = "FALSE",
+    LIBARROW_BUILD = "FALSE",
+    ARROW_USE_PKG_CONFIG = "TRUE",
+    NOT_CRAN = "FALSE",
+    ARROW_R_DEV = "TRUE"
+)
+
+if (!interactive()) Sys.setenv(RGL_USE_NULL = "true", TORCH_INSTALL = "1")
+if (identical(R.version$os, "linux-gnu")) Sys.setenv(DEBIAN_FRONTEND = "noninteractive")
+
+# Checks if a package is installed
+not_installed <- function(pkgName) return(!pkgName %in% rownames(installed.packages()))
+
+# Installs package if missing
+check_install <- function(pkgs) {
+    for (pkg in pkgs) if (not_installed(pkg)) install.packages(pkg, ask = FALSE, install_params)
 }
 
-options(Ncpus = max(1L, ncpus - 1L))
-
-if (!"BiocManager" %in% rownames(installed.packages())) {
-    install.packages("BiocManager", ask = FALSE, dependencies = TRUE)
+# Loads a library if not in current NameSpace
+load_lib <- function(pkg, loaded = FALSE) {
+    lib_opts <- list(package = pkg, character.only = TRUE, verbose = FALSE, logical.return = TRUE)
+    if (!pkg %in% loadedNamespaces()) {
+        loaded <- suppressPackageStartupMessages(do.call(library, c(lib_opts)))
+    }
+    return(message(pkg, " ...loaded ", loaded))
 }
 
-bioc_version  <- paste0(BiocManager::version())
+core_pkgs <- c("devtools", "remotes", "BiocManager", "pak")
+check_install(core_pkgs)
+invisible(lapply(core_pkgs, load_lib))
 
-suppressMessages(options(
-    download.file.method = "curl",
-    repos = c(BiocManager::repositories(version = bioc_version))
-))
+bioc_params <- list(dependencies = core_deps, clean = TRUE, INSTALL_opts = "--no-multiarch",
+                    ask = FALSE, update = FALSE)
+utils::assignInNamespace("install", function(...) do.call(
+    BiocManager::install, utils::modifyList(bioc_params, list(...))), ns = "BiocManager")
 
-cbioLn <- "/Volumes/CBioinformatics/Methylation/classifiers"
-epicV2script <-
-    "/Volumes/CBioinformatics/Methylation/Rscripts/install_epic_v2_classifier.R"
+suppressMessages(pak::repo_add(.list = as.list(suppressMessages(BiocManager::repositories()))))
 
 # Function: Returns the directory where brew is installed if not then NULL ----
 getBrewDir <- function(module_name) tryCatch(
@@ -39,33 +88,32 @@ getBrewDir <- function(module_name) tryCatch(
     warning = function(e) NULL
 )
 
+proj_path <- "/usr/share/proj"
+sqli_path <- "/usr/lib/x86_64-linux-gnu"
+
 if (Sys.info()[["sysname"]] == "Darwin") {
-    proj_path <- getBrewDir("proj")
-    sqli_path <- getBrewDir("sqlite")
-
-    if (length(proj_path) == 1L) {
-        Sys.setenv(PROJ_LIB = file.path(proj_path, "share", "proj"))
+    proj_path_mac <- getBrewDir("proj")
+    sqli_path_mac <- getBrewDir("sqlite")
+    if (length(proj_path_mac) == 1L) {
+        Sys.setenv(PROJ_LIB = file.path(proj_path_mac, "share", "proj"))
     }
-
-    if (length(sqli_path) == 1L) {
-        Sys.setenv(SQLITE3_LIBS = file.path(sqli_path, "lib"))
+    if (length(sqli_path_mac) == 1L) {
+        Sys.setenv(SQLITE3_LIBS = file.path(sqli_path_mac, "lib"))
     }
 } else {
-    proj_path <- "/usr/share/proj"
-    sqli_path <- "/usr/lib/x86_64-linux-gnu"
-
     Sys.setenv(PROJ_LIB = proj_path, SQLITE3_LIBS = sqli_path)
 }
 
-typeSrc <- "source"
+# Custom packages and installer scripts -----------------------------------------------------------
+cbioLn <- "/Volumes/CBioinformatics/Methylation/classifiers"
+epicV2script <-
+    "/Volumes/CBioinformatics/Methylation/Rscripts/install_epic_v2_classifier.R"
 classPacks <- c(
     mgmtstp27 = "https://github.com/badozor/mgmtstp27/raw/master/archive/mgmtstp27_0.6-3.tar.gz",
     mnpqc = paste0(file.path(cbioLn, "mnpqc_0.1.0.tar.gz"))
 )
 
-if (Sys.info()[['sysname']] != "Darwin") {typeSrc <- "source"}
-
-# Cran Packages ---------------------------------------------------------------
+# Cran Packages -----------------------------------------------------------------------------------
 cranPkgs <- c(
     # Fundamental utilities and core dependencies
     "Rcpp",
@@ -179,49 +227,25 @@ extraPks <- c(
 )
 
 # Helper Functions ------------------------------------------------------------
-
-# Loads a library if not in current NameSpace
-load_lib <- function(libName) {
-    lib.opts <- list(package = libName, character.only = T, verbose = F)
-    if (!libName %in% loadedNamespaces()) {
-        suppressPackageStartupMessages(do.call(library, c(lib.opts)))
-    }
-    message(libName, " ...load successful")
-}
-
-# Checks if a package is installed
-not_installed <- function(pkgName) return(!pkgName %in% rownames(installed.packages()))
+check_pak <- function(pkg) { if (not_installed(pkg)) pak::pkg_install(pkg, ask = FALSE) }
 
 # FUNC: Installs package from github link
 gh.inst <- function(git_repo, ...) {
-    pkg <- basename(git_repo)
-    message("Checking ", pkg, "...")
-
-    if (not_installed(pkg)) {
+    if (not_installed(basename(git_repo))) {
         tryCatch(
-            devtools::install_github(
-                repo = git_repo,
-                dependencies = TRUE,
-                upgrade = "never",
-                type = "source",
-                ...
-            ),
-            error = function(e) {
-                message("GitHub package could not install from repo:", git_repo)
-            }
+            pak::pak(repo = git_repo, dependencies = core_deps, ask = FALSE, ...),
+            error = function(e) message("GitHub package could not install from repo:", git_repo)
         )
     }
-
-    load_lib(pkg)
+    load_lib(basename(git_repo))
 }
 
 # FUNC: Installs package from Source link
 source_inst <- function(pkg) {
-    message("Checking ", names(pkg), "...")
     if (not_installed(names(pkg))) {
-        params <- list(pkgs = pkg[[1]], repos = NULL, type = "source", dependencies = T)
+        params <- list(pkgs = pkg[[1]], repos = NULL, type = "source", dependencies = core_deps)
         tryCatch(
-            do.call(install.packages, c(params, Ncpus = 6)),
+            do.call(install.packages, c(params)),
             error = function(cond) {
                 do.call(install.packages, c(params, method = "libcurl"))
             },
@@ -234,30 +258,23 @@ source_inst <- function(pkg) {
 }
 
 # FUNC: Installs package from Bioconductor
-bio_install <- function(pknm) {
-    message("Checking ", pknm, "...")
-    bio.opt <- list(pkgs = pknm, update = F, ask = FALSE, dependencies = T)
-    if (not_installed(pknm)) {
+bio_install <- function(pkg) {
+    if (not_installed(pkg)) {
         tryCatch(
-            do.call(BiocManager::install, c(bio.opt)),
-            error = function(cond) {
-                message(cond)
-                pak::pkg_install(pknm, ask = FALSE)
-            }
-        )
+            BiocManager::install(pkg),
+            error = function(cond) pak::pkg_install(pkg, ask = FALSE)
+            )
     }
-    load_lib(pknm)
+    load_lib(pkg)
 }
 
 # FUNC: Installs and updates autoloading of the needs package
 manage_needs <- function() {
     # Install Needs
     tryCatch(
-        install.packages("needs", dependencies = TRUE, verbose = TRUE,
-                         Ncpus = 4, ask = FALSE, type = "binary"),
+        pak::pkg_install("needs", ask = FALSE),
         error = function(cond) {
-            devtools::install_github("joshkatz/needs", ref = "development",
-                                     dependencies = TRUE, verbose = TRUE)
+            pak::pak("joshkatz/needs", ask = FALSE, dependencies = core_deps)
         }
     )
     # Configure Needs
@@ -273,7 +290,7 @@ manage_needs <- function() {
     profPath <- Sys.getenv("R_PROFILE", unset = NA)
     siteProf <- ifelse(is.na(profPath) || profPath == "",
                        file.path(Sys.getenv("HOME"), "Rprofile.site"), profPath
-                       )
+    )
     if (!file.exists(siteProf)) try(file.create(siteProf), silent = TRUE)
     if (file.exists(siteProf)) {
         lines <- readLines(siteProf, warn = FALSE)
@@ -285,36 +302,7 @@ manage_needs <- function() {
 
 # FUNC: ensures the main package installers are loaded
 loadMainPkgs <- function() {
-    cpus = as.integer(system("sysctl -n hw.logicalcpu", intern = TRUE))
-    options(Ncpus = cpus - 2)
 
-    if (not_installed("devtools")) install.packages("devtools", dependencies = TRUE, ask = FALSE)
-    if (not_installed("BiocManager")) install.packages("BiocManager", dependencies = TRUE, ask = FALSE)
-    load_lib("devtools")
-    load_lib("BiocManager")
-
-    if (not_installed("zip")) install.packages("zip", dependencies = TRUE, ask = FALSE)
-    load_lib("zip")
-
-    if (not_installed("pak")) install.packages("pak", type = "binary", ask = FALSE, dependencies = T)
-    library("pak")
-    # CRAN from PPM snapshot (compact spec), Bioconductor official URLs
-    suppressMessages(
-        pak::repo_add(CRAN = sprintf("PPM@%s", snapshot_date))
-    )
-    
-    # Supply Bioconductor repos explicitly
-    bioc_repos <- BiocManager::repositories(version = bioc_version)
-    bioc_repos <- bioc_repos[!names(bioc_repos) %in% c("CRAN")]
-    suppressMessages(pak::repo_add(.list = as.list(bioc_repos)))
-
-    if (not_installed("needs")) manage_needs()
-    options(needs.promptUser = FALSE)
-    options(promptUser = FALSE)
-    options(device.ask.default = FALSE)
-    options(install.packages.check.source = "yes")
-    gh.inst("jakesherman/easypackages")
-    if (not_installed("tidyverse")) pak::pkg_install("tidyverse", ask = FALSE)
 }
 
 # FUNC: Applies each function install type (Github, CRAN, BioConductor)
@@ -326,14 +314,17 @@ load_install_pkgs <- function(pkgList, instFun) {
 install_minfi <- function() {
     if (isNamespaceLoaded("minfi")) try(unloadNamespace("minfi"), silent = TRUE)
     if (not_installed("IlluminaHumanMethylationEPICv2manifest"))
-        devtools::install_github("mwsill/IlluminaHumanMethylationEPICv2manifest", upgrade = "always", force = T, dependencies = T)
-    devtools::install_github("mwsill/minfi", upgrade = "never", force = T, dependencies = T)
+        pak::pak("mwsill/IlluminaHumanMethylationEPICv2manifest",
+                 upgrade = FALSE, ask = FALSE, dependencies = core_deps)
+    pak::pak("mwsill/minfi", upgrade = FALSE, ask = FALSE, dependencies = core_deps)
 }
 
 # FUNC: Checks if the package in the input list is already installed
 checkNeeded <- function(pkgList) {
     neededPkgs <- pkgList[!pkgList %in% rownames(installed.packages())]
-    return(neededPkgs)
+    if (length(neededPkgs) > 0) {
+        pak::pkg_install(neededPkgs, ask = FALSE)
+    }
 }
 
 # FUNC: Ensures correct version of Plotly to avoid issues loading ggplot2
@@ -344,81 +335,72 @@ check_plotly <- function(){
         if ("package:plotly" %in% search()) {
             try(detach("package:plotly", unload = TRUE, character.only = TRUE), TRUE)
         }
-        if ("plotly" %in% loadedNamespaces()) {
-            try(unloadNamespace("plotly"), TRUE)
-        }
-        library(pak)
-        pak::pkg_install("plotly", upgrade = TRUE, ask = FALSE, dependencies = TRUE)
+        if ("plotly" %in% loadedNamespaces()) try(unloadNamespace("plotly"), TRUE)
+        library("pak")
+        pak::pkg_install("plotly", upgrade = TRUE, ask = FALSE, dependencies = core_deps)
     }
 }
 
 # FUNC: Loads the list of packages from CRAN, GitHub, and BioConductor needed
-loadPacks <- function() {
-    loadMainPkgs()
+load_packages <- function() {
+    if (not_installed("zip")) install.packages("zip", dependencies = core_deps, ask = FALSE)
+    load_lib("zip")
 
-    neededPkgs <- checkNeeded(cranPkgs)
-    if (length(neededPkgs) > 0) pak::pkg_install(neededPkgs, ask = FALSE)
+    if (not_installed("needs")) manage_needs() else invisible(needs:::autoload(TRUE))
+    gh.inst("jakesherman/easypackages")
+    check_install("tidyverse")
+
+    checkNeeded(cranPkgs)
 
     if (not_installed("mdthemes")) {
-        remotes::install_github("thomas-neitmann/mdthemes", upgrade = "never")
+        remotes::install_github("thomas-neitmann/mdthemes", upgrade = "never", ask = FALSE)
     }
-  
+
     if (not_installed("minfi")) install_minfi()
 
     load_install_pkgs(gHubPkgs, gh.inst)
 
     if (not_installed("MethylAid")) {
         tryCatch(
-            BiocManager::install("MethylAid", dependencies = T, ask = FALSE, update = F),
+            BiocManager::install("MethylAid", dependencies = core_deps, ask = FALSE, update = F),
             error = function(e) pak::pkg_install("MethylAid", ask = FALSE)
         )
     }
     check_plotly()
-    neededPkgs <- checkNeeded(biocPkgs)
-    if (length(neededPkgs) > 0) pak::pkg_install(neededPkgs, ask = FALSE)
+    checkNeeded(biocPkgs)
 
     suppressWarnings(load_install_pkgs(biocPkgs, bio_install))
 
     if (as.character(utils::packageVersion("minfi")) != "1.43.1") install_minfi()
-    if (not_installed("librarian")) install.packages("librarian", dependencies = T, ask = FALSE)
+    if (not_installed("librarian")) install.packages("librarian")
 
-    neededPkgs <- checkNeeded(extraPks)
-    if (length(neededPkgs) > 0) pak::pkg_install(neededPkgs, ask = FALSE)
-
-    load_lib('grid')
-    load_lib("pals")
-    load_lib("stringr")
+    checkNeeded(extraPks)
+    invisible(lapply(c('grid', 'pals', 'stringr'), load_lib))
 }
 
 # FUNC: Ensures the network drives are mounted
 checkMounts <- function() {
     paths <- c("/Volumes/CBioinformatics/" = "CBioinformatics", "/Volumes/molecular/Molecular" = "Molecular")
-    missingPaths <- names(paths)[!dir.exists(names(paths))]
-    if (length(missingPaths) > 0)
-        stop("You do not have the following drives mounted:\n",
-                paste(missingPaths, collapse = "\n"))
+    missed_dir <- names(paths)[!dir.exists(names(paths))]
+    if (length(missed_dir) > 0)
+        stop("You do not have the following drives mounted:\n", paste(missed_dir, collapse = "\n"))
 }
 
-# FUNC: Ensures the latest classifier version is installed
-checkEpicV2 <- function(pkg, epicV2script) {
-    if (pkg %in% rownames(installed.packages())) {
-        message(paste("Package", pkg, "is installed with version:", utils::packageVersion(pkg)))
+
+# MAIN: Loads all packages and functions --------------------------------------
+startLoadingAll <- function() {
+    message("Your R library path(s):\n", paste(.libPaths(), collapse = "\n"))
+    if (Sys.info()[["sysname"]] == "Darwin") { checkMounts() }
+    load_packages()
+    suppressWarnings(load_install_pkgs(classPacks, source_inst))
+
+    mnp <- "mnp.v12epicv2"
+    if (mnp %in% rownames(installed.packages())) {
+        message(paste("Package", mnp, "is installed with version:", utils::packageVersion(mnp)))
     } else{
         message("Installing package from source:\n", epicV2script)
         source(epicV2script)
     }
 }
 
-# MAIN: Loads all packages and functions --------------------------------------
-startLoadingAll <- function(typeSrc, epicV2script) {
-    message("Your R library path(s):\n", paste(.libPaths(), collapse = "\n"))
-    if (Sys.info()[["sysname"]] == "Darwin") { checkMounts() }
-    library("base")
-    Sys.setenv(TORCH_INSTALL = "1")
-    options(needs.auto = TRUE)
-    loadPacks()
-    suppressWarnings(load_install_pkgs(classPacks, source_inst))
-    checkEpicV2("mnp.v12epicv2", epicV2script)
-}
-
-startLoadingAll(typeSrc, epicV2script)
+startLoadingAll()
