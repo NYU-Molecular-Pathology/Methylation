@@ -6,19 +6,13 @@
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2026
 
-
 ncpus <- suppressWarnings(try(parallel::detectCores(logical = TRUE), silent = TRUE))
 if (inherits(ncpus, "try-error") || length(ncpus) != 1L || is.na(ncpus) || ncpus < 1L) ncpus <- 1L
 
 core_deps <- c("Depends", "Imports", "LinkingTo")
-install_params <- list(dependencies = c("Depends", "Imports", "LinkingTo"),
-                       clean = TRUE, ask = FALSE, INSTALL_opts = "--no-multiarch")
-
+install_params <- list(dependencies = core_deps, clean = TRUE, ask = FALSE,
+                       INSTALL_opts = "--no-multiarch")
 interactive <- function() FALSE
-
-utils::assignInNamespace("install.packages", function(...) do.call(
-    utils::install.packages, utils::modifyList(install_params, list(...))), ns = "utils")
-
 http_user_agent <- sprintf("R/%s R (%s; %s; %s)", getRversion(), R.version$platform,
                            R.version$arch, R.version$os)
 
@@ -58,7 +52,7 @@ not_installed <- function(pkgName) return(!pkgName %in% rownames(installed.packa
 
 # Installs package if missing
 check_install <- function(pkgs) {
-    for (pkg in pkgs) if (not_installed(pkg)) install.packages(pkg, ask = FALSE, install_params)
+    for (pkg in pkgs) if (not_installed(pkg)) do.call(install.packages, c(pkg, install_params))
 }
 
 # Loads a library if not in current NameSpace
@@ -123,16 +117,16 @@ cranPkgs <- c(
     "R.utils",
     "future.apply",
     "fastmatch",
-
+    
     # Development tools
     "devtools",
     "usethis",
-
+    
     # Data manipulation and transformation
     "data.table",
     "reshape2",
     "stringr",
-
+    
     # Plotting and graphics
     "ggplot2",
     "scales",
@@ -142,18 +136,18 @@ cranPkgs <- c(
     "ggrepel",
     "gplots",
     "plotly",
-
+    
     # Reporting and document generation
     "knitr",
     "kableExtra",
     "xtable",
     "pander",
-
+    
     # Web and interactive tools
     "htmltools",
     "webshot",
     "DT",
-
+    
     # Miscellaneous tools and specialized packages
     "sjmisc",
     "qdapTools",
@@ -186,17 +180,17 @@ biocPkgs <- c(
     "GenomeInfoDb",
     "MatrixGenerics",
     "rngtools",
-
+    
     # Data acquisition and storage
     "GEOquery",
     "HDF5Array",
-
+    
     # Illumina methylation annotations
     "IlluminaHumanMethylation450kmanifest",
     "IlluminaHumanMethylation450kanno.ilmn12.hg19",
     "IlluminaHumanMethylationEPICmanifest",
     "IlluminaHumanMethylationEPICanno.ilm10b4.hg19",
-
+    
     # Methylation data processing
     "lumi",
     "methylumi",
@@ -263,7 +257,7 @@ bio_install <- function(pkg) {
         tryCatch(
             BiocManager::install(pkg),
             error = function(cond) pak::pkg_install(pkg, ask = FALSE)
-            )
+        )
     }
     load_lib(pkg)
 }
@@ -302,7 +296,7 @@ manage_needs <- function() {
 
 # FUNC: ensures the main package installers are loaded
 loadMainPkgs <- function() {
-
+    
 }
 
 # FUNC: Applies each function install type (Github, CRAN, BioConductor)
@@ -330,7 +324,7 @@ checkNeeded <- function(pkgList) {
 # FUNC: Ensures correct version of Plotly to avoid issues loading ggplot2
 check_plotly <- function(){
     plotly_version <- package_version("4.10.4")
-
+    
     if (packageVersion("plotly") < plotly_version) {
         if ("package:plotly" %in% search()) {
             try(detach("package:plotly", unload = TRUE, character.only = TRUE), TRUE)
@@ -343,23 +337,23 @@ check_plotly <- function(){
 
 # FUNC: Loads the list of packages from CRAN, GitHub, and BioConductor needed
 load_packages <- function() {
-    if (not_installed("zip")) install.packages("zip", dependencies = core_deps, ask = FALSE)
+    check_install("zip")
     load_lib("zip")
-
+    
     if (not_installed("needs")) manage_needs() else invisible(needs:::autoload(TRUE))
     gh.inst("jakesherman/easypackages")
     check_install("tidyverse")
-
+    
     checkNeeded(cranPkgs)
-
+    
     if (not_installed("mdthemes")) {
         remotes::install_github("thomas-neitmann/mdthemes", upgrade = "never", ask = FALSE)
     }
-
+    
     if (not_installed("minfi")) install_minfi()
-
+    
     load_install_pkgs(gHubPkgs, gh.inst)
-
+    
     if (not_installed("MethylAid")) {
         tryCatch(
             BiocManager::install("MethylAid", dependencies = core_deps, ask = FALSE, update = F),
@@ -368,12 +362,12 @@ load_packages <- function() {
     }
     check_plotly()
     checkNeeded(biocPkgs)
-
+    
     suppressWarnings(load_install_pkgs(biocPkgs, bio_install))
-
+    
     if (as.character(utils::packageVersion("minfi")) != "1.43.1") install_minfi()
-    if (not_installed("librarian")) install.packages("librarian")
-
+    check_install("librarian")
+    
     checkNeeded(extraPks)
     invisible(lapply(c('grid', 'pals', 'stringr'), load_lib))
 }
@@ -386,14 +380,13 @@ checkMounts <- function() {
         stop("You do not have the following drives mounted:\n", paste(missed_dir, collapse = "\n"))
 }
 
-
 # MAIN: Loads all packages and functions --------------------------------------
 startLoadingAll <- function() {
     message("Your R library path(s):\n", paste(.libPaths(), collapse = "\n"))
     if (Sys.info()[["sysname"]] == "Darwin") { checkMounts() }
     load_packages()
     suppressWarnings(load_install_pkgs(classPacks, source_inst))
-
+    
     mnp <- "mnp.v12epicv2"
     if (mnp %in% rownames(installed.packages())) {
         message(paste("Package", mnp, "is installed with version:", utils::packageVersion(mnp)))
