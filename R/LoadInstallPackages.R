@@ -340,7 +340,7 @@ load_packages <- function() {
     check_install("zip")
     load_lib("zip")
     
-    if (not_installed("needs")) manage_needs() else invisible(needs:::autoload(TRUE))
+    if (not_installed("needs")) manage_needs() else try(invisible(needs:::autoload(TRUE)), silent = TRUE)
     gh.inst("jakesherman/easypackages")
     check_install("tidyverse")
     
