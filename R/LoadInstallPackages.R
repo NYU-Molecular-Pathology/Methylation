@@ -17,7 +17,7 @@ http_user_agent <- sprintf("R/%s R (%s; %s; %s)", getRversion(), R.version$platf
                            R.version$arch, R.version$os)
 
 options(
-    repos = c(CRAN = "https://posit.co"),
+    repos = c(CRAN = "https://cloud.r-project.org"),
     BioC_mirror = "https://bioconductor.org",
     Ncpus = max(1L, ncpus - 1L),
     timeout = 1200L,
