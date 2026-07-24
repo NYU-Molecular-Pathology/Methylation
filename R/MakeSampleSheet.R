@@ -349,7 +349,7 @@ checkSampleSheet <- function(df) {
 
     checkForIssues(missingName, missMsg, df[, c(1, 3, 8:11)])
 
-    dupes <- duplicated(df$Sample_Name)
+    dupes <- duplicated(df$Sample_Name) & df$Sample_Name != "FILLER"
     dupeMsg <-
         "Duplicated sample name found: check df$Sample_Name in samplesheet.csv"
     checkForIssues(dupes, dupeMsg, df[, c(1, 3, 8:11)])
