@@ -357,7 +357,7 @@ checkSampleSheet <- function(df) {
         stop("Error: The first item should be 'control', not 'Control'.")
     }
 
-    missingControls <- stringr::str_count(df$Sample_Name, "control|RD-") == 0
+    missingControls <- stringr::str_count(df$Sample_Name, "FILLER|control|RD-") == 0
     rd_msg <-
         "Some samples are missing RD-numbers or a control! Check Sample_Name in samplesheet.csv"
     checkForIssues(missingControls, rd_msg, df[, c(1, 3, 8:11)])
