@@ -234,17 +234,64 @@ checkMounts <- function() {
 # API Call functions -----
 grabAllRecords <- function(flds, rcon) {
     message("Pulling REDCap data...")
-    ids <- redcapAPI::exportRecordsTyped(
-        rcon = rcon,
-        fields = "record_id",
-        survey = FALSE,
-        dag = FALSE,
-        factors = FALSE,
-        form_complete_auto = FALSE
+    ids <- jsonlite::fromJSON(
+        httr::content(
+            httr::POST(
+                rcon$url,
+                body = list(
+                    token = rcon$token,
+                    content = "record",
+                    action = "export",
+                    format = "json",
+                    type = "flat",
+                    "fields[0]" = "record_id",
+                    rawOrLabel = "raw",
+                    exportSurveyFields = "false",
+                    exportDataAccessGroups = "false",
+                    returnFormat = "json"
+                ),
+                encode = "form"
+            ),
+            as = "text",
+            encoding = "UTF-8"
+        )
     )
+
     rd_ids <- ids$record_id[startsWith(ids$record_id, "RD-")]
-    dbCols <- redcapAPI::exportRecordsTyped(rcon, records = rd_ids, fields = flds, survey = FALSE, dag = FALSE,
-                                            factors = FALSE, form_complete_auto = FALSE)
+
+    response <- httr::POST(
+        rcon$url,
+        body = c(
+            list(
+                token = rcon$token,
+                content = "record",
+                action = "export",
+                format = "json",
+                type = "flat",
+                rawOrLabel = "raw",
+                exportSurveyFields = "false",
+                exportDataAccessGroups = "false",
+                returnFormat = "json"
+            ),
+            stats::setNames(
+                as.list(rd_ids),
+                sprintf("records[%d]", seq_along(rd_ids) - 1L)
+            ),
+            stats::setNames(
+                as.list(flds),
+                sprintf("fields[%d]", seq_along(flds) - 1L)
+            )
+        ),
+        encode = "form"
+    )
+
+    httr::stop_for_status(response)
+
+    dbCols <- jsonlite::fromJSON(
+        httr::content(response, "text", encoding = "UTF-8")
+    )
+
+
     db <- as.data.frame(dbCols)
     if (nrow(db) == 0) {
         message("REDCap API connection failed!\n",
