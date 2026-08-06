@@ -34,8 +34,8 @@ redcap_fields <- c(
 
 main_pkgs <- c(
     "data.table", "openxlsx", "jsonlite", "RCurl", "readxl",
-   "stringr", "tidyverse", "crayon", "tinytex", "systemfonts",
-   "remotes", "dplyr", "fs", "httr"
+    "stringr", "tidyverse", "crayon", "tinytex", "systemfonts",
+    "remotes", "dplyr", "fs"
 )
 
 # Message Inputs --------------------------------------------------------------
@@ -393,7 +393,10 @@ getCaseValues <- function(PACT_INPUT, readFlag) {
     # Default case: PACT_INPUT is a PACT ID, get the file path
     message("Parsing Data from PACT RUN ID: ", PACT_INPUT,
             " finding run worksheet...")
+
+
     pact_sheet <- getFilePath(PACT_INPUT)
+
     if (grepl("\\.csv$", pact_sheet)) {
         vals2find <- parseDemuxCsv(pact_sheet)
     } else{
@@ -867,12 +870,77 @@ process_values <- function(vals2find, db) {
 }
 
 
+getExcelPath <- function(PACT_INPUT) {
+    if (stringr::str_detect(PACT_INPUT, .Platform$file.sep)) return(PACT_INPUT)
+
+    runType <- ifelse(stringr::str_detect(PACT_INPUT, "^\\d{2}"),
+                      "Sophia", "regular")
+
+    lab_only = file.path("", "Volumes", "molecular", "MOLECULAR LAB ONLY")
+    folder = file.path("NYU PACT Patient Data", "Workbook")
+
+    run_year <- stringr::str_split_fixed(PACT_INPUT, "-", 3)[, 2]
+    if (runType == "Sophia") {
+        run_year <- stringr::str_split_fixed(PACT_INPUT, "-", 3)[, 1]
+    }
+    yearDir <- paste0("20", run_year)
+    xlFi <- paste0(PACT_INPUT, ".xlsm")
+    worksheetPath <- file.path(lab_only, folder, yearDir, PACT_INPUT, xlFi)
+
+    if (runType == "NextSeq2000") {
+        folder <- "Validations/PACT new i7-NextSeq2000/Wet Lab/Workbook"
+        worksheetPath <- file.path(lab_only, folder, yearDir, xlFi)
+    }
+    if (runType == "test") {
+        zdrive = "/Volumes/molecular/Molecular/Validation/PACT/Test_Sheets"
+        worksheetPath <- file.path(zdrive, xlFi)
+    }
+    if (runType == "Illumina") {
+        zdrive = "/Volumes/molecular/Molecular/Validation/PACT/Test_Sheets"
+        worksheetPath <- file.path(zdrive, xlFi)
+    }
+    if (runType == "TMB") {
+        zdrive = file.path(lab_only, "Validations/TMB")
+        worksheetPath <- file.path(zdrive, xlFi)
+    }
+    if (runType == "Sophia") {
+        worksheetPath <- file.path(lab_only, folder, yearDir, PACT_INPUT, xlFi)
+        message("Run type is Sophia, looking for workbook in:")
+    }
+    message(worksheetPath)
+    return(worksheetPath)
+}
+
+
 # Grabs REDCap data and finds matches to PACT_INPUT columns to fields
 getOuputData <- function(token, redcap_fields, PACT_INPUT, readFlag) {
+
+
+    worksheetPath <- getExcelPath(PACT_INPUT)
+    all_sheets <- readxl::excel_sheets(worksheetPath)
+
+    sh_kwd <- ifelse(stringr::str_detect(PACT_INPUT, "^\\d{2}"),
+                      "Beaker", "Philips")
+
+    matched_kwd <- stringr::str_detect(pattern = sh_kwd, all_sheets)
+    sheet_name <- all_sheets[matched_kwd]
+    beaker_export <- readxl::read_xlsx(worksheetPath, sheet = sheet_name)
+
+    beaker_cols <- beaker_export[, c("Specimen ID", "MRN")]
+
+
     vals2find <- getCaseValues(PACT_INPUT, readFlag)
 
     if (class(vals2find) != "data.frame") {
         vals2find <- as.data.frame(vals2find)
+    }
+
+    vals2find$beaker_mrn <- ""
+    for (i in 1:nrow(vals2find)) {
+        curr_tm <- vals2find$`Test Number`[i]
+        match_tm <- which(beaker_cols$`Specimen ID` == curr_tm)
+        new_mrn <- beaker_cols$MRN[match_tm]
+        vals2find$beaker_mrn[i] <- new_mrn
     }
 
     message("Values from PACT demux csv used for matching to METH REDCap DB:")
@@ -929,7 +997,7 @@ source_pkg_vers <- function() {
             "/Volumes/CBioinformatics/Methylation/Rscripts/install_epic_v2_classifier.R"
         )
     }
-
+    library("readxl")
     stopifnot(library("conumee2.0", logical.return = T))
     stopifnot(library("minfi", logical.return = T))
     stopifnot(library("IlluminaHumanMethylationEPICv2manifest", logical.return = T))
