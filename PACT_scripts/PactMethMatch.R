@@ -35,7 +35,7 @@ redcap_fields <- c(
 main_pkgs <- c(
     "data.table", "openxlsx", "jsonlite", "RCurl", "readxl",
     "stringr", "tidyverse", "crayon", "tinytex", "systemfonts",
-    "remotes", "dplyr", "fs"
+    "remotes", "dplyr", "fs", "httr"
 )
 
 # Message Inputs --------------------------------------------------------------
