@@ -2,7 +2,6 @@
 ## Script name: PactMethMatch.R
 ## Purpose: search REDCap for PACT samples with methylation & generate cnv PNG
 ## Date Created: September 2, 2021
-## Date Modified March 25, 2026
 ## Version: 1.0.1
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2026
@@ -20,17 +19,24 @@ readFlag <- grepl("\\.csv$", PACT_INPUT)
 
 message(paste("Now Running $HOME/PactMethMatch.R", token, PACT_INPUT))
 
+rcon <- data.frame(token = token, url = "https://redcap.nyumc.org/apps/redcap/api/")
+MATCH_TSV = file.path(fs::path_home(), "Desktop", paste0(PACT_INPUT, "_match_log.tsv"))
+
 # REDCap Fields  --------------------------------------------------------------
 meth_repo <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation"
 cnv_outFolder = "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
 
-flds <- c("record_id", "b_number", "tm_number", "accession_number", "block",
-          "diagnosis", "organ", "tissue_comments", "run_number", "nyu_mrn",
-          "qc_passed", "arrived")
+redcap_fields <- c(
+    "record_id", "b_number", "tm_number", "accession_number", "block",
+    "diagnosis", "organ", "tissue_comments", "run_number", "nyu_mrn",
+    "qc_passed", "arrived"
+)
 
-main_pkgs <- c("data.table", "openxlsx", "jsonlite", "RCurl", "readxl",
-               "stringr", "tidyverse", "crayon", "tinytex", "systemfonts",
-               "remotes", "dplyr", "fs")
+main_pkgs <- c(
+    "data.table", "openxlsx", "jsonlite", "RCurl", "readxl",
+   "stringr", "tidyverse", "crayon", "tinytex", "systemfonts",
+   "remotes", "dplyr", "fs", "httr"
+)
 
 # Message Inputs --------------------------------------------------------------
 message("\n================ Parameters input ================\n")
@@ -116,6 +122,8 @@ get_prefix <- function(pkg = "") {
 
 # Set environment variables dynamically
 set_env_vars <- function() {
+    Sys.unsetenv(c("CC", "CXX", "OBJC", "LDFLAGS", "CPPFLAGS", "PKG_CFLAGS",
+                   "PKG_LIBS", "LD_LIBRARY_PATH", "R_LD_LIBRARY_PATH"))
     brew_prefix = get_prefix()
     llvm_path = get_prefix("llvm")
     arrow_path = get_prefix("apache-arrow")
@@ -190,33 +198,12 @@ ensure_packages <- function(pkgs) {
 # Function to setup compilers, load and install necessary packages ------------
 check_pkg_install <- function() {
     ensure_homebrew()
-    Sys.unsetenv(c("CC", "CXX", "OBJC", "LDFLAGS", "CPPFLAGS", "PKG_CFLAGS",
-                   "PKG_LIBS", "LD_LIBRARY_PATH", "R_LD_LIBRARY_PATH"))
     set_env_vars()
     ensure_packages(main_pkgs)
     if (!"mnp.v12epicv2" %in% rownames(installed.packages())) {
         devtools::source_url(file.path(meth_repo, "refs/heads/main/R/all_installer.R"))
     }
     suppressWarnings(suppressPackageStartupMessages(library("mnp.v12epicv2")))
-}
-
-
-# Check REDCap Version --------------------------------------------------------
-check_REDCap_vers <- function(min_version = "2.7.4") {
-    if (!"redcapAPI" %in% rownames(installed.packages())) {
-        devtools::install_github('nutterb/redcapAPI', dependencies = TRUE,
-                                 upgrade = "always", ask = F, type = "source")
-    }
-    current_vers <- as.character(utils::packageVersion("redcapAPI"))
-    is_current <- utils::compareVersion(current_vers, min_version) >= 0
-    if (!is_current) {
-        if ("redcapAPI" %in% loadedNamespaces()) {
-            try(unloadNamespace("redcapAPI"), TRUE)
-        }
-        devtools::install_github('nutterb/redcapAPI', dependencies = TRUE,
-                                 upgrade = "always", ask = F, type = "source")
-    }
-    suppressPackageStartupMessages(library("redcapAPI", logical.return = TRUE))
 }
 
 
@@ -232,70 +219,31 @@ checkMounts <- function() {
 
 
 # API Call functions -----
-grabAllRecords <- function(flds, rcon) {
+grabAllRecords <- function(redcap_fields) {
     message("Pulling REDCap data...")
-    ids <- jsonlite::fromJSON(
-        httr::content(
-            httr::POST(
-                rcon$url,
-                body = list(
-                    token = rcon$token,
-                    content = "record",
-                    action = "export",
-                    format = "json",
-                    type = "flat",
-                    "fields[0]" = "record_id",
-                    rawOrLabel = "raw",
-                    exportSurveyFields = "false",
-                    exportDataAccessGroups = "false",
-                    returnFormat = "json"
-                ),
-                encode = "form"
-            ),
-            as = "text",
-            encoding = "UTF-8"
-        )
-    )
 
-    rd_ids <- ids$record_id[startsWith(ids$record_id, "RD-")]
-
-    response <- httr::POST(
-        rcon$url,
-        body = c(
-            list(
-                token = rcon$token,
-                content = "record",
-                action = "export",
-                format = "json",
-                type = "flat",
-                rawOrLabel = "raw",
-                exportSurveyFields = "false",
-                exportDataAccessGroups = "false",
-                returnFormat = "json"
-            ),
-            stats::setNames(
-                as.list(rd_ids),
-                sprintf("records[%d]", seq_along(rd_ids) - 1L)
-            ),
-            stats::setNames(
-                as.list(flds),
-                sprintf("fields[%d]", seq_along(flds) - 1L)
-            )
+    url <- "https://redcap.nyumc.org/apps/redcap/api/"
+    field_list <- setNames(as.list(redcap_fields),
+                           paste0("fields[", seq_along(redcap_fields) - 1L, "]"))
+    formData <- c(
+        list(
+            token = token,content = "record",action = "export",format = "csv",type = "flat",
+            csvDelimiter = "",rawOrLabel = "raw",rawOrLabelHeaders = "raw",exportCheckboxLabel = "false",
+            exportSurveyFields = "false",exportDataAccessGroups = "false",returnFormat = "json"
         ),
-        encode = "form"
+        field_list
     )
+    response <- httr::POST(url, body = formData, encode = "form")
+    result <- httr::content(response, show_col_types = FALSE)
 
-    httr::stop_for_status(response)
+    db <- as.data.frame(result)
 
-    dbCols <- jsonlite::fromJSON(
-        httr::content(response, "text", encoding = "UTF-8")
-    )
-
-
-    db <- as.data.frame(dbCols)
     if (nrow(db) == 0) {
-        message("REDCap API connection failed!\n",
-                "Check the Database for non-ASCII characters and verify API Token: ", token)
+        message(
+            "REDCap API connection failed!\n",
+            "Check REDCap for non-ASCII characters & verify API Token: ",
+            token
+        )
         stopifnot(nrow(db) > 0)
     }
     return(db)
@@ -309,26 +257,6 @@ message_matched <- function(item, dbInfo, ngsNum, i) {
                           item, dbInfo, ngsNum, i)
     message(match_line)
     cat(match_line, file = match_log, append = TRUE, sep = "\n")
-}
-
-
-# Searches the REDCap db against the queryList of items -----------------------
-searchDb <- function(queryList, db) {
-    res <- data.frame()
-    for (idx in 1:length(queryList)) {
-        item <- queryList[idx]
-        ngsNum = paste(names(item)[1])
-        for (i in colnames(db)) {
-            ngsMatch <- which(grepl(item, db[, i]))
-            if (length(ngsMatch) > 0) {
-                message_matched(item, db[ngsMatch, i], ngsNum, i)
-                dbMatch <- db[ngsMatch,]
-                dbMatch$Test_Number <- ngsNum
-                res <- rbind(res, dbMatch)
-            }
-        }
-    }
-    return(res)
 }
 
 # Filters out workbooks from xlsx and other files that may be in the directory
@@ -435,6 +363,7 @@ parseDemuxCsv <- function(pact_sheet) {
     return(vals2find)
 }
 
+
 # Parses the input file depending on if the input is a csv file or a xlsx file path
 getCaseValues <- function(PACT_INPUT, readFlag) {
     isSamSheet <- stringr::str_detect(PACT_INPUT, "-SampleSheet")
@@ -473,31 +402,6 @@ getCaseValues <- function(PACT_INPUT, readFlag) {
     return(vals2find)
 }
 
-# Generates a query list of items to search for in the REDCap database
-genQuery <- function(dbCol, vals2find) {
-    currCol <- vals2find[, dbCol]
-    toKeep <- which(currCol != 0 & !is.na(currCol) & currCol != "")
-    q1 <- currCol[toKeep]
-    stopifnot("Test Number" %in% colnames(vals2find))
-    names(q1) <- vals2find$`Test Number`[toKeep]
-    return(q1)
-}
-
-# Queries the REDCap database for the items in the query list
-queryCases <- function(vals2find, db) {
-    # Label each item with the NGS-number
-    queryList <- unlist(lapply(1:ncol(vals2find), function(i) {
-        genQuery(i, vals2find)
-    }), use.names = TRUE)
-    theTScases <- queryList[stringr::str_detect(queryList, "TS|TB|TC")]
-    theTScases <- sapply(theTScases, function(x) {
-        paste(stringr::str_split_fixed(x, "-", 3)[1, 1:2], collapse = "-")
-    })
-    queryList <- c(queryList, theTScases)
-    queryList <- queryList[!duplicated(queryList)]
-    methQuery <- searchDb(queryList, db)
-    return(unique(methQuery))
-}
 
 # Generates the year path for the report link in the xlsx output file
 get_year_paths <- function(output) {
@@ -718,9 +622,40 @@ postData <- function(rcon, record) {
 emailFile <- function(PACT_ID, meth_xlsx, rcon) {
     record = data.frame(record_id = PACT_ID, run_number = PACT_ID)
     postData(rcon, record)
-    isDone <- redcapAPI::exportRecordsTyped(
-        rcon, factors = FALSE, records = record$record_id, fields = c("record_id", "other_file")
-        )
+    response <- httr::POST(
+        rcon$url,
+        body = c(
+            list(
+                token = rcon$token,
+                content = "record",
+                action = "export",
+                format = "json",
+                type = "flat",
+                rawOrLabel = "raw",
+                exportSurveyFields = "false",
+                exportDataAccessGroups = "false",
+                returnFormat = "json"
+            ),
+            stats::setNames(
+                as.list(record$record_id),
+                sprintf("records[%d]", seq_along(record$record_id) - 1L)
+            ),
+            stats::setNames(
+                as.list(c("record_id", "other_file")),
+                sprintf("fields[%d]", 0:1)
+            )
+        ),
+        encode = "form"
+    )
+
+    httr::stop_for_status(response)
+
+    isDone <- jsonlite::fromJSON(
+        httr::content(response, as = "text", encoding = "UTF-8"),
+        simplifyDataFrame = TRUE
+    )
+
+
     if (length(isDone$other_file) == 0) {
         import_res <- httr::POST(
             url = rcon$url,
@@ -762,6 +697,151 @@ grab_run_id <- function(readFlag, PACT_INPUT) {
 }
 
 
+generate_query_table <- function(vals2find, query_columns = NULL) {
+    stopifnot(
+        "Test Number" %in% names(vals2find),
+        all(query_columns %in% names(vals2find))
+    )
+
+    query_table <- data.frame(
+        Test_Number = rep(
+            as.character(vals2find[["Test Number"]]),
+            times = length(query_columns)
+        ),
+        query_value = unlist(
+            lapply(vals2find[query_columns], as.character),
+            use.names = FALSE
+        ),
+        stringsAsFactors = FALSE
+    )
+
+    query_table$query_value <- trimws(query_table$query_value)
+
+    keep_query <- !is.na(query_table$query_value) &
+        !(query_table$query_value %in% c("", "0"))
+
+    query_table <- query_table[keep_query, , drop = FALSE]
+
+    # Add shortened TS, TB, and TC identifiers
+    ts_rows <- grepl(
+        pattern = "^(TS|TB|TC)-[^-]+-",
+        x = query_table$query_value
+    )
+
+    ts_queries <- query_table[ts_rows, , drop = FALSE]
+    ts_queries$query_value <- sub(
+        pattern = "^((TS|TB|TC)-[^-]+)-.*$",
+        replacement = "\\1",
+        x = ts_queries$query_value
+    )
+
+    query_table <- unique(rbind(query_table, ts_queries))
+    rownames(query_table) <- NULL
+
+    return(query_table)
+}
+
+queryCases <- function(vals2find, db) {
+
+    query_columns = names(vals2find)
+    query_table <- generate_query_table(
+        vals2find = vals2find,
+        query_columns = query_columns
+    )
+
+    empty_result <- db[0L, , drop = FALSE]
+    empty_result$Test_Number <- character(0L)
+
+    if (nrow(query_table) == 0L ||
+        nrow(db) == 0L ||
+        ncol(db) == 0L) {
+        return(empty_result)
+    }
+
+    # Convert all database columns to searchable character vectors
+    db_text <- lapply(db, function(column) {
+        column <- as.character(column)
+        column[is.na(column)] <- ""
+        return(column)
+    })
+
+    match_list <- lapply(seq_len(nrow(query_table)), function(query_index) {
+        query_value <- query_table$query_value[[query_index]]
+
+        match_matrix <- do.call(
+            cbind,
+            lapply(db_text, function(column) {
+                grepl(
+                    pattern = query_value,
+                    x = column,
+                    fixed = TRUE
+                )
+            })
+        )
+
+        match_positions <- which(match_matrix, arr.ind = TRUE)
+
+        if (nrow(match_positions) == 0L) {
+            return(NULL)
+        }
+
+        matched_values <- mapply(
+            function(row_index, column_index) {
+                return(db_text[[column_index]][[row_index]])
+            },
+            match_positions[, "row"],
+            match_positions[, "col"],
+            USE.NAMES = FALSE
+        )
+
+        return(data.frame(
+            db_row = match_positions[, "row"],
+            Test_Number = query_table$Test_Number[[query_index]],
+            query_value = query_value,
+            matched_column = names(db)[match_positions[, "col"]],
+            matched_value = matched_values,
+            stringsAsFactors = FALSE
+        ))
+    })
+
+    match_info <- dplyr::bind_rows(match_list)
+
+    if (nrow(match_info) == 0L) {
+        return(empty_result)
+    }
+
+    if (!is.null(MATCH_TSV)) {
+        match_lines <- sprintf(
+            "Match found for '%s' (%s) for %s in: \"%s\" column",
+            match_info$query_value,
+            match_info$matched_value,
+            match_info$Test_Number,
+            match_info$matched_column
+        )
+
+        message(paste(match_lines, collapse = "\n"))
+        dir.create(
+            dirname(MATCH_TSV),
+            recursive = TRUE,
+            showWarnings = FALSE
+        )
+        cat(
+            match_lines,
+            file = MATCH_TSV,
+            append = TRUE,
+            sep = "\n"
+        )
+    }
+
+    output <- db[match_info$db_row, , drop = FALSE]
+    output$Test_Number <- match_info$Test_Number
+    output <- unique(output)
+    rownames(output) <- NULL
+
+    return(output)
+}
+
+
 process_values <- function(vals2find, db) {
     output <- data.frame()
 
@@ -788,18 +868,17 @@ process_values <- function(vals2find, db) {
 
 
 # Grabs REDCap data and finds matches to PACT_INPUT columns to fields
-getOuputData <- function(token, flds, PACT_INPUT, readFlag) {
-    apiUrl = "https://redcap.nyumc.org/apps/redcap/api/"
-    rcon <- redcapAPI::redcapConnection(apiUrl, token)
-
+getOuputData <- function(token, redcap_fields, PACT_INPUT, readFlag) {
     vals2find <- getCaseValues(PACT_INPUT, readFlag)
 
     if (class(vals2find) != "data.frame") {
         vals2find <- as.data.frame(vals2find)
     }
 
+    message("Values from PACT demux csv used for matching to METH REDCap DB:")
+    message(paste(capture.output(vals2find), collapse = '\n'))
     # Get entire REDCap Database matrix
-    db <- grabAllRecords(flds, rcon)
+    db <- grabAllRecords(redcap_fields)
     output <- process_values(vals2find, db)
 
     PACT_ID <- grab_run_id(readFlag, PACT_INPUT)
@@ -1056,9 +1135,8 @@ queue_cnv_maker <- function(output, token) {
 
 # MAIN Execution start -----
 check_pkg_install()
-check_REDCap_vers() # Check REDCap API version
 checkMounts()
-output <- getOuputData(token, flds, PACT_INPUT, readFlag)
+output <- getOuputData(token, redcap_fields, PACT_INPUT, readFlag)
 
 # CNV PNG Creation -------------------------------------
 if (ncol(output) > 0) {
