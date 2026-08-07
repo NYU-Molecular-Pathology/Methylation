@@ -1,5 +1,5 @@
 #!/usr/bin/env R
-## Script name: copy_idats.R
+## Script name: pullRedcap_manual.R
 ## Purpose: source global functions for copying idat using REDCap and save CSV
 ## Author: Jonathan Serrano
 ## Date Created: March 17, 2022
@@ -15,11 +15,11 @@
 # You can provide input in two ways:
 #   1. Command-line arguments: either a vector of RD-numbers (RD-12-345 ...) or a
 #      single .csv/.xlsx path whose first column lists RD-numbers.
-#   2. The DEFAULT_INPUT variable below, used when no arguments are passed.
+#   2. Edit DEFAULT_INPUT variable below, if not running from command line
 #
-# Outputs (written into OUTPUT_DIR):
+# Outputs (written into WORK_DIR):
 #   samplesheet_og.csv            - the generated sample sheet
-#   array_types_sample_sheet.csv  - detected array type per sample
+#   array_types_sample_sheet.csv  - detected array type per sample with no PHI
 #   duplicated_samples.csv        - samples flagged DUPLICATE (if any)
 #   samples_missing_sentrix.csv   - records with no Sentrix ID (if any)
 #   missing_idats_log.csv / *.txt - copy/lookup failures (if any)
@@ -31,24 +31,27 @@
 # -----------------------------------------------------------------------------
 
 # REDCap API access
-REDCAP_API_TOKEN <- "XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 REDCAP_API_URL   <- "https://redcap.nyumc.org/apps/redcap/api/"
+REDCAP_API_TOKEN <- "XXXXXXXXXXXXXXXXXXXX"
+COPY_IDATS <- TRUE
+SAVE_ARRAY_CSV <- TRUE
 
-
-# Default Directory where the sample sheet and copied idats are written
-OUTPUT_DIR <- "/Volumes/CBioinformatics/Methylation/Clinical_Runs/pull_redcap_idats"
+# Directory where the sample sheet and copied idats are written
+WORK_DIR <- '/Volumes/CBioinformatics/Methylation/Clinical_Runs/pull_redcap_idats'
+IDAT_OUTPUT <- file.path(WORK_DIR, "idats")
+CURR_DATE <- format(Sys.Date(), "%B_%d_%Y")
 
 # Manual input, used only when no command-line arguments are supplied.
 # May be a vector of RD-numbers or a path to a .csv/.xlsx file.
-DEFAULT_INPUT <- "/path/to/your/sample_list.xlsx"
+DEFAULT_INPUT <- file.path(WORK_DIR, "IDH_Val_Cases.csv")
+# c( "RD-20-123", "RD-21-123", "RD-21-456")
 
 # .idat search locations
 RESEARCH_IDAT_DIR <- "/Volumes/snudem01labspace/idats"
 CLINICAL_IDAT_DIR <- "/Volumes/molecular/MOLECULAR/iScan"
 
 # Network mount that must be available before running
-REQUIRED_MOUNT     <- "/Volumes/molecular/MOLECULAR LAB ONLY"
-REQUIRED_MOUNT_SMB <- "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular"
+CLINICAL_SMB <- "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular"
 
 # REDCap fields required to build the sample sheet
 REDCAP_FIELDS <- c(
@@ -57,51 +60,38 @@ REDCAP_FIELDS <- c(
 )
 
 # Output file names
-SAMPLESHEET_FILE  <- "samplesheet_og.csv"
+OUTPUT_CSV  <- "samplesheet_og.csv"
 ARRAY_TYPES_FILE  <- "array_types_sample_sheet.csv"
 
 # Package management
 CRAN_PACKAGES <- c(
     "data.table", "openxlsx", "jsonlite", "RCurl", "readxl",
-    "stringr", "dplyr", "crayon", "fs", "cli"
+    "stringr", "dplyr", "crayon", "fs", "cli", "httr"
 )
-MIN_REDCAPAPI_VERSION <- "2.7.4"
+
 
 # -----------------------------------------------------------------------------
 # Small helpers
 # -----------------------------------------------------------------------------
 
 #' Test whether a package is not installed
-#'
-#' @param pkg Character scalar package name.
-#' @return TRUE if the package is not installed, FALSE otherwise.
 not_installed <- function(pkg) {!pkg %in% rownames(installed.packages())}
 
-
 #' Test whether a value is usable (non-null, non-empty, non-NA, non-blank)
-#'
-#' @param x Value to validate.
-#' @return TRUE if x is a usable, non-empty value; FALSE otherwise.
 is_valid <- function(x) {!is.null(x) && length(x) > 0 && !any(is.na(x)) && all(nzchar(x))}
 
-
 #' Print a data frame as a single multi-line message
-#'
-#' @param dat Object coercible to a data frame.
-#' @return Invisibly NULL (called for the side effect of messaging).
-msg_table <- function(dat) message(paste0(capture.output(as.data.frame(dat)), collapse = "\n"))
+msg_df <- function(dat) message(paste0(capture.output(as.data.frame(dat)), collapse = "\n"))
 
+save_csv <- function(df, file_name) {
+    csv_out_path <- file.path(WORK_DIR, file_name)
+    message("Saving CSV file:\n", csv_out_path)
+    msg_df(df)
+    utils::write.csv(df, file = csv_out_path, quote = FALSE, row.names = FALSE)
+}
 
-# -----------------------------------------------------------------------------
-# Environment setup
-# -----------------------------------------------------------------------------
 
 #' Install (if needed) and load the packages required by this script
-#'
-#' Installs missing CRAN packages, ensures a recent enough redcapAPI, installs
-#' minfi from Bioconductor if absent, and attaches the packages used directly.
-#'
-#' @return Invisibly NULL.
 load_packages <- function() {
     repos <- getOption("repos")
     repos["CRAN"] <- "http://cran.us.r-project.org"
@@ -109,14 +99,8 @@ load_packages <- function() {
     
     for (pkg in CRAN_PACKAGES) {
         if (not_installed(pkg)) {
-            install.packages(pkg, dependencies = TRUE)
+            install.packages(pkg, dependencies = TRUE, ask = FALSE)
         }
-    }
-    
-    # redcapAPI must be recent enough to provide exportRecordsTyped()
-    if (not_installed("redcapAPI") ||
-        utils::packageVersion("redcapAPI") < MIN_REDCAPAPI_VERSION) {
-        install.packages("redcapAPI", dependencies = TRUE)
     }
     
     # minfi (Bioconductor) is required to read the array type from idats
@@ -126,23 +110,19 @@ load_packages <- function() {
     }
     
     suppressPackageStartupMessages({
-        library("redcapAPI")
-        library("dplyr")
+        lapply(CRAN_PACKAGES, library, character.only = TRUE, logical.return = TRUE)
     })
+    suppressPackageStartupMessages("minfi")
 }
 
 
 #' Verify the required network mount is accessible
-#'
-#' Stops execution with a clear message if the Z-drive mount is missing.
-#'
-#' @return Invisibly NULL.
 check_mounts <- function() {
-    if (!dir.exists(REQUIRED_MOUNT)) {
-        cat("\nPATH does not exist, ensure path is mounted:\n")
-        cat(crayon::white$bgRed$bold(REQUIRED_MOUNT))
-        cat("\nYou must mount the network Z-drive path:\n")
-        cat(crayon::white$bgRed$bold(REQUIRED_MOUNT_SMB), "\n")
+    if (!dir.exists(CLINICAL_IDAT_DIR)) {
+        message("\nPATH does not exist, ensure path is mounted:\n")
+        message(crayon::white$bgRed$bold(CLINICAL_IDAT_DIR))
+        message("\nYou must mount the network Z-drive path:\n")
+        message(crayon::white$bgRed$bold(CLINICAL_SMB), "\n")
         stop("Required network mount is not accessible.")
     }
     message("\n", crayon::bgGreen("Z-drive path is accessible"), "\n")
@@ -150,12 +130,20 @@ check_mounts <- function() {
 
 
 #' Switch into a directory, stopping if it does not exist
-#'
-#' @param path Directory to switch into.
-#' @return Invisibly the path.
-set_working_dir <- function(path) {
+set_work_dir <- function(path) {
     if (!dir.exists(path)) stop("Location not found: ", path)
     setwd(path)
+}
+
+
+write_log <- function(info, log_file) {
+    message(crayon::bgBlue("~~~Message logged~~~"), "\n", info)
+    message(crayon::bgGreen("To file:"), " ", log_file)
+    LOG_OUT <-  file.path(WORK_DIR, log_file)
+    utils::write.table(
+        info, file = LOG_OUT, append = TRUE, quote = FALSE,
+        sep = ",", row.names = FALSE, col.names = FALSE
+    )
 }
 
 
@@ -163,63 +151,67 @@ set_working_dir <- function(path) {
 # Input resolution
 # -----------------------------------------------------------------------------
 
-#' Read RD-numbers from the first column of a .csv or .xlsx file
-#'
-#' @param path Path to a .csv or .xlsx file.
+#' Read RD-numbers from the first column of a .csv, .tsv, or .xlsx file
 #' @return Character vector of values (NAs removed).
-read_rd_numbers <- function(path) {
-    message("input file: ", path)
-    if (endsWith(path, ".xlsx")) {
-        message("FileType is .xlsx, reading with readxl::read_excel...")
+parse_input_file <- function(raw_input) {
+    message("Input file: ", raw_input)
+    file_type <- tolower(tools::file_ext(raw_input))
+    message("file_type is: ", file_type)
+    values <- NULL
+    if (file_type == "xlsx") {
+        message("Reading sheet 1 with readxl::read_excel...")
         values <- suppressMessages(
-            readxl::read_excel(path, col_names = FALSE, sheet = 1)[[1]]
+            readxl::read_excel(raw_input, col_names = FALSE, sheet = 1)[[1]]
         )
-    } else {
-        message("FileType is .csv, reading with read.delim...")
-        values <- read.delim(
-            path, header = FALSE, sep = ",",
-            colClasses = "character", row.names = NULL
-        )[[1]]
     }
+    if (file_type == "csv") {
+        message("Reading with read.delim...")
+        values <- read.delim(raw_input, header = FALSE, sep = ",", colClasses = "character",
+                             row.names = NULL)[[1]]
+    }
+    if (file_type == "tsv") {
+        message("Reading with read.delim...")
+        values <- read.delim(raw_input, header = FALSE, colClasses = "character",
+                             row.names = NULL)[[1]]
+    }
+    stopifnot(!is.null(values))
     values <- as.character(values)
-    values[!is.na(values)]
+    values <- values[!is.na(values)]
+    return(values)
 }
 
 
-#' Resolve RD-numbers from raw input (a vector, or a single file path)
+#' Get RD-numbers from raw input (a vector, or a single file path)
 #'
-#' A multi-element input is treated as an explicit list of RD-numbers. A single
-#' element ending in .csv/.xlsx is read from disk; anything else is treated as a
-#' single RD-number.
+#' A multi-element input is treated as an explicit list of RD-numbers.
+#' A single element is parsed as a file if it exists
+#' Anything else is treated as a single RD-number
 #'
-#' @param input Character vector of RD-numbers, or a single file path.
-#' @return Character vector of RD-numbers.
-resolve_rd_numbers <- function(input) {
+#' @param raw_input Character vector of RD-numbers, or a single file path.
+#' @return Character vector of RD-numbers
+resolve_rd_numbers <- function(raw_input) {
     rd_numbers <- NULL
-    if (length(input) > 1) {
-        rd_numbers <- as.character(input)
-    }
-    if (endsWith(input, ".csv") || endsWith(input, ".xlsx")) {
-        rd_numbers <- read_rd_numbers(input)
-    }
-    
-    if (is.null(rd_numbers)) {
-        rd_numbers <- as.character(input)
+    if (length(raw_input) == 1) {
+        if (file.exists(raw_input)) {
+            rd_numbers <- parse_input_file(raw_input)
+        } else {
+            rd_numbers <- raw_input
+        }
     }
     
     rd_numbers <- rd_numbers[grepl("^RD-", rd_numbers)]
-    rd_numbers <- trimws(rd_numbers)
-    rd_numbers <- stringr::str_trim(rd_numbers)
+    rd_numbers <- stringr::str_trim(trimws(rd_numbers))
     
     if (length(rd_numbers) == 0) {
         stop(
             "Your RD-numbers input is not valid!\n",
             "Check that RD-numbers (e.g. RD-26-123) are in the first column of your ",
             "input sheet or passed as arguments:\n",
-            paste(input, collapse = ", ")
+            paste(raw_input, collapse = ", ")
         )
     }
-    message("Input RD-number(s):\n", paste0(capture.output(rd_numbers), collapse = "\n"))
+    message("Input RD-number(s):")
+    msg_df(data.frame(rd_numbers))
     return(rd_numbers)
 }
 
@@ -232,31 +224,41 @@ resolve_rd_numbers <- function(input) {
 #'
 #' @param rd_numbers Character vector of RD-numbers (record_id values).
 #' @param token REDCap API token.
-#' @param fields Character vector of fields to export.
-#' @return A data frame of the exported records.
+#' @param fields Character vector of fields to export
+#' @return A data frame of the exported records
 search_redcap <- function(rd_numbers, token, fields = REDCAP_FIELDS) {
-    if (!is_valid(token)) {
-        stop("You must provide a REDCap API token!")
-    }
+    if (!is_valid(token)) stop("You must provide a REDCap API token!")
     
-    rcon <- redcapAPI::redcapConnection(REDCAP_API_URL, token)
-    result <- redcapAPI::exportRecordsTyped(
-        rcon,
-        records            = rd_numbers,
-        fields             = fields,
-        dag                = FALSE,
-        factors            = FALSE,
-        form_complete_auto = FALSE,
-        format             = "csv"
-    )
+    result <- jsonlite::fromJSON(httr::content(
+        httr::POST(
+            REDCAP_API_URL,
+            body = c(
+                list(
+                    token = REDCAP_API_TOKEN, content = "record", action = "export",
+                    format = "json", type = "flat", rawOrLabel = "raw",
+                    exportDataAccessGroups = "false", returnFormat = "json"
+                ),
+                stats::setNames(as.list(rd_numbers), sprintf("records[%d]", seq_along(rd_numbers) - 1L)),
+                stats::setNames(as.list(REDCAP_FIELDS), sprintf("fields[%d]", seq_along(REDCAP_FIELDS) - 1L))
+            ),
+            encode = "form"
+        ),
+        as = "text", encoding = "UTF-8"
+    ))
     
     missing <- !rd_numbers %in% result$record_id
+    
     if (any(missing)) {
         message("Some RD-numbers were not found in REDCap!")
         message(paste0(capture.output(rd_numbers[missing]), collapse = "\n"))
+        MISSING_CSV <- paste(CURR_DATE, "input_not_in_redcap_log.csv", sep = "_")
+        missing_df <- data.frame(Not_Found = rd_numbers[missing])
+        write_log(missing_df, MISSING_CSV)
+        message("Check which cases were not found in REDCap in:\n", "redcap_not_found_log.csv")
     }
     
-    as.data.frame(result)
+    result_df <- as.data.frame(result)
+    return(result_df)
 }
 
 
@@ -269,14 +271,13 @@ search_redcap <- function(rd_numbers, token, fields = REDCAP_FIELDS) {
 #' Rows flagged DUPLICATE are split out into duplicated_samples.csv and excluded
 #' from the written sample sheet.
 #'
-#' @param df Data frame of REDCap records.
-#' @param sentrix_id Two-column data frame: split barcode (ID) and position.
-#' @param output_file Path for the generated sample sheet.
-#' @return Invisibly NULL.
-write_samplesheet <- function(df, sentrix_id, output_file = SAMPLESHEET_FILE) {
-    message(crayon::bgCyan("~~~Writing sample sheet from REDCap records to:"), "\n", output_file)
+#' @param df Data frame of REDCap records
+#' @param sentrix_id Two-column data frame: split barcode (ID) and position
+write_samplesheet <- function(df, sentrix_id) {
+    message(crayon::bgCyan("~~~Writing samplesheet from REDCap records to:"),
+            "\n", OUTPUT_CSV)
     
-    basenames <- file.path(getwd(), df$barcode_and_row_column)
+    basenames <- file.path(IDAT_OUTPUT, df$barcode_and_row_column)
     df <- df[!is.na(df[, "barcode_and_row_column"]), , drop = FALSE]
     
     samplesheet <- data.frame(
@@ -298,16 +299,12 @@ write_samplesheet <- function(df, sentrix_id, output_file = SAMPLESHEET_FILE) {
     
     if (any(is_duplicate)) {
         message("Dropping duplicated samples!!")
-        duplicated_csv <- samplesheet[is_duplicate, , drop = FALSE]
-        message(paste0(capture.output(duplicated_csv), collapse = "\n"))
-        utils::write.csv(
-            duplicated_csv, file = "duplicated_samples.csv",
-            quote = FALSE, row.names = FALSE
-        )
+        duplicated_csv <- samplesheet[is_duplicate, ]
+        save_csv(duplicated_csv, "duplicated_samples.csv")
     }
     
-    samplesheet <- samplesheet[!is_duplicate, , drop = FALSE]
-    utils::write.csv(samplesheet, file = output_file, quote = FALSE, row.names = FALSE)
+    samplesheet <- samplesheet[!is_duplicate, ]
+    save_csv(samplesheet, OUTPUT_CSV)
 }
 
 
@@ -316,59 +313,154 @@ write_samplesheet <- function(df, sentrix_id, output_file = SAMPLESHEET_FILE) {
 # -----------------------------------------------------------------------------
 
 #' Copy idat files into the current working directory
-#'
-#' Unreadable files are logged to read_error_idat.txt and skipped; copy failures
-#' are logged to missing_idat_files.txt.
-#'
 #' @param files Character vector of full paths to .idat files.
-#' @return Invisibly NULL.
-copy_idat_files <- function(files) {
-    
-    write_log <- function(info, log_file) {
-        message(crayon::bgBlue("~~~Message logged~~~"), "\n", info)
-        message(crayon::bgGreen("To file:"), " ", log_file)
-        utils::write.table(
-            info, file = log_file, append = TRUE, quote = FALSE,
-            sep = "\t", row.names = FALSE, col.names = FALSE
-        )
-    }
+copy_idat_files <- function(idat_paths) {
     
     report_copy_status <- function(paths) {
         copied <- basename(paths)
         copied <- copied[copied != ""]
         success <- file.exists(copied)
-        message(".idat files that failed to copy:")
+        message(".idat idat_paths that failed to copy:")
         if (all(success)) cat("none", "\n") else print(copied[!success])
         invisible(all(success))
     }
     
-    readable <- fs::file_access(files, mode = "read")
+    readable <- fs::file_access(idat_paths, mode = "read")
+    
     if (any(!readable)) {
-        info <- paste("Cannot read idat file:", files[!readable], collapse = "\n")
-        write_log(info, "read_error_idat.txt")
-        files <- files[readable]
+        info <- paste("Cannot read idat file:", idat_paths[!readable], collapse = "\n")
+        write_log(info, "read_error_idat.csv")
+        idat_paths <- idat_paths[readable]
     }
     
-    if (length(files) == 0) {
-        report_copy_status(files)
+    if (length(idat_paths) == 0) {
+        report_copy_status(idat_paths)
         return(invisible(NULL))
     }
     
-    cli::cli_progress_bar("Copying files", total = length(files))
-    for (fi in files) {
+    cli::cli_progress_bar("Copying idat_paths", total = length(idat_paths))
+    for (fi in idat_paths) {
         tryCatch(
-            fs::file_copy(fi, file.path(getwd(), basename(fi)), overwrite = TRUE),
+            fs::file_copy(fi, file.path(IDAT_OUTPUT, basename(fi)), overwrite = TRUE),
             error = function(e) {
                 info <- paste("Failed to copy:", fi)
                 cli::cli_alert_danger(info)
-                write_log(info, "missing_idat_files.txt")
+                write_log(info, "missing_idat_files.csv")
             }
         )
         cli::cli_progress_update()
     }
     cli::cli_progress_done()
     
-    report_copy_status(files)
+    report_copy_status(idat_paths)
+}
+
+
+require_mount <- function(idat_dir) stopifnot(dir.exists(idat_dir))
+
+idat_bases_from_files <- function(idat_paths) {
+    if (length(idat_paths) == 0) return(character(0))
+    
+    parts <- stringr::str_split_fixed(basename(idat_paths), "_", 3)
+    return(unique(paste0(parts[, 1], "_", parts[, 2])))
+}
+
+idats_complete <- function(idat_paths, bases_needed) {
+    expected <- length(unique(bases_needed)) * 2
+    actual <- length(unique(basename(idat_paths)))
+    return(expected == actual)
+}
+
+log_missing_idats <- function(idat_paths, bases_needed) {
+    if (idats_complete(idat_paths, bases_needed)) return(invisible(NULL))
+    
+    message(crayon::bgRed("Still missing idat files not in External folder:"))
+    
+    bases_found <- idat_bases_from_files(idat_paths)
+    missing_samples <- bases_needed[!(bases_needed %in% bases_found)]
+    
+    message("The following samples are missing:")
+    msg_df(missing_samples)
+    
+    save_csv(data.frame(Missing_Samples = missing_samples), "missing_idats_log.csv")
+    message(
+        crayon::bgRed("Check the log file to see which idats were not found:"),
+        " missing_idats_log.csv"
+    )
+    
+    return(invisible(NULL))
+}
+
+find_external_idats <- function(missing_bases) {
+    external_idat_dir <- file.path(RESEARCH_IDAT_DIR, "External")
+    
+    message(crayon::bgRed("The following idats are missing:"))
+    msg_df(missing_bases)
+    message(crayon::bgGreen("Searching the External folder for more idats..."))
+    
+    red_green_files <- paste0(
+        rep(missing_bases, each = 2), c("_Grn.idat", "_Red.idat")
+    )
+    direct_idats <- file.path(external_idat_dir, red_green_files)
+    
+    if (all(file.exists(direct_idats))) return(direct_idats)
+    
+    other_idats <- dir(
+        external_idat_dir, pattern = ".idat",
+        full.names = TRUE, recursive = TRUE
+    )
+    found <- stringr::str_detect(
+        other_idats, pattern = paste(missing_bases, collapse = "|")
+    )
+    
+    if (!any(found)) {
+        message(crayon::bgRed("Still missing idat files not in External folder:"))
+        msg_df(missing_bases)
+        return(NULL)
+    }
+    
+    message(
+        crayon::bgGreen("Found extra idats in External folder:"),
+        " ", external_idat_dir
+    )
+    
+    idats_to_add <- other_idats[found]
+    msg_df(idats_to_add)
+    
+    return(idats_to_add)
+}
+
+add_external_idats <- function(idat_paths, ssheet, bases_needed) {
+    external_idat_dir <- file.path(RESEARCH_IDAT_DIR, "External")
+    
+    if (idats_complete(idat_paths, bases_needed)) {
+        message("All idats detected in folders!")
+        return(idat_paths)
+    }
+    
+    message(
+        crayon::bgRed("Still missing some idats! Checking External Folder:"),
+        " ", external_idat_dir
+    )
+    
+    bases_found <- idat_bases_from_files(idat_paths)
+    still_missing <- !(bases_needed %in% bases_found)
+    
+    if (!any(still_missing)) return(idat_paths)
+    
+    message("Missing idats:")
+    msg_df(ssheet[still_missing, , drop = FALSE])
+    
+    idats_to_add <- find_external_idats(bases_needed[still_missing])
+    
+    if (length(idat_paths) > 0) {
+        idat_paths <- unique(c(idat_paths, setdiff(idats_to_add, idat_paths)))
+        log_missing_idats(idat_paths, bases_needed)
+    } else {
+        idat_paths <- idats_to_add
+    }
+    
+    return(idat_paths)
 }
 
 
@@ -380,148 +472,31 @@ copy_idat_files <- function(files) {
 #' directory.
 #'
 #' @param samplesheet_file Path to the sample sheet CSV.
-#' @param run_dir Directory checked for already-present idats (defaults to wd).
 #' @return Invisibly the vector of resolved idat paths.
-resolve_and_copy_idats <- function(samplesheet_file = SAMPLESHEET_FILE,
-                                   run_dir = NULL) {
-    external_idat_dir <- file.path(RESEARCH_IDAT_DIR, "External")
-    
-    require_mount <- function(idat_dir) {
-        if (!dir.exists(idat_dir)) {
-            message(
-                crayon::bgRed("Share drive not found, ensure path is accessible:"),
-                "\n", idat_dir
-            )
-            stopifnot(dir.exists(idat_dir))
-        }
-    }
-    
-    # Derive the unique "barcode_position" base names from full idat paths
-    idat_bases_from_files <- function(files) {
-        if (length(files) == 0) return(character(0))
-        parts <- stringr::str_split_fixed(basename(files), "_", 3)
-        unique(paste0(parts[, 1], "_", parts[, 2]))
-    }
-    
-    log_missing_idats <- function(files, bases_needed) {
-        expected <- length(unique(bases_needed)) * 2
-        actual   <- length(unique(basename(files)))
-        if (expected == actual) return(invisible(NULL))
-        
-        message(crayon::bgRed("Still missing idat files not in External folder:"))
-        bases_found <- idat_bases_from_files(files)
-        missing_samples <- bases_needed[!(bases_needed %in% bases_found)]
-        
-        message("The following samples are missing:")
-        msg_table(missing_samples)
-        
-        utils::write.csv(
-            data.frame(Missing_Samples = missing_samples),
-            "missing_idats_log.csv", row.names = FALSE, quote = FALSE
-        )
-        message(
-            crayon::bgRed("Check the log file to see which idats were not found:"),
-            " ", "missing_idats_log.csv"
-        )
-    }
-    
-    find_external_idats <- function(missing_bases) {
-        message(crayon::bgRed("The following idats are missing:"))
-        msg_table(missing_bases)
-        message(crayon::bgGreen("Searching the External folder for more idats..."))
-        
-        red_green_files <- paste0(
-            rep(missing_bases, each = 2), c("_Grn.idat", "_Red.idat")
-        )
-        direct_idats <- file.path(external_idat_dir, red_green_files)
-        if (all(file.exists(direct_idats))) return(direct_idats)
-        
-        other_idats <- dir(
-            external_idat_dir, pattern = ".idat",
-            full.names = TRUE, recursive = TRUE
-        )
-        search_pattern <- paste(missing_bases, collapse = "|")
-        found <- stringr::str_detect(other_idats, pattern = search_pattern)
-        
-        if (!any(found)) {
-            message(crayon::bgRed("Still missing idat files not in External folder:"))
-            msg_table(missing_bases)
-            return(NULL)
-        }
-        
-        message(
-            crayon::bgGreen("Found extra idats in External folder:"),
-            " ", external_idat_dir
-        )
-        idats_to_add <- other_idats[found]
-        msg_table(idats_to_add)
-        idats_to_add
-    }
-    
-    add_external_idats <- function(files, ssheet, bases_needed) {
-        expected <- length(unique(bases_needed)) * 2
-        actual   <- length(unique(basename(files)))
-        
-        if (expected == actual) {
-            message("All idats detected in folders!")
-            return(files)
-        }
-        
-        message(
-            crayon::bgRed("Still missing some idats! Checking External Folder:"),
-            " ", external_idat_dir
-        )
-        
-        if (length(files) > 0) {
-            bases_found  <- idat_bases_from_files(files)
-            still_missing <- !(bases_needed %in% bases_found)
-        } else {
-            still_missing <- rep(TRUE, length(bases_needed))
-            files <- NULL
-        }
-        
-        if (any(still_missing)) {
-            message("Missing idats:")
-            msg_table(ssheet[still_missing, , drop = FALSE])
-            
-            idats_to_add <- find_external_idats(bases_needed[still_missing])
-            
-            if (!is.null(files)) {
-                files <- unique(c(files, setdiff(idats_to_add, files)))
-                log_missing_idats(files, bases_needed)
-            } else {
-                files <- idats_to_add
-            }
-        }
-        
-        files
-    }
-    
+resolve_and_copy_idats <- function(samplesheet_file = OUTPUT_CSV) {
     require_mount(RESEARCH_IDAT_DIR)
     require_mount(CLINICAL_IDAT_DIR)
-    
-    if (is.null(run_dir)) run_dir <- getwd()
     
     if (!file.exists(samplesheet_file)) {
         message("Cannot find your sheet named:", samplesheet_file)
         stopifnot(file.exists(samplesheet_file))
     }
     
-    ssheet      <- utils::read.csv(samplesheet_file, strip.white = TRUE)
-    barcode     <- as.vector(ssheet$Sentrix_ID)
+    ssheet <- utils::read.csv(samplesheet_file, strip.white = TRUE)
+    barcode <- as.vector(ssheet$Sentrix_ID)
     sentrix_pos <- ssheet$SentrixID_Pos
+    bases_needed <- as.vector(ssheet$SentrixID_Pos)
     
-    # Build candidate Grn/Red paths across both idat drives
     all_fi <- character(0)
+    
     for (idat_dir in c(RESEARCH_IDAT_DIR, CLINICAL_IDAT_DIR)) {
-        dir_names   <- file.path(idat_dir, barcode)
+        dir_names <- file.path(idat_dir, barcode)
         green_files <- file.path(dir_names, paste0(sentrix_pos, "_Grn.idat"))
-        red_files   <- file.path(dir_names, paste0(sentrix_pos, "_Red.idat"))
+        red_files <- file.path(dir_names, paste0(sentrix_pos, "_Red.idat"))
         all_fi <- c(all_fi, green_files, red_files)
     }
     
-    all_fi       <- all_fi[fs::file_exists(all_fi)]
-    bases_needed <- as.vector(ssheet$SentrixID_Pos)
+    all_fi <- all_fi[fs::file_exists(all_fi)]
     
     if (length(all_fi) == 0) {
         all_fi <- add_external_idats(all_fi, ssheet, bases_needed)
@@ -529,22 +504,27 @@ resolve_and_copy_idats <- function(samplesheet_file = SAMPLESHEET_FILE,
     
     if (length(all_fi) == 0) {
         warning(crayon::bgRed("No .idat files found!"))
-        message("Check worksheet for typos and if the barcode folder exists in the search path(s):")
+        message(
+            "Check worksheet for typos and if the barcode folder exists in the search path(s):"
+        )
         message(RESEARCH_IDAT_DIR, "\nor\n", CLINICAL_IDAT_DIR)
-        stop(crayon::bgRed(paste0(
-            "No .idat files found for these sample(s)!  ",
+        stop(crayon::bgRed(paste(
+            "No .idat files found for these sample(s)!",
             "The case(s) may have not been run yet."
         )))
     }
     
     message("Files found: ")
-    msg_table(all_fi)
+    msg_df(all_fi)
     
     all_fi <- add_external_idats(all_fi, ssheet, bases_needed)
     
     message("Checking if idats exist in run directory...")
-    current_idats <- basename(dir(path = run_dir, pattern = "\\.idat$", recursive = FALSE))
-    idats_found   <- basename(all_fi) %in% current_idats
+    
+    current_idats <- basename(
+        dir(IDAT_OUTPUT, pattern = "\\.idat$", recursive = FALSE)
+    )
+    idats_found <- basename(all_fi) %in% current_idats
     
     if (all(idats_found)) {
         message(".idat files already copied to run directory")
@@ -552,7 +532,7 @@ resolve_and_copy_idats <- function(samplesheet_file = SAMPLESHEET_FILE,
         copy_idat_files(all_fi[!idats_found])
     }
     
-    invisible(all_fi)
+    return(invisible(all_fi))
 }
 
 
@@ -566,25 +546,19 @@ resolve_and_copy_idats <- function(samplesheet_file = SAMPLESHEET_FILE,
 #' array_types_sample_sheet.csv. Rows marked "NO IDAT FILE" are skipped.
 #'
 #' @param targets Data frame read from the sample sheet.
-#' @return Invisibly NULL.
 save_array_types <- function(targets) {
     targets$ArrayType <- ""
     targets <- targets[!grepl("NO IDAT FILE", targets$SentrixID_Pos), , drop = FALSE]
     
     for (idx in seq_len(nrow(targets))) {
-        rg_set <- minfi::read.metharray.exp(
-            targets = targets[idx, , drop = FALSE],
-            force = TRUE, verbose = TRUE
-        )
+        current_sam <- targets[idx, ]
+        rg_set <- minfi::read.metharray.exp(targets = current_sam,
+                                            force = TRUE, verbose = TRUE)
         targets$ArrayType[idx] <- rg_set@annotation[["array"]]
     }
     
-    out_file <- file.path(getwd(), ARRAY_TYPES_FILE)
-    message("Saving file:\n", out_file)
-    utils::write.csv(
-        targets[, c("Sample_Name", "SentrixID_Pos", "ArrayType")],
-        file = out_file, quote = FALSE, row.names = FALSE
-    )
+    targets_df <- targets[, c("Sample_Name", "SentrixID_Pos", "ArrayType")]
+    save_csv(targets_df, ARRAY_TYPES_FILE)
 }
 
 
@@ -593,55 +567,56 @@ save_array_types <- function(targets) {
 # -----------------------------------------------------------------------------
 
 #' Pull records, write the sample sheet, copy idats, and record array types
-#'
 #' @param rd_numbers Character vector of RD-numbers.
 #' @param token REDCap API token.
-#' @param copy_idats Whether to locate and copy idat files.
-#' @param output_file Path for the generated sample sheet.
-#' @param run_dir Directory checked for already-present idats (defaults to wd).
-#' @return Invisibly NULL.
-pull_redcap_idats <- function(rd_numbers,
-                              token,
-                              copy_idats  = TRUE,
-                              output_file = SAMPLESHEET_FILE,
-                              run_dir     = NULL) {
-    if (is.null(run_dir)) run_dir <- file.path(getwd(), "idats")
+pull_redcap_idats <- function(rd_numbers, token) {
+    
+    request <- list(token = token, content = "version")
+    
+    is_token_valid <- tryCatch(
+        httr::POST(REDCAP_API_URL, body = request, encode = "form"),
+        error = function(e) NULL
+    )
+    
+    if (is.null(is_token_valid) || httr::http_error(is_token_valid)) {
+        stop("Your REDCap API Token is invalid: ", token)
+    }
+    
+    if (!dir.exists(IDAT_OUTPUT)) {dir.create(IDAT_OUTPUT, recursive = TRUE)}
     stopifnot(length(rd_numbers) > 0)
     
-    records <- search_redcap(rd_numbers, token)
+    records_found <- search_redcap(rd_numbers, token)
     
     # Records without a Sentrix ID cannot be processed; log and drop them
-    missing_sentrix <- is.na(records$barcode_and_row_column)
+    missing_sentrix <- is.na(records_found$barcode_and_row_column)
     if (any(missing_sentrix)) {
-        message("Some samples have no SentrixID and will be dropped:")
-        dropped <- records[missing_sentrix, 1]
-        message(paste0(capture.output(dropped), collapse = "\n"))
-        message("Saving list to file: \"samples_missing_sentrix.csv\"")
-        utils::write.csv(
-            dropped, "samples_missing_sentrix.csv",
-            quote = FALSE, row.names = FALSE
-        )
+        message("Some samples have no SentrixID and will be dropped!")
+        dropped <- records_found[missing_sentrix, 1]
+        save_csv(dropped, "samples_missing_sentrix.csv")
     }
-    records <- records[!missing_sentrix, , drop = FALSE]
+    records_found <- records_found[!missing_sentrix, , drop = FALSE]
     
     sentrix_id <- as.data.frame(
-        stringr::str_split_fixed(records[, "barcode_and_row_column"], "_", 2)
+        stringr::str_split_fixed(records_found[, "barcode_and_row_column"], "_", 2)
     )
+    
     if (nrow(sentrix_id) == 0) {
         message("Input cases have not been run or do not have Sentrix ID in REDCap:")
-        message(paste(capture.output(records), collapse = "\n"))
+        message(paste(capture.output(records_found), collapse = "\n"))
         stopifnot(nrow(sentrix_id) > 0)
     }
     
-    write_samplesheet(df = records, sentrix_id = sentrix_id, output_file = output_file)
+    write_samplesheet(df = records_found, sentrix_id = sentrix_id)
     
-    if (copy_idats) {
+    if (COPY_IDATS == TRUE) {
         Sys.sleep(5)
-        resolve_and_copy_idats(samplesheet_file = output_file, run_dir = run_dir)
+        resolve_and_copy_idats(samplesheet_file = OUTPUT_CSV)
     }
     
-    targets <- utils::read.csv(output_file, strip.white = TRUE, row.names = NULL)
-    save_array_types(targets)
+    if (SAVE_ARRAY_CSV == TRUE) {
+        targets <- utils::read.csv(OUTPUT_CSV, strip.white = TRUE, row.names = NULL)
+        save_array_types(targets)
+    }
 }
 
 
@@ -649,13 +624,16 @@ pull_redcap_idats <- function(rd_numbers,
 # Main
 # -----------------------------------------------------------------------------
 
-load_packages()
-check_mounts()
-set_working_dir(OUTPUT_DIR)
+main <- function(){
+    load_packages()
+    check_mounts()
+    set_work_dir(WORK_DIR)
+    
+    # Command-line arguments take priority over DEFAULT_INPUT
+    cli_args  <- commandArgs(trailingOnly = TRUE)
+    raw_input <- if (length(cli_args) > 0) cli_args else DEFAULT_INPUT
+    rd_numbers <- resolve_rd_numbers(raw_input)
+    pull_redcap_idats(rd_numbers = rd_numbers, token = REDCAP_API_TOKEN)
+}
 
-# Command-line arguments take priority over DEFAULT_INPUT
-cli_args  <- commandArgs(trailingOnly = TRUE)
-raw_input <- if (length(cli_args) > 0) cli_args else DEFAULT_INPUT
-rd_numbers <- resolve_rd_numbers(raw_input)
-pull_redcap_idats(rd_numbers = rd_numbers, token = REDCAP_API_TOKEN)
-
+main()
