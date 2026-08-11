@@ -257,8 +257,9 @@ ReadSheetDate <- function(sampleSheet) {
     return(wsDate)
 }
 
+
 #' Reads the raw_input tab of an xlsm workbook as a samplesheet for minfi
-#' Reads the first worksheet containing "raw" in its name, processes it as a samplesheet, 
+#' Reads the first worksheet containing "raw" in its name, processes it as a samplesheet,
 #' and returns the run ID, total sample count, or the worksheet.
 #'
 #' @param run_ID Logical. If TRUE, return the run ID.
@@ -279,7 +280,7 @@ readSampleSheet <- function(run_ID = FALSE, totalSam = FALSE, wks = FALSE) {
     raw_index <- grep("raw", readxl::excel_sheets(xlsm_wb), ignore.case = TRUE)[1]
 
     worksheet <- suppressMessages(readxl::read_excel(xlsm_wb,
-        sheet = raw_index, col_names = TRUE, col_types = "text", trim_ws = TRUE)
+                                                     sheet = raw_index, col_names = TRUE, col_types = "text", trim_ws = TRUE)
     )
 
     to_keep <- worksheet[, sam_col] != 0 & !is.na( worksheet[, sam_col])
@@ -354,7 +355,8 @@ checkSampleSheet <- function(df) {
         "Duplicated sample name found: check df$Sample_Name in samplesheet.csv"
     checkForIssues(dupes, dupeMsg, df[, c(1, 3, 8:11)])
     if (df$Sample_Name[1] == "Control") {
-        stop("Error: The first item should be 'control', not 'Control'.")
+        df$Sample_Name[1] <- "control"
+        message("WARN: The first item renamed be 'control', not 'Control'.")
     }
 
     missingControls <- stringr::str_count(df$Sample_Name, "FILLER|control|RD-") == 0
@@ -444,15 +446,17 @@ get_newest_rd <- function(rd_num){
 
 get_next_rd <- function(rd_nums) {
     suffix_num <- suppressWarnings(as.integer(sub(".*-", "", rd_nums)))
-    
+
     if (all(is.na(suffix_num))) {
         return(NA_character_)
     } else {
+        message("Creating new RD-number...")
         last_rd <- rd_nums[which.max(suffix_num)]
         last_num <- as.integer(sub(".*-", "", last_rd))
         prefix <- sub("-[^-]+$", "", last_rd)
-        
-        return(paste0(prefix, "-", last_num + 1))
+        rd_num <- paste0(prefix, "-", last_num + 1)
+        message(rd_num)
+        return(rd_num)
     }
 }
 
@@ -461,69 +465,123 @@ is_present <- function(x) {
     !is.null(x) && !is.na(x) && as.character(x) != "" && as.character(x) != "0"
 }
 
+
+get_redcap_cols <- function(){
+
+    field_labels <- c(
+        "record_id", "b_number", "tm_number", "accession_number", "block",
+        "barcode_and_row_column", "tissue_comments", "nyu_mrn", "consult_accession"
+    )
+
+    fields <-
+        stats::setNames(as.list(field_labels), sprintf("fields[%d]", seq_along(field_labels) - 1L))
+
+    params <- c(
+        list(
+            token = gb$token, content = "record", action = "export",
+            format = "json", type = "flat", rawOrLabel = "raw",
+            exportSurveyFields = "false", exportDataAccessGroups = "false",
+            returnFormat = "json"
+        ),
+        fields
+    )
+
+    message("Checking REDCap Database for fillers...")
+
+    dbCols <- jsonlite::fromJSON(
+        httr::content(
+            httr::POST(apiLink, body = params, encode = "form"),
+            as = "text",
+            encoding = "UTF-8"
+        )
+    )
+
+    db <- as.data.frame(dbCols)
+    db <- db[grepl(pattern = "RD-", db$record_id), ]
+    db <- db[!grepl(pattern = "_R0", db$barcode_and_row_column), ]
+    db <- db[!grepl(pattern = "NO IDAT FILE", db$barcode_and_row_column), ]
+    db <- db[!grepl(pattern = "DUPLICATE", db$barcode_and_row_column), ]
+    rownames(db) <- NULL
+
+    return(db)
+
+}
+
+
 # FUNC: Checks RC DB for any record_id matching FILLER annotated rows in samplesheet using b & mp numbers
 check_rd_fillers <- function(df) {
     has_filler <- stringr::str_detect(df$Sample_Name, stringr::regex("fill", ignore_case = TRUE))
-    if (any(has_filler)) {
-        apiUrl = "https://redcap.nyumc.org/apps/redcap/api/"
-        rcon <- redcapAPI::redcapConnection(apiUrl, gb$token)
-        flds <- c("record_id", "b_number", "tm_number", "accession_number", "block",
-                  "barcode_and_row_column", "tissue_comments", "nyu_mrn")
-        params = list(rcon, fields = flds, survey = F, dag = F, factors = F, form_complete_auto = F)
-        message("Checking REDCap Database for fillers...")
-        dbCols <- do.call(redcapAPI::exportRecordsTyped, c(params))
-        db <- as.data.frame(dbCols)
-        db <- db[grepl(pattern = "RD-", db$record_id), ]
-        db <- db[!grepl(pattern = "_R0", db$barcode_and_row_column), ]
-        db <- db[!grepl(pattern = "NO IDAT FILE", db$barcode_and_row_column), ]
-        db <- db[!grepl(pattern = "DUPLICATE", db$barcode_and_row_column), ]
-        rownames(db) <- NULL
-        
-        for (filler in which(has_filler)) {
-            curr_row <- df[filler,]
-            curr_bnum <- curr_row$b_number
-            rd_num <- ""
-            if (is_present(curr_bnum)) {
-                match_b <- grepl(curr_bnum, db$b_number) | grepl(curr_bnum, db$block)
-                match_b[is.na(match_b)] <- FALSE
-                if (any(match_b)) {
-                    rd_num <- db$record_id[match_b]
-                    if (length(rd_num) > 1) {
+
+    if (any(has_filler) == FALSE) return(df)
+
+    db <- get_redcap_cols()
+
+    for (filler in which(has_filler)) {
+        curr_row <- df[filler,]
+        curr_bnum <- trimws(curr_row$b_number)
+        curr_mp <- trimws(curr_row$MP_number)
+
+        rd_num <- ""
+        if (is_present(curr_bnum)) {
+            match_b <- grepl(curr_bnum, db$b_number) | grepl(curr_bnum, db$block)
+            match_b[is.na(match_b)] <- FALSE
+            if (any(match_b)) {
+                rd_num <- db$record_id[match_b]
+                if (length(rd_num) > 1) {
+                    db_dupes <- db[match_b,]
+                    message("Multiple matches for B-number: ", curr_bnum)
+                    message("Matching RDs:\n", paste(db$record_id[match_b], collapse = "\n"))
+                    need_sentrix <- db_dupes$barcode_and_row_column == ""
+                    db_dupes <- db_dupes[need_sentrix,]
+                    rownames(db_dupes) <- NULL
+                    if (nrow(db_dupes) > 1) {
+                        message("Multiple matches found for: ", curr_bnum)
+                        msg_df(db_dupes)
                         rd_num <- get_newest_rd(rd_num)
+                        message("Duplicates have multiple or all missing Sentrix ID!")
+                        message("Assigning unique RD:\n", rd_num)
+                    } else {
+                        rd_num <- db_dupes$record_id[1]
+                        message("Using RD that does not have sentrix ID yet: ", rd_num)
                     }
-                    message("Filler B-number found: ", curr_bnum, " ", rd_num)
-                    df[filler, "Sample_Name"] <- rd_num
-                    next
+
                 }
-                curr_mp <- curr_row$MP_number
-                if (is_present(curr_mp)) {
-                    match_mp <- apply(db[c("accession_number", "tm_number", "b_number")], 1,
-                                      function(x) {any(grepl(curr_mp, x, fixed = TRUE), na.rm = TRUE)}
-                    )
-                    if (any(match_mp)) {
-                        matched_rows <- db[match_mp, , drop = FALSE]
-                        if (nrow(matched_rows) > 1) {
-                            rd_num <- get_newest_rd(matched_rows$record_id)
-                        } else {
-                            rd_num <- matched_rows$record_id
-                        }
-                        message("Filler MP match found: ", curr_mp, " ", rd_num)
-                        df[filler, "Sample_Name"] <- rd_num
-                        next
-                    }
-                }
-                if (rd_num == "") {
-                    message("No matching RD number found for filler:\n",
-                            paste(curr_row[1, c("b_number", "MP_number")], collapse = " "))
-                    message("Creating new RD-number...")
-                    mgdms <- grepl(pattern = paste0("RD-", gb$runID, "-"), df$Sample_Name)
-                    all_rd <- df$Sample_Name[mgdms]
-                    rd_num <- get_next_rd(all_rd)
-                    df[filler, "Sample_Name"] <- rd_num
-                }
+                message("Filler B-number found: ", curr_bnum, " ", rd_num)
+                df[filler, "Sample_Name"] <- rd_num
+                next
             }
         }
+
+        if (is_present(curr_mp)) {
+            match_mp <- apply(
+                db[c("accession_number", "tm_number", "b_number", "consult_accession")], 1,
+                function(x) {any(grepl(curr_mp, x, fixed = TRUE), na.rm = TRUE)}
+                )
+            if (any(match_mp)) {
+                matched_rows <- db[match_mp, , drop = FALSE]
+                if (nrow(matched_rows) > 1) {
+                    message("Multiple matches found for: ", curr_mp)
+                    msg_df(matched_rows)
+                    message("Duplicates have multiple or all missing Sentrix ID!")
+                    rd_num <- get_newest_rd(matched_rows$record_id)
+                } else {
+                    rd_num <- matched_rows$record_id
+                }
+                message("Filler MP match found: ", curr_mp, " ", rd_num)
+                df[filler, "Sample_Name"] <- rd_num
+                next
+            }
+        }
+        if (rd_num == "") {
+            message("No matching RD number found for filler:\n",
+                    paste(curr_row[1, c("b_number", "MP_number")], collapse = " "))
+            mgdms <- grepl(pattern = paste0("RD-", gb$runID, "-"), df$Sample_Name)
+            all_rd <- df$Sample_Name[mgdms]
+            rd_num <- get_next_rd(all_rd)
+            df[filler, "Sample_Name"] <- rd_num
+        }
     }
+
     return(df)
 }
 
