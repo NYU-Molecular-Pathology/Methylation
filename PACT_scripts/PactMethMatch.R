@@ -501,26 +501,8 @@ GetVolumePaths <- function(methData) {
 CheckMethPaths <- function(methData) {
     for (i in 1:length(methData$`Report Path`)) {
         currPath <- methData$`Report Path`[i]
-        if (currPath == "") {
-            next
-        }
         currSplit <- stringr::str_split_fixed(currPath, "/", 11)[1, ]
         if (stringr::str_detect(currSplit[10], "MGDM") == FALSE) {
-            if (stringr::str_detect(methData$run_number[i], pattern = "MC")) {
-                runYear <- stringr::str_split_fixed(methData$run_number[i], "-", 2)[1, 1]
-                runYear <- gsub("MC", "", runYear)
-                runYear <- paste0("20", runYear)
-                smb_path <- "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/MethylationClassifier"
-                newPath <- file.path(smb_path, runYear, methData$run_number[i], "Reports", paste0(methData$record_id[i], ".html"))
-                methData[i, "Report Path"] <- newPath
-                return(methData)
-            }
-            if (stringr::str_detect(methData$run_number[i], pattern = "MR")) {
-                smb_path <- "smb://research-cifs.nyumc.org/Research/snudem01lab/snudem01labspace/FINAL_PDF_Reports_Brain"
-                newPath <- file.path(smb_path, methData$run_number[i], paste0(methData$record_id[i], ".html"))
-                methData[i, "Report Path"] <- newPath
-                return(methData)
-            }
             next
         }
         runYear <- stringr::str_split_fixed(currSplit[10], "-", 2)[1, 1]
@@ -531,11 +513,12 @@ CheckMethPaths <- function(methData) {
     }
     checkPaths <- GetVolumePaths(methData)
     anyPathsFalse <- file.exists(checkPaths) == FALSE
+
     if (any(anyPathsFalse)) {
         message("Fixing broken file paths...")
         toReplace <- basename(checkPaths[anyPathsFalse])
         mainDirs <- dirname(checkPaths[anyPathsFalse])
-        #mainDirs <- unique(mainDirs)
+        mainDirs <- unique(mainDirs)
         for (x in 1:length(mainDirs)) {
             if (!dir.exists(mainDirs[x])) {
                 correct_dir <- dir(
@@ -543,40 +526,114 @@ CheckMethPaths <- function(methData) {
                     pattern = basename(mainDirs[x]),
                     full.names = TRUE
                 )
-                mainDirs[x] <- correct_dir
+                if (length(correct_dir) > 0) {
+                    mainDirs[x] <- correct_dir[1]
+                }
             }
         }
         for (missing in toReplace) {
+            message("Fixing path for missing report: ", missing)
             patt <- stringr::str_split_fixed(missing, ".html", 2)[1, 1]
-            file_found <- dir(path = mainDirs, pattern = patt, full.names = TRUE)
-            file_found <- unique(file_found)
-            if (length(file_found) > 0) {
-                if (length(file_found) > 1) {
-                    file_found <- file_found[1]
+
+            for (dirPath in mainDirs) {
+                file_found <- dir(path = dirPath, pattern = patt, full.names = TRUE)
+                if (length(file_found) > 0) {
+
+                    if (length(file_found) > 1) {
+                        splitNames <- stringr::str_split_fixed(basename(file_found), "_", 2)[, 1]
+                        base_htmls <- paste0(splitNames, ".html")
+                        exact_match <- which(missing == base_htmls)
+                        file_found <- file_found[exact_match]
+
+                        base_old <- stringr::str_split_fixed(basename(methData$`Report Path`), "_", 2)[, 1]
+                        htmls_old <- paste0(base_old, ".html")
+                        htmls_old <- gsub(base_old, pattern = ".html.html", replacement = ".html")
+                        toSwap <- which(missing == htmls_old)
+                        newPath <- stringr::str_replace(
+                            methData$`Report Path`[toSwap],
+                            missing, basename(file_found))
+                        message("Updating file path:\n", newPath)
+                        methData$`Report Path`[toSwap] <- newPath
+                    } else{
+                        toSwap <- which(grepl(missing, methData$`Report Path`))
+                        newPath <- stringr::str_replace(
+                            methData$`Report Path`[toSwap],
+                            missing, basename(file_found))
+                        message("Updating file path:\n", newPath)
+
+                        methData$`Report Path`[toSwap] <- newPath
+                    }
                 }
-                toSwap <- which(grepl(missing, methData$`Report Path`))
-                newPath <- stringr::str_replace(
-                    methData$`Report Path`[toSwap],
-                    missing,
-                    basename(file_found)
-                )
-                message("Updating file path:\n", newPath)
-                methData$`Report Path`[toSwap] <- newPath
             }
         }
         checkPaths <- GetVolumePaths(methData)
         anyPathMissed <- file.exists(checkPaths) == FALSE
+
+        if (any(anyPathMissed)) {
+            to_fix <- checkPaths[anyPathMissed]
+
+            for (old_path in to_fix) {
+                newHtml <- file.path(paste0(dirname(old_path), "-new-template"), basename(old_path))
+                missing <- basename(newHtml)
+
+                message("Fixing path for missing report: ", missing)
+                patt <- stringr::str_split_fixed(missing, ".html", 2)[1, 1]
+                dirPath <- dirname(newHtml)
+
+                file_found <- dir(path = dirPath, pattern = patt, full.names = TRUE)
+                if (length(file_found) > 0) {
+
+                    if (length(file_found) > 1) {
+                        splitNames <- stringr::str_split_fixed(basename(file_found), "_", 2)[, 1]
+                        base_htmls <- paste0(splitNames, ".html")
+                        exact_match <- which(missing == base_htmls)
+                        file_found <- file_found[exact_match]
+
+                        base_old <- stringr::str_split_fixed(basename(methData$`Report Path`), "_", 2)[, 1]
+                        htmls_old <- paste0(base_old, ".html")
+                        htmls_old <- gsub(base_old, pattern = ".html.html", replacement = ".html")
+                        toSwap <- which(missing == htmls_old)
+                        newPath <- stringr::str_replace(
+                            methData$`Report Path`[toSwap],
+                            missing, basename(file_found))
+                        if (stringr::str_detect(pattern = "-new-template", file_found)) {
+                            new_dir_path <- paste0(dirname(newPath), "-new-template")
+                            newPath <- file.path(new_dir_path, basename(file_found))
+                        }
+                        message("Updating file path:\n", newPath)
+                        methData$`Report Path`[toSwap] <- newPath
+                    } else{
+                        toSwap <- which(grepl(missing, methData$`Report Path`))
+                        newPath <- stringr::str_replace(
+                            methData$`Report Path`[toSwap],
+                            missing, basename(file_found))
+
+                        if (stringr::str_detect(pattern = "-new-template", file_found)) {
+                            new_dir_path <- paste0(dirname(newPath), "-new-template")
+                            newPath <- file.path(new_dir_path, basename(file_found))
+                        }
+
+                        message("Updating file path:\n", newPath)
+
+                        methData$`Report Path`[toSwap] <- newPath
+                    }
+                }
+            }
+        }
+        checkPaths <- GetVolumePaths(methData)
+        anyPathMissed <- file.exists(checkPaths) == FALSE
+
         if (any(anyPathMissed)) {
             msg1 <- "Some paths to html reports need editing in MethylMatch.xlsx sheet!"
             msg2 <- "Fix the following paths in worksheet 'Report Path' column that do not exist:"
-            message(crayon::bgRed(msg1))
-            message(crayon::bgRed(msg2), "\n")
-            message(paste(checkPaths[anyPathsFalse], collapse = "\n"), "\n")
+            message(crayon::bgRed(msg1), "\n", crayon::bgRed(msg2), "\n")
+            message(paste(checkPaths[anyPathMissed], collapse = "\n"), "\n")
         }
     }
 
     return(methData)
 }
+
 
 # Adds hyperlinks to the report links in the output excel file
 addExcelLink <- function(output, fiLn, wb, PACT_ID) {
@@ -599,7 +656,7 @@ createXlFile <- function(PACT_ID, output) {
         }
     }
     meth_xlsx <- file.path(fs::path_home(),"Desktop",
-                       paste0(PACT_ID,"_MethylMatch.xlsx"))
+                           paste0(PACT_ID,"_MethylMatch.xlsx"))
     openxlsx::saveWorkbook(wb, meth_xlsx, overwrite = T)
     return(meth_xlsx)
 }
@@ -920,7 +977,7 @@ getOuputData <- function(token, redcap_fields, PACT_INPUT, readFlag) {
     all_sheets <- readxl::excel_sheets(worksheetPath)
 
     sh_kwd <- ifelse(stringr::str_detect(PACT_INPUT, "^\\d{2}"),
-                      "Beaker", "Philips")
+                     "Beaker", "Philips")
 
     matched_kwd <- stringr::str_detect(pattern = sh_kwd, all_sheets)
     sheet_name <- all_sheets[matched_kwd]
