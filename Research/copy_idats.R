@@ -588,13 +588,13 @@ pull_redcap_idats <- function(rd_numbers, token) {
     records_found <- search_redcap(rd_numbers, token)
     
     # Records without a Sentrix ID cannot be processed; log and drop them
-    missing_sentrix <- is.na(records_found$barcode_and_row_column)
+    missing_sentrix <- is.na(records_found$barcode_and_row_column) | records_found$barcode_and_row_column == ""
     if (any(missing_sentrix)) {
         message("Some samples have no SentrixID and will be dropped!")
         dropped <- records_found[missing_sentrix, 1]
         save_csv(dropped, "samples_missing_sentrix.csv")
+        records_found <- records_found[!missing_sentrix, , drop = FALSE]
     }
-    records_found <- records_found[!missing_sentrix, , drop = FALSE]
     
     sentrix_id <- as.data.frame(
         stringr::str_split_fixed(records_found[, "barcode_and_row_column"], "_", 2)
