@@ -272,26 +272,82 @@ reports_to_pdf <- function(input_dir, sam_name = NULL){
 
 
 # Finds html reports in current directory and uploads to matching record_id
+# upload_pdf <- function(recordName, input_dir, fld = "classifier_pdf") {
+#     rcon <- redcapAPI::redcapConnection(url = gb$apiLink, gb$ApiToken)
+
+#     message("\n", "Importing Record Report for:", " ", recordName)
+#     pdf_path <- dir(path = input_dir,
+#                   pattern = sprintf("^%s.*\\.pdf$", recordName), full.names = TRUE)
+
+#     if (length(pdf_path) == 1) {
+#         message("Uploading file:\n", pdf_path, "\nTo REDCap Record: ", recordName)
+
+#         tryCatch(
+#             expr = redcapAPI::importFiles(rcon, file = pdf_path, record = recordName, field = fld),
+#             error = function(e) {
+#                 message("REDCap Import error for record: ", recordName)
+#                 message("File failed to upload: ", pdf_path)
+#             }
+#         )
+#     } else{
+#         message("REDCap Import error for record: ", recordName)
+#     }
+# }
+
 upload_pdf <- function(recordName, input_dir, fld = "classifier_pdf") {
-    rcon <- redcapAPI::redcapConnection(url = gb$apiLink, gb$ApiToken)
+    message("\nImporting Record Report for: ", recordName)
 
-    message("\n", "Importing Record Report for:", " ", recordName)
-    pdf_path <- dir(path = input_dir,
-                  pattern = sprintf("^%s.*\\.pdf$", recordName), full.names = TRUE)
+    pdf_path <- dir(
+        path = input_dir,
+        pattern = sprintf("^%s.*\\.pdf$", recordName),
+        full.names = TRUE
+    )
 
-    if (length(pdf_path) == 1) {
-        message("Uploading file:\n", pdf_path, "\nTo REDCap Record: ", recordName)
-
-        tryCatch(
-            expr = redcapAPI::importFiles(rcon, file = pdf_path, record = recordName, field = fld),
-            error = function(e) {
-                message("REDCap Import error for record: ", recordName)
-                message("File failed to upload: ", pdf_path)
-            }
-        )
-    } else{
-        message("REDCap Import error for record: ", recordName)
+    if (length(pdf_path) > 1) {
+        pdf_path <- pdf_path[grepl(pattern = "V13_1.pdf", pdf_path)]
     }
+
+    if (length(pdf_path) != 1) {
+        message("REDCap Import error for record: ", recordName)
+        message("length(pdf_path) != 1")
+        return()
+    }
+
+    message("Uploading file:\n", pdf_path, "\nTo REDCap Record: ", recordName)
+
+    api_payload <- list(
+        token = gb$ApiToken,
+        content = "file",
+        action = "import",
+        record = recordName,
+        field = fld,
+        file = httr::upload_file(pdf_path, type = "application/pdf")
+    )
+
+    tryCatch(
+        {
+            res <- httr::POST(
+                url = gb$apiLink,
+                body = api_payload,
+                encode = "multipart"
+            )
+
+            if (httr::status_code(res) == 200) {
+                message("Successfully uploaded PDF to REDCap record: ", recordName)
+            } else {
+                message(
+                    "REDCap Import error for record: ", recordName,
+                    "\nError Code: ", httr::status_code(res),
+                    "\nDetails: ",
+                    httr::content(res, as = "text", encoding = "UTF-8")
+                )
+            }
+        },
+        error = function(e) {
+            message("REDCap Import error for record: ", recordName)
+            message("File failed to upload: ", pdf_path)
+        }
+    )
 }
 
 
