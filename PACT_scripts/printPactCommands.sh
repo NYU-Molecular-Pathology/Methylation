@@ -354,7 +354,8 @@ if [[ "$IS_SOPHIA" == "true" ]]; then
 	msg_stage 2 "Deploy and execute the NGS607 Pipeline"
 	msg_step 1 "#ffffba" "After Demux finishes, check the QC by pasting the link below in a web browser to open in a SFTP client like CyberDuck:"
 	msg_code "sftp://bigpurple.nyumc.org${DEMUXDIR}/output/${RUN_ID}.report.html"
-	msg_step "2" "#ffffba" "Begin the SG pipeline by executing the script below:"
+	msg_step "2a" "#ffffba" "Begin the SG pipeline by executing the script below."
+	msg_step "2b" "#ffffba" "Ensure the sample IDs are correct from the demux folder as start_pipeline.sh below will copy the file to: /gpfs/data/molecpathlab/production/vcf_qc_checker/samplesheet/${RUN_ID}-SampleSheet.csv"
 	msg_code "${BASH_HELPERS}/start_pipeline.sh ${RUN_ID}"
 	echo "$BOX2"
 else
