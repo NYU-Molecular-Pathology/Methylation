@@ -258,7 +258,7 @@ reports_to_pdf <- function(input_dir, sam_name = NULL){
             expr = suppressWarnings(pagedown::chrome_print(
                 input = patched_html, output = pdf_file, browser = chrome_bin,
                 wait = 4, timeout = 120, extra_args = chrome_args,
-                work_dir = work_dir, verbose = TRUE, outline = FALSE
+                work_dir = work_dir, verbose = FALSE, outline = FALSE
             )),
             error = function(e){
                 suppressWarnings(pagedown::chrome_print(
@@ -299,12 +299,12 @@ upload_pdf <- function(recordName, input_dir, fld = "classifier_pdf") {
 
     pdf_path <- dir(
         path = input_dir,
-        pattern = sprintf("^%s.*\\.pdf$", recordName),
+        pattern = sprintf("^%s([^0-9].*)?\\.pdf$", recordName),
         full.names = TRUE
     )
 
     if (length(pdf_path) > 1) {
-        pdf_path <- pdf_path[grepl(pattern = "V13_1.pdf", pdf_path)]
+        pdf_path <- pdf_path[grepl(pattern = "V13_1\\.pdf$", pdf_path)]
     }
 
     if (length(pdf_path) != 1) {
