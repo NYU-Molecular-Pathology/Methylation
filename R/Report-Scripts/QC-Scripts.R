@@ -56,6 +56,18 @@ pkgs <- c(
     "dplyr"
 )
 
+raw_colors <- c(
+    "#ff0000", "#0000cd", "#FFD700", "#228b22", "#ff8c00", "#ff00ff", "#00ff00", 
+    "#00bfff", "#000080", "#6900A6", "#dc143c", "#ff6347", "#9400d3", "#4682b4", 
+    "#32cd32", "#8b4513", "#d2691e", "#808000", "#008b8b", "#7f0000", "#6495ed",
+    "#2e8b57", "#8b008b", "#b03060", "#00ced1", "#00fa9a", "#9acd32", "#b8860b",
+    "#556b2f", "#483d8b", "#ff1493", "#009FFF", "#9A4D42", "#00FFBE", "#783FC1",
+    "#1F9698", "#FFACFD", "#B1CC71", "#F1085C", "#FE8F42", "#DD00FF", "#720055",
+    "#02AD24", "#C8FF00", "#886C00", "#FFB79F", "#858567", "#A10300", "#14F9FF",
+    "#00479E", "#DC5E93", "#93D4FF", "#004CFF", "#663399", "#ADFF2F", "#DB7093",
+    "#F4A460", "#2F4F4F", "#7FFFD4", "#1E90FF", "#DAA520", "#BDB76B", "#66CDAA",
+    "#BA55D3", "#EE82EE", "#F5DEB3", "#A0522D", "#87CEEB", "#00FF7F", "#D8BFD8"
+)
 
 not_installed <- function(pkgName) {
     return(!pkgName %in% rownames(installed.packages()))
@@ -148,15 +160,14 @@ ReplaceNAorNull <- function(dParam, xincept, yincept) {
 
 ## Generate Plots for Probes --------------------------------------
 plotParams <- function(totNum, dParam, xincept, yincept) {
-    dParam = dParam$final_data
+    dParam <- dParam$final_data
     dParam <- ReplaceNAorNull(dParam, xincept, yincept)
-    dParam$Sample_Name = paste(dParam$Sample_Name, dParam$MP_num, sep = "\n")
-    plot.colours <- glasbey()[1:(length(dParam$x))]
-
-
+    dParam$Sample_Name <- paste(dParam$Sample_Name, dParam$MP_num, sep = "\n")
+    plot.colours <- raw_colors[1:(length(dParam$x))]
     thePlot <-
-        ggplot(dParam, aes(x = dParam[, 2], y = dParam[, 3],
-                           color = dParam$Sample_Name, label = dParam$Sample_Name
+        ggplot(dParam, aes(
+            x = dParam[, 2], y = dParam[, 3],
+            color = dParam$Sample_Name, label = dParam$Sample_Name
         ), show.legend = FALSE) +
         scale_color_manual(values = plot.colours) +
         geom_point(shape = 19, size = 5, alpha = 0.8) +
@@ -174,9 +185,10 @@ plotParams <- function(totNum, dParam, xincept, yincept) {
                 y = dParam[, 3],
                 show.legend = FALSE,
                 fill = dParam$Sample_Name,
-                colour = scales::alpha(c("black"), 1.0), inherit.aes = FALSE, legend = FALSE
+                colour = scales::alpha(c("black"), 1.0),
+                inherit.aes = FALSE, legend = FALSE
             ),
-            fontface = 'bold',
+            fontface = "bold",
             colour = scales::alpha(c("black"), 1.0),
             alpha = 0.50,
             show.legend = FALSE,
@@ -193,11 +205,13 @@ plotParams <- function(totNum, dParam, xincept, yincept) {
             point.padding = unit(0.25, "lines"),
             label.r = unit(0.5, "lines"),
             force = 12,
-            max.iter = 10000) + theme(legend.position="none")
+            max.iter = 10000
+        ) + theme(legend.position = "none")
         thePlot <- thePlot +
-            geom_vline(xintercept = xincept, linetype = 'dashed', colour = "red", inherit.aes = FALSE) +
-            coord_cartesian(clip="off") +
-            expand_limits(x = min(dParam[,2]), y = max(dParam[,3])*0.25) +
+            geom_vline(xintercept = xincept, linetype = "dashed",
+                       colour = "red", inherit.aes = FALSE) +
+            coord_cartesian(clip = "off") +
+            expand_limits(x = min(dParam[, 2]), y = max(dParam[, 3]) * 0.25) +
             guides(fill = guide_legend(show.legend = FALSE)) +
             theme(legend.position = "none") +
             scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) +
@@ -205,10 +219,12 @@ plotParams <- function(totNum, dParam, xincept, yincept) {
             guides(fill = guide_legend(show.legend = FALSE))
     }
     if (yincept != 0) {
-        samlab <- c(str_replace(dParam$Sample_Name, c("\n"), "_"))
+        samlab <- c(stringr::str_replace(dParam$Sample_Name, c("\n"), "_"))
         thePlot <- thePlot +
-            geom_hline(yintercept = yincept, linetype = 'dashed', colour = "red", inherit.aes = FALSE) +
-            annotate("text", x = dParam[, 2], y = 0.5, label = samlab, angle = 90, size = 4) +
+            geom_hline(yintercept = yincept, linetype = "dashed",
+                       colour = "red", inherit.aes = FALSE) +
+            annotate("text", x = dParam[, 2], y = 0.5, label = samlab,
+                     angle = 90, size = 4) +
             scale_x_continuous(breaks = scales::pretty_breaks()) +
             guides(fill = guide_legend(show.legend = FALSE)) +
             theme(legend.position = "none") + ylim(0.00, 1.00)
