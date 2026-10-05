@@ -4,7 +4,7 @@
 ## Date Created: June 13, 2022
 ## Version: 1.0.0
 ## Author: Jonathan Serrano
-## Copyright (c) NYULH Jonathan Serrano, 2025
+## Copyright (c) NYULH Jonathan Serrano, 2026
 
 gb <- globalenv(); assign("gb", gb)
 apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
@@ -26,6 +26,18 @@ cbVol <- "/Volumes/CBioinformatics/Methylation"
 moVol <- "/Volumes/molecular"
 rsVol <- "/Volumes/snudem01labspace"
 
+fix_paths <- function(this_vol){
+    if (!dir.exists(this_vol)) {
+        all_vols <- dir("/Volumes", include.dirs = TRUE, full.names = TRUE)
+        alt_vols <- all_vols[grepl(pattern = this_vol, all_vols)]
+        if (length(alt_vols) > 0) return(alt_vols) else return(this_vol)
+    } else return(this_vol)
+}
+
+cbVol <- fix_paths(cbVol)
+moVol <- fix_paths(moVol)
+rsVol <- fix_paths(rsVol)
+
 mnp.pk.loc = file.path(cbVol, "classifiers/mnp.v12epicv2")
 methDir = file.path(cbVol, "Clinical_Runs")
 clinDrv = file.path(moVol, "MOLECULAR LAB ONLY/NYU-METHYLATION")
@@ -39,7 +51,7 @@ setDirectory <- function(foldr) {
     msgFunName(cpInLnk,"setDirectory")
     bsDir = paste("cd", foldr)
     mm2 = crayon::white$bgRed("Location Not Found:", foldr)
-    
+
     if (dir.exists(foldr)) {
         system(bsDir)
         setwd(foldr)
@@ -53,14 +65,14 @@ CreateRunDir <- function(newRun) {
     if (endsWith(newRun, "/")) {
         newRun <- substr(newRun, 1, nchar(newRun) - 1)
     }
-    
+
     message(crayon::bgGreen("New Run Path:"), "\n", newRun)
-    
+
     if (!dir.exists(newRun)) {
         dir.create(newRun, recursive = T)
         Sys.chmod(newRun, "0777", use_umask = FALSE)
     }
-    
+
     setDirectory(newRun)
     return(newRun)
 }
@@ -71,9 +83,9 @@ setRunDir <- function(runID = NULL, workFolder = NULL) {
     msgFunName(cpInLnk, "setRunDir")
     msgParams(runID)
     msgParams(workFolder)
-    
+
     workFolder <- ifelse(is.null(workFolder), defaultDir, workFolder)
-    
+
     if (is.null(runID)) {
         runID <- paste0(basename(getwd()))
     }
@@ -99,7 +111,7 @@ check_idat_sizes <- function(runFolder) {
                       full.names = TRUE)
     idat_sizes <- round(file.size(idat_files) / 1e6, 1)
     mb_unique <- unique(idat_sizes)
-    
+
     if (length(mb_unique) > 1) {
         mb_sizes <- c(14.4, 13.7, 10.3, 8.1)
         miss_copied <- !idat_sizes %in% mb_sizes
@@ -169,11 +181,11 @@ MakeLogFile <- function(infoData, logFile) {
 copyBaseIdats <- function(allFi, idatPath = NULL) {
     msgFunName(cpInLnk, "copyBaseIdats")
     suppressPackageStartupMessages(library("cli"))
-    
+
     if (is.null(idatPath)) {
         idatPath <- getwd()
     }
-    
+
     # Check read permission (necessary for copying)
     readable <- fs::file_access(allFi, mode = "read")
     if (any(readable == F)) {
@@ -182,9 +194,9 @@ copyBaseIdats <- function(allFi, idatPath = NULL) {
         MakeLogFile(infoData, "read_error_idat.txt")
         allFi <- allFi[readable]
     }
-    
+
     cli::cli_progress_bar("Copying files", total = length(allFi))
-    
+
     for (f in allFi) {
         tryCatch(
             fs::file_copy(f, file.path(getwd(), basename(f)), overwrite = TRUE),
@@ -196,7 +208,7 @@ copyBaseIdats <- function(allFi, idatPath = NULL) {
         )
         cli::cli_progress_update()  # Updates progress
     }
-    
+
     cli::cli_progress_done()  # Mark progress as complete
     check_success_copy(allFi)
 }
@@ -247,7 +259,7 @@ CheckIdatsReal <- function(ssheet, allFi) {
 
 VerifyIdatFound <- function(foundIdat, otherIdat, toBeFound, extr.idat){
     if (any(foundIdat) == F) {
-        
+
         message(crayon::bgRed("Still missing idat files not in External folder:"))
         DataFrameMessage(toBeFound)
         return(NULL)
@@ -297,14 +309,14 @@ GetExternalIdats <- function(allFi, ssheet, extr.idat) {
         " ",
         extr.idat
     )
-    
+
     if (length(allFi) > 0) {
         stillMissing <- ListMissedIdats(allFi, basesNeeded)
     } else{
         stillMissing <- basesNeeded %in% basesNeeded
         allFi <- NULL
     }
-    
+
     if (any(stillMissing) == T) {
         message("Missing idats:\n", DataFrameMessage(ssheet[stillMissing, ]))
         idatsToAdd <- GetIdats2Add(basesNeeded[stillMissing], extr.idat)
@@ -325,24 +337,24 @@ get.idats <- function(csvNam = "samplesheet.csv", runDir = NULL) {
     extr.idat <- file.path(rsch.idat, "External")
     WarnMounts(rsch.idat)
     WarnMounts(clin.idat)
-    
+
     if (is.null(runDir)) {
         runDir <- getwd()
     }
-    
+
     if (!file.exists(csvNam)) {
         message("Cannot find your sheet named:", csvNam)
         stopifnot(file.exists(csvNam))
     }
-    
+
     ssheet = read.csv(csvNam, strip.white = T)
     allFi <- getAllFiles(idatDir = c(rsch.idat, clin.idat),
                          csvNam = csvNam)
-    
+
     # Check existence
     exists <- fs::file_exists(allFi)
     allFi <- allFi[exists]
-    
+
     if (length(allFi) == 0) {
         allFi <- GetExternalIdats(allFi, ssheet, extr.idat)
     }
@@ -406,7 +418,7 @@ moveSampleSheet <- function(methDir = NULL, runID = NULL, deskDir = NULL) {
     fs::file_copy(
         path = file.path(thisDir, "samplesheet.csv"),
         new_path = outputDir,
-        overwrite = T
+        overwrite = TRUE
     )
     message("Renaming samplesheet in new folder as: ", outFile)
     file.rename(from = outputDir, to = file.path(deskDir, outFile))
@@ -436,61 +448,60 @@ writeFromRedcap <- function(df, samplesheet_ID, bn = NULL) {
     write.csv(samplesheet_csv, file = "samplesheet.csv", quote = F, row.names = F)
 }
 
-# Ensures the correct version of redcapAPI is installed
-check_REDCap_vers <- function(min_version = "2.7.4") {
-    if (!"redcapAPI" %in% rownames(installed.packages())) {
-        devtools::install_github('nutterb/redcapAPI', dependencies = TRUE,
-                                 upgrade = "always", ask = F, type = "source")
-    }
-    current_vers <- as.character(utils::packageVersion("redcapAPI"))
-    is_current <- utils::compareVersion(current_vers, min_version) >= 0
-    if (!is_current) {
-        if ("redcapAPI" %in% loadedNamespaces()) {
-            try(unloadNamespace("redcapAPI"), TRUE)
-        }
-        devtools::install_github('nutterb/redcapAPI', dependencies = TRUE,
-                                 upgrade = "always", ask = F, type = "source")
-    }
-    suppressPackageStartupMessages(library("redcapAPI", logical.return = TRUE))
-}
-
-
 #' FUN: Returns dataframe of REDCap search using a default header and fields
-search.redcap <- function(rd_numbers,
-                          token = NULL,
-                          flds = NULL) {
+search.redcap <- function(rd_numbers, token = NULL, flds = NULL) {
     msgFunName(cpInLnk, "search.redcap")
-    if (!require("redcapAPI")) {
-        install.packages("redcapAPI", dependencies = T, ask = F)
-    }
-    check_REDCap_vers()
+
     if (is.null(token)) {
         message("You must provide an ApiToken!")
     }
     stopifnot(!is.null(token))
-    rcon <- redcapAPI::redcapConnection(apiLink, token)
-    if (is.null(flds)) {
-        flds = c(
-            "record_id",
-            "b_number",
-            "primary_tech",
-            "second_tech",
-            "run_number",
-            "barcode_and_row_column",
-            "accession_number",
-            "tm_number",
-            "arrived"
-        )
+
+    if (!requireNamespace("httr", quietly = TRUE)) {
+        install.packages("httr", dependencies = TRUE, ask = FALSE)
     }
-    result <- redcapAPI::exportRecordsTyped(
-        rcon,
-        records = rd_numbers,
-        fields = flds,
-        dag = F,
-        factors = F,
-        form_complete_auto = F,
-        format = 'csv'
+
+    if (is.null(flds)) {
+        flds <- c(
+            "record_id", "b_number", "primary_tech", "second_tech", "run_number",
+            "barcode_and_row_column", "accession_number", "tm_number", "arrived"
+            )
+    }
+
+    records <- stats::setNames(
+        as.list(rd_numbers),
+        paste0("records[", seq_along(rd_numbers) - 1L, "]")
     )
+    fields <- stats::setNames(
+        as.list(flds),
+        paste0("fields[", seq_along(flds) - 1L, "]")
+    )
+
+    response <- httr::POST(url = apiLink, body = c(list(
+        token = token, content = "record", action = "export", format = "csv",
+        type = "flat", csvDelimiter = "", rawOrLabel = "raw", rawOrLabelHeaders = "raw",
+        exportCheckboxLabel = "false", exportSurveyFields = "false",
+        exportDataAccessGroups = "false", returnFormat = "json"), records,
+        fields), encode = "form")
+
+    httr::stop_for_status(response)
+    response_text <- httr::content(response, as = "text", encoding = "UTF-8")
+
+    if (!nzchar(trimws(response_text))) {
+        return(data.frame())
+    }
+
+    if (grepl('^\\s*\\{.*"error"', response_text)) {
+        stop("REDCap API error: ", response_text)
+    }
+
+    result <- utils::read.csv(
+        text = response_text,
+        stringsAsFactors = FALSE,
+        check.names = FALSE,
+        na.strings = ""
+    )
+
     return(as.data.frame(result))
 }
 
