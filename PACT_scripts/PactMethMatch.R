@@ -2,1268 +2,824 @@
 ## Script name: PactMethMatch.R
 ## Purpose: search REDCap for PACT samples with methylation & generate cnv PNG
 ## Date Created: September 2, 2021
-## Version: 1.0.1
+## Version: 1.1.0
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2026
 
-gb <- globalenv(); assign("gb", gb)
+options(stringsAsFactors = FALSE, repos = c(CRAN = "https://cran.r-project.org"))
 
-# Input Arguments -------------------------------------------------------------
-args <- commandArgs(TRUE)
-args[1] -> token       # REDCap Methylation API Token
-args[2] -> PACT_INPUT  # pactID
+# Input ------------------------------------------------------------------------
+args <- commandArgs(trailingOnly = TRUE)
+if (length(args) != 1 || anyNA(args[1]) || any(!nzchar(args[1]))) {
+    stop("Usage: PactMethMatch.R <PACT ID or input file>")
+}
 
-# Validate arguments
-stopifnot(!is.na(token), !is.na(PACT_INPUT))
-readFlag <- grepl("\\.csv$", PACT_INPUT)
+PACT_INPUT <- args[[1]]
 
-message(paste("Now Running $HOME/PactMethMatch.R", token, PACT_INPUT))
+TOKEN_PATH <- "/Volumes/CBioinformatics/scripts/METH_DB_API.txt"
+stopifnot(file.exists(TOKEN_PATH))
+REDCAP_API_TOKEN <- trimws(readLines(TOKEN_PATH, n = 1, warn = FALSE))
 
-rcon <- data.frame(token = token, url = "https://redcap.nyumc.org/apps/redcap/api/")
-MATCH_TSV = file.path(fs::path_home(), "Desktop", paste0(PACT_INPUT, "_match_log.tsv"))
+read_flag <- grepl("\\.csv$", PACT_INPUT, ignore.case = TRUE)
+is_sophia <- grepl("^[0-9]{2}", PACT_INPUT)
+is_file_path <- grepl("/", PACT_INPUT, fixed = TRUE)
 
-# REDCap Fields  --------------------------------------------------------------
-meth_repo <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation"
-cnv_outFolder = "/Volumes/molecular/Molecular/MethylationClassifier/CNV_PNG"
+# Configuration ----------------------------------------------------------------
+REDCAP_URL <- "https://redcap.nyumc.org/apps/redcap/api/"
 
+classifier_install <- "/Volumes/CBioinformatics/Methylation/Rscripts/install_epic_v2_classifier.R"
+
+# Returns volume path, or macOS duplicate mount such as "/Volumes/molecular-1"
+fix_volume <- function(vol) {
+    if (dir.exists(vol)) return(vol)
+    alts <- Sys.glob(paste0(vol, "-[0-9]*"))
+    if (length(alts) > 0) alts[1] else vol
+}
+
+mol_drive <- fix_volume("/Volumes/molecular")
+research_vol <- fix_volume("/Volumes/snudem01labspace")
+
+research_idat_dir <- file.path(research_vol,"idats")
+clinical_idat_dir <- "/Volumes/molecular/MOLECULAR/iScan"
+
+lab_drive <- file.path(mol_drive,"MOLECULAR LAB ONLY")
+
+cnv_out_dir <- file.path(mol_drive, "Molecular/MethylationClassifier/CNV_PNG")
+pact_data_dir <- file.path(lab_drive, "NYU PACT Patient Data")
+
+
+smb_share <- "smb://shares-cifs.nyumc.org/apps/acc_pathology"
+report_share <- file.path(smb_share, "molecular/Molecular/MethylationClassifier")
+desktop <- path.expand("~/Desktop")
+match_tsv <- file.path(desktop, paste0(basename(PACT_INPUT), "_match_log.tsv"))
+
+main_pkgs <- c(
+    "data.table", "openxlsx", "jsonlite", "readxl", "stringr",
+    "tidyverse", "crayon", "tinytex", "systemfonts", "remotes",
+    "dplyr", "fs", "httr", "cli"
+)
+brew_pkgs <- c("gcc", "llvm", "lld", "open-mpi", "pkgconf", "gdal", "proj", "apache-arrow")
 redcap_fields <- c(
     "record_id", "b_number", "tm_number", "accession_number", "block",
     "diagnosis", "organ", "tissue_comments", "run_number", "nyu_mrn",
     "qc_passed", "arrived"
 )
-
-main_pkgs <- c(
-    "data.table", "openxlsx", "jsonlite", "RCurl", "readxl",
-    "stringr", "tidyverse", "crayon", "tinytex", "systemfonts",
-    "remotes", "dplyr", "fs", "httr"
+cnv_fields <- c(
+    "record_id", "b_number", "primary_tech", "second_tech", "run_number",
+    "barcode_and_row_column", "accession_number", "tm_number", "arrived"
+)
+pact_columns <- c(
+    "Tumor Specimen ID", "Normal Specimen ID", "Tumor DNA/RNA Number", "MRN", "Test Number"
 )
 
-# Message Inputs --------------------------------------------------------------
-message("\n================ Parameters input ================\n")
-message("token: ", token, "\nPACT_INPUT: ", PACT_INPUT, "\n")
-
-options(repos = c(CRAN = "https://cran.r-project.org"))
-
-if (!"devtools" %in% rownames(installed.packages())) {
-    install.packages("devtools", ask = FALSE, dependencies = TRUE)
-}
-
-library("devtools")
-
-# FUN: Install Homebrew if not installed -------------------------------------
+# Homebrew and compiler setup --------------------------------------------------
 install_brew <- function() {
     message("Installing Homebrew...")
-    system(
-        '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
-        , wait = TRUE
-    )
+    system('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"')
 }
 
-# FUN: Check if system command exists
-command_exists <- function(cmd) nzchar(Sys.which(cmd))
-
-# Ensures that brew is found in the system R PATH
+# Adds brew directory to session PATH and to ~/.Renviron
 fix_brew_path <- function() {
-    # pick the correct brew binary in one line
-    arm_brew <- "/opt/homebrew/bin/brew"
-    x64_brew <- "/usr/local/bin/brew"
+    brews <- c("/opt/homebrew/bin/brew", "/usr/local/bin/brew")
+    if (!any(file.exists(brews))) install_brew()
+    brew_dir <- dirname(if (file.exists(brews[1])) brews[1] else brews[2])
+    path <- unique(c(brew_dir, strsplit(Sys.getenv("PATH"), ":", fixed = TRUE)[[1]]))
+    Sys.setenv(PATH = paste(path, collapse = ":"))
 
-    if (!file.exists(arm_brew) && !file.exists(x64_brew)) install_brew()
-
-    brew_path <- ifelse(file.exists(arm_brew), arm_brew, x64_brew)
-    brew_dir <- dirname(brew_path)
-
-    # update session PATH
-    old_path <- strsplit(Sys.getenv("PATH", ""), ":", fixed = TRUE)[[1]]
-    new_path <- unique(c(brew_dir, old_path))
-    Sys.setenv(PATH = paste(new_path, collapse = ":"))
-
-    # prepare .Renviron update
-    renv_file <- file.path(Sys.getenv("HOME"), ".Renviron")
-    entry <- paste0('PATH="', paste(new_path, collapse = ":"), '"')
-    lines <- if (file.exists(renv_file)) {
-        readLines(renv_file, warn = FALSE)
-    } else {
-        character()
-    }
-
-    # only write if the exact entry is missing
+    renviron <- file.path(Sys.getenv("HOME"), ".Renviron")
+    entry <- paste0('PATH="', paste(path, collapse = ":"), '"')
+    lines <- if (file.exists(renviron)) readLines(renviron, warn = FALSE) else character()
     if (!any(grepl(entry, lines, fixed = TRUE))) {
-        idx   <- grep("^PATH=", lines)
-        lines <- if (length(idx) > 0) {
-            lines[idx] <- entry
-            lines
-        } else {c(lines, entry)}
-        writeLines(lines, renv_file)
+        path_lines <- grep("^PATH=", lines)
+        if (length(path_lines) > 0) lines[path_lines] <- entry else lines <- c(lines, entry)
+        writeLines(lines, renviron)
     }
 }
 
-
-# Install Homebrew and packages if necessary
-ensure_homebrew <- function() {
-    pkgs <- c("gcc", "llvm", "lld", "open-mpi", "pkgconf", "gdal", "proj",
-              "apache-arrow")
+# Installs Homebrew and missing brew formulae
+setup_homebrew <- function() {
     fix_brew_path()
-    if (!command_exists("brew")) install_brew(); fix_brew_path()
-    installed_pkgs <- system2("brew", c("list", "--formula"),
-                              stdout = T, stderr = F)
-
-    for (pkg in pkgs) {
-        if (!(pkg %in% installed_pkgs)) {
-            system2("brew", c("install", pkg), wait = TRUE)
-        }
+    if (!nzchar(Sys.which("brew"))) {
+        install_brew()
+        fix_brew_path()
     }
+    installed <- system2("brew", c("list", "--formula"), stdout = TRUE, stderr = FALSE)
+    for (pkg in setdiff(brew_pkgs, installed)) system2("brew", c("install", pkg))
 }
 
-# Returns the path to the brew module
-get_prefix <- function(pkg = "") {
+brew_prefix <- function(pkg = "") {
     system2("brew", c("--prefix", pkg), stdout = TRUE, stderr = FALSE)
 }
 
-# Set environment variables dynamically
+# Points compilers and linker flags to brew llvm and apache-arrow
 set_env_vars <- function() {
-    Sys.unsetenv(c("CC", "CXX", "OBJC", "LDFLAGS", "CPPFLAGS", "PKG_CFLAGS",
-                   "PKG_LIBS", "LD_LIBRARY_PATH", "R_LD_LIBRARY_PATH"))
-    brew_prefix = get_prefix()
-    llvm_path = get_prefix("llvm")
-    arrow_path = get_prefix("apache-arrow")
+    Sys.unsetenv(c(
+        "CC", "CXX", "OBJC", "LDFLAGS", "CPPFLAGS", "PKG_CFLAGS",
+        "PKG_LIBS", "LD_LIBRARY_PATH", "R_LD_LIBRARY_PATH"
+    ))
+    brew <- brew_prefix()
+    llvm <- brew_prefix("llvm")
+    arrow <- brew_prefix("apache-arrow")
+    llvm_libs <- file.path(llvm, c("lib", "lib/c++", "lib/unwind"))
     Sys.setenv(
-        CC = file.path(llvm_path, "bin/clang"),
-        CXX = file.path(llvm_path, "bin/clang++"),
-        OBJC = file.path(llvm_path, "bin/clang"),
+        CC = file.path(llvm, "bin/clang"),
+        CXX = file.path(llvm, "bin/clang++"),
+        OBJC = file.path(llvm, "bin/clang"),
         LDFLAGS = paste(
-            paste0("-L", file.path(llvm_path, "lib")),
-            paste0("-L", file.path(llvm_path, "lib", "c++")),
-            paste0("-L", file.path(llvm_path, "lib", "unwind")),
-            paste0("-Wl,-rpath,", file.path(llvm_path, "lib", "c++")),
-            paste0("-Wl,-rpath,", file.path(llvm_path, "lib", "unwind")),
-            "-lunwind"),
-        CPPFLAGS = paste0("-I", file.path(llvm_path, "include")),
-        PKG_CFLAGS = paste(
-            paste0("-I", file.path(brew_prefix, "include")),
-            paste0("-I", file.path(arrow_path, "include"))),
-        PKG_LIBS = paste(
-            paste0("-L", file.path(brew_prefix, "lib")),
-            paste0("-L", file.path(llvm_path, "lib")),
-            paste0("-L", file.path(arrow_path, "lib"), " -larrow")),
-        LD_LIBRARY_PATH = file.path(brew_prefix, "lib"),
-        R_LD_LIBRARY_PATH = paste(
-            file.path(brew_prefix, "lib"), file.path(llvm_path, "lib/c++"), sep = ":"),
-        DYLD_LIBRARY_PATH = file.path(arrow_path, "lib")
+            c(paste0("-L", llvm_libs), paste0("-Wl,-rpath,", llvm_libs[-1]), "-lunwind"),
+            collapse = " "
+        ),
+        CPPFLAGS = paste0("-I", llvm, "/include"),
+        PKG_CFLAGS = paste0("-I", c(brew, arrow), "/include", collapse = " "),
+        PKG_LIBS = paste(paste0("-L", c(brew, llvm, arrow), "/lib", collapse = " "), "-larrow"),
+        LD_LIBRARY_PATH = file.path(brew, "lib"),
+        R_LD_LIBRARY_PATH = paste(file.path(brew, "lib"), llvm_libs[2], sep = ":"),
+        DYLD_LIBRARY_PATH = file.path(arrow, "lib")
     )
-    if (command_exists("gfortran")) Sys.setenv(FC = Sys.which("gfortran"))
+    if (nzchar(Sys.which("gfortran"))) Sys.setenv(FC = Sys.which("gfortran"))
 }
 
-# Installs the pak package
+# R package setup --------------------------------------------------------------
 install_pak <- function() {
     tryCatch(
         install.packages("pak", repos = sprintf(
             "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
-            .Platform$pkgType, R.Version()$os, R.Version()$arch)),
+            .Platform$pkgType, R.Version()$os, R.Version()$arch
+        )),
         error = function(e) {
             install.packages(
                 "pak", ask = FALSE, dependencies = TRUE,
-                repos = "https://packagemanager.rstudio.com/all/latest")
+                repos = "https://packagemanager.rstudio.com/all/latest"
+            )
         }
     )
 }
 
-
-#' Ensures Required Packages are Loaded the `pak` package installs any missing
-#' @param pkgs A character vector of package names
+# Installs missing packages with pak, then attaches all
 ensure_packages <- function(pkgs) {
-    installed_pk <- rownames(installed.packages())
-    missing_pkgs <- setdiff(pkgs, installed_pk)
+    installed <- rownames(installed.packages())
+    missing_pkgs <- setdiff(pkgs, installed)
     if (length(missing_pkgs) > 0) {
-        message(missing_pkgs)
-        if (!"pak" %in% installed_pk) install_pak()
-        library("pak")
+        message("Installing missing packages: ", toString(missing_pkgs))
+        if (!"pak" %in% installed) install_pak()
         for (pkg in missing_pkgs) {
             tryCatch(
                 pak::pkg_install(pkg, ask = FALSE),
-                error = function(e) {
-                    install.packages(pkg, ask = FALSE, dependencies = TRUE)
-                }
+                error = function(e) install.packages(pkg, ask = FALSE, dependencies = TRUE)
             )
         }
     }
-    stopifnot(all(sapply(pkgs, function(pkg) {
+    attached <- vapply(pkgs, function(pkg) {
         suppressWarnings(suppressPackageStartupMessages(library(
             pkg, mask.ok = TRUE, character.only = TRUE, logical.return = TRUE
         )))
-    })))
+    }, logical(1))
+    if (!all(attached)) stop("Failed to load packages: ", toString(pkgs[!attached]))
 }
 
+has_pkg <- function(pkg, version = NULL) {
+    requireNamespace(pkg, quietly = TRUE) &&
+        (is.null(version) || utils::packageVersion(pkg) == version)
+}
 
-# Function to setup compilers, load and install necessary packages ------------
-check_pkg_install <- function() {
-    ensure_homebrew()
-    set_env_vars()
-    ensure_packages(main_pkgs)
-    if (!"mnp.v12epicv2" %in% rownames(installed.packages())) {
-        devtools::source_url(file.path(meth_repo, "refs/heads/main/R/all_installer.R"))
+# Installs pinned minfi, EPICv2 manifest, classifier, and conumee when missing
+ensure_cnv_packages <- function() {
+    manifest <- "IlluminaHumanMethylationEPICv2manifest"
+    if (!has_pkg("minfi", "1.43.1") || !has_pkg(manifest, "0.1.0")) {
+        Sys.setenv(R_COMPILE_AND_INSTALL_PACKAGES = "always")
+        for (repo in file.path("mwsill", c("minfi", manifest))) {
+            devtools::install_github(
+                repo, upgrade = "always", force = TRUE, dependencies = TRUE,
+                type = "source", auth_token = NULL
+            )
+        }
     }
-    suppressWarnings(suppressPackageStartupMessages(library("mnp.v12epicv2")))
+    if (!has_pkg("mnp.v12epicv2") || !has_pkg("conumee2.0")) source(classifier_install)
+
+    needed <- c("conumee2.0", "minfi", manifest, "mnp.v12epicv2")
+    available <- vapply(needed, has_pkg, logical(1))
+    if (!all(available)) stop("Packages not installed: ", toString(needed[!available]))
 }
 
-
-# Function to check if a network drive is mounted
-checkMounts <- function() {
-    molecDrive <- "/Volumes/molecular/MOLECULAR LAB ONLY"
-    zDrive <- "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular"
-    if (!dir.exists(molecDrive)) {
-        message("Network share is not mounted:\n", crayon::bgRed(zDrive))
-        stop("Molecular shared drive is not mounted")
-    }
+# REDCap API -------------------------------------------------------------------
+# Posts form to REDCap and returns response text
+redcap_post <- function(body) {
+    response <- httr::POST(REDCAP_URL, body = c(list(token = REDCAP_API_TOKEN), body), encode = "form")
+    httr::stop_for_status(response)
+    httr::content(response, as = "text", encoding = "UTF-8")
 }
 
+# Builds indexed API parameters such as fields[0], fields[1]
+redcap_array <- function(name, values) {
+    stats::setNames(as.list(values), sprintf("%s[%d]", name, seq_along(values) - 1L))
+}
 
-# API Call functions -----
-grabAllRecords <- function(redcap_fields) {
-    message("Pulling REDCap data...")
-
-    url <- "https://redcap.nyumc.org/apps/redcap/api/"
-    field_list <- setNames(as.list(redcap_fields),
-                           paste0("fields[", seq_along(redcap_fields) - 1L, "]"))
-    formData <- c(
+# Exports records as data frame of character columns
+redcap_export <- function(fields, records = NULL) {
+    text <- redcap_post(c(
         list(
-            token = token,content = "record",action = "export",format = "csv",type = "flat",
-            csvDelimiter = "",rawOrLabel = "raw",rawOrLabelHeaders = "raw",exportCheckboxLabel = "false",
-            exportSurveyFields = "false",exportDataAccessGroups = "false",returnFormat = "json"
+            content = "record", action = "export", format = "csv", type = "flat",
+            csvDelimiter = "", rawOrLabel = "raw", rawOrLabelHeaders = "raw",
+            exportCheckboxLabel = "false", exportSurveyFields = "false",
+            exportDataAccessGroups = "false", returnFormat = "json"
         ),
-        field_list
+        redcap_array("records", records),
+        redcap_array("fields", fields)
+    ))
+    if (!nzchar(trimws(text))) return(data.frame())
+    if (startsWith(trimws(text), "{")) stop("REDCap API returned an error: ", text)
+    utils::read.csv(
+        text = text, check.names = FALSE, colClasses = "character", na.strings = c("", "NA")
     )
-    response <- httr::POST(url, body = formData, encode = "form")
-    result <- httr::content(response, show_col_types = FALSE)
+}
 
-    db <- as.data.frame(result)
-
-    if (nrow(db) == 0) {
-        message(
-            "REDCap API connection failed!\n",
-            "Check REDCap for non-ASCII characters & verify API Token: ",
-            token
-        )
-        stopifnot(nrow(db) > 0)
-    }
-    return(db)
+# Imports one record given as named list of field values
+redcap_import <- function(record) {
+    invisible(redcap_post(list(
+        content = "record", format = "json", type = "flat",
+        data = jsonlite::toJSON(list(record), auto_unbox = TRUE, na = "null"),
+        returnContent = "nothing", returnFormat = "json"
+    )))
 }
 
 
-# Messages the item matched in the database with the NGS number
-message_matched <- function(item, dbInfo, ngsNum, i) {
-    match_log <- file.path(fs::path_home(), "Desktop", paste0(PACT_INPUT, "_match_log.tsv"))
-    match_line <- sprintf("Match found for '%s' (%s) for %s in: \"%s\" column",
-                          item, dbInfo, ngsNum, i)
-    message(match_line)
-    cat(match_line, file = match_log, append = TRUE, sep = "\n")
+# PACT run inputs --------------------------------------------------------------
+# Returns path to run workbook that holds Beaker or Philips export tab
+get_excel_path <- function() {
+    if (is_file_path) return(PACT_INPUT)
+    run_year <- stringr::str_split_fixed(PACT_INPUT, "-", 3)[, if (is_sophia) 1 else 2]
+    workbook <- file.path(
+        pact_data_dir, "Workbook", paste0("20", run_year), PACT_INPUT, paste0(PACT_INPUT, ".xlsm")
+    )
+    if (is_sophia) message("Run type is Sophia, looking for workbook in:")
+    message(workbook)
+    workbook
 }
 
-# Filters out workbooks from xlsx and other files that may be in the directory
-filterFiles <- function(potentialFi) {
-    wbFiles <- grep("\\.xlsm$|book", basename(potentialFi), value = TRUE)
-    if (!any(grepl("\\.xlsm$", wbFiles))) {
-        message("\nNo .xlsm worksheet found. Checking .xlsx files and others...\n")
-    }
-    filteredFiles <- wbFiles[!grepl("\\$", wbFiles)]
-    return(filteredFiles)
-}
-
-# Checks alternative directories if the file with expected name is not found
-getAltPath <- function(pact_sheet) {
+# Picks first other workbook in run folder when expected .xlsm is absent
+find_alt_workbook <- function(pact_sheet) {
     message(crayon::bgRed("PACT run worksheet not found:"), "\n", pact_sheet)
     message("Checking other files in PACT folder: ", basename(dirname(pact_sheet)))
-    potentialFi <- list.files(dirname(pact_sheet), full.names = TRUE)
-    altFi <- filterFiles(potentialFi)
-    if (length(altFi) > 0) {
-        chosenFi <- altFi[1]
-        message(crayon::bgGreen("Using this workbook instead:"), basename(chosenFi))
-        return(chosenFi)
+    files <- list.files(dirname(pact_sheet), full.names = TRUE)
+    workbooks <- files[grepl("\\.xlsm$|book", basename(files))]
+    if (!any(grepl("\\.xlsm$", workbooks))) {
+        message("\nNo .xlsm worksheet found. Checking .xlsx files and others...\n")
+    }
+    workbooks <- workbooks[!grepl("$", basename(workbooks), fixed = TRUE)]
+    if (length(workbooks) == 0) stop("No alternative file found.")
+    message(crayon::bgGreen("Using this workbook instead:"), basename(workbooks[1]))
+    workbooks[1]
+}
+
+# Returns run sheet path: .xlsm workbook, or demux samplesheet for Results folder runs
+get_pact_sheet <- function() {
+    id_parts <- stringr::str_split_fixed(PACT_INPUT, "-", 3)
+    run_dir <- file.path(pact_data_dir, "Workbook", paste0("20", id_parts[2]), PACT_INPUT)
+    if (!dir.exists(run_dir)) {
+        run_dir <- file.path(
+            pact_data_dir, "Results", "Bioinformatics", paste0("20", id_parts[1]), PACT_INPUT
+        )
+        if (!dir.exists(run_dir)) stop("PACT run folder not found: ", run_dir)
+    }
+    if (grepl("Results", run_dir)) {
+        pact_sheet <- file.path(run_dir, "demux-samplesheet.csv")
     } else {
-        stop("No alternative file found.")
-    }
-}
-
-# Returns the folder path to the PACT run where PACT_INPUT is the PACT ID
-getPactFolder <- function(PACT_INPUT) {
-    drive <- file.path("", "Volumes", "molecular", "MOLECULAR LAB ONLY")
-    folder <- file.path(drive, "NYU PACT Patient Data", "Workbook")
-    runyr <- stringr::str_split_fixed(PACT_INPUT, "-", 3)[, 2]
-    runFolder <- file.path(folder, paste0("20", runyr), PACT_INPUT)
-    if (dir.exists(runFolder)) {
-        return(runFolder)
-    }
-    runyr <- paste0("20", stringr::str_split_fixed(PACT_INPUT, "-", 2)[1, 1])
-    runFolder <- file.path(drive, "NYU PACT Patient Data", "Results", "Bioinformatics",
-                           runyr, PACT_INPUT)
-    stopifnot(dir.exists(runFolder))
-    return(runFolder)
-}
-
-# Returns the file path to the PACT run worksheet
-getFilePath <- function(PACT_INPUT) {
-    runFolder <- getPactFolder(PACT_INPUT)
-    if (stringr::str_detect(runFolder, pattern = "Results")) {
-        pact_sheet <- file.path(runFolder, "demux-samplesheet.csv")
-    }else{
-        pact_sheet <- file.path(runFolder, paste0(PACT_INPUT, ".xlsm"))
-        if (!file.exists(pact_sheet)) {
-            pact_sheet <- getAltPath(pact_sheet)
-        }
+        pact_sheet <- file.path(run_dir, paste0(PACT_INPUT, ".xlsm"))
+        if (!file.exists(pact_sheet)) pact_sheet <- find_alt_workbook(pact_sheet)
     }
     message("Using the following PACT sheet file:\n", pact_sheet)
-    return(pact_sheet)
+    pact_sheet
 }
 
-# Parses the input file for the "PhilipsExport" tab
-parseWorksheet <- function(pact_sheet) {
-    sheet2Read <- "PhilipsExport"
+# Reads sample identifiers from PhilipsExport tab
+parse_worksheet <- function(pact_sheet) {
     message("Reading the file:\n", pact_sheet)
-    shNames <- readxl::excel_sheets(pact_sheet)
-    message("Excel sheet names:\n", paste(shNames, collapse = "\n"))
-    stopifnot(!is.null(shNames) & length(shNames) > 2)
-    sh <- which(grepl(sheet2Read, shNames, ignore.case = T))[1]
-    sheet_to_read <- shNames[sh]
-    pact_columns <-
-        c("Tumor Specimen ID",
-          "Normal Specimen ID",
-          "Tumor DNA/RNA Number",
-          "MRN",
-          "Test Number")
-    vals2find <-  suppressMessages(as.data.frame(
-        readxl::read_excel(
-            pact_sheet,
-            sheet = sheet_to_read,
-            skip = 3,
-            col_types = "text"
-        )
-    ))
-    vals2find <- vals2find[, pact_columns]
-    vals2find <- vals2find[!is.na(vals2find[,1]),]
-    return(vals2find)
+    sheets <- readxl::excel_sheets(pact_sheet)
+    message("Excel sheet names:\n", paste(sheets, collapse = "\n"))
+    stopifnot(length(sheets) > 2)
+    philips_tab <- grep("PhilipsExport", sheets, ignore.case = TRUE, value = TRUE)[1]
+    vals <- suppressMessages(as.data.frame(
+        readxl::read_excel(pact_sheet, sheet = philips_tab, skip = 3, col_types = "text")
+    ))[, pact_columns]
+    vals[!is.na(vals[, 1]), ]
 }
 
-
-parseDemuxCsv <- function(pact_sheet) {
-    raw_csv_df <- as.data.frame(read.csv(pact_sheet, skip = 19))
-    csv_df <- raw_csv_df[raw_csv_df$Tumor_Content != 0,]
-    raw_columns <- c("TUMOR_CASE_ID_BLOCK", "Normal_DNA", "Tumor_DNA")
-    vals2find <- csv_df[, raw_columns]
-    vals2find$Normal_DNA <- sub("-[^-]+$", "", vals2find$TUMOR_CASE_ID_BLOCK)
-    rownames(vals2find) <- NULL
-    vals2find$MRN <- stringr::str_split_fixed(csv_df$Sample_ID, "_", 3)[,1]
-    vals2find$Test <- csv_df$TM_Number
-    pact_columns <-
-        c("Tumor Specimen ID",
-          "Normal Specimen ID",
-          "Tumor DNA/RNA Number",
-          "MRN",
-          "Test Number")
-    colnames(vals2find) <- pact_columns
-    return(vals2find)
+# Reads sample identifiers from demux samplesheet
+parse_demux_csv <- function(pact_sheet) {
+    demux <- read.csv(pact_sheet, skip = 19)
+    demux <- demux[demux$Tumor_Content != 0, ]
+    vals <- data.frame(
+        demux$TUMOR_CASE_ID_BLOCK,
+        sub("-[^-]+$", "", demux$TUMOR_CASE_ID_BLOCK),
+        demux$Tumor_DNA,
+        stringr::str_split_fixed(demux$Sample_ID, "_", 3)[, 1],
+        demux$TM_Number
+    )
+    stats::setNames(vals, pact_columns)
 }
 
-
-# Parses the input file depending on if the input is a csv file or a xlsx file path
-getCaseValues <- function(PACT_INPUT, readFlag) {
-    isSamSheet <- stringr::str_detect(PACT_INPUT, "-SampleSheet")
-    isFilePath <- stringr::str_detect(PACT_INPUT, .Platform$file.sep)
-
-    if (readFlag && isSamSheet) {
+# Returns sample identifiers for csv file, workbook path, or PACT run ID input
+get_case_values <- function() {
+    if (read_flag && grepl("-SampleSheet", PACT_INPUT)) {
         message("Parsing Data from Demux SampleSheet.csv file...")
-        vals2find <- utils::read.csv(PACT_INPUT, skip = 19)[, c(6, 7, 9)]
-        vals2find <- as.data.frame(vals2find[!grepl("H20|SERACARE|HAPMAP", vals2find[, 2]),])
-        return(vals2find)
+        vals <- utils::read.csv(PACT_INPUT, skip = 19)[, c(6, 7, 9)]
+        return(as.data.frame(vals[!grepl("H20|SERACARE|HAPMAP", vals[, 2]), ]))
     }
-
-    if (readFlag && !isSamSheet) {
+    if (read_flag) {
         message("Parsing Data from .csv file that is not a Demux SampleSheet...")
-        vals2find <- read.csv(PACT_INPUT)
-        if (ncol(vals2find) > 1) {
-            vals2find <- unlist(lapply(vals2find, identity))
-        }
-        return(as.data.frame(unique(vals2find[vals2find != ""])))
+        vals <- unlist(read.csv(PACT_INPUT))
+        return(as.data.frame(unique(vals[vals != ""])))
     }
-
-    if (!readFlag && isFilePath) {
+    if (is_file_path) {
         message("Parsing Data from .xlsm/.xlsx file path...")
-        vals2find <- parseWorksheet(PACT_INPUT)
-        return(vals2find)
+        return(parse_worksheet(PACT_INPUT))
     }
-    # Default case: PACT_INPUT is a PACT ID, get the file path
-    message("Parsing Data from PACT RUN ID: ", PACT_INPUT,
-            " finding run worksheet...")
-
-
-    pact_sheet <- getFilePath(PACT_INPUT)
-
-    if (grepl("\\.csv$", pact_sheet)) {
-        vals2find <- parseDemuxCsv(pact_sheet)
-    } else{
-        vals2find <- parseWorksheet(pact_sheet)
-    }
-    return(vals2find)
+    message("Parsing Data from PACT RUN ID: ", PACT_INPUT, " finding run worksheet...")
+    pact_sheet <- get_pact_sheet()
+    if (grepl("\\.csv$", pact_sheet)) parse_demux_csv(pact_sheet) else parse_worksheet(pact_sheet)
 }
 
-
-# Generates the year path for the report link in the xlsx output file
-get_year_paths <- function(output) {
-    output_final <- output[!is.na(output$run_number),]
-    yearSplit <- stringr::str_split_fixed(output_final$run_number, "-", 2)[, 1]
-    yearSplit <- gsub("MC", "", yearSplit)
-    yearPath <- lapply(yearSplit, function(yr) {
-        if (nchar(yr) > 2) {
-            yr <- substring(yr, 3)
-        }
-        paste0("20", yr)
-    })
-    return(yearPath)
+# Returns run ID used to name output worksheet and REDCap record
+get_pact_id <- function() {
+    if (is_sophia) return(read.csv(get_pact_sheet(), skip = 19)$Sample_Project[1])
+    if (grepl(".xls", PACT_INPUT)) {
+        return(substr(basename(PACT_INPUT), 1, nchar(basename(PACT_INPUT)) - 5))
+    }
+    if (read_flag) substr(PACT_INPUT, 1, nchar(PACT_INPUT) - 4) else PACT_INPUT
 }
 
-# Appends the smb file paths to the report path columns in the output excel sheet
-addOutputLinks <- function(output) {
-    if (ncol(output) == 0) return(output)
-
-    winpath <- "smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/MethylationClassifier"
-    yearPath <- get_year_paths(output)
-    output$report_complete <- ifelse(!is.na(output$run_number), "YES", "NOT_YET_RUN")
-    out_htmls <- paste0(output$record_id, ".html")
-    output$'Report Link' <- file.path(winpath, yearPath, output$run_number, out_htmls)
-    output$'Report Link'[is.na(output$run_number)] <- ""
-    output$'Report Path' <- output$'Report Link'
-
-    # Handle the case where the run number does not contain "MGDM"
-    oldRun <- !grepl("MGDM", output$run_number)
-    if (any(oldRun)) {
-        output$report_complete[oldRun] <- "NOT_YET_RUN"
-        output$`Report Link`[oldRun] <- ""
-        output$`Report Path`[oldRun] <- ""
-    }
-    return(output)
-}
-
-# Finds and fills in missing NGS numbers in the output data frame for matching fields
-FillMissingNGS <- function(output, vals2find) {
-    rows2fill <- which(is.na(output$Test_Number))
-    if (length(rows2fill) > 0) {
-        for (row in rows2fill) {
-            accessionNum <- output$accession_number[row]
-            matchedIdx <- which(vals2find$`Tumor Specimen ID` == accessionNum)
-
-            if (length(matchedIdx) > 0) {
-                output$Test_Number[row] <- vals2find$`Test Number`[matchedIdx[1]]
-            }
-        }
-    }
-    rowsStillMissing <- which(is.na(output$Test_Number))
-    if (length(rowsStillMissing) > 0) {
-        warning("Some samples still missing NGS Numbers:\n",
-                paste(output$record_id[rowsStillMissing], collapse = "\n"))
-    }
-    return(output)
-}
-
-# Corrects any NA or missing NGS numbers, and appends output links
-modifyOutput <- function(output, vals2find) {
-    if (!("Test Number" %in% colnames(vals2find))) {
-        return(output)
-    }
-    if (length(vals2find$`Test Number`) == 0) {
-        vals2find$`Test Number` <- ""
-    }
-    # Fixes NA's if any found matches did not have NGS numbers
-    if (all(output$Test_Number %in% vals2find$`Test Number`)) {
-        NGSmissing <- F
-        message("All NGS Test Numbers Found in Methylation Database")
-    } else{
-        NGSmissing <- T
-        message("Not all NGS do not have methylation")
-    }
-
-    if (NGSmissing == T) {
-        output <- FillMissingNGS(output, vals2find)
-    }
-
-    output <- addOutputLinks(output)
-    return(output)
-}
-
-# Returns the volume paths to the methylation reports in the dataframe
-GetVolumePaths <- function(methData) {
-    smb_path <- "smb://shares-cifs.nyumc.org/apps/acc_pathology"
-    checkPaths <- stringr::str_replace_all(methData$`Report Path`, smb_path, "/Volumes")
-    checkPaths <- checkPaths[checkPaths != "" & !is.na(checkPaths)]
-    checkPaths <- checkPaths[stringr::str_detect(checkPaths, "MGDM")]
-    return(checkPaths)
-}
-
-# Checks if paths to the methylation reports are valid and fixes any broken
-CheckMethPaths <- function(methData) {
-    for (i in 1:length(methData$`Report Path`)) {
-        currPath <- methData$`Report Path`[i]
-        currSplit <- stringr::str_split_fixed(currPath, "/", 11)[1, ]
-        if (stringr::str_detect(currSplit[10], "MGDM") == FALSE) {
-            next
-        }
-        runYear <- stringr::str_split_fixed(currSplit[10], "-", 2)[1, 1]
-        runYear <- paste0("20", runYear)
-        currSplit[9] <- runYear
-        newPath <- paste(currSplit, collapse = "/")
-        methData[i, "Report Path"] <- newPath
-    }
-    checkPaths <- GetVolumePaths(methData)
-    anyPathsFalse <- file.exists(checkPaths) == FALSE
-
-    if (any(anyPathsFalse)) {
-        message("Fixing broken file paths...")
-        toReplace <- basename(checkPaths[anyPathsFalse])
-        mainDirs <- dirname(checkPaths[anyPathsFalse])
-        mainDirs <- unique(mainDirs)
-        for (x in 1:length(mainDirs)) {
-            if (!dir.exists(mainDirs[x])) {
-                correct_dir <- dir(
-                    path = dirname(mainDirs[x]),
-                    pattern = basename(mainDirs[x]),
-                    full.names = TRUE
-                )
-                if (length(correct_dir) > 0) {
-                    mainDirs[x] <- correct_dir[1]
-                }
-            }
-        }
-        for (missing in toReplace) {
-            message("Fixing path for missing report: ", missing)
-            patt <- stringr::str_split_fixed(missing, ".html", 2)[1, 1]
-
-            for (dirPath in mainDirs) {
-                file_found <- dir(path = dirPath, pattern = patt, full.names = TRUE)
-                if (length(file_found) > 0) {
-
-                    if (length(file_found) > 1) {
-                        splitNames <- stringr::str_split_fixed(basename(file_found), "_", 2)[, 1]
-                        base_htmls <- paste0(splitNames, ".html")
-                        exact_match <- which(missing == base_htmls)
-                        file_found <- file_found[exact_match]
-
-                        base_old <- stringr::str_split_fixed(basename(methData$`Report Path`), "_", 2)[, 1]
-                        htmls_old <- paste0(base_old, ".html")
-                        htmls_old <- gsub(base_old, pattern = ".html.html", replacement = ".html")
-                        toSwap <- which(missing == htmls_old)
-                        newPath <- stringr::str_replace(
-                            methData$`Report Path`[toSwap],
-                            missing, basename(file_found))
-                        message("Updating file path:\n", newPath)
-                        methData$`Report Path`[toSwap] <- newPath
-                    } else{
-                        toSwap <- which(grepl(missing, methData$`Report Path`))
-                        newPath <- stringr::str_replace(
-                            methData$`Report Path`[toSwap],
-                            missing, basename(file_found))
-                        message("Updating file path:\n", newPath)
-
-                        methData$`Report Path`[toSwap] <- newPath
-                    }
-                }
-            }
-        }
-        checkPaths <- GetVolumePaths(methData)
-        anyPathMissed <- file.exists(checkPaths) == FALSE
-
-        if (any(anyPathMissed)) {
-            to_fix <- checkPaths[anyPathMissed]
-
-            for (old_path in to_fix) {
-                newHtml <- file.path(paste0(dirname(old_path), "-new-template"), basename(old_path))
-                missing <- basename(newHtml)
-
-                message("Fixing path for missing report: ", missing)
-                patt <- stringr::str_split_fixed(missing, ".html", 2)[1, 1]
-                dirPath <- dirname(newHtml)
-
-                file_found <- dir(path = dirPath, pattern = patt, full.names = TRUE)
-                if (length(file_found) > 0) {
-
-                    if (length(file_found) > 1) {
-                        splitNames <- stringr::str_split_fixed(basename(file_found), "_", 2)[, 1]
-                        base_htmls <- paste0(splitNames, ".html")
-                        exact_match <- which(missing == base_htmls)
-                        file_found <- file_found[exact_match]
-
-                        base_old <- stringr::str_split_fixed(basename(methData$`Report Path`), "_", 2)[, 1]
-                        htmls_old <- paste0(base_old, ".html")
-                        htmls_old <- gsub(base_old, pattern = ".html.html", replacement = ".html")
-                        toSwap <- which(missing == htmls_old)
-                        newPath <- stringr::str_replace(
-                            methData$`Report Path`[toSwap],
-                            missing, basename(file_found))
-                        if (stringr::str_detect(pattern = "-new-template", file_found)) {
-                            new_dir_path <- paste0(dirname(newPath), "-new-template")
-                            newPath <- file.path(new_dir_path, basename(file_found))
-                        }
-                        message("Updating file path:\n", newPath)
-                        methData$`Report Path`[toSwap] <- newPath
-                    } else{
-                        toSwap <- which(grepl(missing, methData$`Report Path`))
-                        newPath <- stringr::str_replace(
-                            methData$`Report Path`[toSwap],
-                            missing, basename(file_found))
-
-                        if (stringr::str_detect(pattern = "-new-template", file_found)) {
-                            new_dir_path <- paste0(dirname(newPath), "-new-template")
-                            newPath <- file.path(new_dir_path, basename(file_found))
-                        }
-
-                        message("Updating file path:\n", newPath)
-
-                        methData$`Report Path`[toSwap] <- newPath
-                    }
-                }
-            }
-        }
-        checkPaths <- GetVolumePaths(methData)
-        anyPathMissed <- file.exists(checkPaths) == FALSE
-
-        if (any(anyPathMissed)) {
-            msg1 <- "Some paths to html reports need editing in MethylMatch.xlsx sheet!"
-            msg2 <- "Fix the following paths in worksheet 'Report Path' column that do not exist:"
-            message(crayon::bgRed(msg1), "\n", crayon::bgRed(msg2), "\n")
-            message(paste(checkPaths[anyPathMissed], collapse = "\n"), "\n")
-        }
-    }
-
-    return(methData)
-}
-
-
-# Adds hyperlinks to the report links in the output excel file
-addExcelLink <- function(output, fiLn, wb, PACT_ID) {
-    x <- c(output$'Report Link'[fiLn])
-    names(x) <- paste0(output$record_id[fiLn], ".html")
-    class(x) <- "hyperlink"
-    colNum <- which(colnames(output) == "Report Link")
-    openxlsx::writeData(wb, sheet = PACT_ID, x = x, startCol = colNum, startRow = fiLn + 1)
-}
-
-# Writes the openxlsx workbook file to the Desktop
-createXlFile <- function(PACT_ID, output) {
-    output <- CheckMethPaths(methData = output)
-    wb <- openxlsx::createWorkbook()
-    openxlsx::addWorksheet(wb, PACT_ID)
-    openxlsx::writeData(wb, sheet = PACT_ID, x = output)
-    for (fiLn in 1:length(output$'Report Link')) {
-        if (output$'Report Link'[fiLn] != '') {
-            addExcelLink(output, fiLn, wb, PACT_ID)
-        }
-    }
-    meth_xlsx <- file.path(fs::path_home(),"Desktop",
-                           paste0(PACT_ID,"_MethylMatch.xlsx"))
-    openxlsx::saveWorkbook(wb, meth_xlsx, overwrite = T)
-    return(meth_xlsx)
-}
-
-# Uses Rcurl to post Json form to REDCap
-postData <- function(rcon, record) {
-    datarecord = jsonlite::toJSON(list(as.list(record)), auto_unbox = T)
-    res <-
-        RCurl::postForm(
-            rcon$url,
-            token = rcon$token,
-            content = 'record',
-            format = 'json',
-            type = 'flat',
-            data = datarecord,
-            returnContent = 'nothing',
-            returnFormat = 'csv'
-        )
-    cat(res)
-}
-
-# Uploads the xlsx file to REDCap and sends an email notification
-emailFile <- function(PACT_ID, meth_xlsx, rcon) {
-    record = data.frame(record_id = PACT_ID, run_number = PACT_ID)
-    postData(rcon, record)
-    response <- httr::POST(
-        rcon$url,
-        body = c(
-            list(
-                token = rcon$token,
-                content = "record",
-                action = "export",
-                format = "json",
-                type = "flat",
-                rawOrLabel = "raw",
-                exportSurveyFields = "false",
-                exportDataAccessGroups = "false",
-                returnFormat = "json"
-            ),
-            stats::setNames(
-                as.list(record$record_id),
-                sprintf("records[%d]", seq_along(record$record_id) - 1L)
-            ),
-            stats::setNames(
-                as.list(c("record_id", "other_file")),
-                sprintf("fields[%d]", 0:1)
-            )
-        ),
-        encode = "form"
+# Matching PACT samples to REDCap ----------------------------------------------
+# Pairs every sample identifier with Test Number of its row
+build_query_table <- function(vals) {
+    stopifnot("Test Number" %in% names(vals))
+    queries <- data.frame(
+        Test_Number = rep(as.character(vals[["Test Number"]]), times = ncol(vals)),
+        query_value = trimws(unlist(lapply(vals, as.character), use.names = FALSE))
     )
+    queries <- queries[!is.na(queries$query_value) & !queries$query_value %in% c("", "0"), ]
 
-    httr::stop_for_status(response)
-
-    isDone <- jsonlite::fromJSON(
-        httr::content(response, as = "text", encoding = "UTF-8"),
-        simplifyDataFrame = TRUE
-    )
-
-
-    if (length(isDone$other_file) == 0) {
-        import_res <- httr::POST(
-            url = rcon$url,
-            body = list(
-                token = rcon$token, content = "file",
-                action = "import", record = PACT_ID,
-                field = "other_file", returnFormat = "json",
-                file = httr::upload_file(
-                    path = meth_xlsx,
-                    type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-            ), encode = "multipart"
-        )
-        if (import_res$status_code != "200") {
-            message("REDCap file upload failed:\n", meth_xlsx)
-        } else {
-            message("REDCap file upload successful:\n", meth_xlsx)
-        }
-        record$comments <- "pact_sample_list_email"
-        postData(rcon, record)
-        message("------", "Email Notification Created", "------")
-    }
+    # Adds shortened TS, TB, and TC identifiers
+    short <- queries[grepl("^(TS|TB|TC)-[^-]+-", queries$query_value), ]
+    short$query_value <- sub("^((TS|TB|TC)-[^-]+)-.*$", "\\1", short$query_value)
+    unique(rbind(queries, short))
 }
 
-# Grabs the run ID from the input xlsx sheet name
-grab_run_id <- function(readFlag, PACT_INPUT) {
-    is_sophia <- grepl("^[0-9]{2}", PACT_INPUT)
-    if (is_sophia) {
-        pact_sheet <- getFilePath(PACT_INPUT)
-        PACT_ID <- as.data.frame(read.csv(pact_sheet, skip = 19))$Sample_Project[1]
-        return(PACT_ID)
-    }
-    PACT_ID <-
-        ifelse(readFlag == T, substr(PACT_INPUT, 1, nchar(PACT_INPUT) - 4), PACT_INPUT)
-    if (stringr::str_detect(PACT_INPUT, ".xls")) {
-        PACT_ID <-
-            substr(basename(PACT_INPUT), 1, nchar(basename(PACT_INPUT)) - 5)
-    }
-    return(PACT_ID)
-}
+# Returns REDCap rows where any field contains sample identifier
+query_cases <- function(vals, db) {
+    queries <- build_query_table(vals)
+    db_text <- do.call(cbind, lapply(db, as.character))
+    db_text[is.na(db_text)] <- ""
 
-
-generate_query_table <- function(vals2find, query_columns = NULL) {
-    stopifnot(
-        "Test Number" %in% names(vals2find),
-        all(query_columns %in% names(vals2find))
-    )
-
-    query_table <- data.frame(
-        Test_Number = rep(
-            as.character(vals2find[["Test Number"]]),
-            times = length(query_columns)
-        ),
-        query_value = unlist(
-            lapply(vals2find[query_columns], as.character),
-            use.names = FALSE
-        ),
-        stringsAsFactors = FALSE
-    )
-
-    query_table$query_value <- trimws(query_table$query_value)
-
-    keep_query <- !is.na(query_table$query_value) &
-        !(query_table$query_value %in% c("", "0"))
-
-    query_table <- query_table[keep_query, , drop = FALSE]
-
-    # Add shortened TS, TB, and TC identifiers
-    ts_rows <- grepl(
-        pattern = "^(TS|TB|TC)-[^-]+-",
-        x = query_table$query_value
-    )
-
-    ts_queries <- query_table[ts_rows, , drop = FALSE]
-    ts_queries$query_value <- sub(
-        pattern = "^((TS|TB|TC)-[^-]+)-.*$",
-        replacement = "\\1",
-        x = ts_queries$query_value
-    )
-
-    query_table <- unique(rbind(query_table, ts_queries))
-    rownames(query_table) <- NULL
-
-    return(query_table)
-}
-
-queryCases <- function(vals2find, db) {
-
-    query_columns = names(vals2find)
-    query_table <- generate_query_table(
-        vals2find = vals2find,
-        query_columns = query_columns
-    )
-
-    empty_result <- db[0L, , drop = FALSE]
-    empty_result$Test_Number <- character(0L)
-
-    if (nrow(query_table) == 0L ||
-        nrow(db) == 0L ||
-        ncol(db) == 0L) {
-        return(empty_result)
+    matches <- dplyr::bind_rows(lapply(seq_len(nrow(queries)), function(i) {
+        value <- queries$query_value[i]
+        hits <- which(matrix(grepl(value, db_text, fixed = TRUE), nrow(db_text)), arr.ind = TRUE)
+        if (nrow(hits) == 0) return(NULL)
+        data.frame(
+            db_row = hits[, "row"],
+            Test_Number = queries$Test_Number[i],
+            query_value = value,
+            matched_column = names(db)[hits[, "col"]],
+            matched_value = db_text[hits]
+        )
+    }))
+    if (nrow(matches) == 0) {
+        return(cbind(db[0, , drop = FALSE], Test_Number = character(0)))
     }
 
-    # Convert all database columns to searchable character vectors
-    db_text <- lapply(db, function(column) {
-        column <- as.character(column)
-        column[is.na(column)] <- ""
-        return(column)
-    })
+    match_lines <- sprintf(
+        "Match found for '%s' (%s) for %s in: \"%s\" column",
+        matches$query_value, matches$matched_value, matches$Test_Number, matches$matched_column
+    )
+    message(paste(match_lines, collapse = "\n"))
+    cat(match_lines, file = match_tsv, append = TRUE, sep = "\n")
 
-    match_list <- lapply(seq_len(nrow(query_table)), function(query_index) {
-        query_value <- query_table$query_value[[query_index]]
-
-        match_matrix <- do.call(
-            cbind,
-            lapply(db_text, function(column) {
-                grepl(
-                    pattern = query_value,
-                    x = column,
-                    fixed = TRUE
-                )
-            })
-        )
-
-        match_positions <- which(match_matrix, arr.ind = TRUE)
-
-        if (nrow(match_positions) == 0L) {
-            return(NULL)
-        }
-
-        matched_values <- mapply(
-            function(row_index, column_index) {
-                return(db_text[[column_index]][[row_index]])
-            },
-            match_positions[, "row"],
-            match_positions[, "col"],
-            USE.NAMES = FALSE
-        )
-
-        return(data.frame(
-            db_row = match_positions[, "row"],
-            Test_Number = query_table$Test_Number[[query_index]],
-            query_value = query_value,
-            matched_column = names(db)[match_positions[, "col"]],
-            matched_value = matched_values,
-            stringsAsFactors = FALSE
-        ))
-    })
-
-    match_info <- dplyr::bind_rows(match_list)
-
-    if (nrow(match_info) == 0L) {
-        return(empty_result)
-    }
-
-    if (!is.null(MATCH_TSV)) {
-        match_lines <- sprintf(
-            "Match found for '%s' (%s) for %s in: \"%s\" column",
-            match_info$query_value,
-            match_info$matched_value,
-            match_info$Test_Number,
-            match_info$matched_column
-        )
-
-        message(paste(match_lines, collapse = "\n"))
-        dir.create(
-            dirname(MATCH_TSV),
-            recursive = TRUE,
-            showWarnings = FALSE
-        )
-        cat(
-            match_lines,
-            file = MATCH_TSV,
-            append = TRUE,
-            sep = "\n"
-        )
-    }
-
-    output <- db[match_info$db_row, , drop = FALSE]
-    output$Test_Number <- match_info$Test_Number
+    output <- db[matches$db_row, , drop = FALSE]
+    output$Test_Number <- matches$Test_Number
     output <- unique(output)
     rownames(output) <- NULL
-
-    return(output)
+    output
 }
 
-
-process_values <- function(vals2find, db) {
-    output <- data.frame()
-
-    if (nrow(vals2find) != 0) {
-        output <- queryCases(vals2find, db)
-    }
-    if (nrow(output) == 0) {
-        warning("No Methylation Cases on this PACT run, generating blank file")
-        output[1, ] <- "NONE"
-    } else {
-        rownames(output) <- 1:nrow(output)
-    }
-    if (ncol(output) == 0) {
-        message(crayon::bgRed("No Methylation on this PACT run!"))
+# Fills missing Test Numbers from PACT sheet by accession number
+fill_test_numbers <- function(output, vals) {
+    if (all(output$Test_Number %in% vals$`Test Number`)) {
+        message("All NGS Test Numbers Found in Methylation Database")
         return(output)
     }
-    if (readFlag == T) {
-        output <- modifyOutput(output, vals2find)
-        write.csv(output, file = "meth_sample_data.csv", quote = F, row.names = F)
-        return(output)
-    }
-    return(output)
-}
-
-
-getExcelPath <- function(PACT_INPUT) {
-    if (stringr::str_detect(PACT_INPUT, .Platform$file.sep)) return(PACT_INPUT)
-
-    runType <- ifelse(stringr::str_detect(PACT_INPUT, "^\\d{2}"),
-                      "Sophia", "regular")
-
-    lab_only = file.path("", "Volumes", "molecular", "MOLECULAR LAB ONLY")
-    folder = file.path("NYU PACT Patient Data", "Workbook")
-
-    run_year <- stringr::str_split_fixed(PACT_INPUT, "-", 3)[, 2]
-    if (runType == "Sophia") {
-        run_year <- stringr::str_split_fixed(PACT_INPUT, "-", 3)[, 1]
-    }
-    yearDir <- paste0("20", run_year)
-    xlFi <- paste0(PACT_INPUT, ".xlsm")
-    worksheetPath <- file.path(lab_only, folder, yearDir, PACT_INPUT, xlFi)
-
-    if (runType == "NextSeq2000") {
-        folder <- "Validations/PACT new i7-NextSeq2000/Wet Lab/Workbook"
-        worksheetPath <- file.path(lab_only, folder, yearDir, xlFi)
-    }
-    if (runType == "test") {
-        zdrive = "/Volumes/molecular/Molecular/Validation/PACT/Test_Sheets"
-        worksheetPath <- file.path(zdrive, xlFi)
-    }
-    if (runType == "Illumina") {
-        zdrive = "/Volumes/molecular/Molecular/Validation/PACT/Test_Sheets"
-        worksheetPath <- file.path(zdrive, xlFi)
-    }
-    if (runType == "TMB") {
-        zdrive = file.path(lab_only, "Validations/TMB")
-        worksheetPath <- file.path(zdrive, xlFi)
-    }
-    if (runType == "Sophia") {
-        worksheetPath <- file.path(lab_only, folder, yearDir, PACT_INPUT, xlFi)
-        message("Run type is Sophia, looking for workbook in:")
-    }
-    message(worksheetPath)
-    return(worksheetPath)
-}
-
-
-# Grabs REDCap data and finds matches to PACT_INPUT columns to fields
-getOuputData <- function(token, redcap_fields, PACT_INPUT, readFlag) {
-
-
-    worksheetPath <- getExcelPath(PACT_INPUT)
-    all_sheets <- readxl::excel_sheets(worksheetPath)
-
-    sh_kwd <- ifelse(stringr::str_detect(PACT_INPUT, "^\\d{2}"),
-                     "Beaker", "Philips")
-
-    matched_kwd <- stringr::str_detect(pattern = sh_kwd, all_sheets)
-    sheet_name <- all_sheets[matched_kwd]
-    beaker_export <- readxl::read_xlsx(worksheetPath, sheet = sheet_name)
-
-    beaker_cols <- beaker_export[, c("Specimen ID", "MRN")]
-
-
-    vals2find <- getCaseValues(PACT_INPUT, readFlag)
-
-    if (class(vals2find) != "data.frame") {
-        vals2find <- as.data.frame(vals2find)
-    }
-
-    vals2find$beaker_mrn <- ""
-    for (i in 1:nrow(vals2find)) {
-        curr_tm <- vals2find$`Test Number`[i]
-        match_tm <- which(beaker_cols$`Specimen ID` == curr_tm)
-        new_mrn <- beaker_cols$MRN[match_tm]
-        vals2find$beaker_mrn[i] <- new_mrn
-    }
-
-    message("Values from PACT demux csv used for matching to METH REDCap DB:")
-    message(paste(capture.output(vals2find), collapse = '\n'))
-    # Get entire REDCap Database matrix
-    db <- grabAllRecords(redcap_fields)
-    output <- process_values(vals2find, db)
-
-    PACT_ID <- grab_run_id(readFlag, PACT_INPUT)
-    output <- modifyOutput(output, vals2find)
-    toDrop <- is.na(output$Test_Number)
-
-    if (any(toDrop)) {
-        hasNGS <- which(grepl("NGS", output$tm_number))
-        message("NGS Number found in 'tm_number' field of REDCap!")
-        if (length(hasNGS) > 0) {
-            output$Test_Number[hasNGS] <- output$tm_number[hasNGS]
-        }
-    }
-
-    meth_xlsx <- createXlFile(PACT_ID, output)
-    emailFile(PACT_ID, meth_xlsx, rcon)
-    return(output)
-}
-
-# Installs correct version of EPICv2 manifest and minfi from GitHub
-minfi_install <- function() {
-    Sys.setenv(R_COMPILE_AND_INSTALL_PACKAGES = "always")
-    devtools::install_github(
-        "mwsill/minfi",
-        upgrade = "always",
-        force = T, dependencies = T, type = "source", auth_token = NULL
+    message("Not all NGS do not have methylation")
+    unfilled <- is.na(output$Test_Number)
+    accession_row <- match(
+        output$accession_number[unfilled], vals$`Tumor Specimen ID`, incomparables = NA
     )
-    devtools::install_github(
-        "mwsill/IlluminaHumanMethylationEPICv2manifest",
-        upgrade = "always",
-        force = T, dependencies = T, type = "source", auth_token = NULL
-    )
-}
-
-# Checks the correct package versions are installed and loads them
-source_pkg_vers <- function() {
-    minfiVers <- as.character(utils::packageVersion("minfi"))
-    if (minfiVers != "1.43.1") minfi_install()
-
-    v2_manifest <- "IlluminaHumanMethylationEPICv2manifest"
-    epicVers <- as.character(utils::packageVersion(v2_manifest))
-    if (epicVers != "0.1.0") minfi_install()
-
-    v2Pkg_needed <- !"mnp.v12epicv2" %in% rownames(installed.packages())
-    v2Con_needed <- !"conumee2.0" %in% rownames(installed.packages())
-    if (v2Pkg_needed | v2Con_needed) {
-        source(
-            "/Volumes/CBioinformatics/Methylation/Rscripts/install_epic_v2_classifier.R"
+    output$Test_Number[unfilled] <- vals$`Test Number`[accession_row]
+    if (anyNA(output$Test_Number)) {
+        warning(
+            "Some samples still missing NGS Numbers:\n",
+            paste(output$record_id[is.na(output$Test_Number)], collapse = "\n")
         )
     }
-    library("readxl")
-    stopifnot(library("conumee2.0", logical.return = T))
-    stopifnot(library("minfi", logical.return = T))
-    stopifnot(library("IlluminaHumanMethylationEPICv2manifest", logical.return = T))
-    stopifnot(library("mnp.v12epicv2", logical.return = T))
+    return(output)
 }
 
-# Loads additional packages and functions for generating CNV PNGs
-sourceFuns2 <- function() {
-    mainHub <- file.path(meth_repo, "main", "R")
-    script.list <- c("SetRunParams.R", "CopyInputs.R")
-    scripts <- file.path(mainHub, script.list)
-    invisible(lapply(scripts, function(i) {
-        suppressPackageStartupMessages(devtools::source_url(i))
-    }))
-    gb$setDirectory(getwd())
-    source_pkg_vers()
-    return(gb$defineParams())
+# Adds report status and smb report links for MGDM runs
+add_report_links <- function(output) {
+    run <- output$run_number
+    has_report <- grepl("MGDM", run)
+    year <- gsub("MC", "", sub("-.*$", "", run))
+    year <- paste0("20", ifelse(nchar(year) > 2, substring(year, 3), year))
+    link <- file.path(report_share, year, run, paste0(output$record_id, ".html"))
+    output$report_complete <- ifelse(has_report, "YES", "NOT_YET_RUN")
+    output$`Report Link` <- ifelse(has_report, link, "")
+    output$`Report Path` <- output$`Report Link`
+    output
 }
 
-# Messages the RD-numbers with idats and sets the API token as global variable
-msg_rd_num <- function(rds, token) {
-    message("\nRD-numbers with idats:\n", paste(rds, collapse = "\n"))
-    assign("rds", rds)
-    message("--------", crayon::bgMagenta("Starting CNV PNG Creation"), "--------")
-    ApiToken <- token
-    assign("ApiToken", ApiToken)
+# Report paths -----------------------------------------------------------------
+# Returns mounted volume paths of MGDM reports that do not exist
+missing_reports <- function(report_paths) {
+    volume_paths <- sub(smb_share, "/Volumes", report_paths, fixed = TRUE)
+    volume_paths <- volume_paths[grepl("MGDM", volume_paths)]
+    volume_paths[!file.exists(volume_paths)]
 }
 
-# Generates a minfi samplesheet from REDCap RD numbers and copies idat files
-get_pact_rds <- function(rd_numbers, token) {
-    result <- gb$search.redcap(rd_numbers, token)
-    result <- result[!is.na(result$barcode_and_row_column),]
-    samplesheet_ID = as.data.frame(stringr::str_split_fixed(result[,"barcode_and_row_column"],"_",2))
-    gb$writeFromRedcap(result, samplesheet_ID)  # writes API export as minfi dataframe sheet
-    gb$get.idats()  # copies idat files from return to current directory
-}
-
-# Messages final output of png CNV file output success on the user Desktop
-msgCreated <- function(mySentrix) {
-    pngFiles <- paste0(file.path(fs::path_home(), "Desktop", mySentrix[, 1]),"_cnv.png")
-    cnvMade <- file.exists(pngFiles)
-    if (any(cnvMade == F)) {
-        message("The following failed to be created:")
-        print(pngFiles[!cnvMade])
-        message("Try running again or check GitHub troubleshooting")
+# Points paths that end in missing html name to matching file found in run_dir
+swap_report_file <- function(report_paths, html, run_dir, new_template = FALSE) {
+    found <- dir(run_dir, pattern = sub("\\.html$", "", html), full.names = TRUE)
+    if (length(found) > 1) {
+        found <- found[paste0(sub("_.*", "", basename(found)), ".html") == html]
+        to_swap <- which(sub("_.*", "", basename(report_paths)) == html)
+    } else {
+        to_swap <- grep(html, report_paths)
     }
-    if (any(cnvMade == T)) {
-        message("The following were created successfully:")
-        print(pngFiles[cnvMade])
+    if (length(found) == 0) return(report_paths)
+
+    new_paths <- stringr::str_replace(report_paths[to_swap], html, basename(found[1]))
+    if (new_template) {
+        new_paths <- file.path(paste0(dirname(new_paths), "-new-template"), basename(found[1]))
+    }
+    message("Updating file path:\n", new_paths)
+    report_paths[to_swap] <- new_paths
+    report_paths
+}
+
+# Corrects report path year, then repairs paths to reports that do not exist
+check_report_paths <- function(report_paths) {
+    # Sets year folder from run number prefix
+    parts <- stringr::str_split_fixed(report_paths, "/", 11)
+    mgdm <- grepl("MGDM", parts[, 10])
+    parts[mgdm, 9] <- paste0("20", sub("-.*$", "", parts[mgdm, 10]))
+    report_paths[mgdm] <- apply(parts[mgdm, , drop = FALSE], 1, paste, collapse = "/")
+
+    missing <- missing_reports(report_paths)
+    if (length(missing) == 0) return(report_paths)
+    message("Fixing broken file paths...")
+
+    # Substitutes similarly named run folders for run folders that do not exist
+    run_dirs <- unique(dirname(missing))
+    for (i in which(!dir.exists(run_dirs))) {
+        similar <- dir(dirname(run_dirs[i]), pattern = basename(run_dirs[i]), full.names = TRUE)
+        if (length(similar) > 0) run_dirs[i] <- similar[1]
+    }
+    for (html in basename(missing)) {
+        message("Fixing path for missing report: ", html)
+        for (run_dir in run_dirs) report_paths <- swap_report_file(report_paths, html, run_dir)
+    }
+
+    # Checks "-new-template" run folders for reports still missing
+    for (report in missing_reports(report_paths)) {
+        message("Fixing path for missing report: ", basename(report))
+        report_paths <- swap_report_file(
+            report_paths, basename(report), paste0(dirname(report), "-new-template"),
+            new_template = TRUE
+        )
+    }
+
+    missing <- missing_reports(report_paths)
+    if (length(missing) > 0) {
+        message(
+            crayon::bgRed("Some paths to html reports need editing in MethylMatch.xlsx sheet!"), "\n",
+            crayon::bgRed("Fix the following paths in worksheet 'Report Path' column that do not exist:"), "\n"
+        )
+        message(paste(missing, collapse = "\n"), "\n")
+    }
+    report_paths
+}
+
+# Writes match workbook with report hyperlinks to Desktop
+write_match_xlsx <- function(output, pact_id) {
+    output$`Report Path` <- check_report_paths(output$`Report Path`)
+    wb <- openxlsx::createWorkbook()
+    openxlsx::addWorksheet(wb, pact_id)
+    openxlsx::writeData(wb, sheet = pact_id, x = output)
+    link_col <- which(names(output) == "Report Link")
+    for (i in which(output$`Report Link` != "")) {
+        link <- structure(
+            output$`Report Link`[i],
+            names = paste0(output$record_id[i], ".html"),
+            class = "hyperlink"
+        )
+        openxlsx::writeData(wb, sheet = pact_id, x = link, startCol = link_col, startRow = i + 1)
+    }
+    xlsx_path <- file.path(desktop, paste0(pact_id, "_MethylMatch.xlsx"))
+    openxlsx::saveWorkbook(wb, xlsx_path, overwrite = TRUE)
+    return(xlsx_path)
+}
+
+# IDAT files -------------------------------------------------------------------
+idat_names <- function(sentrix_ids) {
+    c(paste0(sentrix_ids, "_Grn.idat"), paste0(sentrix_ids, "_Red.idat"))
+}
+
+stop_if_unmounted <- function(path) {
+    if (!dir.exists(path)) {
+        stop(crayon::bgRed("Share drive not found, ensure path is accessible:"), "\n", path)
     }
 }
 
-# Function to check if CNV PNGs already exist on Z-drive to skip them
-CheckIfPngExists <- function(rds, outFolder = NULL) {
-    if (is.null(outFolder)) {
-        outFolder <- cnv_outFolder
+# Writes minfi samplesheet for REDCap records that have Sentrix barcode
+write_samplesheet <- function(rds) {
+    records <- redcap_export(cnv_fields, records = rds)
+    has_barcode <- !is.na(records$barcode_and_row_column) & nzchar(records$barcode_and_row_column)
+    records <- records[has_barcode, , drop = FALSE]
+    if (nrow(records) == 0) stop("No REDCap records with barcode_and_row_column were returned")
+
+    sentrix <- stringr::str_split_fixed(records$barcode_and_row_column, "_", 2)
+    samplesheet <- data.frame(
+        Sample_Name = records$record_id,
+        DNA_Number = records$b_number,
+        Sentrix_ID = sentrix[, 1],
+        Sentrix_Position = sentrix[, 2],
+        SentrixID_Pos = records$barcode_and_row_column,
+        Basename = file.path(getwd(), records$barcode_and_row_column),
+        RunID = records$run_number,
+        MP_num = records$tm_number,
+        tech = records$primary_tech,
+        tech2 = records$second_tech,
+        Date = records$arrived
+    )
+    message("Writing REDCap data to samplesheet.csv")
+    message(paste(capture.output(samplesheet), collapse = "\n"))
+    utils::write.csv(samplesheet, "samplesheet.csv", quote = FALSE, row.names = FALSE)
+}
+
+# Copies readable idat files that are not yet in working directory
+copy_idats <- function(idat_files) {
+    readable <- fs::file_access(idat_files, mode = "read")
+    if (any(!readable)) {
+        write(
+            paste("Cannot read idat file:", idat_files[!readable]),
+            "read_error_idat.txt", append = TRUE
+        )
     }
-    outFiles <- file.path(outFolder, paste0(rds, "_cnv.png"))
-    finished <- file.exists(outFiles)
+    already_copied <- basename(idat_files) %in% list.files(pattern = "\\.idat$")
+    to_copy <- idat_files[readable & !already_copied]
+    if (length(to_copy) == 0) return(message(".idat files already copied to run directory"))
+
+    cli::cli_progress_bar("Copying files", total = length(to_copy))
+    for (idat in to_copy) {
+        tryCatch(
+            fs::file_copy(idat, file.path(getwd(), basename(idat)), overwrite = TRUE),
+            error = function(e) {
+                cli::cli_alert_danger(paste("Failed to copy:", idat))
+                write(paste("Failed to copy:", idat), "missing_idat_files.txt", append = TRUE)
+            }
+        )
+        cli::cli_progress_update()
+    }
+    cli::cli_progress_done()
+}
+
+# Finds idat pairs for samplesheet.csv on idat drives and copies them to working directory
+get_idats <- function() {
+    stop_if_unmounted(research_idat_dir)
+    stop_if_unmounted(clinical_idat_dir)
+    samplesheet <- utils::read.csv("samplesheet.csv", strip.white = TRUE)
+    expected <- idat_names(unique(samplesheet$SentrixID_Pos))
+
+    idats <- unlist(lapply(
+        c(research_idat_dir, clinical_idat_dir), file.path,
+        samplesheet$Sentrix_ID, idat_names(samplesheet$SentrixID_Pos)
+    ))
+    idats <- idats[file.exists(idats)]
+
+    absent <- setdiff(expected, basename(idats))
+    if (length(absent) > 0) {
+        external_dir <- file.path(research_idat_dir, "External")
+        message(
+            crayon::bgRed("Still missing some idats! Checking External Folder:"), "\n", external_dir
+        )
+        wanted <- idat_names(unique(sub("_(Grn|Red)\\.idat$", "", absent)))
+        external <- file.path(external_dir, wanted)
+        external <- external[file.exists(external)]
+        if (!all(wanted %in% basename(external)) && dir.exists(external_dir)) {
+            nested <- list.files(external_dir, pattern = "\\.idat$", full.names = TRUE, recursive = TRUE)
+            nested <- nested[basename(nested) %in% setdiff(wanted, basename(external))]
+            external <- unique(c(external, nested))
+        }
+        idats <- c(idats, external)
+    }
+
+    idats <- idats[!duplicated(basename(idats))]
+    if (length(idats) == 0) {
+        stop(
+            "No .idat files found for these samples. Checked:\n",
+            research_idat_dir, "\n", clinical_idat_dir
+        )
+    }
+
+    absent <- setdiff(expected, basename(idats))
+    if (length(absent) > 0) {
+        utils::write.csv(
+            data.frame(Missing_Samples = unique(sub("_(Grn|Red)\\.idat$", "", absent))),
+            "missing_idats_log.csv", row.names = FALSE, quote = FALSE
+        )
+        warning(
+            "Some IDAT files were not found. See missing_idats_log.csv:\n",
+            paste(absent, collapse = "\n")
+        )
+    }
+    message("Files found:\n", paste(idats, collapse = "\n"))
+    copy_idats(idats)
+}
+
+# CNV PNG creation -------------------------------------------------------------
+# Drops RD-numbers that already have CNV PNG in output folder
+skip_existing_pngs <- function(rds) {
+    out_pngs <- file.path(cnv_out_dir, paste0(rds, "_cnv.png"))
+    finished <- file.exists(out_pngs)
     if (any(finished)) {
         message(crayon::bgGreen("Cases below already exist and will be skipped:"))
-        message(paste(capture.output(outFiles[finished]), collapse = '\n'))
-
+        message(paste(out_pngs[finished], collapse = "\n"))
         rds <- rds[!finished]
-
         if (length(rds) > 0) {
             message(crayon::bgGreen("The following CNV PNG will be generated:"))
-            message(paste(capture.output(rds), collapse = '\n'))
+            message(paste(rds, collapse = "\n"))
         }
     }
-    return(rds)
+    rds
 }
 
-# Main function that generates the CNV PNG for a single idat file path
-get_pact_cnv <- function(samName, samEpic, idatPath = getwd()) {
-    sam_out_png <- file.path(fs::path_home(), "Desktop",
-                             paste0(samName, "_cnv.png"))
-    pathEpic <- file.path(idatPath, samEpic)
-    RGsetEpic <- minfi::read.metharray(pathEpic, verbose = TRUE, force = TRUE)
-    MsetEpic <- minfi::preprocessIllumina(RGsetEpic, bg.correct = TRUE,
-                                          normalize = "controls")
-    cnv_obj <- mnp.v12epicv2::MNPcnv(MsetEpic, sex = NULL, main = samName)
-    chrAll <- paste0("chr", 1:22)
-    message("Saving file to:\n", sam_out_png)
-    png(filename = sam_out_png, width = 1820, height = 1040, res = 150)
+# Plots CNV PNG for one sample to Desktop
+make_cnv_png <- function(sample_name, sentrix_id) {
+    png_path <- file.path(desktop, paste0(sample_name, "_cnv.png"))
+    rgset <- minfi::read.metharray(file.path(getwd(), sentrix_id), verbose = TRUE, force = TRUE)
+    mset <- minfi::preprocessIllumina(rgset, bg.correct = TRUE, normalize = "controls")
+    cnv <- mnp.v12epicv2::MNPcnv(mset, sex = NULL, main = sample_name)
+    message("Saving file to:\n", png_path)
+    png(filename = png_path, width = 1820, height = 1040, res = 150)
     conumee2.0::CNV.genomeplot(
-        cnv_obj,
-        chr = chrAll,
-        main = samName,
+        cnv,
+        chr = paste0("chr", 1:22),
+        main = sample_name,
         bins_cex = "sample_level",
         cols = c("darkred", "salmon", "lightgrey", "lightgreen", "darkgreen")
     )
     invisible(dev.off())
 }
 
-# Function to generate CNV PNGs for all samples with sentrix IDs
-generate_new_cnv <- function(targets) {
-    has_idat <- targets[, "SentrixID_Pos"] %like% "_R0"
-    targets <- targets[has_idat, ]
-    all_installer <- file.path(meth_repo, "refs/heads/main/R/all_installer.R")
-
-    if ("conumee2.0" %in% rownames(installed.packages()) == F) {
-        devtools::source_url(all_installer)
-    }
-    if ("mnp.v12epicv2" %in% rownames(installed.packages()) == F) {
-        devtools::source_url(all_installer)
-    }
-    if (!requireNamespace("mnp.v12epicv2", quietly = TRUE)) {
-        stop(crayon::bgRed("The classifier is not installed no CNV will generate!"))
-    }
-    if (nrow(targets) > 0) {
-        sam_names <- as.character(targets[, 1])
-        sentrix.ids <- as.character(targets$SentrixID_Pos)
-        mapply(get_pact_cnv, sam_names, sentrix.ids)
-    } else{
-        message("The RD-number(s) do not have idat files in REDCap:/n")
-        print(targets)
-    }
-    msgCreated(targets)
-    while (!is.null(dev.list())) {dev.off()}
-}
-
-# Reads the sample sheet and returns a dataframe of samples to be processed
-GetSampleList <- function(rds, sampleSheet = "samplesheet.csv") {
-    targets <- read.csv(sampleSheet)
-    toDrop <- targets$Sample_Name %in% rds
-    targets <- targets[toDrop, ]
-    rownames(targets) <- 1:nrow(targets)
-    return(targets)
-}
-
-# Loads additional functions from GitHub and a TryCatch to generate CNV PNGs
-try_cnv_make <- function(rds, token) {
-    msg_rd_num(rds, token)
-    sourceFuns2()
-    get_pact_rds(rds, token)
-    targets <- GetSampleList(rds)
+# Gets idats for RD-numbers and plots CNV PNG for each sample to Desktop
+make_cnv_pngs <- function(rds) {
+    message("\nRD-numbers with idats:\n", paste(rds, collapse = "\n"))
+    message("--------", crayon::bgMagenta("Starting CNV PNG Creation"), "--------")
+    ensure_cnv_packages()
+    write_samplesheet(rds)
+    get_idats()
+    targets <- read.csv("samplesheet.csv")
+    targets <- targets[targets$Sample_Name %in% rds & grepl("_R0", targets$SentrixID_Pos), ]
 
     tryCatch(
-        expr = {
-            generate_new_cnv(targets)
+        {
+            if (nrow(targets) > 0) {
+                mapply(
+                    make_cnv_png,
+                    as.character(targets$Sample_Name), as.character(targets$SentrixID_Pos)
+                )
+            } else {
+                message("The RD-number(s) do not have idat files in REDCap:\n")
+                print(targets)
+            }
+            pngs <- file.path(desktop, paste0(targets$Sample_Name, "_cnv.png"))
+            created <- file.exists(pngs)
+            if (any(!created)) {
+                message("The following failed to be created:")
+                print(pngs[!created])
+                message("Try running again or check GitHub troubleshooting")
+            }
+            if (any(created)) {
+                message("The following were created successfully:")
+                print(pngs[created])
+            }
+            while (!is.null(dev.list())) dev.off()
         },
         error = function(e) {
-            message("The following error occured:\n", e)
-            message("\nTry checking the troubleshooting section on GitHub:\n")
-            git_url <- "https://github.com/NYU-Molecular-Pathology/Methylation/"
-            message(git_url, "blob/main/PACT_scripts/README.md\n")
+            message("The following error occured:\n", conditionMessage(e))
+            message("\nTry checking the troubleshooting section on GitHub")
             stop(crayon::bgRed("CNV PNG generation failed"))
         }
     )
 }
 
-# Copies any CNV PNGs from the Desktop to the Molecular Z-drive folder
-copy_output_png <- function(outFolder = NULL) {
-    if (!"dplyr" %in% loadedNamespaces()) library("dplyr")
+# Copies CNV PNGs created today from Desktop to output folder
+copy_cnv_pngs <- function() {
+    pngs <- dir(desktop, "_cnv.png", full.names = TRUE)
+    pngs <- pngs[as.Date(file.info(pngs)$ctime) == Sys.Date()]
+    if (length(pngs) == 0) return(message("No CNV files found on Desktop to copy"))
 
-    if (is.null(outFolder)) {
-        outFolder <- cnv_outFolder
-    }
-    desk <- file.path(fs::path_home(), "Desktop")
-    the.cnvs <- dir(desk, "_cnv.png", full.names = T) %>% file.info() %>%
-        tibble::rownames_to_column() %>% filter(as.Date(ctime) == Sys.Date()) %>%
-        pull(rowname)
-    if (length(the.cnvs) > 0) {
-        savePath <- file.path(outFolder, basename(the.cnvs))
-        message("\nCopying png files to Molecular folder:\n", outFolder, "\n")
-        message(paste(capture.output(the.cnvs), collapse = '\n'))
-
-        fs::file_copy(path = the.cnvs, new_path = savePath)
-
-        if (any(!file.exists(savePath))) {
-            message("The following failed to copy from the desktop:\n")
-            print(basename(savePath[!file.exists(savePath)]))
-            message(crayon::bgRed(
-                "Manually copy any methylation CNV PNGs that failed to copy"))
-        }
-    } else{
-        message("No CNV files found on Desktop to copy")
+    copies <- file.path(cnv_out_dir, basename(pngs))
+    message("\nCopying png files to Molecular folder:\n", cnv_out_dir, "\n")
+    message(paste(pngs, collapse = "\n"))
+    fs::file_copy(path = pngs, new_path = copies)
+    if (any(!file.exists(copies))) {
+        message("The following failed to copy from the desktop:\n")
+        print(basename(copies[!file.exists(copies)]))
+        message(crayon::bgRed("Manually copy any methylation CNV PNGs that failed to copy"))
     }
 }
 
-# Checks the output generated to see if any CNV PNGs need to be created
-queue_cnv_maker <- function(output, token) {
-    rds <- output$record_id[output$report_complete == "YES"]
-    rds <- rds[grep("^RD-", rds)]
+# Main -------------------------------------------------------------------------
+message("\n================ Parameters input ================\n")
+message("token: [provided]\nPACT_INPUT: ", PACT_INPUT, "\n")
 
-    if (all(!is.null(rds)) == F | all(!is.na(rds)) == F | length(rds) == 0) {
-        return(message(crayon::bgGreen(
-            "The PACT run has no cases with methylation.")))
-    }
+# Compilers and packages
+if (!"devtools" %in% rownames(installed.packages())) {
+    install.packages("devtools", ask = FALSE, dependencies = TRUE)
+}
+suppressPackageStartupMessages(library("devtools"))
+setup_homebrew()
+set_env_vars()
+ensure_packages(main_pkgs)
+if (!"mnp.v12epicv2" %in% rownames(installed.packages())) {
+    stop("You need to install classifier package and pre-reqs first use all_installer.R")
+}
+suppressWarnings(suppressPackageStartupMessages(library("mnp.v12epicv2")))
 
-    rds <- CheckIfPngExists(rds)
-
-    if (length(rds) > 0) {
-        try_cnv_make(rds, token)
-        copy_output_png()
-    } else{
-        message(crayon::bgGreen(
-            "No CNV png images to generate. Check the output directory."
-        ))
-    }
+if (!dir.exists(lab_drive)) {
+    message("Network share is not mounted:\n", crayon::bgRed(file.path(smb_share, "molecular")))
+    stop("Molecular shared drive is not mounted")
 }
 
-# MAIN Execution start -----
-check_pkg_install()
-checkMounts()
-output <- getOuputData(token, redcap_fields, PACT_INPUT, readFlag)
+# PACT sample identifiers, with MRN from Beaker or Philips export tab
+excel_path <- get_excel_path()
+sheets <- readxl::excel_sheets(excel_path)
+export_tab <- sheets[grepl(if (is_sophia) "Beaker" else "Philips", sheets)]
+tab_mrns <- readxl::read_xlsx(excel_path, sheet = export_tab)[, c("Specimen ID", "MRN")]
 
-# CNV PNG Creation -------------------------------------
-if (ncol(output) > 0) {
-    queue_cnv_maker(output, token)
+vals <- get_case_values()
+if (nrow(vals) == 0) stop("No samples found in PACT input: ", PACT_INPUT)
+mrn_row <- match(vals$`Test Number`, tab_mrns$`Specimen ID`, incomparables = NA)
+if (anyNA(mrn_row)) {
+    stop(
+        "Test Number not found in '", export_tab, "' tab: ",
+        toString(vals$`Test Number`[is.na(mrn_row)])
+    )
 }
+vals$beaker_mrn <- as.character(tab_mrns$MRN[mrn_row])
+message("Values from PACT demux csv used for matching to METH REDCap DB:")
+message(paste(capture.output(vals), collapse = "\n"))
+
+# REDCap matches
+message("Pulling REDCap data...")
+db <- redcap_export(redcap_fields)
+if (nrow(db) == 0) stop("REDCap API returned no records")
+record_rows <- grepl(pattern = "RD-", db$record_id)
+db <- db[record_rows,]
+rownames(db) <- NULL
+
+output <- query_NULLoutput <- query_cases(vals, db)
+if (nrow(output) == 0) {
+    warning("No Methylation Cases on this PACT run, generating blank file")
+    output[1, ] <- "NONE"
+}
+pact_id <- get_pact_id()
+tm_numbers_df <- fill_test_numbers(output, vals)
+output <- add_report_links(tm_numbers_df)
+
+if (read_flag) {
+    write.csv(output, file = "meth_sample_data.csv",
+              quote = FALSE, row.names = FALSE)
+}
+
+if (anyNA(output$Test_Number)) {
+    message("Potential NGS Number in 'tm_number' field of REDCap!")
+    has_ngs <- grepl("NGS", output$tm_number)
+    output$Test_Number[has_ngs] <- output$tm_number[has_ngs]
+}
+
+meth_xlsx <- write_match_xlsx(output, pact_id)
+
+# CNV PNGs for cases with completed methylation report
+rds <- grep("^RD-", output$record_id[output$report_complete == "YES"], value = TRUE)
+if (length(rds) == 0) {
+    message(crayon::bgGreen("The PACT run has no cases with methylation."))
+    quit(status = 0)
+}
+
+rds <- skip_existing_pngs(rds)
+
+if (length(rds) == 0) {
+    message(crayon::bgGreen("No CNV png images to generate. Check the output directory."))
+    quit(status = 0)
+}
+
+make_cnv_pngs(rds)
+copy_cnv_pngs()
