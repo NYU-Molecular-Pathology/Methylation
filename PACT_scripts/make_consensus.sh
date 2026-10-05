@@ -4,7 +4,7 @@
 ## Author: Jonathan Serrano
 ## Date Created: August 21, 2023
 ## Author: Jonathan Serrano
-## Version: 1.0.1
+## Version: 1.1.0
 ## Copyright (c) NYULH Jonathan Serrano, 2026
 
 # shellcheck disable=SC1091
@@ -75,8 +75,11 @@ RMD_FILE="${WORK_DIR}/${PACT_ID}_consensus.Rmd"
 msg_code curl -# -L ${GIT_URL}/PACT_consensus.Rmd -o "${RMD_FILE}"
 msg_curl "MakeIndelList.R"
 msg_curl "hs_metric_consensus.R"
+cd "$HOME" && msg_curl "PactMethMatch.R"
 
-msg_code /Volumes/CBioinformatics/PACT/getMethylMatch.sh "${PACT_ID}" "${RUN_ID}"
+msg_code Rscript --verbose "$HOME/PactMethMatch.R" "${PACT_ID}"
+
+#msg_code /Volumes/CBioinformatics/PACT/getMethylMatch.sh "${PACT_ID}" "${RUN_ID}"
 
 # Z-drive TO Desktop
 cd "$HOME" || exit
