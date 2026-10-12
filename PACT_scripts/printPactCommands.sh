@@ -354,7 +354,7 @@ if [[ "$IS_SOPHIA" == "true" ]]; then
 	msg_stage 2 "Deploy and execute the NGS607 Pipeline"
 	msg_step 1 "#ffffba" "After Demux finishes, check the QC by pasting the link below in a web browser to open in a SFTP client like CyberDuck:"
 	msg_code "sftp://bigpurple.nyumc.org${DEMUXDIR}/output/${RUN_ID}.report.html"
-	msg_step "2a" "#ffffba" "Begin the SG pipeline by executing the script below."
+	msg_step "2a" "#ffffba" "Once demux finishes the the SG pipeline should automatically submit an sbatch by executing the script below."
 	msg_step "2b" "#ffffba" "Ensure the sample IDs are correct from the demux folder as start_pipeline.sh below will copy the file to: /gpfs/data/molecpathlab/production/vcf_qc_checker/samplesheet/${RUN_ID}-SampleSheet.csv"
 	msg_code "${BASH_HELPERS}/start_pipeline.sh ${RUN_ID}"
 	echo "$BOX2"
@@ -378,9 +378,9 @@ fi
 msg_stage 3 "Copy QC and output data to the Molecular Z-drive"
 msg_step 1 "#baffc9" "Copy the calibrated BAMs and run the post-scripts, then ssh to the data mover node by executing below:"
 msg_code "${BASH_HELPERS}/bam_copier.sh ${RUN_ID} ${PACT_ID}"
-msg_step 2 "#baffc9" "From the data mover node, mount /mnt/${kerbero}/molecular, and execute zdrive_copier.sh to copy the data from HPC to the Molecular share drive."
-msg_code "/mnt/\"\$USER\"/molecular/Molecular/Validation/Scripts/zdrive_copier.sh ${RUN_ID} ${PACT_ID}"
-msg_step 3 "#baffc9" "Print out the QC summary, for the PACT team:"
+msg_step 2 "#baffc9" "bam_copier.sh will also submit an sbatch for zdrive_copier.sh on data mover node (uvdm). Ensure mount /mnt/${kerbero}/molecular to copy the data from HPC to the Molecular share drive."
+#msg_code "/mnt/\"\$USER\"/molecular/Molecular/Validation/Scripts/zdrive_copier.sh ${RUN_ID} ${PACT_ID}"
+msg_step 3 "#baffc9" "Once the bam_copier.sh sbatch QCs complete, print out the QC summary, for the PACT team email:"
 msg_code "${BASH_HELPERS}/print_qc_summary.sh ${PACT_ID} ${RUN_ID}"
 msg_step 4 "#baffc9" "Once the files are copied, email the PACT team to notify them by replying to the PACTers email thread with the following message template:"
 if [[ "$IS_SOPHIA" == "true" ]]; then
@@ -388,7 +388,7 @@ if [[ "$IS_SOPHIA" == "true" ]]; then
 	smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/NGS607/${YEAR_DIR}/${RUN_ID}/\n
 The QC and output are copied here:
 	smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics/${YEAR_DIR}/${PACT_ID}/${PACT_ID}.html
-QC for upload to Sophia can be reviewed by logging into: https://pactqc.nyumc.org/"
+\n\nQC for upload to Sophia can be reviewed by logging into: https://pactqc.nyumc.org/"
 else
 	msg_txt "Hi all,\n\nThe in-house pipeline completed for ${PACT_ID}. The data for this week's PACT run are copied here:
 	smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/NGS607/${YEAR_DIR}/${RUN_ID}/\n
