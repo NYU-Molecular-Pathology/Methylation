@@ -574,7 +574,7 @@ GetRawSamplesheet <- function(worksheetPath, sheet_kwd = "Bioinformatics") {
             'not in Excel sheet names, defaulting to last sheet:', sh))
     }
     msgRd <- paste0('Reading Excel Sheet named \"', shNames[sh], '\" from file:')
-    message(crayon::bgGreen(msgRd),'\n', worksheetPath, '\n')
+    message(msgRd,'\n', worksheetPath, '\n')
     rawData <- GetExcelData(worksheetPath, sh, shRange = "A1:O200", include_head = TRUE)
     toDrop <- which(rawData[, 1] == "")[1] - 1
     rawData <- rawData[1:toDrop, ]
@@ -616,7 +616,7 @@ parse_workbook <- function(worksheetPath, RUNID) {
     pact_run <- INPUT
 
     rawData$Run_Number <- RUNID
-    message(crayon::bgBlue(paste("PACT ID is:", pact_run)))
+    message(crayon::bgBlue(paste("PACT ID is:", pact_run)), "\n")
     sheet1_df <- GetExcelData(worksheetPath, 1, shRange = "B6:O100", include_head = TRUE)
     mainSheet <- BuildMainSheet(sheet1_df, rawData, sheetRunID, pact_run)
     sheet1_data <- GrabFirstSheet(worksheetPath, section = "Top")
