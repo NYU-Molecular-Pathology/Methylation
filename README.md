@@ -1,5 +1,4 @@
-<h1>
-<img src="https://github.com/NYU-Molecular-Pathology/Methylation/blob/fd470d3a25816e77789a0741dfa62d584bd93b7d/screenshots/clinical_pipeline.png" width="100%"/><br/> </h1>
+<h1>Methylation Pipeline Setup</h1>
 
 ### Table of Contents 
 - [📖 Methylation Pipline Overview](#-methylation-pipline-overview)
