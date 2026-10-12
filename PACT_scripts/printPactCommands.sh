@@ -380,7 +380,9 @@ msg_step 1 "#baffc9" "Copy the calibrated BAMs and run the post-scripts, then ss
 msg_code "${BASH_HELPERS}/bam_copier.sh ${RUN_ID} ${PACT_ID}"
 msg_step 2 "#baffc9" "From the data mover node, mount /mnt/${kerbero}/molecular, and execute zdrive_copier.sh to copy the data from HPC to the Molecular share drive."
 msg_code "/mnt/\"\$USER\"/molecular/Molecular/Validation/Scripts/zdrive_copier.sh ${RUN_ID} ${PACT_ID}"
-msg_step 3 "#baffc9" "Once the files are copied, email the PACT team to notify them by replying to the PACTers email thread with the following message template:"
+msg_step 3 "#baffc9" "Print out the QC summary, for the PACT team:"
+msg_code "${BASH_HELPERS}/print_qc_summary.sh ${PACT_ID} ${RUN_ID}"
+msg_step 4 "#baffc9" "Once the files are copied, email the PACT team to notify them by replying to the PACTers email thread with the following message template:"
 if [[ "$IS_SOPHIA" == "true" ]]; then
 	msg_txt "Hi all,\n\nThe in-house pipeline completed for ${PACT_ID}. The data for this week's PACT run are copied here:
 	smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/NGS607/${YEAR_DIR}/${RUN_ID}/\n
