@@ -11,6 +11,8 @@ reportMd <- file.path(fs::path_home(),"report.Rmd") # From curl github download
 sarcRmdFile = "/Volumes/CBioinformatics/Methylation/SarcReport13.Rmd"
 cpInLnk4 = "https://github.com/NYU-Molecular-Pathology/Methylation/main/R/CustomRuns.R"
 
+idatScript <- "/Volumes/CBioinformatics/Methylation/Rscripts/pullRedcap_manual.R"
+
 msgFunName <- function(pthLnk, funNam) {
     message("\nExecuting function: ", crayon::black$bgYellow(funNam),
             " from RScript in:\n", pthLnk, "\n")
@@ -167,7 +169,7 @@ MakeLocalSampleSheet <- function(runID,
     msgFunName(cpInLnk4, "MakeLocalSampleSheet")
     stopifnot(!is.null(token))
     token2 <- token
-    idatScript <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/pullRedcap_manual.R"
+    
     if (is.null(rd_numbers)) {
         file_data <- NULL
         if (is.null(samSheetIn)) {
@@ -191,7 +193,7 @@ MakeLocalSampleSheet <- function(runID,
     stopifnot(all(grepl("^RD-", rd_numbers)))
     
     message("Sourcing: ", idatScript)
-    devtools::source_url(idatScript)
+    source(idatScript)
     
     gb$token <- gb$ApiToken <- token <- token2
     
@@ -321,9 +323,8 @@ MakeBlankRun <- function(rd_numbers, token, outputFi="samplesheet.csv"){
                         msgFunName(cpInLnk4,"MakeBlankRun")
     stopifnot(length(rd_numbers)>=1 & length(rd_numbers)!=0 & stringr::str_detect(rd_numbers[1],"RD-"))
     if(!exists("grabRDCopyIdat")){
-        idatScript <- "https://raw.githubusercontent.com/NYU-Molecular-Pathology/Methylation/main/Research/pullRedcap_manual.R"
         message("Sourcing: ", idatScript)
-        devtools::source_url(idatScript)
+        source(idatScript)
     }
     gb$grabRDCopyIdat(rd_numbers, token, outputFi=outputFi)
     return(as.data.frame(read.csv(outputFi)))
