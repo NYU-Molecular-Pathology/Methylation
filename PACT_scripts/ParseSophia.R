@@ -28,19 +28,12 @@ stopifnot(file.exists(TOKEN_PATH))
 API_TOKEN <- trimws(readLines(TOKEN_PATH, n = 1, warn = FALSE))
 
 # Functions to print parameters  ) --------------------------------------------
-brick_message <- function(phrase) {
-    dsh <- paste(rep("-", nchar(phrase)), collapse = "")
-    message(paste(dsh, phrase, dsh, sep = "\n"))
-}
 
-print_parameters <- function(INPUT, RUNID, API_TOKEN) {
-    brick_message("Parameters INPUT")
-    message(sprintf(
-        "\nINPUT:  %s\nRUNID:  %s\nAPI_TOKEN:  %s\n",
-        c(INPUT, "NULL")[1], c(RUNID, "NULL")[1], c(API_TOKEN, "NULL")[1]))
-}
+message(sprintf(
+    "\nINPUT:  %s\nRUNID:  %s\nAPI_TOKEN:  %s\n",
+    c(INPUT, "NULL")[1], c(RUNID, "NULL")[1], c(API_TOKEN, "NULL")[1])
+)
 
-print_parameters(INPUT, RUNID, API_TOKEN)
 
 # Helper functions to message as data frame and red background ----------------
 msg_df <- function(...) {
