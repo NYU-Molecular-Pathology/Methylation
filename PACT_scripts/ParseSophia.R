@@ -1,9 +1,9 @@
 #!/usr/bin/env Rscript
-## Script name: pactParse.R
+## Script name: ParseSophia.R
 ## Purpose: source of global scripts and generate PACT -SampleSheet.csv file
 ## Author: Jonathan Serrano
 ## Date Created: February 10, 2026
-## Version: 1.1.0
+## Version: 1.2.0
 ## Copyright (c) NYULH Jonathan Serrano, 2026
 
 args <- commandArgs(TRUE)
@@ -30,10 +30,12 @@ API_TOKEN <- trimws(readLines(TOKEN_PATH, n = 1, warn = FALSE))
 # Functions to print parameters  ) --------------------------------------------
 
 message(sprintf(
-    "\nINPUT:  %s\nRUNID:  %s\nAPI_TOKEN:  %s\n",
+    "INPUT:  %s\nRUNID:  %s\nAPI_TOKEN:  %s\n",
     c(INPUT, "NULL")[1], c(RUNID, "NULL")[1], c(API_TOKEN, "NULL")[1])
 )
 
+message('To debug, run: open -a "Rstudio.app"', " ",
+        file.path(fs::path_home(), "ParseSophia.R"))
 
 # Helper functions to message as data frame and red background ----------------
 msg_df <- function(...) {
@@ -412,7 +414,7 @@ WriteMainSheet <- function(mainSheet, sheetHead, out_end = "SampleSheet.csv") {
     csv_file <- paste(mainSheet[1, "Run_Number"], out_end, sep = "-")
     out_path <- file.path(fs::path_home(), "Desktop", csv_file)
 
-    message(crayon::bgGreen("Writing output, check samplesheet here:"), "\n", out_path)
+    message(crayon::bgGreen("Writing output, saving samplesheet here:"), "\n", out_path)
 
     if (any(mainSheet$Tumor_Type == "NA")) {
         mainSheet[mainSheet$Tumor_Type == "NA", "Tumor_Type"] <- ""
@@ -795,6 +797,7 @@ writeSampleSheet <- function(INPUT, token = NULL, RUNID = NULL) {
     if (!is.null(outVals) && !is.null(token)) {
         pushToRedcap(outVals, token)
     }
+    message("----Rscript end----")
 }
 
 # MAIN Execution start --------------------------------------------------------
