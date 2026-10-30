@@ -263,30 +263,49 @@ generateQCreport <- function(runID = NULL) {
 # Sends an email notification that the run is complete from redcap admin ------
 launchEmailNotify <- function(runID) {
     msgFunName(pipeLnk, "launchEmailNotify")
-    
-    rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
-    
-    isMC = sjmisc::str_contains(runID, "MGDM") | sjmisc::str_contains(runID, "MC")
+
+    isMC <- sjmisc::str_contains(runID, "MGDM") |
+        sjmisc::str_contains(runID, "MC")
     is_validation <- sjmisc::str_contains(runID, "VAL")
-    
+
     if (is_validation) {
         return(message("Run is Validation. No email will be generated"))
     }
     if (sjmisc::str_contains(runID, "EPICV1")) {
         return(message("Run is Validation. No email will be generated"))
     }
-    
-    com <- ifelse(isMC == T, "sample_qc", "sample_research")
-    record_df = data.frame(record_id = paste0(runID, "_QC"), comments = com)
-    record_data <- redcapAPI::castForImport(
-        record_df, rcon, fields = c("record_id", "comments")
+
+    com <- ifelse(isMC, "sample_qc", "sample_research")
+    record_df <- data.frame(
+        record_id = paste0(runID, "_QC"),
+        comments = com,
+        stringsAsFactors = FALSE
     )
-    
-    res <- redcapAPI::importRecords(rcon,
-                                    record_data,
-                                    returnContent = "ids",
-                                    overwriteBehavior = "overwrite")
-    message(bkBlu("Check email to confirm notification created for", res))
+
+    csv_data <- paste(
+        utils::capture.output(
+            utils::write.csv(record_df, row.names = FALSE, na = "")
+        ),
+        collapse = "\n"
+    )
+
+    response <- httr::POST(
+        gb$apiLink,
+        body = list(
+            token = gb$ApiToken,
+            content = "record",
+            format = "csv",
+            type = "flat",
+            overwriteBehavior = "overwrite",
+            returnContent = "ids",
+            data = csv_data
+        ),
+        encode = "form"
+    )
+    httr::stop_for_status(response)
+
+    res <- httr::content(response, as = "text", encoding = "UTF-8")
+    message(bkBlu("Check email to confirm notification created for", trimws(res)))
 }
 
 
@@ -295,42 +314,14 @@ launchEmailNotify <- function(runID) {
 #' This function checks whether a record with a given record_name exists in the REDCap database.
 #' If the record is not found, it creates a new record with that record_name.
 #'
-#' @param record_name A character string representing the REDCap record identifier.
-#' @param rcon A valid REDCap connection object created using redcapConnection().
+#' @param runID The pipeline run identifier.
+#' @param recordWord Record suffix or "regular" for a specified RD-number.
+#' @param rd The record ID when recordWord is "regular".
 #'
-#' @return The result of the importRecords call if a new record is created,
-#'         or a message indicating that the record already exists.
+#' @return Invisibly returns NULL for an existing record; otherwise prints a creation message.
 #'
 CreateRedcapRecord <- function(runID = NULL, recordWord = "QC", rd = NULL) {
     msgFunName(pipeLnk, "CreateRedcapRecord")
-    # rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
-    # if (recordWord != "QC" & recordWord == "regular") {
-    #     record_name <- rd
-    # } else {
-    #     record_name <- paste0(runID, "_", recordWord)
-    # }
-    # 
-    # exist_record <- suppressMessages(redcapAPI::exportRecordsTyped(
-    #     rcon, records = record_name, fields = "record_id",
-    #     factors = FALSE,
-    #     survey = FALSE,
-    #     dag = FALSE))
-    # 
-    # if (nrow(exist_record) == 0) {
-    #     new_record_df <- data.frame(
-    #         record_id = record_name,
-    #         run_number = runID,
-    #         stringsAsFactors = FALSE
-    #     )
-    #     new_record <- redcapAPI::castForImport(
-    #         new_record_df, rcon, fields = c("record_id", "run_number")
-    #     )
-    #     import_result <- redcapAPI::importRecords(rcon, new_record)
-    #     message(dsh, "Created REDCap Record: ", new_record_df[1], dsh, "\n")
-    # } else {
-    #     message(paste(record_name, "already exists in the REDCap database."))
-    # }
-
     if (recordWord != "QC" & recordWord == "regular") {
         record_name <- rd
     } else {
@@ -344,8 +335,8 @@ CreateRedcapRecord <- function(runID = NULL, recordWord = "QC", rd = NULL) {
             token = gb$ApiToken,
             content = "record",
             format = "csv",
-            records = record_name,
-            fields = "record_id"
+            `records[0]` = record_name,
+            `fields[0]` = "record_id"
         ),
         encode = "form"
     )
@@ -353,7 +344,7 @@ CreateRedcapRecord <- function(runID = NULL, recordWord = "QC", rd = NULL) {
     
     result <- httr::content(response, as = "text", encoding = "UTF-8")
     existing <- if (nzchar(trimws(result))) {
-        utils::read.csv(text = result)
+        utils::read.csv(text = result, colClasses = "character")
     } else {
         data.frame()
     }
@@ -378,7 +369,12 @@ CreateRedcapRecord <- function(runID = NULL, recordWord = "QC", rd = NULL) {
     response <- httr::POST(
         gb$apiLink,
         body = list(
-            token = gb$ApiToken, content = "record", format = "csv", type = "flat", data = csv_data, returnContent = "count"
+            token = gb$ApiToken,
+            content = "record",
+            format = "csv",
+            type = "flat",
+            data = csv_data,
+            returnContent = "count"
         ),
         encode = "form"
     )
@@ -515,18 +511,51 @@ NameControl <- function(data, runId) {
 
 
 get_latest_record_id <- function() {
-    rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
-    logs <- exportLogging(rcon,
-                          beginTime = as.POSIXct(Sys.Date() - 30, tz = Sys.timezone()),
-                          endTime = Sys.time(), batchInterval = 1000
+    # REDCap logging uses the server's local time, formatted to minutes.
+    response <- httr::POST(
+        gb$apiLink,
+        body = list(
+            token = gb$ApiToken,
+            content = "log",
+            format = "csv",
+            beginTime = format(
+                as.POSIXct(Sys.Date() - 30, tz = Sys.timezone()),
+                "%Y-%m-%d %H:%M"
+            ),
+            endTime = format(Sys.time(), "%Y-%m-%d %H:%M")
+        ),
+        encode = "form"
     )
-    creates <- stringr::str_detect(logs$action, "Create")
-    created_logs <- logs[creates, ]
-    
-    rd_numbs <- stringr::str_detect(created_logs$record, "RD-")
-    created_logs <- created_logs[rd_numbs,]
-    created_logs$timestamp <- as.POSIXct(created_logs$timestamp,
-                                         tz = Sys.timezone())
+    httr::stop_for_status(response)
+
+    result <- httr::content(response, as = "text", encoding = "UTF-8")
+    if (!nzchar(trimws(result))) {
+        stop("No REDCap logging entries were returned in the last 30 days.")
+    }
+
+    logs <- utils::read.csv(text = result, colClasses = "character")
+    if (!all(c("action", "record", "timestamp") %in% names(logs))) {
+        stop("Unexpected REDCap logging response: missing expected columns.")
+    }
+
+    creates <- !is.na(logs$action) & grepl("Create", logs$action)
+    created_logs <- logs[creates, , drop = FALSE]
+    rd_numbs <- !is.na(created_logs$record) & grepl("RD-", created_logs$record)
+    created_logs <- created_logs[rd_numbs, , drop = FALSE]
+
+    if (nrow(created_logs) == 0L) {
+        stop("No newly created RD- record was found in the last 30 days.")
+    }
+
+    created_logs$timestamp <- as.POSIXct(
+        created_logs$timestamp,
+        format = "%Y-%m-%d %H:%M",
+        tz = Sys.timezone()
+    )
+    if (all(is.na(created_logs$timestamp))) {
+        stop("Unable to parse REDCap logging timestamps.")
+    }
+
     latest_record <- created_logs$record[which.max(created_logs$timestamp)]
     return(latest_record)
 }
@@ -545,25 +574,10 @@ name_next_records <- function(latest_record, how_many) {
 
 
 make_new_rd_number <- function(record_name = NULL, runID) {
-    rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
-    
-    existing_record <- redcapAPI::exportRecordsTyped(rcon,
-                                                     records = record_name)
-    if (nrow(existing_record) == 0) {
-        new_record_df <- data.frame(
-            record_id = record_name,
-            run_number = runID,
-            stringsAsFactors = FALSE
-        )
-        new_record <- redcapAPI::castForImport(
-            new_record_df, rcon, fields = c("record_id", "run_number")
-        )
-        import_result <- redcapAPI::importRecords(rcon, new_record)
-        message(dsh, "Created REDCap Record: ", new_record_df[1], dsh, "\n")
-    } else {
-        message(paste(record_name, "already exists in the REDCap database."))
-    }
+    # Reuse the httr-based existence check and record creation.
+    CreateRedcapRecord(runID = runID, recordWord = "regular", rd = record_name)
 }
+
 
 # Generates new RD-numbers in REDCap from last created and assigns sheet
 fill_missing_rd <- function(samplesSheet, missing_rd) {
@@ -861,29 +875,7 @@ check_control_sam1 <- function(csv_data, cntrl, runID) {
     return(csv_data)
 }
 
-# Searches the RC DB to ensure all rd_numbers exist and are created as record_id if not
-# check_rd_numb_db <- function(csv_data){
-#     msgFunName(pipeLnk, "check_rd_numb_db")
-#     is_rd <- grepl(csv_data[, 1], pattern = "^RD-")
-#     all_rd <- csv_data[is_rd, 1]
-#     rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
-#     all_records <- suppressMessages(redcapAPI::exportRecordsTyped(
-#         rcon, fields = "record_id", factors = FALSE, survey = FALSE, dag = FALSE))
-    
-#     current_records <- all_records$record_id[grepl(all_records$record_id, pattern = "^RD-")]
-    
-#     for (rd_sam in 1:length(all_rd)) {
-#         curr_idx <- which(csv_data[, 1] == all_rd[rd_sam])
-#         curr_sam <- csv_data[curr_idx, 1]
-#         if (curr_sam %in% current_records) {
-#             message(curr_sam, " ", "exists in REDCap")
-#             next
-#         }
-#         curr_run <- csv_data$RunID[curr_idx]
-#         CreateRedcapRecord(runID = curr_run, recordWord = "regular", rd = curr_sam)
-#     }
-# }
-
+# Searches the RC DB to ensure all RD-numbers exist.
 check_rd_numb_db <- function(csv_data){
     msgFunName(pipeLnk, "check_rd_numb_db")
     is_rd <- grepl("^RD-", csv_data[, 1])
@@ -895,7 +887,7 @@ check_rd_numb_db <- function(csv_data){
             token = gb$ApiToken,
             content = "record",
             format = "csv",
-            fields = "record_id"
+            `fields[0]` = "record_id"
         ),
         encode = "form"
     )
@@ -909,7 +901,7 @@ check_rd_numb_db <- function(csv_data){
     current_records <- all_records$record_id[
         grepl("^RD-", all_records$record_id)
     ]
-    for (rd_sam in 1:length(all_rd)) {
+    for (rd_sam in seq_along(all_rd)) {
         curr_idx <- which(csv_data[, 1] == all_rd[rd_sam])
         curr_sam <- csv_data[curr_idx, 1]
         if (curr_sam %in% current_records) {
@@ -959,24 +951,75 @@ check_csv_data <- function(sheetName = "samplesheet.csv") {
     return(csv_data)
 }
 
-# Checks if any html reports are missing from the samplesheet to upload
+# Checks if any HTML reports are missing from the samplesheet to upload.
 final_upload_check <- function() {
-    samList <- read.csv("samplesheet.csv")[,1]
+    samList <- utils::read.csv("samplesheet.csv")[, 1]
     rd_numbers <- samList[grepl("RD", samList)]
-    rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
-    fetched_rds <- redcapAPI::exportRecordsTyped(
-        rcon, fields = c("classifier_pdf"), records = rd_numbers)
+    if (length(rd_numbers) == 0L) {
+        return(invisible(NULL))
+    }
+
+    record_filters <- stats::setNames(
+        as.list(as.character(rd_numbers)),
+        paste0("records[", seq_along(rd_numbers) - 1L, "]")
+    )
+
+    response <- httr::POST(
+        gb$apiLink,
+        body = c(
+            list(
+                token = gb$ApiToken,
+                content = "record",
+                format = "csv",
+                `fields[0]` = "record_id",
+                `fields[1]` = "classifier_pdf"
+            ),
+            record_filters
+        ),
+        encode = "form"
+    )
+    httr::stop_for_status(response)
+
+    result <- httr::content(response, as = "text", encoding = "UTF-8")
+    fetched_rds <- if (nzchar(trimws(result))) {
+        utils::read.csv(text = result, colClasses = "character")
+    } else {
+        data.frame(record_id = character(), classifier_pdf = character())
+    }
+
+    # Preserve the original check: identify record IDs absent from the export.
     missing_rds <- !rd_numbers %in% fetched_rds$record_id
     if (any(missing_rds)) {
         to_upload <- rd_numbers[missing_rds]
-        message(paste("The following reports are missing from REDCap:", paste(to_upload, collapse = ", ")))
+        message(
+            "The following reports are missing from REDCap: ",
+            paste(to_upload, collapse = ", ")
+        )
         all_reports <- dir(getwd(), pattern = ".html", full.names = TRUE)
+
         for (rd in to_upload) {
             rd_html <- all_reports[grepl(rd, all_reports)]
-            if (length(rd_html) == 0) {
-                message(paste("No report found for", rd))
+            if (length(rd_html) == 0L) {
+                message("No report found for ", rd)
             } else {
-                redcapAPI::importFiles(rcon, file = rd_html, record = rd, field = "classifier_pdf")
+                if (length(rd_html) != 1L) {
+                    stop("Expected exactly one HTML report for ", rd)
+                }
+
+                response <- httr::POST(
+                    gb$apiLink,
+                    body = list(
+                        token = gb$ApiToken,
+                        content = "file",
+                        action = "import",
+                        record = rd,
+                        field = "classifier_pdf",
+                        file = httr::upload_file(rd_html)
+                    ),
+                    encode = "multipart"
+                )
+                httr::stop_for_status(response)
+                message("Uploaded report to REDCap for ", rd)
             }
         }
     }
