@@ -46,7 +46,7 @@ msgFunName <- function(pthLnk, funNam) {
 msgParams <- function(...) {
     args <- list(...)
     names <- sapply(substitute(list(...))[-1], deparse)
-
+    
     message(bkGrn("Params passed:"))
     for (i in seq_along(args)) {
         message(names[i], ": ", capture.output(print(args[[i]])), sep = "")
@@ -56,7 +56,7 @@ msgParams <- function(...) {
 # Helper function to return the index of priority selected samples first ------
 reOrderRun <- function(selectRDs, sh="samplesheet.csv") {
     msgFunName(pipeLnk,"reOrderRun"); msgParams(selectRDs, sh)
-
+    
     if (is.null(selectRDs)) {return(NULL)}
     allRd <- as.data.frame(read.csv(sh))
     runFirst <- which(allRd[,1] %in% selectRDs)
@@ -99,12 +99,12 @@ SetKnitProgress <- function() {
 
 check_html_file_sizes <- function(meth_dir) {
     html_files <- list.files(meth_dir, pattern = "\\.html$", full.names = TRUE)
-
+    
     if (length(html_files) == 0) {
         warning("No HTML files found in the directory.")
         return(invisible(NULL))
     }
-
+    
     # Iterate through files and check their sizes
     for (file in html_files) {
         file_size_mb <- file.info(file)$size / (1024 * 1024)
@@ -112,7 +112,7 @@ check_html_file_sizes <- function(meth_dir) {
             warning(sprintf("File '%s' is smaller than 1MB (%.2f MB).", basename(file), file_size_mb))
         }
     }
-
+    
     message("File size check completed.")
 }
 
@@ -179,7 +179,7 @@ CheckSampleQCmetrics <- function(runID) {
     if (!file.exists(qcValsFile)) {
         stop("File not found: ", qcValsFile)
     }
-
+    
     qc_cols <- c(
         "RD.number",
         "Log2sqrt.M.U.",
@@ -240,7 +240,7 @@ generateQCreport <- function(runID = NULL) {
         if (stringr::str_detect(pattern = "new-template", runID)) {
             runID_knit <- stringr::str_remove_all(runID, pattern = "-new-template")
         }
-
+        
         rmarkdown::render(
             rmdToKnit,
             output_file = outQCpath,
@@ -263,25 +263,25 @@ generateQCreport <- function(runID = NULL) {
 # Sends an email notification that the run is complete from redcap admin ------
 launchEmailNotify <- function(runID) {
     msgFunName(pipeLnk, "launchEmailNotify")
-
+    
     rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
-
+    
     isMC = sjmisc::str_contains(runID, "MGDM") | sjmisc::str_contains(runID, "MC")
     is_validation <- sjmisc::str_contains(runID, "VAL")
-
+    
     if (is_validation) {
         return(message("Run is Validation. No email will be generated"))
     }
     if (sjmisc::str_contains(runID, "EPICV1")) {
         return(message("Run is Validation. No email will be generated"))
     }
-
+    
     com <- ifelse(isMC == T, "sample_qc", "sample_research")
     record_df = data.frame(record_id = paste0(runID, "_QC"), comments = com)
     record_data <- redcapAPI::castForImport(
         record_df, rcon, fields = c("record_id", "comments")
     )
-
+    
     res <- redcapAPI::importRecords(rcon,
                                     record_data,
                                     returnContent = "ids",
@@ -301,35 +301,91 @@ launchEmailNotify <- function(runID) {
 #' @return The result of the importRecords call if a new record is created,
 #'         or a message indicating that the record already exists.
 #'
-#' @import redcapAPI
 CreateRedcapRecord <- function(runID = NULL, recordWord = "QC", rd = NULL) {
-    rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
+    msgFunName(pipeLnk, "CreateRedcapRecord")
+    # rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
+    # if (recordWord != "QC" & recordWord == "regular") {
+    #     record_name <- rd
+    # } else {
+    #     record_name <- paste0(runID, "_", recordWord)
+    # }
+    # 
+    # exist_record <- suppressMessages(redcapAPI::exportRecordsTyped(
+    #     rcon, records = record_name, fields = "record_id",
+    #     factors = FALSE,
+    #     survey = FALSE,
+    #     dag = FALSE))
+    # 
+    # if (nrow(exist_record) == 0) {
+    #     new_record_df <- data.frame(
+    #         record_id = record_name,
+    #         run_number = runID,
+    #         stringsAsFactors = FALSE
+    #     )
+    #     new_record <- redcapAPI::castForImport(
+    #         new_record_df, rcon, fields = c("record_id", "run_number")
+    #     )
+    #     import_result <- redcapAPI::importRecords(rcon, new_record)
+    #     message(dsh, "Created REDCap Record: ", new_record_df[1], dsh, "\n")
+    # } else {
+    #     message(paste(record_name, "already exists in the REDCap database."))
+    # }
+
     if (recordWord != "QC" & recordWord == "regular") {
         record_name <- rd
     } else {
         record_name <- paste0(runID, "_", recordWord)
     }
-
-    exist_record <- suppressMessages(redcapAPI::exportRecordsTyped(
-        rcon, records = record_name, fields = "record_id",
-        factors = FALSE,
-        survey = FALSE,
-        dag = FALSE))
-
-    if (nrow(exist_record) == 0) {
-        new_record_df <- data.frame(
-            record_id = record_name,
-            run_number = runID,
-            stringsAsFactors = FALSE
-        )
-        new_record <- redcapAPI::castForImport(
-            new_record_df, rcon, fields = c("record_id", "run_number")
-        )
-        import_result <- redcapAPI::importRecords(rcon, new_record)
-        message(dsh, "Created REDCap Record: ", new_record_df[1], dsh, "\n")
+    
+    # Check whether the record already exists
+    response <- httr::POST(
+        gb$apiLink,
+        body = list(
+            token = gb$ApiToken,
+            content = "record",
+            format = "csv",
+            records = record_name,
+            fields = "record_id"
+        ),
+        encode = "form"
+    )
+    httr::stop_for_status(response)
+    
+    result <- httr::content(response, as = "text", encoding = "UTF-8")
+    existing <- if (nzchar(trimws(result))) {
+        utils::read.csv(text = result)
     } else {
-        message(paste(record_name, "already exists in the REDCap database."))
+        data.frame()
     }
+    
+    if (nrow(existing) > 0) {
+        message(record_name, " already exists in the REDCap database.")
+        return(invisible(NULL))
+    }
+    
+    # Create the new record
+    new_record_df <- data.frame(
+        record_id = record_name,
+        run_number = runID,
+        stringsAsFactors = FALSE
+    )
+    
+    csv_data <- paste(
+        utils::capture.output(utils::write.csv(new_record_df, row.names = FALSE)),
+        collapse = "\n"
+    )
+    
+    response <- httr::POST(
+        gb$apiLink,
+        body = list(
+            token = gb$ApiToken, content = "record", format = "csv", type = "flat", data = csv_data, returnContent = "count"
+        ),
+        encode = "form"
+    )
+    httr::stop_for_status(response)
+    
+    message("Created REDCap Record: ", record_name)
+    
 }
 
 # Checks if the QC File will be read ------------------------------------------
@@ -342,7 +398,7 @@ checkRunOutput <- function(runID) {
     }
     redcapFi <- paste0(runID,"_Redcap.csv")
     csvLocation <- file.path(fs::path_home(),"Desktop", runID, redcapFi)
-
+    
     if (is_new == TRUE) {
         csv_old_dir <- file.path(fs::path_home(),"Desktop", runID)
         csv_file_old <- dir(csv_old_dir, pattern = "_Redcap.csv", full.names = TRUE)[1]
@@ -350,7 +406,7 @@ checkRunOutput <- function(runID) {
         csv_new_dir <- file.path(fs::path_home(),"Desktop", base_run, new_red_csv)
         file.copy(csv_file_old, csv_new_dir, overwrite = TRUE, copy.mode = TRUE)
     }
-
+    
     if (!file.exists(csvLocation)) {
         message(bkRed("File not found:")," ", csvLocation)
         message("QC Report may generate without the Summary Table which needs ", bkGrn(redcapFi))
@@ -412,13 +468,13 @@ getRunData <- function(single_data, fi_end = ".html") {
     if (is.null(single_data)) {
         stop((bkRed("single_data is NULL: Check the SampleSheet.csv in the directory")))
     }
-
+    
     tech1 <- nTech2 <- ""
     if (ncol(single_data) >= 10) {
         tech1 <- paste0(single_data[, 9])
         nTech2 <- paste0(single_data[, 10])
     }
-
+    
     dat <- data.frame(
         sampleID  = paste0(single_data[, "Sample_Name"]),
         bnumber   = paste0(single_data[, "DNA_Number"]),
@@ -429,7 +485,7 @@ getRunData <- function(single_data, fi_end = ".html") {
         tech2     = nTech2,
         outFi     = paste0(single_data[, 1], fi_end)
     )
-
+    
     message(paste(capture.output(dat), collapse = "\n"))
     return(dat)
 }
@@ -466,7 +522,7 @@ get_latest_record_id <- function() {
     )
     creates <- stringr::str_detect(logs$action, "Create")
     created_logs <- logs[creates, ]
-
+    
     rd_numbs <- stringr::str_detect(created_logs$record, "RD-")
     created_logs <- created_logs[rd_numbs,]
     created_logs$timestamp <- as.POSIXct(created_logs$timestamp,
@@ -490,7 +546,7 @@ name_next_records <- function(latest_record, how_many) {
 
 make_new_rd_number <- function(record_name = NULL, runID) {
     rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
-
+    
     existing_record <- redcapAPI::exportRecordsTyped(rcon,
                                                      records = record_name)
     if (nrow(existing_record) == 0) {
@@ -514,7 +570,7 @@ fill_missing_rd <- function(samplesSheet, missing_rd) {
     total_missing <- length(which(missing_rd == T))
     latest_record <- get_latest_record_id()
     next_records <- name_next_records(latest_record, how_many = total_missing)
-
+    
     for (rd in next_records) {
         make_new_rd_number(rd, gb$runID)
     }
@@ -529,37 +585,37 @@ ReadSamSheet <- function(runOrder) {
     msgFunName(pipeLnk, "ReadSamSheet")
     msgParams("runOrder")
     msgParams(runOrder)
-
+    
     wb_path <- gb$GrabSampleSheet()
     if (is.null(wb_path)) {
         return(as.data.frame(read.csv("samplesheet.csv")))
     }
-
+    
     xlSheets <- readxl::excel_sheets(wb_path)
     redSheet <- as.integer(which(grepl("REDCap", xlSheets) == TRUE))
-
+    
     message("Excel workbook sheet names:\n")
     message(paste(1:length(xlSheets), xlSheets, collapse = "\n"))
-
+    
     if (length(redSheet) == 0) {
         warning('"REDCap" tab name is missing from workbook sheet names!')
         warning("Defaulting to reading sheet index #3 in:\n", wb_path)
         redSheet <- 3
     }
-
+    
     message(bkGrn("Sheet index containing 'REDCap_Import':", redSheet), "\n")
     redcap_tab_raw <- readxl::read_excel(wb_path, sheet = redSheet, range = "A1:S97",
                                          col_types = c("text")) %>% as.data.frame()
     last_row <- is.na(redcap_tab_raw[, 1]) | redcap_tab_raw[, 1] == 0
     cuttoff_idx <- as.integer(which(last_row)[1]) - 1
-
+    
     redcap_tab_df <- redcap_tab_raw[1:cuttoff_idx, ]
     dotColName <- stringr::str_detect(colnames(redcap_tab_df), pattern = "^\\.\\.\\.")
-
+    
     if (any(dotColName)) {
         redcap_tab_df <- redcap_tab_df[, !dotColName]
     }
-
+    
     csv_sheet <- dir(path = getwd(), pattern = "samplesheet.csv")
     csv_sheet_df <- as.data.frame(read.csv(csv_sheet))
     stopifnot(nrow(csv_sheet_df) == nrow(redcap_tab_df))
@@ -567,12 +623,12 @@ ReadSamSheet <- function(runOrder) {
     if (any(na_val)) {
         csv_sheet_df[na_val] <- ""
     }
-
+    
     na_val <- is.na(redcap_tab_df)
     if (any(na_val)) {
         redcap_tab_df[na_val] <- ""
     }
-
+    
     for (n_row in 1:nrow(csv_sheet_df)) {
         curr_csv_id <- csv_sheet_df[n_row, c("DNA_Number", "MP_num")]
         curr_red_id <- redcap_tab_df[n_row, c("b_number", "tm_number")]
@@ -581,12 +637,12 @@ ReadSamSheet <- function(runOrder) {
         stopifnot(all(curr_csv_id == curr_red_id))
         redcap_tab_df[n_row, "record_id"] <- csv_sheet_df[n_row, 1]
     }
-
+    
     message(bkGrn("REDCap sheet:"))
     gb$msg_df(redcap_tab_df)
-
+    
     missing_rd <- redcap_tab_df$record_id == 0 | is.na(redcap_tab_df$record_id)
-
+    
     if (any(missing_rd)) {
         warning(paste("Sample #", which(missing_rd), "is missing an RD-number!\n"))
         message(bkRed("Creating new RD for sample #", which(missing_rd),
@@ -594,7 +650,7 @@ ReadSamSheet <- function(runOrder) {
         #redcap_tab_df <- redcap_tab_df[!missing_rd, ]
         redcap_tab_df <- fill_missing_rd(redcap_tab_df, missing_rd)
     }
-
+    
     return(redcap_tab_df)
 }
 
@@ -603,25 +659,25 @@ Check_sam_csv <- function(runOrder) {
     msgFunName(pipeLnk, "Check_sam_csv")
     msgParams("runOrder")
     msgParams(runOrder)
-
+    
     require(rmarkdown)
-
+    
     isMC <- stringr::str_detect(gb$runID, "MGDM") |
         stringr::str_detect(gb$runID, "MC")
     is_validation <- stringr::str_detect(gb$runID, "VAL")
     is_research <- grepl("MR", gb$runID)
-
+    
     redcap_tab_df <- ReadSamSheet(runOrder)
     if (is_validation) {
         reportMd <<-
             "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
         CopyRmdFile(gb$runID, reportMd)
     }
-
+    
     if (isMC == TRUE & is_validation == F & is_research == F) {
         redcap_tab_df <- NameControl(redcap_tab_df, redcap_tab_df$run_number[1])
     }
-
+    
     stopifnot(!is.null(redcap_tab_df))
     all_unique <- !anyDuplicated(redcap_tab_df[, 1])
     if (!all_unique) {
@@ -681,23 +737,23 @@ handle_knit_error <- function(e, dat, params) {
 do_report <- function(single_data = NULL, genCn = FALSE) {
     msgFunName(pipeLnk, "do_report")
     msgParams("data")
-
+    
     reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
     dat <- getRunData(single_data)
-
+    
     RGsetEpic <- getRGset(runPath = getwd(), sentrix = dat$senLi)
-
+    
     if (genCn == T) gb$generate_cnv_png(RGsetEpic, dat$sampleID)
-
+    
     msgRunUp(dat$sampleID, dat$run_id, dat$senLi)
-
+    
     params_init <- list(
         token = gb$ApiToken,
         rundata  = dat,
         RGsetEpic = RGsetEpic,
         knitDir = getwd()
     )
-
+    
     tryCatch(
         expr = make_knit_report(dat, reportMd, params_init),
         error = function(e) {handle_knit_error(e, dat, params_init)},
@@ -727,7 +783,7 @@ loopRender <- function(runOrder = NULL, csv_data = NULL, redcapUp = FALSE) {
         #remain_percent <- 100 - round((((totLeft - 0.5) / length(toRun)) * 100), 1)
         perc_comp <- paste0(remain_percent, "%")
         message(bkGrn("Run is approximately", perc_comp, "complete"))
-
+        
         msgProgress(1, sam_idx, runOrder)
         single_data = csv_data[sam_idx, ]
         do_report(single_data = single_data)
@@ -746,12 +802,12 @@ loopRender <- function(runOrder = NULL, csv_data = NULL, redcapUp = FALSE) {
 
 RenameFailed <- function(qcVals) {
     msgFunName(pipeLnk, "RenameFailed")
-
+    
     if (!is.null(qcVals)) {
         message("qcVals")
         qcVals[is.na(qcVals)] <- "no"
         print(qcVals)
-
+        
         if (any(qcVals$qc_passed == "no")) {
             file.list <- dir(getwd(), pattern = ".html", full.names = T)
             toRename <- qcVals$record_id[qcVals$qc_passed == "no"]
@@ -807,14 +863,15 @@ check_control_sam1 <- function(csv_data, cntrl, runID) {
 
 # Searches the RC DB to ensure all rd_numbers exist and are created as record_id if not
 check_rd_numb_db <- function(csv_data){
+    msgFunName(pipeLnk, "check_rd_numb_db")
     is_rd <- grepl(csv_data[, 1], pattern = "^RD-")
     all_rd <- csv_data[is_rd, 1]
     rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
     all_records <- suppressMessages(redcapAPI::exportRecordsTyped(
         rcon, fields = "record_id", factors = FALSE, survey = FALSE, dag = FALSE))
-
+    
     current_records <- all_records$record_id[grepl(all_records$record_id, pattern = "^RD-")]
-
+    
     for (rd_sam in 1:length(all_rd)) {
         curr_idx <- which(csv_data[, 1] == all_rd[rd_sam])
         curr_sam <- csv_data[curr_idx, 1]
@@ -835,9 +892,9 @@ check_csv_data <- function(sheetName = "samplesheet.csv") {
         csv_data <- csv_data[toKeep, ]
         rownames(csv_data) <- NULL
     }
-
+    
     sheetRunID <- paste0(csv_data$RunID[1])
-
+    
     if (sheetRunID != gb$runID) {
         message("Batch ID in sheet is: ", sheetRunID)
         message("Batch ID provided is: ", gb$runID)
@@ -847,21 +904,21 @@ check_csv_data <- function(sheetName = "samplesheet.csv") {
             stopifnot(gb$runID == csv_data$Project[1])
         }
     }
-
+    
     runID <- paste0(csv_data$RunID[1])
     cntrl <- which(stringr::str_detect(
         csv_data[, 1], pattern = stringr::regex('control', ignore_case = T)))
-
+    
     if (length(cntrl) >= 1) {
         csv_data <- check_control_sam1(csv_data, cntrl, runID)
     } else {
         warning("No control found in the samplesheet csv file!")
     }
-
+    
     check_rd_numb_db(csv_data)
-
+    
     write.csv(csv_data, file = sheetName, row.names = FALSE, quote = FALSE)
-
+    
     return(csv_data)
 }
 
@@ -913,9 +970,9 @@ merge_xlsm_redcap_data <- function(runID) {
     }
     scores_data <- unique(read.csv(redCsv))
     import_data <- import_data[1:cutoff_idx, ]
-
+    
     common_cols <- setdiff(colnames(import_data), colnames(scores_data))
-
+    
     merged_data <- merge(
         x = scores_data,
         y = import_data[, c("record_id", common_cols), drop = FALSE],
@@ -923,7 +980,7 @@ merge_xlsm_redcap_data <- function(runID) {
         all.x = TRUE,
         sort = FALSE
     )
-
+    
     merged_data[is.na(merged_data)] <- ""
     return(unique(merged_data))
 }
@@ -935,10 +992,10 @@ makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redca
     assign("redcapUp", FALSE, envir = gb)
     suppressPackageStartupMessages(library("data.table"))
     assign("genCn", FALSE, envir = gb)
-
+    
     csv_data <- check_csv_data(sheetName = "samplesheet.csv")
     runID <- paste0(csv_data$RunID[1])
-
+    
     reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
     CopyRmdFile(gb$runID, reportMd)
     suppressWarnings(suppressPackageStartupMessages({
@@ -946,9 +1003,9 @@ makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redca
         library("pander")
         library("htmltools")
     }))
-
+    
     loopRender(runOrder, csv_data, redcapUp)
-
+    
     if (stringr::str_detect(basename(getwd()), pattern = "new-template")) {
         runID <- basename(getwd())
     }
@@ -961,17 +1018,17 @@ makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redca
         factors = FALSE,
         survey = FALSE,
         dag = FALSE))
-
+    
     missing_rd <- setdiff(exist_record$record_id, merged_data$record_id)
-
+    
     if (length(missing_rd) > 0) {
         for (rd_num in missing_rd) {
             CreateRedcapRecord(runID, recordWord = "regular", rd = rd_num)
         }
     }
-
+    
     merged_data_cast <- redcapAPI::castForImport(merged_data, rcon, fields = colnames(merged_data))
-
+    
     redcapAPI::importRecords(rcon, merged_data_cast, returnContent = "ids",
                              logfile = "REDCapImportLog.txt")
     qcVals <- NULL
@@ -984,18 +1041,18 @@ makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redca
         redcapAPI::importRecords(rcon, qcVals, "normal", "ids",
                                  logfile = "REDCapQCimports.txt")
     }
-
+    
     if (grepl("TEST", runID)) {
         redcapUp <- email <- FALSE
     }
-
+    
     is_test <- stringr::str_detect(basename(getwd()), pattern = "new")
     
     if (redcapUp == TRUE) {
         file.list <- dir(getwd(), pattern = ".html", full.names = TRUE)
         gb$uploadToRedcap(file.list, F)
     }
-
+    
     if (email == TRUE) {
         RenameFailed(qcVals)
         gb$CombineClassAndQC(
@@ -1011,7 +1068,7 @@ makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redca
         launchEmailNotify(runID)
         check_html_file_sizes(getwd()) # checks files copied size
     }
-
+    
     try(beepr::beep(2), T)
     tidyUpFiles(runID)
 }
@@ -1103,7 +1160,7 @@ PrepareRun <- function(token,
 StartRun <- function(selectRDs = NULL, emailNotify = TRUE, redcapUp = FALSE) {
     mainHub <- "https://github.com/NYU-Molecular-Pathology/Methylation/main/R"
     gb$msgFunName(file.path(mainHub,"methylExpress.R"),"startRun")
-
+    
     runOrder <- NULL
     if (!is.null(selectRDs)) {
         runOrder <- gb$reOrderRun(selectRDs)
@@ -1164,7 +1221,7 @@ CheckIdatsCopied <- function() {
     idatFiles <- dir(getwd(), pattern = ".idat", full.names = T)
     idatSize <- paste(round(file.info(idatFiles)$size/1024.0 ^ 2, 2),"MB")
     idatFiSi <- as.data.frame(table(idatSize))
-
+    
     if (nrow(idatFiSi) > 1) {
         message(crayon::bgRed("Some idat files are not the same size!"))
         message("Make sure Red_ and Grn_.idat pairs are the same file size!")
