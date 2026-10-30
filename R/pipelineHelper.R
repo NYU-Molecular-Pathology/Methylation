@@ -862,16 +862,53 @@ check_control_sam1 <- function(csv_data, cntrl, runID) {
 }
 
 # Searches the RC DB to ensure all rd_numbers exist and are created as record_id if not
+# check_rd_numb_db <- function(csv_data){
+#     msgFunName(pipeLnk, "check_rd_numb_db")
+#     is_rd <- grepl(csv_data[, 1], pattern = "^RD-")
+#     all_rd <- csv_data[is_rd, 1]
+#     rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
+#     all_records <- suppressMessages(redcapAPI::exportRecordsTyped(
+#         rcon, fields = "record_id", factors = FALSE, survey = FALSE, dag = FALSE))
+    
+#     current_records <- all_records$record_id[grepl(all_records$record_id, pattern = "^RD-")]
+    
+#     for (rd_sam in 1:length(all_rd)) {
+#         curr_idx <- which(csv_data[, 1] == all_rd[rd_sam])
+#         curr_sam <- csv_data[curr_idx, 1]
+#         if (curr_sam %in% current_records) {
+#             message(curr_sam, " ", "exists in REDCap")
+#             next
+#         }
+#         curr_run <- csv_data$RunID[curr_idx]
+#         CreateRedcapRecord(runID = curr_run, recordWord = "regular", rd = curr_sam)
+#     }
+# }
+
 check_rd_numb_db <- function(csv_data){
     msgFunName(pipeLnk, "check_rd_numb_db")
-    is_rd <- grepl(csv_data[, 1], pattern = "^RD-")
+    is_rd <- grepl("^RD-", csv_data[, 1])
     all_rd <- csv_data[is_rd, 1]
-    rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
-    all_records <- suppressMessages(redcapAPI::exportRecordsTyped(
-        rcon, fields = "record_id", factors = FALSE, survey = FALSE, dag = FALSE))
     
-    current_records <- all_records$record_id[grepl(all_records$record_id, pattern = "^RD-")]
+    response <- httr::POST(
+        gb$apiLink,
+        body = list(
+            token = gb$ApiToken,
+            content = "record",
+            format = "csv",
+            fields = "record_id"
+        ),
+        encode = "form"
+    )
+    httr::stop_for_status(response)
     
+    all_records <- utils::read.csv(
+        text = httr::content(response, as = "text", encoding = "UTF-8"),
+        colClasses = "character"
+    )
+    
+    current_records <- all_records$record_id[
+        grepl("^RD-", all_records$record_id)
+    ]
     for (rd_sam in 1:length(all_rd)) {
         curr_idx <- which(csv_data[, 1] == all_rd[rd_sam])
         curr_sam <- csv_data[curr_idx, 1]
