@@ -93,9 +93,88 @@ copy.to.clinical <- function(clinOut, runID, runYear) {
 }
 
 
+# Lightweight REDCap API helpers (httr + base R)
+RedcapPost <- function(rcon, body) {
+    response <- httr::POST(
+        rcon$url,
+        body = c(list(token = rcon$token), body),
+        encode = "form"
+    )
+    result <- httr::content(response, as = "text", encoding = "UTF-8")
+    if (httr::http_error(response)) {
+        stop("REDCap API error: ", result)
+    }
+    return(result)
+}
+
+RedcapExportRecords <- function(rcon, fields = NULL, records = NULL) {
+    body <- list(
+        content = "record",
+        format = "csv",
+        returnFormat = "csv",
+        type = "flat",
+        rawOrLabel = "raw",
+        exportSurveyFields = "false",
+        exportDataAccessGroups = "false"
+    )
+    if (!is.null(fields)) {
+        fields <- unique(c("record_id", as.character(fields)))
+        body <- c(body, stats::setNames(as.list(fields), paste0("fields[", seq_along(fields) - 1L, "]")))
+    }
+    if (!is.null(records)) {
+        body <- c(body, stats::setNames(as.list(as.character(records)),
+                                       paste0("records[", seq_along(records) - 1L, "]")))
+    }
+    csv_text <- RedcapPost(rcon, body)
+    if (!nzchar(trimws(csv_text))) {
+        return(data.frame())
+    }
+    return(utils::read.csv(
+        text = csv_text,
+        stringsAsFactors = FALSE,
+        na.strings = c("", "NA"),
+        colClasses = c(record_id = "character")
+    ))
+}
+
+RedcapImportRecords <- function(rcon, data, logfile = NULL) {
+    csv_data <- paste(
+        utils::capture.output(utils::write.csv(data, row.names = FALSE, na = "")),
+        collapse = "\n"
+    )
+    body <- list(
+        content = "record",
+        format = "csv",
+        returnFormat = "csv",
+        type = "flat",
+        overwriteBehavior = "normal",
+        returnContent = "ids",
+        data = csv_data
+    )
+    result <- tryCatch(
+        RedcapPost(rcon, body),
+        error = function(e) {
+            if (!is.null(logfile)) {
+                cat(conditionMessage(e), "\n", file = logfile, append = TRUE)
+            }
+            stop(e)
+        }
+    )
+    if (!is.null(logfile)) {
+        cat("Imported IDs: ", result, "\n", file = logfile, append = TRUE, sep = "")
+    }
+    return(invisible(result))
+}
+
 # Checks REDCap record to see last edit in log
 redcap_last_edit <- function(rcon, record_id) {
-    redcap_logs <- redcapAPI::exportLogging(rcon, logtype = "record", record = record_id)
+    redcap_logs <- utils::read.csv(
+        text = RedcapPost(rcon, list(
+            content = "log", format = "csv", returnFormat = "csv",
+            logtype = "record", record = record_id
+        )),
+        stringsAsFactors = FALSE
+    )
     last_edit <- redcap_logs[1, "timestamp"]
     last_action <- redcap_logs[1, "action"]
     last_edit_date <- base::as.Date(last_edit, format = "%Y-%m-%d")
@@ -108,9 +187,11 @@ redcap_last_edit <- function(rcon, record_id) {
 checkRedcapRecord <- function(recordName, fieldName = 'classifier_pdf') {
     msgFunName(cpOutLnk, "checkRedcapRecord")
     is_val_control <- sjmisc::str_contains(recordName, "_control_")
-    if (is_val_control) return(FALSE)
-    rcon <- redcapAPI::redcapConnection(url = gb$apiLink, gb$ApiToken)
-    formData <- redcapAPI::exportRecordsTyped(rcon, fields = fieldName, records = recordName)
+    if (is_val_control) {
+        return(FALSE)
+    }
+    rcon <- list(url = gb$apiLink, token = gb$ApiToken)
+    formData <- RedcapExportRecords(rcon, fields = fieldName, records = recordName)
     MsgDF(as.data.frame(formData))
     result <- formData[1, fieldName]
     return(is.na(result))
@@ -148,13 +229,8 @@ import_redcap_data <- function(sh_Dat = NULL) {
     if (is.null(sh_Dat)) {
         return("Data is Null nothing to import to REDCap")
     }
-    rcon <- redcapAPI::redcapConnection(gb$apiLink, token = gb$ApiToken)
-    dataCast <- redcapAPI::castForImport(
-        sh_Dat, rcon, fields = colnames(sh_Dat)
-    )
-    redcapAPI::importRecords(rcon,
-                             data = dataCast, overwriteBehavior = "normal", returnContent = "ids"
-    )
+    rcon <- list(url = gb$apiLink, token = gb$ApiToken)
+    RedcapImportRecords(rcon, sh_Dat)
     message(crayon::bgBlue("Record Data Uploaded:"), "\n")
     gb$msg_df(sh_Dat)
 
@@ -309,7 +385,22 @@ callApiFile <- function(rcon, recordName, fiPath = NULL, fld = "classifier_pdf")
         message("Uploading file:\n", fiPath, "\nTo REDCap Record: ", recordName)
 
         tryCatch(
-            expr = redcapAPI::importFiles(rcon, file = fiPath, record = recordName, field = fld),
+            expr = {
+                response <- httr::POST(
+                    rcon$url,
+                    body = list(
+                        token = rcon$token,
+                        content = "file",
+                        action = "import",
+                        returnFormat = "csv",
+                        record = recordName,
+                        field = fld,
+                        file = httr::upload_file(fiPath)
+                    ),
+                    encode = "multipart"
+                )
+                httr::stop_for_status(response)
+            },
             error = function(e) {
                 message("REDCap Import error for record: ", recordName)
                 message("File failed to upload: ", fiPath)
@@ -322,7 +413,7 @@ callApiFile <- function(rcon, recordName, fiPath = NULL, fld = "classifier_pdf")
 # Creates QC record and uploads reports to redcap
 uploadToRedcap <- function(file.list, deskCSV = T, runNumb = NULL) {
     msgFunName(cpOutLnk, "uploadToRedcap")
-    rcon <- redcapAPI::redcapConnection(apiLink, gb$ApiToken)
+    rcon <- list(url = apiLink, token = gb$ApiToken)
     runID <- ifelse(is.null(runNumb), gb$runID, runNumb)
 
     message(paste(file.list))
@@ -378,8 +469,8 @@ importSingle <- function(sh_Dat) {
 
     htmlEmpty <- checkRedcapRecord(paste0(recordName))
 
-    rcon <- redcapAPI::redcapConnection(url = gb$apiLink, gb$ApiToken)
-    formData <- redcapAPI::exportRecordsTyped(rcon, fields = "run_number", records = recordName)
+    rcon <- list(url = gb$apiLink, token = gb$ApiToken)
+    formData <- RedcapExportRecords(rcon, fields = "run_number", records = recordName)
     record_run <- formData[1, "run_number"]
     different_run <- sh_Dat$run_number[1] != record_run
     if (different_run) {
@@ -413,9 +504,7 @@ grabAllRecords <- function(flds, rcon) {
     msgFunName(cpOutLnk, "grabAllRecords")
     message("Pulling REDCap data...")
     library("dplyr")
-    params = list(rcon, fields = flds, survey = F, dag = F,
-                  factors = F, form_complete_auto = F)
-    dbCols <- do.call(redcapAPI::exportRecordsTyped, c(params))
+    dbCols <- RedcapExportRecords(rcon, fields = flds)
     rd_df <- as.data.frame(dbCols)
     rd_df <- rd_df %>% dplyr::mutate_all(~stringr::str_replace_all(., ",", ""))
     return(rd_df)
@@ -426,9 +515,7 @@ GrabSpecificRecords <- function(flds, rd_num, rcon) {
     msgFunName(cpOutLnk, "GrabSpecificRecords")
     message("Pulling REDCap data...")
     library("dplyr")
-    params = list(rcon, records = rd_num, fields = flds, survey = F, dag = F,
-                  factors = F, form_complete_auto = F)
-    dbCols <- do.call(redcapAPI::exportRecordsTyped, c(params))
+    dbCols <- RedcapExportRecords(rcon, fields = flds, records = rd_num)
     rd_df <- as.data.frame(dbCols)
     redcap_db <- rd_df %>% dplyr::mutate_all(~stringr::str_replace_all(., ",", ""))
     return(redcap_db)
@@ -542,7 +629,7 @@ CheckOutputScoresQC <- function(output, runID, redcap_db, fieldsToPull, rcon) {
         }
         redcap_dat <- as.data.frame(read.csv(find_redCsv))
         redcap_dat <- unique(redcap_dat)
-        redcapAPI::importRecords(rcon, redcap_dat, "normal", "ids", logfile = "REDCapImportLog.txt")
+        RedcapImportRecords(rcon, redcap_dat, logfile = "REDCapImportLog.txt")
         if (nrow(redcap_dat) != nrow(redcap_db)) {
             shared_record_ids <- intersect(redcap_dat$record_id, redcap_db$record_id)
 
@@ -669,7 +756,7 @@ CombineClassAndQC <- function(output_fi = NULL, token, runDir = NULL, runID = NU
     if (stringr::str_detect(pattern = "new-template", basename(getwd()))) {
         runID <- basename(getwd())
     }
-    rcon <- redcapAPI::redcapConnection(apiLink, token)
+    rcon <- list(url = apiLink, token = token)
 
     fieldsToPull <- c(
         "record_id", "run_number", "b_number", "tm_number", "block",
