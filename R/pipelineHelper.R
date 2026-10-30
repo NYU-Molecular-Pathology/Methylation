@@ -1023,6 +1023,57 @@ merge_xlsm_redcap_data <- function(runID) {
 }
 
 # MAIN: Generates Html reports with samplesheet.csv for V12_EPICV2 --------------------------------
+# Reusable REDCap import function
+ImportRedcap <- function(data, logfile) {
+    
+    if (nrow(data) == 0) {
+        return(invisible(NULL))
+    }
+    
+    if (any(vapply(data, is.factor, logical(1)))) {
+        stop("Convert factor columns to REDCap raw codes before importing.")
+    }
+    
+    csv_data <- paste(
+        utils::capture.output(
+            utils::write.csv(data, row.names = FALSE, na = "")
+        ),
+        collapse = "\n"
+    )
+    
+    response <- httr::POST(
+        gb$apiLink,
+        body = list(
+            token = gb$ApiToken,
+            content = "record",
+            format = "csv",
+            type = "flat",
+            overwriteBehavior = "normal",
+            returnContent = "ids",
+            data = csv_data
+        ),
+        encode = "form"
+    )
+    
+    result <- httr::content(response, as = "text", encoding = "UTF-8")
+    
+    cat(
+        format(Sys.time(), "[%Y-%m-%d %H:%M:%S] "),
+        if (httr::http_error(response)) "ERROR: " else "Imported IDs: ",
+        result, "\n",
+        file = logfile,
+        append = TRUE,
+        sep = ""
+    )
+    
+    if (httr::http_error(response)) {
+        stop("REDCap import failed: ", result)
+    }
+    
+    return(invisible(result))
+}
+
+# MAIN: Generates Html reports with samplesheet.csv for V12_EPICV2 --------------------------------
 makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redcapUp = FALSE) {
     msgFunName(pipeLnk, "makeHtmlReports")
     gb$redcapUp <- redcapUp <- FALSE
@@ -1046,17 +1097,49 @@ makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redca
     if (stringr::str_detect(basename(getwd()), pattern = "new-template")) {
         runID <- basename(getwd())
     }
-    rcon <- redcapAPI::redcapConnection(gb$apiLink, gb$ApiToken)
+
+    # Main workflow
     checkRunOutput(runID)
     merged_data <- merge_xlsm_redcap_data(runID)
-    message("Importing Scores and Sample Info to REDCap...")
-    exist_record <- suppressMessages(redcapAPI::exportRecordsTyped(
-        rcon, records = merged_data$record_id, fields = "record_id",
-        factors = FALSE,
-        survey = FALSE,
-        dag = FALSE))
     
-    missing_rd <- setdiff(exist_record$record_id, merged_data$record_id)
+    message("Importing Scores and Sample Info to REDCap...")
+    
+    record_ids <- unique(as.character(merged_data$record_id))
+    
+    if (anyNA(record_ids) || any(!nzchar(record_ids))) {
+        stop("Missing or empty REDCap record IDs.")
+    }
+    
+    record_filters <- stats::setNames(
+        as.list(record_ids),
+        paste0("records[", seq_along(record_ids) - 1L, "]")
+    )
+    
+    response <- httr::POST(
+        gb$apiLink,
+        body = c(
+            list(
+                token = gb$ApiToken,
+                content = "record",
+                format = "csv",
+                fields = "record_id"
+            ),
+            record_filters
+        ),
+        encode = "form"
+    )
+    
+    httr::stop_for_status(response)
+    
+    result <- httr::content(response, as = "text", encoding = "UTF-8")
+    
+    exist_record <- if (nzchar(trimws(result))) {
+        utils::read.csv(text = result, colClasses = "character")
+    } else {
+        data.frame(record_id = character())
+    }
+    
+    missing_rd <- setdiff(record_ids, exist_record$record_id)
     
     if (length(missing_rd) > 0) {
         for (rd_num in missing_rd) {
@@ -1064,20 +1147,21 @@ makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redca
         }
     }
     
-    merged_data_cast <- redcapAPI::castForImport(merged_data, rcon, fields = colnames(merged_data))
+    ImportRedcap(merged_data, "REDCapImportLog.txt")
     
-    redcapAPI::importRecords(rcon, merged_data_cast, returnContent = "ids",
-                             logfile = "REDCapImportLog.txt")
     qcVals <- NULL
     runID <- basename(getwd())
-    if (skipQC == F) {
+    
+    if (!skipQC) {
         CreateRedcapRecord(runID)
         generateQCreport(runID)
+        
         qcVals <- CheckSampleQCmetrics(runID)
         qcVals <- gb$NameControl(qcVals, runID)
-        redcapAPI::importRecords(rcon, qcVals, "normal", "ids",
-                                 logfile = "REDCapQCimports.txt")
+        
+        ImportRedcap(qcVals, "REDCapQCimports.txt")
     }
+    
     
     if (grepl("TEST", runID)) {
         redcapUp <- email <- FALSE
