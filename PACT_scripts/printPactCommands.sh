@@ -345,8 +345,10 @@ echo -e "</ol>\n$BOX2\n<br></br>"
 msg_stage 1 "Begin Demultiplexing"
 msg_step 1 "#acacff" "Once sequencing is complete, start demux by logging into HPC"
 msg_code "ssh -Y ${kerbero}@bigpurple.nyumc.org"
-msg_step 2 "#acacff" "Go into the demux-nf2 directory and execute the deploy command"
+msg_step "2a" "#acacff" "Go into the demux-nf2 directory and execute the deploy command"
 msg_code "${BASH_HELPERS}/start_demux.sh ${RUN_ID}"
+msg_step "2b" "#acacff" "Alternatively, you can schedule the demux run to start the next day at 2AM with the following command and skip Stage 2 and Stage 3:"
+msg_code "${BASH_HELPERS}/schedule_demux.sh ${RUN_ID}"
 echo "$BOX2"
 
 # Stage 2 -----------------------
@@ -380,7 +382,7 @@ msg_step 1 "#baffc9" "Copy the calibrated BAMs and run the post-scripts, then ss
 msg_code "${BASH_HELPERS}/bam_copier.sh ${RUN_ID} ${PACT_ID}"
 msg_step 2 "#baffc9" "bam_copier.sh will also submit an sbatch for zdrive_copier.sh on data mover node (uvdm). Ensure mount /mnt/${kerbero}/molecular to copy the data from HPC to the Molecular share drive."
 #msg_code "/mnt/\"\$USER\"/molecular/Molecular/Validation/Scripts/zdrive_copier.sh ${RUN_ID} ${PACT_ID}"
-msg_step 3 "#baffc9" "Once the bam_copier.sh sbatch QCs complete, print out the QC summary, for the PACT team email:"
+msg_step 3 "#baffc9" "Once the bam_copier.sh sbatch QCs complete, print out the QC summary, for the PACT team email (this is done automatically after bam_copier.sh generates QC output):"
 msg_code "${BASH_HELPERS}/print_qc_summary.sh ${PACT_ID} ${RUN_ID}"
 msg_step 4 "#baffc9" "Once the files are copied, email the PACT team to notify them by replying to the PACTers email thread with the following message template:"
 if [[ "$IS_SOPHIA" == "true" ]]; then
@@ -388,7 +390,7 @@ if [[ "$IS_SOPHIA" == "true" ]]; then
 	smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/NGS607/${YEAR_DIR}/${RUN_ID}/\n
 The QC and output are copied here:
 	smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Results/Bioinformatics/${YEAR_DIR}/${PACT_ID}/${PACT_ID}.html
-\n\nQC for upload to Sophia can be reviewed by logging into: https://pactqc.nyumc.org/"
+\nQC for upload to Sophia can be reviewed by logging into: https://pactqc.nyumc.org/"
 else
 	msg_txt "Hi all,\n\nThe in-house pipeline completed for ${PACT_ID}. The data for this week's PACT run are copied here:
 	smb://shares-cifs.nyumc.org/apps/acc_pathology/molecular/Molecular/NGS607/${YEAR_DIR}/${RUN_ID}/\n
@@ -401,16 +403,16 @@ echo "$BOX2"
 if [[ "$IS_SOPHIA" == "true" ]]; then
 	msg_stage 4 "Generate Methylation CNV Consensus Report"
 	msg_step 1 "#bae1ff" "Once the SG results are ready, open your LOCAL terminal and execute the following script that was downloaded to your home folder by parseSophia.sh"
-	msg_code "${HOME}/make_consensus.sh ${RUN_ID} ${PACT_ID}"
-	msg_step 2 "#bae1ff" "Send an email to notify the html report has been generated and copied using the following as a template:"
-	msg_txt "Hi all,\nThe methylation CNV consensus is copied here:\nsmb://shares-cifs.nyumc.org/apps/acc_pathology${outputDir}${YEAR_DIR}/${PACT_ID}/${PACT_ID}_consensus.html"
+	msg_code "\$HOME/make_consensus.sh ${RUN_ID} ${PACT_ID}"
+	msg_step 2 "#bae1ff" "Send an email to notify the html report has been generated and copied using the following as a template and paste the PACT QC Summary email output from print_qc_summary.sh:"
+	msg_txt "\nThe methylation CNV consensus is copied here:\nsmb://shares-cifs.nyumc.org/apps/acc_pathology${outputDir}${YEAR_DIR}/${PACT_ID}/${PACT_ID}_consensus.html"
 	echo "$BOX2"
 else
 	msg_stage 4 "Methylation and Philips CNV Consensus Report"
 	msg_step 1 "#bae1ff" "In your LOCAL terminal execute the make_consensus.sh script Monday after the Philips data dumps into /molecular/Molecular/Philips_SFTP"
 	msg_code "${HOME}/make_consensus.sh ${RUN_ID} ${PACT_ID}"
 	msg_step 2 "#bae1ff" "Send an email to notify the file is ready"
-	msg_txt "Hi all,\nThe methylation CNV consensus is copied here:\nsmb://shares-cifs.nyumc.org/apps/acc_pathology${outputDir}${YEAR_DIR}/${PACT_ID}/${PACT_ID}_consensus.html"
+	msg_txt "\nThe methylation CNV consensus is copied here:\nsmb://shares-cifs.nyumc.org/apps/acc_pathology${outputDir}${YEAR_DIR}/${PACT_ID}/${PACT_ID}_consensus.html"
 	echo "$BOX2"
 fi
 
