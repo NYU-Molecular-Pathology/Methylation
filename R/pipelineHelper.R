@@ -1189,7 +1189,7 @@ makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redca
             CreateRedcapRecord(runID, recordWord = "regular", rd = rd_num)
         }
     }
-    
+    merged_data$sex <- tolower(merged_data$sex)
     ImportRedcap(merged_data, "REDCapImportLog.txt")
     
     qcVals <- NULL
