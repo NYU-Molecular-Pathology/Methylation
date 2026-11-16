@@ -16,12 +16,12 @@ if (!"devtools" %in% rownames(installed.packages())) {
 library("devtools")
 
 # Parameters Input trailing commandline ---------------------------------------
-args[1] -> token      # <- NULL
-args[2] -> runID      # <- "21-MGDM_TEST"
-args[3] -> selectRDs  # <- NULL
-args[4] -> baseFolder # <- NULL
-args[5] -> redcapUp   # <- TRUE
-args[6] -> runLocal   # <- FALSE
+args[1] -> token
+args[2] -> runID
+NULL -> selectRDs
+NULL -> baseFolder
+TRUE -> redcapUp
+FALSE -> runLocal
 forcedUpload <- FALSE
 
 test_case <- FALSE
