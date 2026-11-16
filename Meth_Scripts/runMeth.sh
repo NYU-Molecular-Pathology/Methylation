@@ -2,9 +2,9 @@
 ## Script name: runMeth.sh
 ## Purpose: Download methylation pipeline scripts from Github and execute run
 ## Date Created: August 5, 2021
-## Date Modified: March 20, 2026
+## Date Modified: November 16, 2026
 ## Author: Jonathan Serrano
-## Version: 1.0.2
+## Version: 1.1.0
 ## Copyright (c) NYULH Jonathan Serrano, 2026
 
 # RedCap API Token ------------------------------------------------------------
@@ -187,6 +187,20 @@ rename_htmls() {
 	fi
 }
 
+check_outputs() {
+    local dir="$1"
+    local file
+    for file in \
+        "${METH_ID}_QC.html" \
+        "${METH_ID}_QC_and_Classifier_Scores.csv" \
+        "${METH_ID}_qc_data.csv"
+    do
+        if [[ ! -f "${dir%/}/$file" ]]; then
+            msg_red "WARNING: Missing ${dir%/}/$file"
+        fi
+    done
+}
+
 require_smb_mount() {
 	local mountpoint="$1"
 	if [[ ! -d "$mountpoint" ]]; then msg_red "SMB mount missing: $mountpoint"; exit 1; fi
@@ -223,7 +237,8 @@ if [ "$IS_RESEARCH" != "TRUE" ]; then
 	
 	copy_htmls "${DESK_DIR}" "${OUTPUT_DIR_1}"
 	copy_htmls "${DESK_DIR}" "${OUTPUT_DIR_2}"
-
+	check_outputs "$OUTPUT_DIR_1"
+	check_outputs "$OUTPUT_DIR_2"
 else
 	rsync -rv --include '*.html' --exclude='*' "${RUN_DIR}" "$DESK_DIR"
 	copy_htmls "${DESK_DIR}" "${RESEARCH_OUT}/${METH_ID}/"
