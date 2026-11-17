@@ -4,7 +4,7 @@
 ## Author: Jonathan Serrano
 ## Date Created: August 21, 2023
 ## Author: Jonathan Serrano
-## Version: 1.1.0
+## Version: 1.1.1
 ## Copyright (c) NYULH Jonathan Serrano, 2026
 
 # shellcheck disable=SC1091
@@ -45,24 +45,18 @@ NGS607_DIR="${MOLEC_VOL}/NGS607/${CURRENT_YR}/${RUN_ID}"
 DEMUX_CSV="${RESULTS_DIR}/${CURRENT_YR}/${PACT_ID}/demux-samplesheet.csv"
 
 # Color Variables -------------------------------------------------------------
-BG_RED="$(tput setab 1)" # makes text background red
-BG_BLU="$(tput setab 4)" # makes text background blue
-BG_YLW="$(tput setab 3)$(tput setaf 0)" # yellow background, black text
-NORMAL=$(tput sgr0)      # resets default text
+BG_RED="$(tput setab 1)" BG_BLU="$(tput setab 4)" NORM="$(tput sgr0)"
 
 # trap and notify for ERRORS --------------------------------------------------
-set -Eeuo pipefail
-msg_red() { echo -e "\n${BG_RED}$1${NORMAL}\n"; }
-trap 'msg_red "ERROR:$BASH_COMMAND\nFILE: ${BASH_SOURCE[0]}\nLINE:$LINENO"' ERR
+msg_red() { echo -e "${BG_RED}${1}${NORM}\n"; }
+msg_err() { trap - ERR; [[ ${FUNCNAME[1]-} == msg_code && $2 == '"$@"' ]] && \
+	set -- "$1" "$5" "$3" "$4"; msg_red "ERR!\n$2\nIN: $3:$4 Exit:$1" >&2; exit "$1"; }
 
-# Function to display and execute code
-msg_code() { echo -e "Executing:\n${BG_BLU}$*${NORMAL}\n"; "$@"; }
+set -Eeuo pipefail; trap 'msg_err "$?" "$BASH_COMMAND" "${BASH_SOURCE[0]}" "$LINENO" "$*"' ERR
+
+msg_code() { echo -e "Executing:\n${BG_BLU}$*${NORM}\n"; "$@"; }
 msg_rsync() { msg_code rsync -vrhP ${3:+$3 }"$1" "$2"; }
-msg_curl() {
-    out_fi=$1; out_dir=${2:-$HOME}; dest="${out_dir}/${out_fi}"
-    cd "$out_dir" || exit
-    msg_code curl -k -# -L "$GIT_URL/$out_fi" -o"$dest" && chmod +rwx "$dest"
-}
+msg_curl() { msg_code curl -k -# -L "$GIT_URL/$1" -o "${HOME}/${1}" && chmod +rwx "${HOME}/${1}"; }
 
 # Main execution --------------------------------------------------------------
 mkdir -p "${WORK_DIR}" "${DESK_DIR}/TMB_MSI"
@@ -73,13 +67,12 @@ mkdir -p "${PNG_OUT_DIR}" "${TMB_MSI_OUT}"
 RMD_FILE="${WORK_DIR}/${PACT_ID}_consensus.Rmd"
 
 msg_code curl -# -L ${GIT_URL}/PACT_consensus.Rmd -o "${RMD_FILE}"
+cd "$HOME" || exit 1
 msg_curl "MakeIndelList.R"
 msg_curl "hs_metric_consensus.R"
-cd "$HOME" && msg_curl "PactMethMatch.R"
+msg_curl "PactMethMatch.R"
 
 msg_code Rscript --verbose "$HOME/PactMethMatch.R" "${PACT_ID}"
-
-#msg_code /Volumes/CBioinformatics/PACT/getMethylMatch.sh "${PACT_ID}" "${RUN_ID}"
 
 # Z-drive TO Desktop
 cd "$HOME" || exit
@@ -111,7 +104,7 @@ msg_rsync "$HOME/Desktop/${PACT_ID}/demux-samplesheet.csv" "${WORK_DIR}"
 [ -d "${VAF_DIR}" ] && rsync -vrP "${DESK_VAF}" "${WORK_DIR}/"
 
 # EXECUTE: Rscripts for generating HTML Report --------------------------------
-echo -e "${BG_YLW}Checking if GOS idat files need to be copied...${NORMAL}"
+echo -e "${BG_BLU}Checking if GOS idat files need to be copied...${NORM}"
 ( source "${SCRIPTS_DIR}"/copy_marcin_idats.sh "${RUN_ID}" "${PACT_ID}" ) || true
 
 msg_code RScript --verbose "${HOME}/MakeIndelList.R" "${PACT_ID}"
