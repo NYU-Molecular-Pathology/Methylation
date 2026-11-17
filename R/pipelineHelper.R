@@ -19,8 +19,9 @@ gb$redcapUp <- redcapUp <- FALSE
 apiLink = "https://redcap.nyumc.org/apps/redcap/api/"
 reportMd <- "/Volumes/CBioinformatics/Methylation/EPIC_V2_report_2.Rmd"
 QC_file <- file.path(fs::path_home(),"Methyl_QC.Rmd")
-pipeLnk <-
-    "https://github.com/NYU-Molecular-Pathology/Methylation/edit/main/pipelineHelper.R"
+METH_GIT <- "https://github.com/NYU-Molecular-Pathology/Methylation"
+pipeLnk <- file.path(METH_GIT, "tree/main/R/pipelineHelper.R")
+
 gb$UPLOAD_LOG_TSV <- "redcap_failed_file_uploads.tsv"
 
 cbioLn <- switch(
@@ -98,6 +99,7 @@ SetKnitProgress <- function() {
 }
 
 check_html_file_sizes <- function(meth_dir) {
+    msgFunName(pipeLnk,"check_html_file_sizes")
     html_files <- list.files(meth_dir, pattern = "\\.html$", full.names = TRUE)
     
     if (length(html_files) == 0) {
@@ -208,6 +210,7 @@ CheckSampleQCmetrics <- function(runID) {
 }
 
 my_html_document <- function(...) {
+    msgFunName(pipeLnk,"my_html_document")
     fmt <- rmarkdown::html_document(...)
     fmt$pandoc$convert_fun <- function(input, output, from, to, ...) {
         # Call pandoc_convert with verbose = FALSE
@@ -263,32 +266,32 @@ generateQCreport <- function(runID = NULL) {
 # Sends an email notification that the run is complete from redcap admin ------
 launchEmailNotify <- function(runID) {
     msgFunName(pipeLnk, "launchEmailNotify")
-
+    
     isMC <- sjmisc::str_contains(runID, "MGDM") |
         sjmisc::str_contains(runID, "MC")
     is_validation <- sjmisc::str_contains(runID, "VAL")
-
+    
     if (is_validation) {
         return(message("Run is Validation. No email will be generated"))
     }
     if (sjmisc::str_contains(runID, "EPICV1")) {
         return(message("Run is Validation. No email will be generated"))
     }
-
+    
     com <- ifelse(isMC, "sample_qc", "sample_research")
     record_df <- data.frame(
         record_id = paste0(runID, "_QC"),
         comments = com,
         stringsAsFactors = FALSE
     )
-
+    
     csv_data <- paste(
         utils::capture.output(
             utils::write.csv(record_df, row.names = FALSE, na = "")
         ),
         collapse = "\n"
     )
-
+    
     response <- httr::POST(
         gb$apiLink,
         body = list(
@@ -303,7 +306,7 @@ launchEmailNotify <- function(runID) {
         encode = "form"
     )
     httr::stop_for_status(response)
-
+    
     res <- httr::content(response, as = "text", encoding = "UTF-8")
     message(bkBlu("Check email to confirm notification created for", trimws(res)))
 }
@@ -488,6 +491,7 @@ getRunData <- function(single_data, fi_end = ".html") {
 
 
 NameControl <- function(data, runId) {
+    msgFunName(pipeLnk,"NameControl")
     suppressPackageStartupMessages(library("data.table"))
     cntrl <- which(stringr::str_detect(
         data[, 1], pattern = stringr::regex('control', ignore_case = T)))
@@ -511,6 +515,7 @@ NameControl <- function(data, runId) {
 
 
 get_latest_record_id <- function() {
+    msgFunName(pipeLnk,"get_latest_record_id")
     # REDCap logging uses the server's local time, formatted to minutes.
     response <- httr::POST(
         gb$apiLink,
@@ -527,26 +532,26 @@ get_latest_record_id <- function() {
         encode = "form"
     )
     httr::stop_for_status(response)
-
+    
     result <- httr::content(response, as = "text", encoding = "UTF-8")
     if (!nzchar(trimws(result))) {
         stop("No REDCap logging entries were returned in the last 30 days.")
     }
-
+    
     logs <- utils::read.csv(text = result, colClasses = "character")
     if (!all(c("action", "record", "timestamp") %in% names(logs))) {
         stop("Unexpected REDCap logging response: missing expected columns.")
     }
-
+    
     creates <- !is.na(logs$action) & grepl("Create", logs$action)
     created_logs <- logs[creates, , drop = FALSE]
     rd_numbs <- !is.na(created_logs$record) & grepl("RD-", created_logs$record)
     created_logs <- created_logs[rd_numbs, , drop = FALSE]
-
+    
     if (nrow(created_logs) == 0L) {
         stop("No newly created RD- record was found in the last 30 days.")
     }
-
+    
     created_logs$timestamp <- as.POSIXct(
         created_logs$timestamp,
         format = "%Y-%m-%d %H:%M",
@@ -555,13 +560,14 @@ get_latest_record_id <- function() {
     if (all(is.na(created_logs$timestamp))) {
         stop("Unable to parse REDCap logging timestamps.")
     }
-
+    
     latest_record <- created_logs$record[which.max(created_logs$timestamp)]
     return(latest_record)
 }
 
 
 name_next_records <- function(latest_record, how_many) {
+    msgFunName(pipeLnk,"name_next_records")
     parts <- strsplit(latest_record, "-", fixed = TRUE)[[1]]
     prefix <- paste(parts[1], parts[2], sep = "-")
     current_num <- as.integer(parts[3])
@@ -574,6 +580,7 @@ name_next_records <- function(latest_record, how_many) {
 
 
 make_new_rd_number <- function(record_name = NULL, runID) {
+    msgFunName(pipeLnk,"make_new_rd_number")
     # Reuse the httr-based existence check and record creation.
     CreateRedcapRecord(runID = runID, recordWord = "regular", rd = record_name)
 }
@@ -958,12 +965,12 @@ final_upload_check <- function() {
     if (length(rd_numbers) == 0L) {
         return(invisible(NULL))
     }
-
+    
     record_filters <- stats::setNames(
         as.list(as.character(rd_numbers)),
         paste0("records[", seq_along(rd_numbers) - 1L, "]")
     )
-
+    
     response <- httr::POST(
         gb$apiLink,
         body = c(
@@ -979,14 +986,14 @@ final_upload_check <- function() {
         encode = "form"
     )
     httr::stop_for_status(response)
-
+    
     result <- httr::content(response, as = "text", encoding = "UTF-8")
     fetched_rds <- if (nzchar(trimws(result))) {
         utils::read.csv(text = result, colClasses = "character")
     } else {
         data.frame(record_id = character(), classifier_pdf = character())
     }
-
+    
     # Preserve the original check: identify record IDs absent from the export.
     missing_rds <- !rd_numbers %in% fetched_rds$record_id
     if (any(missing_rds)) {
@@ -996,7 +1003,7 @@ final_upload_check <- function() {
             paste(to_upload, collapse = ", ")
         )
         all_reports <- dir(getwd(), pattern = ".html", full.names = TRUE)
-
+        
         for (rd in to_upload) {
             rd_html <- all_reports[grepl(rd, all_reports)]
             if (length(rd_html) == 0L) {
@@ -1005,7 +1012,7 @@ final_upload_check <- function() {
                 if (length(rd_html) != 1L) {
                     stop("Expected exactly one HTML report for ", rd)
                 }
-
+                
                 response <- httr::POST(
                     gb$apiLink,
                     body = list(
@@ -1039,6 +1046,7 @@ get_red_csv <- function(runID) {
 }
 
 merge_xlsm_redcap_data <- function(runID) {
+    msgFunName(pipeLnk,"merge_xlsm_redcap_data")
     redCsv <- get_red_csv(runID)
     xlsm_sheet <- dir(getwd(), pattern = "*.xlsm")[1]
     import_data <- readxl::read_excel(path = xlsm_sheet, sheet = "REDCap_Import", n_max = 100)
@@ -1068,7 +1076,7 @@ merge_xlsm_redcap_data <- function(runID) {
 # MAIN: Generates Html reports with samplesheet.csv for V12_EPICV2 --------------------------------
 # Reusable REDCap import function
 ImportRedcap <- function(data, logfile) {
-    
+    msgFunName(pipeLnk,"ImportRedcap")
     if (nrow(data) == 0) {
         return(invisible(NULL))
     }
@@ -1140,7 +1148,7 @@ makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redca
     if (stringr::str_detect(basename(getwd()), pattern = "new-template")) {
         runID <- basename(getwd())
     }
-
+    
     # Main workflow
     checkRunOutput(runID)
     merged_data <- merge_xlsm_redcap_data(runID)
@@ -1204,8 +1212,7 @@ makeHtmlReports <- function(runOrder = NULL, skipQC = FALSE, email = TRUE, redca
         
         ImportRedcap(qcVals, "REDCapQCimports.txt")
     }
-    
-    
+
     if (grepl("TEST", runID)) {
         redcapUp <- email <- FALSE
     }
@@ -1298,11 +1305,11 @@ SetBaseFolder <- function(token, baseFolder, runID) {
 PrepareRun <- function(token,
                        baseFolder = NULL,
                        runID,
-                       runLocal = F,
-                       rdInput = F) {
+                       runLocal = FALSE,
+                       rdInput = FALSE) {
     mainHub <- "https://github.com/NYU-Molecular-Pathology/Methylation/main/R"
     gb$msgFunName(file.path(mainHub, "methylExpress.R"), "PrepareRun")
-    if (runLocal == F) {
+    if (runLocal == FALSE) {
         gb$checkMounts()
         gb$checkValidRun(runID)
         gb$SetBaseFolder(token, baseFolder, runID)
@@ -1313,7 +1320,7 @@ PrepareRun <- function(token,
     } else{
         baseFolder <- SetBaseFolder(token, baseFolder, runID)
         assign("baseFolder", baseFolder)
-        if (rdInput == F) {
+        if (rdInput == FALSE) {
             gb$RunLocalIdats(runID, token)
         }
     }
