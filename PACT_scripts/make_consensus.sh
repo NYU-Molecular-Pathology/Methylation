@@ -1,6 +1,6 @@
 #!/bin/bash
 ## Script name: make_consensus.sh
-## Purpose: Generate PACT Consensus HTML report with given input
+## Purpose: Generate PACT Consensus HTML report with PACR run outputs
 ## Author: Jonathan Serrano
 ## Date Created: August 21, 2023
 ## Author: Jonathan Serrano
@@ -107,7 +107,7 @@ msg_rsync "$HOME/Desktop/${PACT_ID}/demux-samplesheet.csv" "${WORK_DIR}"
 echo -e "${BG_BLU}Checking if GOS idat files need to be copied...${NORM}"
 ( source "${SCRIPTS_DIR}"/copy_marcin_idats.sh "${RUN_ID}" "${PACT_ID}" ) || true
 
-msg_code RScript --verbose "${HOME}/MakeIndelList.R" "${PACT_ID}"
+msg_code RScript --verbose "${HOME}/MakeIndelList.R" "${PACT_ID}" "${CONSENSUS_DIR}"
 msg_code RScript --verbose "${HOME}/hs_metric_consensus.R" "${RUN_ID}" "${PACT_ID}"
 
 msg_code cd "${WORK_DIR}/" || exit 1
