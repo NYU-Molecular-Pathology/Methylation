@@ -2,7 +2,6 @@
 ## Script name: MakeIndelList.R
 ## Purpose: Filter out somatic variants for PACT consensus into a csv file
 ## Date Created: August 19, 2022
-## Date Modified: March 23, 2026
 ## Version: 1.0.1
 ## Author: Jonathan Serrano
 ## Copyright (c) NYULH Jonathan Serrano, 2026
@@ -20,6 +19,8 @@ DEFAULT_OUT <- "/Volumes/molecular/MOLECULAR LAB ONLY/NYU PACT Patient Data/Resu
 if (is.na(concensusDir)) {
     concensusDir <- paste0(DEFAULT_DIR, pactRunName, "_consensus")
 }
+
+message("Using concensusDir:", concensusDir)
 
 deps <- c("Depends", "Imports", "LinkingTo")
 if (!requireNamespace("stringr", quietly = TRUE)) {
