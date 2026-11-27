@@ -1638,11 +1638,16 @@ LoopSampleTabs <- function(params) {
         snvTab <- snvDt[samRows & snvDt$Variant == "SNV", ]
         
         if (gb$is_sophia == FALSE) {
-          philipsIndels <- makeAbTab(sam, panel_607)
-          gb$CreateVariantsTabs(philipsIndels, snvTab)
-        } else{
-          philipsIndels <- NULL
-          gb$CreateVariantsTabs(philipsIndels, snvTab)
+            philipsIndels <- makeAbTab(sam, panel_607)
+        } else {
+            philipsIndels <- NULL
+        }
+        
+        gb$CreateVariantsTabs(philipsIndels, snvTab)
+        
+        # Close the extra division only for cases with no variants
+        if (isTRUE(snvTab$Gene[[1L]] == "No variants called")) {
+          cat("\n\n</div>\n\n")
         }
 
         if (!is.null(cnvTab)) {
